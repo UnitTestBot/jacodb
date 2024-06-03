@@ -1,0 +1,1385 @@
+{
+  "name": "basic.ts",
+  "absoluteFilePath": "/home/sapphiron/dev/ark/arkanalyzer/tests/resources/save/basic.ts",
+  "projectDir": "/home/sapphiron/dev/ark/arkanalyzer/tests/resources/save",
+  "projectName": "save",
+  "namespaces": [],
+  "classes": [
+    {
+      "name": "AnonymousClass-basic.ts-0",
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "name": "content",
+          "modifiers": [],
+          "type": "Type",
+          "questionToken": false,
+          "initializer": null
+        }
+      ],
+      "methods": [
+        {
+          "name": "constructor",
+          "modifiers": [],
+          "typeParameters": [],
+          "parameters": [
+            {
+              "name": "value",
+              "type": "Type",
+              "optional": false
+            }
+          ],
+          "returnType": "unknown",
+          "body": [
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "this.content = value;",
+                "def": null,
+                "uses": [],
+                "originPosition": 172,
+                "position": 172,
+                "cfg": null,
+                "originColumn": 7,
+                "column": 7
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "_DEFAULT_ARK_CLASS",
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "name": "_DEFAULT_ARK_METHOD",
+          "modifiers": [],
+          "typeParameters": [],
+          "parameters": [],
+          "returnType": "unknown",
+          "body": [
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "const someClass = class<Type> {\n    content: Type;\n    constructor(value: Type) {\n      this.content = value;\n    }\n  };",
+                "def": null,
+                "uses": [],
+                "originPosition": 169,
+                "position": 169,
+                "cfg": null,
+                "originColumn": 1,
+                "column": 1
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "const m = new someClass(\"Hello, world\");",
+                "def": null,
+                "uses": [],
+                "originPosition": 175,
+                "position": 175,
+                "cfg": null,
+                "originColumn": 1,
+                "column": 1
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "export let x:number = 1;",
+                "def": null,
+                "uses": [],
+                "originPosition": 186,
+                "position": 186,
+                "cfg": null,
+                "originColumn": 1,
+                "column": 1
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "export const soo = 123;",
+                "def": null,
+                "uses": [],
+                "originPosition": 187,
+                "position": 187,
+                "cfg": null,
+                "originColumn": 1,
+                "column": 1
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "forLoopTest();",
+                "def": null,
+                "uses": [],
+                "originPosition": 195,
+                "position": 195,
+                "cfg": null,
+                "originColumn": 1,
+                "column": 1
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "test();",
+                "def": null,
+                "uses": [],
+                "originPosition": 196,
+                "position": 196,
+                "cfg": null,
+                "originColumn": 1,
+                "column": 1
+              }
+            }
+          ]
+        },
+        {
+          "name": "forLoopTest",
+          "modifiers": [],
+          "typeParameters": [],
+          "parameters": [],
+          "returnType": "unknown",
+          "body": [
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "let myPerson = new Person(10);",
+                "def": null,
+                "uses": [],
+                "originPosition": 18,
+                "position": 18,
+                "cfg": null,
+                "originColumn": 5,
+                "column": 5
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "let i = 0; i < 10; i++",
+                "def": null,
+                "uses": [],
+                "originPosition": 19,
+                "position": 19,
+                "cfg": null,
+                "originColumn": 5,
+                "column": 5
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "let newAge = myPerson.age + i;",
+                "def": null,
+                "uses": [],
+                "originPosition": 20,
+                "position": 20,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "logger.info(newAge);",
+                "def": null,
+                "uses": [],
+                "originPosition": 21,
+                "position": 21,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            }
+          ]
+        },
+        {
+          "name": "test",
+          "modifiers": [],
+          "typeParameters": [],
+          "parameters": [],
+          "returnType": "unknown",
+          "body": [
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "const sampleData: number[] = [1, 2, 3, 4, 5];",
+                "def": null,
+                "uses": [],
+                "originPosition": 26,
+                "position": 26,
+                "cfg": null,
+                "originColumn": 5,
+                "column": 5
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "let i = 0; i < sampleData.length; i++",
+                "def": null,
+                "uses": [],
+                "originPosition": 28,
+                "position": 28,
+                "cfg": null,
+                "originColumn": 5,
+                "column": 5
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "if (sampleData[i] % 2 === 0)",
+                "def": null,
+                "uses": [],
+                "originPosition": 30,
+                "position": 30,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "logger.info(`${sampleData[i]} 是偶数`);",
+                "def": null,
+                "uses": [],
+                "originPosition": 31,
+                "position": 31,
+                "cfg": null,
+                "originColumn": 13,
+                "column": 13
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "logger.info(`${sampleData[i]} 是奇数`);",
+                "def": null,
+                "uses": [],
+                "originPosition": 33,
+                "position": 33,
+                "cfg": null,
+                "originColumn": 13,
+                "column": 13
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "",
+                "def": null,
+                "uses": [],
+                "originPosition": 37,
+                "position": 37,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "logger.info(`${sampleData[i]} 可被 3 整除`);",
+                "def": null,
+                "uses": [],
+                "originPosition": 39,
+                "position": 39,
+                "cfg": null,
+                "originColumn": 17,
+                "column": 17
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "break;",
+                "def": null,
+                "uses": [],
+                "originPosition": 40,
+                "position": 40,
+                "cfg": null,
+                "originColumn": 17,
+                "column": 17
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "logger.info(`${sampleData[i]} 除以 3 余 1`);",
+                "def": null,
+                "uses": [],
+                "originPosition": 42,
+                "position": 42,
+                "cfg": null,
+                "originColumn": 17,
+                "column": 17
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "break;",
+                "def": null,
+                "uses": [],
+                "originPosition": 43,
+                "position": 43,
+                "cfg": null,
+                "originColumn": 17,
+                "column": 17
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "logger.info(`${sampleData[i]} 除以 3 余 2`);",
+                "def": null,
+                "uses": [],
+                "originPosition": 45,
+                "position": 45,
+                "cfg": null,
+                "originColumn": 17,
+                "column": 17
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "break;",
+                "def": null,
+                "uses": [],
+                "originPosition": 46,
+                "position": 46,
+                "cfg": null,
+                "originColumn": 17,
+                "column": 17
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "logger.info(\"无法判断\");",
+                "def": null,
+                "uses": [],
+                "originPosition": 48,
+                "position": 48,
+                "cfg": null,
+                "originColumn": 17,
+                "column": 17
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "let count = 0;",
+                "def": null,
+                "uses": [],
+                "originPosition": 52,
+                "position": 52,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "if (count < sampleData[i])",
+                "def": null,
+                "uses": [],
+                "originPosition": 53,
+                "position": 53,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "logger.info(`当前计数: ${count}`);",
+                "def": null,
+                "uses": [],
+                "originPosition": 54,
+                "position": 54,
+                "cfg": null,
+                "originColumn": 13,
+                "column": 13
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "count++;",
+                "def": null,
+                "uses": [],
+                "originPosition": 55,
+                "position": 55,
+                "cfg": null,
+                "originColumn": 13,
+                "column": 13
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "let j = 0; j < 5; j++",
+                "def": null,
+                "uses": [],
+                "originPosition": 59,
+                "position": 59,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "if (j === 2)",
+                "def": null,
+                "uses": [],
+                "originPosition": 60,
+                "position": 60,
+                "cfg": null,
+                "originColumn": 13,
+                "column": 13
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "continue;",
+                "def": null,
+                "uses": [],
+                "originPosition": 61,
+                "position": 61,
+                "cfg": null,
+                "originColumn": 17,
+                "column": 17
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "logger.info(`当前内层循环计数: ${j}`);",
+                "def": null,
+                "uses": [],
+                "originPosition": 63,
+                "position": 63,
+                "cfg": null,
+                "originColumn": 13,
+                "column": 13
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "let k = 0; k < 3; k++",
+                "def": null,
+                "uses": [],
+                "originPosition": 67,
+                "position": 67,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "logger.info(`外层循环计数: ${k}`);",
+                "def": null,
+                "uses": [],
+                "originPosition": 68,
+                "position": 68,
+                "cfg": null,
+                "originColumn": 13,
+                "column": 13
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "logger.info('Department name: ' + k);",
+                "def": null,
+                "uses": [],
+                "originPosition": 69,
+                "position": 69,
+                "cfg": null,
+                "originColumn": 13,
+                "column": 13
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "if (k === 1)",
+                "def": null,
+                "uses": [],
+                "originPosition": 70,
+                "position": 70,
+                "cfg": null,
+                "originColumn": 13,
+                "column": 13
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "break;",
+                "def": null,
+                "uses": [],
+                "originPosition": 71,
+                "position": 71,
+                "cfg": null,
+                "originColumn": 17,
+                "column": 17
+              }
+            }
+          ]
+        },
+        {
+          "name": "classMethodTest",
+          "modifiers": [
+            "ExportKeyword"
+          ],
+          "typeParameters": [],
+          "parameters": [],
+          "returnType": "unknown",
+          "body": [
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "let notPerson = new Person(10);",
+                "def": null,
+                "uses": [],
+                "originPosition": 97,
+                "position": 97,
+                "cfg": null,
+                "originColumn": 5,
+                "column": 5
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "let x = new Map();",
+                "def": null,
+                "uses": [],
+                "originPosition": 98,
+                "position": 98,
+                "cfg": null,
+                "originColumn": 5,
+                "column": 5
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "let z = new Error();",
+                "def": null,
+                "uses": [],
+                "originPosition": 99,
+                "position": 99,
+                "cfg": null,
+                "originColumn": 5,
+                "column": 5
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "let y = test();",
+                "def": null,
+                "uses": [],
+                "originPosition": 100,
+                "position": 100,
+                "cfg": null,
+                "originColumn": 5,
+                "column": 5
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "let a = notPerson.age",
+                "def": null,
+                "uses": [],
+                "originPosition": 101,
+                "position": 101,
+                "cfg": null,
+                "originColumn": 5,
+                "column": 5
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "notPerson.growOld()",
+                "def": null,
+                "uses": [],
+                "originPosition": 102,
+                "position": 102,
+                "cfg": null,
+                "originColumn": 5,
+                "column": 5
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "Person.wooooof()",
+                "def": null,
+                "uses": [],
+                "originPosition": 103,
+                "position": 103,
+                "cfg": null,
+                "originColumn": 5,
+                "column": 5
+              }
+            }
+          ]
+        },
+        {
+          "name": "foo",
+          "modifiers": [
+            "ExportKeyword"
+          ],
+          "typeParameters": [],
+          "parameters": [
+            {
+              "name": "x",
+              "type": "number",
+              "optional": false
+            }
+          ],
+          "returnType": "number",
+          "body": [
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "var y: number = 0;",
+                "def": null,
+                "uses": [],
+                "originPosition": 118,
+                "position": 118,
+                "cfg": null,
+                "originColumn": 5,
+                "column": 5
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "let k = 0; k < x; k++",
+                "def": null,
+                "uses": [],
+                "originPosition": 119,
+                "position": 119,
+                "cfg": null,
+                "originColumn": 5,
+                "column": 5
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "y = y + k;",
+                "def": null,
+                "uses": [],
+                "originPosition": 120,
+                "position": 120,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "return y;",
+                "def": null,
+                "uses": [],
+                "originPosition": 122,
+                "position": 122,
+                "cfg": null,
+                "originColumn": 5,
+                "column": 5
+              }
+            }
+          ]
+        },
+        {
+          "name": "listParameters",
+          "modifiers": [
+            "ExportKeyword"
+          ],
+          "typeParameters": [],
+          "parameters": [
+            {
+              "name": "u",
+              "type": "number",
+              "optional": false
+            },
+            {
+              "name": "v",
+              "type": "number",
+              "optional": false
+            },
+            {
+              "name": "w",
+              "type": "string",
+              "optional": false
+            }
+          ],
+          "returnType": "@save/basic: AnonymousClass-basic.ts-1",
+          "body": [
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "return { x: u, y: v, z: w }",
+                "def": null,
+                "uses": [],
+                "originPosition": 143,
+                "position": 143,
+                "cfg": null,
+                "originColumn": 5,
+                "column": 5
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Person",
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "name": "x",
+          "modifiers": [],
+          "type": "number",
+          "questionToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "0",
+            "type": "number"
+          }
+        },
+        {
+          "name": "growOld",
+          "modifiers": [],
+          "type": null,
+          "questionToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "",
+            "type": "unknown"
+          }
+        }
+      ],
+      "methods": [
+        {
+          "name": "constructor",
+          "modifiers": [],
+          "typeParameters": [],
+          "parameters": [
+            {
+              "name": "age",
+              "type": "number",
+              "optional": false
+            }
+          ],
+          "returnType": "unknown",
+          "body": []
+        },
+        {
+          "name": "getAge",
+          "modifiers": [
+            "PublicKeyword"
+          ],
+          "typeParameters": [],
+          "parameters": [],
+          "returnType": "unknown",
+          "body": [
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "return this.age",
+                "def": null,
+                "uses": [],
+                "originPosition": 88,
+                "position": 88,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            }
+          ]
+        },
+        {
+          "name": "wooooof",
+          "modifiers": [
+            "StaticKeyword"
+          ],
+          "typeParameters": [],
+          "parameters": [],
+          "returnType": "unknown",
+          "body": [
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "logger.info(\"not a person sound\")",
+                "def": null,
+                "uses": [],
+                "originPosition": 92,
+                "position": 92,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Alarm",
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "name": "alert",
+          "modifiers": [],
+          "typeParameters": [],
+          "parameters": [],
+          "returnType": "void",
+          "body": []
+        }
+      ]
+    },
+    {
+      "name": "Alarm2",
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "name": "alert2",
+          "modifiers": [],
+          "typeParameters": [],
+          "parameters": [],
+          "returnType": "void",
+          "body": []
+        }
+      ]
+    },
+    {
+      "name": "Door",
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": []
+    },
+    {
+      "name": "Adder",
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "name": "add",
+          "modifiers": [],
+          "type": null,
+          "questionToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "",
+            "type": "unknown"
+          }
+        }
+      ],
+      "methods": [
+        {
+          "name": "constructor",
+          "modifiers": [],
+          "typeParameters": [],
+          "parameters": [
+            {
+              "name": "a",
+              "type": "number",
+              "optional": false
+            }
+          ],
+          "returnType": "unknown",
+          "body": []
+        }
+      ]
+    },
+    {
+      "name": "ExtendedAdder",
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "Adder",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "name": "superAdd",
+          "modifiers": [
+            "PrivateKeyword"
+          ],
+          "type": null,
+          "questionToken": false,
+          "initializer": {
+            "_": "UnknownValue",
+            "value": {
+              "fieldSignature": {
+                "declaringClassSignature": {
+                  "declaringFileSignature": {
+                    "projectName": "_UnkownProjectName",
+                    "fileName": "_UnkownFileName"
+                  },
+                  "declaringNamespaceSignature": null,
+                  "className": ""
+                },
+                "fieldName": "add",
+                "type": {}
+              },
+              "base": {
+                "value": "",
+                "type": {}
+              }
+            }
+          }
+        },
+        {
+          "name": "add",
+          "modifiers": [],
+          "type": null,
+          "questionToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "",
+            "type": "unknown"
+          }
+        }
+      ],
+      "methods": []
+    },
+    {
+      "name": "AnonymousClass$listParameters$0",
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": []
+    },
+    {
+      "name": "SecurityDoor",
+      "modifiers": [
+        "ExportKeyword"
+      ],
+      "typeParameters": [],
+      "superClassName": "Door",
+      "implementedInterfaceNames": [
+        "Alarm",
+        "Alarm2"
+      ],
+      "fields": [
+        {
+          "name": "x",
+          "modifiers": [],
+          "type": "number",
+          "questionToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "0",
+            "type": "number"
+          }
+        },
+        {
+          "name": "y",
+          "modifiers": [],
+          "type": "string",
+          "questionToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "''",
+            "type": "string"
+          }
+        },
+        {
+          "name": "Members",
+          "modifiers": [
+            "PublicKeyword"
+          ],
+          "type": null,
+          "questionToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "",
+            "type": "unknown"
+          }
+        }
+      ],
+      "methods": [
+        {
+          "name": "alert",
+          "modifiers": [],
+          "typeParameters": [],
+          "parameters": [],
+          "returnType": "void",
+          "body": [
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "logger.info(\"SecurityDoor alert\");",
+                "def": null,
+                "uses": [],
+                "originPosition": 150,
+                "position": 150,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            }
+          ]
+        },
+        {
+          "name": "alert2",
+          "modifiers": [],
+          "typeParameters": [],
+          "parameters": [],
+          "returnType": "void",
+          "body": [
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "logger.info(\"SecurityDoor alert2\");",
+                "def": null,
+                "uses": [],
+                "originPosition": 153,
+                "position": 153,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            }
+          ]
+        },
+        {
+          "name": "fooo",
+          "modifiers": [
+            "PublicKeyword"
+          ],
+          "typeParameters": [],
+          "parameters": [],
+          "returnType": "unknown",
+          "body": [
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "logger.info(\"This is fooo!\");",
+                "def": null,
+                "uses": [],
+                "originPosition": 159,
+                "position": 159,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            }
+          ]
+        },
+        {
+          "name": "constructor",
+          "modifiers": [],
+          "typeParameters": [],
+          "parameters": [
+            {
+              "name": "x",
+              "type": "number",
+              "optional": false
+            },
+            {
+              "name": "y",
+              "type": "string",
+              "optional": false
+            }
+          ],
+          "returnType": "unknown",
+          "body": [
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "super();",
+                "def": null,
+                "uses": [],
+                "originPosition": 162,
+                "position": 162,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "this.x = x;",
+                "def": null,
+                "uses": [],
+                "originPosition": 163,
+                "position": 163,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "this.y = y;",
+                "def": null,
+                "uses": [],
+                "originPosition": 164,
+                "position": 164,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            },
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "logger.info(\"This is a constrctor!\");",
+                "def": null,
+                "uses": [],
+                "originPosition": 165,
+                "position": 165,
+                "cfg": null,
+                "originColumn": 9,
+                "column": 9
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Animal",
+      "modifiers": [
+        "AbstractKeyword"
+      ],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "name": "name",
+          "modifiers": [
+            "PublicKeyword"
+          ],
+          "type": null,
+          "questionToken": false,
+          "initializer": null
+        }
+      ],
+      "methods": [
+        {
+          "name": "constructor",
+          "modifiers": [
+            "PublicKeyword"
+          ],
+          "typeParameters": [],
+          "parameters": [
+            {
+              "name": "name",
+              "type": "string",
+              "optional": false
+            }
+          ],
+          "returnType": "unknown",
+          "body": [
+            {
+              "_": "UnknownStmt",
+              "stmt": {
+                "text": "this.name = name;",
+                "def": null,
+                "uses": [],
+                "originPosition": 180,
+                "position": 180,
+                "cfg": null,
+                "originColumn": 7,
+                "column": 7
+              }
+            }
+          ]
+        },
+        {
+          "name": "sayHi",
+          "modifiers": [
+            "PublicKeyword",
+            "AbstractKeyword"
+          ],
+          "typeParameters": [],
+          "parameters": [],
+          "returnType": "void",
+          "body": []
+        }
+      ]
+    },
+    {
+      "name": "StringValidator",
+      "modifiers": [
+        "ExportKeyword"
+      ],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "name": "color",
+          "modifiers": [],
+          "type": "string",
+          "questionToken": true,
+          "initializer": null
+        },
+        {
+          "name": "width",
+          "modifiers": [],
+          "type": "number",
+          "questionToken": true,
+          "initializer": null
+        }
+      ],
+      "methods": [
+        {
+          "name": "isAcceptable",
+          "modifiers": [],
+          "typeParameters": [],
+          "parameters": [
+            {
+              "name": "s",
+              "type": "string",
+              "optional": true
+            }
+          ],
+          "returnType": "boolean",
+          "body": []
+        }
+      ]
+    }
+  ],
+  "importInfos": [],
+  "exportInfos": [
+    {
+      "exportClauseName": "classMethodTest",
+      "exportClauseType": "Method",
+      "isDefault": false,
+      "modifiers": [
+        "ExportKeyword"
+      ],
+      "originTsPosition": {
+        "line": -1,
+        "col": -1
+      }
+    },
+    {
+      "exportClauseName": "foo",
+      "exportClauseType": "Method",
+      "isDefault": false,
+      "modifiers": [
+        "ExportKeyword"
+      ],
+      "originTsPosition": {
+        "line": -1,
+        "col": -1
+      }
+    },
+    {
+      "exportClauseName": "listParameters",
+      "exportClauseType": "Method",
+      "isDefault": false,
+      "modifiers": [
+        "ExportKeyword"
+      ],
+      "originTsPosition": {
+        "line": -1,
+        "col": -1
+      }
+    },
+    {
+      "exportClauseName": "SecurityDoor",
+      "exportClauseType": "Class",
+      "isDefault": false,
+      "modifiers": [
+        "ExportKeyword"
+      ],
+      "originTsPosition": {
+        "line": -1,
+        "col": -1
+      }
+    },
+    {
+      "exportClauseName": "StringValidator",
+      "exportClauseType": "Class",
+      "isDefault": false,
+      "modifiers": [
+        "ExportKeyword"
+      ],
+      "originTsPosition": {
+        "line": -1,
+        "col": -1
+      }
+    },
+    {
+      "exportClauseName": "ExtAdder",
+      "exportClauseType": "NamedExports",
+      "nameBeforeAs": "ExtendedAdder",
+      "isDefault": false,
+      "modifiers": [],
+      "originTsPosition": {
+        "line": 193,
+        "col": 1
+      }
+    },
+    {
+      "exportClauseName": "ExtendedAdder",
+      "exportClauseType": "NamedExports",
+      "isDefault": false,
+      "modifiers": [],
+      "originTsPosition": {
+        "line": 193,
+        "col": 1
+      }
+    }
+  ]
+}
