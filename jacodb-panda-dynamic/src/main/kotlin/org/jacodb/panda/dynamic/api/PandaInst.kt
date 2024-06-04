@@ -105,7 +105,7 @@ data class PandaNopInst(
 class PandaEmptyBBPlaceholderInst(
     override val location: PandaInstLocation,
     private val bbId: Int,
-) : PandaTerminatingInst() {
+) : PandaInst() {
 
     override val operands: List<PandaExpr>
         get() = emptyList()

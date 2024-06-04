@@ -34,15 +34,25 @@ interface PandaBytecodeGraph<out Statement> : BytecodeGraph<Statement>
 
 class PandaGraph(
     override val instructions: List<PandaInst>,
+    val basicBlocks: List<PandaBasicBlock>
 ) : PandaBytecodeGraph<PandaInst> {
 
     private val predecessorMap: MutableMap<PandaInst, MutableSet<PandaInst>> = hashMapOf()
     private val successorMap: MutableMap<PandaInst, Set<PandaInst>> = hashMapOf()
 
+    private fun bbFromInst(inst: PandaInst): PandaBasicBlock {
+        return basicBlocks.find { it.contains(inst) }!!
+    }
+
+    private fun bbFromId(id: Int): PandaBasicBlock {
+        return basicBlocks.find { it.id == id }!!
+    }
+
     init {
         for (inst in instructions) {
             val successors = when (inst) {
                 is PandaTerminatingInst -> emptySet()
+                is PandaEmptyBBPlaceholderInst -> bbFromInst(inst).successors.map { inst(bbFromId(it).start) }.toSet()
                 is PandaBranchingInst -> inst.successors.map { instructions[it.index] }.toSet()
                 else -> setOfNotNull(next(inst))
             }
@@ -112,7 +122,7 @@ class PandaBlockGraph(
     instList: List<PandaInst>,
 ) : PandaBytecodeGraph<PandaBasicBlock> {
 
-    val graph: PandaGraph = PandaGraph(instList)
+    val graph: PandaGraph = PandaGraph(instList, instructions)
 
     override val entries: List<PandaBasicBlock>
         get() = instructions.take(1)

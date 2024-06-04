@@ -162,7 +162,7 @@ class IRTraversalManager(
 
         if (startId > endId || endId == -1) {
             currentBB.start = if (startId == -1) 0 else startId
-            addEmptyBlockPlaceholder(programMethod, currentBB.id)
+            if (currentBB.successors.isNotEmpty()) addEmptyBlockPlaceholder(programMethod, currentBB.id)
             addEmptyJump(programMethod)
             currentBB.end = programMethod.currentId
         } else if (endId >= 0) {
