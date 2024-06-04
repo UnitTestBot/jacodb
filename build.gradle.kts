@@ -160,6 +160,7 @@ if (!repoUrl.isNullOrEmpty()) {
             project(":jacodb-taint-configuration"),
             project(":jacodb-ets"),
             project(":jacodb-panda-static"),
+            project(":jacodb-go"),
         )
     ) {
         tasks {
