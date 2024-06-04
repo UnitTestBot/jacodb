@@ -287,12 +287,16 @@ class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>
 
         val argTypes: List<TypeName>
         val tag = implementation.tag
+        var isNewInvokeSpecial = false
         if (tag == 6) {
             // Invoke static case
             argTypes = implementation.argTypes
+        } else if (tag == 8) {
+            isNewInvokeSpecial = true
+            argTypes = implementation.argTypes
         } else {
             // Invoke non-static case
-            check(tag == 5 || tag == 7 || tag == 8 || tag == 9) {
+            check(tag == 5 || tag == 7 || tag == 9) {
                 "Unexpected tag for invoke dynamic $tag"
             }
             argTypes = implementation.argTypes.toMutableList()
@@ -318,7 +322,8 @@ class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>
             expr.callSiteMethodName,
             expr.callSiteArgTypes.map { it.asType() },
             expr.callSiteReturnType.asType(),
-            expr.callSiteArgs.map { it.accept(this) as JcValue }
+            expr.callSiteArgs.map { it.accept(this) as JcValue },
+            isNewInvokeSpecial
         )
     }
 

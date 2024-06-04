@@ -58,6 +58,9 @@ class InvokeDynamicTest : BaseInstructionsTest() {
         runStaticMethod<InvokeDynamicExamples>("testNonStaticLambda")
     }
 
+    @Test
+    fun `invoke dynamic constructor`() = runStaticMethod<InvokeDynamicExamples>("testInvokeDynamicConstructor")
+
     private inline fun <reified T> runStaticMethod(name: String) {
         val clazz = cp.findClass<T>()
 
