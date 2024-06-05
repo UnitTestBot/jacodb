@@ -64,6 +64,7 @@ import org.jacodb.panda.dynamic.ark.base.Type
 import org.jacodb.panda.dynamic.ark.base.TypeOfExpr
 import org.jacodb.panda.dynamic.ark.base.UnaryOp
 import org.jacodb.panda.dynamic.ark.base.UnaryOperation
+import org.jacodb.panda.dynamic.ark.base.UnclearRefType
 import org.jacodb.panda.dynamic.ark.base.UndefinedConstant
 import org.jacodb.panda.dynamic.ark.base.UndefinedType
 import org.jacodb.panda.dynamic.ark.base.UnknownType
@@ -255,8 +256,7 @@ fun convertToArkType(type: String): Type {
         // "class" -> ClassType
         // "array" -> ArrayType
         // "object" -> ArrayObjectType
-        // "???" -> UnclearRefType
-        else -> UnknownType
+        else -> UnclearRefType(type)
     }
 }
 
