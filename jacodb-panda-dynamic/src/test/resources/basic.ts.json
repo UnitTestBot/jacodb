@@ -29,7 +29,7 @@
             {
               "name": "value",
               "type": "Type",
-              "optional": false
+              "isOptional": false
             }
           ],
           "returnType": "unknown",
@@ -2109,7 +2109,7 @@
             {
               "name": "x",
               "type": "number",
-              "optional": false
+              "isOptional": false
             }
           ],
           "returnType": "number",
@@ -2272,17 +2272,17 @@
             {
               "name": "u",
               "type": "number",
-              "optional": false
+              "isOptional": false
             },
             {
               "name": "v",
               "type": "number",
-              "optional": false
+              "isOptional": false
             },
             {
               "name": "w",
               "type": "string",
-              "optional": false
+              "isOptional": false
             }
           ],
           "returnType": "@save/basic: AnonymousClass-basic.ts-1",
@@ -2421,7 +2421,7 @@
             {
               "name": "age",
               "type": "number",
-              "optional": false
+              "isOptional": false
             }
           ],
           "returnType": "unknown",
@@ -2705,7 +2705,7 @@
             {
               "name": "a",
               "type": "number",
-              "optional": false
+              "isOptional": false
             }
           ],
           "returnType": "unknown",
@@ -3043,12 +3043,12 @@
             {
               "name": "x",
               "type": "number",
-              "optional": false
+              "isOptional": false
             },
             {
               "name": "y",
               "type": "string",
-              "optional": false
+              "isOptional": false
             }
           ],
           "returnType": "unknown",
@@ -3297,7 +3297,7 @@
             {
               "name": "name",
               "type": "string",
-              "optional": false
+              "isOptional": false
             }
           ],
           "returnType": "unknown",
@@ -3440,7 +3440,7 @@
             {
               "name": "s",
               "type": "string",
-              "optional": true
+              "isOptional": true
             }
           ],
           "returnType": "boolean",

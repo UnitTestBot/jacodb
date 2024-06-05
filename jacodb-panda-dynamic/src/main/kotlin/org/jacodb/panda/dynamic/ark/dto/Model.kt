@@ -90,8 +90,8 @@ data class MethodDto(
 @Serializable
 data class ParameterDto(
     val name: String,
-    val optional: Boolean,
     val type: String,
+    val isOptional: Boolean,
 )
 
 @Serializable
