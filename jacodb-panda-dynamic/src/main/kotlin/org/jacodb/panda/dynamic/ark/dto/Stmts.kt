@@ -25,76 +25,76 @@ import kotlinx.serialization.json.JsonElement
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
 @JsonClassDiscriminator("_")
-sealed interface Stmt
+sealed interface StmtDto
 
 @Serializable
 @SerialName("UnknownStmt")
-data class UnknownStmt(
+data class UnknownStmtDto(
     val stmt: JsonElement,
-) : Stmt
+) : StmtDto
 
 @Serializable
 @SerialName("NopStmt")
-object NopStmt : Stmt {
+object NopStmtDto : StmtDto {
     override fun toString(): String = javaClass.simpleName
 }
 
 @Serializable
 @SerialName("AssignStmt")
-data class AssignStmt(
-    val left: Value, // Local
-    val right: Value,
-) : Stmt
+data class AssignStmtDto(
+    val left: ValueDto, // Local
+    val right: ValueDto,
+) : StmtDto
 
 @Serializable
 @SerialName("ArkInvokeStmt")
-data class CallStmt(
-    val expr: CallExpr,
-) : Stmt
+data class CallStmtDto(
+    val expr: CallExprDto,
+) : StmtDto
 
 @Serializable
 @SerialName("DeleteStmt")
-data class DeleteStmt(
-    val arg: FieldRef,
-) : Stmt
+data class DeleteStmtDto(
+    val arg: FieldRefDto,
+) : StmtDto
 
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
 @JsonClassDiscriminator("_")
-sealed interface TerminatingStmt : Stmt
+sealed interface TerminatingStmtDto : StmtDto
 
 @Serializable
 @SerialName("ReturnStmt")
-data class ReturnStmt(
-    val arg: Value?,
-) : TerminatingStmt
+data class ReturnStmtDto(
+    val arg: ValueDto?,
+) : TerminatingStmtDto
 
 @Serializable
 @SerialName("ThrowStmt")
-data class ThrowStmt(
-    val arg: Value,
-) : TerminatingStmt
+data class ThrowStmtDto(
+    val arg: ValueDto,
+) : TerminatingStmtDto
 
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
 @JsonClassDiscriminator("_")
-sealed interface BranchingStmt : Stmt
+sealed interface BranchingStmtDto : StmtDto
 
 @Serializable
 @SerialName("GotoStmt")
-object GotoStmt : BranchingStmt {
+object GotoStmtDto : BranchingStmtDto {
     override fun toString(): String = javaClass.simpleName
 }
 
 @Serializable
 @SerialName("IfStmt")
-data class IfStmt(
-    val condition: ConditionExpr,
-) : BranchingStmt
+data class IfStmtDto(
+    val condition: ConditionExprDto,
+) : BranchingStmtDto
 
 @Serializable
 @SerialName("SwitchStmt")
-data class SwitchStmt(
-    val arg: Value,
-    val cases: List<Value>,
-) : BranchingStmt
+data class SwitchStmtDto(
+    val arg: ValueDto,
+    val cases: List<ValueDto>,
+) : BranchingStmtDto

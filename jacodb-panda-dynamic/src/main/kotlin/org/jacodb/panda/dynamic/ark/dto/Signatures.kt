@@ -19,28 +19,28 @@ package org.jacodb.panda.dynamic.ark.dto
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ClassSignature(
+data class ClassSignatureDto(
     val name: String,
 )
 
 @Serializable
-data class FieldSignature(
-    val enclosingClass: ClassSignature,
+data class FieldSignatureDto(
+    val enclosingClass: ClassSignatureDto,
     val name: String,
     val fieldType: String,
     val optional: Boolean = false,
 )
 
 @Serializable
-data class MethodSignature(
-    val enclosingClass: ClassSignature,
+data class MethodSignatureDto(
+    val enclosingClass: ClassSignatureDto,
     val name: String,
-    val parameters: List<MethodParameter>,
+    val parameters: List<MethodParameterDto>,
     val returnType: String,
 )
 
 @Serializable
-data class MethodParameter(
+data class MethodParameterDto(
     val name: String,
     val type: String,
     val optional: Boolean = false,

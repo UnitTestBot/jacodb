@@ -24,15 +24,15 @@ import kotlinx.serialization.json.decodeFromStream
 import java.io.InputStream
 
 @Serializable
-data class Ark(
+data class ArkFileDto(
     val name: String,
     val absoluteFilePath: String,
     val projectDir: String,
     val projectName: String,
-    val namespaces: List<Namespace>,
-    val classes: List<Class>,
-    val importInfos: List<ImportInfo>,
-    val exportInfos: List<ExportInfo>,
+    val namespaces: List<NamespaceDto>,
+    val classes: List<ClassDto>,
+    val importInfos: List<ImportInfoDto>,
+    val exportInfos: List<ExportInfoDto>,
 ) {
     companion object {
         private val json = Json {
@@ -40,84 +40,84 @@ data class Ark(
             prettyPrint = true
         }
 
-        fun loadFromJson(jsonString: String): Ark {
+        fun loadFromJson(jsonString: String): ArkFileDto {
             return json.decodeFromString(jsonString)
         }
 
         @OptIn(ExperimentalSerializationApi::class)
-        fun loadFromJson(stream: InputStream): Ark {
+        fun loadFromJson(stream: InputStream): ArkFileDto {
             return json.decodeFromStream(stream)
         }
     }
 }
 
 @Serializable
-data class Namespace(
+data class NamespaceDto(
     val name: String,
-    val classes: List<Class>,
+    val classes: List<ClassDto>,
 )
 
 @Serializable
-data class Class(
+data class ClassDto(
     val name: String,
     val modifiers: List<String>,
     val typeParameters: List<String>,
     val superClassName: String?,
     val implementedInterfaceNames: List<String>,
-    val fields: List<Field>,
-    val methods: List<Method>,
+    val fields: List<FieldDto>,
+    val methods: List<MethodDto>,
 )
 
 @Serializable
-data class Field(
+data class FieldDto(
     val name: String,
     val modifiers: List<String>,
     val type: String?,
     val questionToken: Boolean,
-    val initializer: Value?,
+    val initializer: ValueDto?,
 )
 
 @Serializable
-data class Method(
+data class MethodDto(
     val name: String,
     val modifiers: List<String>,
     val typeParameters: List<String>,
-    val parameters: List<Parameter>,
+    val parameters: List<ParameterDto>,
     val returnType: String,
-    val body: List<Stmt>,
+    val body: List<StmtDto>,
 )
 
 @Serializable
-data class Parameter(
+data class ParameterDto(
     val name: String,
     val optional: Boolean,
     val type: String,
 )
 
 @Serializable
-data class ImportInfo(
+data class ImportInfoDto(
     val importClauseName: String,
     val importType: String,
     val importFrom: String,
     val nameBeforeAs: String?,
     val clauseType: String,
     val modifiers: List<String>,
-    val importFromSignature: FileSignature,
+    val importFromSignature: FileSignatureDto,
     val importProjectType: String,
-    val originTsPosition: LineColPosition,
+    val originTsPosition: LineColPositionDto,
 )
 
 @Serializable
-data class ExportInfo(
+data class ExportInfoDto(
     val exportClauseName: String,
     val exportClauseType: String,
     val exportFrom: String? = null,
     val nameBeforeAs: String? = null,
     val declaringSignature: String? = null,
     val isDefault: Boolean,
-    val importInfo: ImportInfo? = null,
+    val importInfo: ImportInfoDto? = null,
     val modifiers: List<String>,
-    val originTsPosition: LineColPosition,
+    val originTsPosition: LineColPositionDto,
 )
 
 // @Serializable
@@ -127,13 +127,13 @@ data class ExportInfo(
 // )
 
 @Serializable
-data class FileSignature(
+data class FileSignatureDto(
     val projectName: String,
     val fileName: String,
 )
 
 @Serializable
-data class LineColPosition(
+data class LineColPositionDto(
     val line: Int,
     val col: Int,
 )

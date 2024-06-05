@@ -25,15 +25,15 @@ import kotlinx.serialization.json.JsonElement
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
 @JsonClassDiscriminator("_")
-sealed interface Value {
+sealed interface ValueDto {
     val type: String
 }
 
 @Serializable
 @SerialName("UnknownValue")
-data class UnknownValue(
+data class UnknownValueDto(
     val value: JsonElement?,
-) : Value {
+) : ValueDto {
     override val type: String
         get() = "unknown"
 }
@@ -41,21 +41,21 @@ data class UnknownValue(
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
 @JsonClassDiscriminator("_")
-sealed interface Immediate : Value
+sealed interface ImmediateDto : ValueDto
 
 @Serializable
 @SerialName("Local")
-data class Local(
+data class LocalDto(
     val name: String,
     override val type: String,
-) : Immediate
+) : ImmediateDto
 
 @Serializable
 @SerialName("Constant")
-data class Constant(
+data class ConstantDto(
     val value: String,
     override val type: String,
-) : Immediate
+) : ImmediateDto
 
 // @Serializable
 // @SerialName("StringConstant")
@@ -125,74 +125,74 @@ data class Constant(
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
 @JsonClassDiscriminator("_")
-sealed interface Expr : Value
+sealed interface ExprDto : ValueDto
 
 @Serializable
 @SerialName("NewExpr")
-data class NewExpr(
+data class NewExprDto(
     override val type: String,
-) : Expr
+) : ExprDto
 
 @Serializable
 @SerialName("NewArrayExpr")
-data class NewArrayExpr(
+data class NewArrayExprDto(
     override val type: String,
-    val size: Value,
-) : Expr
+    val size: ValueDto,
+) : ExprDto
 
 @Serializable
 @SerialName("TypeOfExpr")
-data class TypeOfExpr(
-    val arg: Value,
-) : Expr {
+data class TypeOfExprDto(
+    val arg: ValueDto,
+) : ExprDto {
     override val type: String
         get() = "string"
 }
 
 @Serializable
 @SerialName("InstanceOfExpr")
-data class InstanceOfExpr(
-    val arg: Value,
+data class InstanceOfExprDto(
+    val arg: ValueDto,
     @SerialName("type") val checkType: String,
-) : Expr {
+) : ExprDto {
     override val type: String
         get() = "boolean"
 }
 
 @Serializable
 @SerialName("LengthExpr")
-data class LengthExpr(
-    val arg: Value,
-) : Expr {
+data class LengthExprDto(
+    val arg: ValueDto,
+) : ExprDto {
     override val type: String
         get() = "number"
 }
 
 @Serializable
 @SerialName("CastExpr")
-data class CastExpr(
-    val arg: Value,
+data class CastExprDto(
+    val arg: ValueDto,
     override val type: String,
-) : Expr
+) : ExprDto
 
 @Serializable
 @SerialName("PhiExpr")
-data class PhiExpr(
-    val args: List<Value>,
+data class PhiExprDto(
+    val args: List<ValueDto>,
     // val argToBlock: Map<Value, BasicBlock>, // TODO
     override val type: String,
-) : Expr
+) : ExprDto
 
 @Serializable
 @SerialName("ArrayLiteralExpr")
-data class ArrayLiteralExpr(
-    val elements: List<Value>,
+data class ArrayLiteralDto(
+    val elements: List<ValueDto>,
     override val type: String,
-) : Expr
+) : ExprDto
 
 // @Serializable
 // @SerialName("ObjectLiteralExpr")
-// data class ObjectLiteralExpr(
+// data class ObjectLiteral(
 //     val keys: List<String>,
 //     val values: List<Value>,
 //     override val type: Type,
@@ -201,8 +201,8 @@ data class ArrayLiteralExpr(
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
 @JsonClassDiscriminator("_")
-sealed interface UnaryExpr : Expr {
-    val arg: Value
+sealed interface UnaryExprDto : ExprDto {
+    val arg: ValueDto
 
     override val type: String
         get() = arg.type
@@ -210,17 +210,17 @@ sealed interface UnaryExpr : Expr {
 
 @Serializable
 @SerialName("UnopExpr")
-data class UnaryOperation(
+data class UnaryOperationDto(
     val op: String,
-    override val arg: Value,
-) : UnaryExpr
+    override val arg: ValueDto,
+) : UnaryExprDto
 
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
 @JsonClassDiscriminator("_")
-sealed interface BinaryExpr : Expr {
-    val left: Value
-    val right: Value
+sealed interface BinaryExprDto : ExprDto {
+    val left: ValueDto
+    val right: ValueDto
 
     override val type: String
         get() = "any"
@@ -228,11 +228,11 @@ sealed interface BinaryExpr : Expr {
 
 @Serializable
 @SerialName("BinaryOperation")
-data class BinaryOperation(
+data class BinaryOperationDto(
     val op: String,
-    override val left: Value,
-    override val right: Value,
-) : BinaryExpr {
+    override val left: ValueDto,
+    override val right: ValueDto,
+) : BinaryExprDto {
     override fun toString(): String {
         return "$left $op $right"
     }
@@ -241,18 +241,18 @@ data class BinaryOperation(
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
 @JsonClassDiscriminator("_")
-sealed interface ConditionExpr : BinaryExpr {
+sealed interface ConditionExprDto : BinaryExprDto {
     override val type: String
         get() = "boolean"
 }
 
 @Serializable
 @SerialName("ConditionExpr")
-data class RelationOperation(
+data class RelationOperationDto(
     val op: String,
-    override val left: Value,
-    override val right: Value,
-) : ConditionExpr {
+    override val left: ValueDto,
+    override val right: ValueDto,
+) : ConditionExprDto {
     override fun toString(): String {
         return "$left $op $right"
     }
@@ -261,9 +261,9 @@ data class RelationOperation(
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
 @JsonClassDiscriminator("_")
-sealed interface CallExpr : Expr {
-    val method: MethodSignature
-    val args: List<Value>
+sealed interface CallExprDto : ExprDto {
+    val method: MethodSignatureDto
+    val args: List<ValueDto>
 
     override val type: String
         get() = method.returnType
@@ -271,38 +271,38 @@ sealed interface CallExpr : Expr {
 
 @Serializable
 @SerialName("InstanceCallExpr")
-data class InstanceCallExpr(
-    val instance: Value, // Local
-    override val method: MethodSignature,
-    override val args: List<Value>,
-) : CallExpr
+data class InstanceCallExprDto(
+    val instance: ValueDto, // Local
+    override val method: MethodSignatureDto,
+    override val args: List<ValueDto>,
+) : CallExprDto
 
 @Serializable
 @SerialName("StaticInvokeExpr")
-data class StaticCallExpr(
-    override val method: MethodSignature,
-    override val args: List<Value>,
-) : CallExpr
+data class StaticCallExprDto(
+    override val method: MethodSignatureDto,
+    override val args: List<ValueDto>,
+) : CallExprDto
 
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
 @JsonClassDiscriminator("_")
-sealed interface Ref : Value
+sealed interface RefDto : ValueDto
 
 @Serializable
 @SerialName("ThisRef")
-data class ThisRef(
+data class ThisRefDto(
     override val type: String,
-) : Ref {
+) : RefDto {
     override fun toString(): String = "this"
 }
 
 @Serializable
 @SerialName("ParameterRef")
-data class ParameterRef(
+data class ParameterRefDto(
     val index: Int,
     override val type: String,
-) : Ref {
+) : RefDto {
     override fun toString(): String {
         return "arg$index"
     }
@@ -310,11 +310,11 @@ data class ParameterRef(
 
 @Serializable
 @SerialName("ArrayAccess")
-data class ArrayAccess(
-    val array: Value,
-    val index: Value,
+data class ArrayAccessDto(
+    val array: ValueDto,
+    val index: ValueDto,
     override val type: String,
-) : Ref {
+) : RefDto {
     override fun toString(): String {
         return "$array[$index]"
     }
@@ -323,8 +323,8 @@ data class ArrayAccess(
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
 @JsonClassDiscriminator("_")
-sealed interface FieldRef : Ref {
-    val field: FieldSignature
+sealed interface FieldRefDto : RefDto {
+    val field: FieldSignatureDto
 
     override val type: String
         get() = this.field.fieldType
@@ -332,13 +332,13 @@ sealed interface FieldRef : Ref {
 
 @Serializable
 @SerialName("InstanceFieldRef")
-data class InstanceFieldRef(
-    val instance: Value, // Local
-    override val field: FieldSignature,
-) : FieldRef
+data class InstanceFieldRefDto(
+    val instance: ValueDto, // Local
+    override val field: FieldSignatureDto,
+) : FieldRefDto
 
 @Serializable
 @SerialName("StaticFieldRef")
-data class StaticFieldRef(
-    override val field: FieldSignature,
-) : FieldRef
+data class StaticFieldRefDto(
+    override val field: FieldSignatureDto,
+) : FieldRefDto

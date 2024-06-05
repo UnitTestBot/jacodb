@@ -19,10 +19,10 @@ package ark
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.jacodb.panda.dynamic.ark.dto.Ark
-import org.jacodb.panda.dynamic.ark.dto.Constant
-import org.jacodb.panda.dynamic.ark.dto.Field
-import org.jacodb.panda.dynamic.ark.dto.Local
+import org.jacodb.panda.dynamic.ark.dto.ArkFileDto
+import org.jacodb.panda.dynamic.ark.dto.ConstantDto
+import org.jacodb.panda.dynamic.ark.dto.FieldDto
+import org.jacodb.panda.dynamic.ark.dto.LocalDto
 import org.jacodb.panda.dynamic.ark.dto.convertToArkValue
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -36,12 +36,12 @@ class ArkFromJsonTest {
     }
 
     @Test
-    fun testLoadArkFromJson() {
+    fun testLoadArkFileFromJson() {
         val path = "basic.ts.json"
         val stream = object {}::class.java.getResourceAsStream("/$path")
             ?: error("Resource not found: $path")
-        val ark = Ark.loadFromJson(stream)
-        println(ark)
+        val arkDto = ArkFileDto.loadFromJson(stream)
+        println(arkDto)
     }
 
     @Test
@@ -52,27 +52,27 @@ class ArkFromJsonTest {
                 "type": "any"
             }
         """.trimIndent()
-        val valueDto = Json.decodeFromString<Local>(jsonString)
-        Assertions.assertEquals(Local("x", "any"), valueDto)
+        val valueDto = Json.decodeFromString<LocalDto>(jsonString)
+        Assertions.assertEquals(LocalDto("x", "any"), valueDto)
         val value = convertToArkValue(valueDto)
         Assertions.assertEquals(ArkLocal("x", ArkAnyType), value)
     }
 
     @Test
     fun testLoadFieldFromJson() {
-        val field = Field(
+        val field = FieldDto(
             name = "x",
             modifiers = emptyList(),
             type = "number",
             questionToken = false,
-            initializer = Constant("0", "number"),
+            initializer = ConstantDto("0", "number"),
         )
         println("field = $field")
 
         val jsonString = json.encodeToString(field)
         println("json: $jsonString")
 
-        val fieldDto = json.decodeFromString<Field>(jsonString)
+        val fieldDto = json.decodeFromString<FieldDto>(jsonString)
         println("fieldDto = $fieldDto")
         Assertions.assertEquals(field, fieldDto)
     }
