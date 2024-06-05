@@ -80,8 +80,19 @@ class PandaProject(
 
     fun findClassOrNull(name: String): PandaClass? = classes.find { it.name == name }
 
-    fun findMethodOrNull(name: String, currentClassName: String): PandaMethod? =
-        findClassOrNull(currentClassName)?.methods?.find { it.name == name }
+    fun findMethodOrNull(name: String, currentClassName: String): PandaMethod? {
+        // one day ...
+        if (currentClassName == "console" && name == "log") {
+            val consoleLogMethod = PandaMethod("log")
+            consoleLogMethod.className = "console"
+            consoleLogMethod.parameterInfos = List(5) { index ->
+                PandaParameterInfo(index, PandaAnyType)
+            }
+            consoleLogMethod.enclosingClass = PandaClass("console", "", listOf(consoleLogMethod))
+            return consoleLogMethod
+        }
+        return findClassOrNull(currentClassName)?.methods?.find { it.name == name }
+    }
 
     override fun close() {}
 

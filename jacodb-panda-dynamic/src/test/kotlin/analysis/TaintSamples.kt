@@ -32,19 +32,7 @@ import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
 import org.jacodb.panda.dynamic.api.PandaInst
 import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaProject
-import org.jacodb.taint.configuration.Argument
-import org.jacodb.taint.configuration.AssignMark
-import org.jacodb.taint.configuration.ConstantTrue
-import org.jacodb.taint.configuration.ContainsMark
-import org.jacodb.taint.configuration.CopyAllMarks
-import org.jacodb.taint.configuration.Position
-import org.jacodb.taint.configuration.RemoveMark
-import org.jacodb.taint.configuration.Result
-import org.jacodb.taint.configuration.TaintConfigurationItem
-import org.jacodb.taint.configuration.TaintMark
-import org.jacodb.taint.configuration.TaintMethodSink
-import org.jacodb.taint.configuration.TaintMethodSource
-import org.jacodb.taint.configuration.TaintPassThrough
+import org.jacodb.taint.configuration.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
@@ -76,7 +64,7 @@ class TaintSamples {
     data class SinkMethodConfig(
         val methodName: String?,
         val markName: String = "TAINT",
-        val position: Position = Argument(0),
+        val position: Position = if (methodName == "log") AnyArgument else Argument(0),
     )
 
     @Serializable
@@ -143,12 +131,14 @@ class TaintSamples {
                         for (cleanerConfig in caseTaintConfig.cleanerMethodConfigs) {
                             val (cleanerMethodName, markName, cleanerPosition) = cleanerConfig
                             if (method.name == cleanerMethodName) {
-                                TaintPassThrough(
-                                    method = method,
-                                    condition = ConstantTrue,
-                                    actionsAfter = listOf(
-                                        RemoveMark(mark = TaintMark(markName), position = cleanerPosition)
-                                    ),
+                                add(
+                                    TaintPassThrough(
+                                        method = method,
+                                        condition = ConstantTrue,
+                                        actionsAfter = listOf(
+                                            RemoveMark(mark = TaintMark(markName), position = cleanerPosition)
+                                        ),
+                                    )
                                 )
                                 return@buildList
                             }
@@ -156,11 +146,18 @@ class TaintSamples {
                         for (sinkConfig in caseTaintConfig.sinkMethodConfigs) {
                             val (sinkMethodName, markName, sinkPosition) = sinkConfig
                             if (method.name == sinkMethodName) {
-                                TaintMethodSink(
-                                    method = method,
-                                    ruleNote = "CUSTOM SINK", // FIXME
-                                    cwe = listOf(), // FIXME
-                                    condition = ContainsMark(position = sinkPosition, mark = TaintMark(markName))
+                                add(
+                                    TaintMethodSink(
+                                        method = method,
+                                        ruleNote = "CUSTOM SINK", // FIXME
+                                        cwe = listOf(), // FIXME
+                                        condition = when(sinkPosition) {
+                                            AnyArgument -> Or(List(method.parameters.size) {
+                                                ContainsMark(position = Argument(it), mark = TaintMark(markName))
+                                            })
+                                            else -> ContainsMark(position = sinkPosition, mark = TaintMark(markName))
+                                        }
+                                    )
                                 )
                                 return@buildList
                             }
@@ -488,6 +485,7 @@ class TaintSamples {
             assert(sinks.size == 1)
         }
 
+        // TODO("fix config")
         @Test
         fun `counterexample - potential exposure of unencrypted password`() {
             val sinks = fileTaintAnalyzer.analyseOneCase(
@@ -499,6 +497,25 @@ class TaintSamples {
                         )
                     ),
                     startMethodNamesForAnalysis = listOf("usage2")
+                )
+            )
+            assert(sinks.size == 1)
+        }
+
+        @Disabled("Temporary test. For debug purposes only.")
+        @Test
+        fun `debug test`() {
+            val sinks = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodConfigs = listOf(SourceMethodConfig("getUserData")),
+                    sinkMethodConfigs = listOf(
+                        SinkMethodConfig(
+                            methodName = "log",
+                            markName = "WRONG MARK NAME",
+                            position = Argument(1)
+                        )
+                    ),
+                    startMethodNamesForAnalysis = listOf("usage3")
                 )
             )
             assert(sinks.size == 1)

@@ -22,3 +22,20 @@ function usage1() {
 function usage2() {
     processUserData(1)
 }
+
+
+// for debugging (will be deleted soon)
+
+function usage3() {
+    let data = getUserData()
+    console.log(data)
+}
+
+function printOnConsole(data) {
+    console.log(data)
+}
+
+function usage4() {
+    let data = getUserData()
+    printOnConsole(data)
+}
