@@ -147,10 +147,10 @@ interface JcField : JcAnnotatedSymbol, JcAccessible, CommonClassField {
 }
 
 interface JcParameter : JcAnnotated, JcAccessible, CommonMethodParameter {
-    override val type: TypeName
-    override val name: String?
-    override val index: Int
-    override val method: JcMethod
+    /*override*/ val type: TypeName
+    /*override*/ val name: String?
+    /*override*/ val index: Int
+    /*override*/ val method: JcMethod
 }
 
 interface TypeName : CommonTypeName {

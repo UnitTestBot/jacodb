@@ -47,11 +47,11 @@ class PandaMethod(
 ) : CommonMethod<PandaMethod, PandaInst> {
 
     data class Parameter(
-        override val type: PandaType,
-        override val index: Int,
-        override val method: CommonMethod<*, *>,
+        /*override*/ val type: PandaType,
+        /*override*/ val index: Int,
+        /*override*/ val method: PandaMethod,
     ) : CommonMethodParameter {
-        override val name: String?
+        /*override*/ val name: String?
             get() = null
     }
 

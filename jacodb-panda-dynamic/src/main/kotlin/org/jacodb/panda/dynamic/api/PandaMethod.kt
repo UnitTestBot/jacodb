@@ -112,8 +112,8 @@ class PandaParameterInfo(
 )
 
 class PandaMethodParameter(
-    override val type: PandaTypeName,
-    override val name: String?,
-    override val index: Int,
-    override val method: PandaMethod,
+    /*override*/ val type: PandaTypeName,
+    /*override*/ val name: String?,
+    /*override*/ val index: Int,
+    /*override*/ val method: PandaMethod,
 ) : CommonMethodParameter
