@@ -103,8 +103,10 @@ fun convertToArkStmt(stmt: StmtDto): Stmt {
         )
 
         is ReturnStmtDto -> ReturnStmt(
-            arg = stmt.arg?.let { convertToArkValue(it) }
+            arg = convertToArkValue(stmt.arg)
         )
+
+        is ReturnVoidStmtDto -> ReturnStmt(null)
 
         is ThrowStmtDto -> ThrowStmt(
             arg = convertToArkValue(stmt.arg)
@@ -220,7 +222,7 @@ fun convertToArkValue(value: ValueDto): Value {
             type = convertToArkType(value.type),
         )
 
-        is ArrayAccessDto -> ArrayAccess(
+        is ArrayRefDto -> ArrayAccess(
             array = convertToArkValue(value.array),
             index = convertToArkValue(value.index),
             type = convertToArkType(value.type),

@@ -39,8 +39,6 @@ data class UnknownValueDto(
 }
 
 @Serializable
-@OptIn(ExperimentalSerializationApi::class)
-@JsonClassDiscriminator("_")
 sealed interface ImmediateDto : ValueDto
 
 @Serializable
@@ -123,8 +121,6 @@ data class ConstantDto(
 // ) : Constant
 
 @Serializable
-@OptIn(ExperimentalSerializationApi::class)
-@JsonClassDiscriminator("_")
 sealed interface ExprDto : ValueDto
 
 @Serializable
@@ -199,8 +195,6 @@ data class ArrayLiteralDto(
 // ) : Expr
 
 @Serializable
-@OptIn(ExperimentalSerializationApi::class)
-@JsonClassDiscriminator("_")
 sealed interface UnaryExprDto : ExprDto {
     val arg: ValueDto
 
@@ -216,8 +210,6 @@ data class UnaryOperationDto(
 ) : UnaryExprDto
 
 @Serializable
-@OptIn(ExperimentalSerializationApi::class)
-@JsonClassDiscriminator("_")
 sealed interface BinaryExprDto : ExprDto {
     val left: ValueDto
     val right: ValueDto
@@ -227,7 +219,7 @@ sealed interface BinaryExprDto : ExprDto {
 }
 
 @Serializable
-@SerialName("BinaryOperation")
+@SerialName("BinopExpr")
 data class BinaryOperationDto(
     val op: String,
     override val left: ValueDto,
@@ -239,8 +231,6 @@ data class BinaryOperationDto(
 }
 
 @Serializable
-@OptIn(ExperimentalSerializationApi::class)
-@JsonClassDiscriminator("_")
 sealed interface ConditionExprDto : BinaryExprDto {
     override val type: String
         get() = "boolean"
@@ -259,8 +249,6 @@ data class RelationOperationDto(
 }
 
 @Serializable
-@OptIn(ExperimentalSerializationApi::class)
-@JsonClassDiscriminator("_")
 sealed interface CallExprDto : ExprDto {
     val method: MethodSignatureDto
     val args: List<ValueDto>
@@ -278,15 +266,13 @@ data class InstanceCallExprDto(
 ) : CallExprDto
 
 @Serializable
-@SerialName("StaticInvokeExpr")
+@SerialName("StaticCallExpr")
 data class StaticCallExprDto(
     override val method: MethodSignatureDto,
     override val args: List<ValueDto>,
 ) : CallExprDto
 
 @Serializable
-@OptIn(ExperimentalSerializationApi::class)
-@JsonClassDiscriminator("_")
 sealed interface RefDto : ValueDto
 
 @Serializable
@@ -309,9 +295,9 @@ data class ParameterRefDto(
 }
 
 @Serializable
-@SerialName("ArrayAccess")
-data class ArrayAccessDto(
-    val array: ValueDto,
+@SerialName("ArrayRef")
+data class ArrayRefDto(
+    val array: ValueDto, // Local
     val index: ValueDto,
     override val type: String,
 ) : RefDto {
@@ -321,8 +307,6 @@ data class ArrayAccessDto(
 }
 
 @Serializable
-@OptIn(ExperimentalSerializationApi::class)
-@JsonClassDiscriminator("_")
 sealed interface FieldRefDto : RefDto {
     val field: FieldSignatureDto
 

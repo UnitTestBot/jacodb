@@ -47,7 +47,7 @@ data class AssignStmtDto(
 ) : StmtDto
 
 @Serializable
-@SerialName("ArkInvokeStmt")
+@SerialName("CallStmt")
 data class CallStmtDto(
     val expr: CallExprDto,
 ) : StmtDto
@@ -59,14 +59,18 @@ data class DeleteStmtDto(
 ) : StmtDto
 
 @Serializable
-@OptIn(ExperimentalSerializationApi::class)
-@JsonClassDiscriminator("_")
 sealed interface TerminatingStmtDto : StmtDto
+
+@Serializable
+@SerialName("ReturnVoidStmt")
+object ReturnVoidStmtDto : TerminatingStmtDto {
+    override fun toString(): String = javaClass.simpleName
+}
 
 @Serializable
 @SerialName("ReturnStmt")
 data class ReturnStmtDto(
-    val arg: ValueDto?,
+    val arg: ValueDto,
 ) : TerminatingStmtDto
 
 @Serializable
@@ -76,8 +80,6 @@ data class ThrowStmtDto(
 ) : TerminatingStmtDto
 
 @Serializable
-@OptIn(ExperimentalSerializationApi::class)
-@JsonClassDiscriminator("_")
 sealed interface BranchingStmtDto : StmtDto
 
 @Serializable

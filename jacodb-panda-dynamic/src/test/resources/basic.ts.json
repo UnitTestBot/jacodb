@@ -35,17 +35,78 @@
           "returnType": "unknown",
           "body": [
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "this.content = value;",
-                "def": null,
-                "uses": [],
-                "originPosition": 172,
-                "position": 172,
-                "cfg": null,
-                "originColumn": 7,
-                "column": 7
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "value",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "ParameterRef",
+                "index": 0,
+                "type": "Type"
               }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: AnonymousClass-basic.ts-0"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: AnonymousClass-basic.ts-0"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "InstanceFieldRef",
+                "instance": {
+                  "_": "Local",
+                  "name": "this",
+                  "type": "@save/basic: AnonymousClass-basic.ts-0"
+                },
+                "field": {
+                  "enclosingClass": {
+                    "name": "AnonymousClass-basic.ts-0"
+                  },
+                  "name": "content",
+                  "fieldType": "Type"
+                }
+              },
+              "right": {
+                "_": "Constant",
+                "value": "undefined",
+                "type": "undefined"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "InstanceFieldRef",
+                "instance": {
+                  "_": "Local",
+                  "name": "this",
+                  "type": "@save/basic: AnonymousClass-basic.ts-0"
+                },
+                "field": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "content",
+                  "fieldType": "unknown"
+                }
+              },
+              "right": {
+                "_": "Local",
+                "name": "value",
+                "type": "unknown"
+              }
+            },
+            {
+              "_": "ReturnVoidStmt"
             }
           ]
         }
@@ -67,82 +128,178 @@
           "returnType": "unknown",
           "body": [
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "const someClass = class<Type> {\n    content: Type;\n    constructor(value: Type) {\n      this.content = value;\n    }\n  };",
-                "def": null,
-                "uses": [],
-                "originPosition": 169,
-                "position": 169,
-                "cfg": null,
-                "originColumn": 1,
-                "column": 1
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: _DEFAULT_ARK_CLASS"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: _DEFAULT_ARK_CLASS"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "const m = new someClass(\"Hello, world\");",
-                "def": null,
-                "uses": [],
-                "originPosition": 175,
-                "position": 175,
-                "cfg": null,
-                "originColumn": 1,
-                "column": 1
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "someClass",
+                "type": "@save/basic: AnonymousClass-basic.ts-0"
+              },
+              "right": {
+                "_": "Local",
+                "name": "AnonymousClass-basic.ts-0",
+                "type": "@save/basic: AnonymousClass-basic.ts-0"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "export let x:number = 1;",
-                "def": null,
-                "uses": [],
-                "originPosition": 186,
-                "position": 186,
-                "cfg": null,
-                "originColumn": 1,
-                "column": 1
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp2",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "\"Hello, world\"",
+                "type": "string"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "export const soo = 123;",
-                "def": null,
-                "uses": [],
-                "originPosition": 187,
-                "position": 187,
-                "cfg": null,
-                "originColumn": 1,
-                "column": 1
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp1",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "NewExpr",
+                "type": "@_UnkownProjectName/_UnkownFileName: someClass"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "forLoopTest();",
-                "def": null,
-                "uses": [],
-                "originPosition": 195,
-                "position": 195,
-                "cfg": null,
-                "originColumn": 1,
-                "column": 1
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "$temp1",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": "someClass"
+                  },
+                  "name": "constructor",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp2",
+                    "type": "unknown"
+                  }
+                ]
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "test();",
-                "def": null,
-                "uses": [],
-                "originPosition": 196,
-                "position": 196,
-                "cfg": null,
-                "originColumn": 1,
-                "column": 1
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "m",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Local",
+                "name": "$temp1",
+                "type": "unknown"
               }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp3",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "1",
+                "type": "number"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "x",
+                "type": "number"
+              },
+              "right": {
+                "_": "Local",
+                "name": "$temp3",
+                "type": "unknown"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp4",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "123",
+                "type": "number"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "soo",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Local",
+                "name": "$temp4",
+                "type": "unknown"
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "StaticCallExpr",
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "forLoopTest",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": []
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "StaticCallExpr",
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "test",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": []
+              }
+            },
+            {
+              "_": "ReturnVoidStmt"
             }
           ]
         },
@@ -154,56 +311,232 @@
           "returnType": "unknown",
           "body": [
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "let myPerson = new Person(10);",
-                "def": null,
-                "uses": [],
-                "originPosition": 18,
-                "position": 18,
-                "cfg": null,
-                "originColumn": 5,
-                "column": 5
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: _DEFAULT_ARK_CLASS"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: _DEFAULT_ARK_CLASS"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "let i = 0; i < 10; i++",
-                "def": null,
-                "uses": [],
-                "originPosition": 19,
-                "position": 19,
-                "cfg": null,
-                "originColumn": 5,
-                "column": 5
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp2",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "10",
+                "type": "number"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "let newAge = myPerson.age + i;",
-                "def": null,
-                "uses": [],
-                "originPosition": 20,
-                "position": 20,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp1",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "NewExpr",
+                "type": "@_UnkownProjectName/_UnkownFileName: Person"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "logger.info(newAge);",
-                "def": null,
-                "uses": [],
-                "originPosition": 21,
-                "position": 21,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "$temp1",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": "Person"
+                  },
+                  "name": "constructor",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp2",
+                    "type": "unknown"
+                  }
+                ]
               }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "myPerson",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Local",
+                "name": "$temp1",
+                "type": "unknown"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp3",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "0",
+                "type": "number"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "i",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Local",
+                "name": "$temp3",
+                "type": "unknown"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp4",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "10",
+                "type": "number"
+              }
+            },
+            {
+              "_": "IfStmt",
+              "condition": {
+                "_": "ConditionExpr",
+                "op": ">=",
+                "left": {
+                  "_": "Local",
+                  "name": "i",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "$temp4",
+                  "type": "unknown"
+                }
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "i",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "Local",
+                  "name": "i",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Constant",
+                  "value": "1",
+                  "type": "number"
+                }
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp5",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "InstanceFieldRef",
+                "instance": {
+                  "_": "Local",
+                  "name": "myPerson",
+                  "type": "unknown"
+                },
+                "field": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "age",
+                  "fieldType": "unknown"
+                }
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "newAge",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "Local",
+                  "name": "$temp5",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "i",
+                  "type": "unknown"
+                }
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "logger",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "info",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "newAge",
+                    "type": "unknown"
+                  }
+                ]
+              }
+            },
+            {
+              "_": "ReturnVoidStmt"
             }
           ]
         },
@@ -215,342 +548,1291 @@
           "returnType": "unknown",
           "body": [
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "const sampleData: number[] = [1, 2, 3, 4, 5];",
-                "def": null,
-                "uses": [],
-                "originPosition": 26,
-                "position": 26,
-                "cfg": null,
-                "originColumn": 5,
-                "column": 5
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: _DEFAULT_ARK_CLASS"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: _DEFAULT_ARK_CLASS"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "let i = 0; i < sampleData.length; i++",
-                "def": null,
-                "uses": [],
-                "originPosition": 28,
-                "position": 28,
-                "cfg": null,
-                "originColumn": 5,
-                "column": 5
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp1",
+                "type": "(number)[]"
+              },
+              "right": {
+                "_": "NewArrayExpr",
+                "type": "number",
+                "size": {
+                  "_": "Constant",
+                  "value": "5",
+                  "type": "number"
+                }
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "if (sampleData[i] % 2 === 0)",
-                "def": null,
-                "uses": [],
-                "originPosition": 30,
-                "position": 30,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "AssignStmt",
+              "left": {
+                "_": "ArrayRef",
+                "array": {
+                  "_": "Local",
+                  "name": "$temp1",
+                  "type": "(number)[]"
+                },
+                "index": {
+                  "_": "Constant",
+                  "value": "0",
+                  "type": "number"
+                },
+                "type": "number"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "1",
+                "type": "number"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "logger.info(`${sampleData[i]} 是偶数`);",
-                "def": null,
-                "uses": [],
-                "originPosition": 31,
-                "position": 31,
-                "cfg": null,
-                "originColumn": 13,
-                "column": 13
+              "_": "AssignStmt",
+              "left": {
+                "_": "ArrayRef",
+                "array": {
+                  "_": "Local",
+                  "name": "$temp1",
+                  "type": "(number)[]"
+                },
+                "index": {
+                  "_": "Constant",
+                  "value": "1",
+                  "type": "number"
+                },
+                "type": "number"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "2",
+                "type": "number"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "logger.info(`${sampleData[i]} 是奇数`);",
-                "def": null,
-                "uses": [],
-                "originPosition": 33,
-                "position": 33,
-                "cfg": null,
-                "originColumn": 13,
-                "column": 13
+              "_": "AssignStmt",
+              "left": {
+                "_": "ArrayRef",
+                "array": {
+                  "_": "Local",
+                  "name": "$temp1",
+                  "type": "(number)[]"
+                },
+                "index": {
+                  "_": "Constant",
+                  "value": "2",
+                  "type": "number"
+                },
+                "type": "number"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "3",
+                "type": "number"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "",
-                "def": null,
-                "uses": [],
-                "originPosition": 37,
-                "position": 37,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "AssignStmt",
+              "left": {
+                "_": "ArrayRef",
+                "array": {
+                  "_": "Local",
+                  "name": "$temp1",
+                  "type": "(number)[]"
+                },
+                "index": {
+                  "_": "Constant",
+                  "value": "3",
+                  "type": "number"
+                },
+                "type": "number"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "4",
+                "type": "number"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "logger.info(`${sampleData[i]} 可被 3 整除`);",
-                "def": null,
-                "uses": [],
-                "originPosition": 39,
-                "position": 39,
-                "cfg": null,
-                "originColumn": 17,
-                "column": 17
+              "_": "AssignStmt",
+              "left": {
+                "_": "ArrayRef",
+                "array": {
+                  "_": "Local",
+                  "name": "$temp1",
+                  "type": "(number)[]"
+                },
+                "index": {
+                  "_": "Constant",
+                  "value": "4",
+                  "type": "number"
+                },
+                "type": "number"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "5",
+                "type": "number"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "break;",
-                "def": null,
-                "uses": [],
-                "originPosition": 40,
-                "position": 40,
-                "cfg": null,
-                "originColumn": 17,
-                "column": 17
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "sampleData",
+                "type": "(number)[]"
+              },
+              "right": {
+                "_": "Local",
+                "name": "$temp1",
+                "type": "(number)[]"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "logger.info(`${sampleData[i]} 除以 3 余 1`);",
-                "def": null,
-                "uses": [],
-                "originPosition": 42,
-                "position": 42,
-                "cfg": null,
-                "originColumn": 17,
-                "column": 17
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp2",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "0",
+                "type": "number"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "break;",
-                "def": null,
-                "uses": [],
-                "originPosition": 43,
-                "position": 43,
-                "cfg": null,
-                "originColumn": 17,
-                "column": 17
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "i",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Local",
+                "name": "$temp2",
+                "type": "unknown"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "logger.info(`${sampleData[i]} 除以 3 余 2`);",
-                "def": null,
-                "uses": [],
-                "originPosition": 45,
-                "position": 45,
-                "cfg": null,
-                "originColumn": 17,
-                "column": 17
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp3",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "InstanceFieldRef",
+                "instance": {
+                  "_": "Local",
+                  "name": "sampleData",
+                  "type": "(number)[]"
+                },
+                "field": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "length",
+                  "fieldType": "unknown"
+                }
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "break;",
-                "def": null,
-                "uses": [],
-                "originPosition": 46,
-                "position": 46,
-                "cfg": null,
-                "originColumn": 17,
-                "column": 17
+              "_": "IfStmt",
+              "condition": {
+                "_": "ConditionExpr",
+                "op": ">=",
+                "left": {
+                  "_": "Local",
+                  "name": "i",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "$temp3",
+                  "type": "unknown"
+                }
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "logger.info(\"无法判断\");",
-                "def": null,
-                "uses": [],
-                "originPosition": 48,
-                "position": 48,
-                "cfg": null,
-                "originColumn": 17,
-                "column": 17
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "i",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "Local",
+                  "name": "i",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Constant",
+                  "value": "1",
+                  "type": "number"
+                }
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "let count = 0;",
-                "def": null,
-                "uses": [],
-                "originPosition": 52,
-                "position": 52,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp4",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "2",
+                "type": "number"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "if (count < sampleData[i])",
-                "def": null,
-                "uses": [],
-                "originPosition": 53,
-                "position": 53,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp5",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "ArrayRef",
+                "array": {
+                  "_": "Local",
+                  "name": "sampleData",
+                  "type": "(number)[]"
+                },
+                "index": {
+                  "_": "Local",
+                  "name": "i",
+                  "type": "unknown"
+                },
+                "type": "number"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "logger.info(`当前计数: ${count}`);",
-                "def": null,
-                "uses": [],
-                "originPosition": 54,
-                "position": 54,
-                "cfg": null,
-                "originColumn": 13,
-                "column": 13
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp6",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "0",
+                "type": "number"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "count++;",
-                "def": null,
-                "uses": [],
-                "originPosition": 55,
-                "position": 55,
-                "cfg": null,
-                "originColumn": 13,
-                "column": 13
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp7",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "%",
+                "left": {
+                  "_": "Local",
+                  "name": "$temp5",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "$temp4",
+                  "type": "unknown"
+                }
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "let j = 0; j < 5; j++",
-                "def": null,
-                "uses": [],
-                "originPosition": 59,
-                "position": 59,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "IfStmt",
+              "condition": {
+                "_": "ConditionExpr",
+                "op": "!==",
+                "left": {
+                  "_": "Local",
+                  "name": "$temp7",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "$temp6",
+                  "type": "unknown"
+                }
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "if (j === 2)",
-                "def": null,
-                "uses": [],
-                "originPosition": 60,
-                "position": 60,
-                "cfg": null,
-                "originColumn": 13,
-                "column": 13
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp8",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "ArrayRef",
+                  "array": {
+                    "_": "Local",
+                    "name": "sampleData",
+                    "type": "(number)[]"
+                  },
+                  "index": {
+                    "_": "Local",
+                    "name": "i",
+                    "type": "unknown"
+                  },
+                  "type": "number"
+                },
+                "right": {
+                  "_": "Constant",
+                  "value": " 是偶数",
+                  "type": "string"
+                }
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "continue;",
-                "def": null,
-                "uses": [],
-                "originPosition": 61,
-                "position": 61,
-                "cfg": null,
-                "originColumn": 17,
-                "column": 17
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp9",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "Constant",
+                  "value": "",
+                  "type": "string"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "$temp8",
+                  "type": "unknown"
+                }
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "logger.info(`当前内层循环计数: ${j}`);",
-                "def": null,
-                "uses": [],
-                "originPosition": 63,
-                "position": 63,
-                "cfg": null,
-                "originColumn": 13,
-                "column": 13
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "logger",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "info",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp9",
+                    "type": "unknown"
+                  }
+                ]
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "let k = 0; k < 3; k++",
-                "def": null,
-                "uses": [],
-                "originPosition": 67,
-                "position": 67,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp10",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "ArrayRef",
+                  "array": {
+                    "_": "Local",
+                    "name": "sampleData",
+                    "type": "(number)[]"
+                  },
+                  "index": {
+                    "_": "Local",
+                    "name": "i",
+                    "type": "unknown"
+                  },
+                  "type": "number"
+                },
+                "right": {
+                  "_": "Constant",
+                  "value": " 是奇数",
+                  "type": "string"
+                }
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "logger.info(`外层循环计数: ${k}`);",
-                "def": null,
-                "uses": [],
-                "originPosition": 68,
-                "position": 68,
-                "cfg": null,
-                "originColumn": 13,
-                "column": 13
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp11",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "Constant",
+                  "value": "",
+                  "type": "string"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "$temp10",
+                  "type": "unknown"
+                }
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "logger.info('Department name: ' + k);",
-                "def": null,
-                "uses": [],
-                "originPosition": 69,
-                "position": 69,
-                "cfg": null,
-                "originColumn": 13,
-                "column": 13
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "logger",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "info",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp11",
+                    "type": "unknown"
+                  }
+                ]
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "if (k === 1)",
-                "def": null,
-                "uses": [],
-                "originPosition": 70,
-                "position": 70,
-                "cfg": null,
-                "originColumn": 13,
-                "column": 13
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp12",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "ArrayRef",
+                  "array": {
+                    "_": "Local",
+                    "name": "sampleData",
+                    "type": "(number)[]"
+                  },
+                  "index": {
+                    "_": "Local",
+                    "name": "i",
+                    "type": "unknown"
+                  },
+                  "type": "number"
+                },
+                "right": {
+                  "_": "Constant",
+                  "value": " 可被 3 整除",
+                  "type": "string"
+                }
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "break;",
-                "def": null,
-                "uses": [],
-                "originPosition": 71,
-                "position": 71,
-                "cfg": null,
-                "originColumn": 17,
-                "column": 17
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp13",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "Constant",
+                  "value": "",
+                  "type": "string"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "$temp12",
+                  "type": "unknown"
+                }
               }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "logger",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "info",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp13",
+                    "type": "unknown"
+                  }
+                ]
+              }
+            },
+            {
+              "_": "GotoStmt"
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp14",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "ArrayRef",
+                  "array": {
+                    "_": "Local",
+                    "name": "sampleData",
+                    "type": "(number)[]"
+                  },
+                  "index": {
+                    "_": "Local",
+                    "name": "i",
+                    "type": "unknown"
+                  },
+                  "type": "number"
+                },
+                "right": {
+                  "_": "Constant",
+                  "value": " 除以 3 余 1",
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp15",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "Constant",
+                  "value": "",
+                  "type": "string"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "$temp14",
+                  "type": "unknown"
+                }
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "logger",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "info",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp15",
+                    "type": "unknown"
+                  }
+                ]
+              }
+            },
+            {
+              "_": "GotoStmt"
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp16",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "ArrayRef",
+                  "array": {
+                    "_": "Local",
+                    "name": "sampleData",
+                    "type": "(number)[]"
+                  },
+                  "index": {
+                    "_": "Local",
+                    "name": "i",
+                    "type": "unknown"
+                  },
+                  "type": "number"
+                },
+                "right": {
+                  "_": "Constant",
+                  "value": " 除以 3 余 2",
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp17",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "Constant",
+                  "value": "",
+                  "type": "string"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "$temp16",
+                  "type": "unknown"
+                }
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "logger",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "info",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp17",
+                    "type": "unknown"
+                  }
+                ]
+              }
+            },
+            {
+              "_": "GotoStmt"
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp18",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "\"无法判断\"",
+                "type": "string"
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "logger",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "info",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp18",
+                    "type": "unknown"
+                  }
+                ]
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp19",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "0",
+                "type": "number"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "count",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Local",
+                "name": "$temp19",
+                "type": "unknown"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp20",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "ArrayRef",
+                "array": {
+                  "_": "Local",
+                  "name": "sampleData",
+                  "type": "(number)[]"
+                },
+                "index": {
+                  "_": "Local",
+                  "name": "i",
+                  "type": "unknown"
+                },
+                "type": "number"
+              }
+            },
+            {
+              "_": "IfStmt",
+              "condition": {
+                "_": "ConditionExpr",
+                "op": ">=",
+                "left": {
+                  "_": "Local",
+                  "name": "count",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "$temp20",
+                  "type": "unknown"
+                }
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp21",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "Constant",
+                  "value": "当前计数: ",
+                  "type": "string"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "count",
+                  "type": "unknown"
+                }
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "logger",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "info",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp21",
+                    "type": "unknown"
+                  }
+                ]
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "count",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "Local",
+                  "name": "count",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Constant",
+                  "value": "1",
+                  "type": "number"
+                }
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp22",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "0",
+                "type": "number"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "j",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Local",
+                "name": "$temp22",
+                "type": "unknown"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp23",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "5",
+                "type": "number"
+              }
+            },
+            {
+              "_": "IfStmt",
+              "condition": {
+                "_": "ConditionExpr",
+                "op": ">=",
+                "left": {
+                  "_": "Local",
+                  "name": "j",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "$temp23",
+                  "type": "unknown"
+                }
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "j",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "Local",
+                  "name": "j",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Constant",
+                  "value": "1",
+                  "type": "number"
+                }
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp24",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "2",
+                "type": "number"
+              }
+            },
+            {
+              "_": "IfStmt",
+              "condition": {
+                "_": "ConditionExpr",
+                "op": "!==",
+                "left": {
+                  "_": "Local",
+                  "name": "j",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "$temp24",
+                  "type": "unknown"
+                }
+              }
+            },
+            {
+              "_": "GotoStmt"
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp25",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "Constant",
+                  "value": "当前内层循环计数: ",
+                  "type": "string"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "j",
+                  "type": "unknown"
+                }
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "logger",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "info",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp25",
+                    "type": "unknown"
+                  }
+                ]
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp26",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "0",
+                "type": "number"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "k",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Local",
+                "name": "$temp26",
+                "type": "unknown"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp27",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "3",
+                "type": "number"
+              }
+            },
+            {
+              "_": "IfStmt",
+              "condition": {
+                "_": "ConditionExpr",
+                "op": ">=",
+                "left": {
+                  "_": "Local",
+                  "name": "k",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "$temp27",
+                  "type": "unknown"
+                }
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "k",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "Local",
+                  "name": "k",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Constant",
+                  "value": "1",
+                  "type": "number"
+                }
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp28",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "Constant",
+                  "value": "外层循环计数: ",
+                  "type": "string"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "k",
+                  "type": "unknown"
+                }
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "logger",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "info",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp28",
+                    "type": "unknown"
+                  }
+                ]
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp29",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "'Department name: '",
+                "type": "string"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp30",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "Local",
+                  "name": "$temp29",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "k",
+                  "type": "unknown"
+                }
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "logger",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "info",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp30",
+                    "type": "unknown"
+                  }
+                ]
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp31",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "1",
+                "type": "number"
+              }
+            },
+            {
+              "_": "IfStmt",
+              "condition": {
+                "_": "ConditionExpr",
+                "op": "!==",
+                "left": {
+                  "_": "Local",
+                  "name": "k",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "$temp31",
+                  "type": "unknown"
+                }
+              }
+            },
+            {
+              "_": "GotoStmt"
+            },
+            {
+              "_": "ReturnVoidStmt"
             }
           ]
         },
@@ -564,95 +1846,256 @@
           "returnType": "unknown",
           "body": [
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "let notPerson = new Person(10);",
-                "def": null,
-                "uses": [],
-                "originPosition": 97,
-                "position": 97,
-                "cfg": null,
-                "originColumn": 5,
-                "column": 5
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: _DEFAULT_ARK_CLASS"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: _DEFAULT_ARK_CLASS"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "let x = new Map();",
-                "def": null,
-                "uses": [],
-                "originPosition": 98,
-                "position": 98,
-                "cfg": null,
-                "originColumn": 5,
-                "column": 5
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp2",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "10",
+                "type": "number"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "let z = new Error();",
-                "def": null,
-                "uses": [],
-                "originPosition": 99,
-                "position": 99,
-                "cfg": null,
-                "originColumn": 5,
-                "column": 5
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp1",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "NewExpr",
+                "type": "@_UnkownProjectName/_UnkownFileName: Person"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "let y = test();",
-                "def": null,
-                "uses": [],
-                "originPosition": 100,
-                "position": 100,
-                "cfg": null,
-                "originColumn": 5,
-                "column": 5
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "$temp1",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": "Person"
+                  },
+                  "name": "constructor",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp2",
+                    "type": "unknown"
+                  }
+                ]
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "let a = notPerson.age",
-                "def": null,
-                "uses": [],
-                "originPosition": 101,
-                "position": 101,
-                "cfg": null,
-                "originColumn": 5,
-                "column": 5
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "notPerson",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Local",
+                "name": "$temp1",
+                "type": "unknown"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "notPerson.growOld()",
-                "def": null,
-                "uses": [],
-                "originPosition": 102,
-                "position": 102,
-                "cfg": null,
-                "originColumn": 5,
-                "column": 5
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp3",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "NewExpr",
+                "type": "@_UnkownProjectName/_UnkownFileName: Map"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "Person.wooooof()",
-                "def": null,
-                "uses": [],
-                "originPosition": 103,
-                "position": 103,
-                "cfg": null,
-                "originColumn": 5,
-                "column": 5
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "$temp3",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": "Map"
+                  },
+                  "name": "constructor",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": []
               }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "x",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Local",
+                "name": "$temp3",
+                "type": "unknown"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp4",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "NewExpr",
+                "type": "@_UnkownProjectName/_UnkownFileName: Error"
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "$temp4",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": "Error"
+                  },
+                  "name": "constructor",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": []
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "z",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Local",
+                "name": "$temp4",
+                "type": "unknown"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "y",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "StaticCallExpr",
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "test",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": []
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "a",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "InstanceFieldRef",
+                "instance": {
+                  "_": "Local",
+                  "name": "notPerson",
+                  "type": "unknown"
+                },
+                "field": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "age",
+                  "fieldType": "unknown"
+                }
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "notPerson",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "growOld",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": []
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "Person",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "wooooof",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": []
+              }
+            },
+            {
+              "_": "ReturnVoidStmt"
             }
           ]
         },
@@ -672,55 +2115,149 @@
           "returnType": "number",
           "body": [
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "var y: number = 0;",
-                "def": null,
-                "uses": [],
-                "originPosition": 118,
-                "position": 118,
-                "cfg": null,
-                "originColumn": 5,
-                "column": 5
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "x",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "ParameterRef",
+                "index": 0,
+                "type": "number"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "let k = 0; k < x; k++",
-                "def": null,
-                "uses": [],
-                "originPosition": 119,
-                "position": 119,
-                "cfg": null,
-                "originColumn": 5,
-                "column": 5
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: _DEFAULT_ARK_CLASS"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: _DEFAULT_ARK_CLASS"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "y = y + k;",
-                "def": null,
-                "uses": [],
-                "originPosition": 120,
-                "position": 120,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp2",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "0",
+                "type": "number"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "return y;",
-                "def": null,
-                "uses": [],
-                "originPosition": 122,
-                "position": 122,
-                "cfg": null,
-                "originColumn": 5,
-                "column": 5
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "y",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Local",
+                "name": "$temp2",
+                "type": "unknown"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp3",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "0",
+                "type": "number"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "k",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Local",
+                "name": "$temp3",
+                "type": "unknown"
+              }
+            },
+            {
+              "_": "IfStmt",
+              "condition": {
+                "_": "ConditionExpr",
+                "op": ">=",
+                "left": {
+                  "_": "Local",
+                  "name": "k",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "x",
+                  "type": "unknown"
+                }
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "k",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "Local",
+                  "name": "k",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Constant",
+                  "value": "1",
+                  "type": "number"
+                }
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "y",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "BinopExpr",
+                "op": "+",
+                "left": {
+                  "_": "Local",
+                  "name": "y",
+                  "type": "unknown"
+                },
+                "right": {
+                  "_": "Local",
+                  "name": "k",
+                  "type": "unknown"
+                }
+              }
+            },
+            {
+              "_": "ReturnStmt",
+              "arg": {
+                "_": "Local",
+                "name": "y",
+                "type": "unknown"
               }
             }
           ]
@@ -751,16 +2288,94 @@
           "returnType": "@save/basic: AnonymousClass-basic.ts-1",
           "body": [
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "return { x: u, y: v, z: w }",
-                "def": null,
-                "uses": [],
-                "originPosition": 143,
-                "position": 143,
-                "cfg": null,
-                "originColumn": 5,
-                "column": 5
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "u",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "ParameterRef",
+                "index": 0,
+                "type": "number"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "v",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "ParameterRef",
+                "index": 1,
+                "type": "number"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "w",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "ParameterRef",
+                "index": 2,
+                "type": "string"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: _DEFAULT_ARK_CLASS"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: _DEFAULT_ARK_CLASS"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp4",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "NewExpr",
+                "type": "@save/basic: AnonymousClass$listParameters$0"
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "$temp4",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": "AnonymousClass$listParameters$0"
+                  },
+                  "name": "constructor",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": []
+              }
+            },
+            {
+              "_": "ReturnStmt",
+              "arg": {
+                "_": "Local",
+                "name": "$temp4",
+                "type": "unknown"
               }
             }
           ]
@@ -788,7 +2403,7 @@
         {
           "name": "growOld",
           "modifiers": [],
-          "type": null,
+          "type": "UNDEFINED",
           "questionToken": false,
           "initializer": {
             "_": "Constant",
@@ -810,7 +2425,59 @@
             }
           ],
           "returnType": "unknown",
-          "body": []
+          "body": [
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "age",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "ParameterRef",
+                "index": 0,
+                "type": "number"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: Person"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: Person"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "InstanceFieldRef",
+                "instance": {
+                  "_": "Local",
+                  "name": "this",
+                  "type": "@save/basic: Person"
+                },
+                "field": {
+                  "enclosingClass": {
+                    "name": "Person"
+                  },
+                  "name": "x",
+                  "fieldType": "number"
+                }
+              },
+              "right": {
+                "_": "Constant",
+                "value": "0",
+                "type": "number"
+              }
+            },
+            {
+              "_": "ReturnVoidStmt"
+            }
+          ]
         },
         {
           "name": "getAge",
@@ -822,16 +2489,46 @@
           "returnType": "unknown",
           "body": [
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "return this.age",
-                "def": null,
-                "uses": [],
-                "originPosition": 88,
-                "position": 88,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: Person"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: Person"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp1",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "InstanceFieldRef",
+                "instance": {
+                  "_": "Local",
+                  "name": "this",
+                  "type": "@save/basic: Person"
+                },
+                "field": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "age",
+                  "fieldType": "unknown"
+                }
+              }
+            },
+            {
+              "_": "ReturnStmt",
+              "arg": {
+                "_": "Local",
+                "name": "$temp1",
+                "type": "unknown"
               }
             }
           ]
@@ -846,17 +2543,58 @@
           "returnType": "unknown",
           "body": [
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "logger.info(\"not a person sound\")",
-                "def": null,
-                "uses": [],
-                "originPosition": 92,
-                "position": 92,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: Person"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: Person"
               }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp1",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "\"not a person sound\"",
+                "type": "string"
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "logger",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "info",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp1",
+                    "type": "unknown"
+                  }
+                ]
+              }
+            },
+            {
+              "_": "ReturnVoidStmt"
             }
           ]
         }
@@ -876,7 +2614,23 @@
           "typeParameters": [],
           "parameters": [],
           "returnType": "void",
-          "body": []
+          "body": [
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: Alarm"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: Alarm"
+              }
+            },
+            {
+              "_": "ReturnVoidStmt"
+            }
+          ]
         }
       ]
     },
@@ -894,7 +2648,23 @@
           "typeParameters": [],
           "parameters": [],
           "returnType": "void",
-          "body": []
+          "body": [
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: Alarm2"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: Alarm2"
+              }
+            },
+            {
+              "_": "ReturnVoidStmt"
+            }
+          ]
         }
       ]
     },
@@ -917,7 +2687,7 @@
         {
           "name": "add",
           "modifiers": [],
-          "type": null,
+          "type": "UNDEFINED",
           "questionToken": false,
           "initializer": {
             "_": "Constant",
@@ -939,7 +2709,36 @@
             }
           ],
           "returnType": "unknown",
-          "body": []
+          "body": [
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "a",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "ParameterRef",
+                "index": 0,
+                "type": "number"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: Adder"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: Adder"
+              }
+            },
+            {
+              "_": "ReturnVoidStmt"
+            }
+          ]
         }
       ]
     },
@@ -955,7 +2754,7 @@
           "modifiers": [
             "PrivateKeyword"
           ],
-          "type": null,
+          "type": "UNDEFINED",
           "questionToken": false,
           "initializer": {
             "_": "InstanceFieldRef",
@@ -976,7 +2775,7 @@
         {
           "name": "add",
           "modifiers": [],
-          "type": null,
+          "type": "UNDEFINED",
           "questionToken": false,
           "initializer": {
             "_": "Constant",
@@ -1035,7 +2834,7 @@
           "modifiers": [
             "PublicKeyword"
           ],
-          "type": null,
+          "type": "UNDEFINED",
           "questionToken": false,
           "initializer": {
             "_": "Constant",
@@ -1053,17 +2852,58 @@
           "returnType": "void",
           "body": [
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "logger.info(\"SecurityDoor alert\");",
-                "def": null,
-                "uses": [],
-                "originPosition": 150,
-                "position": 150,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: SecurityDoor"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: SecurityDoor"
               }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp1",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "\"SecurityDoor alert\"",
+                "type": "string"
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "logger",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "info",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp1",
+                    "type": "unknown"
+                  }
+                ]
+              }
+            },
+            {
+              "_": "ReturnVoidStmt"
             }
           ]
         },
@@ -1075,17 +2915,58 @@
           "returnType": "void",
           "body": [
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "logger.info(\"SecurityDoor alert2\");",
-                "def": null,
-                "uses": [],
-                "originPosition": 153,
-                "position": 153,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: SecurityDoor"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: SecurityDoor"
               }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp1",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "\"SecurityDoor alert2\"",
+                "type": "string"
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "logger",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "info",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp1",
+                    "type": "unknown"
+                  }
+                ]
+              }
+            },
+            {
+              "_": "ReturnVoidStmt"
             }
           ]
         },
@@ -1099,17 +2980,58 @@
           "returnType": "unknown",
           "body": [
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "logger.info(\"This is fooo!\");",
-                "def": null,
-                "uses": [],
-                "originPosition": 159,
-                "position": 159,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: SecurityDoor"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: SecurityDoor"
               }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp1",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "\"This is fooo!\"",
+                "type": "string"
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "logger",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "info",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp1",
+                    "type": "unknown"
+                  }
+                ]
+              }
+            },
+            {
+              "_": "ReturnVoidStmt"
             }
           ]
         },
@@ -1132,56 +3054,214 @@
           "returnType": "unknown",
           "body": [
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "super();",
-                "def": null,
-                "uses": [],
-                "originPosition": 162,
-                "position": 162,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "x",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "ParameterRef",
+                "index": 0,
+                "type": "number"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "this.x = x;",
-                "def": null,
-                "uses": [],
-                "originPosition": 163,
-                "position": 163,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "y",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "ParameterRef",
+                "index": 1,
+                "type": "string"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "this.y = y;",
-                "def": null,
-                "uses": [],
-                "originPosition": 164,
-                "position": 164,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: SecurityDoor"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: SecurityDoor"
               }
             },
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "logger.info(\"This is a constrctor!\");",
-                "def": null,
-                "uses": [],
-                "originPosition": 165,
-                "position": 165,
-                "cfg": null,
-                "originColumn": 9,
-                "column": 9
+              "_": "AssignStmt",
+              "left": {
+                "_": "InstanceFieldRef",
+                "instance": {
+                  "_": "Local",
+                  "name": "this",
+                  "type": "@save/basic: SecurityDoor"
+                },
+                "field": {
+                  "enclosingClass": {
+                    "name": "SecurityDoor"
+                  },
+                  "name": "x",
+                  "fieldType": "number"
+                }
+              },
+              "right": {
+                "_": "Constant",
+                "value": "0",
+                "type": "number"
               }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "InstanceFieldRef",
+                "instance": {
+                  "_": "Local",
+                  "name": "this",
+                  "type": "@save/basic: SecurityDoor"
+                },
+                "field": {
+                  "enclosingClass": {
+                    "name": "SecurityDoor"
+                  },
+                  "name": "y",
+                  "fieldType": "string"
+                }
+              },
+              "right": {
+                "_": "Constant",
+                "value": "''",
+                "type": "string"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "InstanceFieldRef",
+                "instance": {
+                  "_": "Local",
+                  "name": "this",
+                  "type": "@save/basic: SecurityDoor"
+                },
+                "field": {
+                  "enclosingClass": {
+                    "name": "SecurityDoor"
+                  },
+                  "name": "Members",
+                  "fieldType": "UNDEFINED"
+                }
+              },
+              "right": {
+                "_": "Constant",
+                "value": "",
+                "type": "unknown"
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "StaticCallExpr",
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "super",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": []
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "InstanceFieldRef",
+                "instance": {
+                  "_": "Local",
+                  "name": "this",
+                  "type": "@save/basic: SecurityDoor"
+                },
+                "field": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "x",
+                  "fieldType": "unknown"
+                }
+              },
+              "right": {
+                "_": "Local",
+                "name": "x",
+                "type": "unknown"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "InstanceFieldRef",
+                "instance": {
+                  "_": "Local",
+                  "name": "this",
+                  "type": "@save/basic: SecurityDoor"
+                },
+                "field": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "y",
+                  "fieldType": "unknown"
+                }
+              },
+              "right": {
+                "_": "Local",
+                "name": "y",
+                "type": "unknown"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "$temp3",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "Constant",
+                "value": "\"This is a constrctor!\"",
+                "type": "string"
+              }
+            },
+            {
+              "_": "CallStmt",
+              "expr": {
+                "_": "InstanceCallExpr",
+                "instance": {
+                  "_": "Local",
+                  "name": "logger",
+                  "type": "unknown"
+                },
+                "method": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "info",
+                  "parameters": [],
+                  "returnType": "unknown"
+                },
+                "args": [
+                  {
+                    "_": "Local",
+                    "name": "$temp3",
+                    "type": "unknown"
+                  }
+                ]
+              }
+            },
+            {
+              "_": "ReturnVoidStmt"
             }
           ]
         }
@@ -1201,7 +3281,7 @@
           "modifiers": [
             "PublicKeyword"
           ],
-          "type": null,
+          "type": "UNDEFINED",
           "questionToken": false,
           "initializer": null
         }
@@ -1223,17 +3303,78 @@
           "returnType": "unknown",
           "body": [
             {
-              "_": "UnknownStmt",
-              "stmt": {
-                "text": "this.name = name;",
-                "def": null,
-                "uses": [],
-                "originPosition": 180,
-                "position": 180,
-                "cfg": null,
-                "originColumn": 7,
-                "column": 7
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "name",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "ParameterRef",
+                "index": 0,
+                "type": "string"
               }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: Animal"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: Animal"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "InstanceFieldRef",
+                "instance": {
+                  "_": "Local",
+                  "name": "this",
+                  "type": "@save/basic: Animal"
+                },
+                "field": {
+                  "enclosingClass": {
+                    "name": "Animal"
+                  },
+                  "name": "name",
+                  "fieldType": "UNDEFINED"
+                }
+              },
+              "right": {
+                "_": "Constant",
+                "value": "undefined",
+                "type": "undefined"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "InstanceFieldRef",
+                "instance": {
+                  "_": "Local",
+                  "name": "this",
+                  "type": "@save/basic: Animal"
+                },
+                "field": {
+                  "enclosingClass": {
+                    "name": ""
+                  },
+                  "name": "name",
+                  "fieldType": "unknown"
+                }
+              },
+              "right": {
+                "_": "Local",
+                "name": "name",
+                "type": "unknown"
+              }
+            },
+            {
+              "_": "ReturnVoidStmt"
             }
           ]
         },
@@ -1246,7 +3387,23 @@
           "typeParameters": [],
           "parameters": [],
           "returnType": "void",
-          "body": []
+          "body": [
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: Animal"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: Animal"
+              }
+            },
+            {
+              "_": "ReturnVoidStmt"
+            }
+          ]
         }
       ]
     },
@@ -1287,7 +3444,36 @@
             }
           ],
           "returnType": "boolean",
-          "body": []
+          "body": [
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "s",
+                "type": "unknown"
+              },
+              "right": {
+                "_": "ParameterRef",
+                "index": 0,
+                "type": "string"
+              }
+            },
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "this",
+                "type": "@save/basic: StringValidator"
+              },
+              "right": {
+                "_": "ThisRef",
+                "type": "@save/basic: StringValidator"
+              }
+            },
+            {
+              "_": "ReturnVoidStmt"
+            }
+          ]
         }
       ]
     }

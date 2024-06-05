@@ -19,15 +19,18 @@ package ark
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.jacodb.panda.dynamic.ark.base.AnyType
+import org.jacodb.panda.dynamic.ark.base.Local
 import org.jacodb.panda.dynamic.ark.dto.ArkFileDto
 import org.jacodb.panda.dynamic.ark.dto.ConstantDto
 import org.jacodb.panda.dynamic.ark.dto.FieldDto
 import org.jacodb.panda.dynamic.ark.dto.LocalDto
+import org.jacodb.panda.dynamic.ark.dto.MethodDto
+import org.jacodb.panda.dynamic.ark.dto.StmtDto
+import org.jacodb.panda.dynamic.ark.dto.convertToArkStmt
 import org.jacodb.panda.dynamic.ark.dto.convertToArkValue
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.jacodb.panda.dynamic.ark.base.AnyType as ArkAnyType
-import org.jacodb.panda.dynamic.ark.base.Local as ArkLocal
 
 class ArkFromJsonTest {
     private val json = Json {
@@ -48,14 +51,14 @@ class ArkFromJsonTest {
     fun testLoadValueFromJson() {
         val jsonString = """
             {
-                "name": "x",
-                "type": "any"
+              "name": "x",
+              "type": "any"
             }
         """.trimIndent()
         val valueDto = Json.decodeFromString<LocalDto>(jsonString)
         Assertions.assertEquals(LocalDto("x", "any"), valueDto)
         val value = convertToArkValue(valueDto)
-        Assertions.assertEquals(ArkLocal("x", ArkAnyType), value)
+        Assertions.assertEquals(Local("x", AnyType), value)
     }
 
     @Test
@@ -75,5 +78,38 @@ class ArkFromJsonTest {
         val fieldDto = json.decodeFromString<FieldDto>(jsonString)
         println("fieldDto = $fieldDto")
         Assertions.assertEquals(field, fieldDto)
+    }
+
+    @Test
+    fun testLoadReturnVoidStmtFromJson() {
+        val jsonString = """
+            {
+              "_": "ReturnVoidStmt"
+            }
+        """.trimIndent()
+        val stmtDto = Json.decodeFromString<StmtDto>(jsonString)
+        println(stmtDto)
+        val stmt = convertToArkStmt(stmtDto)
+        println(stmt)
+    }
+
+    @Test
+    fun testLoadMethodFromJson() {
+        val jsonString = """
+            {
+              "name": "_DEFAULT_ARK_METHOD",
+              "modifiers": [],
+              "typeParameters": [],
+              "parameters": [],
+              "returnType": "unknown",
+              "body": [
+                {
+                  "_": "ReturnVoidStmt"
+                }
+              ]
+            }
+        """.trimIndent()
+        val methodDto = Json.decodeFromString<MethodDto>(jsonString)
+        println("methodDto = $methodDto")
     }
 }
