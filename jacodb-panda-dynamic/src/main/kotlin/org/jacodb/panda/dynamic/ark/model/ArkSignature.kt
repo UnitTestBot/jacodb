@@ -83,6 +83,13 @@ data class MethodSignature(
     val enclosingClass: ClassSignature,
     val sub: MethodSubSignature,
 ) {
+    val name: String
+        get() = sub.name
+    val parameters: List<MethodParameter>
+        get() = sub.parameters
+    val returnType: Type
+        get() = sub.returnType
+
     override fun toString(): String {
         return "${enclosingClass.name}::$sub"
     }

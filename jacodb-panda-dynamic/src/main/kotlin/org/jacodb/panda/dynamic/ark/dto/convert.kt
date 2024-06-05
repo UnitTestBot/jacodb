@@ -70,6 +70,13 @@ import org.jacodb.panda.dynamic.ark.base.UndefinedType
 import org.jacodb.panda.dynamic.ark.base.UnknownType
 import org.jacodb.panda.dynamic.ark.base.Value
 import org.jacodb.panda.dynamic.ark.base.VoidType
+import org.jacodb.panda.dynamic.ark.model.ArkClass
+import org.jacodb.panda.dynamic.ark.model.ArkClassImpl
+import org.jacodb.panda.dynamic.ark.model.ArkField
+import org.jacodb.panda.dynamic.ark.model.ArkFieldImpl
+import org.jacodb.panda.dynamic.ark.model.ArkFile
+import org.jacodb.panda.dynamic.ark.model.ArkMethod
+import org.jacodb.panda.dynamic.ark.model.ArkMethodImpl
 import org.jacodb.panda.dynamic.ark.model.ClassSignature
 import org.jacodb.panda.dynamic.ark.model.FieldSignature
 import org.jacodb.panda.dynamic.ark.model.FieldSubSignature
@@ -90,7 +97,7 @@ fun convertToArkStmt(stmt: StmtDto): Stmt {
         is NopStmtDto -> NopStmt
 
         is AssignStmtDto -> AssignStmt(
-            left = convertToArkValue(stmt.left) as Local,
+            left = convertToArkValue(stmt.left),
             right = convertToArkValue(stmt.right),
         )
 
@@ -148,7 +155,7 @@ fun convertToArkValue(value: ValueDto): Value {
         is ConstantDto -> convertToArkConstant(value)
 
         is NewExprDto -> NewExpr(
-            type = convertToArkType(value.type) as ClassType,
+            type = convertToArkType(value.type) // as ClassType
         )
 
         is NewArrayExprDto -> NewArrayExpr(
@@ -214,7 +221,7 @@ fun convertToArkValue(value: ValueDto): Value {
         )
 
         is ThisRefDto -> This(
-            type = convertToArkType(value.type) as ClassType
+            type = convertToArkType(value.type) // as ClassType
         )
 
         is ParameterRefDto -> ParameterRef(
@@ -273,6 +280,17 @@ fun convertToArkConstant(value: ConstantDto): Constant {
 
         "undefined" -> UndefinedConstant
 
+        "unknown" -> object: Constant {
+            override val type: Type
+                get() = UnknownType
+
+            override fun toString(): String = "UnknownConstant(${value.value})"
+
+            override fun <R> accept(visitor: Constant.Visitor<R>): R {
+                TODO("UnknownConstant is not supported")
+            }
+        }
+
         else -> error("Unknown Constant: $value")
     }
 }
@@ -326,7 +344,7 @@ fun convertToArkFieldRef(fieldRef: FieldRefDto): FieldRef {
     val field = convertToArkFieldSignature(fieldRef.field)
     return when (fieldRef) {
         is InstanceFieldRefDto -> InstanceFieldRef(
-            instance = convertToArkValue(fieldRef.instance) as Local, // safe cast
+            instance = convertToArkValue(fieldRef.instance), // as Local
             field = field
         )
 
@@ -370,5 +388,56 @@ fun convertToArkMethodParameter(param: MethodParameterDto): MethodParameter {
         name = param.name,
         type = convertToArkType(param.type),
         isOptional = param.isOptional,
+    )
+}
+
+fun convertToArkMethod(method: MethodDto): ArkMethod {
+    return ArkMethodImpl(
+        signature = MethodSignature(
+            sub = MethodSubSignature(
+                name = method.signature.name,
+                parameters = method.signature.parameters.map { convertToArkMethodParameter(it) },
+                returnType = convertToArkType(method.signature.returnType)
+            ),
+            enclosingClass = convertToArkClassSignature(method.signature.enclosingClass)
+        ),
+        body = method.body.map { convertToArkStmt(it) }
+    )
+}
+
+fun convertToArkField(field: FieldDto): ArkField {
+    return ArkFieldImpl(
+        signature = FieldSignature(
+            enclosingClass = convertToArkClassSignature(field.signature.enclosingClass),
+            sub = FieldSubSignature(
+                name = field.signature.name,
+                type = convertToArkType(field.signature.fieldType)
+            )
+        ),
+        // TODO: decorators = field.modifiers...
+        isOptional = field.isOptional,
+        isDefinitelyAssigned = field.isDefinitelyAssigned,
+        initializer = field.initializer?.let { convertToArkValue(it) }
+    )
+}
+
+fun convertToArkClass(clazz: ClassDto): ArkClass {
+    return ArkClassImpl(
+        signature = ClassSignature(
+            name = clazz.signature.name,
+            namespace = null, // TODO
+            file = null, // TODO
+        ),
+        fields = clazz.fields.map { convertToArkField(it) },
+        methods = clazz.methods.map { convertToArkMethod(it) }
+    )
+}
+
+fun convertToArkFile(file: ArkFileDto): ArkFile {
+    val classes = file.classes.map { convertToArkClass(it) }
+    return ArkFile(
+        path = file.absoluteFilePath,
+        projectName = file.projectName,
+        classes = classes
     )
 }

@@ -29,6 +29,7 @@ import org.jacodb.panda.dynamic.ark.dto.FieldSignatureDto
 import org.jacodb.panda.dynamic.ark.dto.LocalDto
 import org.jacodb.panda.dynamic.ark.dto.MethodDto
 import org.jacodb.panda.dynamic.ark.dto.StmtDto
+import org.jacodb.panda.dynamic.ark.dto.convertToArkFile
 import org.jacodb.panda.dynamic.ark.dto.convertToArkStmt
 import org.jacodb.panda.dynamic.ark.dto.convertToArkValue
 import org.junit.jupiter.api.Assertions
@@ -46,7 +47,9 @@ class ArkFromJsonTest {
         val stream = object {}::class.java.getResourceAsStream("/$path")
             ?: error("Resource not found: $path")
         val arkDto = ArkFileDto.loadFromJson(stream)
-        println(arkDto)
+        println("arkDto = $arkDto")
+        val ark = convertToArkFile(arkDto)
+        println("ark = $ark")
     }
 
     @Test
@@ -58,8 +61,10 @@ class ArkFromJsonTest {
             }
         """.trimIndent()
         val valueDto = Json.decodeFromString<LocalDto>(jsonString)
+        println("valueDto = $valueDto")
         Assertions.assertEquals(LocalDto("x", "any"), valueDto)
         val value = convertToArkValue(valueDto)
+        println("value = $value")
         Assertions.assertEquals(Local("x", AnyType), value)
     }
 

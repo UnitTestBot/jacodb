@@ -16,7 +16,8 @@
 
 package org.jacodb.panda.dynamic.ark.model
 
-data class ArkFile(
+class ArkFile(
     val path: String,
     val projectName: String,
+    val classes: List<ArkClass>,
 )

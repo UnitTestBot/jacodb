@@ -17,22 +17,31 @@
 package org.jacodb.panda.dynamic.ark.model
 
 import org.jacodb.panda.dynamic.ark.base.Type
+import org.jacodb.panda.dynamic.ark.base.Value
 
 // for '!' field marker ("definitely assigned field"), see https://www.typescriptlang.org/docs/handbook/2/classes.html#--strictpropertyinitialization
 
-data class ArkField(
-    val signature: FieldSignature,
+interface ArkField {
+    val enclosingClass: ArkClass?
+    val signature: FieldSignature
+
+    val name: String
+        get() = signature.sub.name
+
+    val type: Type
+        get() = signature.sub.type
+}
+
+class ArkFieldImpl(
+    override val signature: FieldSignature,
     val accessFlags: AccessFlags = AccessFlags(),
     val decorators: List<Decorator> = emptyList(),
     val isOptional: Boolean = false,  // '?'
     val isDefinitelyAssigned: Boolean = false, // '!'
-) {
-    val name: String
-        get() = signature.sub.name
-    val type: Type
-        get() = signature.sub.type
-    val enclosingClass: ClassSignature
-        get() = signature.enclosingClass
+    val initializer: Value? = null,
+) : ArkField {
+
+    override var enclosingClass: ArkClass? = null
 
     override fun toString(): String {
         return signature.toString()
@@ -47,7 +56,7 @@ data class AccessFlags(
     var isReadOnly: Boolean = false,
 )
 
-data class Decorator (
+data class Decorator(
     val name: String,
     // TODO: args...
 )

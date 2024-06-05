@@ -67,25 +67,16 @@ data class ClassDto(
     val implementedInterfaceNames: List<String>,
     val fields: List<FieldDto>,
     val methods: List<MethodDto>,
-) {
-    val name: String
-        get() = signature.name
-}
+)
 
 @Serializable
 data class FieldDto(
     val signature: FieldSignatureDto,
     val modifiers: List<String>,
-    @SerialName("exclamationToken") val isDefinitelyAssigned: Boolean = false, // '!'
     @SerialName("questionToken") val isOptional: Boolean = false, // '?'
+    @SerialName("exclamationToken") val isDefinitelyAssigned: Boolean = false, // '!'
     val initializer: ValueDto? = null,
-) {
-    val name: String
-        get() = signature.name
-
-    val type: String
-        get() = signature.fieldType
-}
+)
 
 @Serializable
 data class MethodDto(
@@ -93,13 +84,7 @@ data class MethodDto(
     val modifiers: List<String>,
     val typeParameters: List<String>,
     val body: List<StmtDto>,
-) {
-    val name: String
-        get() = signature.name
-
-    val returnType: String
-        get() = signature.returnType
-}
+)
 
 @Serializable
 data class ImportInfoDto(

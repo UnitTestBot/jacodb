@@ -55,7 +55,7 @@ object NopStmt : Stmt {
 }
 
 data class AssignStmt(
-    val left: Local,
+    val left: Value, // Local
     val right: Value,
 ) : Stmt {
     override fun toString(): String {

@@ -45,7 +45,7 @@ interface Ref : Value {
 }
 
 data class This(
-    override val type: ClassType,
+    override val type: Type, // ClassType
 ) : Ref {
     override fun toString(): String = "this"
 
@@ -89,7 +89,7 @@ interface FieldRef : Ref {
 }
 
 data class InstanceFieldRef(
-    val instance: Local, // TODO: consider Value
+    val instance: Value, // Local
     override val field: FieldSignature,
 ) : FieldRef {
     override fun toString(): String {

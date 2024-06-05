@@ -60,7 +60,7 @@ interface Expr : Value {
 }
 
 data class NewExpr(
-    override val type: ClassType,
+    override val type: Type, // ClassType
 ) : Expr {
     override fun toString(): String {
         return "new ${type.typeName}"

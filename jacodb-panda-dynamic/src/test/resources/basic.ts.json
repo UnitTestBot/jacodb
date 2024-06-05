@@ -23,8 +23,8 @@
             "fieldType": "Type"
           },
           "modifiers": [],
-          "exclamationToken": false,
           "questionToken": false,
+          "exclamationToken": false,
           "initializer": null
         }
       ],
@@ -2445,8 +2445,8 @@
             "fieldType": "number"
           },
           "modifiers": [],
-          "exclamationToken": false,
           "questionToken": false,
+          "exclamationToken": false,
           "initializer": {
             "_": "Constant",
             "value": "0",
@@ -2462,8 +2462,8 @@
             "fieldType": "UNDEFINED"
           },
           "modifiers": [],
-          "exclamationToken": false,
           "questionToken": false,
+          "exclamationToken": false,
           "initializer": {
             "_": "Constant",
             "value": "",
@@ -2785,8 +2785,8 @@
             "fieldType": "UNDEFINED"
           },
           "modifiers": [],
-          "exclamationToken": false,
           "questionToken": false,
+          "exclamationToken": false,
           "initializer": {
             "_": "Constant",
             "value": "",
@@ -2865,8 +2865,8 @@
           "modifiers": [
             "PrivateKeyword"
           ],
-          "exclamationToken": false,
           "questionToken": false,
+          "exclamationToken": false,
           "initializer": {
             "_": "InstanceFieldRef",
             "instance": {
@@ -2892,8 +2892,8 @@
             "fieldType": "UNDEFINED"
           },
           "modifiers": [],
-          "exclamationToken": false,
           "questionToken": false,
+          "exclamationToken": false,
           "initializer": {
             "_": "Constant",
             "value": "",
@@ -2937,8 +2937,8 @@
             "fieldType": "number"
           },
           "modifiers": [],
-          "exclamationToken": false,
           "questionToken": false,
+          "exclamationToken": false,
           "initializer": {
             "_": "Constant",
             "value": "0",
@@ -2954,8 +2954,8 @@
             "fieldType": "string"
           },
           "modifiers": [],
-          "exclamationToken": false,
           "questionToken": false,
+          "exclamationToken": false,
           "initializer": {
             "_": "Constant",
             "value": "''",
@@ -2973,8 +2973,8 @@
           "modifiers": [
             "PublicKeyword"
           ],
-          "exclamationToken": false,
           "questionToken": false,
+          "exclamationToken": false,
           "initializer": {
             "_": "Constant",
             "value": "",
@@ -3448,8 +3448,8 @@
           "modifiers": [
             "PublicKeyword"
           ],
-          "exclamationToken": false,
           "questionToken": false,
+          "exclamationToken": false,
           "initializer": null
         }
       ],
@@ -3604,8 +3604,8 @@
             "fieldType": "string"
           },
           "modifiers": [],
-          "exclamationToken": false,
           "questionToken": true,
+          "exclamationToken": false,
           "initializer": null
         },
         {
@@ -3617,8 +3617,8 @@
             "fieldType": "number"
           },
           "modifiers": [],
-          "exclamationToken": false,
           "questionToken": true,
+          "exclamationToken": false,
           "initializer": null
         }
       ],
