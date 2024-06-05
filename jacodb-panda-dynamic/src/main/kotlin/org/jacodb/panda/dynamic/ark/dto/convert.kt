@@ -249,7 +249,7 @@ fun convertToArkType(type: String): Type {
         "string" -> StringType
         "null" -> NullType
         "undefined" -> UndefinedType
-        "" -> VoidType
+        "void" -> VoidType
         "never" -> NeverType
         // "literal" -> LiteralType
         // "class" -> ClassType
