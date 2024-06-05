@@ -16,11 +16,15 @@
 
 package org.jacodb.panda.dynamic.ark.dto
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonClassDiscriminator
 import kotlinx.serialization.json.JsonElement
 
 @Serializable
+@OptIn(ExperimentalSerializationApi::class)
+@JsonClassDiscriminator("_")
 sealed interface Value {
     val type: String
 }
@@ -35,6 +39,8 @@ data class UnknownValue(
 }
 
 @Serializable
+@OptIn(ExperimentalSerializationApi::class)
+@JsonClassDiscriminator("_")
 sealed interface Immediate : Value
 
 @Serializable
@@ -117,6 +123,8 @@ data class Constant(
 // ) : Constant
 
 @Serializable
+@OptIn(ExperimentalSerializationApi::class)
+@JsonClassDiscriminator("_")
 sealed interface Expr : Value
 
 @Serializable
@@ -145,7 +153,7 @@ data class TypeOfExpr(
 @SerialName("InstanceOfExpr")
 data class InstanceOfExpr(
     val arg: Value,
-    val checkType: String,
+    @SerialName("type") val checkType: String,
 ) : Expr {
     override val type: String
         get() = "boolean"
@@ -191,6 +199,8 @@ data class ArrayLiteralExpr(
 // ) : Expr
 
 @Serializable
+@OptIn(ExperimentalSerializationApi::class)
+@JsonClassDiscriminator("_")
 sealed interface UnaryExpr : Expr {
     val arg: Value
 
@@ -199,13 +209,15 @@ sealed interface UnaryExpr : Expr {
 }
 
 @Serializable
-@SerialName("UnaryOperation")
+@SerialName("UnopExpr")
 data class UnaryOperation(
     val op: String,
     override val arg: Value,
 ) : UnaryExpr
 
 @Serializable
+@OptIn(ExperimentalSerializationApi::class)
+@JsonClassDiscriminator("_")
 sealed interface BinaryExpr : Expr {
     val left: Value
     val right: Value
@@ -227,52 +239,59 @@ data class BinaryOperation(
 }
 
 @Serializable
+@OptIn(ExperimentalSerializationApi::class)
+@JsonClassDiscriminator("_")
 sealed interface ConditionExpr : BinaryExpr {
     override val type: String
         get() = "boolean"
 }
 
 @Serializable
-@SerialName("RelationOperation")
+@SerialName("ConditionExpr")
 data class RelationOperation(
-    val relop: String,
+    val op: String,
     override val left: Value,
     override val right: Value,
 ) : ConditionExpr {
     override fun toString(): String {
-        return "$left $relop $right"
+        return "$left $op $right"
     }
 }
 
 @Serializable
+@OptIn(ExperimentalSerializationApi::class)
+@JsonClassDiscriminator("_")
 sealed interface CallExpr : Expr {
-    val method: String // TODO: MethodSignature
+    val method: MethodSignature
     val args: List<Value>
+
+    override val type: String
+        get() = method.returnType
 }
 
 @Serializable
 @SerialName("InstanceCallExpr")
 data class InstanceCallExpr(
-    val instance: Local,
-    override val method: String, // TODO: MethodSignature
+    val instance: Value, // Local
+    override val method: MethodSignature,
     override val args: List<Value>,
-    override val type: String,
 ) : CallExpr
 
 @Serializable
-@SerialName("StaticCallExpr")
+@SerialName("StaticInvokeExpr")
 data class StaticCallExpr(
-    override val method: String, // TODO: MethodSignature
+    override val method: MethodSignature,
     override val args: List<Value>,
-    override val type: String,
 ) : CallExpr
 
 @Serializable
+@OptIn(ExperimentalSerializationApi::class)
+@JsonClassDiscriminator("_")
 sealed interface Ref : Value
 
 @Serializable
-@SerialName("This")
-data class This(
+@SerialName("ThisRef")
+data class ThisRef(
     override val type: String,
 ) : Ref {
     override fun toString(): String = "this"
@@ -302,28 +321,24 @@ data class ArrayAccess(
 }
 
 @Serializable
+@OptIn(ExperimentalSerializationApi::class)
+@JsonClassDiscriminator("_")
 sealed interface FieldRef : Ref {
-    // TODO: FieldSignature
-    val fieldName: String
-    val isOptional: Boolean
-    val enclosingClass: String
+    val field: FieldSignature
+
+    override val type: String
+        get() = this.field.fieldType
 }
 
 @Serializable
 @SerialName("InstanceFieldRef")
 data class InstanceFieldRef(
-    val instance: Local,
-    override val fieldName: String,
-    override val type: String,
-    override val isOptional: Boolean,
-    override val enclosingClass: String,
+    val instance: Value, // Local
+    override val field: FieldSignature,
 ) : FieldRef
 
 @Serializable
 @SerialName("StaticFieldRef")
 data class StaticFieldRef(
-    override val fieldName: String,
-    override val type: String,
-    override val isOptional: Boolean,
-    override val enclosingClass: String,
+    override val field: FieldSignature,
 ) : FieldRef

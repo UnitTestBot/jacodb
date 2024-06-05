@@ -72,11 +72,15 @@ data class NewExpr(
 }
 
 data class NewArrayExpr(
-    override val type: ArrayType,
+    val elementType: Type,
     val size: Value,
 ) : Expr {
+    // TODO: support multi-dimensional arrays
+    override val type: Type
+        get() = ArrayType(elementType, 1)
+
     override fun toString(): String {
-        return "new ${type.typeName}[$size]"
+        return "new ${elementType.typeName}[$size]"
     }
 
     override fun <R> accept(visitor: Expr.Visitor<R>): R {

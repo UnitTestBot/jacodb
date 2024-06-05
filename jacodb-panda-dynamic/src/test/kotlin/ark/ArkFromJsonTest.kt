@@ -16,10 +16,25 @@
 
 package ark
 
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jacodb.panda.dynamic.ark.dto.Ark
+import org.jacodb.panda.dynamic.ark.dto.Constant
+import org.jacodb.panda.dynamic.ark.dto.Field
+import org.jacodb.panda.dynamic.ark.dto.Local
+import org.jacodb.panda.dynamic.ark.dto.convertToArkValue
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.jacodb.panda.dynamic.ark.base.AnyType as ArkAnyType
+import org.jacodb.panda.dynamic.ark.base.Local as ArkLocal
 
 class ArkFromJsonTest {
+    private val json = Json {
+        // classDiscriminator = "_"
+        prettyPrint = true
+    }
+
     @Test
     fun testLoadArkFromJson() {
         val path = "basic.ts.json"
@@ -27,5 +42,38 @@ class ArkFromJsonTest {
             ?: error("Resource not found: $path")
         val ark = Ark.loadFromJson(stream)
         println(ark)
+    }
+
+    @Test
+    fun testLoadValueFromJson() {
+        val jsonString = """
+            {
+                "name": "x",
+                "type": "any"
+            }
+        """.trimIndent()
+        val valueDto = Json.decodeFromString<Local>(jsonString)
+        Assertions.assertEquals(Local("x", "any"), valueDto)
+        val value = convertToArkValue(valueDto)
+        Assertions.assertEquals(ArkLocal("x", ArkAnyType), value)
+    }
+
+    @Test
+    fun testLoadFieldFromJson() {
+        val field = Field(
+            name = "x",
+            modifiers = emptyList(),
+            type = "number",
+            questionToken = false,
+            initializer = Constant("0", "number"),
+        )
+        println("field = $field")
+
+        val jsonString = json.encodeToString(field)
+        println("json: $jsonString")
+
+        val fieldDto = json.decodeFromString<Field>(jsonString)
+        println("fieldDto = $fieldDto")
+        Assertions.assertEquals(field, fieldDto)
     }
 }

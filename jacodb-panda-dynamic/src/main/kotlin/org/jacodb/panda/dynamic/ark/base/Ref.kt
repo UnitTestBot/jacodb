@@ -45,7 +45,7 @@ interface Ref : Value {
 }
 
 data class This(
-    override val type: Type, // TODO: consider ClassType
+    override val type: ClassType,
 ) : Ref {
     override fun toString(): String = "this"
 

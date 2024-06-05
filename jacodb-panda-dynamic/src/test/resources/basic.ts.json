@@ -958,24 +958,18 @@
           "type": null,
           "questionToken": false,
           "initializer": {
-            "_": "UnknownValue",
-            "value": {
-              "fieldSignature": {
-                "declaringClassSignature": {
-                  "declaringFileSignature": {
-                    "projectName": "_UnkownProjectName",
-                    "fileName": "_UnkownFileName"
-                  },
-                  "declaringNamespaceSignature": null,
-                  "className": ""
-                },
-                "fieldName": "add",
-                "type": {}
+            "_": "InstanceFieldRef",
+            "instance": {
+              "_": "Constant",
+              "value": "",
+              "type": "unknown"
+            },
+            "field": {
+              "enclosingClass": {
+                "name": ""
               },
-              "base": {
-                "value": "",
-                "type": {}
-              }
+              "name": "add",
+              "fieldType": "unknown"
             }
           }
         },

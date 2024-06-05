@@ -16,11 +16,15 @@
 
 package org.jacodb.panda.dynamic.ark.dto
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonClassDiscriminator
 import kotlinx.serialization.json.JsonElement
 
 @Serializable
+@OptIn(ExperimentalSerializationApi::class)
+@JsonClassDiscriminator("_")
 sealed interface Stmt
 
 @Serializable
@@ -38,12 +42,12 @@ object NopStmt : Stmt {
 @Serializable
 @SerialName("AssignStmt")
 data class AssignStmt(
-    val left: Local,
+    val left: Value, // Local
     val right: Value,
 ) : Stmt
 
 @Serializable
-@SerialName("CallStmt")
+@SerialName("ArkInvokeStmt")
 data class CallStmt(
     val expr: CallExpr,
 ) : Stmt
@@ -55,6 +59,8 @@ data class DeleteStmt(
 ) : Stmt
 
 @Serializable
+@OptIn(ExperimentalSerializationApi::class)
+@JsonClassDiscriminator("_")
 sealed interface TerminatingStmt : Stmt
 
 @Serializable
@@ -70,6 +76,8 @@ data class ThrowStmt(
 ) : TerminatingStmt
 
 @Serializable
+@OptIn(ExperimentalSerializationApi::class)
+@JsonClassDiscriminator("_")
 sealed interface BranchingStmt : Stmt
 
 @Serializable

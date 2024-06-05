@@ -34,9 +34,9 @@ data class Ark(
     val importInfos: List<ImportInfo>,
     val exportInfos: List<ExportInfo>,
 ) {
-    companion object{
+    companion object {
         private val json = Json {
-            classDiscriminator = "_"
+            // classDiscriminator = "_"
             prettyPrint = true
         }
 
