@@ -28,7 +28,6 @@ data class FieldSignatureDto(
     val enclosingClass: ClassSignatureDto,
     val name: String,
     val fieldType: String,
-    val optional: Boolean = false,
 )
 
 @Serializable
@@ -43,5 +42,5 @@ data class MethodSignatureDto(
 data class MethodParameterDto(
     val name: String,
     val type: String,
-    val optional: Boolean = false,
+    val isOptional: Boolean = false,
 )

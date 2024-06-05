@@ -6,33 +6,46 @@
   "namespaces": [],
   "classes": [
     {
-      "name": "AnonymousClass-basic.ts-0",
+      "signature": {
+        "name": "AnonymousClass-basic.ts-0"
+      },
       "modifiers": [],
       "typeParameters": [],
       "superClassName": "",
       "implementedInterfaceNames": [],
       "fields": [
         {
-          "name": "content",
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-basic.ts-0"
+            },
+            "name": "content",
+            "fieldType": "Type"
+          },
           "modifiers": [],
-          "type": "Type",
+          "exclamationToken": false,
           "questionToken": false,
           "initializer": null
         }
       ],
       "methods": [
         {
-          "name": "constructor",
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-basic.ts-0"
+            },
+            "name": "constructor",
+            "parameters": [
+              {
+                "name": "value",
+                "type": "Type",
+                "isOptional": false
+              }
+            ],
+            "returnType": "unknown"
+          },
           "modifiers": [],
           "typeParameters": [],
-          "parameters": [
-            {
-              "name": "value",
-              "type": "Type",
-              "isOptional": false
-            }
-          ],
-          "returnType": "unknown",
           "body": [
             {
               "_": "AssignStmt",
@@ -113,7 +126,9 @@
       ]
     },
     {
-      "name": "_DEFAULT_ARK_CLASS",
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
       "modifiers": [],
       "typeParameters": [],
       "superClassName": "",
@@ -121,11 +136,16 @@
       "fields": [],
       "methods": [
         {
-          "name": "_DEFAULT_ARK_METHOD",
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "_DEFAULT_ARK_METHOD",
+            "parameters": [],
+            "returnType": "unknown"
+          },
           "modifiers": [],
           "typeParameters": [],
-          "parameters": [],
-          "returnType": "unknown",
           "body": [
             {
               "_": "AssignStmt",
@@ -304,11 +324,16 @@
           ]
         },
         {
-          "name": "forLoopTest",
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "forLoopTest",
+            "parameters": [],
+            "returnType": "unknown"
+          },
           "modifiers": [],
           "typeParameters": [],
-          "parameters": [],
-          "returnType": "unknown",
           "body": [
             {
               "_": "AssignStmt",
@@ -541,11 +566,16 @@
           ]
         },
         {
-          "name": "test",
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "test",
+            "parameters": [],
+            "returnType": "unknown"
+          },
           "modifiers": [],
           "typeParameters": [],
-          "parameters": [],
-          "returnType": "unknown",
           "body": [
             {
               "_": "AssignStmt",
@@ -1837,13 +1867,18 @@
           ]
         },
         {
-          "name": "classMethodTest",
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "classMethodTest",
+            "parameters": [],
+            "returnType": "unknown"
+          },
           "modifiers": [
             "ExportKeyword"
           ],
           "typeParameters": [],
-          "parameters": [],
-          "returnType": "unknown",
           "body": [
             {
               "_": "AssignStmt",
@@ -2100,19 +2135,24 @@
           ]
         },
         {
-          "name": "foo",
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "foo",
+            "parameters": [
+              {
+                "name": "x",
+                "type": "number",
+                "isOptional": false
+              }
+            ],
+            "returnType": "number"
+          },
           "modifiers": [
             "ExportKeyword"
           ],
           "typeParameters": [],
-          "parameters": [
-            {
-              "name": "x",
-              "type": "number",
-              "isOptional": false
-            }
-          ],
-          "returnType": "number",
           "body": [
             {
               "_": "AssignStmt",
@@ -2263,29 +2303,34 @@
           ]
         },
         {
-          "name": "listParameters",
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "listParameters",
+            "parameters": [
+              {
+                "name": "u",
+                "type": "number",
+                "isOptional": false
+              },
+              {
+                "name": "v",
+                "type": "number",
+                "isOptional": false
+              },
+              {
+                "name": "w",
+                "type": "string",
+                "isOptional": false
+              }
+            ],
+            "returnType": "@save/basic: AnonymousClass-basic.ts-1"
+          },
           "modifiers": [
             "ExportKeyword"
           ],
           "typeParameters": [],
-          "parameters": [
-            {
-              "name": "u",
-              "type": "number",
-              "isOptional": false
-            },
-            {
-              "name": "v",
-              "type": "number",
-              "isOptional": false
-            },
-            {
-              "name": "w",
-              "type": "string",
-              "isOptional": false
-            }
-          ],
-          "returnType": "@save/basic: AnonymousClass-basic.ts-1",
           "body": [
             {
               "_": "AssignStmt",
@@ -2383,16 +2428,24 @@
       ]
     },
     {
-      "name": "Person",
+      "signature": {
+        "name": "Person"
+      },
       "modifiers": [],
       "typeParameters": [],
       "superClassName": "",
       "implementedInterfaceNames": [],
       "fields": [
         {
-          "name": "x",
+          "signature": {
+            "enclosingClass": {
+              "name": "Person"
+            },
+            "name": "x",
+            "fieldType": "number"
+          },
           "modifiers": [],
-          "type": "number",
+          "exclamationToken": false,
           "questionToken": false,
           "initializer": {
             "_": "Constant",
@@ -2401,9 +2454,15 @@
           }
         },
         {
-          "name": "growOld",
+          "signature": {
+            "enclosingClass": {
+              "name": "Person"
+            },
+            "name": "growOld",
+            "fieldType": "UNDEFINED"
+          },
           "modifiers": [],
-          "type": "UNDEFINED",
+          "exclamationToken": false,
           "questionToken": false,
           "initializer": {
             "_": "Constant",
@@ -2414,17 +2473,22 @@
       ],
       "methods": [
         {
-          "name": "constructor",
+          "signature": {
+            "enclosingClass": {
+              "name": "Person"
+            },
+            "name": "constructor",
+            "parameters": [
+              {
+                "name": "age",
+                "type": "number",
+                "isOptional": false
+              }
+            ],
+            "returnType": "unknown"
+          },
           "modifiers": [],
           "typeParameters": [],
-          "parameters": [
-            {
-              "name": "age",
-              "type": "number",
-              "isOptional": false
-            }
-          ],
-          "returnType": "unknown",
           "body": [
             {
               "_": "AssignStmt",
@@ -2480,13 +2544,18 @@
           ]
         },
         {
-          "name": "getAge",
+          "signature": {
+            "enclosingClass": {
+              "name": "Person"
+            },
+            "name": "getAge",
+            "parameters": [],
+            "returnType": "unknown"
+          },
           "modifiers": [
             "PublicKeyword"
           ],
           "typeParameters": [],
-          "parameters": [],
-          "returnType": "unknown",
           "body": [
             {
               "_": "AssignStmt",
@@ -2534,13 +2603,18 @@
           ]
         },
         {
-          "name": "wooooof",
+          "signature": {
+            "enclosingClass": {
+              "name": "Person"
+            },
+            "name": "wooooof",
+            "parameters": [],
+            "returnType": "unknown"
+          },
           "modifiers": [
             "StaticKeyword"
           ],
           "typeParameters": [],
-          "parameters": [],
-          "returnType": "unknown",
           "body": [
             {
               "_": "AssignStmt",
@@ -2601,7 +2675,9 @@
       ]
     },
     {
-      "name": "Alarm",
+      "signature": {
+        "name": "Alarm"
+      },
       "modifiers": [],
       "typeParameters": [],
       "superClassName": "",
@@ -2609,11 +2685,16 @@
       "fields": [],
       "methods": [
         {
-          "name": "alert",
+          "signature": {
+            "enclosingClass": {
+              "name": "Alarm"
+            },
+            "name": "alert",
+            "parameters": [],
+            "returnType": "void"
+          },
           "modifiers": [],
           "typeParameters": [],
-          "parameters": [],
-          "returnType": "void",
           "body": [
             {
               "_": "AssignStmt",
@@ -2635,7 +2716,9 @@
       ]
     },
     {
-      "name": "Alarm2",
+      "signature": {
+        "name": "Alarm2"
+      },
       "modifiers": [],
       "typeParameters": [],
       "superClassName": "",
@@ -2643,11 +2726,16 @@
       "fields": [],
       "methods": [
         {
-          "name": "alert2",
+          "signature": {
+            "enclosingClass": {
+              "name": "Alarm2"
+            },
+            "name": "alert2",
+            "parameters": [],
+            "returnType": "void"
+          },
           "modifiers": [],
           "typeParameters": [],
-          "parameters": [],
-          "returnType": "void",
           "body": [
             {
               "_": "AssignStmt",
@@ -2669,7 +2757,9 @@
       ]
     },
     {
-      "name": "Door",
+      "signature": {
+        "name": "Door"
+      },
       "modifiers": [],
       "typeParameters": [],
       "superClassName": "",
@@ -2678,16 +2768,24 @@
       "methods": []
     },
     {
-      "name": "Adder",
+      "signature": {
+        "name": "Adder"
+      },
       "modifiers": [],
       "typeParameters": [],
       "superClassName": "",
       "implementedInterfaceNames": [],
       "fields": [
         {
-          "name": "add",
+          "signature": {
+            "enclosingClass": {
+              "name": "Adder"
+            },
+            "name": "add",
+            "fieldType": "UNDEFINED"
+          },
           "modifiers": [],
-          "type": "UNDEFINED",
+          "exclamationToken": false,
           "questionToken": false,
           "initializer": {
             "_": "Constant",
@@ -2698,17 +2796,22 @@
       ],
       "methods": [
         {
-          "name": "constructor",
+          "signature": {
+            "enclosingClass": {
+              "name": "Adder"
+            },
+            "name": "constructor",
+            "parameters": [
+              {
+                "name": "a",
+                "type": "number",
+                "isOptional": false
+              }
+            ],
+            "returnType": "unknown"
+          },
           "modifiers": [],
           "typeParameters": [],
-          "parameters": [
-            {
-              "name": "a",
-              "type": "number",
-              "isOptional": false
-            }
-          ],
-          "returnType": "unknown",
           "body": [
             {
               "_": "AssignStmt",
@@ -2743,18 +2846,26 @@
       ]
     },
     {
-      "name": "ExtendedAdder",
+      "signature": {
+        "name": "ExtendedAdder"
+      },
       "modifiers": [],
       "typeParameters": [],
       "superClassName": "Adder",
       "implementedInterfaceNames": [],
       "fields": [
         {
-          "name": "superAdd",
+          "signature": {
+            "enclosingClass": {
+              "name": "ExtendedAdder"
+            },
+            "name": "superAdd",
+            "fieldType": "UNDEFINED"
+          },
           "modifiers": [
             "PrivateKeyword"
           ],
-          "type": "UNDEFINED",
+          "exclamationToken": false,
           "questionToken": false,
           "initializer": {
             "_": "InstanceFieldRef",
@@ -2773,9 +2884,15 @@
           }
         },
         {
-          "name": "add",
+          "signature": {
+            "enclosingClass": {
+              "name": "ExtendedAdder"
+            },
+            "name": "add",
+            "fieldType": "UNDEFINED"
+          },
           "modifiers": [],
-          "type": "UNDEFINED",
+          "exclamationToken": false,
           "questionToken": false,
           "initializer": {
             "_": "Constant",
@@ -2787,7 +2904,9 @@
       "methods": []
     },
     {
-      "name": "AnonymousClass$listParameters$0",
+      "signature": {
+        "name": "AnonymousClass$listParameters$0"
+      },
       "modifiers": [],
       "typeParameters": [],
       "superClassName": "",
@@ -2796,7 +2915,9 @@
       "methods": []
     },
     {
-      "name": "SecurityDoor",
+      "signature": {
+        "name": "SecurityDoor"
+      },
       "modifiers": [
         "ExportKeyword"
       ],
@@ -2808,9 +2929,15 @@
       ],
       "fields": [
         {
-          "name": "x",
+          "signature": {
+            "enclosingClass": {
+              "name": "SecurityDoor"
+            },
+            "name": "x",
+            "fieldType": "number"
+          },
           "modifiers": [],
-          "type": "number",
+          "exclamationToken": false,
           "questionToken": false,
           "initializer": {
             "_": "Constant",
@@ -2819,9 +2946,15 @@
           }
         },
         {
-          "name": "y",
+          "signature": {
+            "enclosingClass": {
+              "name": "SecurityDoor"
+            },
+            "name": "y",
+            "fieldType": "string"
+          },
           "modifiers": [],
-          "type": "string",
+          "exclamationToken": false,
           "questionToken": false,
           "initializer": {
             "_": "Constant",
@@ -2830,11 +2963,17 @@
           }
         },
         {
-          "name": "Members",
+          "signature": {
+            "enclosingClass": {
+              "name": "SecurityDoor"
+            },
+            "name": "Members",
+            "fieldType": "UNDEFINED"
+          },
           "modifiers": [
             "PublicKeyword"
           ],
-          "type": "UNDEFINED",
+          "exclamationToken": false,
           "questionToken": false,
           "initializer": {
             "_": "Constant",
@@ -2845,11 +2984,16 @@
       ],
       "methods": [
         {
-          "name": "alert",
+          "signature": {
+            "enclosingClass": {
+              "name": "SecurityDoor"
+            },
+            "name": "alert",
+            "parameters": [],
+            "returnType": "void"
+          },
           "modifiers": [],
           "typeParameters": [],
-          "parameters": [],
-          "returnType": "void",
           "body": [
             {
               "_": "AssignStmt",
@@ -2908,11 +3052,16 @@
           ]
         },
         {
-          "name": "alert2",
+          "signature": {
+            "enclosingClass": {
+              "name": "SecurityDoor"
+            },
+            "name": "alert2",
+            "parameters": [],
+            "returnType": "void"
+          },
           "modifiers": [],
           "typeParameters": [],
-          "parameters": [],
-          "returnType": "void",
           "body": [
             {
               "_": "AssignStmt",
@@ -2971,13 +3120,18 @@
           ]
         },
         {
-          "name": "fooo",
+          "signature": {
+            "enclosingClass": {
+              "name": "SecurityDoor"
+            },
+            "name": "fooo",
+            "parameters": [],
+            "returnType": "unknown"
+          },
           "modifiers": [
             "PublicKeyword"
           ],
           "typeParameters": [],
-          "parameters": [],
-          "returnType": "unknown",
           "body": [
             {
               "_": "AssignStmt",
@@ -3036,22 +3190,27 @@
           ]
         },
         {
-          "name": "constructor",
+          "signature": {
+            "enclosingClass": {
+              "name": "SecurityDoor"
+            },
+            "name": "constructor",
+            "parameters": [
+              {
+                "name": "x",
+                "type": "number",
+                "isOptional": false
+              },
+              {
+                "name": "y",
+                "type": "string",
+                "isOptional": false
+              }
+            ],
+            "returnType": "unknown"
+          },
           "modifiers": [],
           "typeParameters": [],
-          "parameters": [
-            {
-              "name": "x",
-              "type": "number",
-              "isOptional": false
-            },
-            {
-              "name": "y",
-              "type": "string",
-              "isOptional": false
-            }
-          ],
-          "returnType": "unknown",
           "body": [
             {
               "_": "AssignStmt",
@@ -3268,7 +3427,9 @@
       ]
     },
     {
-      "name": "Animal",
+      "signature": {
+        "name": "Animal"
+      },
       "modifiers": [
         "AbstractKeyword"
       ],
@@ -3277,30 +3438,41 @@
       "implementedInterfaceNames": [],
       "fields": [
         {
-          "name": "name",
+          "signature": {
+            "enclosingClass": {
+              "name": "Animal"
+            },
+            "name": "name",
+            "fieldType": "UNDEFINED"
+          },
           "modifiers": [
             "PublicKeyword"
           ],
-          "type": "UNDEFINED",
+          "exclamationToken": false,
           "questionToken": false,
           "initializer": null
         }
       ],
       "methods": [
         {
-          "name": "constructor",
+          "signature": {
+            "enclosingClass": {
+              "name": "Animal"
+            },
+            "name": "constructor",
+            "parameters": [
+              {
+                "name": "name",
+                "type": "string",
+                "isOptional": false
+              }
+            ],
+            "returnType": "unknown"
+          },
           "modifiers": [
             "PublicKeyword"
           ],
           "typeParameters": [],
-          "parameters": [
-            {
-              "name": "name",
-              "type": "string",
-              "isOptional": false
-            }
-          ],
-          "returnType": "unknown",
           "body": [
             {
               "_": "AssignStmt",
@@ -3379,14 +3551,19 @@
           ]
         },
         {
-          "name": "sayHi",
+          "signature": {
+            "enclosingClass": {
+              "name": "Animal"
+            },
+            "name": "sayHi",
+            "parameters": [],
+            "returnType": "void"
+          },
           "modifiers": [
             "PublicKeyword",
             "AbstractKeyword"
           ],
           "typeParameters": [],
-          "parameters": [],
-          "returnType": "void",
           "body": [
             {
               "_": "AssignStmt",
@@ -3408,7 +3585,9 @@
       ]
     },
     {
-      "name": "StringValidator",
+      "signature": {
+        "name": "StringValidator"
+      },
       "modifiers": [
         "ExportKeyword"
       ],
@@ -3417,33 +3596,50 @@
       "implementedInterfaceNames": [],
       "fields": [
         {
-          "name": "color",
+          "signature": {
+            "enclosingClass": {
+              "name": "StringValidator"
+            },
+            "name": "color",
+            "fieldType": "string"
+          },
           "modifiers": [],
-          "type": "string",
+          "exclamationToken": false,
           "questionToken": true,
           "initializer": null
         },
         {
-          "name": "width",
+          "signature": {
+            "enclosingClass": {
+              "name": "StringValidator"
+            },
+            "name": "width",
+            "fieldType": "number"
+          },
           "modifiers": [],
-          "type": "number",
+          "exclamationToken": false,
           "questionToken": true,
           "initializer": null
         }
       ],
       "methods": [
         {
-          "name": "isAcceptable",
+          "signature": {
+            "enclosingClass": {
+              "name": "StringValidator"
+            },
+            "name": "isAcceptable",
+            "parameters": [
+              {
+                "name": "s",
+                "type": "string",
+                "isOptional": true
+              }
+            ],
+            "returnType": "boolean"
+          },
           "modifiers": [],
           "typeParameters": [],
-          "parameters": [
-            {
-              "name": "s",
-              "type": "string",
-              "isOptional": true
-            }
-          ],
-          "returnType": "boolean",
           "body": [
             {
               "_": "AssignStmt",

@@ -17,6 +17,7 @@
 package org.jacodb.panda.dynamic.ark.dto
 
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -59,40 +60,46 @@ data class NamespaceDto(
 
 @Serializable
 data class ClassDto(
-    val name: String,
+    val signature: ClassSignatureDto,
     val modifiers: List<String>,
     val typeParameters: List<String>,
     val superClassName: String?,
     val implementedInterfaceNames: List<String>,
     val fields: List<FieldDto>,
     val methods: List<MethodDto>,
-)
+) {
+    val name: String
+        get() = signature.name
+}
 
 @Serializable
 data class FieldDto(
-    val name: String,
+    val signature: FieldSignatureDto,
     val modifiers: List<String>,
-    val type: String?,
-    val questionToken: Boolean,
-    val initializer: ValueDto?,
-)
+    @SerialName("exclamationToken") val isDefinitelyAssigned: Boolean = false, // '!'
+    @SerialName("questionToken") val isOptional: Boolean = false, // '?'
+    val initializer: ValueDto? = null,
+) {
+    val name: String
+        get() = signature.name
+
+    val type: String
+        get() = signature.fieldType
+}
 
 @Serializable
 data class MethodDto(
-    val name: String,
+    val signature: MethodSignatureDto,
     val modifiers: List<String>,
     val typeParameters: List<String>,
-    val parameters: List<ParameterDto>,
-    val returnType: String,
     val body: List<StmtDto>,
-)
+) {
+    val name: String
+        get() = signature.name
 
-@Serializable
-data class ParameterDto(
-    val name: String,
-    val type: String,
-    val isOptional: Boolean,
-)
+    val returnType: String
+        get() = signature.returnType
+}
 
 @Serializable
 data class ImportInfoDto(

@@ -22,8 +22,10 @@ import kotlinx.serialization.json.Json
 import org.jacodb.panda.dynamic.ark.base.AnyType
 import org.jacodb.panda.dynamic.ark.base.Local
 import org.jacodb.panda.dynamic.ark.dto.ArkFileDto
+import org.jacodb.panda.dynamic.ark.dto.ClassSignatureDto
 import org.jacodb.panda.dynamic.ark.dto.ConstantDto
 import org.jacodb.panda.dynamic.ark.dto.FieldDto
+import org.jacodb.panda.dynamic.ark.dto.FieldSignatureDto
 import org.jacodb.panda.dynamic.ark.dto.LocalDto
 import org.jacodb.panda.dynamic.ark.dto.MethodDto
 import org.jacodb.panda.dynamic.ark.dto.StmtDto
@@ -64,10 +66,16 @@ class ArkFromJsonTest {
     @Test
     fun testLoadFieldFromJson() {
         val field = FieldDto(
-            name = "x",
+            signature = FieldSignatureDto(
+                enclosingClass = ClassSignatureDto(
+                    name = "Test"
+                ),
+                name = "x",
+                fieldType = "number",
+            ),
             modifiers = emptyList(),
-            type = "number",
-            questionToken = false,
+            isOptional = true,
+            isDefinitelyAssigned = false,
             initializer = ConstantDto("0", "number"),
         )
         println("field = $field")
@@ -97,11 +105,16 @@ class ArkFromJsonTest {
     fun testLoadMethodFromJson() {
         val jsonString = """
             {
-              "name": "_DEFAULT_ARK_METHOD",
+              "signature": {
+                "enclosingClass": {
+                  "name": "_DEFAULT_ARK_CLASS"
+                },
+                "name": "_DEFAULT_ARK_METHOD",
+                "parameters": [],
+                "returnType": "unknown"
+              },
               "modifiers": [],
               "typeParameters": [],
-              "parameters": [],
-              "returnType": "unknown",
               "body": [
                 {
                   "_": "ReturnVoidStmt"

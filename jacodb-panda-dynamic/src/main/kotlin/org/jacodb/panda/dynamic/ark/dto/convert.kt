@@ -228,14 +228,7 @@ fun convertToArkValue(value: ValueDto): Value {
             type = convertToArkType(value.type),
         )
 
-        is InstanceFieldRefDto -> InstanceFieldRef(
-            instance = convertToArkValue(value.instance) as Local, // safe cast
-            field = convertToArkFieldSignature(value.field),
-        )
-
-        is StaticFieldRefDto -> StaticFieldRef(
-            field = convertToArkFieldSignature(value.field)
-        )
+        is FieldRefDto -> convertToArkFieldRef(value)
 
         // else -> error("Unknown Value: $value")
     }
@@ -333,7 +326,7 @@ fun convertToArkFieldRef(fieldRef: FieldRefDto): FieldRef {
     val field = convertToArkFieldSignature(fieldRef.field)
     return when (fieldRef) {
         is InstanceFieldRefDto -> InstanceFieldRef(
-            instance = convertToArkValue(fieldRef.instance) as Local,
+            instance = convertToArkValue(fieldRef.instance) as Local, // safe cast
             field = field
         )
 
@@ -353,23 +346,22 @@ fun convertToArkClassSignature(clazz: ClassSignatureDto): ClassSignature {
 
 fun convertToArkFieldSignature(field: FieldSignatureDto): FieldSignature {
     return FieldSignature(
+        enclosingClass = convertToArkClassSignature(field.enclosingClass),
         sub = FieldSubSignature(
             name = field.name,
             type = convertToArkType(field.fieldType),
-            isOptional = field.optional,
-        ),
-        enclosingClass = convertToArkClassSignature(field.enclosingClass)
+        )
     )
 }
 
 fun convertToArkMethodSignature(method: MethodSignatureDto): MethodSignature {
     return MethodSignature(
+        enclosingClass = convertToArkClassSignature(method.enclosingClass),
         sub = MethodSubSignature(
             name = method.name,
             parameters = method.parameters.map { convertToArkMethodParameter(it) },
             returnType = convertToArkType(method.returnType)
-        ),
-        enclosingClass = convertToArkClassSignature(method.enclosingClass)
+        )
     )
 }
 
@@ -377,6 +369,6 @@ fun convertToArkMethodParameter(param: MethodParameterDto): MethodParameter {
     return MethodParameter(
         name = param.name,
         type = convertToArkType(param.type),
-        isOptional = param.optional,
+        isOptional = param.isOptional,
     )
 }

@@ -62,8 +62,8 @@ data class ClassSignature(
 }
 
 data class FieldSignature(
-    val sub: FieldSubSignature,
     val enclosingClass: ClassSignature,
+    val sub: FieldSubSignature,
 ) {
     override fun toString(): String {
         return "${enclosingClass.name}::$sub"
@@ -73,16 +73,15 @@ data class FieldSignature(
 data class FieldSubSignature(
     val name: String,
     val type: Type,
-    val isOptional: Boolean,
 ) {
     override fun toString(): String {
-        return "$name${if (isOptional) "?" else ""}: $type"
+        return "$name: $type"
     }
 }
 
 data class MethodSignature(
-    val sub: MethodSubSignature,
     val enclosingClass: ClassSignature,
+    val sub: MethodSubSignature,
 ) {
     override fun toString(): String {
         return "${enclosingClass.name}::$sub"
