@@ -47,6 +47,7 @@ import org.jacodb.panda.dynamic.ark.base.NullConstant
 import org.jacodb.panda.dynamic.ark.base.NullType
 import org.jacodb.panda.dynamic.ark.base.NumberConstant
 import org.jacodb.panda.dynamic.ark.base.NumberType
+import org.jacodb.panda.dynamic.ark.base.ObjectLiteral
 import org.jacodb.panda.dynamic.ark.base.ParameterRef
 import org.jacodb.panda.dynamic.ark.base.PhiExpr
 import org.jacodb.panda.dynamic.ark.base.RelationOperation
@@ -189,6 +190,11 @@ fun convertToArkValue(value: ValueDto): Value {
         is ArrayLiteralDto -> ArrayLiteral(
             elements = value.elements.map { convertToArkValue(it) },
             type = convertToArkType(value.type) as ArrayType,
+        )
+
+        is ObjectLiteralDto -> ObjectLiteral(
+            properties = emptyList(), // TODO
+            type = convertToArkType(value.type),
         )
 
         is UnaryOperationDto -> UnaryOperation(
