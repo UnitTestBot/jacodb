@@ -19,12 +19,14 @@ package org.jacodb.analysis.ifds
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonInst
 
-data class Vertex<out Fact, out Method, out Statement>(
+data class Vertex<out Fact, out Statement : CommonInst>(
     val statement: Statement,
     val fact: Fact,
-) where Method : CommonMethod<Method, Statement>,
-        Statement : CommonInst<Method, Statement> {
+) {
+    val method: CommonMethod
+        get() = statement.method
 
-    val method: Method
-        get() = statement.location.method
+    override fun toString(): String {
+        return "$fact at $statement in $method"
+    }
 }

@@ -46,15 +46,18 @@ interface VirtualTypedMethodRef : TypedMethodRef {
     val declaredMethod: JcTypedMethod
 }
 
-interface JcInstLocation : CommonInstLocation<JcMethod, JcInst> {
+interface JcInstLocation : CommonInstLocation {
     override val method: JcMethod
     override val index: Int
     override val lineNumber: Int
 }
 
-interface JcInst : CommonInst<JcMethod, JcInst> {
+interface JcInst : CommonInst {
     override val location: JcInstLocation
     override val operands: List<JcExpr>
+
+    override val method: JcMethod
+        get() = location.method
 
     fun <T> accept(visitor: JcInstVisitor<T>): T
 }
@@ -84,7 +87,7 @@ class JcAssignInst(
     location: JcInstLocation,
     override val lhv: JcValue,
     override val rhv: JcExpr,
-) : AbstractJcInst(location), CommonAssignInst<JcMethod, JcInst> {
+) : AbstractJcInst(location), CommonAssignInst {
     override val operands: List<JcExpr>
         get() = listOf(lhv, rhv)
 
@@ -126,7 +129,7 @@ class JcExitMonitorInst(
 class JcCallInst(
     location: JcInstLocation,
     val callExpr: JcCallExpr,
-) : AbstractJcInst(location), CommonCallInst<JcMethod, JcInst> {
+) : AbstractJcInst(location), CommonCallInst {
     override val operands: List<JcExpr>
         get() = listOf(callExpr)
 
@@ -142,7 +145,7 @@ interface JcTerminatingInst : JcInst
 class JcReturnInst(
     location: JcInstLocation,
     override val returnValue: JcValue?,
-) : AbstractJcInst(location), JcTerminatingInst, CommonReturnInst<JcMethod, JcInst> {
+) : AbstractJcInst(location), JcTerminatingInst, CommonReturnInst {
     override val operands: List<JcExpr>
         get() = listOfNotNull(returnValue)
 
@@ -190,7 +193,7 @@ interface JcBranchingInst : JcInst {
 class JcGotoInst(
     location: JcInstLocation,
     val target: JcInstRef,
-) : AbstractJcInst(location), JcBranchingInst, CommonGotoInst<JcMethod, JcInst> {
+) : AbstractJcInst(location), JcBranchingInst, CommonGotoInst {
     override val operands: List<JcExpr>
         get() = emptyList()
 
@@ -209,7 +212,7 @@ class JcIfInst(
     val condition: JcConditionExpr,
     val trueBranch: JcInstRef,
     val falseBranch: JcInstRef,
-) : AbstractJcInst(location), JcBranchingInst, CommonIfInst<JcMethod, JcInst> {
+) : AbstractJcInst(location), JcBranchingInst, CommonIfInst {
     override val operands: List<JcExpr>
         get() = listOf(condition)
 

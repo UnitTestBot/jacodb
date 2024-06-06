@@ -20,10 +20,10 @@ import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonInst
 
 object CallExprVisitor : CommonInst.Visitor.Default<CommonCallExpr?> {
-    override fun defaultVisitCommonInst(inst: CommonInst<*, *>): CommonCallExpr? {
+    override fun defaultVisitCommonInst(inst: CommonInst): CommonCallExpr? {
         return inst.operands.filterIsInstance<CommonCallExpr>().firstOrNull()
     }
 }
 
-val CommonInst<*, *>.callExpr: CommonCallExpr?
+val CommonInst.callExpr: CommonCallExpr?
     get() = accept(CallExprVisitor)

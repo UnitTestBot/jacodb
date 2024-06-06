@@ -44,7 +44,7 @@ class ProjectAnalysis {
     private var tsLinesFailed = 0L
     private var analysisTime: Duration = Duration.ZERO
     private var totalPathEdges = 0
-    private var totalSinks: MutableList<TaintVulnerability<PandaMethod, PandaInst>> = mutableListOf()
+    private var totalSinks: MutableList<TaintVulnerability<PandaInst>> = mutableListOf()
 
     companion object : PandaTraits {
         const val PROJECT_PATH = "/samples/project1"

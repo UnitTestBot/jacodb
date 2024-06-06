@@ -55,6 +55,7 @@ import org.jacodb.api.jvm.cfg.JcDynamicCallExpr
 import org.jacodb.api.jvm.cfg.JcEqExpr
 import org.jacodb.api.jvm.cfg.JcExpr
 import org.jacodb.api.jvm.cfg.JcIfInst
+import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.api.jvm.cfg.JcInstanceCallExpr
 import org.jacodb.api.jvm.cfg.JcNeqExpr
 import org.jacodb.api.jvm.cfg.JcNewArrayExpr
@@ -79,8 +80,8 @@ context(Traits<Method, Statement>)
 class ForwardNpeFlowFunctions<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
 ) : FlowFunctions<TaintDomainFact, Method, Statement>
-    where Method : CommonMethod<Method, Statement>,
-          Statement : CommonInst<Method, Statement> {
+    where Method : CommonMethod,
+          Statement : CommonInst {
 
     private val cp: CommonProject
         get() = graph.project
@@ -212,7 +213,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
     private fun generates(
         inst: Statement,
     ): Collection<TaintDomainFact> = buildList {
-        if (inst is CommonAssignInst<*, *>) {
+        if (inst is CommonAssignInst) {
             val toPath = inst.lhv.toPath()
             val from = inst.rhv
             if (from is JcNullConstant || (from is JcCallExpr && from.method.method.isNullable == true)) {
@@ -248,6 +249,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
         }
 
         if (current is JcIfInst) {
+            check(next is JcInst)
             val nextIsTrueBranch = next.location.index == current.trueBranch.index
             val pathComparedWithNull = current.pathComparedWithNull
             if (fact == TaintZeroFact) {
@@ -540,7 +542,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
         callStatement: Statement,
         calleeStart: Statement,
     ) = FlowFunction<TaintDomainFact> { fact ->
-        val callee = calleeStart.location.method
+        val callee = graph.methodOf(calleeStart)
 
         if (fact == TaintZeroFact) {
             return@FlowFunction obtainPossibleStartFactsBasic(callee)
@@ -609,7 +611,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
 
         val callExpr = callStatement.callExpr
             ?: error("Call statement should have non-null callExpr")
-        val callee = exitStatement.location.method
+        val callee = graph.methodOf(exitStatement)
 
         buildSet {
             // Transmit facts on arguments (from 'formal' back to 'actual'), if they are passed by-ref:

@@ -27,7 +27,7 @@ import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.jvm.cfg.JcInstanceCallExpr
 import org.jacodb.api.jvm.cfg.JcLengthExpr
 
-context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
+context(Traits<CommonMethod, CommonInst>)
 internal fun AccessPath?.isDereferencedAt(expr: CommonExpr): Boolean {
     if (this == null) {
         return false
@@ -54,8 +54,8 @@ internal fun AccessPath?.isDereferencedAt(expr: CommonExpr): Boolean {
         }
 }
 
-context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
-internal fun AccessPath?.isDereferencedAt(inst: CommonInst<*, *>): Boolean {
+context(Traits<CommonMethod, CommonInst>)
+internal fun AccessPath?.isDereferencedAt(inst: CommonInst): Boolean {
     if (this == null) return false
     return inst.operands.any { isDereferencedAt(it) }
 }

@@ -21,7 +21,7 @@ import org.jacodb.api.common.CommonMethodParameter
 
 class PandaMethod(
     override val name: String,
-) : CommonMethod<PandaMethod, PandaInst> {
+) : CommonMethod {
 
     lateinit var project: PandaProject
         internal set

@@ -18,6 +18,6 @@ package org.jacodb.analysis.sarif
 
 import org.jacodb.api.common.cfg.CommonInst
 
-fun interface SourceFileResolver<Statement : CommonInst<*, Statement>> {
+fun interface SourceFileResolver<in Statement : CommonInst> {
     fun resolve(inst: Statement): String?
 }

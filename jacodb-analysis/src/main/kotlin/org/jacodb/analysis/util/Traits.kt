@@ -32,8 +32,8 @@ import org.jacodb.taint.configuration.ConstantValue
  * Extensions for analysis.
  */
 interface Traits<out Method, out Statement>
-    where Method : CommonMethod<Method, Statement>,
-          Statement : CommonInst<Method, Statement> {
+    where Method : CommonMethod,
+          Statement : CommonInst {
 
     val @UnsafeVariance Method.thisInstance: CommonThis
     val @UnsafeVariance Method.isConstructor: Boolean

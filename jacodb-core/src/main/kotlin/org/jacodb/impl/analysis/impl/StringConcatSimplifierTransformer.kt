@@ -33,7 +33,7 @@ class StringConcatSimplifierTransformer(
     private val list: JcInstList<JcInst>,
 ) : JcInstVisitor.Default<JcInst> {
 
-    override fun defaultVisitCommonInst(inst: CommonInst<*, *>): JcInst {
+    override fun defaultVisitCommonInst(inst: CommonInst): JcInst {
         TODO("Not yet implemented")
     }
 

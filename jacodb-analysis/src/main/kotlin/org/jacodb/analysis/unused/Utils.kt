@@ -30,16 +30,16 @@ import org.jacodb.api.jvm.cfg.JcLocal
 import org.jacodb.api.jvm.cfg.JcSpecialCallExpr
 import org.jacodb.api.jvm.cfg.JcTerminatingInst
 
-context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
+context(Traits<CommonMethod, CommonInst>)
 internal fun AccessPath.isUsedAt(
     expr: CommonExpr,
 ): Boolean {
     return expr.values.any { it.toPathOrNull() == this }
 }
 
-context(Traits<CommonMethod<*, *>, CommonInst<*, *>>)
+context(Traits<CommonMethod, CommonInst>)
 internal fun AccessPath.isUsedAt(
-    inst: CommonInst<*, *>,
+    inst: CommonInst,
 ): Boolean {
     val callExpr = inst.callExpr
 

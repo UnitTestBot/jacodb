@@ -89,7 +89,7 @@ interface JcAnnotation : JcSymbol {
 
 }
 
-interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible, CommonMethod<JcMethod, JcInst> {
+interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible, CommonMethod {
 
     /** reference to class */
     override val enclosingClass: JcClassOrInterface

@@ -64,7 +64,7 @@ fun launchAnalysesByConfig(
     config: AnalysisConfig,
     graph: JcApplicationGraph,
     methods: List<JcMethod>,
-): List<List<VulnerabilityInstance<*, JcMethod, JcInst>>> = with(JcTraits) {
+): List<List<VulnerabilityInstance<*, JcInst>>> = with(JcTraits) {
     return config.analyses.mapNotNull { (analysis, options) ->
         val unitResolver = options["UnitResolver"]?.let {
             UnitResolver.getByName(it)

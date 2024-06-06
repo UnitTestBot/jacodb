@@ -77,7 +77,7 @@ fun loadRules(configFileName: String): List<SerializedTaintConfigurationItem> {
 }
 
 fun getConfigForMethod(
-    method: CommonMethod<*, *>,
+    method: CommonMethod,
     rules: List<SerializedTaintConfigurationItem>,
 ): List<TaintConfigurationItem>? {
     val res = buildList {
@@ -93,7 +93,7 @@ fun getConfigForMethod(
     return res.ifEmpty { null }
 }
 
-fun SerializedTaintConfigurationItem.toItem(method: CommonMethod<*, *>): TaintConfigurationItem {
+fun SerializedTaintConfigurationItem.toItem(method: CommonMethod): TaintConfigurationItem {
     return when (this) {
         is SerializedTaintEntryPointSource -> TaintEntryPointSource(
             method = method,

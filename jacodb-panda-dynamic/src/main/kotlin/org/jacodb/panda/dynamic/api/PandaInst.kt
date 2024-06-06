@@ -30,7 +30,7 @@ class PandaInstLocation(
     override val method: PandaMethod,
     private var _index: Int,
     override val lineNumber: Int,
-) : CommonInstLocation<PandaMethod, PandaInst> {
+) : CommonInstLocation {
     // TODO: expand like JcInstLocation
 
     internal fun decLocationIndex(count: Int) {
@@ -58,7 +58,7 @@ data class PandaInstRef(
     override fun toString(): String = index.toString()
 }
 
-abstract class PandaInst : CommonInst<PandaMethod, PandaInst>, Mappable {
+abstract class PandaInst : CommonInst, Mappable {
     abstract override val location: PandaInstLocation
     abstract override val operands: List<PandaExpr>
 
@@ -122,7 +122,7 @@ class PandaAssignInst(
     override val lhv: PandaValue,
     override val rhv: PandaExpr,
     val varName: String? = null,
-) : PandaInst(), CommonAssignInst<PandaMethod, PandaInst> {
+) : PandaInst(), CommonAssignInst {
 
     override val operands: List<PandaExpr>
         get() = listOf(lhv, rhv)
@@ -166,7 +166,7 @@ class PandaPopLexenvInst(
 
 class PandaGotoInst(
     override val location: PandaInstLocation,
-) : PandaBranchingInst(), CommonGotoInst<PandaMethod, PandaInst> {
+) : PandaBranchingInst(), CommonGotoInst {
 
     var target: PandaInstRef = PandaInstRef(-1)
         private set
@@ -199,7 +199,7 @@ class PandaIfInst(
     val condition: PandaConditionExpr,
     private var _trueBranch: Lazy<PandaInstRef>,
     private var _falseBranch: Lazy<PandaInstRef>,
-) : PandaBranchingInst(), CommonIfInst<PandaMethod, PandaInst> {
+) : PandaBranchingInst(), CommonIfInst {
 
     val trueBranch: PandaInstRef
         get() = minOf(_trueBranch.value, _falseBranch.value)
@@ -237,7 +237,7 @@ abstract class PandaTerminatingInst : PandaInst()
 class PandaReturnInst(
     override val location: PandaInstLocation,
     override val returnValue: PandaValue?,
-) : PandaTerminatingInst(), CommonReturnInst<PandaMethod, PandaInst> {
+) : PandaTerminatingInst(), CommonReturnInst {
 
     override val operands: List<PandaExpr>
         get() = listOfNotNull(returnValue)
@@ -300,7 +300,7 @@ class PandaCatchInst(
 class PandaCallInst(
     override val location: PandaInstLocation,
     val callExpr: PandaCallExpr,
-) : PandaInst(), CommonCallInst<PandaMethod, PandaInst> {
+) : PandaInst(), CommonCallInst {
 
     override val operands: List<PandaExpr>
         get() = listOf(callExpr)
@@ -316,7 +316,7 @@ object CallExprVisitor :
     PandaInstVisitor<PandaCallExpr?>,
     CommonInst.Visitor.Default<PandaCallExpr?> {
 
-    override fun defaultVisitCommonInst(inst: CommonInst<*, *>): PandaCallExpr? {
+    override fun defaultVisitCommonInst(inst: CommonInst): PandaCallExpr? {
         TODO("Not yet implemented")
     }
 

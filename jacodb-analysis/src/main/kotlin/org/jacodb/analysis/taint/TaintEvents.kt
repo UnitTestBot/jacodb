@@ -17,32 +17,22 @@
 package org.jacodb.analysis.taint
 
 import org.jacodb.analysis.ifds.Reason
-import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonInst
 
-sealed interface TaintEvent<Method, Statement>
-    where Method : CommonMethod<Method, Statement>,
-          Statement : CommonInst<Method, Statement>
+sealed interface TaintEvent<Statement : CommonInst>
 
-data class NewSummaryEdge<Method, Statement>(
-    val edge: TaintEdge<Method, Statement>,
-) : TaintEvent<Method, Statement>
-    where Method : CommonMethod<Method, Statement>,
-          Statement : CommonInst<Method, Statement>
+data class NewSummaryEdge<Statement : CommonInst>(
+    val edge: TaintEdge<Statement>,
+) : TaintEvent<Statement>
 
-data class NewVulnerability<Method, Statement>(
-    val vulnerability: TaintVulnerability<Method, Statement>,
-) : TaintEvent<Method, Statement>
-    where Method : CommonMethod<Method, Statement>,
-          Statement : CommonInst<Method, Statement>
+data class NewVulnerability<Statement : CommonInst>(
+    val vulnerability: TaintVulnerability<Statement>,
+) : TaintEvent<Statement>
 
-data class EdgeForOtherRunner<Method, Statement>(
-    val edge: TaintEdge<Method, Statement>,
-    val reason: Reason<TaintDomainFact, Method, Statement>,
-) : TaintEvent<Method, Statement>
-    where Method : CommonMethod<Method, Statement>,
-          Statement : CommonInst<Method, Statement> {
-
+data class EdgeForOtherRunner<Statement : CommonInst>(
+    val edge: TaintEdge<Statement>,
+    val reason: Reason<TaintDomainFact, Statement>,
+) : TaintEvent<Statement> {
     init {
         // TODO: remove this check
         check(edge.from == edge.to) { "Edge for another runner must be a loop" }

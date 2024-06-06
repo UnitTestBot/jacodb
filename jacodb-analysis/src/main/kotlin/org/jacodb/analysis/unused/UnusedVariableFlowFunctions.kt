@@ -33,8 +33,8 @@ context(Traits<Method, Statement>)
 class UnusedVariableFlowFunctions<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
 ) : FlowFunctions<UnusedVariableDomainFact, Method, Statement>
-    where Method : CommonMethod<Method, Statement>,
-          Statement : CommonInst<Method, Statement> {
+    where Method : CommonMethod,
+          Statement : CommonInst {
 
     private val cp: CommonProject
         get() = graph.project
@@ -49,7 +49,7 @@ class UnusedVariableFlowFunctions<Method, Statement>(
         current: Statement,
         next: Statement,
     ) = FlowFunction<UnusedVariableDomainFact> { fact ->
-        if (current !is CommonAssignInst<*, *>) {
+        if (current !is CommonAssignInst) {
             return@FlowFunction setOf(fact)
         }
 
@@ -98,7 +98,7 @@ class UnusedVariableFlowFunctions<Method, Statement>(
             }
             return@FlowFunction buildSet {
                 add(UnusedVariableZeroFact)
-                val callee = calleeStart.location.method
+                val callee = graph.methodOf(calleeStart)
                 val formalParams = cp.getArgumentsOf(callee)
                 for (formal in formalParams) {
                     add(UnusedVariable(formal.toPath(), callStatement))

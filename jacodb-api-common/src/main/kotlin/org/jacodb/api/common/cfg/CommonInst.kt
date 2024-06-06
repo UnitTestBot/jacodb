@@ -18,35 +18,34 @@ package org.jacodb.api.common.cfg
 
 import org.jacodb.api.common.CommonMethod
 
-interface CommonInst<out Method, out Statement>
-    where Method : CommonMethod<Method, Statement>,
-          Statement : CommonInst<Method, Statement> {
-
-    val location: CommonInstLocation<Method, Statement> // Self-type would be nice to have here...
+interface CommonInst {
+    val location: CommonInstLocation
     val operands: List<CommonExpr>
 
+    val method: CommonMethod
+        get() = location.method
     val lineNumber: Int
         get() = location.lineNumber
 
     interface Visitor<out T> {
-        fun visitExternalCommonInst(inst: CommonInst<*, *>): T
+        fun visitExternalCommonInst(inst: CommonInst): T
 
-        fun visitCommonAssignInst(inst: CommonAssignInst<*, *>): T
-        fun visitCommonCallInst(inst: CommonCallInst<*, *>): T
-        fun visitCommonReturnInst(inst: CommonReturnInst<*, *>): T
-        fun visitCommonGotoInst(inst: CommonGotoInst<*, *>): T
-        fun visitCommonIfInst(inst: CommonIfInst<*, *>): T
+        fun visitCommonAssignInst(inst: CommonAssignInst): T
+        fun visitCommonCallInst(inst: CommonCallInst): T
+        fun visitCommonReturnInst(inst: CommonReturnInst): T
+        fun visitCommonGotoInst(inst: CommonGotoInst): T
+        fun visitCommonIfInst(inst: CommonIfInst): T
 
         interface Default<out T> : Visitor<T> {
-            fun defaultVisitCommonInst(inst: CommonInst<*, *>): T
+            fun defaultVisitCommonInst(inst: CommonInst): T
 
-            override fun visitExternalCommonInst(inst: CommonInst<*, *>): T = defaultVisitCommonInst(inst)
+            override fun visitExternalCommonInst(inst: CommonInst): T = defaultVisitCommonInst(inst)
 
-            override fun visitCommonAssignInst(inst: CommonAssignInst<*, *>): T = defaultVisitCommonInst(inst)
-            override fun visitCommonCallInst(inst: CommonCallInst<*, *>): T = defaultVisitCommonInst(inst)
-            override fun visitCommonReturnInst(inst: CommonReturnInst<*, *>): T = defaultVisitCommonInst(inst)
-            override fun visitCommonGotoInst(inst: CommonGotoInst<*, *>): T = defaultVisitCommonInst(inst)
-            override fun visitCommonIfInst(inst: CommonIfInst<*, *>): T = defaultVisitCommonInst(inst)
+            override fun visitCommonAssignInst(inst: CommonAssignInst): T = defaultVisitCommonInst(inst)
+            override fun visitCommonCallInst(inst: CommonCallInst): T = defaultVisitCommonInst(inst)
+            override fun visitCommonReturnInst(inst: CommonReturnInst): T = defaultVisitCommonInst(inst)
+            override fun visitCommonGotoInst(inst: CommonGotoInst): T = defaultVisitCommonInst(inst)
+            override fun visitCommonIfInst(inst: CommonIfInst): T = defaultVisitCommonInst(inst)
         }
     }
 
@@ -56,19 +55,13 @@ interface CommonInst<out Method, out Statement>
     }
 }
 
-interface CommonInstLocation<out Method, out Statement>
-    where Method : CommonMethod<Method, Statement>,
-          Statement : CommonInst<Method, Statement> {
-
-    val method: Method
+interface CommonInstLocation {
+    val method: CommonMethod
     val index: Int
     val lineNumber: Int
 }
 
-interface CommonAssignInst<out Method, out Statement> : CommonInst<Method, Statement>
-    where Method : CommonMethod<Method, Statement>,
-          Statement : CommonInst<Method, Statement> {
-
+interface CommonAssignInst : CommonInst {
     val lhv: CommonValue
     val rhv: CommonExpr
 
@@ -78,18 +71,13 @@ interface CommonAssignInst<out Method, out Statement> : CommonInst<Method, State
 }
 
 // TODO: add 'callExpr: CoreExpr' property
-interface CommonCallInst<out Method, out Statement> : CommonInst<Method, Statement>
-    where Method : CommonMethod<Method, Statement>,
-          Statement : CommonInst<Method, Statement> {
+interface CommonCallInst : CommonInst {
     override fun <T> acceptCommonInst(visitor: CommonInst.Visitor<T>): T {
         return visitor.visitCommonCallInst(this)
     }
 }
 
-interface CommonReturnInst<out Method, out Statement> : CommonInst<Method, Statement>
-    where Method : CommonMethod<Method, Statement>,
-          Statement : CommonInst<Method, Statement> {
-
+interface CommonReturnInst : CommonInst {
     val returnValue: CommonValue?
 
     override fun <T> acceptCommonInst(visitor: CommonInst.Visitor<T>): T {
@@ -97,19 +85,13 @@ interface CommonReturnInst<out Method, out Statement> : CommonInst<Method, State
     }
 }
 
-interface CommonGotoInst<out Method, out Statement> : CommonInst<Method, Statement>
-    where Method : CommonMethod<Method, Statement>,
-          Statement : CommonInst<Method, Statement> {
-
+interface CommonGotoInst : CommonInst {
     override fun <T> acceptCommonInst(visitor: CommonInst.Visitor<T>): T {
         return visitor.visitCommonGotoInst(this)
     }
 }
 
-interface CommonIfInst<out Method, out Statement> : CommonInst<Method, Statement>
-    where Method : CommonMethod<Method, Statement>,
-          Statement : CommonInst<Method, Statement> {
-
+interface CommonIfInst : CommonInst {
     override fun <T> acceptCommonInst(visitor: CommonInst.Visitor<T>): T {
         return visitor.visitCommonIfInst(this)
     }

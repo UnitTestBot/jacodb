@@ -59,17 +59,17 @@ class UnusedVariableManager<Method, Statement>(
     private val graph: ApplicationGraph<Method, Statement>,
     private val unitResolver: UnitResolver<Method>,
 ) : Manager<UnusedVariableDomainFact, UnusedVariableEvent<Method, Statement>, Method, Statement>
-    where Method : CommonMethod<Method, Statement>,
-          Statement : CommonInst<Method, Statement> {
+    where Method : CommonMethod,
+          Statement : CommonInst {
 
     private val methodsForUnit: MutableMap<UnitType, MutableSet<Method>> = hashMapOf()
     private val runnerForUnit: MutableMap<UnitType, Runner<UnusedVariableDomainFact, Method, Statement>> = hashMapOf()
     private val queueIsEmpty = ConcurrentHashMap<UnitType, Boolean>()
 
     private val summaryEdgesStorage =
-        SummaryStorageImpl<UnusedVariableSummaryEdge<Method, Statement>, Method, Statement>()
+        SummaryStorageImpl<UnusedVariableSummaryEdge<Statement>>()
     private val vulnerabilitiesStorage =
-        SummaryStorageImpl<UnusedVariableVulnerability<Method, Statement>, Method, Statement>()
+        SummaryStorageImpl<UnusedVariableVulnerability<Statement>>()
 
     private val stopRendezvous = Channel<Unit>(Channel.RENDEZVOUS)
 
@@ -96,7 +96,8 @@ class UnusedVariableManager<Method, Statement>(
     private fun getAllCallees(method: Method): Set<Method> {
         val result: MutableSet<Method> = hashSetOf()
         for (inst in method.flowGraph().instructions) {
-            result += graph.callees(inst)
+            @Suppress("UNCHECKED_CAST")
+            result += graph.callees(inst as Statement)
         }
         return result
     }
@@ -118,7 +119,7 @@ class UnusedVariableManager<Method, Statement>(
     fun analyze(
         startMethods: List<Method>,
         timeout: Duration = 3600.seconds,
-    ): List<UnusedVariableVulnerability<Method, Statement>> = runBlocking {
+    ): List<UnusedVariableVulnerability<Statement>> = runBlocking {
         val timeStart = TimeSource.Monotonic.markNow()
 
         // Add start methods:
@@ -256,7 +257,7 @@ class UnusedVariableManager<Method, Statement>(
     override fun subscribeOnSummaryEdges(
         method: Method,
         scope: CoroutineScope,
-        handler: (Edge<UnusedVariableDomainFact, Method, Statement>) -> Unit,
+        handler: (Edge<UnusedVariableDomainFact, Statement>) -> Unit,
     ) {
         summaryEdgesStorage
             .getFacts(method)

@@ -27,7 +27,7 @@ import org.jacodb.panda.staticvm.classpath.PandaMethod
 data class PandaInstLocation(
     override val method: PandaMethod,
     override val index: Int,
-) : CommonInstLocation<PandaMethod, PandaInst> {
+) : CommonInstLocation {
     // TODO: expand like JcInstLocation
 
     override val lineNumber: Int
@@ -42,12 +42,9 @@ data class PandaInstRef(
     override fun toString(): String = index.toString()
 }
 
-sealed interface PandaInst : CommonInst<PandaMethod, PandaInst> {
+sealed interface PandaInst : CommonInst {
     override val location: PandaInstLocation
     override val operands: List<PandaExpr>
-
-    override val lineNumber: Int
-        get() = location.lineNumber
 
     override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
         return visitor.visitExternalCommonInst(this)
@@ -78,7 +75,7 @@ class PandaAssignInst(
     override val location: PandaInstLocation,
     override val lhv: PandaValue,
     override val rhv: PandaExpr,
-) : PandaInst, CommonAssignInst<PandaMethod, PandaInst> {
+) : PandaInst, CommonAssignInst {
     override val operands: List<PandaExpr>
         get() = listOf(lhv, rhv)
 
@@ -98,7 +95,7 @@ class PandaIfInst(
     val condition: PandaConditionExpr,
     val trueBranch: PandaInstRef,
     val falseBranch: PandaInstRef,
-) : PandaBranchingInst, CommonIfInst<PandaMethod, PandaInst> {
+) : PandaBranchingInst, CommonIfInst {
     override val operands: List<PandaExpr>
         get() = listOf(condition)
 
@@ -115,7 +112,7 @@ class PandaIfInst(
 class PandaGotoInst(
     override val location: PandaInstLocation,
     val target: PandaInstRef,
-) : PandaBranchingInst, CommonGotoInst<PandaMethod, PandaInst> {
+) : PandaBranchingInst, CommonGotoInst {
     override val operands: List<PandaExpr>
         get() = emptyList()
 
@@ -134,7 +131,7 @@ sealed interface PandaTerminatingInst : PandaInst
 class PandaReturnInst(
     override val location: PandaInstLocation,
     override val returnValue: PandaValue?,
-) : PandaTerminatingInst, CommonReturnInst<PandaMethod, PandaInst> {
+) : PandaTerminatingInst, CommonReturnInst {
     override val operands: List<PandaExpr>
         get() = emptyList()
 

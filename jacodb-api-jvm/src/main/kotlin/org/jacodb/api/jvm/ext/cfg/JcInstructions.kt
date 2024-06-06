@@ -69,7 +69,7 @@ object FieldRefVisitor :
         TODO("Not yet implemented")
     }
 
-    override fun defaultVisitCommonInst(inst: CommonInst<*, *>): JcFieldRef? {
+    override fun defaultVisitCommonInst(inst: CommonInst): JcFieldRef? {
         TODO("Not yet implemented")
     }
 
@@ -94,7 +94,7 @@ object ArrayAccessVisitor :
         TODO("Not yet implemented")
     }
 
-    override fun defaultVisitCommonInst(inst: CommonInst<*, *>): JcArrayAccess? {
+    override fun defaultVisitCommonInst(inst: CommonInst): JcArrayAccess? {
         TODO("Not yet implemented")
     }
 
@@ -112,7 +112,7 @@ object ArrayAccessVisitor :
 }
 
 object CallExprVisitor : JcInstVisitor.Default<JcCallExpr?> {
-    override fun defaultVisitCommonInst(inst: CommonInst<*, *>): JcCallExpr? {
+    override fun defaultVisitCommonInst(inst: CommonInst): JcCallExpr? {
         TODO("Not yet implemented")
     }
 

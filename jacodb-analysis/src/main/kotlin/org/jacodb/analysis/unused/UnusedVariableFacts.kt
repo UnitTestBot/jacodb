@@ -27,5 +27,5 @@ object UnusedVariableZeroFact : UnusedVariableDomainFact {
 
 data class UnusedVariable(
     val variable: AccessPath,
-    val initStatement: CommonInst<*, *>,
+    val initStatement: CommonInst,
 ) : UnusedVariableDomainFact

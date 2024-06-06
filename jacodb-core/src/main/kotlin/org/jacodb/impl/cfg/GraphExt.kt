@@ -239,7 +239,7 @@ open class JcExceptionResolver(
         TODO("Not yet implemented")
     }
 
-    override fun defaultVisitCommonInst(inst: CommonInst<*, *>): List<JcClassType> {
+    override fun defaultVisitCommonInst(inst: CommonInst): List<JcClassType> {
         TODO("Not yet implemented")
     }
 

@@ -16,29 +16,27 @@
 
 package org.jacodb.analysis.ifds
 
-import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonInst
 
-data class TraceGraph<Fact, Method, Statement>(
-    val sink: Vertex<Fact, Method, Statement>,
-    val sources: MutableSet<Vertex<Fact, Method, Statement>>,
-    val edges: MutableMap<Vertex<Fact, Method, Statement>, MutableSet<Vertex<Fact, Method, Statement>>>,
-    val unresolvedCrossUnitCalls: Map<Vertex<Fact, Method, Statement>, Set<Vertex<Fact, Method, Statement>>>,
-) where Method : CommonMethod<Method, Statement>,
-        Statement : CommonInst<Method, Statement> {
+data class TraceGraph<Fact, Statement : CommonInst>(
+    val sink: Vertex<Fact, Statement>,
+    val sources: MutableSet<Vertex<Fact, Statement>>,
+    val edges: MutableMap<Vertex<Fact, Statement>, MutableSet<Vertex<Fact, Statement>>>,
+    val unresolvedCrossUnitCalls: Map<Vertex<Fact, Statement>, Set<Vertex<Fact, Statement>>>,
+) {
 
     /**
      * Returns all traces from [sources] to [sink].
      */
-    fun getAllTraces(): Sequence<List<Vertex<Fact, Method, Statement>>> = sequence {
+    fun getAllTraces(): Sequence<List<Vertex<Fact, Statement>>> = sequence {
         for (v in sources) {
             yieldAll(getAllTraces(mutableListOf(v)))
         }
     }
 
     private fun getAllTraces(
-        trace: MutableList<Vertex<Fact, Method, Statement>>,
-    ): Sequence<List<Vertex<Fact, Method, Statement>>> = sequence {
+        trace: MutableList<Vertex<Fact, Statement>>,
+    ): Sequence<List<Vertex<Fact, Statement>>> = sequence {
         val v = trace.last()
         if (v == sink) {
             yield(trace.toList()) // copy list
@@ -57,8 +55,8 @@ data class TraceGraph<Fact, Method, Statement>(
      * Merges [upGraph] into this graph.
      */
     fun mergeWithUpGraph(
-        upGraph: TraceGraph<Fact, Method, Statement>,
-        entryPoints: Set<Vertex<Fact, Method, Statement>>,
+        upGraph: TraceGraph<Fact, Statement>,
+        entryPoints: Set<Vertex<Fact, Statement>>,
     ) {
         sources.addAll(upGraph.sources)
 

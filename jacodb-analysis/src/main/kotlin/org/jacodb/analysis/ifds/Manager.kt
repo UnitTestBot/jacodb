@@ -19,11 +19,10 @@ package org.jacodb.analysis.ifds
 import kotlinx.coroutines.CoroutineScope
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonInst
-import org.jacodb.api.jvm.JcMethod
 
 interface Manager<out Fact, in Event, out Method, out Statement>
-    where Method : CommonMethod<Method, Statement>,
-          Statement : CommonInst<Method, Statement> {
+    where Method : CommonMethod,
+          Statement : CommonInst {
 
     fun handleEvent(event: Event)
 
@@ -32,7 +31,7 @@ interface Manager<out Fact, in Event, out Method, out Statement>
     fun subscribeOnSummaryEdges(
         method: @UnsafeVariance Method,
         scope: CoroutineScope,
-        handler: (Edge<Fact, Method, Statement>) -> Unit,
+        handler: (Edge<Fact, Statement>) -> Unit,
     )
 }
 

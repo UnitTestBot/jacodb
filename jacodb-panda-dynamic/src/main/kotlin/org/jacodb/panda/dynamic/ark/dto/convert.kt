@@ -28,7 +28,6 @@ import org.jacodb.panda.dynamic.ark.base.BooleanType
 import org.jacodb.panda.dynamic.ark.base.CallExpr
 import org.jacodb.panda.dynamic.ark.base.CallStmt
 import org.jacodb.panda.dynamic.ark.base.CastExpr
-import org.jacodb.panda.dynamic.ark.base.ClassType
 import org.jacodb.panda.dynamic.ark.base.ConditionExpr
 import org.jacodb.panda.dynamic.ark.base.Constant
 import org.jacodb.panda.dynamic.ark.base.DeleteStmt
@@ -280,7 +279,7 @@ fun convertToArkConstant(value: ConstantDto): Constant {
 
         "undefined" -> UndefinedConstant
 
-        "unknown" -> object: Constant {
+        "unknown" -> object : Constant {
             override val type: Type
                 get() = UnknownType
 

@@ -16,8 +16,8 @@
 
 package org.jacodb.panda.dynamic.ark.model
 
-import org.jacodb.panda.dynamic.ark.graph.Cfg
 import org.jacodb.panda.dynamic.ark.base.Local
+import org.jacodb.panda.dynamic.ark.graph.Cfg
 
 // TODO
 class ArkBody(

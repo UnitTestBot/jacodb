@@ -19,6 +19,7 @@ package org.jacodb.panda.dynamic.parser
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import kotlinx.serialization.json.JsonPrimitive
 import org.jacodb.panda.dynamic.api.Mappable
 import org.jacodb.panda.dynamic.api.PandaAssignInst
 import org.jacodb.panda.dynamic.api.PandaBasicBlock
@@ -31,7 +32,6 @@ import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaParameterInfo
 import org.jacodb.panda.dynamic.api.PandaType
 import org.jacodb.panda.dynamic.api.PandaValue
-import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable
 data class Program(val classes: List<ProgramClass>) {
@@ -331,7 +331,7 @@ data class ProgramInst(
     val catchers: List<Int> = emptyList(),
     val lexenv: Int? = null,
     val lexvar: Int? = null,
-    val literals: List<JsonPrimitive>? = null
+    val literals: List<JsonPrimitive>? = null,
 ) {
 
     @Transient

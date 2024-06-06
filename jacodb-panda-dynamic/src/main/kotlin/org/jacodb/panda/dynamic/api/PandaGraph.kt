@@ -34,7 +34,7 @@ interface PandaBytecodeGraph<out Statement> : BytecodeGraph<Statement>
 
 class PandaGraph(
     override val instructions: List<PandaInst>,
-    val basicBlocks: List<PandaBasicBlock>
+    val basicBlocks: List<PandaBasicBlock>,
 ) : PandaBytecodeGraph<PandaInst> {
 
     private val predecessorMap: MutableMap<PandaInst, MutableSet<PandaInst>> = hashMapOf()

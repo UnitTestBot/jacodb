@@ -19,16 +19,18 @@ package org.jacodb.analysis.ifds
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonInst
 
-data class Edge<out Fact, out Method, out Statement>(
-    val from: Vertex<Fact, Method, Statement>,
-    val to: Vertex<Fact, Method, Statement>,
-) where Method : CommonMethod<Method, Statement>,
-        Statement : CommonInst<Method, Statement> {
-
+data class Edge<out Fact, out Statement : CommonInst>(
+    val from: Vertex<Fact, Statement>,
+    val to: Vertex<Fact, Statement>,
+)  {
     init {
         require(from.method == to.method)
     }
 
-    val method: Method
+    val method: CommonMethod
         get() = from.method
+
+    override fun toString(): String {
+        return "$from -> $to"
+    }
 }

@@ -21,7 +21,6 @@ import org.jacodb.analysis.graph.JcApplicationGraphImpl
 import org.jacodb.analysis.ifds.SingletonUnitResolver
 import org.jacodb.analysis.npe.NpeManager
 import org.jacodb.analysis.taint.TaintVulnerability
-import org.jacodb.analysis.util.JcTraits
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.api.jvm.ext.constructors
@@ -37,7 +36,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.util.*
+import java.util.StringTokenizer
 import java.util.stream.Stream
 import kotlin.time.Duration.Companion.seconds
 
@@ -197,7 +196,7 @@ class IfdsNpeTest : BaseAnalysisTest() {
         testOneMethod<NpeExamples>("nullAssignmentToCopy", emptyList())
     }
 
-    private fun findSinks(method: JcMethod): List<TaintVulnerability<JcMethod, JcInst>> {
+    private fun findSinks(method: JcMethod): List<TaintVulnerability<JcInst>> {
         val unitResolver = SingletonUnitResolver
         val manager = NpeManager(graph, unitResolver)
         return manager.analyze(listOf(method), timeout = 30.seconds)

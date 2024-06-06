@@ -32,7 +32,21 @@ import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
 import org.jacodb.panda.dynamic.api.PandaInst
 import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaProject
-import org.jacodb.taint.configuration.*
+import org.jacodb.taint.configuration.AnyArgument
+import org.jacodb.taint.configuration.Argument
+import org.jacodb.taint.configuration.AssignMark
+import org.jacodb.taint.configuration.ConstantTrue
+import org.jacodb.taint.configuration.ContainsMark
+import org.jacodb.taint.configuration.CopyAllMarks
+import org.jacodb.taint.configuration.Or
+import org.jacodb.taint.configuration.Position
+import org.jacodb.taint.configuration.RemoveMark
+import org.jacodb.taint.configuration.Result
+import org.jacodb.taint.configuration.TaintConfigurationItem
+import org.jacodb.taint.configuration.TaintMark
+import org.jacodb.taint.configuration.TaintMethodSink
+import org.jacodb.taint.configuration.TaintMethodSource
+import org.jacodb.taint.configuration.TaintPassThrough
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
@@ -92,7 +106,7 @@ class TaintSamples {
     )
 
     data class SinkResult(
-        val sink: TaintVulnerability<PandaMethod, PandaInst>,
+        val sink: TaintVulnerability<PandaInst>,
         val trace: List<PandaInst>? = null
     )
 
@@ -156,10 +170,11 @@ class TaintSamples {
                                         method = method,
                                         ruleNote = "CUSTOM SINK", // FIXME
                                         cwe = listOf(), // FIXME
-                                        condition = when(sinkPosition) {
+                                        condition = when (sinkPosition) {
                                             AnyArgument -> Or(List(method.parameters.size) {
                                                 ContainsMark(position = Argument(it), mark = TaintMark(markName))
                                             })
+
                                             else -> ContainsMark(position = sinkPosition, mark = TaintMark(markName))
                                         }
                                     )

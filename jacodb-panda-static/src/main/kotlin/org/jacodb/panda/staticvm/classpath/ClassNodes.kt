@@ -40,7 +40,7 @@ class PandaMethod(
     override val returnType: PandaType,
     val parameterTypes: List<PandaType>,
     val flags: AccessFlags,
-) : CommonMethod<PandaMethod, PandaInst> {
+) : CommonMethod {
 
     data class Parameter(
         override val type: PandaType,
