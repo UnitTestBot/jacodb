@@ -18,8 +18,10 @@
 
 package org.jacodb.analysis.graph
 
+import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.analysis.ApplicationGraph
+import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.analysis.JcApplicationGraph
@@ -27,7 +29,9 @@ import org.jacodb.api.jvm.cfg.JcInst
 
 private class BackwardApplicationGraphImpl<Method, Statement>(
     val forward: ApplicationGraph<Method, Statement>,
-) : ApplicationGraph<Method, Statement> {
+) : ApplicationGraph<Method, Statement>
+    where Method : CommonMethod,
+          Statement : CommonInst {
 
     override val project: CommonProject
         get() = forward.project
@@ -46,6 +50,8 @@ private class BackwardApplicationGraphImpl<Method, Statement>(
 
 @Suppress("UNCHECKED_CAST")
 val <Method, Statement> ApplicationGraph<Method, Statement>.reversed: ApplicationGraph<Method, Statement>
+    where Method : CommonMethod,
+          Statement : CommonInst
     get() = when (this) {
         is JcApplicationGraph -> this.reversed as ApplicationGraph<Method, Statement>
         is BackwardApplicationGraphImpl -> this.forward

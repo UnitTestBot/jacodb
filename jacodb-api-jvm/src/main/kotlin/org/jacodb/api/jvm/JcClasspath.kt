@@ -62,7 +62,7 @@ interface JcClasspath : Closeable, CommonProject {
      *
      * @return class or interface or null if there is no such class found in locations
      */
-    override fun findTypeOrNull(name: String): JcType?
+    fun findTypeOrNull(name: String): JcType?
 
     fun classTypeOf(
         jcClass: JcClassOrInterface,

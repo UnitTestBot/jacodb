@@ -47,7 +47,6 @@ import org.jacodb.api.common.ext.callExpr
 import org.jacodb.api.jvm.JcArrayType
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcMethod
-import org.jacodb.api.jvm.JcType
 import org.jacodb.api.jvm.cfg.JcArgument
 import org.jacodb.api.jvm.cfg.JcAssignInst
 import org.jacodb.api.jvm.cfg.JcCallExpr
@@ -107,8 +106,8 @@ class ForwardNpeFlowFunctions<Method, Statement>(
 
         // Possibly null arguments:
         for (p in method.parameters.filter { it.isNullable != false }) {
-            val t = cp.findTypeOrNull(p.type.typeName)!!
-            val arg = JcArgument.of(p.index, p.name, t as JcType)
+            val t = (cp as JcClasspath).findTypeOrNull(p.type.typeName)!!
+            val arg = JcArgument.of(p.index, p.name, t)
             val path = arg.toPath()
             add(Tainted(path, TaintMark.NULLNESS))
         }

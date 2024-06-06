@@ -99,7 +99,7 @@ class ForwardTaintFlowFunctions<Method, Statement>(
     // private fun CommonExpr.toPathOrNull(): AccessPath? = traits.toPathOrNull(this)
     // private fun CommonValue.toPath(): AccessPath = traits.toPath(this)
 
-    internal val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
+    private val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
         val cp = cp
         if (cp is JcClasspath) {
             cp.features
@@ -119,8 +119,12 @@ class ForwardTaintFlowFunctions<Method, Statement>(
         // Extract initial facts from the config:
         val config = getConfigForMethod(method)
         if (config != null) {
-            val conditionEvaluator = BasicConditionEvaluator(EntryPointPositionToValueResolver(method, cp))
-            val actionEvaluator = TaintActionEvaluator(EntryPointPositionToAccessPathResolver(method, cp))
+            val conditionEvaluator = BasicConditionEvaluator(
+                EntryPointPositionToValueResolver(method, cp)
+            )
+            val actionEvaluator = TaintActionEvaluator(
+                EntryPointPositionToAccessPathResolver(method, cp)
+            )
 
             // Handle EntryPointSource config items:
             for (item in config.filterIsInstance<TaintEntryPointSource>()) {

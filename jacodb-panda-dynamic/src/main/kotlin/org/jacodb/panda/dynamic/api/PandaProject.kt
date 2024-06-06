@@ -31,7 +31,7 @@ class PandaProject(
         }
     }
 
-    override fun findTypeOrNull(name: String): PandaType? {
+    fun findTypeOrNull(name: String): PandaType? {
         return null
     }
 
@@ -93,8 +93,6 @@ class PandaProject(
         }
         return findClassOrNull(currentClassName)?.methods?.find { it.name == name }
     }
-
-    override fun close() {}
 
     companion object {
         fun empty(): PandaProject = PandaProject(emptyList())

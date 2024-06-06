@@ -134,7 +134,7 @@ class PandaProject : CommonProject {
         program.addFlowGraphsToPandaClasspath(this)
     }
 
-    override fun findTypeOrNull(name: String): PandaType? =
+    fun findTypeOrNull(name: String): PandaType? =
         if (name.endsWith("[]")) {
             findTypeOrNull(name.removeSuffix("[]"))?.array
         } else {
@@ -159,10 +159,6 @@ class PandaProject : CommonProject {
         } else {
             throw IllegalArgumentException("Expected array type")
         }
-
-    override fun close() {
-        // Do nothing.
-    }
 
     private val flowGraphs: MutableMap<PandaMethod, PandaGraph> = hashMapOf()
 

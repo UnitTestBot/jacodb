@@ -16,12 +16,17 @@
 
 package org.jacodb.api.common.analysis
 
+import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.CommonProject
+import org.jacodb.api.common.cfg.CommonInst
 
 /**
  * Provides both CFG and call graph (i.e., the supergraph in terms of RHS95 paper).
  */
-interface ApplicationGraph<Method, Statement> {
+interface ApplicationGraph<Method, Statement>
+    where Method : CommonMethod,
+          Statement : CommonInst {
+
     val project: CommonProject
 
     fun predecessors(node: Statement): Sequence<Statement>
