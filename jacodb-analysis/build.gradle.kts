@@ -5,16 +5,16 @@ plugins {
 
 dependencies {
     api(project(":jacodb-api-jvm"))
-    api(project(":jacodb-panda-static"))
     api(project(":jacodb-core"))
     api(project(":jacodb-taint-configuration"))
+    api(project(":jacodb-panda-static"))
+    api(project(":jacodb-panda-dynamic"))
 
     implementation(Libs.kotlin_logging)
     implementation(Libs.slf4j_simple)
     implementation(Libs.kotlinx_coroutines_core)
     implementation(Libs.kotlinx_serialization_json)
     api(Libs.sarif4k)
-    api(project(":jacodb-panda-dynamic"))
 
     testImplementation(project(":jacodb-api-jvm"))
     testImplementation(testFixtures(project(":jacodb-core")))
