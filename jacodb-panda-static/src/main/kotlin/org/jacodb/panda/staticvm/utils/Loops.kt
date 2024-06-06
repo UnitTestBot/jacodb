@@ -19,7 +19,7 @@ package org.jacodb.panda.staticvm.utils
 import org.jacodb.panda.staticvm.cfg.PandaGraph
 import org.jacodb.panda.staticvm.cfg.PandaInst
 import org.jacodb.panda.staticvm.cfg.findDominators
-import java.util.*
+import java.util.ArrayDeque
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class PandaLoop(

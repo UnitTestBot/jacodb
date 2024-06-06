@@ -24,7 +24,6 @@ import org.jacodb.analysis.util.removeTrailingElementAccessors
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonValue
-import org.jacodb.api.jvm.cfg.JcInt
 import org.jacodb.api.jvm.cfg.JcValue
 import org.jacodb.api.jvm.ext.isAssignable
 import org.jacodb.taint.configuration.And
@@ -32,7 +31,6 @@ import org.jacodb.taint.configuration.AnnotationType
 import org.jacodb.taint.configuration.ConditionVisitor
 import org.jacodb.taint.configuration.ConstantEq
 import org.jacodb.taint.configuration.ConstantGt
-import org.jacodb.taint.configuration.ConstantIntValue
 import org.jacodb.taint.configuration.ConstantLt
 import org.jacodb.taint.configuration.ConstantMatches
 import org.jacodb.taint.configuration.ConstantTrue
@@ -96,7 +94,7 @@ open class BasicConditionEvaluator(
 
     override fun visit(condition: ConstantLt): Boolean {
         positionResolver.resolve(condition.position).onSome { value ->
-           return value.ltConstant(condition.value)
+            return value.ltConstant(condition.value)
         }
         return false
     }

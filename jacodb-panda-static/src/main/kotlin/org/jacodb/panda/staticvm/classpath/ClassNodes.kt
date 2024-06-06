@@ -21,7 +21,6 @@ import org.jacodb.api.common.CommonField
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.CommonMethodParameter
 import org.jacodb.panda.staticvm.cfg.PandaGraph
-import org.jacodb.panda.staticvm.cfg.PandaInst
 
 class PandaField(
     override val enclosingClass: PandaClassOrInterface,

@@ -17,13 +17,13 @@
 package org.jacodb.analysis.graph
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.api.jvm.ext.cfg.callExpr
-import org.jacodb.api.jvm.ext.isSubClassOf
 import org.jacodb.api.jvm.JcClassType
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.analysis.JcApplicationGraph
 import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.api.jvm.cfg.JcVirtualCallExpr
+import org.jacodb.api.jvm.ext.cfg.callExpr
+import org.jacodb.api.jvm.ext.isSubClassOf
 import org.jacodb.impl.cfg.JcInstLocationImpl
 import org.jacodb.impl.features.hierarchyExt
 

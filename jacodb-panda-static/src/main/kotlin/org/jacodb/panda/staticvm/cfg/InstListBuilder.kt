@@ -286,16 +286,21 @@ class InstListBuilder(
             if (block.isCatchBegin) {
                 visitor.location = IrInstLocation(block.id, 0)
                 locationMap[visitor.location] = instBuilders.size
-                val exceptionCatcher = block.insts.filterIsInstance<PandaCatchPhiInstIr>().find { it.throwers.isEmpty() }
-                exceptionCatcher?.let { push { location ->
-                    PandaCatchInst(
-                        location,
-                        result(it),
-                        throwersToCatchBlocks.predecessors(block)
-                            .flatMap { throwersLocations(it) }
-                            .map(this::linearRef)
-                    )
-                } }
+                val exceptionCatcher = block.insts
+                    .filterIsInstance<PandaCatchPhiInstIr>()
+                    .find { it.throwers.isEmpty() }
+                exceptionCatcher?.let {
+                    push { location ->
+                        PandaCatchInst(
+                            location,
+                            result(it),
+                            throwersToCatchBlocks
+                                .predecessors(block)
+                                .flatMap { throwersLocations(it) }
+                                .map(this::linearRef)
+                        )
+                    }
+                }
             }
 
             if (block.isTryBegin) {
@@ -351,7 +356,9 @@ internal fun buildLocalVariables(
     val localVarsIndex = hashMapOf<String, PandaLocalVar>()
 
     val handledType = blocks.flatMap { it.handlers }.associate {
-        it.id to (if (it.type == "finally") null else it.type)?.let(project::findTypeOrNull) }
+        val t = if (it.type == "finally") null else it.type
+        it.id to t?.let { n -> project.findTypeOrNull(n) }
+    }
 
     val varNodes = blocks.flatMap { block ->
         val outputVarBuilder = OutputVarBuilder(pandaMethod, block, handledType[block.id])

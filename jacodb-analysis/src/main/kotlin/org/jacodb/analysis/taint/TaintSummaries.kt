@@ -18,12 +18,11 @@ package org.jacodb.analysis.taint
 
 import org.jacodb.analysis.ifds.SummaryEdge
 import org.jacodb.analysis.ifds.Vulnerability
-import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.taint.configuration.TaintMethodSink
 
 data class TaintSummaryEdge<Statement : CommonInst>(
-    override val edge: TaintEdge< Statement>,
+    override val edge: TaintEdge<Statement>,
 ) : SummaryEdge<TaintDomainFact, Statement>
 
 data class TaintVulnerability<Statement : CommonInst>(

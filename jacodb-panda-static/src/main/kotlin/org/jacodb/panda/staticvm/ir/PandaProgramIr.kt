@@ -206,7 +206,7 @@ data class PandaBasicBlockIr(
     val isTryBegin: Boolean = false,
     val isTryEnd: Boolean = false,
     private val handlerIds: List<Int> = emptyList(),
-    private val handledTypes: List<String> = emptyList()
+    private val handledTypes: List<String> = emptyList(),
 ) {
     data class Handler(val id: Int, val type: String?)
 

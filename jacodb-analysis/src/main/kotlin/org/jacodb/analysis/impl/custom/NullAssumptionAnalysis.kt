@@ -32,7 +32,6 @@ import org.jacodb.api.jvm.ext.cfg.arrayRef
 import org.jacodb.api.jvm.ext.cfg.callExpr
 import org.jacodb.api.jvm.ext.cfg.fieldRef
 
-
 class NullAnalysisMap : HashMap<JcValue, NullableState> {
 
     constructor() : super()
@@ -59,7 +58,7 @@ open class NullAssumptionAnalysis(graph: JcGraph) : BackwardFlowAnalysis<JcInst,
     override fun flowThrough(
         instIn: NullAnalysisMap?,
         ins: JcInst,
-        instOut: NullAnalysisMap
+        instOut: NullAnalysisMap,
     ) {
         val out = instIn?.let { NullAnalysisMap(it) } ?: NullAnalysisMap()
 
@@ -222,7 +221,6 @@ open class NullAssumptionAnalysis(graph: JcGraph) : BackwardFlowAnalysis<JcInst,
     }
 
 }
-
 
 enum class NullableState {
     UNKNOWN,
