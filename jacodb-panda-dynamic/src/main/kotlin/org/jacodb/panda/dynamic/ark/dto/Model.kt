@@ -83,7 +83,13 @@ data class MethodDto(
     val signature: MethodSignatureDto,
     val modifiers: List<String>,
     val typeParameters: List<String>,
-    val body: List<StmtDto>,
+    val body: BodyDto,
+)
+
+@Serializable
+data class BodyDto(
+    val locals: List<LocalDto>,
+    val cfg: CfgDto,
 )
 
 @Serializable
