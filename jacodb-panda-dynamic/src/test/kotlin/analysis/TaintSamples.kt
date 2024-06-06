@@ -91,6 +91,11 @@ class TaintSamples {
         val builtInOptions: List<TaintBuiltInOption> = listOf(),
     )
 
+    data class SinkResult(
+        val sink: TaintVulnerability<PandaMethod, PandaInst>,
+        val trace: List<PandaInst>? = null
+    )
+
     class FileTaintAnalyzer(programName: String) {
         companion object : PandaTraits
 
@@ -108,7 +113,7 @@ class TaintSamples {
         //         .view("dot", "C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome")
         // }
 
-        fun analyseOneCase(caseTaintConfig: CaseTaintConfig): List<TaintVulnerability<PandaMethod, PandaInst>> {
+        fun analyseOneCase(caseTaintConfig: CaseTaintConfig, withTrace: Boolean = false): List<SinkResult> {
             val unitResolver = UnitResolver<PandaMethod> { SingletonUnit }
             val getConfigForMethod: ForwardTaintFlowFunctions<PandaMethod, PandaInst>.(PandaMethod) -> List<TaintConfigurationItem>? =
                 { method ->
@@ -210,14 +215,23 @@ class TaintSamples {
             val sinks = manager.analyze(filteredMethods, timeout = 30.seconds)
             logger.info { "Sinks: $sinks" }
 
-
-            sinks.forEach { sink ->
-                val graph = manager.vulnerabilityTraceGraph(sink)
-                val trace = graph.getAllTraces().first()
-                Assertions.assertTrue(trace.isNotEmpty())
+            val results = sinks.map { sink ->
+                SinkResult(
+                    sink,
+                    when (withTrace) {
+                        false -> null
+                        true -> {
+                            val graph = manager.vulnerabilityTraceGraph(sink)
+                            val trace = graph.getAllTraces().first()
+                            Assertions.assertTrue(trace.isNotEmpty())
+                            trace.map {
+                                it.statement
+                            }
+                        }
+                    }
+                )
             }
-
-            return sinks
+            return results
         }
     }
 
@@ -240,15 +254,15 @@ class TaintSamples {
         @Test
         fun `counterexample - print unencrypted password to console`() {
             val config = loadCaseTaintConfig("passwordLeakTaintConfig1.json")
-            val sinks = fileTaintAnalyzer.analyseOneCase(config)
-            assert(sinks.size == 1)
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(config)
+            assert(sinkResults.size == 1)
         }
 
         @Test
         fun `positive example - print encrypted password to console (with forgotten cleaner)`() {
             val config = loadCaseTaintConfig("passwordLeakTaintConfig2.json")
-            val sinks = fileTaintAnalyzer.analyseOneCase(config)
-            assert(sinks.size == 1)
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(config)
+            assert(sinkResults.size == 1)
         }
 
         // @Disabled("Cleaner config don't work as expected")
@@ -270,8 +284,8 @@ class TaintSamples {
                 startMethodNamesForAnalysis = listOf("case2")
             )
             saveSerializedConfig(config, "passwordLeakTaintConfig3.json")
-            // val sinks = fileTaintAnalyzer.analyseOneCase(config)
-            // assert(sinks.isEmpty())
+            // val sinkResults = fileTaintAnalyzer.analyseOneCase(config)
+            // assert(sinkResults.isEmpty())
         }
 
     }
@@ -284,14 +298,14 @@ class TaintSamples {
         @Test
         fun `counterexample - untrusted bound in for loop`() {
             val config = loadCaseTaintConfig("untrustedLoopBoundConfig1.json")
-            val sinks = fileTaintAnalyzer.analyseOneCase(config)
-            assert(sinks.size == 1)
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(config)
+            assert(sinkResults.size == 1)
         }
 
         @Disabled("Loop do while is not supported yet")
         @Test
         fun `counterexample - untrusted bound in do while loop`() {
-            val sinks = fileTaintAnalyzer.analyseOneCase(
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
                     sourceMethodConfigs = listOf(
                         SourceMethodConfig(
@@ -303,12 +317,12 @@ class TaintSamples {
                     builtInOptions = listOf(UntrustedLoopBoundSinkCheck)
                 )
             )
-            assert(sinks.size == 1)
+            assert(sinkResults.size == 1)
         }
 
         @Test
         fun `counterexample - untrusted bound in while loop`() {
-            val sinks = fileTaintAnalyzer.analyseOneCase(
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
                     sourceMethodConfigs = listOf(
                         SourceMethodConfig(
@@ -320,7 +334,7 @@ class TaintSamples {
                     builtInOptions = listOf(UntrustedLoopBoundSinkCheck)
                 )
             )
-            assert(sinks.size == 1)
+            assert(sinkResults.size == 1)
         }
 
     }
@@ -343,8 +357,8 @@ class TaintSamples {
                 builtInOptions = listOf(UntrustedLoopBoundSinkCheck, UntrustedArraySizeSinkCheck)
             )
             saveSerializedConfig(config, "untrustedArraySizeConfig1.json")
-            // val sinks = fileTaintAnalyzer.analyseOneCase(config)
-            // assert(sinks.size == 2)
+            // val sinkResults = fileTaintAnalyzer.analyseOneCase(config)
+            // assert(sinkResults.size == 2)
         }
 
     }
@@ -357,7 +371,7 @@ class TaintSamples {
         @Disabled("Taint marks don't pass through as expected")
         @Test
         fun `false positive - potential index out of range alert when it's not feasible`() {
-            val sinks = fileTaintAnalyzer.analyseOneCase(
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
                     sourceMethodConfigs = listOf(
                         SourceMethodConfig(
@@ -369,7 +383,7 @@ class TaintSamples {
                     builtInOptions = listOf(UntrustedIndexArrayAccessSinkCheck)
                 )
             )
-            assert(sinks.size == 2)
+            assert(sinkResults.size == 2)
         }
 
     }
@@ -381,7 +395,7 @@ class TaintSamples {
         @Disabled("IFDS do not work properly with virtual methods")
         @Test
         fun `test taint analysis on fieldSample`() {
-            val sinks = fileTaintAnalyzer.analyseOneCase(
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
                     sourceMethodConfigs = listOf(
                         SourceMethodConfig(
@@ -395,7 +409,7 @@ class TaintSamples {
                     ),
                 )
             )
-            assert(sinks.size == 2)
+            assert(sinkResults.size == 2)
         }
     }
 
@@ -408,7 +422,7 @@ class TaintSamples {
         @Disabled("There is no ability to mark method argument as tainted")
         @Test
         fun `counterexample - loop bound injection (could possibly lead to DoS if length is large)`() {
-            val sinks = fileTaintAnalyzer.analyseOneCase(
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
                     sourceMethodConfigs = listOf(
                         SourceMethodConfig(
@@ -421,7 +435,7 @@ class TaintSamples {
                     builtInOptions = listOf(UntrustedLoopBoundSinkCheck)
                 )
             )
-            assert(sinks.size == 1)
+            assert(sinkResults.size == 1)
         }
     }
 
@@ -431,7 +445,7 @@ class TaintSamples {
 
         @Test
         fun `counterexample - sql injection that lead to dropping table`() {
-            val sinks = fileTaintAnalyzer.analyseOneCase(
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
                     sourceMethodConfigs = listOf(SourceMethodConfig("getUserName")),
                     sinkMethodConfigs = listOf(
@@ -441,7 +455,7 @@ class TaintSamples {
                     ),
                 )
             )
-            assert(sinks.size == 1)
+            assert(sinkResults.size == 1)
         }
     }
 
@@ -451,7 +465,7 @@ class TaintSamples {
 
         @Test
         fun `counterexample - not validating user data lead to xss attack`() {
-            val sinks = fileTaintAnalyzer.analyseOneCase(
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
                     sourceMethodConfigs = listOf(SourceMethodConfig("getUserComment")),
                     sinkMethodConfigs = listOf(
@@ -461,7 +475,7 @@ class TaintSamples {
                     ),
                 )
             )
-            assert(sinks.size == 1)
+            assert(sinkResults.size == 1)
         }
     }
 
@@ -471,7 +485,7 @@ class TaintSamples {
 
         @Test
         fun `counterexample - potential exposure of unencrypted password (false positive tho)`() {
-            val sinks = fileTaintAnalyzer.analyseOneCase(
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
                     sourceMethodConfigs = listOf(SourceMethodConfig("getUserData")),
                     sinkMethodConfigs = listOf(
@@ -482,13 +496,13 @@ class TaintSamples {
                     startMethodNamesForAnalysis = listOf("usage1")
                 )
             )
-            assert(sinks.size == 1)
+            assert(sinkResults.size == 1)
         }
 
         // TODO("fix config")
         @Test
         fun `counterexample - potential exposure of unencrypted password`() {
-            val sinks = fileTaintAnalyzer.analyseOneCase(
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
                     sourceMethodConfigs = listOf(SourceMethodConfig("getUserData")),
                     sinkMethodConfigs = listOf(
@@ -499,13 +513,13 @@ class TaintSamples {
                     startMethodNamesForAnalysis = listOf("usage2")
                 )
             )
-            assert(sinks.size == 1)
+            assert(sinkResults.size == 1)
         }
 
         @Disabled("Temporary test. For debug purposes only.")
         @Test
         fun `debug test`() {
-            val sinks = fileTaintAnalyzer.analyseOneCase(
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
                     sourceMethodConfigs = listOf(SourceMethodConfig("getUserData")),
                     sinkMethodConfigs = listOf(
@@ -518,7 +532,7 @@ class TaintSamples {
                     startMethodNamesForAnalysis = listOf("usage3")
                 )
             )
-            assert(sinks.size == 1)
+            assert(sinkResults.size == 1)
         }
     }
 }

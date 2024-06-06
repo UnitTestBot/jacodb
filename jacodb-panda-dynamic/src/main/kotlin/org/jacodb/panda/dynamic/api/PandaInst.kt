@@ -40,7 +40,7 @@ class PandaInstLocation(
     override val index: Int
         get() = _index
 
-    override fun toString(): String = "method.$index"
+    override fun toString(): String = "${method.name}.$index"
 }
 
 data class PandaInstRef(
