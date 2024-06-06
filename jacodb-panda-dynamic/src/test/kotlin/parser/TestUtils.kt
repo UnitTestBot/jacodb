@@ -16,7 +16,6 @@
 
 package parser
 
-import analysis.TaintSamples
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
@@ -40,6 +39,7 @@ import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
 import org.jacodb.taint.configuration.actionModule
 import org.jacodb.taint.configuration.conditionModule
+import org.jacodb.panda.taint.CaseTaintConfig
 import java.io.File
 
 fun loadIr(filePath: String): IRParser {
@@ -153,10 +153,10 @@ object DumpIrToDot {
     }
 }
 
-fun loadCaseTaintConfig(filename: String): TaintSamples.CaseTaintConfig {
+fun loadCaseTaintConfig(filename: String): CaseTaintConfig {
     val configResource = object {}::class.java.getResourceAsStream("/samples/taintConfigs/$filename")
         ?: error("Could not load config from '$filename'")
     val configJson = configResource.bufferedReader().readText()
-    val config: TaintSamples.CaseTaintConfig = Json.decodeFromString(configJson)
+    val config: CaseTaintConfig = Json.decodeFromString(configJson)
     return config
 }
