@@ -16,32 +16,28 @@
 
 package org.jacodb.api.jvm
 
-import org.jacodb.api.common.CommonArrayType
-import org.jacodb.api.common.CommonClassType
-import org.jacodb.api.common.CommonRefType
 import org.jacodb.api.common.CommonType
-import org.jacodb.api.common.CommonTypedField
-import org.jacodb.api.common.CommonTypedMethod
-import org.jacodb.api.common.CommonTypedMethodParameter
-import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.api.jvm.ext.objectClass
 import org.objectweb.asm.tree.LocalVariableNode
 
-interface JcTypedField : JcAccessible, CommonTypedField {
-    override val field: JcField
-    override val type: JcType
+interface JcTypedField : JcAccessible {
+    val field: JcField
+    val name: String
+    val type: JcType
     val enclosingType: JcRefType
 }
 
-interface JcTypedMethod : JcAccessible, CommonTypedMethod<JcMethod, JcInst> {
-    override val returnType: JcType
+// CommonTypedMethod<JcMethod, JcInst>
+interface JcTypedMethod : JcAccessible {
+    val name: String
+    val returnType: JcType
 
     val typeParameters: List<JcTypeVariableDeclaration>
     val typeArguments: List<JcRefType>
 
-    override val parameters: List<JcTypedMethodParameter>
+    val parameters: List<JcTypedMethodParameter>
     val exceptions: List<JcRefType>
-    override val method: JcMethod
+    val method: JcMethod
 
     val enclosingType: JcRefType
 
@@ -49,10 +45,11 @@ interface JcTypedMethod : JcAccessible, CommonTypedMethod<JcMethod, JcInst> {
 
 }
 
-interface JcTypedMethodParameter : CommonTypedMethodParameter {
-    override val type: JcType
-    override val name: String?
-    override val enclosingMethod: JcTypedMethod
+// CommonTypedMethodParameter
+interface JcTypedMethodParameter {
+    val type: JcType
+    val name: String?
+    val enclosingMethod: JcTypedMethod
 }
 
 interface JcType : CommonType {
@@ -67,20 +64,21 @@ interface JcPrimitiveType : JcType {
         get() = false
 }
 
-interface JcRefType : JcType, CommonRefType {
+interface JcRefType : JcType {
     val jcClass: JcClassOrInterface
 
     fun copyWithNullability(nullability: Boolean?): JcRefType
 }
 
-interface JcArrayType : JcRefType, CommonArrayType {
-    override val elementType: JcType
+interface JcArrayType : JcRefType {
+    val elementType: JcType
+    val dimensions: Int
 
     override val jcClass: JcClassOrInterface
         get() = classpath.objectClass
 }
 
-interface JcClassType : JcRefType, JcAccessible, CommonClassType {
+interface JcClassType : JcRefType, JcAccessible {
 
     val outerType: JcClassType?
 
@@ -126,7 +124,6 @@ interface JcUnboundWildcard : JcRefType {
         get() = classpath.objectClass
 
     override fun copyWithAnnotations(annotations: List<JcAnnotation>): JcType = this
-
 }
 
 interface JcTypeVariableDeclaration {

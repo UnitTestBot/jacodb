@@ -17,7 +17,7 @@
 package org.jacodb.api.jvm
 
 import org.jacodb.api.common.CommonClass
-import org.jacodb.api.common.CommonClassField
+import org.jacodb.api.common.CommonField
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.CommonMethodParameter
 import org.jacodb.api.common.CommonTypeName
@@ -40,7 +40,7 @@ interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible, CommonClass {
     val declaredFields: List<JcField>
     val declaredMethods: List<JcMethod>
 
-    override val simpleName: String
+    val simpleName: String
     val signature: String?
     val isAnonymous: Boolean
 
@@ -140,19 +140,17 @@ interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible, CommonMethod<JcM
 
 }
 
-interface JcField : JcAnnotatedSymbol, JcAccessible, CommonClassField {
+interface JcField : JcAnnotatedSymbol, JcAccessible, CommonField {
     override val enclosingClass: JcClassOrInterface
     override val type: TypeName
-    override val signature: String?
+    val signature: String?
 }
 
 interface JcParameter : JcAnnotated, JcAccessible, CommonMethodParameter {
-    /*override*/ val type: TypeName
-    /*override*/ val name: String?
-    /*override*/ val index: Int
-    /*override*/ val method: JcMethod
+    override val type: TypeName
+    val name: String?
+    val index: Int
+    val method: JcMethod
 }
 
-interface TypeName : CommonTypeName {
-    override val typeName: String
-}
+interface TypeName : CommonTypeName

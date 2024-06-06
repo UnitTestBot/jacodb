@@ -394,12 +394,12 @@ fun convertToArkMethodParameter(param: MethodParameterDto): MethodParameter {
 fun convertToArkMethod(method: MethodDto): ArkMethod {
     return ArkMethodImpl(
         signature = MethodSignature(
+            enclosingClass = convertToArkClassSignature(method.signature.enclosingClass),
             sub = MethodSubSignature(
                 name = method.signature.name,
                 parameters = method.signature.parameters.map { convertToArkMethodParameter(it) },
                 returnType = convertToArkType(method.signature.returnType)
-            ),
-            enclosingClass = convertToArkClassSignature(method.signature.enclosingClass)
+            )
         ),
         body = method.body.map { convertToArkStmt(it) }
     )

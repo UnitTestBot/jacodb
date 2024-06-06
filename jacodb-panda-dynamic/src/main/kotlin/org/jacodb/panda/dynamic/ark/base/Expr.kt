@@ -260,7 +260,7 @@ interface CallExpr : Expr {
     val args: List<Value>
 
     override val type: Type
-        get() = method.sub.returnType
+        get() = method.returnType
 }
 
 data class InstanceCallExpr(
@@ -269,7 +269,7 @@ data class InstanceCallExpr(
     override val args: List<Value>,
 ) : CallExpr {
     override fun toString(): String {
-        return "$instance.${method.sub.name}(${args.joinToString()})"
+        return "$instance.${method.name}(${args.joinToString()})"
     }
 
     override fun <R> accept(visitor: Expr.Visitor<R>): R {
@@ -282,7 +282,7 @@ data class StaticCallExpr(
     override val args: List<Value>,
 ) : CallExpr {
     override fun toString(): String {
-        return "${method.enclosingClass}::${method.sub.name}(${args.joinToString()})"
+        return "${method.enclosingClass.name}.${method.name}(${args.joinToString()})"
     }
 
     override fun <R> accept(visitor: Expr.Visitor<R>): R {

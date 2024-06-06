@@ -19,7 +19,6 @@ package org.jacodb.analysis.util
 import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.FieldAccessor
-import org.jacodb.analysis.ifds.PandaFieldAccessor
 import org.jacodb.analysis.util.getArgument
 import org.jacodb.analysis.util.toPathOrNull
 import org.jacodb.api.common.CommonMethodParameter
@@ -171,22 +170,23 @@ fun PandaValue.toPathOrNull(): AccessPath? = when (this) {
     is PandaFieldRef -> {
         val instance = instance
         if (instance == null) {
-            AccessPath(null, listOf(FieldAccessor(classField)))
+            AccessPath(null, listOf(FieldAccessor(classField.name, isStatic = true)))
         } else {
             instance.toPathOrNull()?.let {
-                it + FieldAccessor(classField)
+                it + FieldAccessor(classField.name)
             }
         }
     }
 
     is PandaValueByInstance -> {
+        // TODO: handle static?
         instance.toPathOrNull()?.let {
-            it + PandaFieldAccessor(PandaField(property,  PandaTypeName(typeName), null))
+            it + FieldAccessor(property)
         }
     }
 
     is PandaLoadedValue -> {
-        when(className) {
+        when (className) {
             "console" -> instance.toPathOrNull()
             else -> TODO("Not implemented yet")
         }

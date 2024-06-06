@@ -16,7 +16,6 @@
 
 package org.jacodb.api.jvm.cfg
 
-import org.jacodb.api.common.CommonClassField
 import org.jacodb.api.common.cfg.CommonArgument
 import org.jacodb.api.common.cfg.CommonArrayAccess
 import org.jacodb.api.common.cfg.CommonAssignInst
@@ -32,6 +31,7 @@ import org.jacodb.api.common.cfg.CommonInstanceCallExpr
 import org.jacodb.api.common.cfg.CommonReturnInst
 import org.jacodb.api.common.cfg.CommonThis
 import org.jacodb.api.common.cfg.CommonValue
+import org.jacodb.api.jvm.JcField
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.JcType
 import org.jacodb.api.jvm.JcTypedField
@@ -907,7 +907,7 @@ data class JcFieldRef(
     override val type: JcType
         get() = this.field.type
 
-    override val classField: CommonClassField
+    override val classField: JcField
         get() = this.field.field
 
     override val operands: List<JcValue>

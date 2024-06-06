@@ -95,8 +95,9 @@ data class ProgramClass(
     val properties: List<ProgramProperty> = emptyList(),
 ) {
     @Transient
-    val superClass: String = ""
+    val superClass: String = "" // TODO
 
+    // TODO: remove 'program' property from Class, it is not necessary
     @Transient
     lateinit var program: Program
         internal set
@@ -136,7 +137,7 @@ class ProgramMethod(
         internal set
 
     @Transient
-    val idToMappable: MutableMap<Int, Mappable> = mutableMapOf()
+    val idToMappable: MutableMap<Int, Mappable> = hashMapOf()
 
     @Transient
     val instBuilders: MutableList<PandaInstBuilder> = mutableListOf()
@@ -147,14 +148,14 @@ class ProgramMethod(
 
     // ArkTS id -> Panda input
     @Transient
-    val idToInputs: MutableMap<Int, MutableList<PandaValue?>> = mutableMapOf()
+    val idToInputs: MutableMap<Int, MutableList<PandaValue?>> = hashMapOf()
 
     @Transient
-    val idToIRInputs: MutableMap<Int, MutableList<ProgramInst>> = mutableMapOf()
+    val idToIRInputs: MutableMap<Int, MutableList<ProgramInst>> = hashMapOf()
 
     // ArkTS bb id -> bb
     @Transient
-    val idToBB: MutableMap<Int, PandaBasicBlock> = mutableMapOf()
+    val idToBB: MutableMap<Int, PandaBasicBlock> = hashMapOf()
 
     @Transient
     val pandaMethod: PandaMethod = PandaMethod(name)
@@ -169,10 +170,10 @@ class ProgramMethod(
     var currentId = -1
 
     @Transient
-    private val idToInst: MutableMap<Int, ProgramInst> = mutableMapOf()
+    private val idToInst: MutableMap<Int, ProgramInst> = hashMapOf()
 
     @Transient
-    val nameToLocalVarId: MutableMap<String, PandaValue> = mutableMapOf()
+    val nameToLocalVarId: MutableMap<String, PandaValue> = hashMapOf()
 
     @Transient
     var paramTypes: MutableList<PandaType> = mutableListOf()

@@ -22,14 +22,12 @@ class PandaProject(
     val classes: List<PandaClass>,
 ) : CommonProject {
 
-    // private val std = PandaStdLib
-
     init {
-        classes.forEach { clazz ->
-            clazz.methods.forEach { method ->
+        for (clazz in classes) {
+            clazz.project = this
+            for (method in clazz.methods) {
                 method.project = this
             }
-            clazz.project = this
         }
     }
 
@@ -41,13 +39,13 @@ class PandaProject(
         return findClassOrNull("L_GLOBAL") ?: error("no global class")
     }
 
-//    fun findObject(name: String, currentClassName: String): PandaField {
-//        findClassOrNull(currentClassName)?.let { clazz ->
-//            return clazz.fields.find { it.name == name } ?: findObject(name, clazz.superClassName)
-//        }
-//
-//        throw IllegalStateException("couldn't find object $name starting from class $currentClassName")
-//    }
+    // fun findObject(name: String, currentClassName: String): PandaField {
+    //     findClassOrNull(currentClassName)?.let { clazz ->
+    //         return clazz.fields.find { it.name == name } ?: findObject(name, clazz.superClassName)
+    //     }
+    //
+    //     throw IllegalStateException("couldn't find object $name starting from class $currentClassName")
+    // }
 
     // fun findInstanceMethodInStd(instanceName: String, methodName: String): PandaStdMethod {
     //     std.fields.find { it.name == instanceName }?.let { obj ->
@@ -66,7 +64,11 @@ class PandaProject(
             3. Imports
             4. STD
      */
-    fun findMethodByInstanceOrEmpty(instanceName: String, methodName: String, currentClassName: String): PandaMethod {
+    fun findMethodByInstanceOrEmpty(
+        instanceName: String,
+        methodName: String,
+        currentClassName: String,
+    ): PandaMethod {
         // if (instanceName == "this") {
         return findMethodOrNull(methodName, currentClassName)
             ?: run {
@@ -75,8 +77,6 @@ class PandaProject(
         // }
         // return findInstanceMethodInStd(instanceName, methodName)
     }
-
-    fun createInstance(instanceName: String): PandaMethod = PandaMethod(instanceName)
 
     fun findClassOrNull(name: String): PandaClass? = classes.find { it.name == name }
 
@@ -88,7 +88,7 @@ class PandaProject(
             consoleLogMethod.parameterInfos = List(5) { index ->
                 PandaParameterInfo(index, PandaAnyType)
             }
-            consoleLogMethod.enclosingClass = PandaClass("console", "", listOf(consoleLogMethod))
+            consoleLogMethod.enclosingClass_ = PandaClass("console", listOf(consoleLogMethod))
             return consoleLogMethod
         }
         return findClassOrNull(currentClassName)?.methods?.find { it.name == name }
@@ -100,17 +100,3 @@ class PandaProject(
         fun empty(): PandaProject = PandaProject(emptyList())
     }
 }
-
-// class PandaObject(
-//     val name: String,
-//     val methods: List<PandaStdMethod>,
-// )
-
-// object PandaStdLib {
-//     val fields = listOf(
-//         PandaObject(
-//             "console",
-//             listOf(PandaStdMethod("log"))
-//         )
-//     )
-// }

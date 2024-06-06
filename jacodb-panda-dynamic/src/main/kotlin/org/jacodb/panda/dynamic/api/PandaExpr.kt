@@ -69,7 +69,7 @@ interface PandaCallExpr : PandaExpr, CommonCallExpr {
     override val args: List<PandaValue>
 
     override val type: PandaType
-        get() = method.type
+        get() = method.returnType
 
     override val operands: List<PandaValue>
         get() = args

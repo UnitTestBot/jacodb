@@ -27,11 +27,14 @@ import kotlin.LazyThreadSafetyMode.PUBLICATION
 class JcTypedFieldImpl(
     override val enclosingType: JcRefType,
     override val field: JcField,
-    private val substitutor: JcSubstitutor
+    private val substitutor: JcSubstitutor,
 ) : JcTypedField {
 
     override val access: Int
         get() = this.field.access
+
+    override val name: String
+        get() = this.field.name
 
     private val classpath = field.enclosingClass.classpath
     private val resolvedType by lazy(PUBLICATION) {
@@ -44,13 +47,14 @@ class JcTypedFieldImpl(
         val type = resolvedType?.let {
             classpath.typeOf(substitutor.substitute(it))
         } ?: classpath.findTypeOrNull(field.type.typeName)?.copyWithAnnotations(
-            (field as? JcFieldImpl)?.typeAnnotationInfos?.map { JcAnnotationImpl(it, field.enclosingClass.classpath) } ?: listOf()
+            (field as? JcFieldImpl)?.typeAnnotationInfos?.map {
+                JcAnnotationImpl(it, field.enclosingClass.classpath)
+            } ?: listOf()
         ) ?: typeName.throwClassNotFound()
 
         field.isNullable?.let {
             (type as? JcRefType)?.copyWithNullability(it)
         } ?: type
     }
-
 
 }

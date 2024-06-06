@@ -187,10 +187,10 @@ fun JcValue.toPathOrNull(): AccessPath? = when (this) {
         val instance = instance
         if (instance == null) {
             require(field.isStatic) { "Expected static field" }
-            AccessPath(null, listOf(FieldAccessor(field.field)))
+            AccessPath(null, listOf(FieldAccessor(field.name, isStatic = true)))
         } else {
             instance.toPathOrNull()?.let {
-                it + FieldAccessor(field.field)
+                it + FieldAccessor(field.name)
             }
         }
     }

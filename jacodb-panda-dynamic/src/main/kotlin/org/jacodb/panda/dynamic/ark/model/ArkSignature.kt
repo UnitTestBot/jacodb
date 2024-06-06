@@ -81,17 +81,24 @@ data class FieldSubSignature(
 
 data class MethodSignature(
     val enclosingClass: ClassSignature,
-    val sub: MethodSubSignature,
+    val name: String,
+    val parameters: List<MethodParameter>,
+    val returnType: Type,
 ) {
-    val name: String
-        get() = sub.name
-    val parameters: List<MethodParameter>
-        get() = sub.parameters
-    val returnType: Type
-        get() = sub.returnType
+
+    constructor(
+        enclosingClass: ClassSignature,
+        sub: MethodSubSignature,
+    ) : this(
+        enclosingClass,
+        sub.name,
+        sub.parameters,
+        sub.returnType,
+    )
 
     override fun toString(): String {
-        return "${enclosingClass.name}::$sub"
+        val params = parameters.joinToString()
+        return "${enclosingClass.name}::$name($params): $returnType"
     }
 }
 

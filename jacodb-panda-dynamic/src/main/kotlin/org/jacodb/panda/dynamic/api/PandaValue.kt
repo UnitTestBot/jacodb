@@ -198,7 +198,9 @@ data class PandaFieldRef(
     override val operands: List<PandaValue>
         get() = listOfNotNull(instance)
 
-    override fun toString(): String = "${instance ?: classField.enclosingClass.simpleName}.${classField.name}"
+    override fun toString(): String {
+        return "${instance ?: classField.enclosingClass?.simpleName}.${classField.name}"
+    }
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaFieldRef(this)

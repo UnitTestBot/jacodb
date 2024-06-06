@@ -17,24 +17,20 @@
 package org.jacodb.panda.staticvm.classpath
 
 import org.jacodb.api.common.CommonClass
-import org.jacodb.api.common.CommonClassField
+import org.jacodb.api.common.CommonField
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.CommonMethodParameter
-import org.jacodb.api.common.CommonTypedField
 import org.jacodb.panda.staticvm.cfg.PandaGraph
 import org.jacodb.panda.staticvm.cfg.PandaInst
 
 class PandaField(
-    override val name: String,
     override val enclosingClass: PandaClassOrInterface,
+    override val name: String,
     override val type: PandaType,
     val flags: AccessFlags,
-) : CommonClassField, CommonTypedField {
-    override val signature: String
+) : CommonField {
+    val signature: String
         get() = "${enclosingClass.name}.$name"
-
-    override val field: CommonClassField
-        get() = this
 }
 
 class PandaMethod(
@@ -47,17 +43,18 @@ class PandaMethod(
 ) : CommonMethod<PandaMethod, PandaInst> {
 
     data class Parameter(
-        /*override*/ val type: PandaType,
-        /*override*/ val index: Int,
-        /*override*/ val method: PandaMethod,
+        override val type: PandaType,
+        val index: Int,
+        // val method: PandaMethod,
     ) : CommonMethodParameter {
-        /*override*/ val name: String?
+        val name: String?
             get() = null
     }
 
     override val parameters: List<Parameter>
         get() = parameterTypes.mapIndexed { index, typeName ->
-            Parameter(typeName, index, this)
+            // Parameter(typeName, index, this)
+            Parameter(typeName, index)
         }
 
     override fun flowGraph(): PandaGraph {
@@ -74,12 +71,10 @@ class PandaMethod(
 sealed interface PandaClassOrInterface : CommonClass {
     override val project: PandaProject
 
-    /** qualified class/interface name */
     override val name: String
 
-    // TODO: remove package prefix from 'name'
-    override val simpleName: String
-        get() = name
+    val simpleName: String
+        get() = name.substringAfterLast('.')
 
     val directSuperClass: PandaClass?
     val directSuperInterfaces: Set<PandaInterface>

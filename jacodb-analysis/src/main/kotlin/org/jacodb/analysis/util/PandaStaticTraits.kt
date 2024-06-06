@@ -39,8 +39,8 @@ import org.jacodb.analysis.util.getArgument as _getArgument
 import org.jacodb.analysis.util.getArgumentsOf as _getArgumentsOf
 import org.jacodb.analysis.util.thisInstance as _thisInstance
 import org.jacodb.analysis.util.toPath as _toPath
-import org.jacodb.analysis.util.toPaths as _toPaths
 import org.jacodb.analysis.util.toPathOrNull as _toPathOrNull
+import org.jacodb.analysis.util.toPaths as _toPaths
 
 /**
  * Panda-specific extensions for analysis.
@@ -186,10 +186,10 @@ fun PandaValue.toPathOrNull(): AccessPath? = when (this) {
     is PandaFieldRef -> {
         val instance = instance
         if (instance == null) {
-            AccessPath(null, listOf(FieldAccessor(classField)))
+            AccessPath(null, listOf(FieldAccessor(classField.name, isStatic = true)))
         } else {
             instance.toPathOrNull()?.let {
-                it + FieldAccessor(classField)
+                it + FieldAccessor(classField.name)
             }
         }
     }

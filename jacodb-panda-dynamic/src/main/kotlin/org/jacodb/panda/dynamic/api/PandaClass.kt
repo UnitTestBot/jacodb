@@ -17,18 +17,37 @@
 package org.jacodb.panda.dynamic.api
 
 import org.jacodb.api.common.CommonClass
-import org.jacodb.api.common.CommonClassField
+import org.jacodb.api.common.CommonField
 
 class PandaClass(
-    override val name: String,
-    val superClassName: String,
-    val methods: List<PandaMethod>,
+    val signature: PandaClassSignature,
+    val superClassName: String? = null,
+    val fields: List<PandaField> = emptyList(),
+    val methods: List<PandaMethod> = emptyList(),
 ) : CommonClass {
+
+    constructor(
+        name: String,
+        methods: List<PandaMethod> = emptyList(),
+    ) : this(
+        signature = PandaClassSignature(name),
+        methods = methods,
+    )
+
+    init {
+        for (method in methods) {
+            method.enclosingClass_ = this
+        }
+    }
+
     override lateinit var project: PandaProject
         internal set
 
-    override val simpleName: String
-        get() = name
+    override val name: String
+        get() = signature.name
+
+    val simpleName: String
+        get() = signature.simpleName
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -36,37 +55,67 @@ class PandaClass(
 
         other as PandaClass
 
-        return name == other.name
-    }
-
-    override fun hashCode(): Int {
-        return name.hashCode()
-    }
-}
-
-class PandaField(
-    override val name: String,
-    override val type: PandaTypeName,
-    override val signature: String?,
-    private val _enclosingClass: PandaClass? = null,
-) : CommonClassField {
-
-    override val enclosingClass: PandaClass
-        get() = _enclosingClass ?: error("Sorry")
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as PandaField
-
-        if (name != other.name) return false
-        // if (enclosingClass != other.enclosingClass) return false
+        if (signature != other.signature) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return name.hashCode()
+        return signature.hashCode()
+    }
+
+    override fun toString(): String {
+        return signature.toString()
+    }
+}
+
+data class PandaClassSignature(
+    val name: String,
+) {
+    val simpleName: String
+        get() = name.substringAfterLast('.')
+
+    override fun toString(): String {
+        return simpleName
+    }
+}
+
+data class PandaField(
+    val signature: PandaFieldSignature,
+) : CommonField {
+
+    constructor(
+        enclosingClassName: String,
+        name: String,
+        type: PandaType,
+    ) : this(
+        PandaFieldSignature(
+            enclosingClass = PandaClassSignature(enclosingClassName),
+            name = name,
+            type = type
+        )
+    )
+
+    override var enclosingClass: PandaClass? = null
+        internal set
+
+    override val name: String
+        get() = signature.name
+
+    override val type: PandaType
+        get() = signature.type
+
+    override fun toString(): String {
+        return signature.toString()
+    }
+}
+
+data class PandaFieldSignature(
+    val enclosingClass: PandaClassSignature,
+    val name: String,
+    val type: PandaType,
+) {
+    override fun toString(): String {
+        return "${enclosingClass.name}::$name: $type"
     }
 }

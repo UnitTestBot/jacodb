@@ -124,8 +124,8 @@ data class PandaProgramIr(
             clazz.fields.applyFold(this) { field ->
                 val fieldType = requireNotNull(findTypeOrNull(field.type))
                 val pandaField = PandaField(
-                    name = field.name,
                     enclosingClass = enclosingClass,
+                    name = field.name,
                     type = fieldType,
                     flags = AccessFlags(field.accessFlags)
                 )

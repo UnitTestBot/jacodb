@@ -16,7 +16,6 @@
 
 package org.jacodb.panda.staticvm.classpath
 
-import org.jacodb.api.common.CommonClassType
 import org.jacodb.api.common.CommonType
 import org.jacodb.api.common.CommonTypeName
 
@@ -57,7 +56,7 @@ sealed interface PandaSingleType : PandaType {
         get() = PandaArrayType(1, this)
 }
 
-sealed interface PandaObjectType : PandaSingleType, CommonClassType {
+sealed interface PandaObjectType : PandaSingleType {
     val project: PandaProject
 
     val pandaClassOrInterface: PandaClassOrInterface

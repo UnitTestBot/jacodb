@@ -19,14 +19,22 @@ package org.jacodb.panda.dynamic.api
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.CommonMethodParameter
 
-open class PandaMethod(
+class PandaMethod(
     override val name: String,
 ) : CommonMethod<PandaMethod, PandaInst> {
 
-    override lateinit var enclosingClass: PandaClass
+    lateinit var project: PandaProject
         internal set
 
-    lateinit var project: PandaProject
+    // TODO: replace with lateinit var
+    @Suppress("PropertyName")
+    internal var enclosingClass_: PandaClass? = null
+    override val enclosingClass: PandaClass
+        get() = enclosingClass_ ?: error("Enclosing class not set")
+    // TODO
+    // override val enclosingClass: PandaClass
+    //     get() = project.classes.find { it.name == className } ?: project.getGlobalClass()
+
     var blocks: List<PandaBasicBlock> = emptyList()
         internal set(value) {
             field = value
@@ -41,29 +49,23 @@ open class PandaMethod(
         internal set
     var className: String? = null
         internal set
-    var type: PandaType = PandaAnyType
-        internal set
 
     var localVarsCount: Int = 0
         internal set
 
-    private var flowGraph: PandaGraph? = null
-    //
-    // override val enclosingClass: PandaClass
-    //     get() = project.classes.find { it.name == className } ?: project.getGlobalClass()
-
-    override val returnType: PandaTypeName
-        get() = PandaTypeName(type.typeName)
-
     override val parameters: List<PandaMethodParameter>
         get() = parameterInfos.map {
             PandaMethodParameter(
-                PandaTypeName(it.type.typeName),
-                "arg${it.index}",
                 it.index,
-                this
+                "arg${it.index}",
+                PandaNamedType(it.type.typeName),
             )
         }
+
+    override val returnType: PandaType
+        get() = PandaAnyType
+
+    private var flowGraph: PandaGraph? = null
 
     override fun flowGraph(): PandaGraph {
         if (flowGraph == null) {
@@ -72,12 +74,6 @@ open class PandaMethod(
         return flowGraph!!
     }
 
-    private val signature: String
-        get() = parameterInfos.joinToString(separator = ", ") {
-            "arg ${it.index}: ${it.type.typeName}"
-        }
-
-    override fun toString(): String = "function ${enclosingClass.name}::$name($signature): $returnType"
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -87,7 +83,7 @@ open class PandaMethod(
         if (name != other.name) return false
         if (parameterInfos != other.parameterInfos) return false
         // TODO waiting for support
-//        if (enclosingClass != other.enclosingClass) return false
+        // if (enclosingClass != other.enclosingClass) return false
 
         return true
     }
@@ -96,24 +92,27 @@ open class PandaMethod(
         var result = name.hashCode()
         result = 31 * result + parameterInfos.hashCode()
         // TODO waiting for support
-//        result = 31 * result + enclosingClass.hashCode()
+        // result = 31 * result + enclosingClass.hashCode()
         return result
     }
-}
 
-// class PandaStdMethod(
-//     name: String,
-//     // enclosingClass: PandaClass,
-// ) : PandaMethod(name)
+    override fun toString(): String {
+        val params = parameters.joinToString()
+        return "$name($params): $returnType"
+    }
+}
 
 class PandaParameterInfo(
     val index: Int,
     val type: PandaType,
 )
 
-class PandaMethodParameter(
-    /*override*/ val type: PandaTypeName,
-    /*override*/ val name: String?,
-    /*override*/ val index: Int,
-    /*override*/ val method: PandaMethod,
-) : CommonMethodParameter
+data class PandaMethodParameter(
+    val index: Int,
+    val name: String?,
+    override val type: PandaType,
+) : CommonMethodParameter {
+    override fun toString(): String {
+        return "${name ?: "arg$index"}: ${type.typeName}"
+    }
+}

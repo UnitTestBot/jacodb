@@ -164,7 +164,7 @@ class PandaThrowInst(
 class PandaPhiInst(
     override val location: PandaInstLocation,
     val lhv: PandaValue,
-    val phiInputs: List<PhiInput>
+    val phiInputs: List<PhiInput>,
 ) : PandaInst {
     data class PhiInput(val value: PandaValue, val cfgBranch: PandaInstRef)
 
@@ -190,7 +190,7 @@ class PandaCatchInst(
 
 class PandaTryPseudoInst(
     override val location: PandaInstLocation,
-    val catchers: List<PandaInstRef>
+    val catchers: List<PandaInstRef>,
 ) : PandaInst {
     override val operands: List<PandaExpr>
         get() = emptyList()

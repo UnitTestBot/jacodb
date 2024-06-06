@@ -129,19 +129,20 @@ class IRParser(
     private fun mapMethods(program: Program): List<PandaClass> {
         return program.classes.map { clazz ->
             val pandaMethods = clazz.properties.map { property ->
-                property.method.also { method ->
-                    val pandaMethod = method.pandaMethod
-                    pandaMethod.blocks = method.idToBB.values.toList()
-                    pandaMethod.instructions = method.insts
-                    pandaMethod.parameterInfos = method.parameters
-                    pandaMethod.className = clazz.name
-                    pandaMethod.localVarsCount = method.currentLocalVarId + 1
-                }.pandaMethod
+                val method = property.method
+                method.pandaMethod.also { it ->
+                    it.blocks = method.idToBB.values.toList()
+                    it.instructions = method.insts
+                    it.parameterInfos = method.parameters
+                    it.className = clazz.name
+                    it.localVarsCount = method.currentLocalVarId + 1
+                }
             }
-            val pandaClass = PandaClass(clazz.name, clazz.superClass, pandaMethods)
-            pandaMethods.forEach {
-                it.enclosingClass = pandaClass
-            }
+            val pandaClass = PandaClass(
+                signature = PandaClassSignature(clazz.name),
+                superClassName = clazz.superClass,
+                methods = pandaMethods,
+            )
             pandaClass
         }
     }
@@ -665,9 +666,9 @@ class IRParser(
                     val literalValue = literals[i + 1].content
                     val value = handleLiteralValue(literalType, literalValue)
                     val arrayAccess = PandaArrayAccess(
-                        array=lv,
-                        index=PandaNumberConstant(i / 2),
-                        type=PandaAnyType
+                        array = lv,
+                        index = PandaNumberConstant(i / 2),
+                        type = PandaAnyType
                     )
                     val assignment = PandaAssignInst(locationFromOp(this), arrayAccess, value)
                     method.pushInst(assignment)
@@ -1213,8 +1214,8 @@ class IRParser(
         else -> TODOConstant(op.value.toString())
     }
 
-    private fun handleLiteralValue(literalType: Int, literalValue: String) : PandaValue {
-        return when(literalType) {
+    private fun handleLiteralValue(literalType: Int, literalValue: String): PandaValue {
+        return when (literalType) {
             1 -> PandaBoolConstant(literalValue.toBoolean())
             2 -> PandaNumberConstant(literalValue.toInt())
             5 -> PandaStringConstant(literalValue)
