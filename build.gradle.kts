@@ -164,6 +164,7 @@ if (!repoUrl.isNullOrEmpty()) {
             project(":jacodb-taint-configuration"),
             project(":jacodb-panda-dynamic"),
             project(":jacodb-panda-static"),
+            project(":jacodb-panda-analysis")
         )
     ) {
         tasks {
