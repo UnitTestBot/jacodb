@@ -96,7 +96,8 @@ class UniRunner<Fact, Event, Method, Statement>(
         edge: Edge<Fact, Statement>,
         reason: Reason<Fact, Statement>,
     ): Boolean {
-        require(unitResolver.resolve(graph.methodOf(edge.from.statement)) == unit) {
+        val method = graph.methodOf(edge.from.statement)
+        require(unitResolver.resolve(method) == unit) {
             "Propagated edge must be in the same unit"
         }
 
@@ -109,9 +110,7 @@ class UniRunner<Fact, Event, Method, Statement>(
             if (!doPrintOnlyForward || edge.from.statement is JcNoopInst) {
                 if (doPrintZero || edge.to.fact != TaintZeroFact) {
                     logger.trace {
-                        "Propagating edge=${edge} in method=${
-                            graph.methodOf(edge.from.statement).name
-                        } with reason=${reason}"
+                        "Propagating edge=${edge} in method=${method.name} with reason=${reason}"
                     }
                 }
             }
