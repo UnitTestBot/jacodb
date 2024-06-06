@@ -175,9 +175,12 @@ data class CastExprDto(
 @SerialName("PhiExpr")
 data class PhiExprDto(
     val args: List<ValueDto>,
-    // val argToBlock: Map<Value, BasicBlock>, // TODO
-    override val type: String,
-) : ExprDto
+    val blocks: List<Int>,
+    // override val type: String, // TODO
+) : ExprDto {
+    override val type: String
+        get() = args.first().type
+}
 
 @Serializable
 @SerialName("ArrayLiteralExpr")
