@@ -189,13 +189,14 @@ data class ArrayLiteralDto(
     override val type: String,
 ) : ExprDto
 
-// @Serializable
-// @SerialName("ObjectLiteralExpr")
-// data class ObjectLiteral(
-//     val keys: List<String>,
-//     val values: List<Value>,
-//     override val type: Type,
-// ) : Expr
+@Serializable
+@SerialName("ObjectLiteralExpr")
+// TODO: keys and values
+data class ObjectLiteral(
+    // val keys: List<String>,
+    // val values: List<Value>,
+    override val type: String,
+) : ExprDto
 
 @Serializable
 sealed interface UnaryExprDto : ExprDto {
