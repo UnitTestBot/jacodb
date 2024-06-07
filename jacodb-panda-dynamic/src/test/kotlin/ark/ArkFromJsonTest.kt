@@ -79,6 +79,7 @@ class ArkFromJsonTest {
                 fieldType = "number",
             ),
             modifiers = emptyList(),
+            typeParameters = emptyList(),
             isOptional = true,
             isDefinitelyAssigned = false,
             initializer = ConstantDto("0", "number"),
@@ -109,23 +110,35 @@ class ArkFromJsonTest {
     @Test
     fun testLoadMethodFromJson() {
         val jsonString = """
-            {
-              "signature": {
-                "enclosingClass": {
-                  "name": "_DEFAULT_ARK_CLASS"
-                },
-                "name": "_DEFAULT_ARK_METHOD",
-                "parameters": [],
-                "returnType": "unknown"
-              },
-              "modifiers": [],
-              "typeParameters": [],
-              "body": [
-                {
-                  "_": "ReturnVoidStmt"
-                }
-              ]
-            }
+             {
+               "signature": {
+                 "enclosingClass": {
+                   "name": "_DEFAULT_ARK_CLASS"
+                 },
+                 "name": "_DEFAULT_ARK_METHOD",
+                 "parameters": [],
+                 "returnType": "unknown"
+               },
+               "modifiers": [],
+               "typeParameters": [],
+               "body": {
+                 "locals": [],
+                 "cfg": {
+                   "blocks": [
+                     {
+                       "id": 0,
+                       "successors": [],
+                       "predecessors": [],
+                       "stmts": [
+                         {
+                           "_": "ReturnVoidStmt"
+                         }
+                       ]
+                     }
+                   ]
+                 }
+               }
+             }
         """.trimIndent()
         val methodDto = Json.decodeFromString<MethodDto>(jsonString)
         println("methodDto = $methodDto")

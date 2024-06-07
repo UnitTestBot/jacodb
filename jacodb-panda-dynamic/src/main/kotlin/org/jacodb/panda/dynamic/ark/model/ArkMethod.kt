@@ -16,15 +16,15 @@
 
 package org.jacodb.panda.dynamic.ark.model
 
-import org.jacodb.panda.dynamic.ark.base.Stmt
 import org.jacodb.panda.dynamic.ark.base.Type
 
+// TODO: modifiers
+// TODO: typeParameters
 interface ArkMethod {
     val enclosingClass: ArkClass?
     val signature: MethodSignature
 
-    // val body: ArkBody // TODO
-    val body: List<Stmt>
+    val body: ArkBody
 
     val name: String
         get() = signature.name
@@ -38,20 +38,10 @@ interface ArkMethod {
 
 class ArkMethodImpl(
     override val signature: MethodSignature,
-    override val body: List<Stmt>,
+    override val body: ArkBody,
 ) : ArkMethod {
 
     override var enclosingClass: ArkClass? = null
-
-    // constructor(
-    //     enclosingClass: ArkClass,
-    //     signature: MethodSubSignature,
-    //     body: ArkBody,
-    // ) : this(
-    //     enclosingClass,
-    //     MethodSignature(enclosingClass.signature, signature),
-    //     body
-    // )
 
     override fun toString(): String {
         return signature.toString()

@@ -18,11 +18,18 @@ package org.jacodb.panda.dynamic.ark.graph
 
 import org.jacodb.panda.dynamic.ark.base.Stmt
 
-data class BasicBlock(
+class BasicBlock(
+    val id: Int,
+    val successors: List<Int>,
+    val predecessors: List<Int>,
     val stmts: List<Stmt>,
 ) {
     val head: Stmt?
         get() = stmts.firstOrNull()
     val last: Stmt?
         get() = stmts.lastOrNull()
+
+    override fun toString(): String {
+        return "BasicBlock(id: $id, succ: $successors, pred: $predecessors)"
+    }
 }

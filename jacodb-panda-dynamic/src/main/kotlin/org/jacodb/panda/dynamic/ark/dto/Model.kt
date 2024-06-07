@@ -72,6 +72,7 @@ data class ClassDto(
 @Serializable
 data class FieldDto(
     val signature: FieldSignatureDto,
+    val typeParameters: List<String>,
     val modifiers: List<String>,
     @SerialName("questionToken") val isOptional: Boolean = false, // '?'
     @SerialName("exclamationToken") val isDefinitelyAssigned: Boolean = false, // '!'

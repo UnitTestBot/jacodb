@@ -70,6 +70,9 @@ import org.jacodb.panda.dynamic.ark.base.UndefinedType
 import org.jacodb.panda.dynamic.ark.base.UnknownType
 import org.jacodb.panda.dynamic.ark.base.Value
 import org.jacodb.panda.dynamic.ark.base.VoidType
+import org.jacodb.panda.dynamic.ark.graph.BasicBlock
+import org.jacodb.panda.dynamic.ark.graph.Cfg
+import org.jacodb.panda.dynamic.ark.model.ArkBody
 import org.jacodb.panda.dynamic.ark.model.ArkClass
 import org.jacodb.panda.dynamic.ark.model.ArkClassImpl
 import org.jacodb.panda.dynamic.ark.model.ArkField
@@ -397,16 +400,17 @@ fun convertToArkMethodParameter(param: MethodParameterDto): MethodParameter {
 }
 
 fun convertToArkMethod(method: MethodDto): ArkMethod {
+    val signature = convertToArkMethodSignature(method.signature)
+    val locals = method.body.locals.map { convertToArkValue(it) as Local } // safe cast
+    val cfg = convertToArkCfg(method.body.cfg)
+    val body = ArkBody(
+        method = signature,
+        locals = locals,
+        cfg = cfg,
+    )
     return ArkMethodImpl(
-        signature = MethodSignature(
-            enclosingClass = convertToArkClassSignature(method.signature.enclosingClass),
-            sub = MethodSubSignature(
-                name = method.signature.name,
-                parameters = method.signature.parameters.map { convertToArkMethodParameter(it) },
-                returnType = convertToArkType(method.signature.returnType)
-            )
-        ),
-        body = method.body.map { convertToArkStmt(it) }
+        signature = signature,
+        body = body,
     )
 }
 
@@ -445,4 +449,16 @@ fun convertToArkFile(file: ArkFileDto): ArkFile {
         projectName = file.projectName,
         classes = classes
     )
+}
+
+fun convertToArkCfg(cfg: CfgDto): Cfg {
+    val blocks = cfg.blocks.associate { block ->
+        block.id to BasicBlock(
+            id = block.id,
+            successors = block.successors,
+            predecessors = block.predecessors,
+            stmts = block.stmts.map { convertToArkStmt(it) },
+        )
+    }
+    return Cfg(blocks)
 }

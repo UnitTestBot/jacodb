@@ -18,18 +18,17 @@ package org.jacodb.panda.dynamic.ark.graph
 
 import org.jacodb.panda.dynamic.ark.base.Stmt
 
-class Cfg {
-    val blocks: MutableList<BasicBlock> = mutableListOf()
-    val stmtToBlock: MutableMap<Int, BasicBlock> = hashMapOf()
+class Cfg(
+    val blocks: Map<Int, BasicBlock>,
+) {
+    val startingStmt: Stmt
+        get() = blocks[0]!!.stmts.first()
 
-    val startStmt: Stmt
-        get() = blocks.first().stmts.first()
-
-    fun successors(node: BasicBlock): List<BasicBlock> {
-        TODO("Not yet implemented")
+    fun successors(block: BasicBlock): List<BasicBlock> {
+        return block.successors.map { blocks[it]!! }
     }
 
-    fun predecessors(node: BasicBlock): List<BasicBlock> {
-        TODO("Not yet implemented")
+    fun predecessors(block: BasicBlock): List<BasicBlock> {
+        return block.predecessors.map { blocks[it]!! }
     }
 }

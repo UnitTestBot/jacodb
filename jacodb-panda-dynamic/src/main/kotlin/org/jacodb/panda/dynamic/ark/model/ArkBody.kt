@@ -19,9 +19,8 @@ package org.jacodb.panda.dynamic.ark.model
 import org.jacodb.panda.dynamic.ark.base.Local
 import org.jacodb.panda.dynamic.ark.graph.Cfg
 
-// TODO
 class ArkBody(
     val method: MethodSignature,
-    val cfg: Cfg,
     val locals: List<Local>,
+    val cfg: Cfg,
 )
