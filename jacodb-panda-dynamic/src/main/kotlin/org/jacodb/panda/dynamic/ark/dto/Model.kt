@@ -27,9 +27,9 @@ import java.io.InputStream
 @Serializable
 data class ArkFileDto(
     val name: String,
-    val absoluteFilePath: String,
-    val projectDir: String,
-    val projectName: String,
+    val absoluteFilePath: String? = null,
+    val projectDir: String? = null,
+    val projectName: String? = null,
     val namespaces: List<NamespaceDto>,
     val classes: List<ClassDto>,
     val importInfos: List<ImportInfoDto>,

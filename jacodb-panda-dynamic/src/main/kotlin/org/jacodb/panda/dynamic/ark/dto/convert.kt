@@ -445,9 +445,9 @@ fun convertToArkClass(clazz: ClassDto): ArkClass {
 fun convertToArkFile(file: ArkFileDto): ArkFile {
     val classes = file.classes.map { convertToArkClass(it) }
     return ArkFile(
+        name = file.name,
         path = file.absoluteFilePath,
-        projectName = file.projectName,
-        classes = classes
+        classes = classes,
     )
 }
 

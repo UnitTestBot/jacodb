@@ -1,8 +1,5 @@
 {
   "name": "basic.ts",
-  "absoluteFilePath": "/home/sapphiron/dev/ark/arkanalyzer/tests/resources/save/basic.ts",
-  "projectDir": "/home/sapphiron/dev/ark/arkanalyzer/tests/resources/save",
-  "projectName": "save",
   "namespaces": [],
   "classes": [
     {

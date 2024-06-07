@@ -1349,7 +1349,10 @@
   },
   "properties": {
     "absoluteFilePath": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "classes": {
       "items": {
@@ -1379,21 +1382,24 @@
       "type": "array"
     },
     "projectDir": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "projectName": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     }
   },
   "required": [
-    "absoluteFilePath",
     "classes",
     "exportInfos",
     "importInfos",
     "name",
-    "namespaces",
-    "projectDir",
-    "projectName"
+    "namespaces"
   ],
   "type": "object"
 }
