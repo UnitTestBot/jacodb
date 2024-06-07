@@ -40,7 +40,7 @@
         },
         "locals": {
           "items": {
-            "$ref": "#/definitions/Value.Local"
+            "$ref": "#/definitions/Local"
           },
           "type": "array"
         }
@@ -516,6 +516,21 @@
       "required": [
         "col",
         "line"
+      ],
+      "type": "object"
+    },
+    "Local": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "type"
       ],
       "type": "object"
     },
