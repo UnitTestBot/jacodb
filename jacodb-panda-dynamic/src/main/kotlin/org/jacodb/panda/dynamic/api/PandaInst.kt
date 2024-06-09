@@ -342,3 +342,6 @@ object CallExprVisitor :
 
 val PandaInst.callExpr: PandaCallExpr?
     get() = accept(CallExprVisitor)
+
+val PandaInst.recursiveOperands: List<PandaValue>
+    get() = operands.flatMap { expr -> expr.operands }
