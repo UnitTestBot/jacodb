@@ -25,7 +25,7 @@ enum class ImplicitCastAnalysisMode {
     POSSIBILITY_CHECK
 }
 
-class ImplicitCastingAnalyser(val project: PandaProject) {
+class ImplicitCastingChecker(val project: PandaProject) {
     val graph = PandaApplicationGraphImpl(project)
 
     fun analyseOneCase(

@@ -20,7 +20,18 @@ import org.jacodb.panda.dynamic.api.*
 
 private val logger = mu.KotlinLogging.logger {}
 
-class UndeclaredVariablesAnalyser(val project: PandaProject) {
+enum class VarAccess {
+    READ, WRITE
+}
+
+class UndeclaredVariablesCheckerError(
+    val varName: String,
+    val inst: PandaInst,
+    val varAccess: VarAccess,
+    val isConstant: Lazy<Boolean>
+)
+
+class UndeclaredVariablesChecker(val project: PandaProject) {
     val graph = PandaApplicationGraphImpl(project)
 
     private val orderedInstructions = mutableListOf<PandaInst>()
@@ -55,13 +66,14 @@ class UndeclaredVariablesAnalyser(val project: PandaProject) {
         orderedInstructions.reverse()
     }
 
-    // TODO(): expand for writing (trysttoglobalbyname) and constants (stconsttoglobalbyname)
-    fun analyse(): List<Pair<String, PandaInst>> {
+    fun analyse(): List<UndeclaredVariablesCheckerError> {
         topologicalSort(graph)
 
         val instToGlobalVars = mutableMapOf<PandaInst, MutableSet<String>>()
 
-        val unresolvedVariables = mutableListOf<Pair<String, PandaInst>>()
+        val isVarConstantMap = mutableMapOf<String, Boolean>()
+
+        val unresolvedVariables = mutableListOf<UndeclaredVariablesCheckerError>()
 
         for (inst in orderedInstructions) {
             var predecessorInstructions = mutableListOf<PandaInst>()
@@ -78,22 +90,77 @@ class UndeclaredVariablesAnalyser(val project: PandaProject) {
                 instToGlobalVars[inst]!!.intersect(instToGlobalVars[predecessorInst]!!)
             }
             if (inst is PandaAssignInst && inst.varName != null) {
-                instToGlobalVars[inst]!!.add(inst.varName!!)
+                val varName = inst.varName!!
+                val name = when {
+                    varName.startsWith("constant.") -> {
+                        val slicedName = varName.substring(9)
+                        isVarConstantMap[slicedName] = true
+                        slicedName
+                    }
+                    else -> varName
+                }
+                instToGlobalVars[inst]!!.add(name)
             }
-            // adhoc check for tryldglobalname, TODO(): check trysttoglobalname (for both will be cooler after better global variable processing)
+
+            // TODO("refactor after better global variable processing in IR")
+            // check for tryldglobalname
             val probablyUndefinedVarNames = inst.recursiveOperands.mapNotNull { op ->
                 if (op is PandaLoadedValue && op.instance is PandaStringConstant) {
-                    ((op.instance) as PandaStringConstant).value
+                    Pair(
+                        ((op.instance) as PandaStringConstant).value,
+                        VarAccess.READ
+                    )
                 } else null
+            }.toMutableList()
+
+            // check for trystglobalbyname
+            if (inst is PandaAssignInst && inst.lhv is PandaLoadedValue) {
+                val lhvInstance = (inst.lhv as PandaLoadedValue).instance
+                if (lhvInstance is PandaStringConstant) {
+                    probablyUndefinedVarNames.add(
+                        Pair(
+                            lhvInstance.value,
+                            VarAccess.WRITE
+                        )
+                    )
+                }
             }
 
             val stdVarNames = listOf("console") // TODO(): need more smart filter
-            probablyUndefinedVarNames.forEach { varName ->
+            probablyUndefinedVarNames.forEach { varInfo ->
+                val varName = varInfo.first
+                val varAccess = varInfo.second
                 if (varName !in stdVarNames && varName !in instToGlobalVars[inst]!!) {
-                    unresolvedVariables.add(Pair(varName, inst))
-                    logger.info { "unresolved variable $varName in $inst with location: (method:${inst.location.method}, index: ${inst.location.index})" }
+                    unresolvedVariables.add(
+                        UndeclaredVariablesCheckerError(
+                            varName = varName,
+                            inst = inst,
+                            varAccess = varAccess,
+                            isConstant = lazy {
+                                isVarConstantMap.getOrDefault(varName, false)
+                            }
+                        )
+                    )
                 }
             }
+        }
+
+        val varAccessToStr: (VarAccess) -> String = { varAccess ->
+            when(varAccess) {
+                VarAccess.WRITE -> "Write"
+                VarAccess.READ -> "Read"
+            }
+        }
+
+        val isVarConstantToString: (Boolean) -> String = { isVarConstant ->
+            when(isVarConstant) {
+                true -> "constant"
+                false -> "regular"
+            }
+        }
+
+        unresolvedVariables.forEach { err ->
+            logger.info { "${varAccessToStr(err.varAccess)} access to undeclared ${isVarConstantToString(err.isConstant.value)} variable ${err.varName} in ${err.inst} (location: ${err.inst.location})" }
         }
 
         return unresolvedVariables

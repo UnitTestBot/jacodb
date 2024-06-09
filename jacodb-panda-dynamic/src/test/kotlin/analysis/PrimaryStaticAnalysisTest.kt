@@ -16,6 +16,7 @@
 
 package analysis
 
+import org.jacodb.panda.dynamic.api.PandaProject
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -23,12 +24,16 @@ import panda.primary.*
 import parser.loadIr
 
 class PrimaryStaticAnalysisTest {
+    private fun getProjectByProgramName(programName: String): PandaProject {
+        val parser = loadIr("/samples/${programName}.json")
+        return parser.getProject()
+    }
+
     @Nested
     inner class ArgumentParameterCorrespondenceTest {
         private val programName = "codeqlSamples/parametersArgumentsMismatch"
-        private val parser = loadIr("/samples/${programName}.json")
-        private val project = parser.getProject()
-        private val analyser = ArgumentParameterMatchingAnalyser(project)
+        private val project = getProjectByProgramName(programName)
+        private val analyser = ArgumentParameterMatchingChecker(project)
 
         @Test
         fun `test for mismatch detection in regular function call`() {
@@ -74,24 +79,39 @@ class PrimaryStaticAnalysisTest {
 
     @Nested
     inner class UnresolvedVariableTest {
-        private val programName = "codeqlSamples/unresolvedVariable"
-        private val parser = loadIr("/samples/${programName}.json")
-        private val project = parser.getProject()
-        private val analyser = UndeclaredVariablesAnalyser(project)
+        private fun getAnalyserByProgramName(programName: String): UndeclaredVariablesChecker {
+            val project = getProjectByProgramName(programName)
+            val analyser = UndeclaredVariablesChecker(project)
+            return analyser
+        }
 
         @Test
         fun `counterexample - program that read some unresolved variables`() {
+            val analyser = getAnalyserByProgramName("codeqlSamples/unresolvedVariable")
             val unresolvedVariables = analyser.analyse()
             assert(unresolvedVariables.size == 4)
+        }
+
+        @Test
+        fun `counterexample - program that also write into unresolved variables`() {
+            val analyser = getAnalyserByProgramName("codeqlSamples/unresolvedVariable2")
+            val unresolvedVariables = analyser.analyse()
+            assert(unresolvedVariables.size == 3)
+        }
+
+        @Test
+        fun `counterexample - program that read undeclared const variables`() {
+            val analyser = getAnalyserByProgramName("codeqlSamples/unresolvedVariable3")
+            val unresolvedVariables = analyser.analyse()
+            assert(unresolvedVariables.size == 3)
         }
     }
 
     @Nested
     inner class ImplicitCastingTest {
         private val programName = "codeqlSamples/implicitCasting"
-        private val parser = loadIr("/samples/${programName}.json")
-        private val project = parser.getProject()
-        private val analyser = ImplicitCastingAnalyser(project)
+        private val project = getProjectByProgramName(programName)
+        private val analyser = ImplicitCastingChecker(project)
 
         @Test
         fun `test implicit casting observation in binary expressions with primitive literals`() {
@@ -132,10 +152,9 @@ class PrimaryStaticAnalysisTest {
 
     @Nested
     inner class MissingMembersTest {
-        private fun getAnalyserByProgramName(programName: String): MissingMembersAnalyser {
-            val parser = loadIr("/samples/${programName}.json")
-            val project = parser.getProject()
-            val analyser = MissingMembersAnalyser(project)
+        private fun getAnalyserByProgramName(programName: String): MissingMembersChecker {
+            val project = getProjectByProgramName(programName)
+            val analyser = MissingMembersChecker(project)
             return analyser
         }
 

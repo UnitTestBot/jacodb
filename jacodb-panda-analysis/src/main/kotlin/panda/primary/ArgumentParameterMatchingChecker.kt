@@ -20,7 +20,7 @@ import org.jacodb.panda.dynamic.api.*
 
 private val logger = mu.KotlinLogging.logger {}
 
-class ArgumentParameterMatchingAnalyser(val project: PandaProject) {
+class ArgumentParameterMatchingChecker(val project: PandaProject) {
     val graph = PandaApplicationGraphImpl(project)
 
     fun analyseOneCase(startMethods: List<String>): List<Pair<PandaInst, PandaMethod>> {

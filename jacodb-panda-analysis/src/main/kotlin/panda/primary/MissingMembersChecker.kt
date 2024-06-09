@@ -20,7 +20,7 @@ import org.jacodb.panda.dynamic.api.*
 
 private val logger = mu.KotlinLogging.logger {}
 
-class MissingMembersAnalyser(val project: PandaProject) {
+class MissingMembersChecker(val project: PandaProject) {
     val graph = PandaApplicationGraphImpl(project)
 
     companion object {

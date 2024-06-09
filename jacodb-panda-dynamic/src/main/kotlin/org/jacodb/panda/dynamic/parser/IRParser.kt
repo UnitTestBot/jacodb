@@ -983,6 +983,14 @@ class IRParser(
                     }
                 val localVar = inputs[0]
                 method.nameToLocalVarId[variableName] = localVar
+                // tmp
+                if (inputs[0] is PandaConstant) {
+                    val lv = PandaLocalVar(method.currentLocalVarId++, PandaAnyType)
+                    val assignment = PandaAssignInst(locationFromOp(this), lv, inputs[0], varName = "constant.${stringData!!}")
+                    method.pushInst(assignment)
+                    program!!.setLocalAssignment(method.signature, lv, assignment)
+                    env.setLocalVar(stringData!!, lv)
+                }
             }
 
             "Intrinsic.callthis0" -> {
@@ -1125,9 +1133,12 @@ class IRParser(
             }
 
             "Intrinsic.trystglobalbyname" -> {
-                val lv = env.getLocalVar(stringData!!)
-                    ?: error("Can't load local var from environment for literal \"$stringData\"")
-                method.pushInst(PandaAssignInst(locationFromOp(this), lv, inputs[0]))
+                val name = stringData!!
+//                val lv = env.getLocalVar(name)
+//                    ?: error("Can't load local var from environment for literal \"$stringData\"")
+                val assignee = env.getLocalVar(name)
+                    ?: PandaLoadedValue(PandaStringConstant(name))
+                method.pushInst(PandaAssignInst(locationFromOp(this), assignee, inputs[0]))
             }
 
             else -> checkIgnoredInstructions(this)
