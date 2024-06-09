@@ -24,13 +24,6 @@ enum class VarAccess {
     READ, WRITE
 }
 
-class UndeclaredVariablesCheckerError(
-    val varName: String,
-    val inst: PandaInst,
-    val varAccess: VarAccess,
-    val isConstant: Lazy<Boolean>
-)
-
 class UndeclaredVariablesChecker(val project: PandaProject) {
     val graph = PandaApplicationGraphImpl(project)
 
@@ -66,14 +59,19 @@ class UndeclaredVariablesChecker(val project: PandaProject) {
         orderedInstructions.reverse()
     }
 
-    fun analyse(): List<UndeclaredVariablesCheckerError> {
+    fun analyse(
+        checkConstReassignment: Boolean = false
+    ): List<VariableError> {
         topologicalSort(graph)
 
         val instToGlobalVars = mutableMapOf<PandaInst, MutableSet<String>>()
 
         val isVarConstantMap = mutableMapOf<String, Boolean>()
+//        isVarConstantMap["unknown."] = true
 
         val unresolvedVariables = mutableListOf<UndeclaredVariablesCheckerError>()
+
+        val potentialConstReassignments = mutableListOf<UndeclaredVariablesCheckerError>()
 
         for (inst in orderedInstructions) {
             var predecessorInstructions = mutableListOf<PandaInst>()
@@ -114,16 +112,26 @@ class UndeclaredVariablesChecker(val project: PandaProject) {
             }.toMutableList()
 
             // check for trystglobalbyname
-            if (inst is PandaAssignInst && inst.lhv is PandaLoadedValue) {
-                val lhvInstance = (inst.lhv as PandaLoadedValue).instance
-                if (lhvInstance is PandaStringConstant) {
-                    probablyUndefinedVarNames.add(
-                        Pair(
-                            lhvInstance.value,
-                            VarAccess.WRITE
+            if (inst is PandaAssignInst) {
+                if (inst.lhv is PandaLoadedValue) {
+                    val lhvInstance = (inst.lhv as PandaLoadedValue).instance
+                    if (lhvInstance is PandaStringConstant) {
+                        probablyUndefinedVarNames.add(
+                            Pair(
+                                lhvInstance.value,
+                                VarAccess.WRITE
+                            )
                         )
-                    )
+                    }
                 }
+//                if (inst.lhv is PandaLocalVar && (inst.lhv as PandaLocalVar).isConst) {
+//                    probablyUndefinedVarNames.add(
+//                        Pair(
+//                            "unknown.",
+//                            VarAccess.WRITE
+//                        )
+//                    )
+//                }
             }
 
             val stdVarNames = listOf("console") // TODO(): need more smart filter
@@ -142,6 +150,21 @@ class UndeclaredVariablesChecker(val project: PandaProject) {
                         )
                     )
                 }
+                if (checkConstReassignment && varName in instToGlobalVars[inst]!!) {
+                    if (varAccess == VarAccess.WRITE) {
+                        potentialConstReassignments.add(
+                            UndeclaredVariablesCheckerError(
+                                varName = varName,
+                                inst = inst,
+                                varAccess = VarAccess.WRITE,
+                                isConstant = lazy {
+                                    isVarConstantMap.getOrDefault(varName, false)
+                                },
+                                fictive = true
+                            )
+                        )
+                    }
+                }
             }
         }
 
@@ -157,6 +180,28 @@ class UndeclaredVariablesChecker(val project: PandaProject) {
                 true -> "constant"
                 false -> "regular"
             }
+        }
+
+        if (checkConstReassignment) {
+            val constReassignments = potentialConstReassignments.filter { it ->
+                it.isConstant.value
+            }.toMutableList()
+            constReassignments.addAll(
+                unresolvedVariables.filter { err ->
+                    err.isConstant.value && err.varAccess == VarAccess.WRITE
+                }
+            )
+            val allErrors = constReassignments.map { err ->
+                ConstAssignmentCheckerError(
+                    varName = err.varName,
+                    inst = err.inst,
+                    errorType = when(err.fictive) {
+                        true -> ConstAssignmentCheckerErrorType.CONST_GLOBAL_VARIABLE_REASSIGNMENT
+                        false -> ConstAssignmentCheckerErrorType.ACCESS_TO_UNDECLARED_CONST_VARIABLE
+                    }
+                )
+            }
+            return allErrors
         }
 
         unresolvedVariables.forEach { err ->

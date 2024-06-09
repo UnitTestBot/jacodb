@@ -36,6 +36,7 @@ interface PandaLocal : PandaSimpleValue {
 data class PandaLocalVar(
     val index: Int,
     override val type: PandaType,
+    val isConst: Boolean = false
 ) : PandaLocal {
 
     override fun toString(): String = "%$index"

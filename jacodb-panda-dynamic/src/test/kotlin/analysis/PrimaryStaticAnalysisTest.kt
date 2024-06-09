@@ -107,6 +107,30 @@ class PrimaryStaticAnalysisTest {
         }
     }
 
+
+    @Nested
+    inner class ConstReassignmentTest {
+        private fun getAnalyserByProgramName(programName: String): ConstAssignmentChecker {
+            val project = getProjectByProgramName(programName)
+            val analyser = ConstAssignmentChecker(project)
+            return analyser
+        }
+
+        @Test
+        fun `counterexample - program with const reassignment`() {
+            val analyser = getAnalyserByProgramName("codeqlSamples/constAssignment")
+            val unresolvedVariables = analyser.analyse()
+            assert(unresolvedVariables.size == 2)
+        }
+
+        @Test
+        fun `counterexample - program that read undeclared const variables`() {
+            val analyser = getAnalyserByProgramName("codeqlSamples/unresolvedVariable3")
+            val unresolvedVariables = analyser.analyse()
+            assert(unresolvedVariables.size == 2)
+        }
+    }
+
     @Nested
     inner class ImplicitCastingTest {
         private val programName = "codeqlSamples/implicitCasting"

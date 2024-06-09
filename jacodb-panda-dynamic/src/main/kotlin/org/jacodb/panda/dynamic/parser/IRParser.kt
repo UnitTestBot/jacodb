@@ -976,20 +976,21 @@ class IRParser(
             }
 
             "Intrinsic.stconsttoglobalrecord" -> {
-                val variableName = stringData?.takeIf { it.isNotEmpty() }
-                    ?: run {
-                        logger.error("No stringData for stconsttoglobalrecord")
-                        "STRINGDATANAME"
-                    }
-                val localVar = inputs[0]
-                method.nameToLocalVarId[variableName] = localVar
                 // tmp
                 if (inputs[0] is PandaConstant) {
-                    val lv = PandaLocalVar(method.currentLocalVarId++, PandaAnyType)
+                    val lv = PandaLocalVar(method.currentLocalVarId++, PandaAnyType, isConst = true)
                     val assignment = PandaAssignInst(locationFromOp(this), lv, inputs[0], varName = "constant.${stringData!!}")
                     method.pushInst(assignment)
                     program!!.setLocalAssignment(method.signature, lv, assignment)
                     env.setLocalVar(stringData!!, lv)
+                } else {
+                    val variableName = stringData?.takeIf { it.isNotEmpty() }
+                        ?: run {
+                            logger.error("No stringData for stconsttoglobalrecord")
+                            "STRINGDATANAME"
+                        }
+                    val localVar = inputs[0]
+                    method.nameToLocalVarId[variableName] = localVar
                 }
             }
 
