@@ -1174,16 +1174,23 @@ class IRParser(
         val arrayAccess = inputs.find<PandaArrayAccess>().lastOrNull()
         val stringConstant = inputs.find<PandaStringConstant>().lastOrNull()
         instCallValue?.let { instValue ->
+            val args = inputs.filterNot { it == instValue }
             return PandaInstanceVirtualCallExpr(
                 lazyMethod = lazy {
                     val (instanceName, methodName) = instValue.getClassAndMethodName()
-                    method.pandaMethod.project.findMethodByInstanceOrEmpty(
+                    val foundMethod = method.pandaMethod.project.findMethodByInstanceOrEmpty(
                         instanceName,
                         methodName,
                         instValue.className
                     )
+                    if (foundMethod.className == "console" && foundMethod.name == "log") {
+                        foundMethod.parameterInfos = List(args.size) { index ->
+                            PandaParameterInfo(index, PandaAnyType)
+                        }
+                    }
+                    foundMethod
                 },
-                args = inputs.filterNot { it == instValue },
+                args = args,
                 instance = instValue.instance
             )
         }

@@ -95,8 +95,9 @@ class TaintSamples {
                 startMethodNamesForAnalysis = listOf("case2")
             )
             saveSerializedConfig(config, "passwordLeakTaintConfig3.json")
-            // val sinkResults = fileTaintAnalyzer.analyseOneCase(config)
-            // assert(sinkResults.isEmpty())
+
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(config)
+            assert(sinkResults.isEmpty())
         }
 
     }
@@ -159,19 +160,9 @@ class TaintSamples {
 
         @Test
         fun `counterexample - untrusted size in array constructor and loop bound`() {
-            val config = CaseTaintConfig(
-                sourceMethodConfigs = listOf(
-                    SourceMethodConfig(
-                        methodName = "getNumber",
-                        markName = "UNTRUSTED"
-                    )
-                ),
-                startMethodNamesForAnalysis = listOf("main"),
-                builtInOptions = listOf(UntrustedLoopBoundSinkCheck, UntrustedArraySizeSinkCheck)
-            )
-            saveSerializedConfig(config, "untrustedArraySizeConfig1.json")
-            // val sinkResults = fileTaintAnalyzer.analyseOneCase(config)
-            // assert(sinkResults.size == 2)
+            val config = loadCaseTaintConfig("untrustedArraySizeConfig1.json")
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(config)
+            assert(sinkResults.size == 2)
         }
 
     }
@@ -299,11 +290,14 @@ class TaintSamples {
 
     @Nested
     inner class PasswordExposureFPTest {
-        private val project: PandaProject = loadProjectForSample("taintSamples/passwordExposureFP")
-        private val fileTaintAnalyzer = TaintAnalyzer(project)
-
+        private fun getTaintAnalyserByProgramName(programName: String = "taintSamples/passwordExposureFP"): TaintAnalyzer {
+            val project: PandaProject = loadProjectForSample(programName)
+            val fileTaintAnalyzer = TaintAnalyzer(project)
+            return fileTaintAnalyzer
+        }
         @Test
         fun `counterexample - potential exposure of unencrypted password (false positive tho)`() {
+            val fileTaintAnalyzer = getTaintAnalyserByProgramName()
             val sinkResults = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
                     sourceMethodConfigs = listOf(SourceMethodConfig("getUserData")),
@@ -318,9 +312,9 @@ class TaintSamples {
             assert(sinkResults.size == 1)
         }
 
-        // TODO("fix config")
         @Test
-        fun `counterexample - potential exposure of unencrypted password`() {
+        fun `counterexample - exposure of unencrypted password`() {
+            val fileTaintAnalyzer = getTaintAnalyserByProgramName()
             val sinkResults = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
                     sourceMethodConfigs = listOf(SourceMethodConfig("getUserData")),
@@ -338,6 +332,7 @@ class TaintSamples {
         @Disabled("Temporary test. For debug purposes only.")
         @Test
         fun `debug test`() {
+            val fileTaintAnalyzer = getTaintAnalyserByProgramName()
             val sinkResults = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
                     sourceMethodConfigs = listOf(SourceMethodConfig("getUserData")),
@@ -350,6 +345,25 @@ class TaintSamples {
                     ),
                     startMethodNamesForAnalysis = listOf("usage3")
                 )
+            )
+            assert(sinkResults.size == 1)
+        }
+
+        @Test
+        fun `control test for false positive refutation with symbolic execution`() {
+            val fileTaintAnalyzer = getTaintAnalyserByProgramName("taintSamples/passwordExposureFP2")
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(
+                caseTaintConfig = CaseTaintConfig(
+                    sourceMethodConfigs = listOf(SourceMethodConfig("getUserData")),
+                    sinkMethodConfigs = listOf(
+                        SinkMethodConfig(
+                            methodName = "printToConsole",
+                            position = Argument(0)
+                        )
+                    ),
+                    startMethodNamesForAnalysis = listOf("usage1")
+                ),
+                withTrace = true
             )
             assert(sinkResults.size == 1)
         }

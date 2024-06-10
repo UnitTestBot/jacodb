@@ -1,7 +1,7 @@
 {
     "sourceMethodConfigs": [
         {
-            "methodName": "getNumber",
+            "methodName": "getUserData",
             "markName": "UNTRUSTED",
             "position": {
                 "type": "Result"
@@ -13,7 +13,7 @@
     "sinkMethodConfigs": [
     ],
     "startMethodNamesForAnalysis": [
-        "main"
+        "forLoop"
     ],
     "builtInOptions": [
         {

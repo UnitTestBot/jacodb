@@ -85,9 +85,6 @@ class PandaProject(
         if (currentClassName == "console" && name == "log") {
             val consoleLogMethod = PandaMethod("log")
             consoleLogMethod.className = "console"
-            consoleLogMethod.parameterInfos = List(5) { index ->
-                PandaParameterInfo(index, PandaAnyType)
-            }
             consoleLogMethod.enclosingClass_ = PandaClass("console", listOf(consoleLogMethod))
             return consoleLogMethod
         }
