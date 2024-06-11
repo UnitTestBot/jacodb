@@ -27,7 +27,6 @@ interface JcTypedField : JcAccessible {
     val enclosingType: JcRefType
 }
 
-// CommonTypedMethod<JcMethod, JcInst>
 interface JcTypedMethod : JcAccessible {
     val name: String
     val returnType: JcType
@@ -45,7 +44,6 @@ interface JcTypedMethod : JcAccessible {
 
 }
 
-// CommonTypedMethodParameter
 interface JcTypedMethodParameter {
     val type: JcType
     val name: String?

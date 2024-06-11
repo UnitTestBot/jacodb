@@ -315,15 +315,6 @@ class PandaCallInst(
     }
 }
 
-// object CallExprVisitor : PandaInstVisitor.Default<PandaCallExpr?> {
-//     override fun defaultVisit(inst: PandaInst): PandaCallExpr? {
-//         return inst.operands.filterIsInstance<PandaCallExpr>().firstOrNull()
-//     }
-// }
-//
-// val PandaInst.callExpr: PandaCallExpr?
-//     get() = accept(CallExprVisitor)
-
 val PandaInst.callExpr: PandaCallExpr?
     get() = operands.filterIsInstance<PandaCallExpr>().firstOrNull()
 
