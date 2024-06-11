@@ -360,7 +360,7 @@ class PandaBitwiseAndExpr(
     override val operands: List<PandaValue>
         get() = listOf(lhv, rhv)
 
-    override fun toString(): String = "$lhv ** $rhv"
+    override fun toString(): String = "$lhv & $rhv"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaBitwiseAndExpr(this)
