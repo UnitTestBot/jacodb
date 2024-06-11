@@ -569,7 +569,8 @@ class IRParser(
 
             "Intrinsic.tryldglobalbyname" -> {
                 val name = stringData ?: error("No string data")
-                val out = method.nameToLocalVarId.getOrDefault(name, PandaLoadedValue(PandaStringConstant(name)))
+                val out = method.nameToLocalVarId[name]
+                    ?: PandaLoadedValue(PandaStringConstant(name))
                 outputs.forEach { output ->
                     addInput(method, id(), output, out)
                 }
@@ -579,8 +580,15 @@ class IRParser(
                 val name = stringData ?: error("No string data")
                 val out = if (inputs[0].type is PandaArrayType && name == "length") {
                     val expr = PandaLengthExpr(inputs[0])
-                    val lv = PandaLocalVar(method.currentLocalVarId++, expr.type)
-                    val assignment = PandaAssignInst(locationFromOp(this), lv, expr)
+                    val lv = PandaLocalVar(
+                        index = method.currentLocalVarId++,
+                        type = expr.type
+                    )
+                    val assignment = PandaAssignInst(
+                        location = locationFromOp(this),
+                        lhv = lv,
+                        rhv = expr
+                    )
                     method.pushInst(assignment)
                     program!!.setLocalAssignment(method.signature, lv, assignment)
                     lv
@@ -605,7 +613,10 @@ class IRParser(
 
             "Intrinsic.ldglobalvar" -> {
                 val name = stringData ?: error("No string data")
-                val out = PandaValueByInstance(PandaThis(PandaClassTypeImpl("GLOBAL")), name)
+                val out = PandaValueByInstance(
+                    instance = PandaThis(PandaClassTypeImpl("GLOBAL")),
+                    property = name
+                )
                 outputs.forEach { output ->
                     addInput(method, id(), output, out)
                 }
@@ -622,7 +633,13 @@ class IRParser(
                 val value = inputs[1]
 
                 val property = PandaValueByInstance(instance, objectName)
-                method.pushInst(PandaAssignInst(locationFromOp(this), property, value))
+                method.pushInst(
+                    PandaAssignInst(
+                        location = locationFromOp(this),
+                        lhv = property,
+                        rhv = value
+                    )
+                )
             }
 
             "Intrinsic.ldhole" -> {
@@ -670,7 +687,13 @@ class IRParser(
                 )
                 val value = inputs[0]
                 program!!.setLexvar(lexvar.lexenvIndex, lexvar.lexvarIndex, method.signature, value)
-                method.pushInst(PandaAssignInst(locationFromOp(this), lexvar, value))
+                method.pushInst(
+                    PandaAssignInst(
+                        location = locationFromOp(this),
+                        lhv = lexvar,
+                        rhv = value
+                    )
+                )
             }
 
             "Intrinsic.ldlexvar" -> {
@@ -685,7 +708,10 @@ class IRParser(
 
             "Intrinsic.definemethod" -> {
                 val name = functionName ?: error("No functionName")
-                val out = PandaValueByInstance(inputs[0], name)
+                val out = PandaValueByInstance(
+                    instance = inputs[0],
+                    property = name
+                )
                 outputs.forEach { output ->
                     addInput(method, id(), output, out)
                     // for call insts not to have "instance.object" and "instance, object" in inputs
@@ -700,7 +726,13 @@ class IRParser(
                 val value = inputs[1]
 
                 val property = PandaValueByInstance(instance, fieldName)
-                method.pushInst(PandaAssignInst(locationFromOp(this), property, value))
+                method.pushInst(
+                    PandaAssignInst(
+                        location = locationFromOp(this),
+                        lhv = property,
+                        rhv = value
+                    )
+                )
             }
 
             "Intrinsic.definefunc" -> {
@@ -722,11 +754,18 @@ class IRParser(
                 either the first gap or a non-primitive type element.
                  */
                 val createEmptyExpr = PandaCreateEmptyArrayExpr()
-                val lv = PandaLocalVar(method.currentLocalVarId++, PandaArrayTypeImpl(PandaAnyType))
+                val lv = PandaLocalVar(
+                    index = method.currentLocalVarId++,
+                    type = PandaArrayTypeImpl(PandaAnyType)
+                )
                 outputs.forEach { output ->
                     addInput(method, id(), output, lv)
                 }
-                val assignment = PandaAssignInst(locationFromOp(this), lv, createEmptyExpr)
+                val assignment = PandaAssignInst(
+                    location = locationFromOp(this),
+                    lhv = lv,
+                    rhv = createEmptyExpr
+                )
                 program!!.setLocalAssignment(method.signature, lv, assignment)
                 method.pushInst(assignment)
                 val literals = literals ?: run {
@@ -743,7 +782,11 @@ class IRParser(
                         index = PandaNumberConstant(i / 2),
                         type = PandaAnyType
                     )
-                    val assignment = PandaAssignInst(locationFromOp(this), arrayAccess, value)
+                    val assignment = PandaAssignInst(
+                        location = locationFromOp(this),
+                        lhv = arrayAccess,
+                        rhv = value
+                    )
                     method.pushInst(assignment)
                 }
             }
@@ -774,18 +817,29 @@ class IRParser(
                     index = inputs[1],
                     type = PandaAnyType
                 )
-                val assignment = PandaAssignInst(locationFromOp(this), arrayAccess, inputs[2])
+                val assignment = PandaAssignInst(
+                    location = locationFromOp(this),
+                    lhv = arrayAccess,
+                    rhv = inputs[2]
+                )
                 method.pushInst(assignment)
             }
 
             "Intrinsic.createobjectwithbuffer" -> {
                 // TODO(): Need more intelligent processing with correct model for object; currently only demonstrates how to take into account information about fields with literal values.
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
-                val lv = PandaLocalVar(method.currentLocalVarId++, PandaArrayTypeImpl(PandaAnyType))
+                val lv = PandaLocalVar(
+                    index = method.currentLocalVarId++,
+                    type = PandaArrayTypeImpl(PandaAnyType)
+                )
                 outputs.forEach { output ->
                     addInput(method, id(), output, lv)
                 }
-                val assignment = PandaAssignInst(locationFromOp(this), lv, todoExpr)
+                val assignment = PandaAssignInst(
+                    location = locationFromOp(this),
+                    lhv = lv,
+                    rhv = todoExpr
+                )
                 program!!.setLocalAssignment(method.signature, lv, assignment)
                 method.pushInst(assignment)
                 val literals = literals ?: run {
@@ -805,8 +859,17 @@ class IRParser(
                     its values still stored in literals as null,
                     need to find out how to distinguish real null value from null value as placeholder)
                     */
-                    val property = PandaValueByInstance(lv, fieldName)
-                    method.pushInst(PandaAssignInst(locationFromOp(this), property, value))
+                    val property = PandaValueByInstance(
+                        instance = lv,
+                        property = fieldName
+                    )
+                    method.pushInst(
+                        PandaAssignInst(
+                            location = locationFromOp(this),
+                            lhv = property,
+                            rhv = value
+                        )
+                    )
                 }
             }
 
@@ -962,7 +1025,11 @@ class IRParser(
                     index = index,
                     type = PandaAnyType
                 )
-                val assignment = PandaAssignInst(locationFromOp(this), arrayAccess, inputs[1])
+                val assignment = PandaAssignInst(
+                    location = locationFromOp(this),
+                    lhv = arrayAccess,
+                    rhv = inputs[1]
+                )
                 method.pushInst(assignment)
             }
 
@@ -1009,8 +1076,17 @@ class IRParser(
             "Intrinsic.stconsttoglobalrecord" -> {
                 // tmp
                 if (inputs[0] is PandaConstant) {
-                    val lv = PandaLocalVar(method.currentLocalVarId++, PandaAnyType, isConst = true)
-                    val assignment = PandaAssignInst(locationFromOp(this), lv, inputs[0], varName = "constant.${stringData!!}")
+                    val lv = PandaLocalVar(
+                        index = method.currentLocalVarId++,
+                        type = PandaAnyType,
+                        isConst = true
+                    )
+                    val assignment = PandaAssignInst(
+                        location = locationFromOp(this),
+                        lhv = lv,
+                        rhv = inputs[0],
+                        varName = "constant.${stringData!!}"
+                    )
                     method.pushInst(assignment)
                     program!!.setLocalAssignment(method.signature, lv, assignment)
                     env.setLocalVar(stringData!!, lv)
@@ -1126,9 +1202,7 @@ class IRParser(
                 val nextInstOpcode = basicBlock.insts.getOrNull(opIdx + 1)?.opcode ?: ""
                 if (nextInstOpcode != "CatchPhi") {
                     val throwable = PandaCaughtError()
-                    val tryBlockIds = env.getTryBlocks(basicBlock.id)
-                        ?: emptySet()
-
+                    val tryBlockIds = env.getTryBlocks(basicBlock.id).orEmpty()
                     val path = tryBlockIds.flatMap { bbId ->
                         val bb = method.idToBB[bbId]
                             ?: error("zalupa")
@@ -1171,11 +1245,17 @@ class IRParser(
 
             "Intrinsic.trystglobalbyname" -> {
                 val name = stringData!!
-//                val lv = env.getLocalVar(name)
-//                    ?: error("Can't load local var from environment for literal \"$stringData\"")
+                // val lv = env.getLocalVar(name)
+                //     ?: error("Can't load local var from environment for literal \"$stringData\"")
                 val assignee = env.getLocalVar(name)
                     ?: PandaLoadedValue(PandaStringConstant(name))
-                method.pushInst(PandaAssignInst(locationFromOp(this), assignee, inputs[0]))
+                method.pushInst(
+                    PandaAssignInst(
+                        location = locationFromOp(this),
+                        lhv = assignee,
+                        rhv = inputs[0]
+                    )
+                )
             }
 
             else -> checkIgnoredInstructions(this)

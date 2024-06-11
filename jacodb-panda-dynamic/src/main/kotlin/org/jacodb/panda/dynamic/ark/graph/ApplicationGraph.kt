@@ -16,10 +16,6 @@
 
 package org.jacodb.panda.dynamic.ark.graph
 
-import org.jacodb.api.common.analysis.ApplicationGraph
-import org.jacodb.panda.dynamic.ark.base.Stmt
-import org.jacodb.panda.dynamic.ark.model.ArkMethod
-
 // class ArkApplicationGraph: ApplicationGraph<ArkMethod, Stmt> {
 //
 // }

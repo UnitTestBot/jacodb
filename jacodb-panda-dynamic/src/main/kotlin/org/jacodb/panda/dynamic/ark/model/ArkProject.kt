@@ -18,4 +18,4 @@ package org.jacodb.panda.dynamic.ark.model
 
 import org.jacodb.api.common.CommonProject
 
-class ArkProject: CommonProject
+class ArkProject : CommonProject
