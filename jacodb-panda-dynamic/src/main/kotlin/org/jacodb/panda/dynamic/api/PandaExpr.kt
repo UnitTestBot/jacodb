@@ -466,10 +466,11 @@ class PandaLengthExpr(
     override val operands: List<PandaValue>
         get() = listOf(array)
 
+    override fun toString(): String = "${array}.length"
+
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaLengthExpr(this)
     }
-
 }
 
 class PandaCreateEmptyArrayExpr : PandaExpr {
