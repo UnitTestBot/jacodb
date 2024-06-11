@@ -59,6 +59,7 @@ import org.jacodb.api.jvm.cfg.JcNeqExpr
 import org.jacodb.api.jvm.cfg.JcNewArrayExpr
 import org.jacodb.api.jvm.cfg.JcNullConstant
 import org.jacodb.api.jvm.cfg.JcReturnInst
+import org.jacodb.api.jvm.ext.findType
 import org.jacodb.api.jvm.ext.isNullable
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.CopyAllMarks
@@ -105,7 +106,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
 
         // Possibly null arguments:
         for (p in method.parameters.filter { it.isNullable != false }) {
-            val t = (cp as JcClasspath).findTypeOrNull(p.type.typeName)!!
+            val t = (cp as JcClasspath).findType(p.type.typeName)
             val arg = JcArgument.of(p.index, p.name, t)
             val path = arg.toPath()
             add(Tainted(path, TaintMark.NULLNESS))
