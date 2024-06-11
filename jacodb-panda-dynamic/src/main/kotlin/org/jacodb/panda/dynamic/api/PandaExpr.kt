@@ -43,7 +43,7 @@ class TODOExpr(
     override val type: PandaType
         get() = PandaAnyType
 
-    override fun toString(): String = "$opcode(${operands.joinToString(separator = ", ")})"
+    override fun toString(): String = "$opcode(${operands.joinToString()})"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitTODOExpr(this)
@@ -241,7 +241,7 @@ class PandaNewExpr(
     override val operands: List<PandaValue>
         get() = params
 
-    override fun toString(): String = "new ${typeName}(${params.joinToString(separator = ", ")})"
+    override fun toString(): String = "new ${typeName}(${params.joinToString()})"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaNewExpr(this)
@@ -374,7 +374,7 @@ class PandaStaticCallExpr(
     override val method: PandaMethod
         get() = lazyMethod.value
 
-    override fun toString(): String = "${method.name}(${args.joinToString(", ")})"
+    override fun toString(): String = "${method.name}(${args.joinToString()})"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaStaticCallExpr(this)
@@ -388,7 +388,7 @@ class PandaVirtualCallExpr(
     override val method: PandaMethod
         get() = lazyMethod.value
 
-    override fun toString(): String = "${method.name}(${args.joinToString(", ")})"
+    override fun toString(): String = "${method.name}(${args.joinToString()})"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaVirtualCallExpr(this)
@@ -403,7 +403,7 @@ class PandaInstanceVirtualCallExpr(
     override val method: PandaMethod
         get() = lazyMethod.value
 
-    override fun toString(): String = "$instance.${method.name}(${args.joinToString(", ")})"
+    override fun toString(): String = "$instance.${method.name}(${args.joinToString()})"
 
     override fun <T> accept(visitor: PandaExprVisitor<T>): T {
         return visitor.visitPandaInstanceVirtualCallExpr(this)
