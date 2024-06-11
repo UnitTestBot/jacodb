@@ -25,7 +25,6 @@ import org.jacodb.analysis.util.Traits
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonInst
-import org.jacodb.api.common.ext.callExpr
 import org.jacodb.api.jvm.cfg.JcIfInst
 import org.jacodb.impl.cfg.util.loops
 import org.jacodb.panda.dynamic.api.loops
@@ -69,7 +68,7 @@ class TaintAnalyzer<Method, Statement>(
         }
 
         run {
-            val callExpr = edge.to.statement.callExpr ?: return@run
+            val callExpr = edge.to.statement.getCallExpr() ?: return@run
 
             val callee = callExpr.callee
 

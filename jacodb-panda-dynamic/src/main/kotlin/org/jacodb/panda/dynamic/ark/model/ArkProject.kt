@@ -16,22 +16,6 @@
 
 package org.jacodb.panda.dynamic.ark.model
 
-import org.jacodb.api.common.CommonClass
+import org.jacodb.api.common.CommonProject
 
-interface ArkClass : CommonClass {
-    val signature: ClassSignature
-    val superClass: ArkClass?
-    val fields: List<ArkField>
-    val methods: List<ArkMethod>
-
-    override val name: String
-        get() = signature.name
-}
-
-class ArkClassImpl(
-    override val signature: ClassSignature,
-    override val fields: List<ArkField>,
-    override val methods: List<ArkMethod>,
-) : ArkClass {
-    override var superClass: ArkClass? = null
-}
+class ArkProject: CommonProject

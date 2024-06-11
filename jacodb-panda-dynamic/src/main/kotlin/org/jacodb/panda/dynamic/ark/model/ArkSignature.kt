@@ -16,6 +16,7 @@
 
 package org.jacodb.panda.dynamic.ark.model
 
+import org.jacodb.api.common.CommonMethodParameter
 import org.jacodb.panda.dynamic.ark.base.Type
 
 data class FileSignature(
@@ -115,9 +116,9 @@ data class MethodSubSignature(
 
 data class MethodParameter(
     val name: String,
-    val type: Type,
+    override val type: Type,
     val isOptional: Boolean = false,
-) {
+) : CommonMethodParameter {
     override fun toString(): String {
         return "$name${if (isOptional) "?" else ""}: $type"
     }

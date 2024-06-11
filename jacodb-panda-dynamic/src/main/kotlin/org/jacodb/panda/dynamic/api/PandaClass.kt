@@ -40,7 +40,7 @@ class PandaClass(
         }
     }
 
-    override lateinit var project: PandaProject
+    lateinit var project: PandaProject
         internal set
 
     override val name: String

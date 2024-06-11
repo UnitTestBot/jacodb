@@ -25,9 +25,15 @@ import org.jacodb.analysis.graph.JcNoopInst
 import org.jacodb.analysis.taint.TaintZeroFact
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.analysis.ApplicationGraph
+import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonInst
-import org.jacodb.api.common.ext.callExpr
+import org.jacodb.api.jvm.cfg.JcInst
 import java.util.concurrent.ConcurrentHashMap
+import org.jacodb.api.jvm.ext.cfg.callExpr as jcCallExpr
+import org.jacodb.panda.dynamic.api.PandaInst as DynamicPandaInst
+import org.jacodb.panda.dynamic.api.callExpr as dynamicPandaCallExpr
+import org.jacodb.panda.staticvm.cfg.PandaInst as StaticPandaInst
+import org.jacodb.panda.staticvm.cfg.callExpr as staticPandaCallExpr
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -49,10 +55,18 @@ class UniRunner<Fact, Event, Method, Statement>(
     private val analyzer: Analyzer<Fact, Event, Method, Statement>,
     private val unitResolver: UnitResolver<Method>,
     override val unit: UnitType,
-    private val zeroFact: Fact?,
+    private val zeroFact: Fact,
 ) : Runner<Fact, Method, Statement>
     where Method : CommonMethod,
           Statement : CommonInst {
+
+    private val Statement.callExpr: CommonCallExpr?
+        get() = when (this) {
+            is JcInst -> jcCallExpr
+            is DynamicPandaInst -> dynamicPandaCallExpr
+            is StaticPandaInst -> staticPandaCallExpr
+            else -> error("Unsupported statement type: $this")
+        }
 
     private val flowSpace: FlowFunctions<Fact, Method, Statement> = analyzer.flowFunctions
     private val workList: Channel<Edge<Fact, Statement>> = Channel(Channel.UNLIMITED)

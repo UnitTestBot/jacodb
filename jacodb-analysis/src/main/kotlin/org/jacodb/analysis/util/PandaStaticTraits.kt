@@ -52,6 +52,7 @@ import org.jacodb.analysis.util.thisInstance as _thisInstance
 import org.jacodb.analysis.util.toPath as _toPath
 import org.jacodb.analysis.util.toPathOrNull as _toPathOrNull
 import org.jacodb.analysis.util.toPaths as _toPaths
+import org.jacodb.panda.staticvm.cfg.callExpr as _callExpr
 
 /**
  * Panda-specific extensions for analysis.
@@ -96,6 +97,8 @@ interface PandaStaticTraits : Traits<PandaMethod, PandaInst> {
             check(this is PandaCallExpr)
             return method
         }
+
+    override fun PandaInst.getCallExpr(): CommonCallExpr? = _callExpr
 
     override fun CommonProject.getArgument(param: CommonMethodParameter): PandaArgument {
         check(this is PandaProject)
@@ -163,6 +166,15 @@ interface PandaStaticTraits : Traits<PandaMethod, PandaInst> {
         val s = this.toString()
         val re = pattern.toRegex()
         return re.matches(s)
+    }
+
+    override fun CommonExpr.getValues(): Set<CommonValue> {
+        check(this is PandaExpr)
+        return TODO()
+    }
+
+    override fun PandaInst.getOperands(): List<PandaExpr> {
+        return operands
     }
 
     // Ensure that all methods are default-implemented in the interface itself:

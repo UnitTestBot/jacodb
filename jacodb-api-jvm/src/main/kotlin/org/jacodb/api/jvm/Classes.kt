@@ -34,8 +34,6 @@ import org.objectweb.asm.tree.MethodNode
 interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible, CommonClass {
 
     val classpath: JcClasspath
-    override val project: JcClasspath
-        get() = classpath
 
     val declaredFields: List<JcField>
     val declaredMethods: List<JcMethod>

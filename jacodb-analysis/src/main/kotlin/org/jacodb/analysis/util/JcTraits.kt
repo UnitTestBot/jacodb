@@ -43,6 +43,7 @@ import org.jacodb.api.jvm.cfg.JcSimpleValue
 import org.jacodb.api.jvm.cfg.JcStringConstant
 import org.jacodb.api.jvm.cfg.JcThis
 import org.jacodb.api.jvm.cfg.JcValue
+import org.jacodb.api.jvm.cfg.values
 import org.jacodb.api.jvm.ext.toType
 import org.jacodb.taint.configuration.ConstantBooleanValue
 import org.jacodb.taint.configuration.ConstantIntValue
@@ -54,6 +55,7 @@ import org.jacodb.analysis.util.getArgumentsOf as _getArgumentsOf
 import org.jacodb.analysis.util.thisInstance as _thisInstance
 import org.jacodb.analysis.util.toPath as _toPath
 import org.jacodb.analysis.util.toPathOrNull as _toPathOrNull
+import org.jacodb.api.jvm.ext.cfg.callExpr as _callExpr
 
 /**
  * JVM-specific extensions for analysis.
@@ -156,6 +158,19 @@ interface JcTraits : Traits<JcMethod, JcInst> {
         val s = this.toString()
         val re = pattern.toRegex()
         return re.matches(s)
+    }
+
+    override fun JcInst.getCallExpr(): CommonCallExpr? {
+        return _callExpr
+    }
+
+    override fun CommonExpr.getValues(): Set<CommonValue> {
+        check(this is JcExpr)
+        return values
+    }
+
+    override fun JcInst.getOperands(): List<JcExpr> {
+        return operands
     }
 
     // Ensure that all methods are default-implemented in the interface itself:

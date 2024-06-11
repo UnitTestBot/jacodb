@@ -68,7 +68,7 @@ class PandaMethod(
 }
 
 sealed interface PandaClassOrInterface : CommonClass {
-    override val project: PandaProject
+    val project: PandaProject
 
     override val name: String
 

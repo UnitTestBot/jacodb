@@ -16,8 +16,16 @@
 
 package org.jacodb.panda.dynamic.ark.base
 
-interface Value {
+import org.jacodb.api.common.cfg.CommonExpr
+
+interface Value : CommonExpr {
     val type: Type
+
+    override val typeName: String
+        get() = type.typeName
+
+    // override val operands: List<Value>
+    //     get() = TODO("Not yet implemented")
 
     interface Visitor<out R> :
         Immediate.Visitor<R>,

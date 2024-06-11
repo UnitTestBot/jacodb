@@ -26,12 +26,12 @@ import org.jacodb.panda.staticvm.classpath.PandaMethod
 
 data class PandaInstLocation(
     override val method: PandaMethod,
-    override val index: Int,
+    val index: Int,
 ) : CommonInstLocation {
     // TODO: expand like JcInstLocation
 
-    override val lineNumber: Int
-        get() = 0 // TODO("Not yet implemented")
+    // override val lineNumber: Int
+    //     get() = 0 // TODO("Not yet implemented")
 
     override fun toString(): String = "${method.name}:$index"
 }
@@ -44,7 +44,12 @@ data class PandaInstRef(
 
 sealed interface PandaInst : CommonInst {
     override val location: PandaInstLocation
-    override val operands: List<PandaExpr>
+
+    override val method: PandaMethod
+        get() = location.method
+
+    // TODO: remove 'operands'
+    val operands: List<PandaExpr>
 
     override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
         return visitor.visitExternalCommonInst(this)
@@ -194,3 +199,6 @@ class PandaTryPseudoInst(
 
     override fun toString(): String = "try"
 }
+
+val PandaInst.callExpr: PandaCallExpr?
+    get() = operands.filterIsInstance<PandaCallExpr>().firstOrNull()

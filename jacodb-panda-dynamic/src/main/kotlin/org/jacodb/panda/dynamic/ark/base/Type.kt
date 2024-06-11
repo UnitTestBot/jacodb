@@ -16,10 +16,15 @@
 
 package org.jacodb.panda.dynamic.ark.base
 
+import org.jacodb.api.common.CommonType
+import org.jacodb.api.common.CommonTypeName
 import org.jacodb.panda.dynamic.ark.model.ClassSignature
 
-interface Type {
-    val typeName: String
+interface Type : CommonType, CommonTypeName {
+    override val typeName: String
+
+    override val nullable: Boolean?
+        get() = false
 
     interface Visitor<out R> {
         fun visit(type: AnyType): R

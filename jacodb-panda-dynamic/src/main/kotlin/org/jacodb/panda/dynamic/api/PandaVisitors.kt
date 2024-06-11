@@ -84,4 +84,23 @@ interface PandaInstVisitor<out T> : CommonInst.Visitor<T> {
     fun visitPandaEmptyBBPlaceholderInst(inst: PandaEmptyBBPlaceholderInst): T
     fun visitPandaNewLexenvInst(inst: PandaNewLexenvInst): T
     fun visitPandaPopLexenvInst(inst: PandaPopLexenvInst): T
+
+    interface Default<out T> : PandaInstVisitor<T>, CommonInst.Visitor.Default<T> {
+        override fun visitTODOInst(inst: TODOInst): T = defaultVisit(inst)
+        override fun visitPandaNopInst(inst: PandaNopInst): T = defaultVisit(inst)
+        override fun visitPandaThrowInst(inst: PandaThrowInst): T = defaultVisit(inst)
+        override fun visitPandaReturnInst(inst: PandaReturnInst): T = defaultVisit(inst)
+        override fun visitPandaAssignInst(inst: PandaAssignInst): T = defaultVisit(inst)
+        override fun visitPandaCallInst(inst: PandaCallInst): T = defaultVisit(inst)
+        override fun visitPandaIfInst(inst: PandaIfInst): T = defaultVisit(inst)
+        override fun visitPandaGotoInst(inst: PandaGotoInst): T = defaultVisit(inst)
+        override fun visitPandaCatchInst(inst: PandaCatchInst): T = defaultVisit(inst)
+        override fun visitPandaEmptyBBPlaceholderInst(inst: PandaEmptyBBPlaceholderInst): T = defaultVisit(inst)
+        override fun visitPandaNewLexenvInst(inst: PandaNewLexenvInst): T = defaultVisit(inst)
+        override fun visitPandaPopLexenvInst(inst: PandaPopLexenvInst): T = defaultVisit(inst)
+
+        override fun defaultVisitCommonInst(inst: CommonInst): T = TODO("Not implemented")
+
+        fun defaultVisit(inst: PandaInst): T
+    }
 }

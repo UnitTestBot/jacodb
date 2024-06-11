@@ -18,14 +18,13 @@ package org.jacodb.analysis.unused
 
 import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.util.Traits
-import org.jacodb.analysis.util.values
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
-import org.jacodb.api.common.ext.callExpr
 import org.jacodb.api.jvm.cfg.JcArrayAccess
 import org.jacodb.api.jvm.cfg.JcAssignInst
 import org.jacodb.api.jvm.cfg.JcBranchingInst
+import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.api.jvm.cfg.JcLocal
 import org.jacodb.api.jvm.cfg.JcSpecialCallExpr
 import org.jacodb.api.jvm.cfg.JcTerminatingInst
@@ -34,14 +33,14 @@ context(Traits<CommonMethod, CommonInst>)
 internal fun AccessPath.isUsedAt(
     expr: CommonExpr,
 ): Boolean {
-    return expr.values.any { it.toPathOrNull() == this }
+    return expr.getValues().any { it.toPathOrNull() == this }
 }
 
 context(Traits<CommonMethod, CommonInst>)
 internal fun AccessPath.isUsedAt(
     inst: CommonInst,
 ): Boolean {
-    val callExpr = inst.callExpr
+    val callExpr = inst.getCallExpr()
 
     if (callExpr != null) {
         // Don't count constructor calls as usages
@@ -61,6 +60,7 @@ internal fun AccessPath.isUsedAt(
         return isUsedAt(inst.rhv) && (inst.lhv !is JcLocal || inst.rhv !is JcLocal)
     }
     if (inst is JcTerminatingInst || inst is JcBranchingInst) {
+        inst as JcInst
         return inst.operands.any { isUsedAt(it) }
     }
     return false

@@ -33,7 +33,6 @@ import org.jacodb.analysis.util.Traits
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonInst
-import org.jacodb.api.common.ext.callExpr
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintMark
@@ -79,7 +78,7 @@ class NpeAnalyzer<Method, Statement>(
         }
 
         run {
-            val callExpr = edge.to.statement.callExpr ?: return@run
+            val callExpr = edge.to.statement.getCallExpr() ?: return@run
             val callee = callExpr.callee
 
             val config = taintConfigurationFeature?.let { feature ->

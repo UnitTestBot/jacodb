@@ -14,16 +14,12 @@
  *  limitations under the License.
  */
 
-package org.jacodb.api.common.ext
+package org.jacodb.panda.dynamic.ark.graph
 
-import org.jacodb.api.common.cfg.CommonCallExpr
-import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.common.analysis.ApplicationGraph
+import org.jacodb.panda.dynamic.ark.base.Stmt
+import org.jacodb.panda.dynamic.ark.model.ArkMethod
 
-object CallExprVisitor : CommonInst.Visitor.Default<CommonCallExpr?> {
-    override fun defaultVisitCommonInst(inst: CommonInst): CommonCallExpr? {
-        return inst.operands.filterIsInstance<CommonCallExpr>().firstOrNull()
-    }
-}
-
-val CommonInst.callExpr: CommonCallExpr?
-    get() = accept(CallExprVisitor)
+// class ArkApplicationGraph: ApplicationGraph<ArkMethod, Stmt> {
+//
+// }

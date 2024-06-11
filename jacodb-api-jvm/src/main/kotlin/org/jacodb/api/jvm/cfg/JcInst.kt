@@ -48,16 +48,18 @@ interface VirtualTypedMethodRef : TypedMethodRef {
 
 interface JcInstLocation : CommonInstLocation {
     override val method: JcMethod
-    override val index: Int
-    override val lineNumber: Int
+    val index: Int
+    val lineNumber: Int
 }
 
 interface JcInst : CommonInst {
     override val location: JcInstLocation
-    override val operands: List<JcExpr>
+    val operands: List<JcExpr>
 
     override val method: JcMethod
         get() = location.method
+    val lineNumber: Int
+        get() = location.lineNumber
 
     fun <T> accept(visitor: JcInstVisitor<T>): T
 }
@@ -247,7 +249,7 @@ class JcSwitchInst(
 
 interface JcExpr : CommonExpr {
     val type: JcType
-    override val operands: List<JcValue>
+    val operands: List<JcValue>
 
     override val typeName: String
         get() = type.typeName

@@ -22,9 +22,6 @@ import org.jacodb.analysis.ifds.ElementAccessor
 import org.jacodb.analysis.ifds.Runner
 import org.jacodb.analysis.ifds.UniRunner
 import org.jacodb.analysis.taint.TaintBidiRunner
-import org.jacodb.api.common.cfg.CommonExpr
-import org.jacodb.api.common.cfg.CommonInst
-import org.jacodb.api.common.cfg.CommonValue
 
 fun AccessPath?.startsWith(other: AccessPath?): Boolean {
     if (this == null || other == null) {
@@ -50,44 +47,44 @@ fun Runner<*, *, *>.getPathEdges(): Set<Edge<*, *>> = when (this) {
     else -> error("Cannot extract pathEdges for $this")
 }
 
-abstract class AbstractFullCommonExprSetCollector :
-    CommonExpr.Visitor.Default<Any>,
-    CommonInst.Visitor.Default<Any> {
-
-    abstract fun ifMatches(expr: CommonExpr)
-
-    override fun defaultVisitCommonExpr(expr: CommonExpr) {
-        ifMatches(expr)
-        expr.operands.forEach { it.accept(this) }
-    }
-
-    override fun defaultVisitCommonInst(inst: CommonInst) {
-        inst.operands.forEach { it.accept(this) }
-    }
-}
-
-abstract class TypedCommonExprResolver<T : CommonExpr> : AbstractFullCommonExprSetCollector() {
-    val result: MutableSet<T> = hashSetOf()
-}
-
-class CommonValueResolver : TypedCommonExprResolver<CommonValue>() {
-    override fun ifMatches(expr: CommonExpr) {
-        if (expr is CommonValue) {
-            result.add(expr)
-        }
-    }
-}
-
-val CommonExpr.values: Set<CommonValue>
-    get() {
-        val resolver = CommonValueResolver()
-        accept(resolver)
-        return resolver.result
-    }
-
-val CommonInst.values: Set<CommonValue>
-    get() {
-        val resolver = CommonValueResolver()
-        accept(resolver)
-        return resolver.result
-    }
+// abstract class AbstractFullCommonExprSetCollector :
+//     CommonExpr.Visitor.Default<Any>,
+//     CommonInst.Visitor.Default<Any> {
+//
+//     abstract fun ifMatches(expr: CommonExpr)
+//
+//     override fun defaultVisitCommonExpr(expr: CommonExpr) {
+//         ifMatches(expr)
+//         expr.operands.forEach { it.accept(this) }
+//     }
+//
+//     override fun defaultVisitCommonInst(inst: CommonInst) {
+//         inst.operands.forEach { it.accept(this) }
+//     }
+// }
+//
+// abstract class TypedCommonExprResolver<T : CommonExpr> : AbstractFullCommonExprSetCollector() {
+//     val result: MutableSet<T> = hashSetOf()
+// }
+//
+// class CommonValueResolver : TypedCommonExprResolver<CommonValue>() {
+//     override fun ifMatches(expr: CommonExpr) {
+//         if (expr is CommonValue) {
+//             result.add(expr)
+//         }
+//     }
+// }
+//
+// val CommonExpr.values: Set<CommonValue>
+//     get() {
+//         val resolver = CommonValueResolver()
+//         accept(resolver)
+//         return resolver.result
+//     }
+//
+// val CommonInst.values: Set<CommonValue>
+//     get() {
+//         val resolver = CommonValueResolver()
+//         accept(resolver)
+//         return resolver.result
+//     }

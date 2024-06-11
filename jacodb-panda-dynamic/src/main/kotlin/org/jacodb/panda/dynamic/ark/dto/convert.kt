@@ -17,6 +17,7 @@
 package org.jacodb.panda.dynamic.ark.dto
 
 import org.jacodb.panda.dynamic.ark.base.AnyType
+import org.jacodb.panda.dynamic.ark.base.ArkInstLocation
 import org.jacodb.panda.dynamic.ark.base.ArrayAccess
 import org.jacodb.panda.dynamic.ark.base.ArrayLiteral
 import org.jacodb.panda.dynamic.ark.base.ArrayType
@@ -87,9 +88,11 @@ import org.jacodb.panda.dynamic.ark.model.MethodParameter
 import org.jacodb.panda.dynamic.ark.model.MethodSignature
 import org.jacodb.panda.dynamic.ark.model.MethodSubSignature
 
-fun convertToArkStmt(stmt: StmtDto): Stmt {
+fun convertToArkStmt(stmt: StmtDto, location: ArkInstLocation): Stmt {
     return when (stmt) {
         is UnknownStmtDto -> object : Stmt {
+            override val location: ArkInstLocation = location
+
             override fun toString(): String = "UnknownStmt"
 
             override fun <R> accept(visitor: Stmt.Visitor<R>): R {
@@ -97,38 +100,48 @@ fun convertToArkStmt(stmt: StmtDto): Stmt {
             }
         }
 
-        is NopStmtDto -> NopStmt
+        is NopStmtDto -> NopStmt(location = location)
 
         is AssignStmtDto -> AssignStmt(
+            location = location,
             left = convertToArkValue(stmt.left),
             right = convertToArkValue(stmt.right),
         )
 
         is CallStmtDto -> CallStmt(
-            expr = convertToArkValue(stmt.expr) as CallExpr
+            location = location,
+            expr = convertToArkValue(stmt.expr) as CallExpr,
         )
 
         is DeleteStmtDto -> DeleteStmt(
-            arg = convertToArkFieldRef(stmt.arg)
+            location = location,
+            arg = convertToArkFieldRef(stmt.arg),
         )
 
         is ReturnStmtDto -> ReturnStmt(
-            arg = convertToArkValue(stmt.arg)
+            location = location,
+            arg = convertToArkValue(stmt.arg),
         )
 
-        is ReturnVoidStmtDto -> ReturnStmt(null)
+        is ReturnVoidStmtDto -> ReturnStmt(
+            location = location,
+            arg = null,
+        )
 
         is ThrowStmtDto -> ThrowStmt(
-            arg = convertToArkValue(stmt.arg)
+            location = location,
+            arg = convertToArkValue(stmt.arg),
         )
 
-        is GotoStmtDto -> GotoStmt
+        is GotoStmtDto -> GotoStmt(location = location)
 
         is IfStmtDto -> IfStmt(
+            location = location,
             condition = convertToArkValue(stmt.condition) as ConditionExpr,
         )
 
         is SwitchStmtDto -> SwitchStmt(
+            location = location,
             arg = convertToArkValue(stmt.arg),
             cases = stmt.cases.map { convertToArkValue(it) },
         )
@@ -386,7 +399,7 @@ fun convertToArkMethodSignature(method: MethodSignatureDto): MethodSignature {
         sub = MethodSubSignature(
             name = method.name,
             parameters = method.parameters.map { convertToArkMethodParameter(it) },
-            returnType = convertToArkType(method.returnType)
+            returnType = convertToArkType(method.returnType),
         )
     )
 }
@@ -401,17 +414,27 @@ fun convertToArkMethodParameter(param: MethodParameterDto): MethodParameter {
 
 fun convertToArkMethod(method: MethodDto): ArkMethod {
     val signature = convertToArkMethodSignature(method.signature)
-    val locals = method.body.locals.map { convertToArkValue(it) as Local } // safe cast
-    val cfg = convertToArkCfg(method.body.cfg)
+    val locals = method.body.locals.map {
+        convertToArkValue(it) as Local  // safe cast
+    }
+    val arkMethod = ArkMethodImpl(signature)
+    val location = ArkInstLocation(arkMethod)
+    val blocks = method.body.cfg.blocks.associate { block ->
+        block.id to BasicBlock(
+            id = block.id,
+            successors = block.successors,
+            predecessors = block.predecessors,
+            stmts = block.stmts.map { convertToArkStmt(it, location) },
+        )
+    }
+    val cfg = Cfg(blocks)
     val body = ArkBody(
         method = signature,
         locals = locals,
         cfg = cfg,
     )
-    return ArkMethodImpl(
-        signature = signature,
-        body = body,
-    )
+    arkMethod.body = body
+    return arkMethod
 }
 
 fun convertToArkField(field: FieldDto): ArkField {
@@ -438,7 +461,7 @@ fun convertToArkClass(clazz: ClassDto): ArkClass {
             file = null, // TODO
         ),
         fields = clazz.fields.map { convertToArkField(it) },
-        methods = clazz.methods.map { convertToArkMethod(it) }
+        methods = clazz.methods.map { convertToArkMethod(it) },
     )
 }
 
@@ -449,16 +472,4 @@ fun convertToArkFile(file: ArkFileDto): ArkFile {
         path = file.absoluteFilePath,
         classes = classes,
     )
-}
-
-fun convertToArkCfg(cfg: CfgDto): Cfg {
-    val blocks = cfg.blocks.associate { block ->
-        block.id to BasicBlock(
-            id = block.id,
-            successors = block.successors,
-            predecessors = block.predecessors,
-            stmts = block.stmts.map { convertToArkStmt(it) },
-        )
-    }
-    return Cfg(blocks)
 }

@@ -36,6 +36,8 @@ sealed interface PandaExpr : CommonExpr {
     override val typeName: String
         get() = type.typeName
 
+    val operands: List<PandaValue>
+
     override fun <T> accept(visitor: CommonExpr.Visitor<T>): T {
         TODO("Not yet implemented")
     }
@@ -86,7 +88,7 @@ class PandaFieldRef(
     override val classField: PandaField
         get() = this.field
 
-    override val operands: List<CommonValue>
+    override val operands: List<PandaValue>
         get() = listOfNotNull(instance)
 
     override fun toString(): String = "${instance ?: field.enclosingClass.name}.${classField.name}"
@@ -97,7 +99,7 @@ class PandaArrayAccess(
     override val index: PandaValue,
     override val type: PandaType,
 ) : PandaValue, CommonArrayAccess {
-    override val operands: List<CommonValue>
+    override val operands: List<PandaValue>
         get() = listOf(array, index)
 
     override fun toString(): String = "$array[$index]"
@@ -445,7 +447,8 @@ data class PandaNeExpr(
 
 sealed interface PandaCallExpr : PandaExpr, CommonCallExpr {
     val method: PandaMethod
-    override val operands: List<CommonValue>
+    override val args: List<PandaValue>
+    override val operands: List<PandaValue>
         get() = args
 }
 

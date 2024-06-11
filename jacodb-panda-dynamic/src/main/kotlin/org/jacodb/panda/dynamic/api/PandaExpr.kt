@@ -26,7 +26,7 @@ interface PandaExpr : CommonExpr, Mappable {
     override val typeName: String
         get() = type.typeName
 
-    override val operands: List<PandaValue>
+    val operands: List<PandaValue>
 
     fun <T> accept(visitor: PandaExprVisitor<T>): T
 

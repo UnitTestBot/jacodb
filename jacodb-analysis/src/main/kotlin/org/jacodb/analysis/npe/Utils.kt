@@ -20,7 +20,6 @@ import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.ifds.minus
 import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.startsWith
-import org.jacodb.analysis.util.values
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonInst
@@ -47,15 +46,14 @@ internal fun AccessPath?.isDereferencedAt(expr: CommonExpr): Boolean {
         }
     }
 
-    return expr.values
+    return expr
+        .getValues()
         .mapNotNull { it.toPathOrNull() }
-        .any {
-            (it - this)?.isNotEmpty() == true
-        }
+        .any { (it - this)?.isNotEmpty() == true }
 }
 
 context(Traits<CommonMethod, CommonInst>)
 internal fun AccessPath?.isDereferencedAt(inst: CommonInst): Boolean {
     if (this == null) return false
-    return inst.operands.any { isDereferencedAt(it) }
+    return inst.getOperands().any { isDereferencedAt(it) }
 }

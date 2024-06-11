@@ -25,7 +25,6 @@ import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonAssignInst
 import org.jacodb.api.common.cfg.CommonInst
-import org.jacodb.api.common.ext.callExpr
 import org.jacodb.api.jvm.cfg.JcSpecialCallExpr
 import org.jacodb.api.jvm.cfg.JcStaticCallExpr
 
@@ -88,7 +87,7 @@ class UnusedVariableFlowFunctions<Method, Statement>(
         callStatement: Statement,
         calleeStart: Statement,
     ) = FlowFunction<UnusedVariableDomainFact> { fact ->
-        val callExpr = callStatement.callExpr
+        val callExpr = callStatement.getCallExpr()
             ?: error("Call statement should have non-null callExpr")
 
         if (fact == UnusedVariableZeroFact) {

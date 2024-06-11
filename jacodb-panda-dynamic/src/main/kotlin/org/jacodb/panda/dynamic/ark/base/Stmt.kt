@@ -16,7 +16,24 @@
 
 package org.jacodb.panda.dynamic.ark.base
 
-interface Stmt {
+import org.jacodb.api.common.cfg.CommonInst
+import org.jacodb.api.common.cfg.CommonInstLocation
+import org.jacodb.panda.dynamic.ark.model.ArkMethod
+
+data class ArkInstLocation(
+    override val method: ArkMethod,
+    // val index: Int,
+    // val lineNumber: Int,
+) : CommonInstLocation
+
+interface Stmt : CommonInst {
+    // override val operands: List<Value>
+
+    override val location: ArkInstLocation
+
+    override val method: ArkMethod
+        get() = location.method
+
     interface Visitor<out R> {
         fun visit(stmt: NopStmt): R
         fun visit(stmt: AssignStmt): R
@@ -46,7 +63,9 @@ interface Stmt {
     fun <R> accept(visitor: Visitor<R>): R
 }
 
-object NopStmt : Stmt {
+data class NopStmt(
+    override val location: ArkInstLocation,
+) : Stmt {
     override fun toString(): String = "nop"
 
     override fun <R> accept(visitor: Stmt.Visitor<R>): R {
@@ -55,6 +74,7 @@ object NopStmt : Stmt {
 }
 
 data class AssignStmt(
+    override val location: ArkInstLocation,
     val left: Value, // Local
     val right: Value,
 ) : Stmt {
@@ -68,6 +88,7 @@ data class AssignStmt(
 }
 
 data class CallStmt(
+    override val location: ArkInstLocation,
     val expr: CallExpr,
 ) : Stmt {
     override fun toString(): String {
@@ -80,6 +101,7 @@ data class CallStmt(
 }
 
 data class DeleteStmt(
+    override val location: ArkInstLocation,
     val arg: FieldRef,
 ) : Stmt {
     override fun toString(): String {
@@ -94,6 +116,7 @@ data class DeleteStmt(
 interface TerminatingStmt : Stmt
 
 data class ReturnStmt(
+    override val location: ArkInstLocation,
     val arg: Value?,
 ) : TerminatingStmt {
     override fun toString(): String {
@@ -110,6 +133,7 @@ data class ReturnStmt(
 }
 
 data class ThrowStmt(
+    override val location: ArkInstLocation,
     val arg: Value,
 ) : TerminatingStmt {
     override fun toString(): String {
@@ -123,7 +147,9 @@ data class ThrowStmt(
 
 interface BranchingStmt : Stmt
 
-object GotoStmt : BranchingStmt {
+class GotoStmt(
+    override val location: ArkInstLocation,
+) : BranchingStmt {
     override fun toString(): String = "goto"
 
     override fun <R> accept(visitor: Stmt.Visitor<R>): R {
@@ -132,6 +158,7 @@ object GotoStmt : BranchingStmt {
 }
 
 data class IfStmt(
+    override val location: ArkInstLocation,
     val condition: ConditionExpr,
 ) : BranchingStmt {
     override fun toString(): String {
@@ -144,6 +171,7 @@ data class IfStmt(
 }
 
 data class SwitchStmt(
+    override val location: ArkInstLocation,
     val arg: Value,
     val cases: List<Value>,
 ) : BranchingStmt {

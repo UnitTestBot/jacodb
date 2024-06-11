@@ -35,7 +35,6 @@ import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.api.jvm.cfg.JcLocal
 import org.jacodb.api.jvm.cfg.JcLocalVar
 import org.jacodb.api.jvm.cfg.JcReturnInst
-import org.jacodb.api.jvm.ext.cfg.callExpr
 import org.jacodb.api.jvm.ext.findTypeOrNull
 import org.jacodb.api.jvm.ext.packageName
 import org.jacodb.impl.features.InMemoryHierarchy
@@ -68,7 +67,7 @@ class TaintFlowFunctionsTest : BaseTest() {
     private val graph: JcApplicationGraph = mockk {
         every { project } returns cp
         every { callees(any()) } answers {
-            sequenceOf(arg<JcInst>(0).callExpr!!.callee)
+            sequenceOf(arg<JcInst>(0).getCallExpr()!!.callee)
         }
     }
 

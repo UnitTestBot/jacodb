@@ -29,7 +29,7 @@ interface Mappable
 class PandaInstLocation(
     override val method: PandaMethod,
     private var _index: Int,
-    override val lineNumber: Int,
+    val lineNumber: Int,
 ) : CommonInstLocation {
     // TODO: expand like JcInstLocation
 
@@ -37,7 +37,7 @@ class PandaInstLocation(
         _index -= count
     }
 
-    override val index: Int
+    val index: Int
         get() = _index
 
     override fun toString(): String = "${method.name}.$index"
@@ -60,7 +60,10 @@ data class PandaInstRef(
 
 abstract class PandaInst : CommonInst, Mappable {
     abstract override val location: PandaInstLocation
-    abstract override val operands: List<PandaExpr>
+    abstract val operands: List<PandaExpr>
+
+    override val method: PandaMethod
+        get() = location.method
 
     abstract fun <T> accept(visitor: PandaInstVisitor<T>): T
 
@@ -312,36 +315,17 @@ class PandaCallInst(
     }
 }
 
-object CallExprVisitor :
-    PandaInstVisitor<PandaCallExpr?>,
-    CommonInst.Visitor.Default<PandaCallExpr?> {
-
-    override fun defaultVisitCommonInst(inst: CommonInst): PandaCallExpr? {
-        TODO("Not yet implemented")
-    }
-
-    fun defaultVisitPandaInst(inst: PandaInst): PandaCallExpr? {
-        return inst.operands.filterIsInstance<PandaCallExpr>().firstOrNull()
-    }
-
-    override fun visitTODOInst(inst: TODOInst): PandaCallExpr? = defaultVisitPandaInst(inst)
-    override fun visitPandaNopInst(inst: PandaNopInst): PandaCallExpr? = defaultVisitPandaInst(inst)
-    override fun visitPandaThrowInst(inst: PandaThrowInst): PandaCallExpr? = defaultVisitPandaInst(inst)
-    override fun visitPandaReturnInst(inst: PandaReturnInst): PandaCallExpr? = defaultVisitPandaInst(inst)
-    override fun visitPandaAssignInst(inst: PandaAssignInst): PandaCallExpr? = defaultVisitPandaInst(inst)
-    override fun visitPandaCallInst(inst: PandaCallInst): PandaCallExpr? = defaultVisitPandaInst(inst)
-    override fun visitPandaIfInst(inst: PandaIfInst): PandaCallExpr? = defaultVisitPandaInst(inst)
-    override fun visitPandaGotoInst(inst: PandaGotoInst): PandaCallExpr? = defaultVisitPandaInst(inst)
-    override fun visitPandaCatchInst(inst: PandaCatchInst): PandaCallExpr? = defaultVisitPandaInst(inst)
-    override fun visitPandaEmptyBBPlaceholderInst(inst: PandaEmptyBBPlaceholderInst): PandaCallExpr? =
-        defaultVisitPandaInst(inst)
-
-    override fun visitPandaNewLexenvInst(inst: PandaNewLexenvInst): PandaCallExpr? = defaultVisitPandaInst(inst)
-    override fun visitPandaPopLexenvInst(inst: PandaPopLexenvInst): PandaCallExpr? = defaultVisitPandaInst(inst)
-}
+// object CallExprVisitor : PandaInstVisitor.Default<PandaCallExpr?> {
+//     override fun defaultVisit(inst: PandaInst): PandaCallExpr? {
+//         return inst.operands.filterIsInstance<PandaCallExpr>().firstOrNull()
+//     }
+// }
+//
+// val PandaInst.callExpr: PandaCallExpr?
+//     get() = accept(CallExprVisitor)
 
 val PandaInst.callExpr: PandaCallExpr?
-    get() = accept(CallExprVisitor)
+    get() = operands.filterIsInstance<PandaCallExpr>().firstOrNull()
 
 val PandaInst.recursiveOperands: List<PandaValue>
     get() = operands.flatMap { expr -> expr.operands }

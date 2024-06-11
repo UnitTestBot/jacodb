@@ -20,6 +20,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jacodb.panda.dynamic.ark.base.AnyType
+import org.jacodb.panda.dynamic.ark.base.ArkInstLocation
 import org.jacodb.panda.dynamic.ark.base.Local
 import org.jacodb.panda.dynamic.ark.dto.ArkFileDto
 import org.jacodb.panda.dynamic.ark.dto.ClassSignatureDto
@@ -32,6 +33,9 @@ import org.jacodb.panda.dynamic.ark.dto.StmtDto
 import org.jacodb.panda.dynamic.ark.dto.convertToArkFile
 import org.jacodb.panda.dynamic.ark.dto.convertToArkStmt
 import org.jacodb.panda.dynamic.ark.dto.convertToArkValue
+import org.jacodb.panda.dynamic.ark.model.ArkMethodImpl
+import org.jacodb.panda.dynamic.ark.model.ClassSignature
+import org.jacodb.panda.dynamic.ark.model.MethodSignature
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
@@ -43,7 +47,7 @@ class ArkFromJsonTest {
 
     @Test
     fun testLoadArkFileFromJson() {
-        val path = "basic.ts.json"
+        val path = "arkir/basic.ts.json"
         val stream = object {}::class.java.getResourceAsStream("/$path")
             ?: error("Resource not found: $path")
         val arkDto = ArkFileDto.loadFromJson(stream)
@@ -103,7 +107,15 @@ class ArkFromJsonTest {
         """.trimIndent()
         val stmtDto = Json.decodeFromString<StmtDto>(jsonString)
         println(stmtDto)
-        val stmt = convertToArkStmt(stmtDto)
+        val method = ArkMethodImpl(
+            signature = MethodSignature(
+                enclosingClass = ClassSignature(name = "_DEFAULT_ARK_CLASS"),
+                name = "_DEFAULT_ARK_METHOD",
+                parameters = emptyList(),
+                returnType = AnyType,
+            )
+        )
+        val stmt = convertToArkStmt(stmtDto, location = ArkInstLocation(method))
         println(stmt)
     }
 
