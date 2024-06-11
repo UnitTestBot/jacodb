@@ -33,7 +33,6 @@ import io.github.detekt.sarif4k.Tool
 import io.github.detekt.sarif4k.ToolComponent
 import io.github.detekt.sarif4k.Version
 import org.jacodb.analysis.ifds.Vertex
-import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.jvm.cfg.JcInst
 
@@ -87,9 +86,6 @@ fun <Statement : CommonInst> sarifReportFromVulnerabilities(
     )
 }
 
-private val CommonMethod.fullyQualifiedName: String
-    get() = "${enclosingClass.name}#${name}"
-
 private fun <Statement : CommonInst> instToSarifLocation(
     inst: Statement,
     sourceFileResolver: SourceFileResolver<Statement>,
@@ -106,7 +102,12 @@ private fun <Statement : CommonInst> instToSarifLocation(
         ),
         logicalLocations = listOf(
             LogicalLocation(
-                fullyQualifiedName = if (inst is JcInst) inst.location.method.fullyQualifiedName else null
+                fullyQualifiedName = if (inst is JcInst) {
+                    val method = inst.location.method
+                    "${method.enclosingClass.name}#${method.name}"
+                } else {
+                    null
+                }
             )
         )
     )

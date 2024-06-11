@@ -337,7 +337,7 @@ class ForwardTaintFlowFunctions<Method, Statement>(
         // FIXME: handle taint pass-through on invokedynamic-based String concatenation:
         if (fact is Tainted
             && callExpr is JcDynamicCallExpr
-            && callee.enclosingClass.name == "java.lang.invoke.StringConcatFactory"
+            && (callee as JcMethod).enclosingClass.name == "java.lang.invoke.StringConcatFactory"
             && callStatement is JcAssignInst
         ) {
             for (arg in callExpr.args) {

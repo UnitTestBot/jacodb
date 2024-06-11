@@ -362,7 +362,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
         // FIXME: handle taint pass-through on invokedynamic-based String concatenation:
         if (fact is Tainted
             && callExpr is JcDynamicCallExpr
-            && callee.enclosingClass.name == "java.lang.invoke.StringConcatFactory"
+            && (callee as JcMethod).enclosingClass.name == "java.lang.invoke.StringConcatFactory"
             && callStatement is JcAssignInst
         ) {
             for (arg in callExpr.args) {
@@ -431,7 +431,10 @@ class ForwardNpeFlowFunctions<Method, Statement>(
 
         if (config != null) {
             // FIXME: adhoc
-            if (callee.enclosingClass.name == "java.lang.StringBuilder" && callee.name == "append") {
+            if (callee is JcMethod
+                && callee.enclosingClass.name == "java.lang.StringBuilder"
+                && callee.name == "append"
+            ) {
                 // Skip rules for StringBuilder::append in NPE analysis.
             } else {
                 val facts = mutableSetOf<Tainted>()

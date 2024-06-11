@@ -35,7 +35,7 @@ class PandaField(
 class PandaMethod(
     val signature: String,
     override val name: String,
-    override val enclosingClass: PandaClassOrInterface,
+    val enclosingClass: PandaClassOrInterface,
     override val returnType: PandaType,
     val parameterTypes: List<PandaType>,
     val flags: AccessFlags,

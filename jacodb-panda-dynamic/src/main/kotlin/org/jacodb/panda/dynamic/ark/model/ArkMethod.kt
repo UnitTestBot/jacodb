@@ -23,7 +23,7 @@ import org.jacodb.panda.dynamic.ark.graph.Cfg
 // TODO: modifiers
 // TODO: typeParameters
 interface ArkMethod : CommonMethod {
-    override val enclosingClass: ArkClass
+    val enclosingClass: ArkClass
     val signature: MethodSignature
     val body: ArkBody
 

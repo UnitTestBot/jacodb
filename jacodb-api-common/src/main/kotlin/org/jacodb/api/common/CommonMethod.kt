@@ -20,7 +20,6 @@ import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.ControlFlowGraph
 
 interface CommonMethod {
-    val enclosingClass: CommonClass // TODO: remove
     val name: String
     val parameters: List<CommonMethodParameter>
     val returnType: CommonTypeName
