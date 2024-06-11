@@ -16,9 +16,6 @@
 
 package org.jacodb.api.jvm.cfg
 
-import org.jacodb.api.common.cfg.CommonExpr
-import org.jacodb.api.common.cfg.CommonValue
-
 interface JcValueVisitor<out T> {
     fun visitExternalJcValue(value: JcValue): T
 
@@ -41,7 +38,7 @@ interface JcValueVisitor<out T> {
     fun visitJcMethodConstant(value: JcMethodConstant): T
     fun visitJcMethodType(value: JcMethodType): T
 
-    interface Default<out T> : JcValueVisitor<T>, CommonValue.Visitor<T> {
+    interface Default<out T> : JcValueVisitor<T> {
         fun defaultVisitJcValue(value: JcValue): T
 
         override fun visitExternalJcValue(value: JcValue): T = defaultVisitJcValue(value)
@@ -67,7 +64,7 @@ interface JcValueVisitor<out T> {
     }
 }
 
-interface JcExprVisitor<out T> : JcValueVisitor<T>, CommonExpr.Visitor<T> {
+interface JcExprVisitor<out T> : JcValueVisitor<T> {
     fun visitExternalJcExpr(expr: JcExpr): T
 
     fun visitJcAddExpr(expr: JcAddExpr): T
@@ -103,7 +100,7 @@ interface JcExprVisitor<out T> : JcValueVisitor<T>, CommonExpr.Visitor<T> {
     fun visitJcStaticCallExpr(expr: JcStaticCallExpr): T
     fun visitJcSpecialCallExpr(expr: JcSpecialCallExpr): T
 
-    interface Default<out T> : JcExprVisitor<T>, JcValueVisitor.Default<T>, CommonExpr.Visitor.Default<T> {
+    interface Default<out T> : JcExprVisitor<T>, JcValueVisitor.Default<T> {
         fun defaultVisitJcExpr(expr: JcExpr): T
 
         override fun defaultVisitJcValue(value: JcValue): T = defaultVisitJcExpr(value)

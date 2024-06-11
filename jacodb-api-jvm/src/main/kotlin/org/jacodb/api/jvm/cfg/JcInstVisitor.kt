@@ -16,9 +16,7 @@
 
 package org.jacodb.api.jvm.cfg
 
-import org.jacodb.api.common.cfg.CommonInst
-
-interface JcInstVisitor<out T> : CommonInst.Visitor<T> {
+interface JcInstVisitor<out T> {
     fun visitExternalJcInst(inst: JcInst): T
 
     fun visitJcAssignInst(inst: JcAssignInst): T
@@ -32,7 +30,7 @@ interface JcInstVisitor<out T> : CommonInst.Visitor<T> {
     fun visitJcIfInst(inst: JcIfInst): T
     fun visitJcSwitchInst(inst: JcSwitchInst): T
 
-    interface Default<out T> : JcInstVisitor<T>, CommonInst.Visitor.Default<T> {
+    interface Default<out T> : JcInstVisitor<T> {
         fun defaultVisitJcInst(inst: JcInst): T
 
         override fun visitExternalJcInst(inst: JcInst): T = defaultVisitJcInst(inst)

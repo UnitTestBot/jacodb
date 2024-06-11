@@ -50,10 +50,6 @@ sealed interface PandaInst : CommonInst {
 
     // TODO: remove 'operands'
     val operands: List<PandaExpr>
-
-    override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
-        return visitor.visitExternalCommonInst(this)
-    }
 }
 
 class PandaDoNothingInst(
@@ -85,10 +81,6 @@ class PandaAssignInst(
         get() = listOf(lhv, rhv)
 
     override fun toString(): String = "$lhv = $rhv"
-
-    override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
-        return visitor.visitCommonAssignInst(this)
-    }
 }
 
 sealed interface PandaBranchingInst : PandaInst {
@@ -108,10 +100,6 @@ class PandaIfInst(
         get() = listOf(trueBranch, falseBranch)
 
     override fun toString(): String = "if ($condition) goto ${trueBranch.index} else goto ${falseBranch.index}"
-
-    override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
-        return visitor.visitCommonIfInst(this)
-    }
 }
 
 class PandaGotoInst(
@@ -125,10 +113,6 @@ class PandaGotoInst(
         get() = listOf(target)
 
     override fun toString(): String = "goto ${target.index}"
-
-    override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
-        return visitor.visitCommonGotoInst(this)
-    }
 }
 
 sealed interface PandaTerminatingInst : PandaInst
@@ -146,10 +130,6 @@ class PandaReturnInst(
         } else {
             "return"
         }
-
-    override fun <T> accept(visitor: CommonInst.Visitor<T>): T {
-        return visitor.visitCommonReturnInst(this)
-    }
 }
 
 class PandaThrowInst(
@@ -176,7 +156,9 @@ class PandaPhiInst(
     override val operands: List<PandaExpr>
         get() = inputs
 
-    override fun toString() = "$lhv = Phi(${phiInputs.joinToString { "${it.value} <- ${it.cfgBranch}" }})"
+    override fun toString() = "$lhv = Phi(${
+        phiInputs.joinToString { "${it.value} <- ${it.cfgBranch}" }
+    })"
 }
 
 class PandaCatchInst(

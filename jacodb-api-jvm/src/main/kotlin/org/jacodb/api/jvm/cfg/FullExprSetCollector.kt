@@ -139,14 +139,6 @@ abstract class AbstractFullExprSetCollector :
     JcExprVisitor.Default<Any>,
     JcInstVisitor.Default<Any> {
 
-    override fun defaultVisitCommonExpr(expr: CommonExpr): Any {
-        TODO("Not yet implemented")
-    }
-
-    override fun defaultVisitCommonInst(inst: CommonInst) {
-        TODO("Not yet implemented")
-    }
-
     override fun defaultVisitJcExpr(expr: JcExpr) {
         ifMatches(expr)
     }

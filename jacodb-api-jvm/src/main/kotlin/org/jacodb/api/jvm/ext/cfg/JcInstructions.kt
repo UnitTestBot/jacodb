@@ -65,14 +65,6 @@ object FieldRefVisitor :
     JcExprVisitor.Default<JcFieldRef?>,
     JcInstVisitor.Default<JcFieldRef?> {
 
-    override fun defaultVisitCommonExpr(expr: CommonExpr): JcFieldRef? {
-        TODO("Not yet implemented")
-    }
-
-    override fun defaultVisitCommonInst(inst: CommonInst): JcFieldRef? {
-        TODO("Not yet implemented")
-    }
-
     override fun defaultVisitJcExpr(expr: JcExpr): JcFieldRef? {
         return expr.operands.filterIsInstance<JcFieldRef>().firstOrNull()
     }
@@ -90,14 +82,6 @@ object ArrayAccessVisitor :
     JcExprVisitor.Default<JcArrayAccess?>,
     JcInstVisitor.Default<JcArrayAccess?> {
 
-    override fun defaultVisitCommonExpr(expr: CommonExpr): JcArrayAccess? {
-        TODO("Not yet implemented")
-    }
-
-    override fun defaultVisitCommonInst(inst: CommonInst): JcArrayAccess? {
-        TODO("Not yet implemented")
-    }
-
     override fun defaultVisitJcExpr(expr: JcExpr): JcArrayAccess? {
         return expr.operands.filterIsInstance<JcArrayAccess>().firstOrNull()
     }
@@ -112,10 +96,6 @@ object ArrayAccessVisitor :
 }
 
 object CallExprVisitor : JcInstVisitor.Default<JcCallExpr?> {
-    override fun defaultVisitCommonInst(inst: CommonInst): JcCallExpr? {
-        TODO("Not yet implemented")
-    }
-
     override fun defaultVisitJcInst(inst: JcInst): JcCallExpr? {
         return inst.operands.filterIsInstance<JcCallExpr>().firstOrNull()
     }

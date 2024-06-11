@@ -16,10 +16,7 @@
 
 package org.jacodb.panda.dynamic.api
 
-import org.jacodb.api.common.cfg.CommonExpr
-import org.jacodb.api.common.cfg.CommonInst
-
-interface PandaExprVisitor<out T> : CommonExpr.Visitor<T> {
+interface PandaExprVisitor<out T> {
     fun visitPandaExpr(expr: PandaExpr): T
     fun visitTODOExpr(expr: TODOExpr): T
     fun visitPandaCmpExpr(expr: PandaCmpExpr): T
@@ -71,7 +68,7 @@ interface PandaExprVisitor<out T> : CommonExpr.Visitor<T> {
     fun visitPandaBuiltInError(expr: PandaBuiltInError): T
 }
 
-interface PandaInstVisitor<out T> : CommonInst.Visitor<T> {
+interface PandaInstVisitor<out T> {
     fun visitTODOInst(inst: TODOInst): T
     fun visitPandaNopInst(inst: PandaNopInst): T
     fun visitPandaThrowInst(inst: PandaThrowInst): T
@@ -85,7 +82,7 @@ interface PandaInstVisitor<out T> : CommonInst.Visitor<T> {
     fun visitPandaNewLexenvInst(inst: PandaNewLexenvInst): T
     fun visitPandaPopLexenvInst(inst: PandaPopLexenvInst): T
 
-    interface Default<out T> : PandaInstVisitor<T>, CommonInst.Visitor.Default<T> {
+    interface Default<out T> : PandaInstVisitor<T> {
         override fun visitTODOInst(inst: TODOInst): T = defaultVisit(inst)
         override fun visitPandaNopInst(inst: PandaNopInst): T = defaultVisit(inst)
         override fun visitPandaThrowInst(inst: PandaThrowInst): T = defaultVisit(inst)
@@ -98,8 +95,6 @@ interface PandaInstVisitor<out T> : CommonInst.Visitor<T> {
         override fun visitPandaEmptyBBPlaceholderInst(inst: PandaEmptyBBPlaceholderInst): T = defaultVisit(inst)
         override fun visitPandaNewLexenvInst(inst: PandaNewLexenvInst): T = defaultVisit(inst)
         override fun visitPandaPopLexenvInst(inst: PandaPopLexenvInst): T = defaultVisit(inst)
-
-        override fun defaultVisitCommonInst(inst: CommonInst): T = TODO("Not implemented")
 
         fun defaultVisit(inst: PandaInst): T
     }

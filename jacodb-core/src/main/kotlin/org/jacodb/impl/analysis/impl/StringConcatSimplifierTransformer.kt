@@ -16,11 +16,26 @@
 
 package org.jacodb.impl.analysis.impl
 
-import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.jvm.JcClassType
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.PredefinedPrimitives
-import org.jacodb.api.jvm.cfg.*
+import org.jacodb.api.jvm.cfg.BsmStringArg
+import org.jacodb.api.jvm.cfg.JcAssignInst
+import org.jacodb.api.jvm.cfg.JcCatchInst
+import org.jacodb.api.jvm.cfg.JcDynamicCallExpr
+import org.jacodb.api.jvm.cfg.JcGotoInst
+import org.jacodb.api.jvm.cfg.JcIfInst
+import org.jacodb.api.jvm.cfg.JcInst
+import org.jacodb.api.jvm.cfg.JcInstList
+import org.jacodb.api.jvm.cfg.JcInstRef
+import org.jacodb.api.jvm.cfg.JcInstVisitor
+import org.jacodb.api.jvm.cfg.JcLocalVar
+import org.jacodb.api.jvm.cfg.JcStaticCallExpr
+import org.jacodb.api.jvm.cfg.JcStringConstant
+import org.jacodb.api.jvm.cfg.JcSwitchInst
+import org.jacodb.api.jvm.cfg.JcValue
+import org.jacodb.api.jvm.cfg.JcVirtualCallExpr
+import org.jacodb.api.jvm.cfg.values
 import org.jacodb.api.jvm.ext.autoboxIfNeeded
 import org.jacodb.api.jvm.ext.findTypeOrNull
 import org.jacodb.impl.cfg.JcInstListImpl
@@ -32,10 +47,6 @@ class StringConcatSimplifierTransformer(
     classpath: JcClasspath,
     private val list: JcInstList<JcInst>,
 ) : JcInstVisitor.Default<JcInst> {
-
-    override fun defaultVisitCommonInst(inst: CommonInst): JcInst {
-        TODO("Not yet implemented")
-    }
 
     override fun defaultVisitJcInst(inst: JcInst): JcInst {
         return inst

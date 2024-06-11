@@ -37,10 +37,6 @@ sealed interface PandaExpr : CommonExpr {
         get() = type.typeName
 
     val operands: List<PandaValue>
-
-    override fun <T> accept(visitor: CommonExpr.Visitor<T>): T {
-        TODO("Not yet implemented")
-    }
 }
 
 sealed interface PandaValue : PandaExpr, CommonValue

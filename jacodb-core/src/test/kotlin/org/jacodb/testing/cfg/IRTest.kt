@@ -80,14 +80,6 @@ class OverridesResolver(
 ) : JcExprVisitor.Default<Sequence<JcTypedMethod>>,
     JcInstVisitor.Default<Sequence<JcTypedMethod>> {
 
-    override fun defaultVisitCommonExpr(expr: CommonExpr): Sequence<JcTypedMethod> {
-        TODO("Not yet implemented")
-    }
-
-    override fun defaultVisitCommonInst(inst: CommonInst): Sequence<JcTypedMethod> {
-        TODO("Not yet implemented")
-    }
-
     override fun defaultVisitJcExpr(expr: JcExpr): Sequence<JcTypedMethod> {
         return emptySequence()
     }
@@ -299,30 +291,6 @@ class JcGraphChecker(
             inst in catch.throwers.map { thrower -> jcGraph.inst(thrower) }.toSet()
         })
         assertTrue(jcGraph.throwers(inst).isEmpty())
-    }
-
-    override fun visitExternalCommonInst(inst: CommonInst) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitCommonAssignInst(inst: CommonAssignInst) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitCommonCallInst(inst: CommonCallInst) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitCommonReturnInst(inst: CommonReturnInst) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitCommonGotoInst(inst: CommonGotoInst) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitCommonIfInst(inst: CommonIfInst) {
-        TODO("Not yet implemented")
     }
 }
 

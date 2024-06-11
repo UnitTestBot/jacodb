@@ -29,10 +29,6 @@ interface PandaExpr : CommonExpr, Mappable {
     val operands: List<PandaValue>
 
     fun <T> accept(visitor: PandaExprVisitor<T>): T
-
-    override fun <T> accept(visitor: CommonExpr.Visitor<T>): T {
-        TODO("Not yet implemented")
-    }
 }
 
 /**

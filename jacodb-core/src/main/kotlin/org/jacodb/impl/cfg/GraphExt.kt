@@ -23,8 +23,6 @@ import info.leadinglight.jdot.enums.Color
 import info.leadinglight.jdot.enums.Shape
 import info.leadinglight.jdot.enums.Style
 import info.leadinglight.jdot.impl.Util
-import org.jacodb.api.common.cfg.CommonExpr
-import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.jvm.JcClassType
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.PredefinedPrimitives
@@ -234,14 +232,6 @@ open class JcExceptionResolver(
     private val runtimeExceptionType = classpath.findTypeOrNull<RuntimeException>() as JcClassType
     private val nullPointerExceptionType = classpath.findTypeOrNull<NullPointerException>() as JcClassType
     private val arithmeticExceptionType = classpath.findTypeOrNull<ArithmeticException>() as JcClassType
-
-    override fun defaultVisitCommonExpr(expr: CommonExpr): List<JcClassType> {
-        TODO("Not yet implemented")
-    }
-
-    override fun defaultVisitCommonInst(inst: CommonInst): List<JcClassType> {
-        TODO("Not yet implemented")
-    }
 
     override fun defaultVisitJcExpr(expr: JcExpr): List<JcClassType> {
         return emptyList()
