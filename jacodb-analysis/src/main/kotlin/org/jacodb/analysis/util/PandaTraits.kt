@@ -206,12 +206,7 @@ fun PandaValue.toPathOrNull(): AccessPath? = when (this) {
         }
     }
 
-    is PandaLoadedValue -> {
-        when (className) {
-            "console" -> instance.toPathOrNull()
-            else -> TODO("Not implemented yet")
-        }
-    }
+    is PandaLoadedValue -> instance.toPathOrNull()
 
     else -> null
 }

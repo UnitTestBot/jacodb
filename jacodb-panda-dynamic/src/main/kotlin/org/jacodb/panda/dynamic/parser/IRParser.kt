@@ -834,6 +834,11 @@ class IRParser(
                 handle(todoExpr)
             }
 
+            "Intrinsic.getmodulenamespace" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
             "Intrinsic.asyncfunctionenter" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)

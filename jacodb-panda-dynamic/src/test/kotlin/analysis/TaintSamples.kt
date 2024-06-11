@@ -35,9 +35,6 @@ import org.jacodb.panda.taint.UntrustedLoopBoundSinkCheck
 import org.jacodb.panda.taint.UntrustedArraySizeSinkCheck
 import org.jacodb.panda.taint.UntrustedIndexArrayAccessSinkCheck
 
-
-private val logger = mu.KotlinLogging.logger {}
-
 class TaintSamples {
     private fun loadProjectForSample(programName: String): PandaProject {
         val parser = loadIr("/samples/${programName}.json")
@@ -248,17 +245,55 @@ class TaintSamples {
 
     @Nested
     inner class SQLInjectionTest {
-        private val project: PandaProject = loadProjectForSample("taintSamples/SQLInjection")
-        private val fileTaintAnalyzer = TaintAnalyzer(project)
+        private fun getTaintAnalyserByProgramName(programName: String = "taintSamples/SQLInjection"): TaintAnalyzer {
+            val project: PandaProject = loadProjectForSample(programName)
+            val fileTaintAnalyzer = TaintAnalyzer(project)
+            return fileTaintAnalyzer
+        }
 
         @Test
         fun `counterexample - sql injection that lead to dropping table`() {
+            val fileTaintAnalyzer = getTaintAnalyserByProgramName()
             val sinkResults = fileTaintAnalyzer.analyseOneCase(
                 CaseTaintConfig(
                     sourceMethodConfigs = listOf(SourceMethodConfig("getUserName")),
                     sinkMethodConfigs = listOf(
                         SinkMethodConfig(
                             methodName = "query",
+                        )
+                    ),
+                )
+            )
+            assert(sinkResults.size == 1)
+        }
+
+        @Test
+        fun `counterexample - more realistic sql injection`() {
+            val fileTaintAnalyzer = getTaintAnalyserByProgramName("taintSamples/SQLInjection2")
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodConfigs = listOf(SourceMethodConfig("getUser")),
+                    sinkMethodConfigs = listOf(
+                        SinkMethodConfig(
+                            methodName = "query",
+                            position = Argument(1)
+                        )
+                    ),
+                )
+            )
+            assert(sinkResults.size == 1)
+        }
+
+        @Test
+        fun `counterexample - most production-like sql injection`() {
+            val fileTaintAnalyzer = getTaintAnalyserByProgramName("taintSamples/SQLInjection3")
+            val sinkResults = fileTaintAnalyzer.analyseOneCase(
+                CaseTaintConfig(
+                    sourceMethodConfigs = listOf(SourceMethodConfig("getUser")),
+                    sinkMethodConfigs = listOf(
+                        SinkMethodConfig(
+                            methodName = "query",
+                            position = Argument(1)
                         )
                     ),
                 )
