@@ -1,0 +1,672 @@
+{
+ "classes": [
+  {
+   "name": "GLOBAL",
+   "properties": [
+    {
+     "method": {
+      "accessFlags": 264,
+      "basicBlocks": [
+       {
+        "id": 1,
+        "insts": [
+         {
+          "id": "v0",
+          "index": 0,
+          "opcode": "Parameter",
+          "type": "any"
+         },
+         {
+          "id": "v1",
+          "index": 1,
+          "opcode": "Parameter",
+          "type": "any"
+         },
+         {
+          "id": "v2",
+          "index": 2,
+          "opcode": "Parameter",
+          "type": "any"
+         },
+         {
+          "id": "v3",
+          "opcode": "Constant",
+          "type": "i32",
+          "users": [
+           "v40",
+           "v36",
+           "v32",
+           "v28",
+           "v17",
+           "v13",
+           "v9",
+           "v4"
+          ],
+          "value": 5
+         },
+         {
+          "id": "v6",
+          "opcode": "Constant",
+          "type": "i32",
+          "users": [
+           "v17",
+           "v13",
+           "v9",
+           "v7"
+          ],
+          "value": 3
+         },
+         {
+          "id": "v27",
+          "opcode": "Constant",
+          "type": "i32",
+          "users": [
+           "v46",
+           "v36",
+           "v32",
+           "v28"
+          ],
+          "value": 1
+         }
+        ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
+        "successors": [
+         0
+        ]
+       },
+       {
+        "id": 0,
+        "insts": [
+         {
+          "id": "v5",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v4"
+          ]
+         },
+         {
+          "id": "v4",
+          "imms": [
+           0,
+           197
+          ],
+          "inputs": [
+           "v3",
+           "v5"
+          ],
+          "intrinsic_id": "Intrinsic.stconsttoglobalrecord",
+          "opcode": "Intrinsic",
+          "string_data": "a",
+          "type": "void"
+         },
+         {
+          "id": "v8",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v7"
+          ]
+         },
+         {
+          "id": "v7",
+          "imms": [
+           1,
+           211
+          ],
+          "inputs": [
+           "v6",
+           "v8"
+          ],
+          "intrinsic_id": "Intrinsic.stconsttoglobalrecord",
+          "opcode": "Intrinsic",
+          "string_data": "b",
+          "type": "void"
+         },
+         {
+          "id": "v10",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v9"
+          ]
+         },
+         {
+          "id": "v9",
+          "imms": [
+           2
+          ],
+          "inputs": [
+           "v3",
+           "v6",
+           "v10"
+          ],
+          "intrinsic_id": "Intrinsic.and2",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v11"
+          ]
+         },
+         {
+          "id": "v12",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v11"
+          ]
+         },
+         {
+          "id": "v11",
+          "imms": [
+           3,
+           200
+          ],
+          "inputs": [
+           "v9",
+           "v12"
+          ],
+          "intrinsic_id": "Intrinsic.stconsttoglobalrecord",
+          "opcode": "Intrinsic",
+          "string_data": "andResult",
+          "type": "void"
+         },
+         {
+          "id": "v14",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v13"
+          ]
+         },
+         {
+          "id": "v13",
+          "imms": [
+           4
+          ],
+          "inputs": [
+           "v3",
+           "v6",
+           "v14"
+          ],
+          "intrinsic_id": "Intrinsic.or2",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v15"
+          ]
+         },
+         {
+          "id": "v16",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v15"
+          ]
+         },
+         {
+          "id": "v15",
+          "imms": [
+           5,
+           245
+          ],
+          "inputs": [
+           "v13",
+           "v16"
+          ],
+          "intrinsic_id": "Intrinsic.stconsttoglobalrecord",
+          "opcode": "Intrinsic",
+          "string_data": "orResult",
+          "type": "void"
+         },
+         {
+          "id": "v18",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v17"
+          ]
+         },
+         {
+          "id": "v17",
+          "imms": [
+           6
+          ],
+          "inputs": [
+           "v3",
+           "v6",
+           "v18"
+          ],
+          "intrinsic_id": "Intrinsic.xor2",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v19"
+          ]
+         },
+         {
+          "id": "v20",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v19"
+          ]
+         },
+         {
+          "id": "v19",
+          "imms": [
+           7,
+           333
+          ],
+          "inputs": [
+           "v17",
+           "v20"
+          ],
+          "intrinsic_id": "Intrinsic.stconsttoglobalrecord",
+          "opcode": "Intrinsic",
+          "string_data": "xorResult",
+          "type": "void"
+         },
+         {
+          "id": "v22",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v21"
+          ]
+         },
+         {
+          "id": "v21",
+          "imms": [
+           8,
+           197
+          ],
+          "inputs": [
+           "v22"
+          ],
+          "intrinsic_id": "Intrinsic.tryldglobalbyname",
+          "opcode": "Intrinsic",
+          "string_data": "a",
+          "type": "any",
+          "users": [
+           "v23"
+          ]
+         },
+         {
+          "id": "v24",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v23"
+          ]
+         },
+         {
+          "id": "v23",
+          "imms": [
+           9
+          ],
+          "inputs": [
+           "v21",
+           "v24"
+          ],
+          "intrinsic_id": "Intrinsic.not",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v25"
+          ]
+         },
+         {
+          "id": "v26",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v25"
+          ]
+         },
+         {
+          "id": "v25",
+          "imms": [
+           10,
+           234
+          ],
+          "inputs": [
+           "v23",
+           "v26"
+          ],
+          "intrinsic_id": "Intrinsic.stconsttoglobalrecord",
+          "opcode": "Intrinsic",
+          "string_data": "notResult",
+          "type": "void"
+         },
+         {
+          "id": "v29",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v28"
+          ]
+         },
+         {
+          "id": "v28",
+          "imms": [
+           11
+          ],
+          "inputs": [
+           "v3",
+           "v27",
+           "v29"
+          ],
+          "intrinsic_id": "Intrinsic.shl2",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v30"
+          ]
+         },
+         {
+          "id": "v31",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v30"
+          ]
+         },
+         {
+          "id": "v30",
+          "imms": [
+           12,
+           217
+          ],
+          "inputs": [
+           "v28",
+           "v31"
+          ],
+          "intrinsic_id": "Intrinsic.stconsttoglobalrecord",
+          "opcode": "Intrinsic",
+          "string_data": "leftShiftResult",
+          "type": "void"
+         },
+         {
+          "id": "v33",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v32"
+          ]
+         },
+         {
+          "id": "v32",
+          "imms": [
+           13
+          ],
+          "inputs": [
+           "v3",
+           "v27",
+           "v33"
+          ],
+          "intrinsic_id": "Intrinsic.ashr2",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v34"
+          ]
+         },
+         {
+          "id": "v35",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v34"
+          ]
+         },
+         {
+          "id": "v34",
+          "imms": [
+           14,
+           255
+          ],
+          "inputs": [
+           "v32",
+           "v35"
+          ],
+          "intrinsic_id": "Intrinsic.stconsttoglobalrecord",
+          "opcode": "Intrinsic",
+          "string_data": "rightShiftResult",
+          "type": "void"
+         },
+         {
+          "id": "v37",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v36"
+          ]
+         },
+         {
+          "id": "v36",
+          "imms": [
+           15
+          ],
+          "inputs": [
+           "v3",
+           "v27",
+           "v37"
+          ],
+          "intrinsic_id": "Intrinsic.shr2",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v38"
+          ]
+         },
+         {
+          "id": "v39",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v38"
+          ]
+         },
+         {
+          "id": "v38",
+          "imms": [
+           16,
+           307
+          ],
+          "inputs": [
+           "v36",
+           "v39"
+          ],
+          "intrinsic_id": "Intrinsic.stconsttoglobalrecord",
+          "opcode": "Intrinsic",
+          "string_data": "unsignedRightShiftResult",
+          "type": "void"
+         },
+         {
+          "id": "v41",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v40"
+          ]
+         },
+         {
+          "id": "v40",
+          "imms": [
+           17
+          ],
+          "inputs": [
+           "v3",
+           "v41"
+          ],
+          "intrinsic_id": "Intrinsic.neg",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v42"
+          ]
+         },
+         {
+          "id": "v43",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v42"
+          ]
+         },
+         {
+          "id": "v42",
+          "imms": [
+           18,
+           214
+          ],
+          "inputs": [
+           "v40",
+           "v43"
+          ],
+          "intrinsic_id": "Intrinsic.stconsttoglobalrecord",
+          "opcode": "Intrinsic",
+          "string_data": "c",
+          "type": "void"
+         },
+         {
+          "id": "v45",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v44"
+          ]
+         },
+         {
+          "id": "v44",
+          "imms": [
+           19,
+           214
+          ],
+          "inputs": [
+           "v45"
+          ],
+          "intrinsic_id": "Intrinsic.tryldglobalbyname",
+          "opcode": "Intrinsic",
+          "string_data": "c",
+          "type": "any",
+          "users": [
+           "v46"
+          ]
+         },
+         {
+          "id": "v47",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v46"
+          ]
+         },
+         {
+          "id": "v46",
+          "imms": [
+           20
+          ],
+          "inputs": [
+           "v44",
+           "v27",
+           "v47"
+          ],
+          "intrinsic_id": "Intrinsic.shr2",
+          "opcode": "Intrinsic",
+          "type": "any",
+          "users": [
+           "v48"
+          ]
+         },
+         {
+          "id": "v49",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v48"
+          ]
+         },
+         {
+          "id": "v48",
+          "imms": [
+           21,
+           273
+          ],
+          "inputs": [
+           "v46",
+           "v49"
+          ],
+          "intrinsic_id": "Intrinsic.stconsttoglobalrecord",
+          "opcode": "Intrinsic",
+          "string_data": "unsignedRightShiftNegativeResult",
+          "type": "void"
+         },
+         {
+          "id": "v51",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v50"
+          ]
+         },
+         {
+          "id": "v50",
+          "inputs": [
+           "v51"
+          ],
+          "intrinsic_id": "Intrinsic.ldundefined",
+          "opcode": "Intrinsic",
+          "type": "any"
+         },
+         {
+          "id": "v53",
+          "opcode": "SaveState",
+          "type": "void",
+          "users": [
+           "v52"
+          ]
+         },
+         {
+          "id": "v52",
+          "inputs": [
+           "v53"
+          ],
+          "intrinsic_id": "Intrinsic.returnundefined",
+          "opcode": "Intrinsic",
+          "type": "void"
+         }
+        ],
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
+        "predecessors": [
+         1
+        ],
+        "successors": [
+         2
+        ]
+       },
+       {
+        "id": 2,
+        "isCatchBegin": false,
+        "isTryBegin": false,
+        "isTryEnd": false,
+        "predecessors": [
+         0
+        ]
+       }
+      ],
+      "name": "func_main_0",
+      "returnType": "any",
+      "signature": ".func_main_0"
+     },
+     "name": "func_main_0"
+    }
+   ]
+  }
+ ]
+}

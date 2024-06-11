@@ -26,6 +26,7 @@ import org.jacodb.panda.dynamic.api.PandaArrayType
 import org.jacodb.panda.dynamic.api.PandaArrayTypeImpl
 import org.jacodb.panda.dynamic.api.PandaAssignInst
 import org.jacodb.panda.dynamic.api.PandaBasicBlock
+import org.jacodb.panda.dynamic.api.PandaBitwiseAndExpr
 import org.jacodb.panda.dynamic.api.PandaBoolConstant
 import org.jacodb.panda.dynamic.api.PandaBuiltInError
 import org.jacodb.panda.dynamic.api.PandaCallExpr
@@ -894,6 +895,31 @@ class IRParser(
                 handle(todoExpr)
             }
 
+            "Intrinsic.xor2" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
+            "Intrinsic.shl2" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
+            "Intrinsic.shr2" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
+            "Intrinsic.ashr2" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
+            "Intrinsic.not" -> {
+                val todoExpr = TODOExpr(opcode, inputs) // TODO
+                handle(todoExpr)
+            }
+
             "Intrinsic.definegettersetterbyvalue" -> {
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
                 handle(todoExpr)
@@ -1077,6 +1103,11 @@ class IRParser(
             "Intrinsic.neg" -> {
                 val negExpr = PandaNegExpr(inputs[0])
                 handle(negExpr)
+            }
+
+            "Intrinsic.and2" -> {
+                val bitwiseAndExpr = PandaBitwiseAndExpr(inputs[0], inputs[1])
+                handle(bitwiseAndExpr)
             }
 
             "Phi" -> {
