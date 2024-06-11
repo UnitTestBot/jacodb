@@ -181,6 +181,3 @@ class PandaTryPseudoInst(
 
     override fun toString(): String = "try"
 }
-
-val PandaInst.callExpr: PandaCallExpr?
-    get() = operands.filterIsInstance<PandaCallExpr>().firstOrNull()

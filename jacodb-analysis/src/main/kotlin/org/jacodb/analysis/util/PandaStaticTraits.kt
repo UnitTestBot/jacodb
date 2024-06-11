@@ -52,7 +52,7 @@ import org.jacodb.analysis.util.thisInstance as _thisInstance
 import org.jacodb.analysis.util.toPath as _toPath
 import org.jacodb.analysis.util.toPathOrNull as _toPathOrNull
 import org.jacodb.analysis.util.toPaths as _toPaths
-import org.jacodb.panda.staticvm.cfg.callExpr as _callExpr
+import org.jacodb.panda.staticvm.utils.callExpr as _callExpr
 
 /**
  * Panda-specific extensions for analysis.

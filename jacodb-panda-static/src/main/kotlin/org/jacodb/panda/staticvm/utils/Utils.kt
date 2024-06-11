@@ -16,8 +16,14 @@
 
 package org.jacodb.panda.staticvm.utils
 
+import org.jacodb.panda.staticvm.cfg.PandaCallExpr
+import org.jacodb.panda.staticvm.cfg.PandaInst
+
 /**
  * Applies [operation] to [initial] object with all arguments from [Iterable] consecutively
  */
 fun <T, A> Iterable<T>.applyFold(initial: A, operation: A.(T) -> Unit) =
     fold(initial) { acc, elem -> acc.apply { operation(elem) } }
+
+val PandaInst.callExpr: PandaCallExpr?
+    get() = operands.filterIsInstance<PandaCallExpr>().firstOrNull()

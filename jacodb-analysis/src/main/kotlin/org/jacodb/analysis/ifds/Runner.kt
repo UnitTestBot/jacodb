@@ -33,7 +33,7 @@ import org.jacodb.api.jvm.ext.cfg.callExpr as jcCallExpr
 import org.jacodb.panda.dynamic.api.PandaInst as DynamicPandaInst
 import org.jacodb.panda.dynamic.api.callExpr as dynamicPandaCallExpr
 import org.jacodb.panda.staticvm.cfg.PandaInst as StaticPandaInst
-import org.jacodb.panda.staticvm.cfg.callExpr as staticPandaCallExpr
+import org.jacodb.panda.staticvm.utils.callExpr as staticPandaCallExpr
 
 private val logger = mu.KotlinLogging.logger {}
 
