@@ -16,18 +16,16 @@
 
 package org.jacodb.panda.staticvm.classpath
 
-import org.jacodb.api.common.CommonClass
-import org.jacodb.api.common.CommonField
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.CommonMethodParameter
 import org.jacodb.panda.staticvm.cfg.PandaGraph
 
 class PandaField(
-    override val enclosingClass: PandaClassOrInterface,
-    override val name: String,
-    override val type: PandaType,
+    val enclosingClass: PandaClassOrInterface,
+    val name: String,
+    val type: PandaType,
     val flags: AccessFlags,
-) : CommonField {
+) {
     val signature: String
         get() = "${enclosingClass.name}.$name"
 }
@@ -67,10 +65,10 @@ class PandaMethod(
     }
 }
 
-sealed interface PandaClassOrInterface : CommonClass {
+sealed interface PandaClassOrInterface {
     val project: PandaProject
 
-    override val name: String
+    val name: String
 
     val simpleName: String
         get() = name.substringAfterLast('.')

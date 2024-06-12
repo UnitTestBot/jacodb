@@ -209,10 +209,10 @@ fun PandaValue.toPathOrNull(): AccessPath? = when (this) {
     is PandaFieldRef -> {
         val instance = instance
         if (instance == null) {
-            AccessPath(null, listOf(FieldAccessor(classField.name, isStatic = true)))
+            AccessPath(null, listOf(FieldAccessor(field.name, isStatic = true)))
         } else {
             instance.toPathOrNull()?.let {
-                it + FieldAccessor(classField.name)
+                it + FieldAccessor(field.name)
             }
         }
     }

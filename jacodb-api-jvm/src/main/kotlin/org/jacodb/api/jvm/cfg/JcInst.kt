@@ -17,12 +17,10 @@
 package org.jacodb.api.jvm.cfg
 
 import org.jacodb.api.common.cfg.CommonArgument
-import org.jacodb.api.common.cfg.CommonArrayAccess
 import org.jacodb.api.common.cfg.CommonAssignInst
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonCallInst
 import org.jacodb.api.common.cfg.CommonExpr
-import org.jacodb.api.common.cfg.CommonFieldRef
 import org.jacodb.api.common.cfg.CommonGotoInst
 import org.jacodb.api.common.cfg.CommonIfInst
 import org.jacodb.api.common.cfg.CommonInst
@@ -31,7 +29,6 @@ import org.jacodb.api.common.cfg.CommonInstanceCallExpr
 import org.jacodb.api.common.cfg.CommonReturnInst
 import org.jacodb.api.common.cfg.CommonThis
 import org.jacodb.api.common.cfg.CommonValue
-import org.jacodb.api.jvm.JcField
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.JcType
 import org.jacodb.api.jvm.JcTypedField
@@ -831,7 +828,7 @@ interface JcLocal : JcSimpleValue {
  * @param name isn't considered in `equals` and `hashcode`
  */
 data class JcArgument(
-    override val index: Int,
+    val index: Int,
     override val name: String,
     override val type: JcType,
 ) : JcLocal, CommonArgument {
@@ -905,15 +902,12 @@ data class JcLocalVar(
 interface JcComplexValue : JcValue
 
 data class JcFieldRef(
-    override val instance: JcValue?,
+    val instance: JcValue?,
     val field: JcTypedField,
-) : JcComplexValue, CommonFieldRef {
+) : JcComplexValue {
 
     override val type: JcType
         get() = this.field.type
-
-    override val classField: JcField
-        get() = this.field.field
 
     override val operands: List<JcValue>
         get() = listOfNotNull(instance)
@@ -926,10 +920,10 @@ data class JcFieldRef(
 }
 
 data class JcArrayAccess(
-    override val array: JcValue,
-    override val index: JcValue,
+    val array: JcValue,
+    val index: JcValue,
     override val type: JcType,
-) : JcComplexValue, CommonArrayAccess {
+) : JcComplexValue {
 
     override val operands: List<JcValue>
         get() = listOf(array, index)

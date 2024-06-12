@@ -17,8 +17,6 @@
 package org.jacodb.panda.dynamic.api
 
 import org.jacodb.api.common.cfg.CommonArgument
-import org.jacodb.api.common.cfg.CommonArrayAccess
-import org.jacodb.api.common.cfg.CommonFieldRef
 import org.jacodb.api.common.cfg.CommonThis
 import org.jacodb.api.common.cfg.CommonValue
 
@@ -68,8 +66,8 @@ data class PandaThis(
 }
 
 data class PandaArgument(
-    override val index: Int,
-    override val name: String = "arg$index",
+    val index: Int,
+    val name: String = "arg$index",
     override val type: PandaType = PandaAnyType,
 ) : PandaLocal, CommonArgument {
 
@@ -192,10 +190,10 @@ data class PandaMethodConstant(
 interface PandaComplexValue : PandaValue
 
 data class PandaFieldRef(
-    override val instance: PandaValue?, // null for static fields
-    override val classField: PandaField,
+    val instance: PandaValue?, // null for static fields
+    val classField: PandaField,
     override val type: PandaType,
-) : PandaComplexValue, CommonFieldRef {
+) : PandaComplexValue {
     override val operands: List<PandaValue>
         get() = listOfNotNull(instance)
 
@@ -209,10 +207,10 @@ data class PandaFieldRef(
 }
 
 data class PandaArrayAccess(
-    override val array: PandaValue,
-    override val index: PandaValue,
+    val array: PandaValue,
+    val index: PandaValue,
     override val type: PandaType,
-) : PandaComplexValue, CommonArrayAccess {
+) : PandaComplexValue {
     override val operands: List<PandaValue>
         get() = listOf(array, index)
 

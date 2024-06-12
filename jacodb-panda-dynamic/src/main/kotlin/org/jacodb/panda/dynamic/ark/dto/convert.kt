@@ -73,7 +73,6 @@ import org.jacodb.panda.dynamic.ark.base.Value
 import org.jacodb.panda.dynamic.ark.base.VoidType
 import org.jacodb.panda.dynamic.ark.graph.BasicBlock
 import org.jacodb.panda.dynamic.ark.graph.Cfg
-import org.jacodb.panda.dynamic.ark.model.ArkBody
 import org.jacodb.panda.dynamic.ark.model.ArkClass
 import org.jacodb.panda.dynamic.ark.model.ArkClassImpl
 import org.jacodb.panda.dynamic.ark.model.ArkField
@@ -417,7 +416,7 @@ fun convertToArkMethod(method: MethodDto): ArkMethod {
     val locals = method.body.locals.map {
         convertToArkValue(it) as Local  // safe cast
     }
-    val arkMethod = ArkMethodImpl(signature)
+    val arkMethod = ArkMethodImpl(signature, locals)
     val location = ArkInstLocation(arkMethod)
     val blocks = method.body.cfg.blocks.associate { block ->
         block.id to BasicBlock(
@@ -428,12 +427,7 @@ fun convertToArkMethod(method: MethodDto): ArkMethod {
         )
     }
     val cfg = Cfg(blocks)
-    val body = ArkBody(
-        method = signature,
-        locals = locals,
-        cfg = cfg,
-    )
-    arkMethod.body = body
+    arkMethod.cfg = cfg
     return arkMethod
 }
 

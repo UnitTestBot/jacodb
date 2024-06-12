@@ -16,8 +16,6 @@
 
 package org.jacodb.api.jvm
 
-import org.jacodb.api.common.CommonClass
-import org.jacodb.api.common.CommonField
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.CommonMethodParameter
 import org.jacodb.api.common.CommonTypeName
@@ -31,7 +29,7 @@ import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
 @JvmDefaultWithoutCompatibility
-interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible, CommonClass {
+interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
 
     val classpath: JcClasspath
 
@@ -138,9 +136,9 @@ interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible, CommonMethod {
 
 }
 
-interface JcField : JcAnnotatedSymbol, JcAccessible, CommonField {
-    override val enclosingClass: JcClassOrInterface
-    override val type: TypeName
+interface JcField : JcAnnotatedSymbol, JcAccessible {
+    val enclosingClass: JcClassOrInterface
+    val type: TypeName
     val signature: String?
 }
 

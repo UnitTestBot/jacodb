@@ -106,17 +106,17 @@ class ArkFromJsonTest {
             }
         """.trimIndent()
         val stmtDto = Json.decodeFromString<StmtDto>(jsonString)
-        println(stmtDto)
-        val method = ArkMethodImpl(
-            signature = MethodSignature(
-                enclosingClass = ClassSignature(name = "_DEFAULT_ARK_CLASS"),
-                name = "_DEFAULT_ARK_METHOD",
-                parameters = emptyList(),
-                returnType = AnyType,
-            )
+        println("stmtDto = $stmtDto")
+        val signature = MethodSignature(
+            enclosingClass = ClassSignature(name = "_DEFAULT_ARK_CLASS"),
+            name = "_DEFAULT_ARK_METHOD",
+            parameters = emptyList(),
+            returnType = AnyType,
         )
-        val stmt = convertToArkStmt(stmtDto, location = ArkInstLocation(method))
-        println(stmt)
+        val method = ArkMethodImpl(signature, emptyList())
+        val location = ArkInstLocation(method)
+        val stmt = convertToArkStmt(stmtDto, location)
+        println("stmt = $stmt")
     }
 
     @Test

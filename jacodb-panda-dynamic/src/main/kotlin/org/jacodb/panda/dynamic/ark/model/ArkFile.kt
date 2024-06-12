@@ -16,8 +16,10 @@
 
 package org.jacodb.panda.dynamic.ark.model
 
+import org.jacodb.api.common.CommonProject
+
 class ArkFile(
     val name: String,
     val path: String? = null,
     val classes: List<ArkClass>,
-)
+):  CommonProject

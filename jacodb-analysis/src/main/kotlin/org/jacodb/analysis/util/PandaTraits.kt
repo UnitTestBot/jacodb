@@ -227,10 +227,10 @@ fun PandaValue.toPath(): AccessPath {
     return toPathOrNull() ?: error("Unable to build access path for value $this")
 }
 
-fun PandaProject.getArgument(param: PandaMethodParameter): PandaArgument {
-    return PandaArgument(param.index)
+fun getArgument(param: PandaMethodParameter): PandaArgument {
+    return PandaArgument(index = param.index, type = param.type)
 }
 
-fun PandaProject.getArgumentsOf(method: PandaMethod): List<PandaArgument> {
+fun getArgumentsOf(method: PandaMethod): List<PandaArgument> {
     return method.parameters.map { getArgument(it) }
 }

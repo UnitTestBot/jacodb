@@ -16,15 +16,12 @@
 
 package org.jacodb.panda.dynamic.api
 
-import org.jacodb.api.common.CommonClass
-import org.jacodb.api.common.CommonField
-
 class PandaClass(
     val signature: PandaClassSignature,
     val superClassName: String? = null,
     val fields: List<PandaField> = emptyList(),
     val methods: List<PandaMethod> = emptyList(),
-) : CommonClass {
+) {
 
     constructor(
         name: String,
@@ -43,9 +40,8 @@ class PandaClass(
     lateinit var project: PandaProject
         internal set
 
-    override val name: String
+    val name: String
         get() = signature.name
-
     val simpleName: String
         get() = signature.simpleName
 
@@ -82,7 +78,7 @@ data class PandaClassSignature(
 
 data class PandaField(
     val signature: PandaFieldSignature,
-) : CommonField {
+) {
 
     constructor(
         enclosingClassName: String,
@@ -96,13 +92,13 @@ data class PandaField(
         )
     )
 
-    override var enclosingClass: PandaClass? = null
+    var enclosingClass: PandaClass? = null
         internal set
 
-    override val name: String
+    val name: String
         get() = signature.name
 
-    override val type: PandaType
+    val type: PandaType
         get() = signature.type
 
     override fun toString(): String {
