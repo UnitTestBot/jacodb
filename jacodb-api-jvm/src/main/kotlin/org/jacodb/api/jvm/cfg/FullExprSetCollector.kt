@@ -16,9 +16,6 @@
 
 package org.jacodb.api.jvm.cfg
 
-import org.jacodb.api.common.cfg.CommonExpr
-import org.jacodb.api.common.cfg.CommonInst
-
 abstract class AbstractFullRawExprSetCollector :
     JcRawExprVisitor<Unit>,
     JcRawInstVisitor.Default<Unit> {
