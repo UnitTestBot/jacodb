@@ -28,7 +28,7 @@ class PandaMethod(
 
     // TODO: replace with lateinit var
     @Suppress("PropertyName")
-    internal var enclosingClass_: PandaClass? = null
+    var enclosingClass_: PandaClass? = null
     val enclosingClass: PandaClass
         get() = enclosingClass_ ?: error("Enclosing class not set")
     // TODO

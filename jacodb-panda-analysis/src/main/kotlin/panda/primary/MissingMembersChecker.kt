@@ -92,7 +92,7 @@ class MissingMembersChecker(val project: PandaProject) {
                                 continue
                             }
                             // TODO: "callee.enclosingClass" is always non-null, BUT can be non-initialized (lateinit var), which will cause an exception in runtime
-                            if (callee.enclosingClass != null) {
+                            if (callee.enclosingClass_ != null) {
                                 continue
                             }
                         } catch (e: UninitializedPropertyAccessException) { // simply means that IRParser cannot resolve a method
