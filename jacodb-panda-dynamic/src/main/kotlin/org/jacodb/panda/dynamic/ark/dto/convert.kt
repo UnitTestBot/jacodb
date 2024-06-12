@@ -38,6 +38,7 @@ import org.jacodb.panda.dynamic.ark.base.IfStmt
 import org.jacodb.panda.dynamic.ark.base.InstanceCallExpr
 import org.jacodb.panda.dynamic.ark.base.InstanceFieldRef
 import org.jacodb.panda.dynamic.ark.base.InstanceOfExpr
+import org.jacodb.panda.dynamic.ark.base.LValue
 import org.jacodb.panda.dynamic.ark.base.LengthExpr
 import org.jacodb.panda.dynamic.ark.base.Local
 import org.jacodb.panda.dynamic.ark.base.NeverType
@@ -103,7 +104,7 @@ fun convertToArkStmt(stmt: StmtDto, location: ArkInstLocation): Stmt {
 
         is AssignStmtDto -> AssignStmt(
             location = location,
-            left = convertToArkValue(stmt.left),
+            left = convertToArkValue(stmt.left) as LValue,
             right = convertToArkValue(stmt.right),
         )
 

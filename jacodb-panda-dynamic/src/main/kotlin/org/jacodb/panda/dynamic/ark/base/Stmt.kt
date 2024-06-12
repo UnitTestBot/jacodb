@@ -75,7 +75,7 @@ data class NopStmt(
 
 data class AssignStmt(
     override val location: ArkInstLocation,
-    val left: Value, // Local
+    val left: LValue,
     val right: Value,
 ) : Stmt {
     override fun toString(): String {
