@@ -71,7 +71,7 @@ data class ArrayAccess(
     val array: Value,
     val index: Value,
     override val type: Type,
-) : Ref {
+) : Ref, LValue {
     override fun toString(): String {
         return "$array[$index]"
     }
@@ -81,7 +81,7 @@ data class ArrayAccess(
     }
 }
 
-interface FieldRef : Ref {
+interface FieldRef : Ref, LValue {
     val field: FieldSignature
 
     override val type: Type

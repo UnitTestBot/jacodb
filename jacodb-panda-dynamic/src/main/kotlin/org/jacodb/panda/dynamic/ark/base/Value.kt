@@ -47,6 +47,3 @@ interface Value : CommonExpr {
 
     fun <R> accept(visitor: Visitor<R>): R
 }
-
-// TODO: use LValue to mark assignable values
-interface LValue : Value

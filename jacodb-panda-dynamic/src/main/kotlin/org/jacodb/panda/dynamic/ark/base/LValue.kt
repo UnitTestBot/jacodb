@@ -16,15 +16,4 @@
 
 package org.jacodb.panda.dynamic.ark.base
 
-data class Local(
-    val name: String,
-    override val type: Type,
-) : Immediate, LValue {
-    override fun toString(): String {
-        return name
-    }
-
-    override fun <R> accept(visitor: Immediate.Visitor<R>): R {
-        return visitor.visit(this)
-    }
-}
+interface LValue : Value
