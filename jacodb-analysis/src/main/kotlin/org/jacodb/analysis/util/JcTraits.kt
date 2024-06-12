@@ -39,7 +39,7 @@ import org.jacodb.api.jvm.cfg.JcExpr
 import org.jacodb.api.jvm.cfg.JcFieldRef
 import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.api.jvm.cfg.JcInt
-import org.jacodb.api.jvm.cfg.JcSimpleValue
+import org.jacodb.api.jvm.cfg.JcImmediate
 import org.jacodb.api.jvm.cfg.JcStringConstant
 import org.jacodb.api.jvm.cfg.JcThis
 import org.jacodb.api.jvm.cfg.JcValue
@@ -190,7 +190,9 @@ fun JcExpr.toPathOrNull(): AccessPath? = when (this) {
 }
 
 fun JcValue.toPathOrNull(): AccessPath? = when (this) {
-    is JcSimpleValue -> AccessPath(this, emptyList())
+    is JcImmediate -> AccessPath(this, emptyList())
+
+    is JcThis -> AccessPath(this, emptyList())
 
     is JcArrayAccess -> {
         array.toPathOrNull()?.let {

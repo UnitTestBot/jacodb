@@ -804,24 +804,47 @@ data class JcSpecialCallExpr(
 
 interface JcValue : JcExpr, CommonValue
 
-interface JcSimpleValue : JcValue {
+interface JcImmediate : JcValue {
     override val operands: List<JcValue>
         get() = emptyList()
 }
 
-data class JcThis(override val type: JcType) : JcLocal, CommonThis {
-    override val name: String
-        get() = "this"
-
-    override fun toString(): String = "this"
-
-    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-        return visitor.visitJcThis(this)
-    }
+interface JcLocal : JcImmediate {
+    val name: String
 }
 
-interface JcLocal : JcSimpleValue {
-    val name: String
+/**
+ * @param name isn't considered in `equals` and `hashcode`
+ */
+data class JcLocalVar(
+    val index: Int,
+    override val name: String,
+    override val type: JcType,
+) : JcLocal {
+
+    override fun toString(): String = name
+
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcLocalVar(this)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as JcLocalVar
+
+        if (index != other.index) return false
+        if (type != other.type) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = index
+        result = 31 * result + type.hashCode()
+        return result
+    }
 }
 
 /**
@@ -865,46 +888,26 @@ data class JcArgument(
     }
 }
 
-/**
- * @param name isn't considered in `equals` and `hashcode`
- */
-data class JcLocalVar(
-    val index: Int,
-    override val name: String,
-    override val type: JcType,
-) : JcLocal {
+interface JcRef : JcValue
 
-    override fun toString(): String = name
+data class JcThis(
+    override val type: JcType,
+) : JcRef, CommonThis {
+
+    override val operands: List<JcValue>
+        get() = emptyList()
+
+    override fun toString(): String = "this"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
-        return visitor.visitJcLocalVar(this)
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as JcLocalVar
-
-        if (index != other.index) return false
-        if (type != other.type) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = index
-        result = 31 * result + type.hashCode()
-        return result
+        return visitor.visitJcThis(this)
     }
 }
-
-interface JcComplexValue : JcValue
 
 data class JcFieldRef(
     val instance: JcValue?,
     val field: JcTypedField,
-) : JcComplexValue {
+) : JcRef {
 
     override val type: JcType
         get() = this.field.type
@@ -923,7 +926,7 @@ data class JcArrayAccess(
     val array: JcValue,
     val index: JcValue,
     override val type: JcType,
-) : JcComplexValue {
+) : JcRef {
 
     override val operands: List<JcValue>
         get() = listOf(array, index)
@@ -935,7 +938,7 @@ data class JcArrayAccess(
     }
 }
 
-interface JcConstant : JcSimpleValue
+interface JcConstant : JcImmediate
 
 interface JcNumericConstant : JcConstant {
 
