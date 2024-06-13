@@ -257,6 +257,9 @@ interface JcExpr : CommonExpr {
 interface JcBinaryExpr : JcExpr {
     val lhv: JcValue
     val rhv: JcValue
+
+    override val operands: List<JcValue>
+        get() = listOf(lhv, rhv)
 }
 
 data class JcAddExpr(
@@ -264,9 +267,6 @@ data class JcAddExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcBinaryExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv + $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -279,9 +279,6 @@ data class JcAndExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcBinaryExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv & $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -294,9 +291,6 @@ data class JcCmpExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcBinaryExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv cmp $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -309,9 +303,6 @@ data class JcCmpgExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcBinaryExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv cmpg $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -324,9 +315,6 @@ data class JcCmplExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcBinaryExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv cmpl $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -339,9 +327,6 @@ data class JcDivExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcBinaryExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv / $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -354,9 +339,6 @@ data class JcMulExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcBinaryExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv * $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -371,9 +353,6 @@ data class JcEqExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcConditionExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv == $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -386,9 +365,6 @@ data class JcNeqExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcConditionExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv != $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -401,9 +377,6 @@ data class JcGeExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcConditionExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv >= $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -416,9 +389,6 @@ data class JcGtExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcConditionExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv > $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -431,9 +401,6 @@ data class JcLeExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcConditionExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv <= $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -446,9 +413,6 @@ data class JcLtExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcConditionExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv < $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -461,9 +425,6 @@ data class JcOrExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcBinaryExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv | $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -476,9 +437,6 @@ data class JcRemExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcBinaryExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv % $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -491,9 +449,6 @@ data class JcShlExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcBinaryExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv << $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -506,9 +461,6 @@ data class JcShrExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcBinaryExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv >> $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -521,9 +473,6 @@ data class JcSubExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcBinaryExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv - $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -536,9 +485,6 @@ data class JcUshrExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcBinaryExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv u<< $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -551,9 +497,6 @@ data class JcXorExpr(
     override val lhv: JcValue,
     override val rhv: JcValue,
 ) : JcBinaryExpr {
-    override val operands: List<JcValue>
-        get() = listOf(lhv, rhv)
-
     override fun toString(): String = "$lhv ^ $rhv"
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
@@ -684,7 +627,7 @@ data class JcPhiExpr(
 ) : JcExpr {
 
     override val operands: List<JcValue>
-        get() = values
+        get() = values + args
 
     override fun <T> accept(visitor: JcExprVisitor<T>): T {
         return visitor.visitJcPhiExpr(this)

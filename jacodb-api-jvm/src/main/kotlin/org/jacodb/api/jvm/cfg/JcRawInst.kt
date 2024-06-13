@@ -614,7 +614,7 @@ data class JcRawNewArrayExpr(
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
         return visitor.visitJcRawNewArrayExpr(this)
     }
-    
+
     companion object {
         private val regexToProcessDimensions = Regex("\\[(.*?)]")
 
@@ -657,6 +657,9 @@ sealed interface JcRawCallExpr : JcRawExpr {
 
 sealed interface JcRawInstanceExpr: JcRawCallExpr {
     val instance: JcRawValue
+
+    override val operands: List<JcRawValue>
+        get() = listOf(instance) + args
 }
 
 sealed interface BsmArg
@@ -726,9 +729,6 @@ data class JcRawVirtualCallExpr(
     override val instance: JcRawValue,
     override val args: List<JcRawValue>,
 ) : JcRawInstanceExpr {
-    override val operands: List<JcRawValue>
-        get() = listOf(instance) + args
-
     override fun toString(): String =
         "$instance.$methodName${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
 
@@ -745,9 +745,6 @@ data class JcRawInterfaceCallExpr(
     override val instance: JcRawValue,
     override val args: List<JcRawValue>,
 ) : JcRawInstanceExpr {
-    override val operands: List<JcRawValue>
-        get() = listOf(instance) + args
-
     override fun toString(): String =
         "$instance.$methodName${args.joinToString(prefix = "(", postfix = ")", separator = ", ")}"
 
@@ -789,12 +786,12 @@ data class JcRawSpecialCallExpr(
 }
 
 
-sealed interface JcRawValue : JcRawExpr {
+sealed interface JcRawValue : JcRawExpr
+
+sealed interface JcRawSimpleValue : JcRawValue {
     override val operands: List<JcRawValue>
         get() = emptyList()
 }
-
-sealed interface JcRawSimpleValue : JcRawValue
 
 sealed interface JcRawLocal : JcRawSimpleValue {
     val name: String
@@ -811,14 +808,17 @@ data class JcRawThis(override val typeName: TypeName) : JcRawSimpleValue {
 /**
  * @param name isn't considered in `equals` and `hashcode`
  */
-data class JcRawArgument(val index: Int, override val name: String, override val typeName: TypeName) : JcRawLocal {
+data class JcRawArgument(
+    val index: Int,
+    override val name: String,
+    override val typeName: TypeName,
+) : JcRawLocal {
     companion object {
         @JvmStatic
         fun of(index: Int, name: String?, typeName: TypeName): JcRawArgument {
             return JcRawArgument(index, name ?: "arg$$index", typeName)
         }
     }
-
 
     override fun toString(): String = name
 
@@ -848,7 +848,11 @@ data class JcRawArgument(val index: Int, override val name: String, override val
 /**
  * @param name isn't considered in `equals` and `hashcode`
  */
-data class JcRawLocalVar(val index: Int, override val name: String, override val typeName: TypeName) : JcRawLocal {
+data class JcRawLocalVar(
+    val index: Int,
+    override val name: String,
+    override val typeName: TypeName,
+) : JcRawLocal {
     override fun toString(): String = name
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
@@ -882,12 +886,16 @@ data class JcRawFieldRef(
     val fieldName: String,
     override val typeName: TypeName
 ) : JcRawComplexValue {
+
     constructor(declaringClass: TypeName, fieldName: String, typeName: TypeName) : this(
         null,
         declaringClass,
         fieldName,
         typeName
     )
+
+    override val operands: List<JcRawValue>
+        get() = listOfNotNull(instance)
 
     override fun toString(): String = "${instance ?: declaringClass}.$fieldName"
 
@@ -901,6 +909,9 @@ data class JcRawArrayAccess(
     val index: JcRawValue,
     override val typeName: TypeName
 ) : JcRawComplexValue {
+    override val operands: List<JcRawValue>
+        get() = listOf(array, index)
+
     override fun toString(): String = "$array[$index]"
 
     override fun <T> accept(visitor: JcRawExprVisitor<T>): T {
