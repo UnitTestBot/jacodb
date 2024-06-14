@@ -17,10 +17,12 @@
 package org.jacodb.api.jvm.cfg
 
 import org.jacodb.api.common.cfg.CommonArgument
+import org.jacodb.api.common.cfg.CommonArrayAccess
 import org.jacodb.api.common.cfg.CommonAssignInst
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonCallInst
 import org.jacodb.api.common.cfg.CommonExpr
+import org.jacodb.api.common.cfg.CommonFieldRef
 import org.jacodb.api.common.cfg.CommonGotoInst
 import org.jacodb.api.common.cfg.CommonIfInst
 import org.jacodb.api.common.cfg.CommonInst
@@ -848,9 +850,9 @@ data class JcArgument(
 interface JcRef : JcValue
 
 data class JcFieldRef(
-    val instance: JcValue?,
+    override val instance: JcValue?,
     val field: JcTypedField,
-) : JcRef {
+) : JcRef, CommonFieldRef {
 
     override val type: JcType
         get() = this.field.type
@@ -866,10 +868,10 @@ data class JcFieldRef(
 }
 
 data class JcArrayAccess(
-    val array: JcValue,
-    val index: JcValue,
+    override val array: JcValue,
+    override val index: JcValue,
     override val type: JcType,
-) : JcRef {
+) : JcRef, CommonArrayAccess {
 
     override val operands: List<JcValue>
         get() = listOf(array, index)

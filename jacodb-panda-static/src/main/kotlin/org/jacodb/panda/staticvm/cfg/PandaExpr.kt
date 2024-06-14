@@ -17,8 +17,10 @@
 package org.jacodb.panda.staticvm.cfg
 
 import org.jacodb.api.common.cfg.CommonArgument
+import org.jacodb.api.common.cfg.CommonArrayAccess
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
+import org.jacodb.api.common.cfg.CommonFieldRef
 import org.jacodb.api.common.cfg.CommonInstanceCallExpr
 import org.jacodb.api.common.cfg.CommonThis
 import org.jacodb.api.common.cfg.CommonValue
@@ -72,9 +74,9 @@ class PandaThis(
 }
 
 class PandaFieldRef(
-    val instance: PandaValue?,
+    override val instance: PandaValue?,
     val field: PandaField,
-) : PandaValue {
+) : PandaValue, CommonFieldRef {
 
     override val type: PandaType
         get() = this.field.type
@@ -86,10 +88,10 @@ class PandaFieldRef(
 }
 
 class PandaArrayAccess(
-    val array: PandaValue,
-    val index: PandaValue,
+    override val array: PandaValue,
+    override val index: PandaValue,
     override val type: PandaType,
-) : PandaValue {
+) : PandaValue, CommonArrayAccess {
     override val operands: List<PandaValue>
         get() = listOf(array, index)
 
