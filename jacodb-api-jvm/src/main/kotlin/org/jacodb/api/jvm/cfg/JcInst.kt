@@ -790,6 +790,20 @@ data class JcLocalVar(
     }
 }
 
+data class JcThis(
+    override val type: JcType,
+) : JcImmediate, CommonThis {
+
+    override val operands: List<JcValue>
+        get() = emptyList()
+
+    override fun toString(): String = "this"
+
+    override fun <T> accept(visitor: JcExprVisitor<T>): T {
+        return visitor.visitJcThis(this)
+    }
+}
+
 /**
  * @param name isn't considered in `equals` and `hashcode`
  */
@@ -832,20 +846,6 @@ data class JcArgument(
 }
 
 interface JcRef : JcValue
-
-data class JcThis(
-    override val type: JcType,
-) : JcRef, CommonThis {
-
-    override val operands: List<JcValue>
-        get() = emptyList()
-
-    override fun toString(): String = "this"
-
-    override fun <T> accept(visitor: JcExprVisitor<T>): T {
-        return visitor.visitJcThis(this)
-    }
-}
 
 data class JcFieldRef(
     val instance: JcValue?,

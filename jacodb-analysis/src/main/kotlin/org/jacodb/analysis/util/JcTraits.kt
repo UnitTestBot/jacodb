@@ -192,8 +192,6 @@ fun JcExpr.toPathOrNull(): AccessPath? = when (this) {
 fun JcValue.toPathOrNull(): AccessPath? = when (this) {
     is JcImmediate -> AccessPath(this, emptyList())
 
-    is JcThis -> AccessPath(this, emptyList())
-
     is JcArrayAccess -> {
         array.toPathOrNull()?.let {
             it + ElementAccessor
