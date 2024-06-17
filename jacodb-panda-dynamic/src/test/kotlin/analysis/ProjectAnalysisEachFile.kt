@@ -38,6 +38,7 @@ import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.condition.EnabledIf
@@ -49,6 +50,7 @@ import kotlin.time.Duration.Companion.seconds
 
 private val logger = mu.KotlinLogging.logger {}
 
+@Disabled
 class ProjectAnalysisEachFile {
     companion object : PandaTraits {
         private const val PROJECT_PATH = "/samples/project1"

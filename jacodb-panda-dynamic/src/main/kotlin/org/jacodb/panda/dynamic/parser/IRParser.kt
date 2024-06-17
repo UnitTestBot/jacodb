@@ -828,49 +828,50 @@ class IRParser(
             "Intrinsic.createobjectwithbuffer" -> {
                 // TODO(): Need more intelligent processing with correct model for object; currently only demonstrates how to take into account information about fields with literal values.
                 val todoExpr = TODOExpr(opcode, inputs) // TODO
-                val lv = PandaLocalVar(
-                    index = method.currentLocalVarId++,
-                    type = PandaArrayTypeImpl(PandaAnyType)
-                )
-                outputs.forEach { output ->
-                    addInput(method, id(), output, lv)
-                }
-                val assignment = PandaAssignInst(
-                    location = locationFromOp(this),
-                    lhv = lv,
-                    rhv = todoExpr
-                )
-                program!!.setLocalAssignment(method.signature, lv, assignment)
-                method.pushInst(assignment)
-                val literals = literals ?: run {
-                    logger.error("No literals found for createobjectwithbuffer; update es2abc for the latest version.")
-                    listOf()
-                }
-                // for each field 4 values: fieldNameType (always string most likely), fieldName, fieldValueType, fieldValue
-                for (i in literals.indices step 4) {
-                    // 0 - ?, 1 - bool, 2 - int, 3 - ?, 4 - long double, 5 - string, 255 - null
-                    val fieldNameType = literals[i].content
-                    val fieldName = literals[i + 1].content
-                    val literalType = literals[i + 2].content.toInt()
-                    val literalValue = literals[i + 3].content
-                    val value = handleLiteralValue(literalType, literalValue)
-                    /* TODO("get rid of reductant assignments")
-                    (currently if field initialized with `definefieldbyname`,
-                    its values still stored in literals as null,
-                    need to find out how to distinguish real null value from null value as placeholder)
-                    */
-                    val property = PandaValueByInstance(
-                        instance = lv,
-                        property = fieldName
-                    )
-                    method.pushInst(
-                        PandaAssignInst(
-                            location = locationFromOp(this),
-                            lhv = property,
-                            rhv = value
-                        )
-                    )
-                }
+                handle(todoExpr)
+                // val lv = PandaLocalVar(
+                //     index = method.currentLocalVarId++,
+                //     type = PandaArrayTypeImpl(PandaAnyType)
+                // )
+                // outputs.forEach { output ->
+                //     addInput(method, id(), output, lv)
+                // }
+                // val assignment = PandaAssignInst(
+                //     location = locationFromOp(this),
+                //     lhv = lv,
+                //     rhv = todoExpr
+                // )
+                // program!!.setLocalAssignment(method.signature, lv, assignment)
+                // method.pushInst(assignment)
+                // val literals = literals ?: run {
+                //     logger.error("No literals found for createobjectwithbuffer; update es2abc for the latest version.")
+                //     listOf()
+                // }
+                // // for each field 4 values: fieldNameType (always string most likely), fieldName, fieldValueType, fieldValue
+                // for (i in literals.indices step 4) {
+                //     // 0 - ?, 1 - bool, 2 - int, 3 - ?, 4 - long double, 5 - string, 255 - null
+                //     val fieldNameType = literals[i].content
+                //     val fieldName = literals[i + 1].content
+                //     val literalType = literals[i + 2].content.toInt()
+                //     val literalValue = literals[i + 3].content
+                //     val value = handleLiteralValue(literalType, literalValue)
+                //     /* TODO("get rid of reductant assignments")
+                //     (currently if field initialized with `definefieldbyname`,
+                //     its values still stored in literals as null,
+                //     need to find out how to distinguish real null value from null value as placeholder)
+                //     */
+                //     val property = PandaValueByInstance(
+                //         instance = lv,
+                //         property = fieldName
+                //     )
+                //     method.pushInst(
+                //         PandaAssignInst(
+                //             location = locationFromOp(this),
+                //             lhv = property,
+                //             rhv = value
+                //         )
+                //     )
+                // }
             }
 
             "Intrinsic.ldglobal" -> {

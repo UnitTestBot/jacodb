@@ -50,12 +50,12 @@ class IRParserBinarySamplesTest {
                 Assertions.assertNotNull(pandaMethod.name)
                 Assertions.assertNotNull(pandaMethod.instructions)
                 when (pandaMethod.name) {
-                    "subtract" -> {
-                        assertEquals(2, pandaMethod.instructions.size)
-                        assertEquals(2, pandaMethod.blocks.size)
+                    "subtraction" -> {
+                        assertEquals(3, pandaMethod.instructions.size)
+                        assertEquals(3, pandaMethod.blocks.size)
                         pandaMethod.instructions.forEachIndexed { index, inst ->
                             when (index) {
-                                0 -> {
+                                1 -> {
                                     val assignInst = inst as PandaAssignInst
                                     val expectedInst = PandaLocalVar(
                                         index = 0,
@@ -69,7 +69,8 @@ class IRParserBinarySamplesTest {
                                     assertEquals(
                                         PandaArgument(
                                             index = 0,
-                                            name = "arg0"
+                                            name = "arg0",
+                                            type = PandaNumberType
                                         ),
                                         subExpr.lhv
                                     )
@@ -81,7 +82,7 @@ class IRParserBinarySamplesTest {
                                     )
                                 }
 
-                                1 -> {
+                                2 -> {
                                     val returnInst = inst as PandaReturnInst
                                     assertEquals(
                                         PandaLocalVar(
@@ -100,7 +101,7 @@ class IRParserBinarySamplesTest {
                         assertEquals(3, pandaMethod.blocks.size)
                         pandaMethod.instructions.forEachIndexed { index, inst ->
                             when (index) {
-                                0 -> {
+                                1 -> {
                                     val assignInst = inst as PandaAssignInst
                                     val expectedInst = PandaLocalVar(
                                         index = 0,
@@ -127,7 +128,7 @@ class IRParserBinarySamplesTest {
                                     )
                                 }
 
-                                1 -> {
+                                2 -> {
                                     val returnInst = inst as PandaReturnInst
                                     assertEquals(
                                         PandaLocalVar(
@@ -146,7 +147,7 @@ class IRParserBinarySamplesTest {
                         assertEquals(3, pandaMethod.blocks.size)
                         pandaMethod.instructions.forEachIndexed { index, inst ->
                             when (index) {
-                                0 -> {
+                                1 -> {
                                     val assignInst = inst as PandaAssignInst
                                     val expectedInst = PandaLocalVar(
                                         index = 0,
@@ -175,7 +176,7 @@ class IRParserBinarySamplesTest {
                                     )
                                 }
 
-                                1 -> {
+                                2 -> {
                                     val returnInst = inst as PandaReturnInst
                                     assertEquals(
                                         PandaLocalVar(
@@ -194,7 +195,7 @@ class IRParserBinarySamplesTest {
                         assertEquals(3, pandaMethod.blocks.size)
                         pandaMethod.instructions.forEachIndexed { index, inst ->
                             when (index) {
-                                0 -> {
+                                1 -> {
                                     val assignInst = inst as PandaAssignInst
                                     val expectedInst = PandaLocalVar(
                                         index = 0,
@@ -221,7 +222,7 @@ class IRParserBinarySamplesTest {
                                     )
                                 }
 
-                                1 -> {
+                                2 -> {
                                     val returnInst = inst as PandaReturnInst
                                     assertEquals(
                                         PandaLocalVar(
@@ -240,7 +241,7 @@ class IRParserBinarySamplesTest {
                         assertEquals(3, pandaMethod.blocks.size)
                         pandaMethod.instructions.forEachIndexed { index, inst ->
                             when (index) {
-                                0 -> {
+                                1 -> {
                                     val assignInst = inst as PandaAssignInst
                                     val expectedInst = PandaLocalVar(
                                         index = 0,
@@ -267,7 +268,7 @@ class IRParserBinarySamplesTest {
                                     )
                                 }
 
-                                1 -> {
+                                2 -> {
                                     val returnInst = inst as PandaReturnInst
                                     assertEquals(
                                         PandaLocalVar(
@@ -286,7 +287,7 @@ class IRParserBinarySamplesTest {
                         assertEquals(3, pandaMethod.blocks.size)
                         pandaMethod.instructions.forEachIndexed { index, inst ->
                             when (index) {
-                                0 -> {
+                                1 -> {
                                     val assignInst = inst as PandaAssignInst
                                     val expectedInst = PandaLocalVar(
                                         index = 0,
@@ -307,7 +308,7 @@ class IRParserBinarySamplesTest {
                                     )
                                 }
 
-                                1 -> {
+                                2 -> {
                                     val assignInst = inst as PandaAssignInst
                                     val expectedInst = PandaLocalVar(
                                         index = 1,
@@ -335,7 +336,7 @@ class IRParserBinarySamplesTest {
                                     )
                                 }
 
-                                2 -> {
+                                3 -> {
                                     val returnInst = inst as PandaReturnInst
                                     assertEquals(
                                         PandaLocalVar(
@@ -354,7 +355,7 @@ class IRParserBinarySamplesTest {
                         assertEquals(3, pandaMethod.blocks.size)
                         pandaMethod.instructions.forEachIndexed { index, inst ->
                             when (index) {
-                                0 -> {
+                                1 -> {
                                     val assignInst = inst as PandaAssignInst
                                     val expectedInst = PandaLocalVar(
                                         index = 0,
@@ -383,7 +384,7 @@ class IRParserBinarySamplesTest {
                                     )
                                 }
 
-                                1 -> {
+                                2 -> {
                                     val returnInst = inst as PandaReturnInst
                                     assertEquals(
                                         PandaLocalVar(

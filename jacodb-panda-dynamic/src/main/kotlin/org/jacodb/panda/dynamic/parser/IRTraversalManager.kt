@@ -20,6 +20,7 @@ import org.jacodb.panda.dynamic.api.PandaBasicBlock
 import org.jacodb.panda.dynamic.api.PandaEmptyBBPlaceholderInst
 import org.jacodb.panda.dynamic.api.PandaGotoInst
 import org.jacodb.panda.dynamic.api.PandaInstRef
+import org.jacodb.panda.dynamic.api.PandaNopInst
 
 enum class TraversalType {
     DEFAULT,
@@ -162,7 +163,9 @@ class IRTraversalManager(
 
         if (startId > endId || endId == -1) {
             currentBB.start = if (startId == -1) 0 else startId
-            if (currentBB.successors.isNotEmpty()) addEmptyBlockPlaceholder(programMethod, currentBB.id)
+            if (currentBB.successors.isNotEmpty()) {
+                addEmptyBlockPlaceholder(programMethod, currentBB.id)
+            }
             addEmptyJump(programMethod)
             currentBB.end = programMethod.currentId
         } else if (endId >= 0) {

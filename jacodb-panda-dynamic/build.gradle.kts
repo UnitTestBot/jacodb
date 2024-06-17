@@ -14,7 +14,6 @@ dependencies {
 
     antlr(Libs.antlr)
 
-    testImplementation(project(":jacodb-panda-analysis"))
     testImplementation(project(":jacodb-analysis"))
     testImplementation(testFixtures(project(":jacodb-core")))
     testImplementation(Libs.mockk)

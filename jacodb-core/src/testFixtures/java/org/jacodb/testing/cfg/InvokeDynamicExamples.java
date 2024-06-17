@@ -16,6 +16,8 @@
 
 package org.jacodb.testing.cfg;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 public class InvokeDynamicExamples {
@@ -93,6 +95,70 @@ public class InvokeDynamicExamples {
     public static String testComplexInvokeDynamic() {
         String expected = "abc42xabc17abc";
         String actual = runComplexStringConcat("abc", 42);
+        return expected.equals(actual) ? "OK" : "BAD";
+    }
+
+    static class A {
+        private final String prefix;
+
+        public A(String prefix) {
+            this.prefix = prefix;
+        }
+
+        @Override
+        public String toString() {
+            return prefix + "456";
+        }
+    }
+
+    private static String invokeDynamicConstructor(Function<String, A> f){
+        A a = f.apply("123");
+        return a.toString();
+    }
+
+    public static String testInvokeDynamicConstructor() {
+        final String result = invokeDynamicConstructor(A::new);
+        return "123456".equals(result) ? "OK" : "BAD";
+    }
+
+    public static class CollectionWithInnerMap {
+        private final Map<String, String> innerMap;
+
+        public CollectionWithInnerMap() {
+            innerMap = new HashMap<>();
+        }
+
+        private void add(String key, String value) {
+            innerMap.put(key, value);
+        }
+
+        public void putAll(Map<String, String> map) {
+            map.forEach(this::removeBindingResultIfNecessary);
+            map.forEach(this::privateRemoveBindingResultIfNecessary);
+            innerMap.putAll(map);
+        }
+
+        void removeBindingResultIfNecessary(String key, String value) {
+            if (!key.isEmpty()) {
+                add(key + "cde", value);
+            }
+        }
+
+        private void privateRemoveBindingResultIfNecessary(String key, String value) {
+            if (!key.isEmpty()) {
+                add(key + "abc", value);
+            }
+        }
+    }
+
+    public static String testNonStaticLambda() {
+        CollectionWithInnerMap collection = new CollectionWithInnerMap();
+        Map<String, String> map = new HashMap<>();
+        map.put("abc", "cde");
+        map.put("dead", "beef");
+        collection.putAll(map);
+        String expected = "beef";
+        String actual = collection.innerMap.get("deadabc");
         return expected.equals(actual) ? "OK" : "BAD";
     }
 }

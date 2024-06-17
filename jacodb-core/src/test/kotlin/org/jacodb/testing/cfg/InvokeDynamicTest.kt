@@ -16,9 +16,12 @@
 
 package org.jacodb.testing.cfg
 
+import org.jacodb.api.jvm.cfg.JcAssignInst
+import org.jacodb.api.jvm.cfg.JcLambdaExpr
 import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.testing.WithGlobalDB
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class InvokeDynamicTest : BaseInstructionsTest() {
@@ -42,6 +45,21 @@ class InvokeDynamicTest : BaseInstructionsTest() {
 
     @Test
     fun `test complex invoke dynamic`() = runStaticMethod<InvokeDynamicExamples>("testComplexInvokeDynamic")
+
+    @Test
+    fun `test resolving virtual lambda`() {
+        val clazz = cp.findClass<InvokeDynamicExamples.CollectionWithInnerMap>()
+        val method = clazz.declaredMethods.find { it.name == "putAll" }!!
+        val instructions = method.instList
+        val first = instructions[0] as JcAssignInst
+        assertTrue(first.rhv is JcLambdaExpr)
+        val third = instructions[2] as JcAssignInst
+        assertTrue(third.rhv is JcLambdaExpr)
+        runStaticMethod<InvokeDynamicExamples>("testNonStaticLambda")
+    }
+
+    @Test
+    fun `invoke dynamic constructor`() = runStaticMethod<InvokeDynamicExamples>("testInvokeDynamicConstructor")
 
     private inline fun <reified T> runStaticMethod(name: String) {
         val clazz = cp.findClass<T>()
