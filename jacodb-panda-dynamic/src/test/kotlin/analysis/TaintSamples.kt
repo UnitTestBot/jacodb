@@ -70,7 +70,7 @@ class TaintSamples {
             assert(sinkResults.size == 1)
         }
 
-        // @Disabled("Cleaner config don't work as expected")
+        @Disabled("Taint analysis goes through the functions that have Cleaner rules and propagate unnecessary facts")
         @Test
         fun `positive example - print encrypted password to console`() {
             val config = CaseTaintConfig(
