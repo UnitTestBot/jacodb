@@ -66,7 +66,7 @@ class TaintAnalyzer(val project: PandaProject) {
                         val (cleanerMethodName, markName, cleanerPosition) = cleanerConfig
                         if (method.name == cleanerMethodName) {
                             add(
-                                TaintPassThrough(
+                                TaintCleaner(
                                     method = method,
                                     condition = ConstantTrue,
                                     actionsAfter = listOf(
