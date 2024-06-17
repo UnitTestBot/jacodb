@@ -88,7 +88,10 @@ class TaintSamples {
                     )
                 ),
                 sinkMethodConfigs = listOf(
-                    SinkMethodConfig(methodName = "log")
+                    SinkMethodConfig(
+                        methodName = "log",
+                        position = Argument(1)
+                    )
                 ),
                 startMethodNamesForAnalysis = listOf("case2")
             )
