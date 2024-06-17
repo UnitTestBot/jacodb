@@ -22,4 +22,4 @@ class ArkFile(
     val name: String,
     val path: String? = null,
     val classes: List<ArkClass>,
-):  CommonProject
+) : CommonProject
