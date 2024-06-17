@@ -652,6 +652,7 @@ data class JcLambdaExpr(
     val callSiteArgTypes: List<JcType>,
     val callSiteReturnType: JcType,
     val callSiteArgs: List<JcValue>,
+    val isNewInvokeSpecial: Boolean,
 ) : JcCallExpr {
 
     override val method get() = bsmRef.method
