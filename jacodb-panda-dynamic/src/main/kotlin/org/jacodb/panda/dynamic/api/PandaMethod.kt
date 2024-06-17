@@ -58,7 +58,7 @@ class PandaMethod(
             PandaMethodParameter(
                 it.index,
                 "arg${it.index}",
-                PandaNamedType(it.type.typeName),
+                it.type,
             )
         }
 
