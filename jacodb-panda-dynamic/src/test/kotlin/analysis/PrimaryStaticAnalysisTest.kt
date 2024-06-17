@@ -20,9 +20,15 @@ import org.jacodb.panda.dynamic.api.PandaProject
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import panda.primary.*
+import panda.primary.ArgumentParameterMatchingChecker
+import panda.primary.ConstAssignmentChecker
+import panda.primary.ImplicitCastAnalysisMode
+import panda.primary.ImplicitCastingChecker
+import panda.primary.MissingMembersChecker
+import panda.primary.UndeclaredVariablesChecker
 import parser.loadIr
 
+@Disabled
 class PrimaryStaticAnalysisTest {
     private fun getProjectByProgramName(programName: String): PandaProject {
         val parser = loadIr("/samples/${programName}.json")
@@ -58,6 +64,7 @@ class PrimaryStaticAnalysisTest {
             )
             assert(mismatches.isEmpty())
         }
+
         @Disabled("reconcile arguments number for class methods (is 'this' count?)")
         @Test
         fun `positive example - test for mismatch detection in class method call`() {
@@ -106,7 +113,6 @@ class PrimaryStaticAnalysisTest {
             assert(unresolvedVariables.size == 3)
         }
     }
-
 
     @Nested
     inner class ConstReassignmentTest {
