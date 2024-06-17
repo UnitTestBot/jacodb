@@ -58,17 +58,19 @@ fun loadIrWithTs(filePath: String, tsPath: String): IRParser {
     return IRParser(sampleFilePath, tsFunctions)
 }
 
+private val json = Json {
+    classDiscriminator = "_"
+    serializersModule = SerializersModule {
+        include(conditionModule)
+        include(actionModule)
+    }
+}
+
 fun loadRules(configFileName: String): List<SerializedTaintConfigurationItem> {
     val configResource = object {}::class.java.getResourceAsStream("/$configFileName")
         ?: error("Could not load config from '$configFileName'")
     val configJson = configResource.bufferedReader().readText()
-    val rules: List<SerializedTaintConfigurationItem> = Json {
-        classDiscriminator = "_"
-        serializersModule = SerializersModule {
-            include(conditionModule)
-            include(actionModule)
-        }
-    }.decodeFromString(configJson)
+    val rules: List<SerializedTaintConfigurationItem> = json.decodeFromString(configJson)
     // println("Loaded ${rules.size} rules from '$configFileName'")
     // for (rule in rules) {
     //     println(rule)

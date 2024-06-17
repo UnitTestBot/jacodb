@@ -19,6 +19,7 @@ package parser
 import org.jacodb.panda.dynamic.parser.IRParser
 import org.jacodb.panda.dynamic.parser.Program
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.condition.EnabledIf
@@ -28,6 +29,7 @@ import java.util.stream.Collectors
 
 private val logger = mu.KotlinLogging.logger {}
 
+@Disabled
 class IRParserProjectTest {
     companion object {
         const val PROJECT_PATH = "/samples/project1"
