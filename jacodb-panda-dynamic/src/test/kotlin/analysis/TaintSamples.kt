@@ -16,8 +16,6 @@
 
 package analysis
 
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.jacodb.panda.dynamic.api.PandaProject
 import org.jacodb.panda.taint.CaseTaintConfig
 import org.jacodb.panda.taint.CleanerMethodConfig
@@ -32,7 +30,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import parser.loadCaseTaintConfig
 import parser.loadIr
-import java.io.File
 
 class TaintSamples {
     private fun loadProjectForSample(programName: String): PandaProject {
@@ -41,18 +38,17 @@ class TaintSamples {
         return project
     }
 
-    private val json = Json {
-        encodeDefaults = true
-        prettyPrint = true
-    }
-
-    private fun saveSerializedConfig(config: CaseTaintConfig, filename: String) {
-        val serializedConfig = json.encodeToString(config)
-        val fullPath =
-            "C:\\Users\\bethi\\IdeaProjects\\jacodb\\jacodb-panda-dynamic\\src\\test\\resources\\samples\\taintConfigs\\${filename}"
-        val outputFile = File(fullPath)
-        outputFile.writeText(serializedConfig)
-    }
+    // private val json = Json {
+    //     encodeDefaults = true
+    //     prettyPrint = true
+    // }
+    //
+    // private fun saveSerializedConfig(config: CaseTaintConfig, filename: String) {
+    //     val serializedConfig = json.encodeToString(config)
+    //     val fullPath = "${filename}"
+    //     val outputFile = File(fullPath)
+    //     outputFile.writeText(serializedConfig)
+    // }
 
     @Nested
     inner class PasswordLeakTest {
