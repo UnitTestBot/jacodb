@@ -15,6 +15,8 @@ fun Test.setup(jacocoTestReport: TaskProvider<*>) {
     val majorJavaVersion =
         Integer.parseInt(StringTokenizer(System.getProperty("java.specification.version"), ".").nextToken())
 
+    maxHeapSize = "8G"
+
     if (majorJavaVersion >= 16) {
         jvmArgs = listOf(
             "--add-opens", "java.base/java.nio=ALL-UNNAMED", // this is necessary for LMDB
