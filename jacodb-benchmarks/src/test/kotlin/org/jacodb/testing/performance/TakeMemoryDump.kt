@@ -21,7 +21,12 @@ import org.jacodb.impl.features.Builders
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
-import org.jacodb.impl.storage.jooq.tables.references.*
+import org.jacodb.impl.storage.dslContext
+import org.jacodb.impl.storage.jooq.tables.references.CALLS
+import org.jacodb.impl.storage.jooq.tables.references.CLASSES
+import org.jacodb.impl.storage.jooq.tables.references.FIELDS
+import org.jacodb.impl.storage.jooq.tables.references.METHODPARAMETERS
+import org.jacodb.impl.storage.jooq.tables.references.METHODS
 import org.jacodb.testing.allClasspath
 
 fun main() {
@@ -39,12 +44,13 @@ fun main() {
             it.awaitBackgroundJobs()
             println("AWAITING jobs took ${System.currentTimeMillis() - start}ms")
         }
-        db.persistence.read {
-            println("Processed classes " + it.fetchCount(CLASSES))
-            println("Processed fields " + it.fetchCount(FIELDS))
-            println("Processed methods " + it.fetchCount(METHODS))
-            println("Processed method params " + it.fetchCount(METHODPARAMETERS))
-            println("Processed usages " + it.fetchCount(CALLS))
+        db.persistence.read { context ->
+            val jooq = context.dslContext
+            println("Processed classes " + jooq.fetchCount(CLASSES))
+            println("Processed fields " + jooq.fetchCount(FIELDS))
+            println("Processed methods " + jooq.fetchCount(METHODS))
+            println("Processed method params " + jooq.fetchCount(METHODPARAMETERS))
+            println("Processed usages " + jooq.fetchCount(CALLS))
         }
 
 //        val name = ManagementFactory.getRuntimeMXBean().name

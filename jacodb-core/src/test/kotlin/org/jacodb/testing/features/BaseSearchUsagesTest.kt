@@ -23,6 +23,7 @@ import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.impl.features.usagesExt
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
+import org.jacodb.testing.WithGlobalRAMDB
 import org.jacodb.testing.usages.fields.FieldA
 import org.jacodb.testing.usages.fields.FieldB
 import org.jacodb.testing.usages.methods.MethodA
@@ -192,4 +193,8 @@ class InMemoryHierarchySearchUsagesTest : BaseSearchUsagesTest() {
 
 class SearchUsagesTest : BaseSearchUsagesTest() {
     companion object : WithGlobalDB()
+}
+
+class SearchUsagesRAMTest : BaseSearchUsagesTest() {
+    companion object : WithGlobalRAMDB()
 }

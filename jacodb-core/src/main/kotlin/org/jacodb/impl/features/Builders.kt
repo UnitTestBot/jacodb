@@ -18,15 +18,16 @@ package org.jacodb.impl.features
 
 import org.jacodb.api.jvm.*
 import org.jacodb.api.jvm.ext.jvmPrimitiveNames
+import org.jacodb.api.jvm.storage.ers.compressed
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.fs.className
+import org.jacodb.impl.storage.execute
 import org.jacodb.impl.storage.executeQueries
 import org.jacodb.impl.storage.jooq.tables.references.BUILDERS
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.jacodb.impl.storage.jooq.tables.references.SYMBOLS
 import org.jacodb.impl.storage.runBatch
 import org.jacodb.impl.storage.withoutAutoCommit
-import org.jooq.DSLContext
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
@@ -81,24 +82,42 @@ class BuildersIndexer(val persistence: JcDatabasePersistence, private val locati
     }
 
 
-    override fun flush(jooq: DSLContext) {
-        jooq.withoutAutoCommit { conn ->
-            conn.runBatch(BUILDERS) {
-                potentialBuilders.forEach { (calleeClass, builders) ->
-                    val calleeId = calleeClass.className
-                    builders.forEach {
-                        val (callerClass, offset, priority) = it
-                        val callerId = callerClass.className
-                        setString(1, calleeId)
-                        setString(2, callerId)
-                        setInt(3, priority)
-                        setInt(4, offset)
-                        setLong(5, location.id)
-                        addBatch()
+    override fun flush(context: JCDBContext) {
+        context.execute(
+            sqlAction = { jooq ->
+                jooq.withoutAutoCommit { conn ->
+                    conn.runBatch(BUILDERS) {
+                        potentialBuilders.forEach { (calleeClass, builders) ->
+                            val calleeId = calleeClass.className
+                            builders.forEach {
+                                val (callerClass, offset, priority) = it
+                                val callerId = callerClass.className
+                                setString(1, calleeId)
+                                setString(2, callerId)
+                                setInt(3, priority)
+                                setInt(4, offset)
+                                setLong(5, location.id)
+                                addBatch()
+                            }
+                        }
+                    }
+                }
+            },
+            noSqlAction = { txn ->
+                potentialBuilders.forEach { (returnedClassInternalName, builders) ->
+                    builders.forEach { builder ->
+                        val entity = txn.newEntity(BuilderEntity.BUILDER_ENTITY_TYPE)
+                        entity[BuilderEntity.BUILDER_LOCATION_ID_PROPERTY] = location.id
+                        entity[BuilderEntity.RETURNED_CLASS_NAME_ID_PROPERTY] =
+                            persistence.findSymbolId(returnedClassInternalName.className)
+                        entity[BuilderEntity.BUILDER_CLASS_NAME_ID] =
+                            persistence.findSymbolId(builder.callerClass.className)
+                        entity[BuilderEntity.METHOD_OFFSET_PROPERTY] = builder.methodOffset
+                        entity[BuilderEntity.PRIORITY_PROPERTY] = builder.priority
                     }
                 }
             }
-        }
+        )
     }
 
 }
@@ -111,11 +130,20 @@ data class BuildersResponse(
 
 object Builders : JcFeature<Set<String>, BuildersResponse> {
 
-    fun create(jooq: DSLContext, drop: Boolean) {
-        if (drop) {
-            jooq.executeQueries(dropScheme)
-        }
-        jooq.executeQueries(createScheme)
+    fun create(context: JCDBContext, drop: Boolean) {
+        context.execute(
+            sqlAction = { jooq ->
+                if (drop) {
+                    jooq.executeQueries(dropScheme)
+                }
+                jooq.executeQueries(createScheme)
+            },
+            noSqlAction = { txn ->
+                if (drop) {
+                    txn.all(BuilderEntity.BUILDER_ENTITY_TYPE).deleteAll()
+                }
+            }
+        )
     }
 
     private val createScheme = """
@@ -145,29 +173,50 @@ object Builders : JcFeature<Set<String>, BuildersResponse> {
     override fun onSignal(signal: JcSignal) {
         when (signal) {
             is JcSignal.BeforeIndexing -> {
-                signal.jcdb.persistence.write {
+                signal.jcdb.persistence.write { context ->
                     if (signal.clearOnStart) {
-                        it.executeQueries(dropScheme)
+                        context.execute(
+                            sqlAction = { it.executeQueries(dropScheme) },
+                            noSqlAction = { it.all(type = BuilderEntity.BUILDER_ENTITY_TYPE).deleteAll() }
+                        )
                     }
-                    it.executeQueries(createScheme)
+                    context.execute(
+                        sqlAction = { it.executeQueries(createScheme) },
+                        noSqlAction = { /* no-op */ }
+                    )
                 }
             }
 
             is JcSignal.LocationRemoved -> {
-                signal.jcdb.persistence.write {
-                    it.deleteFrom(BUILDERS).where(BUILDERS.LOCATION_ID.eq(signal.location.id)).execute()
+                signal.jcdb.persistence.write { context ->
+                    context.execute(
+                        sqlAction = { it.deleteFrom(BUILDERS).where(BUILDERS.LOCATION_ID.eq(signal.location.id)) },
+                        noSqlAction = { txn ->
+                            txn.find(
+                                type = BuilderEntity.BUILDER_ENTITY_TYPE,
+                                propertyName = BuilderEntity.BUILDER_LOCATION_ID_PROPERTY,
+                                value = signal.location.id
+                            ).deleteAll()
+                        }
+                    )
                 }
             }
 
             is JcSignal.AfterIndexing -> {
-                signal.jcdb.persistence.write {
-                    it.executeQueries(createIndex)
+                signal.jcdb.persistence.write { context ->
+                    context.execute(
+                        sqlAction = { it.executeQueries(createIndex) },
+                        noSqlAction = { /* no-op */ }
+                    )
                 }
             }
 
             is JcSignal.Drop -> {
-                signal.jcdb.persistence.write {
-                    it.deleteFrom(BUILDERS).execute()
+                signal.jcdb.persistence.write { context ->
+                    context.execute(
+                        sqlAction = { it.deleteFrom(BUILDERS).execute() },
+                        noSqlAction = { it.all(type = BuilderEntity.BUILDER_ENTITY_TYPE).deleteAll() }
+                    )
                 }
             }
 
@@ -183,38 +232,78 @@ object Builders : JcFeature<Set<String>, BuildersResponse> {
         val locationIds = classpath.registeredLocations.map { it.id }
         val persistence = classpath.db.persistence
         return sequence {
-            val result = persistence.read { jooq ->
-                jooq.select(BUILDERS.OFFSET, SYMBOLS.NAME, CLASSES.ID, CLASSES.LOCATION_ID, BUILDERS.PRIORITY)
-                    .from(BUILDERS)
-                    .join(SYMBOLS).on(SYMBOLS.NAME.eq(BUILDERS.BUILDER_CLASS_NAME))
-                    .join(CLASSES).on(CLASSES.NAME.eq(SYMBOLS.ID).and(BUILDERS.LOCATION_ID.eq(CLASSES.LOCATION_ID)))
-                    .where(
-                        BUILDERS.CLASS_NAME.`in`(req).and(BUILDERS.LOCATION_ID.`in`(locationIds))
-
-
-                    )
-                    .limit(100)
-                    .fetch()
-                    .mapNotNull { (offset, className, classId, locationId, priority) ->
-                        BuildersResponse(
-                            source = PersistenceClassSource(
-                                classpath.db,
-                                locationId = locationId!!,
-                                classId = classId!!,
-                                className = className!!,
-                            ),
-                            methodOffset = offset!!,
-                            priority = priority ?: 0
-                        )
-                    }.sortedByDescending { it.priority }
-            }
+            val result = persistence.read { context ->
+                context.execute(
+                    sqlAction = { jooq ->
+                        jooq.select(BUILDERS.OFFSET, SYMBOLS.NAME, CLASSES.ID, CLASSES.LOCATION_ID, BUILDERS.PRIORITY)
+                            .from(BUILDERS)
+                            .join(SYMBOLS).on(SYMBOLS.NAME.eq(BUILDERS.BUILDER_CLASS_NAME))
+                            .join(CLASSES).on(CLASSES.NAME.eq(SYMBOLS.ID).and(BUILDERS.LOCATION_ID.eq(CLASSES.LOCATION_ID)))
+                            .where(
+                                BUILDERS.CLASS_NAME.`in`(req).and(BUILDERS.LOCATION_ID.`in`(locationIds))
+                            )
+                            .limit(100)
+                            .fetch()
+                            .mapNotNull { (offset, className, classId, locationId, priority) ->
+                                BuildersResponse(
+                                    source = PersistenceClassSource(
+                                        db = classpath.db,
+                                        locationId = locationId!!,
+                                        classId = classId!!,
+                                        className = className!!,
+                                    ),
+                                    methodOffset = offset!!,
+                                    priority = priority ?: 0
+                                )
+                            }
+                    },
+                    noSqlAction = { txn ->
+                        req
+                            .asSequence()
+                            .map { returnedClassName -> persistence.findSymbolId(returnedClassName) }
+                            .map { returnedClassNameId ->
+                                txn.find(
+                                    type = BuilderEntity.BUILDER_ENTITY_TYPE,
+                                    propertyName = BuilderEntity.RETURNED_CLASS_NAME_ID_PROPERTY,
+                                    value = returnedClassNameId
+                                )
+                            }
+                            .flatten()
+                            .filter { builder -> builder[BuilderEntity.BUILDER_LOCATION_ID_PROPERTY] in locationIds }
+                            .flatMap { builder ->
+                                val builderClassNameId: Long = builder[BuilderEntity.BUILDER_CLASS_NAME_ID]!!
+                                txn.find("Class", "nameId", builderClassNameId.compressed).map { builderClass ->
+                                    BuildersResponse(
+                                        source = PersistenceClassSource(
+                                            db = classpath.db,
+                                            locationId = builder[BuilderEntity.BUILDER_LOCATION_ID_PROPERTY]!!,
+                                            classId = builderClass.id.instanceId,
+                                            className = persistence.findSymbolName(builderClassNameId),
+                                        ),
+                                        methodOffset = builder[BuilderEntity.METHOD_OFFSET_PROPERTY]!!,
+                                        priority = builder[BuilderEntity.PRIORITY_PROPERTY] ?: 0
+                                    )
+                                }
+                            }
+                            .toList()
+                    }
+                )
+            }.sortedByDescending { it.priority }
             yieldAll(result)
         }
-
     }
 
     override fun newIndexer(jcdb: JcDatabase, location: RegisteredLocation) =
         BuildersIndexer(jcdb.persistence, location)
 
 
+}
+
+private object BuilderEntity {
+    const val BUILDER_ENTITY_TYPE = "Builder"
+    const val BUILDER_LOCATION_ID_PROPERTY = "builderLocationId"
+    const val RETURNED_CLASS_NAME_ID_PROPERTY = "returnedClassNameId"
+    const val BUILDER_CLASS_NAME_ID = "builderClassNameId"
+    const val METHOD_OFFSET_PROPERTY = "methodOffset"
+    const val PRIORITY_PROPERTY = "priority"
 }

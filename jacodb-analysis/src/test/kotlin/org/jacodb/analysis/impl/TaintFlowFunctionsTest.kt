@@ -43,12 +43,13 @@ import org.jacodb.taint.configuration.TaintConfigurationFeature
 import org.jacodb.taint.configuration.TaintMark
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
+import org.jacodb.testing.WithRAMDB
 import org.jacodb.testing.allClasspath
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.jacodb.analysis.util.getArgument as _getArgument
 
-class TaintFlowFunctionsTest : BaseTest() {
+open class TaintFlowFunctionsTest : BaseTest() {
 
     companion object : WithDB(Usages, InMemoryHierarchy), JcTraits
 
@@ -213,4 +214,9 @@ class TaintFlowFunctionsTest : BaseTest() {
         val facts = f.compute(yTaint).toList()
         Assertions.assertEquals(listOf(xTaint), facts)
     }
+}
+
+class TaintFlowFunctionsRAMTest : TaintFlowFunctionsTest() {
+
+    companion object : WithRAMDB(Usages, InMemoryHierarchy)
 }

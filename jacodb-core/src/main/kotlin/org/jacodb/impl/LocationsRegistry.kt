@@ -19,11 +19,15 @@ package org.jacodb.impl
 import org.jacodb.api.jvm.JcByteCodeLocation
 import org.jacodb.api.jvm.RegisteredLocation
 import java.io.Closeable
+import java.util.concurrent.ConcurrentHashMap
 
 interface LocationsRegistry : Closeable {
     // all locations
     val actualLocations: List<RegisteredLocation>
     val runtimeLocations: List<RegisteredLocation>
+
+    // all snapshot associated with classpaths
+    val snapshots: ConcurrentHashMap.KeySetView<LocationsRegistrySnapshot, Boolean>
 
     fun cleanup(): CleanupResult
     fun refresh(): RefreshResult

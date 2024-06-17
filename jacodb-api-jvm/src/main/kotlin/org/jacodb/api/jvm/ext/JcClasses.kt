@@ -47,7 +47,7 @@ val JcClassOrInterface.isEnum: Boolean
     }
 
 fun JcClassOrInterface.toType(): JcClassType {
-    return classpath.classTypeOf(this) as JcClassType
+    return classpath.typeOf(this) as JcClassType
 }
 
 val JcClassOrInterface.packageName get() = name.substringBeforeLast(".", missingDelimiterValue = "")

@@ -26,13 +26,14 @@ import org.jacodb.impl.bytecode.JcDatabaseClassWriter
 import org.jacodb.impl.types.substition.IgnoreSubstitutionProblems
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
+import org.jacodb.testing.WithRAMDB
 import org.junit.jupiter.api.Test
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.util.CheckClassAdapter
 import java.nio.file.Files
 
-class IgnoreSubstitutionProblemsTest : BaseTest() {
+open class IgnoreSubstitutionProblemsTest : BaseTest() {
 
     companion object : WithDB(IgnoreSubstitutionProblems)
 
@@ -74,5 +75,8 @@ class IgnoreSubstitutionProblemsTest : BaseTest() {
         }
         targetFile.writeBytes(cw.toByteArray())
     }
+}
 
+class IgnoreSubstitutionProblemsRAMTest : IgnoreSubstitutionProblemsTest() {
+    companion object : WithRAMDB(IgnoreSubstitutionProblems)
 }

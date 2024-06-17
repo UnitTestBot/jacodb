@@ -63,13 +63,14 @@ import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.StringConcatSimplifier
 import org.jacodb.impl.fs.JarLocation
 import org.jacodb.testing.WithDB
+import org.jacodb.testing.WithRAMDB
 import org.jacodb.testing.asmLib
 import org.jacodb.testing.guavaLib
 import org.jacodb.testing.kotlinStdLib
 import org.jacodb.testing.kotlinxCoroutines
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -294,9 +295,7 @@ class JcGraphChecker(
     }
 }
 
-class IRTest : BaseInstructionsTest() {
-
-    companion object : WithDB(StringConcatSimplifier)
+abstract class IRTest : BaseInstructionsTest() {
 
     @Test
     fun `get ir of simple method`() {
@@ -373,8 +372,8 @@ class IRTest : BaseInstructionsTest() {
             override val majorVersion: Int
                 get() = 8
         }).classes
-        assertNotNull(classes)
-        classes!!.forEach {
+        assertFalse(classes.isEmpty())
+        classes.forEach {
             val clazz = cp.findClass(it.key)
             if (!clazz.isAnnotation && !clazz.isInterface) {
                 println("Testing class: ${it.key}")
@@ -382,5 +381,14 @@ class IRTest : BaseInstructionsTest() {
             }
         }
     }
+}
 
+class IRSqlTest : IRTest() {
+
+    companion object : WithDB(StringConcatSimplifier)
+}
+
+class IRRAMTest : IRTest() {
+
+    companion object : WithRAMDB(StringConcatSimplifier)
 }
