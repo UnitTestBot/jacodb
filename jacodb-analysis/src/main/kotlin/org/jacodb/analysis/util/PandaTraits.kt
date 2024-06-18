@@ -41,7 +41,6 @@ import org.jacodb.panda.dynamic.api.PandaLoadedValue
 import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaMethodParameter
 import org.jacodb.panda.dynamic.api.PandaNumberConstant
-import org.jacodb.panda.dynamic.api.PandaProject
 import org.jacodb.panda.dynamic.api.PandaSimpleValue
 import org.jacodb.panda.dynamic.api.PandaStringConstant
 import org.jacodb.panda.dynamic.api.PandaThis
@@ -172,7 +171,8 @@ interface PandaTraits : Traits<PandaMethod, PandaInst> {
 
     // Ensure that all methods are default-implemented in the interface itself:
     companion object : PandaTraits {
-        lateinit var cp: PandaProject
+        // Note: unused for now
+        // lateinit var cp: PandaProject
     }
 }
 

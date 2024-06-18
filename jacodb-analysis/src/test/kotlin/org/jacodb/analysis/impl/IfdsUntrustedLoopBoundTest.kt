@@ -21,6 +21,7 @@ import mu.KotlinLogging
 import org.jacodb.analysis.ifds.SingletonUnitResolver
 import org.jacodb.analysis.taint.TaintAnalysisOptions
 import org.jacodb.analysis.taint.TaintManager
+import org.jacodb.analysis.util.JcTraits
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
@@ -48,6 +49,8 @@ class Ifds2UpperBoundTest : BaseAnalysisTest() {
         } else {
             super.cp
         }
+    }.also {
+        JcTraits.cp = it
     }
 
     @Test

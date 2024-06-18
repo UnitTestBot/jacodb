@@ -40,7 +40,6 @@ import org.jacodb.panda.staticvm.cfg.PandaValue
 import org.jacodb.panda.staticvm.classpath.PandaClass
 import org.jacodb.panda.staticvm.classpath.PandaClassType
 import org.jacodb.panda.staticvm.classpath.PandaMethod
-import org.jacodb.panda.staticvm.classpath.PandaProject
 import org.jacodb.taint.configuration.ConstantBooleanValue
 import org.jacodb.taint.configuration.ConstantIntValue
 import org.jacodb.taint.configuration.ConstantStringValue
@@ -101,11 +100,11 @@ interface PandaStaticTraits : Traits<PandaMethod, PandaInst> {
 
     override fun getArgument(param: CommonMethodParameter): PandaArgument {
         check(param is PandaMethod.Parameter)
-        return cp._getArgument(param)
+        return _getArgument(param)
     }
 
     override fun getArgumentsOf(method: PandaMethod): List<PandaArgument> {
-        return cp._getArgumentsOf(method)
+        return _getArgumentsOf(method)
     }
 
     override fun CommonValue.isConstant(): Boolean {
@@ -176,7 +175,8 @@ interface PandaStaticTraits : Traits<PandaMethod, PandaInst> {
 
     // Ensure that all methods are default-implemented in the interface itself:
     companion object : PandaStaticTraits {
-        lateinit var cp: PandaProject
+        // Note: unused for now
+        // lateinit var cp: PandaProject
     }
 }
 
@@ -223,10 +223,10 @@ fun PandaValue.toPath(): AccessPath {
     return toPathOrNull() ?: error("Unable to build access path for value $this")
 }
 
-fun PandaProject.getArgument(param: PandaMethod.Parameter): PandaArgument {
+fun getArgument(param: PandaMethod.Parameter): PandaArgument {
     return PandaArgument(param.index, "arg${param.index}", param.type)
 }
 
-fun PandaProject.getArgumentsOf(method: PandaMethod): List<PandaArgument> {
+fun getArgumentsOf(method: PandaMethod): List<PandaArgument> {
     return method.parameters.map { getArgument(it) }
 }

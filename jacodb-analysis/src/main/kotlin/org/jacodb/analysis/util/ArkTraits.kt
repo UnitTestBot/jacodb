@@ -38,7 +38,6 @@ import org.jacodb.panda.dynamic.ark.base.ArkStaticFieldRef
 import org.jacodb.panda.dynamic.ark.base.ArkStmt
 import org.jacodb.panda.dynamic.ark.base.ArkThis
 import org.jacodb.panda.dynamic.ark.base.ArkValue
-import org.jacodb.panda.dynamic.ark.model.ArkFile
 import org.jacodb.panda.dynamic.ark.model.ArkMethod
 import org.jacodb.panda.dynamic.ark.model.ArkMethodImpl
 import org.jacodb.panda.dynamic.ark.model.ArkMethodParameter
@@ -123,7 +122,8 @@ interface ArkTraits : Traits<ArkMethod, ArkStmt> {
     }
 
     companion object : ArkTraits {
-        lateinit var cp: ArkFile
+        // Note: unused for now
+        // lateinit var cp: ArkFile
     }
 }
 

@@ -63,7 +63,7 @@ class ArkTaintAnalysisTest {
     @Test
     fun `test taint analysis`() {
         val arkFile = loadArkFile("taint")
-        ArkTraits.cp = arkFile
+        // ArkTraits.cp = arkFile
         val graph = ArkApplicationGraph(arkFile)
         val unitResolver = UnitResolver<ArkMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<ArkMethod, ArkStmt>.(ArkMethod) -> List<TaintConfigurationItem>? =

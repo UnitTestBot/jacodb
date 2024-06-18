@@ -68,6 +68,9 @@ import org.jacodb.api.jvm.ext.cfg.callExpr as _callExpr
  */
 interface JcTraits : Traits<JcMethod, JcInst> {
 
+    val cp: JcClasspath
+        get() = JcTraits.cp
+
     override val JcMethod.thisInstance: JcThis
         get() = _thisInstance
 
@@ -172,7 +175,7 @@ interface JcTraits : Traits<JcMethod, JcInst> {
 
     // Ensure that all methods are default-implemented in the interface itself:
     companion object : JcTraits {
-        lateinit var cp: JcClasspath
+        override lateinit var cp: JcClasspath
     }
 }
 
