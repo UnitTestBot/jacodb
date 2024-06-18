@@ -36,11 +36,11 @@ import org.jacodb.panda.dynamic.ark.base.ArkThis
 import org.jacodb.panda.dynamic.ark.base.ArkType
 import org.jacodb.panda.dynamic.ark.base.ArkUnaryOperation
 import org.jacodb.panda.dynamic.ark.base.ArkValue
-import org.jacodb.panda.dynamic.ark.base.ArrayLiteral
+import org.jacodb.panda.dynamic.ark.base.ArkArrayLiteral
 import org.jacodb.panda.dynamic.ark.base.ArkArrayType
 import org.jacodb.panda.dynamic.ark.base.ArkAssignStmt
 import org.jacodb.panda.dynamic.ark.base.BinaryOp
-import org.jacodb.panda.dynamic.ark.base.BooleanConstant
+import org.jacodb.panda.dynamic.ark.base.ArkBooleanConstant
 import org.jacodb.panda.dynamic.ark.base.ArkBooleanType
 import org.jacodb.panda.dynamic.ark.base.ArkCallStmt
 import org.jacodb.panda.dynamic.ark.base.ArkCastExpr
@@ -54,22 +54,22 @@ import org.jacodb.panda.dynamic.ark.base.ArkNeverType
 import org.jacodb.panda.dynamic.ark.base.ArkNewArrayExpr
 import org.jacodb.panda.dynamic.ark.base.ArkNewExpr
 import org.jacodb.panda.dynamic.ark.base.ArkNopStmt
-import org.jacodb.panda.dynamic.ark.base.NullConstant
+import org.jacodb.panda.dynamic.ark.base.ArkNullConstant
 import org.jacodb.panda.dynamic.ark.base.ArkNullType
-import org.jacodb.panda.dynamic.ark.base.NumberConstant
+import org.jacodb.panda.dynamic.ark.base.ArkNumberConstant
 import org.jacodb.panda.dynamic.ark.base.ArkNumberType
-import org.jacodb.panda.dynamic.ark.base.ObjectLiteral
+import org.jacodb.panda.dynamic.ark.base.ArkObjectLiteral
 import org.jacodb.panda.dynamic.ark.base.ArkPhiExpr
 import org.jacodb.panda.dynamic.ark.base.ArkReturnStmt
 import org.jacodb.panda.dynamic.ark.base.ArkStmt
-import org.jacodb.panda.dynamic.ark.base.StringConstant
+import org.jacodb.panda.dynamic.ark.base.ArkStringConstant
 import org.jacodb.panda.dynamic.ark.base.ArkStringType
 import org.jacodb.panda.dynamic.ark.base.ArkSwitchStmt
 import org.jacodb.panda.dynamic.ark.base.ArkThrowStmt
 import org.jacodb.panda.dynamic.ark.base.ArkTypeOfExpr
 import org.jacodb.panda.dynamic.ark.base.UnaryOp
 import org.jacodb.panda.dynamic.ark.base.ArkUnclearRefType
-import org.jacodb.panda.dynamic.ark.base.UndefinedConstant
+import org.jacodb.panda.dynamic.ark.base.ArkUndefinedConstant
 import org.jacodb.panda.dynamic.ark.base.ArkUndefinedType
 import org.jacodb.panda.dynamic.ark.base.ArkUnknownType
 import org.jacodb.panda.dynamic.ark.base.ArkVoidType
@@ -207,12 +207,12 @@ fun convertToArkEntity(value: ValueDto): ArkEntity {
             type = convertToArkType(value.type),
         )
 
-        is ArrayLiteralDto -> ArrayLiteral(
+        is ArrayLiteralDto -> ArkArrayLiteral(
             elements = value.elements.map { convertToArkEntity(it) },
             type = convertToArkType(value.type) as ArkArrayType,
         )
 
-        is ObjectLiteralDto -> ObjectLiteral(
+        is ObjectLiteralDto -> ArkObjectLiteral(
             properties = emptyList(), // TODO
             type = convertToArkType(value.type),
         )
@@ -289,21 +289,21 @@ fun convertToArkType(type: String): ArkType {
 
 fun convertToArkConstant(value: ConstantDto): ArkConstant {
     return when (value.type) {
-        "string" -> StringConstant(
+        "string" -> ArkStringConstant(
             value = value.value
         )
 
-        "boolean" -> BooleanConstant(
+        "boolean" -> ArkBooleanConstant(
             value = value.value.toBoolean()
         )
 
-        "number" -> NumberConstant(
+        "number" -> ArkNumberConstant(
             value = value.value.toDouble()
         )
 
-        "null" -> NullConstant
+        "null" -> ArkNullConstant
 
-        "undefined" -> UndefinedConstant
+        "undefined" -> ArkUndefinedConstant
 
         "unknown" -> object : ArkConstant {
             override val type: ArkType

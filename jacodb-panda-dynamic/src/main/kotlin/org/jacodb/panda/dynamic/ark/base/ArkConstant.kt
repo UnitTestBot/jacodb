@@ -18,22 +18,22 @@ package org.jacodb.panda.dynamic.ark.base
 
 interface ArkConstant : ArkImmediate {
     interface Visitor<out R> {
-        fun visit(value: StringConstant): R
-        fun visit(value: BooleanConstant): R
-        fun visit(value: NumberConstant): R
-        fun visit(value: NullConstant): R
-        fun visit(value: UndefinedConstant): R
-        fun visit(value: ArrayLiteral): R
-        fun visit(value: ObjectLiteral): R
+        fun visit(value: ArkStringConstant): R
+        fun visit(value: ArkBooleanConstant): R
+        fun visit(value: ArkNumberConstant): R
+        fun visit(value: ArkNullConstant): R
+        fun visit(value: ArkUndefinedConstant): R
+        fun visit(value: ArkArrayLiteral): R
+        fun visit(value: ArkObjectLiteral): R
 
         interface Default<out R> : Visitor<R> {
-            override fun visit(value: StringConstant): R = defaultVisit(value)
-            override fun visit(value: BooleanConstant): R = defaultVisit(value)
-            override fun visit(value: NumberConstant): R = defaultVisit(value)
-            override fun visit(value: NullConstant): R = defaultVisit(value)
-            override fun visit(value: UndefinedConstant): R = defaultVisit(value)
-            override fun visit(value: ArrayLiteral): R = defaultVisit(value)
-            override fun visit(value: ObjectLiteral): R = defaultVisit(value)
+            override fun visit(value: ArkStringConstant): R = defaultVisit(value)
+            override fun visit(value: ArkBooleanConstant): R = defaultVisit(value)
+            override fun visit(value: ArkNumberConstant): R = defaultVisit(value)
+            override fun visit(value: ArkNullConstant): R = defaultVisit(value)
+            override fun visit(value: ArkUndefinedConstant): R = defaultVisit(value)
+            override fun visit(value: ArkArrayLiteral): R = defaultVisit(value)
+            override fun visit(value: ArkObjectLiteral): R = defaultVisit(value)
 
             fun defaultVisit(value: ArkConstant): R
         }
@@ -46,7 +46,7 @@ interface ArkConstant : ArkImmediate {
     fun <R> accept(visitor: Visitor<R>): R
 }
 
-data class StringConstant(
+data class ArkStringConstant(
     val value: String,
 ) : ArkConstant {
     override val type: ArkType
@@ -61,7 +61,7 @@ data class StringConstant(
     }
 }
 
-data class BooleanConstant(
+data class ArkBooleanConstant(
     val value: Boolean,
 ) : ArkConstant {
     override val type: ArkType
@@ -76,12 +76,12 @@ data class BooleanConstant(
     }
 
     companion object {
-        val TRUE = BooleanConstant(true)
-        val FALSE = BooleanConstant(false)
+        val TRUE = ArkBooleanConstant(true)
+        val FALSE = ArkBooleanConstant(false)
     }
 }
 
-data class NumberConstant(
+data class ArkNumberConstant(
     val value: Double,
 ) : ArkConstant {
     override val type: ArkType
@@ -96,7 +96,7 @@ data class NumberConstant(
     }
 }
 
-object NullConstant : ArkConstant {
+object ArkNullConstant : ArkConstant {
     override val type: ArkType
         get() = ArkNullType
 
@@ -107,7 +107,7 @@ object NullConstant : ArkConstant {
     }
 }
 
-object UndefinedConstant : ArkConstant {
+object ArkUndefinedConstant : ArkConstant {
     override val type: ArkType
         get() = ArkUndefinedType
 
@@ -118,7 +118,7 @@ object UndefinedConstant : ArkConstant {
     }
 }
 
-data class ArrayLiteral(
+data class ArkArrayLiteral(
     val elements: List<ArkEntity>,
     override val type: ArkArrayType,
 ) : ArkConstant {
@@ -138,7 +138,7 @@ data class ArrayLiteral(
 }
 
 // TODO: replace `Pair<String, Value>` with `Property`
-data class ObjectLiteral(
+data class ArkObjectLiteral(
     val properties: List<Pair<String, ArkEntity>>,
     override val type: ArkType, // TODO: consider ClassType
 ) : ArkConstant {

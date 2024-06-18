@@ -41,31 +41,31 @@ object ArkEntityPrinter : ArkEntity.Visitor.Default<Unit> {
         println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
-    override fun visit(value: StringConstant) {
+    override fun visit(value: ArkStringConstant) {
         println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
-    override fun visit(value: BooleanConstant) {
+    override fun visit(value: ArkBooleanConstant) {
         println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
-    override fun visit(value: NumberConstant) {
+    override fun visit(value: ArkNumberConstant) {
         println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
-    override fun visit(value: NullConstant) {
+    override fun visit(value: ArkNullConstant) {
         println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
-    override fun visit(value: UndefinedConstant) {
+    override fun visit(value: ArkUndefinedConstant) {
         println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
-    override fun visit(value: ArrayLiteral) {
+    override fun visit(value: ArkArrayLiteral) {
         println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
-    override fun visit(value: ObjectLiteral) {
+    override fun visit(value: ArkObjectLiteral) {
         println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
@@ -147,31 +147,31 @@ object ImmediatePrinter : ArkImmediate.Visitor.Default<Unit> {
         println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
-    override fun visit(value: StringConstant) {
+    override fun visit(value: ArkStringConstant) {
         println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
-    override fun visit(value: BooleanConstant) {
+    override fun visit(value: ArkBooleanConstant) {
         println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
-    override fun visit(value: NumberConstant) {
+    override fun visit(value: ArkNumberConstant) {
         println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
-    override fun visit(value: NullConstant) {
+    override fun visit(value: ArkNullConstant) {
         println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
-    override fun visit(value: UndefinedConstant) {
+    override fun visit(value: ArkUndefinedConstant) {
         println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 }
 
 fun main() {
     val local: ArkImmediate = ArkLocal("kek", ArkNumberType)
-    val stringConstant: ArkConstant = StringConstant("lol")
-    val arrayLiteral = ArrayLiteral(listOf(local, stringConstant), ArkArrayType(ArkNumberType, 1))
+    val stringConstant: ArkConstant = ArkStringConstant("lol")
+    val arrayLiteral = ArkArrayLiteral(listOf(local, stringConstant), ArkArrayType(ArkNumberType, 1))
     val expr: ArkExpr = ArkBinaryOperation(BinaryOp.Add, local, stringConstant)
     val ref: ArkRef = ArkArrayAccess(arrayLiteral, local, ArkNumberType)
 

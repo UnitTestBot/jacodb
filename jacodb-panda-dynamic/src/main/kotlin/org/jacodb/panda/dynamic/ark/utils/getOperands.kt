@@ -28,9 +28,9 @@ import org.jacodb.panda.dynamic.ark.base.ArkStaticCallExpr
 import org.jacodb.panda.dynamic.ark.base.ArkStaticFieldRef
 import org.jacodb.panda.dynamic.ark.base.ArkThis
 import org.jacodb.panda.dynamic.ark.base.ArkUnaryOperation
-import org.jacodb.panda.dynamic.ark.base.ArrayLiteral
+import org.jacodb.panda.dynamic.ark.base.ArkArrayLiteral
 import org.jacodb.panda.dynamic.ark.base.ArkAssignStmt
-import org.jacodb.panda.dynamic.ark.base.BooleanConstant
+import org.jacodb.panda.dynamic.ark.base.ArkBooleanConstant
 import org.jacodb.panda.dynamic.ark.base.ArkCallStmt
 import org.jacodb.panda.dynamic.ark.base.ArkCastExpr
 import org.jacodb.panda.dynamic.ark.base.ArkDeleteStmt
@@ -41,17 +41,17 @@ import org.jacodb.panda.dynamic.ark.base.ArkLengthExpr
 import org.jacodb.panda.dynamic.ark.base.ArkNewArrayExpr
 import org.jacodb.panda.dynamic.ark.base.ArkNewExpr
 import org.jacodb.panda.dynamic.ark.base.ArkNopStmt
-import org.jacodb.panda.dynamic.ark.base.NullConstant
-import org.jacodb.panda.dynamic.ark.base.NumberConstant
-import org.jacodb.panda.dynamic.ark.base.ObjectLiteral
+import org.jacodb.panda.dynamic.ark.base.ArkNullConstant
+import org.jacodb.panda.dynamic.ark.base.ArkNumberConstant
+import org.jacodb.panda.dynamic.ark.base.ArkObjectLiteral
 import org.jacodb.panda.dynamic.ark.base.ArkPhiExpr
 import org.jacodb.panda.dynamic.ark.base.ArkReturnStmt
 import org.jacodb.panda.dynamic.ark.base.ArkStmt
-import org.jacodb.panda.dynamic.ark.base.StringConstant
+import org.jacodb.panda.dynamic.ark.base.ArkStringConstant
 import org.jacodb.panda.dynamic.ark.base.ArkSwitchStmt
 import org.jacodb.panda.dynamic.ark.base.ArkThrowStmt
 import org.jacodb.panda.dynamic.ark.base.ArkTypeOfExpr
-import org.jacodb.panda.dynamic.ark.base.UndefinedConstant
+import org.jacodb.panda.dynamic.ark.base.ArkUndefinedConstant
 
 fun ArkStmt.getOperands(): Sequence<ArkEntity> {
     return accept(StmtGetOperands)
@@ -107,34 +107,34 @@ private object EntityGetOperands : ArkEntity.Visitor<Sequence<ArkEntity>> {
         // empty
     }
 
-    override fun visit(value: StringConstant): Sequence<ArkEntity> = sequence {
+    override fun visit(value: ArkStringConstant): Sequence<ArkEntity> = sequence {
         // empty
     }
 
-    override fun visit(value: BooleanConstant): Sequence<ArkEntity> = sequence {
+    override fun visit(value: ArkBooleanConstant): Sequence<ArkEntity> = sequence {
         // empty
     }
 
-    override fun visit(value: NumberConstant): Sequence<ArkEntity> = sequence {
+    override fun visit(value: ArkNumberConstant): Sequence<ArkEntity> = sequence {
         // empty
     }
 
-    override fun visit(value: NullConstant): Sequence<ArkEntity> = sequence {
+    override fun visit(value: ArkNullConstant): Sequence<ArkEntity> = sequence {
         // empty
     }
 
-    override fun visit(value: UndefinedConstant): Sequence<ArkEntity> = sequence {
+    override fun visit(value: ArkUndefinedConstant): Sequence<ArkEntity> = sequence {
         // empty
     }
 
-    override fun visit(value: ArrayLiteral): Sequence<ArkEntity> = sequence {
+    override fun visit(value: ArkArrayLiteral): Sequence<ArkEntity> = sequence {
         // TODO: check
         for (element in value.elements) {
             yield(element)
         }
     }
 
-    override fun visit(value: ObjectLiteral): Sequence<ArkEntity> = sequence {
+    override fun visit(value: ArkObjectLiteral): Sequence<ArkEntity> = sequence {
         // TODO: check
         for ((_, v) in value.properties) {
             yield(v)

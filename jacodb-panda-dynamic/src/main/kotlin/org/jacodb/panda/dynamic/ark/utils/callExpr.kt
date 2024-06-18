@@ -14,9 +14,10 @@
  *  limitations under the License.
  */
 
-package org.jacodb.panda.dynamic.ark.base
+package org.jacodb.panda.dynamic.ark.utils
 
-import org.jacodb.panda.dynamic.ark.utils.getOperands
+import org.jacodb.panda.dynamic.ark.base.ArkCallExpr
+import org.jacodb.panda.dynamic.ark.base.ArkStmt
 
 val ArkStmt.callExpr: ArkCallExpr?
     get() = getOperands().filterIsInstance<ArkCallExpr>().firstOrNull()

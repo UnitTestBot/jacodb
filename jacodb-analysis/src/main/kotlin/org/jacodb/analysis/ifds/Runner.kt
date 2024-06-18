@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap
 import org.jacodb.api.jvm.ext.cfg.callExpr as jcCallExpr
 import org.jacodb.panda.dynamic.api.PandaInst as DynamicPandaInst
 import org.jacodb.panda.dynamic.api.callExpr as dynamicPandaCallExpr
-import org.jacodb.panda.dynamic.ark.base.callExpr as arkCallExpr
+import org.jacodb.panda.dynamic.ark.utils.callExpr as arkCallExpr
 import org.jacodb.panda.staticvm.cfg.PandaInst as StaticPandaInst
 import org.jacodb.panda.staticvm.utils.callExpr as staticPandaCallExpr
 
