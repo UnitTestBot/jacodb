@@ -17,42 +17,43 @@
 package org.jacodb.panda.dynamic.ark.graph
 
 import org.jacodb.api.common.analysis.ApplicationGraph
-import org.jacodb.panda.dynamic.ark.base.ArkCallExpr
 import org.jacodb.panda.dynamic.ark.base.ArkCallStmt
 import org.jacodb.panda.dynamic.ark.base.ArkStmt
 import org.jacodb.panda.dynamic.ark.model.ArkFile
 import org.jacodb.panda.dynamic.ark.model.ArkMethod
-import org.jacodb.panda.dynamic.ark.utils.getOperands
+import org.jacodb.panda.dynamic.ark.utils.callExpr
 
 class ArkApplicationGraph(
     override val project: ArkFile,
 ) : ApplicationGraph<ArkMethod, ArkStmt> {
 
     override fun predecessors(node: ArkStmt): Sequence<ArkStmt> {
-        val graph = node.location.method.flowGraph()
+        val graph = node.method.flowGraph()
         val predecessors = graph.predecessors(node)
         return predecessors.asSequence()
     }
 
     override fun successors(node: ArkStmt): Sequence<ArkStmt> {
-        val graph = node.location.method.flowGraph()
+        val graph = node.method.flowGraph()
         val successors = graph.successors(node)
         return successors.asSequence()
     }
 
     override fun callees(node: ArkStmt): Sequence<ArkMethod> {
-        val expr = node.getOperands().filterIsInstance<ArkCallExpr>().firstOrNull() ?: return emptySequence()
-        val method = expr.method
-        val result = project.classes.asSequence().flatMap { it.methods }.filter { it.name == method.name }
-        return result
+        val expr = node.callExpr ?: return emptySequence()
+        val callee = expr.method
+        return project.classes.asSequence()
+            .flatMap { it.methods }
+            .filter { it.name == callee.name }
     }
 
     override fun callers(method: ArkMethod): Sequence<ArkStmt> {
-        val result = project.classes.asSequence()
+        return project.classes.asSequence()
             .flatMap { it.methods }
             .flatMap { it.cfg.instructions }
-            .filter { stmt -> stmt is ArkCallStmt && stmt.expr.method == method.signature }
-        return result
+            .filterIsInstance<ArkCallStmt>()
+            // TODO: consider comparing only by name
+            .filter { it.expr.method == method.signature }
     }
 
     override fun entryPoints(method: ArkMethod): Sequence<ArkStmt> {
