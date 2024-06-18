@@ -25,7 +25,7 @@ import org.jacodb.panda.dynamic.ark.model.ArkMethod
 import org.jacodb.panda.dynamic.ark.utils.getOperands
 
 class ArkApplicationGraph(
-    override val project: ArkFile
+    override val project: ArkFile,
 ) : ApplicationGraph<ArkMethod, Stmt> {
 
     override fun predecessors(node: Stmt): Sequence<Stmt> {

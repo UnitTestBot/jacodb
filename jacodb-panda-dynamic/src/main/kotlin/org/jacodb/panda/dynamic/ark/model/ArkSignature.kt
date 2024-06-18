@@ -124,7 +124,7 @@ data class ArkMethodParameter(
     val index: Int,
     val name: String,
     override val type: ArkType,
-    val isOptional: Boolean = false
+    val isOptional: Boolean = false,
 ) : CommonMethodParameter {
     override fun toString(): String {
         return "$name${if (isOptional) "?" else ""}: $type"

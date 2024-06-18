@@ -17,7 +17,6 @@
 package org.jacodb.panda.dynamic.ark.base
 
 import org.jacodb.api.common.cfg.CommonCallExpr
-import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.panda.dynamic.ark.graph.BasicBlock
 import org.jacodb.panda.dynamic.ark.model.MethodSignature
 

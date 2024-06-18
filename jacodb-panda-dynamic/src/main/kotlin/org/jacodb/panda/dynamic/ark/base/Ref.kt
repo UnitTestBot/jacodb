@@ -18,7 +18,6 @@ package org.jacodb.panda.dynamic.ark.base
 
 import org.jacodb.api.common.cfg.CommonArgument
 import org.jacodb.api.common.cfg.CommonThis
-import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.panda.dynamic.ark.model.FieldSignature
 
 interface Ref : ArkValue {
