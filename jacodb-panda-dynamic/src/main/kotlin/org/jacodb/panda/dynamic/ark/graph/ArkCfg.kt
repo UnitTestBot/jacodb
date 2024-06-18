@@ -33,7 +33,7 @@ class ArkCfg(
     override val entries: List<ArkStmt>
         get() = listOf(startingStmt)
 
-    override val exits: List<ArkStmt>
+    override val exits: List<ArkTerminatingStmt>
         get() = instructions.filterIsInstance<ArkTerminatingStmt>()
 
     private fun traverse(): Sequence<ArkStmt> = sequence {
