@@ -69,12 +69,12 @@ interface ArkTraits : Traits<ArkMethod, ArkStmt> {
     }
 
     override fun CommonValue.toPathOrNull(): AccessPath? {
-        check(this is ArkEntity)
+        check(this is ArkValue)
         return this._toPathOrNull()
     }
 
     override fun CommonValue.toPath(): AccessPath {
-        check(this is ArkEntity)
+        check(this is ArkValue)
         return this._toPath()
     }
 
