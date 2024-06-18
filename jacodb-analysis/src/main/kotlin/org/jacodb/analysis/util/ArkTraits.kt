@@ -130,6 +130,8 @@ fun ArkEntity.toPathOrNull(): AccessPath? = when (this) {
 
     is ArkThis -> AccessPath(this, emptyList())
 
+    is ParameterRef -> AccessPath(this, emptyList())
+
     is ArrayAccess -> {
         array.toPathOrNull()?.let {
             it + ElementAccessor
