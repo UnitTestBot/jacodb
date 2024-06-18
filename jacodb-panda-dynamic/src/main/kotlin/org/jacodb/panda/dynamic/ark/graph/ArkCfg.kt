@@ -18,7 +18,7 @@ package org.jacodb.panda.dynamic.ark.graph
 
 import org.jacodb.api.common.cfg.ControlFlowGraph
 import org.jacodb.panda.dynamic.ark.base.ArkStmt
-import org.jacodb.panda.dynamic.ark.base.TerminatingStmt
+import org.jacodb.panda.dynamic.ark.base.ArkTerminatingStmt
 
 class ArkCfg(
     val blocks: Map<Int, ArkBasicBlock>,
@@ -34,7 +34,7 @@ class ArkCfg(
         get() = listOf(startingStmt)
 
     override val exits: List<ArkStmt>
-        get() = instructions.filterIsInstance<TerminatingStmt>()
+        get() = instructions.filterIsInstance<ArkTerminatingStmt>()
 
     private fun traverse(): Sequence<ArkStmt> = sequence {
         val visited: MutableSet<Int> = hashSetOf()

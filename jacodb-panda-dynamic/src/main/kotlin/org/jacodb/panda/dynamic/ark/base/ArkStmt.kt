@@ -112,12 +112,12 @@ data class ArkDeleteStmt(
     }
 }
 
-interface TerminatingStmt : ArkStmt
+interface ArkTerminatingStmt : ArkStmt
 
 data class ArkReturnStmt(
     override val location: ArkInstLocation,
     val arg: ArkEntity?,
-) : TerminatingStmt {
+) : ArkTerminatingStmt {
     override fun toString(): String {
         return if (arg != null) {
             "return $arg"
@@ -134,7 +134,7 @@ data class ArkReturnStmt(
 data class ArkThrowStmt(
     override val location: ArkInstLocation,
     val arg: ArkEntity,
-) : TerminatingStmt {
+) : ArkTerminatingStmt {
     override fun toString(): String {
         return "throw $arg"
     }
