@@ -74,10 +74,6 @@
               {
                 "name": "this",
                 "type": "@save/taint: _DEFAULT_ARK_CLASS"
-              },
-              {
-                "name": "$temp1",
-                "type": "unknown"
               }
             ],
             "cfg": {
@@ -100,24 +96,11 @@
                       }
                     },
                     {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "$temp1",
-                        "type": "unknown"
-                      },
-                      "right": {
+                      "_": "ReturnStmt",
+                      "arg": {
                         "_": "Constant",
                         "value": "null",
                         "type": "null"
-                      }
-                    },
-                    {
-                      "_": "ReturnStmt",
-                      "arg": {
-                        "_": "Local",
-                        "name": "$temp1",
-                        "type": "unknown"
                       }
                     }
                   ]
@@ -146,12 +129,12 @@
           "body": {
             "locals": [
               {
-                "name": "data",
-                "type": "unknown"
-              },
-              {
                 "name": "this",
                 "type": "@save/taint: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "data",
+                "type": "number|null"
               }
             ],
             "cfg": {
@@ -166,7 +149,7 @@
                       "left": {
                         "_": "Local",
                         "name": "data",
-                        "type": "unknown"
+                        "type": "number|null"
                       },
                       "right": {
                         "_": "ParameterRef",
@@ -191,7 +174,7 @@
                       "arg": {
                         "_": "Local",
                         "name": "data",
-                        "type": "unknown"
+                        "type": "number|null"
                       }
                     }
                   ]
@@ -220,20 +203,12 @@
           "body": {
             "locals": [
               {
-                "name": "data",
-                "type": "unknown"
-              },
-              {
                 "name": "this",
                 "type": "@save/taint: _DEFAULT_ARK_CLASS"
               },
               {
-                "name": "$temp2",
-                "type": "unknown"
-              },
-              {
-                "name": "$temp3",
-                "type": "unknown"
+                "name": "data",
+                "type": "number|null"
               }
             ],
             "cfg": {
@@ -251,7 +226,7 @@
                       "left": {
                         "_": "Local",
                         "name": "data",
-                        "type": "unknown"
+                        "type": "number|null"
                       },
                       "right": {
                         "_": "ParameterRef",
@@ -272,19 +247,6 @@
                       }
                     },
                     {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "$temp2",
-                        "type": "unknown"
-                      },
-                      "right": {
-                        "_": "Constant",
-                        "value": "null",
-                        "type": "null"
-                      }
-                    },
-                    {
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
@@ -292,12 +254,12 @@
                         "left": {
                           "_": "Local",
                           "name": "data",
-                          "type": "unknown"
+                          "type": "number|null"
                         },
                         "right": {
-                          "_": "Local",
-                          "name": "$temp2",
-                          "type": "unknown"
+                          "_": "Constant",
+                          "value": "null",
+                          "type": "null"
                         }
                       }
                     }
@@ -316,7 +278,7 @@
                       "arg": {
                         "_": "Local",
                         "name": "data",
-                        "type": "unknown"
+                        "type": "number|null"
                       }
                     }
                   ]
@@ -331,24 +293,11 @@
                   ],
                   "stmts": [
                     {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "$temp3",
-                        "type": "unknown"
-                      },
-                      "right": {
+                      "_": "ReturnStmt",
+                      "arg": {
                         "_": "Constant",
                         "value": "0",
                         "type": "number"
-                      }
-                    },
-                    {
-                      "_": "ReturnStmt",
-                      "arg": {
-                        "_": "Local",
-                        "name": "$temp3",
-                        "type": "unknown"
                       }
                     }
                   ]
@@ -377,24 +326,16 @@
           "body": {
             "locals": [
               {
-                "name": "data",
-                "type": "unknown"
-              },
-              {
                 "name": "this",
                 "type": "@save/taint: _DEFAULT_ARK_CLASS"
               },
               {
-                "name": "$temp2",
-                "type": "unknown"
+                "name": "data",
+                "type": "number|null"
               },
               {
-                "name": "$temp3",
-                "type": "unknown"
-              },
-              {
-                "name": "$temp4",
-                "type": "unknown"
+                "name": "$temp0",
+                "type": "@_UnkownProjectName/_UnkownFileName: Error"
               }
             ],
             "cfg": {
@@ -412,7 +353,7 @@
                       "left": {
                         "_": "Local",
                         "name": "data",
-                        "type": "unknown"
+                        "type": "number|null"
                       },
                       "right": {
                         "_": "ParameterRef",
@@ -433,19 +374,6 @@
                       }
                     },
                     {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "$temp2",
-                        "type": "unknown"
-                      },
-                      "right": {
-                        "_": "Constant",
-                        "value": "null",
-                        "type": "null"
-                      }
-                    },
-                    {
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
@@ -453,12 +381,12 @@
                         "left": {
                           "_": "Local",
                           "name": "data",
-                          "type": "unknown"
+                          "type": "number|null"
                         },
                         "right": {
-                          "_": "Local",
-                          "name": "$temp2",
-                          "type": "unknown"
+                          "_": "Constant",
+                          "value": "null",
+                          "type": "null"
                         }
                       }
                     }
@@ -490,21 +418,8 @@
                       "_": "AssignStmt",
                       "left": {
                         "_": "Local",
-                        "name": "$temp4",
-                        "type": "unknown"
-                      },
-                      "right": {
-                        "_": "Constant",
-                        "value": "\"Error!\"",
-                        "type": "string"
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "$temp3",
-                        "type": "unknown"
+                        "name": "$temp0",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
                       },
                       "right": {
                         "_": "NewExpr",
@@ -517,8 +432,8 @@
                         "_": "InstanceCallExpr",
                         "instance": {
                           "_": "Local",
-                          "name": "$temp3",
-                          "type": "unknown"
+                          "name": "$temp0",
+                          "type": "@_UnkownProjectName/_UnkownFileName: Error"
                         },
                         "method": {
                           "enclosingClass": {
@@ -530,9 +445,9 @@
                         },
                         "args": [
                           {
-                            "_": "Local",
-                            "name": "$temp4",
-                            "type": "unknown"
+                            "_": "Constant",
+                            "value": "Error!",
+                            "type": "string"
                           }
                         ]
                       }
@@ -541,8 +456,8 @@
                       "_": "ThrowStmt",
                       "arg": {
                         "_": "Local",
-                        "name": "$temp3",
-                        "type": "unknown"
+                        "name": "$temp0",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
                       }
                     }
                   ]

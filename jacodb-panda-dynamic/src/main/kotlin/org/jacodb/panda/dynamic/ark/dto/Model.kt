@@ -99,22 +99,17 @@ data class ImportInfoDto(
     val importType: String,
     val importFrom: String,
     val nameBeforeAs: String?,
-    val clauseType: String,
     val modifiers: List<String>,
-    val importFromSignature: FileSignatureDto,
-    val importProjectType: String,
     val originTsPosition: LineColPositionDto,
 )
 
 @Serializable
 data class ExportInfoDto(
     val exportClauseName: String,
-    val exportClauseType: String,
+    val exportClauseType: Int,
     val exportFrom: String? = null,
     val nameBeforeAs: String? = null,
-    val declaringSignature: String? = null,
     val isDefault: Boolean,
-    val importInfo: ImportInfoDto? = null,
     val modifiers: List<String>,
     val originTsPosition: LineColPositionDto,
 )
@@ -124,12 +119,6 @@ data class ExportInfoDto(
 //     val kind: String,
 //     val type: String?,
 // )
-
-@Serializable
-data class FileSignatureDto(
-    val projectName: String,
-    val fileName: String,
-)
 
 @Serializable
 data class LineColPositionDto(

@@ -225,7 +225,7 @@
           "type": "string"
         },
         "exportClauseType": {
-          "type": "string"
+          "type": "number"
         },
         "exportFrom": {
           "type": [
