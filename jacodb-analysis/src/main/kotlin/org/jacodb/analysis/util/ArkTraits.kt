@@ -25,7 +25,7 @@ import org.jacodb.api.common.cfg.CommonArgument
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonValue
-import org.jacodb.panda.dynamic.ark.base.AnyType
+import org.jacodb.panda.dynamic.ark.base.ArkAnyType
 import org.jacodb.panda.dynamic.ark.base.ArkArrayAccess
 import org.jacodb.panda.dynamic.ark.base.ArkCallExpr
 import org.jacodb.panda.dynamic.ark.base.ArkConstant
@@ -36,8 +36,8 @@ import org.jacodb.panda.dynamic.ark.base.ArkParameterRef
 import org.jacodb.panda.dynamic.ark.base.ArkStaticFieldRef
 import org.jacodb.panda.dynamic.ark.base.ArkThis
 import org.jacodb.panda.dynamic.ark.base.ArkValue
-import org.jacodb.panda.dynamic.ark.base.CastExpr
-import org.jacodb.panda.dynamic.ark.base.Stmt
+import org.jacodb.panda.dynamic.ark.base.ArkCastExpr
+import org.jacodb.panda.dynamic.ark.base.ArkStmt
 import org.jacodb.panda.dynamic.ark.model.ArkFile
 import org.jacodb.panda.dynamic.ark.model.ArkMethod
 import org.jacodb.panda.dynamic.ark.model.ArkMethodImpl
@@ -48,7 +48,7 @@ import org.jacodb.analysis.util.toPathOrNull as _toPathOrNull
 import org.jacodb.panda.dynamic.ark.utils.getOperands as _getOperands
 import org.jacodb.panda.dynamic.ark.utils.getValues as _getValues
 
-interface ArkTraits : Traits<ArkMethod, Stmt> {
+interface ArkTraits : Traits<ArkMethod, ArkStmt> {
 
     override val CommonCallExpr.callee: ArkMethod
         get() {
@@ -58,7 +58,7 @@ interface ArkTraits : Traits<ArkMethod, Stmt> {
         }
 
     override val ArkMethod.thisInstance: ArkThis
-        get() = ArkThis(AnyType)
+        get() = ArkThis(ArkAnyType)
 
     override val ArkMethod.isConstructor: Boolean
         get() = false
@@ -108,7 +108,7 @@ interface ArkTraits : Traits<ArkMethod, Stmt> {
         TODO("Not yet implemented")
     }
 
-    override fun Stmt.getCallExpr(): ArkCallExpr? {
+    override fun ArkStmt.getCallExpr(): ArkCallExpr? {
         return callExpr
     }
 
@@ -117,7 +117,7 @@ interface ArkTraits : Traits<ArkMethod, Stmt> {
         return _getValues().toSet()
     }
 
-    override fun Stmt.getOperands(): List<ArkEntity> {
+    override fun ArkStmt.getOperands(): List<ArkEntity> {
         return _getOperands().toList()
     }
 
@@ -149,7 +149,7 @@ fun ArkEntity.toPathOrNull(): AccessPath? = when (this) {
         AccessPath(null, listOf(FieldAccessor(field.name, isStatic = true)))
     }
 
-    is CastExpr -> arg.toPathOrNull()
+    is ArkCastExpr -> arg.toPathOrNull()
 
     else -> null
 }
@@ -158,5 +158,5 @@ fun ArkEntity.toPath(): AccessPath {
     return toPathOrNull() ?: error("Unable to build access path for value $this")
 }
 
-val Stmt.callExpr: ArkCallExpr?
+val ArkStmt.callExpr: ArkCallExpr?
     get() = _getOperands().filterIsInstance<ArkCallExpr>().firstOrNull()

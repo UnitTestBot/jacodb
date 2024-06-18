@@ -69,31 +69,31 @@ object ArkEntityPrinter : ArkEntity.Visitor.Default<Unit> {
         println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
-    override fun visit(expr: NewExpr) {
+    override fun visit(expr: ArkNewExpr) {
         println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
-    override fun visit(expr: NewArrayExpr) {
+    override fun visit(expr: ArkNewArrayExpr) {
         println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
-    override fun visit(expr: TypeOfExpr) {
+    override fun visit(expr: ArkTypeOfExpr) {
         println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
-    override fun visit(expr: InstanceOfExpr) {
+    override fun visit(expr: ArkInstanceOfExpr) {
         println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
-    override fun visit(expr: LengthExpr) {
+    override fun visit(expr: ArkLengthExpr) {
         println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
-    override fun visit(expr: CastExpr) {
+    override fun visit(expr: ArkCastExpr) {
         println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
-    override fun visit(expr: PhiExpr) {
+    override fun visit(expr: ArkPhiExpr) {
         println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
@@ -169,11 +169,11 @@ object ImmediatePrinter : ArkImmediate.Visitor.Default<Unit> {
 }
 
 fun main() {
-    val local: ArkImmediate = ArkLocal("kek", NumberType)
+    val local: ArkImmediate = ArkLocal("kek", ArkNumberType)
     val stringConstant: ArkConstant = StringConstant("lol")
-    val arrayLiteral = ArrayLiteral(listOf(local, stringConstant), ArrayType(NumberType, 1))
+    val arrayLiteral = ArrayLiteral(listOf(local, stringConstant), ArkArrayType(ArkNumberType, 1))
     val expr: ArkExpr = ArkBinaryOperation(BinaryOp.Add, local, stringConstant)
-    val ref: ArkRef = ArkArrayAccess(arrayLiteral, local, NumberType)
+    val ref: ArkRef = ArkArrayAccess(arrayLiteral, local, ArkNumberType)
 
     local.accept(ArkEntityPrinter)
     local.accept(ArkEntityPrinter as ArkImmediate.Visitor<Unit>)

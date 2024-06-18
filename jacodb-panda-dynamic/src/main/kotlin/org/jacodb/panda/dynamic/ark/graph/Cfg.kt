@@ -17,26 +17,26 @@
 package org.jacodb.panda.dynamic.ark.graph
 
 import org.jacodb.api.common.cfg.ControlFlowGraph
-import org.jacodb.panda.dynamic.ark.base.Stmt
+import org.jacodb.panda.dynamic.ark.base.ArkStmt
 import org.jacodb.panda.dynamic.ark.base.TerminatingStmt
 
 class Cfg(
     val blocks: Map<Int, BasicBlock>,
-) : ControlFlowGraph<Stmt> {
-    val startingStmt: Stmt
+) : ControlFlowGraph<ArkStmt> {
+    val startingStmt: ArkStmt
         get() = blocks[0]!!.stmts.first()
 
-    override val instructions: List<Stmt> by lazy {
+    override val instructions: List<ArkStmt> by lazy {
         traverse().toList()
     }
 
-    override val entries: List<Stmt>
+    override val entries: List<ArkStmt>
         get() = listOf(startingStmt)
 
-    override val exits: List<Stmt>
+    override val exits: List<ArkStmt>
         get() = instructions.filterIsInstance<TerminatingStmt>()
 
-    private fun traverse(): Sequence<Stmt> = sequence {
+    private fun traverse(): Sequence<ArkStmt> = sequence {
         val visited: MutableSet<Int> = hashSetOf()
         val queue: ArrayDeque<Int> = ArrayDeque()
         queue.add(0)
@@ -59,8 +59,8 @@ class Cfg(
         return block.predecessors.map { blocks[it]!! }
     }
 
-    private val successorMap: Map<Stmt, List<Stmt>> = run {
-        val map: MutableMap<Stmt, List<Stmt>> = hashMapOf()
+    private val successorMap: Map<ArkStmt, List<ArkStmt>> = run {
+        val map: MutableMap<ArkStmt, List<ArkStmt>> = hashMapOf()
         for (block in blocks.values) {
             for ((i, stmt) in block.stmts.withIndex()) {
                 check(stmt !in map)
@@ -74,8 +74,8 @@ class Cfg(
         map
     }
 
-    private val predecessorMap: Map<Stmt, List<Stmt>> = run {
-        val map: MutableMap<Stmt, List<Stmt>> = hashMapOf()
+    private val predecessorMap: Map<ArkStmt, List<ArkStmt>> = run {
+        val map: MutableMap<ArkStmt, List<ArkStmt>> = hashMapOf()
         for (block in blocks.values) {
             for ((i, stmt) in block.stmts.withIndex()) {
                 check(stmt !in map)
@@ -89,11 +89,11 @@ class Cfg(
         map
     }
 
-    override fun successors(node: Stmt): Set<Stmt> {
+    override fun successors(node: ArkStmt): Set<ArkStmt> {
         return successorMap[node]!!.toSet()
     }
 
-    override fun predecessors(node: Stmt): Set<Stmt> {
+    override fun predecessors(node: ArkStmt): Set<ArkStmt> {
         return predecessorMap[node]!!.toSet()
     }
 }

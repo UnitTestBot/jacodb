@@ -17,9 +17,9 @@
 package org.jacodb.panda.dynamic.ark.utils
 
 import org.jacodb.panda.dynamic.ark.base.ArkEntity
-import org.jacodb.panda.dynamic.ark.base.Stmt
+import org.jacodb.panda.dynamic.ark.base.ArkStmt
 
-fun Stmt.getUses(): Sequence<ArkEntity> = sequence {
+fun ArkStmt.getUses(): Sequence<ArkEntity> = sequence {
     for (op in getOperands()) {
         yield(op)
         yieldAll(op.getUses())

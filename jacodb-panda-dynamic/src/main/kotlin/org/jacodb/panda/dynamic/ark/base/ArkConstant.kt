@@ -50,7 +50,7 @@ data class StringConstant(
     val value: String,
 ) : ArkConstant {
     override val type: ArkType
-        get() = StringType
+        get() = ArkStringType
 
     override fun toString(): String {
         return "\"$value\""
@@ -65,7 +65,7 @@ data class BooleanConstant(
     val value: Boolean,
 ) : ArkConstant {
     override val type: ArkType
-        get() = BooleanType
+        get() = ArkBooleanType
 
     override fun toString(): String {
         return if (value) "true" else "false"
@@ -85,7 +85,7 @@ data class NumberConstant(
     val value: Double,
 ) : ArkConstant {
     override val type: ArkType
-        get() = NumberType
+        get() = ArkNumberType
 
     override fun toString(): String {
         return value.toString()
@@ -98,7 +98,7 @@ data class NumberConstant(
 
 object NullConstant : ArkConstant {
     override val type: ArkType
-        get() = NullType
+        get() = ArkNullType
 
     override fun toString(): String = "null"
 
@@ -109,7 +109,7 @@ object NullConstant : ArkConstant {
 
 object UndefinedConstant : ArkConstant {
     override val type: ArkType
-        get() = UndefinedType
+        get() = ArkUndefinedType
 
     override fun toString(): String = "undefined"
 
@@ -120,7 +120,7 @@ object UndefinedConstant : ArkConstant {
 
 data class ArrayLiteral(
     val elements: List<ArkEntity>,
-    override val type: ArrayType,
+    override val type: ArkArrayType,
 ) : ArkConstant {
     init {
         require(type.dimensions == 1) {

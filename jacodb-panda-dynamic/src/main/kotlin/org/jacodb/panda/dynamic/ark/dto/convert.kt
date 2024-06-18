@@ -16,7 +16,7 @@
 
 package org.jacodb.panda.dynamic.ark.dto
 
-import org.jacodb.panda.dynamic.ark.base.AnyType
+import org.jacodb.panda.dynamic.ark.base.ArkAnyType
 import org.jacodb.panda.dynamic.ark.base.ArkArrayAccess
 import org.jacodb.panda.dynamic.ark.base.ArkBinaryOperation
 import org.jacodb.panda.dynamic.ark.base.ArkCallExpr
@@ -37,42 +37,42 @@ import org.jacodb.panda.dynamic.ark.base.ArkType
 import org.jacodb.panda.dynamic.ark.base.ArkUnaryOperation
 import org.jacodb.panda.dynamic.ark.base.ArkValue
 import org.jacodb.panda.dynamic.ark.base.ArrayLiteral
-import org.jacodb.panda.dynamic.ark.base.ArrayType
-import org.jacodb.panda.dynamic.ark.base.AssignStmt
+import org.jacodb.panda.dynamic.ark.base.ArkArrayType
+import org.jacodb.panda.dynamic.ark.base.ArkAssignStmt
 import org.jacodb.panda.dynamic.ark.base.BinaryOp
 import org.jacodb.panda.dynamic.ark.base.BooleanConstant
-import org.jacodb.panda.dynamic.ark.base.BooleanType
-import org.jacodb.panda.dynamic.ark.base.CallStmt
-import org.jacodb.panda.dynamic.ark.base.CastExpr
-import org.jacodb.panda.dynamic.ark.base.DeleteStmt
-import org.jacodb.panda.dynamic.ark.base.FieldRef
-import org.jacodb.panda.dynamic.ark.base.GotoStmt
-import org.jacodb.panda.dynamic.ark.base.IfStmt
-import org.jacodb.panda.dynamic.ark.base.InstanceOfExpr
-import org.jacodb.panda.dynamic.ark.base.LengthExpr
-import org.jacodb.panda.dynamic.ark.base.NeverType
-import org.jacodb.panda.dynamic.ark.base.NewArrayExpr
-import org.jacodb.panda.dynamic.ark.base.NewExpr
-import org.jacodb.panda.dynamic.ark.base.NopStmt
+import org.jacodb.panda.dynamic.ark.base.ArkBooleanType
+import org.jacodb.panda.dynamic.ark.base.ArkCallStmt
+import org.jacodb.panda.dynamic.ark.base.ArkCastExpr
+import org.jacodb.panda.dynamic.ark.base.ArkDeleteStmt
+import org.jacodb.panda.dynamic.ark.base.ArkFieldRef
+import org.jacodb.panda.dynamic.ark.base.ArkGotoStmt
+import org.jacodb.panda.dynamic.ark.base.ArkIfStmt
+import org.jacodb.panda.dynamic.ark.base.ArkInstanceOfExpr
+import org.jacodb.panda.dynamic.ark.base.ArkLengthExpr
+import org.jacodb.panda.dynamic.ark.base.ArkNeverType
+import org.jacodb.panda.dynamic.ark.base.ArkNewArrayExpr
+import org.jacodb.panda.dynamic.ark.base.ArkNewExpr
+import org.jacodb.panda.dynamic.ark.base.ArkNopStmt
 import org.jacodb.panda.dynamic.ark.base.NullConstant
-import org.jacodb.panda.dynamic.ark.base.NullType
+import org.jacodb.panda.dynamic.ark.base.ArkNullType
 import org.jacodb.panda.dynamic.ark.base.NumberConstant
-import org.jacodb.panda.dynamic.ark.base.NumberType
+import org.jacodb.panda.dynamic.ark.base.ArkNumberType
 import org.jacodb.panda.dynamic.ark.base.ObjectLiteral
-import org.jacodb.panda.dynamic.ark.base.PhiExpr
-import org.jacodb.panda.dynamic.ark.base.ReturnStmt
-import org.jacodb.panda.dynamic.ark.base.Stmt
+import org.jacodb.panda.dynamic.ark.base.ArkPhiExpr
+import org.jacodb.panda.dynamic.ark.base.ArkReturnStmt
+import org.jacodb.panda.dynamic.ark.base.ArkStmt
 import org.jacodb.panda.dynamic.ark.base.StringConstant
-import org.jacodb.panda.dynamic.ark.base.StringType
-import org.jacodb.panda.dynamic.ark.base.SwitchStmt
-import org.jacodb.panda.dynamic.ark.base.ThrowStmt
-import org.jacodb.panda.dynamic.ark.base.TypeOfExpr
+import org.jacodb.panda.dynamic.ark.base.ArkStringType
+import org.jacodb.panda.dynamic.ark.base.ArkSwitchStmt
+import org.jacodb.panda.dynamic.ark.base.ArkThrowStmt
+import org.jacodb.panda.dynamic.ark.base.ArkTypeOfExpr
 import org.jacodb.panda.dynamic.ark.base.UnaryOp
-import org.jacodb.panda.dynamic.ark.base.UnclearRefType
+import org.jacodb.panda.dynamic.ark.base.ArkUnclearRefType
 import org.jacodb.panda.dynamic.ark.base.UndefinedConstant
-import org.jacodb.panda.dynamic.ark.base.UndefinedType
-import org.jacodb.panda.dynamic.ark.base.UnknownType
-import org.jacodb.panda.dynamic.ark.base.VoidType
+import org.jacodb.panda.dynamic.ark.base.ArkUndefinedType
+import org.jacodb.panda.dynamic.ark.base.ArkUnknownType
+import org.jacodb.panda.dynamic.ark.base.ArkVoidType
 import org.jacodb.panda.dynamic.ark.graph.BasicBlock
 import org.jacodb.panda.dynamic.ark.graph.Cfg
 import org.jacodb.panda.dynamic.ark.model.ArkClass
@@ -89,59 +89,59 @@ import org.jacodb.panda.dynamic.ark.model.FieldSubSignature
 import org.jacodb.panda.dynamic.ark.model.MethodSignature
 import org.jacodb.panda.dynamic.ark.model.MethodSubSignature
 
-fun convertToArkStmt(stmt: StmtDto, location: ArkInstLocation): Stmt {
+fun convertToArkStmt(stmt: StmtDto, location: ArkInstLocation): ArkStmt {
     return when (stmt) {
-        is UnknownStmtDto -> object : Stmt {
+        is UnknownStmtDto -> object : ArkStmt {
             override val location: ArkInstLocation = location
 
             override fun toString(): String = "UnknownStmt"
 
-            override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+            override fun <R> accept(visitor: ArkStmt.Visitor<R>): R {
                 error("UnknownStmt is not supported")
             }
         }
 
-        is NopStmtDto -> NopStmt(location = location)
+        is NopStmtDto -> ArkNopStmt(location = location)
 
-        is AssignStmtDto -> AssignStmt(
+        is AssignStmtDto -> ArkAssignStmt(
             location = location,
             lhv = convertToArkEntity(stmt.left) as ArkLValue,
             rhv = convertToArkEntity(stmt.right),
         )
 
-        is CallStmtDto -> CallStmt(
+        is CallStmtDto -> ArkCallStmt(
             location = location,
             expr = convertToArkEntity(stmt.expr) as ArkCallExpr,
         )
 
-        is DeleteStmtDto -> DeleteStmt(
+        is DeleteStmtDto -> ArkDeleteStmt(
             location = location,
             arg = convertToArkFieldRef(stmt.arg),
         )
 
-        is ReturnStmtDto -> ReturnStmt(
+        is ReturnStmtDto -> ArkReturnStmt(
             location = location,
             arg = convertToArkEntity(stmt.arg),
         )
 
-        is ReturnVoidStmtDto -> ReturnStmt(
+        is ReturnVoidStmtDto -> ArkReturnStmt(
             location = location,
             arg = null,
         )
 
-        is ThrowStmtDto -> ThrowStmt(
+        is ThrowStmtDto -> ArkThrowStmt(
             location = location,
             arg = convertToArkEntity(stmt.arg),
         )
 
-        is GotoStmtDto -> GotoStmt(location = location)
+        is GotoStmtDto -> ArkGotoStmt(location = location)
 
-        is IfStmtDto -> IfStmt(
+        is IfStmtDto -> ArkIfStmt(
             location = location,
             condition = convertToArkEntity(stmt.condition) as ArkConditionExpr,
         )
 
-        is SwitchStmtDto -> SwitchStmt(
+        is SwitchStmtDto -> ArkSwitchStmt(
             location = location,
             arg = convertToArkEntity(stmt.arg),
             cases = stmt.cases.map { convertToArkEntity(it) },
@@ -155,11 +155,14 @@ fun convertToArkEntity(value: ValueDto): ArkEntity {
     return when (value) {
         is UnknownValueDto -> object : ArkEntity {
             override val type: ArkType
-                get() = UnknownType
+                get() = ArkUnknownType
 
             override fun toString(): String = "UnknownValue"
 
             override fun <R> accept(visitor: ArkEntity.Visitor<R>): R {
+                if (visitor is ArkEntity.Visitor.Default<R>) {
+                    return visitor.defaultVisit(this)
+                }
                 error("UnknownValue is not supported")
             }
         }
@@ -171,34 +174,34 @@ fun convertToArkEntity(value: ValueDto): ArkEntity {
 
         is ConstantDto -> convertToArkConstant(value)
 
-        is NewExprDto -> NewExpr(
+        is NewExprDto -> ArkNewExpr(
             type = convertToArkType(value.type) // as ClassType
         )
 
-        is NewArrayExprDto -> NewArrayExpr(
+        is NewArrayExprDto -> ArkNewArrayExpr(
             elementType = convertToArkType(value.type),
             size = convertToArkEntity(value.size),
         )
 
-        is TypeOfExprDto -> TypeOfExpr(
+        is TypeOfExprDto -> ArkTypeOfExpr(
             arg = convertToArkEntity(value.arg)
         )
 
-        is InstanceOfExprDto -> InstanceOfExpr(
+        is InstanceOfExprDto -> ArkInstanceOfExpr(
             arg = convertToArkEntity(value.arg),
             checkType = convertToArkType(value.checkType),
         )
 
-        is LengthExprDto -> LengthExpr(
+        is LengthExprDto -> ArkLengthExpr(
             arg = convertToArkEntity(value.arg)
         )
 
-        is CastExprDto -> CastExpr(
+        is CastExprDto -> ArkCastExpr(
             arg = convertToArkEntity(value.arg),
             type = convertToArkType(value.type),
         )
 
-        is PhiExprDto -> PhiExpr(
+        is PhiExprDto -> ArkPhiExpr(
             args = value.args.map { convertToArkEntity(it) },
             argToBlock = emptyMap(), // TODO
             type = convertToArkType(value.type),
@@ -206,7 +209,7 @@ fun convertToArkEntity(value: ValueDto): ArkEntity {
 
         is ArrayLiteralDto -> ArrayLiteral(
             elements = value.elements.map { convertToArkEntity(it) },
-            type = convertToArkType(value.type) as ArrayType,
+            type = convertToArkType(value.type) as ArkArrayType,
         )
 
         is ObjectLiteralDto -> ObjectLiteral(
@@ -265,22 +268,22 @@ fun convertToArkEntity(value: ValueDto): ArkEntity {
 
 fun convertToArkType(type: String): ArkType {
     return when (type) {
-        "any" -> AnyType
-        "unknown" -> UnknownType
+        "any" -> ArkAnyType
+        "unknown" -> ArkUnknownType
         // "union" -> UnionType
         // "tuple" -> TupleType
-        "boolean" -> BooleanType
-        "number" -> NumberType
-        "string" -> StringType
-        "null" -> NullType
-        "undefined" -> UndefinedType
-        "void" -> VoidType
-        "never" -> NeverType
+        "boolean" -> ArkBooleanType
+        "number" -> ArkNumberType
+        "string" -> ArkStringType
+        "null" -> ArkNullType
+        "undefined" -> ArkUndefinedType
+        "void" -> ArkVoidType
+        "never" -> ArkNeverType
         // "literal" -> LiteralType
         // "class" -> ClassType
         // "array" -> ArrayType
         // "object" -> ArrayObjectType
-        else -> UnclearRefType(type)
+        else -> ArkUnclearRefType(type)
     }
 }
 
@@ -304,7 +307,7 @@ fun convertToArkConstant(value: ConstantDto): ArkConstant {
 
         "unknown" -> object : ArkConstant {
             override val type: ArkType
-                get() = UnknownType
+                get() = ArkUnknownType
 
             override fun toString(): String = "UnknownConstant(${value.value})"
 
@@ -362,7 +365,7 @@ fun convertToArkBinaryOp(op: String): BinaryOp {
     }
 }
 
-fun convertToArkFieldRef(fieldRef: FieldRefDto): FieldRef {
+fun convertToArkFieldRef(fieldRef: FieldRefDto): ArkFieldRef {
     val field = convertToArkFieldSignature(fieldRef.field)
     return when (fieldRef) {
         is InstanceFieldRefDto -> ArkInstanceFieldRef(

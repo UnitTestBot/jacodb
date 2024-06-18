@@ -22,13 +22,13 @@ import org.jacodb.panda.dynamic.ark.model.MethodSignature
 
 interface ArkExpr : ArkEntity {
     interface Visitor<out R> {
-        fun visit(expr: NewExpr): R
-        fun visit(expr: NewArrayExpr): R
-        fun visit(expr: TypeOfExpr): R
-        fun visit(expr: InstanceOfExpr): R
-        fun visit(expr: LengthExpr): R
-        fun visit(expr: CastExpr): R
-        fun visit(expr: PhiExpr): R
+        fun visit(expr: ArkNewExpr): R
+        fun visit(expr: ArkNewArrayExpr): R
+        fun visit(expr: ArkTypeOfExpr): R
+        fun visit(expr: ArkInstanceOfExpr): R
+        fun visit(expr: ArkLengthExpr): R
+        fun visit(expr: ArkCastExpr): R
+        fun visit(expr: ArkPhiExpr): R
         fun visit(expr: ArkUnaryOperation): R
         fun visit(expr: ArkBinaryOperation): R
         fun visit(expr: ArkRelationOperation): R
@@ -36,13 +36,13 @@ interface ArkExpr : ArkEntity {
         fun visit(expr: ArkStaticCallExpr): R
 
         interface Default<out R> : Visitor<R> {
-            override fun visit(expr: NewExpr): R = defaultVisit(expr)
-            override fun visit(expr: NewArrayExpr): R = defaultVisit(expr)
-            override fun visit(expr: TypeOfExpr): R = defaultVisit(expr)
-            override fun visit(expr: InstanceOfExpr): R = defaultVisit(expr)
-            override fun visit(expr: LengthExpr): R = defaultVisit(expr)
-            override fun visit(expr: CastExpr): R = defaultVisit(expr)
-            override fun visit(expr: PhiExpr): R = defaultVisit(expr)
+            override fun visit(expr: ArkNewExpr): R = defaultVisit(expr)
+            override fun visit(expr: ArkNewArrayExpr): R = defaultVisit(expr)
+            override fun visit(expr: ArkTypeOfExpr): R = defaultVisit(expr)
+            override fun visit(expr: ArkInstanceOfExpr): R = defaultVisit(expr)
+            override fun visit(expr: ArkLengthExpr): R = defaultVisit(expr)
+            override fun visit(expr: ArkCastExpr): R = defaultVisit(expr)
+            override fun visit(expr: ArkPhiExpr): R = defaultVisit(expr)
             override fun visit(expr: ArkUnaryOperation): R = defaultVisit(expr)
             override fun visit(expr: ArkBinaryOperation): R = defaultVisit(expr)
             override fun visit(expr: ArkRelationOperation): R = defaultVisit(expr)
@@ -60,7 +60,7 @@ interface ArkExpr : ArkEntity {
     fun <R> accept(visitor: Visitor<R>): R
 }
 
-data class NewExpr(
+data class ArkNewExpr(
     override val type: ArkType, // ClassType
 ) : ArkExpr {
     override fun toString(): String {
@@ -72,13 +72,13 @@ data class NewExpr(
     }
 }
 
-data class NewArrayExpr(
+data class ArkNewArrayExpr(
     val elementType: ArkType,
     val size: ArkEntity,
 ) : ArkExpr {
     // TODO: support multi-dimensional arrays
     override val type: ArkType
-        get() = ArrayType(elementType, 1)
+        get() = ArkArrayType(elementType, 1)
 
     override fun toString(): String {
         return "new ${elementType.typeName}[$size]"
@@ -89,11 +89,11 @@ data class NewArrayExpr(
     }
 }
 
-data class TypeOfExpr(
+data class ArkTypeOfExpr(
     val arg: ArkEntity,
 ) : ArkExpr {
     override val type: ArkType
-        get() = StringType
+        get() = ArkStringType
 
     override fun toString(): String {
         return "typeof $arg"
@@ -104,12 +104,12 @@ data class TypeOfExpr(
     }
 }
 
-data class InstanceOfExpr(
+data class ArkInstanceOfExpr(
     val arg: ArkEntity,
     val checkType: ArkType,
 ) : ArkExpr {
     override val type: ArkType
-        get() = BooleanType
+        get() = ArkBooleanType
 
     override fun toString(): String {
         return "$arg instanceof $checkType"
@@ -120,11 +120,11 @@ data class InstanceOfExpr(
     }
 }
 
-data class LengthExpr(
+data class ArkLengthExpr(
     val arg: ArkEntity,
 ) : ArkExpr {
     override val type: ArkType
-        get() = NumberType
+        get() = ArkNumberType
 
     override fun toString(): String {
         return "$arg.length"
@@ -135,7 +135,7 @@ data class LengthExpr(
     }
 }
 
-data class CastExpr(
+data class ArkCastExpr(
     val arg: ArkEntity,
     override val type: ArkType,
 ) : ArkExpr {
@@ -161,7 +161,7 @@ data class CastExpr(
 //     }
 // }
 
-data class PhiExpr(
+data class ArkPhiExpr(
     val args: List<ArkEntity>,
     val argToBlock: Map<ArkEntity, BasicBlock>,
     override val type: ArkType,
@@ -239,7 +239,7 @@ data class ArkBinaryOperation(
 
 interface ArkConditionExpr : ArkBinaryExpr {
     override val type: ArkType
-        get() = BooleanType
+        get() = ArkBooleanType
 }
 
 data class ArkRelationOperation(

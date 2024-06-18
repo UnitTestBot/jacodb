@@ -16,17 +16,17 @@
 
 package org.jacodb.panda.dynamic.ark.graph
 
-import org.jacodb.panda.dynamic.ark.base.Stmt
+import org.jacodb.panda.dynamic.ark.base.ArkStmt
 
 class BasicBlock(
     val id: Int,
     val successors: List<Int>,
     val predecessors: List<Int>,
-    val stmts: List<Stmt>,
+    val stmts: List<ArkStmt>,
 ) {
-    val head: Stmt?
+    val head: ArkStmt?
         get() = stmts.firstOrNull()
-    val last: Stmt?
+    val last: ArkStmt?
         get() = stmts.lastOrNull()
 
     override fun toString(): String {

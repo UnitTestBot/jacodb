@@ -27,94 +27,94 @@ data class ArkInstLocation(
     // val lineNumber: Int,
 ) : CommonInstLocation
 
-interface Stmt : CommonInst {
+interface ArkStmt : CommonInst {
     override val location: ArkInstLocation
 
     override val method: ArkMethod
         get() = location.method
 
     interface Visitor<out R> {
-        fun visit(stmt: NopStmt): R
-        fun visit(stmt: AssignStmt): R
-        fun visit(stmt: CallStmt): R
-        fun visit(stmt: DeleteStmt): R
-        fun visit(stmt: ReturnStmt): R
-        fun visit(stmt: ThrowStmt): R
-        fun visit(stmt: GotoStmt): R
-        fun visit(stmt: IfStmt): R
-        fun visit(stmt: SwitchStmt): R
+        fun visit(stmt: ArkNopStmt): R
+        fun visit(stmt: ArkAssignStmt): R
+        fun visit(stmt: ArkCallStmt): R
+        fun visit(stmt: ArkDeleteStmt): R
+        fun visit(stmt: ArkReturnStmt): R
+        fun visit(stmt: ArkThrowStmt): R
+        fun visit(stmt: ArkGotoStmt): R
+        fun visit(stmt: ArkIfStmt): R
+        fun visit(stmt: ArkSwitchStmt): R
 
         interface Default<out R> : Visitor<R> {
-            override fun visit(stmt: NopStmt): R = defaultVisit(stmt)
-            override fun visit(stmt: AssignStmt): R = defaultVisit(stmt)
-            override fun visit(stmt: CallStmt): R = defaultVisit(stmt)
-            override fun visit(stmt: DeleteStmt): R = defaultVisit(stmt)
-            override fun visit(stmt: ReturnStmt): R = defaultVisit(stmt)
-            override fun visit(stmt: ThrowStmt): R = defaultVisit(stmt)
-            override fun visit(stmt: GotoStmt): R = defaultVisit(stmt)
-            override fun visit(stmt: IfStmt): R = defaultVisit(stmt)
-            override fun visit(stmt: SwitchStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: ArkNopStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: ArkAssignStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: ArkCallStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: ArkDeleteStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: ArkReturnStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: ArkThrowStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: ArkGotoStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: ArkIfStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: ArkSwitchStmt): R = defaultVisit(stmt)
 
-            fun defaultVisit(stmt: Stmt): R
+            fun defaultVisit(stmt: ArkStmt): R
         }
     }
 
     fun <R> accept(visitor: Visitor<R>): R
 }
 
-data class NopStmt(
+data class ArkNopStmt(
     override val location: ArkInstLocation,
-) : Stmt {
+) : ArkStmt {
     override fun toString(): String = "nop"
 
-    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkStmt.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-data class AssignStmt(
+data class ArkAssignStmt(
     override val location: ArkInstLocation,
     override val lhv: ArkLValue,
     override val rhv: ArkEntity,
-) : Stmt, CommonAssignInst {
+) : ArkStmt, CommonAssignInst {
     override fun toString(): String {
         return "$lhv := $rhv"
     }
 
-    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkStmt.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-data class CallStmt(
+data class ArkCallStmt(
     override val location: ArkInstLocation,
     val expr: ArkCallExpr,
-) : Stmt {
+) : ArkStmt {
     override fun toString(): String {
         return expr.toString()
     }
 
-    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkStmt.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-data class DeleteStmt(
+data class ArkDeleteStmt(
     override val location: ArkInstLocation,
-    val arg: FieldRef,
-) : Stmt {
+    val arg: ArkFieldRef,
+) : ArkStmt {
     override fun toString(): String {
         return "delete $arg"
     }
 
-    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkStmt.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-interface TerminatingStmt : Stmt
+interface TerminatingStmt : ArkStmt
 
-data class ReturnStmt(
+data class ArkReturnStmt(
     override val location: ArkInstLocation,
     val arg: ArkEntity?,
 ) : TerminatingStmt {
@@ -126,12 +126,12 @@ data class ReturnStmt(
         }
     }
 
-    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkStmt.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-data class ThrowStmt(
+data class ArkThrowStmt(
     override val location: ArkInstLocation,
     val arg: ArkEntity,
 ) : TerminatingStmt {
@@ -139,46 +139,46 @@ data class ThrowStmt(
         return "throw $arg"
     }
 
-    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkStmt.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-interface BranchingStmt : Stmt
+interface ArkBranchingStmt : ArkStmt
 
-class GotoStmt(
+class ArkGotoStmt(
     override val location: ArkInstLocation,
-) : BranchingStmt {
+) : ArkBranchingStmt {
     override fun toString(): String = "goto"
 
-    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkStmt.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-data class IfStmt(
+data class ArkIfStmt(
     override val location: ArkInstLocation,
     val condition: ArkConditionExpr,
-) : BranchingStmt {
+) : ArkBranchingStmt {
     override fun toString(): String {
         return "if ($condition)"
     }
 
-    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkStmt.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-data class SwitchStmt(
+data class ArkSwitchStmt(
     override val location: ArkInstLocation,
     val arg: ArkEntity,
     val cases: List<ArkEntity>,
-) : BranchingStmt {
+) : ArkBranchingStmt {
     override fun toString(): String {
         return "switch ($arg)"
     }
 
-    override fun <R> accept(visitor: Stmt.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkStmt.Visitor<R>): R {
         return visitor.visit(this)
     }
 }

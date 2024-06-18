@@ -19,7 +19,7 @@ package ark
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.jacodb.panda.dynamic.ark.base.AnyType
+import org.jacodb.panda.dynamic.ark.base.ArkAnyType
 import org.jacodb.panda.dynamic.ark.base.ArkInstLocation
 import org.jacodb.panda.dynamic.ark.base.ArkLocal
 import org.jacodb.panda.dynamic.ark.dto.ArkFileDto
@@ -69,7 +69,7 @@ class ArkFromJsonTest {
         Assertions.assertEquals(LocalDto("x", "any"), valueDto)
         val value = convertToArkEntity(valueDto)
         println("value = $value")
-        Assertions.assertEquals(ArkLocal("x", AnyType), value)
+        Assertions.assertEquals(ArkLocal("x", ArkAnyType), value)
     }
 
     @Test
@@ -111,7 +111,7 @@ class ArkFromJsonTest {
             enclosingClass = ClassSignature(name = "_DEFAULT_ARK_CLASS"),
             name = "_DEFAULT_ARK_METHOD",
             parameters = emptyList(),
-            returnType = AnyType,
+            returnType = ArkAnyType,
         )
         val method = ArkMethodImpl(signature, emptyList())
         val location = ArkInstLocation(method)

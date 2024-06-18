@@ -83,7 +83,7 @@ data class ArkArrayAccess(
     }
 }
 
-interface FieldRef : ArkRef, ArkLValue {
+interface ArkFieldRef : ArkRef, ArkLValue {
     val field: FieldSignature
 
     override val type: ArkType
@@ -93,7 +93,7 @@ interface FieldRef : ArkRef, ArkLValue {
 data class ArkInstanceFieldRef(
     val instance: ArkEntity, // Local
     override val field: FieldSignature,
-) : FieldRef {
+) : ArkFieldRef {
     override fun toString(): String {
         return "$instance.${field.sub.name}"
     }
@@ -105,7 +105,7 @@ data class ArkInstanceFieldRef(
 
 data class ArkStaticFieldRef(
     override val field: FieldSignature,
-) : FieldRef {
+) : ArkFieldRef {
     override fun toString(): String {
         return "${field.enclosingClass.name}.${field.sub.name}"
     }

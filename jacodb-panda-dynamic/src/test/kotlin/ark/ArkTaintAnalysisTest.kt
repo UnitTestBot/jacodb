@@ -21,7 +21,7 @@ import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.util.ArkTraits
-import org.jacodb.panda.dynamic.ark.base.Stmt
+import org.jacodb.panda.dynamic.ark.base.ArkStmt
 import org.jacodb.panda.dynamic.ark.dto.ArkFileDto
 import org.jacodb.panda.dynamic.ark.dto.convertToArkFile
 import org.jacodb.panda.dynamic.ark.graph.ArkApplicationGraph
@@ -66,7 +66,7 @@ class ArkTaintAnalysisTest {
         ArkTraits.cp = arkFile
         val graph = ArkApplicationGraph(arkFile)
         val unitResolver = UnitResolver<ArkMethod> { SingletonUnit }
-        val getConfigForMethod: ForwardTaintFlowFunctions<ArkMethod, Stmt>.(ArkMethod) -> List<TaintConfigurationItem>? =
+        val getConfigForMethod: ForwardTaintFlowFunctions<ArkMethod, ArkStmt>.(ArkMethod) -> List<TaintConfigurationItem>? =
             { method ->
                 val rules = buildList {
                     if (method.name == "source") add(

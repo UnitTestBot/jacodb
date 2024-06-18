@@ -27,40 +27,40 @@ interface ArkType : CommonType, CommonTypeName {
         get() = false
 
     interface Visitor<out R> {
-        fun visit(type: AnyType): R
-        fun visit(type: UnknownType): R
-        fun visit(type: UnionType): R
-        fun visit(type: TupleType): R
-        fun visit(type: BooleanType): R
-        fun visit(type: NumberType): R
-        fun visit(type: StringType): R
-        fun visit(type: NullType): R
-        fun visit(type: UndefinedType): R
-        fun visit(type: VoidType): R
-        fun visit(type: NeverType): R
-        fun visit(type: LiteralType): R
-        fun visit(type: ClassType): R
-        fun visit(type: ArrayType): R
-        fun visit(type: ArrayObjectType): R
-        fun visit(type: UnclearRefType): R
+        fun visit(type: ArkAnyType): R
+        fun visit(type: ArkUnknownType): R
+        fun visit(type: ArkUnionType): R
+        fun visit(type: ArkTupleType): R
+        fun visit(type: ArkBooleanType): R
+        fun visit(type: ArkNumberType): R
+        fun visit(type: ArkStringType): R
+        fun visit(type: ArkNullType): R
+        fun visit(type: ArkUndefinedType): R
+        fun visit(type: ArkVoidType): R
+        fun visit(type: ArkNeverType): R
+        fun visit(type: ArkLiteralType): R
+        fun visit(type: ArkClassType): R
+        fun visit(type: ArkArrayType): R
+        fun visit(type: ArkArrayObjectType): R
+        fun visit(type: ArkUnclearRefType): R
 
         interface Default<R> : Visitor<R> {
-            override fun visit(type: AnyType): R = defaultVisit(type)
-            override fun visit(type: UnknownType): R = defaultVisit(type)
-            override fun visit(type: UnionType): R = defaultVisit(type)
-            override fun visit(type: TupleType): R = defaultVisit(type)
-            override fun visit(type: BooleanType): R = defaultVisit(type)
-            override fun visit(type: NumberType): R = defaultVisit(type)
-            override fun visit(type: StringType): R = defaultVisit(type)
-            override fun visit(type: NullType): R = defaultVisit(type)
-            override fun visit(type: UndefinedType): R = defaultVisit(type)
-            override fun visit(type: VoidType): R = defaultVisit(type)
-            override fun visit(type: NeverType): R = defaultVisit(type)
-            override fun visit(type: LiteralType): R = defaultVisit(type)
-            override fun visit(type: ClassType): R = defaultVisit(type)
-            override fun visit(type: ArrayType): R = defaultVisit(type)
-            override fun visit(type: ArrayObjectType): R = defaultVisit(type)
-            override fun visit(type: UnclearRefType): R = defaultVisit(type)
+            override fun visit(type: ArkAnyType): R = defaultVisit(type)
+            override fun visit(type: ArkUnknownType): R = defaultVisit(type)
+            override fun visit(type: ArkUnionType): R = defaultVisit(type)
+            override fun visit(type: ArkTupleType): R = defaultVisit(type)
+            override fun visit(type: ArkBooleanType): R = defaultVisit(type)
+            override fun visit(type: ArkNumberType): R = defaultVisit(type)
+            override fun visit(type: ArkStringType): R = defaultVisit(type)
+            override fun visit(type: ArkNullType): R = defaultVisit(type)
+            override fun visit(type: ArkUndefinedType): R = defaultVisit(type)
+            override fun visit(type: ArkVoidType): R = defaultVisit(type)
+            override fun visit(type: ArkNeverType): R = defaultVisit(type)
+            override fun visit(type: ArkLiteralType): R = defaultVisit(type)
+            override fun visit(type: ArkClassType): R = defaultVisit(type)
+            override fun visit(type: ArkArrayType): R = defaultVisit(type)
+            override fun visit(type: ArkArrayObjectType): R = defaultVisit(type)
+            override fun visit(type: ArkUnclearRefType): R = defaultVisit(type)
 
             fun defaultVisit(type: ArkType): R
         }
@@ -69,7 +69,7 @@ interface ArkType : CommonType, CommonTypeName {
     fun <R> accept(visitor: Visitor<R>): R
 }
 
-object AnyType : ArkType {
+object ArkAnyType : ArkType {
     override val typeName: String
         get() = "any"
 
@@ -80,7 +80,7 @@ object AnyType : ArkType {
     }
 }
 
-object UnknownType : ArkType {
+object ArkUnknownType : ArkType {
     override val typeName: String
         get() = "unknown"
 
@@ -91,7 +91,7 @@ object UnknownType : ArkType {
     }
 }
 
-data class UnionType(
+data class ArkUnionType(
     val types: List<ArkType>,
 ) : ArkType {
     override val typeName: String
@@ -104,7 +104,7 @@ data class UnionType(
     }
 }
 
-data class TupleType(
+data class ArkTupleType(
     val types: List<ArkType>,
 ) : ArkType {
     override val typeName: String
@@ -121,7 +121,7 @@ data class TupleType(
 
 interface PrimitiveType : ArkType
 
-object BooleanType : PrimitiveType {
+object ArkBooleanType : PrimitiveType {
     override val typeName: String
         get() = "boolean"
 
@@ -132,7 +132,7 @@ object BooleanType : PrimitiveType {
     }
 }
 
-object NumberType : PrimitiveType {
+object ArkNumberType : PrimitiveType {
     override val typeName: String
         get() = "number"
 
@@ -143,7 +143,7 @@ object NumberType : PrimitiveType {
     }
 }
 
-object StringType : PrimitiveType {
+object ArkStringType : PrimitiveType {
     override val typeName: String
         get() = "string"
 
@@ -154,7 +154,7 @@ object StringType : PrimitiveType {
     }
 }
 
-object NullType : PrimitiveType {
+object ArkNullType : PrimitiveType {
     override val typeName: String
         get() = "null"
 
@@ -165,7 +165,7 @@ object NullType : PrimitiveType {
     }
 }
 
-object UndefinedType : PrimitiveType {
+object ArkUndefinedType : PrimitiveType {
     override val typeName: String
         get() = "undefined"
 
@@ -176,7 +176,7 @@ object UndefinedType : PrimitiveType {
     }
 }
 
-object VoidType : PrimitiveType {
+object ArkVoidType : PrimitiveType {
     override val typeName: String
         get() = "void"
 
@@ -187,7 +187,7 @@ object VoidType : PrimitiveType {
     }
 }
 
-object NeverType : PrimitiveType {
+object ArkNeverType : PrimitiveType {
     override val typeName: String
         get() = "never"
 
@@ -198,7 +198,7 @@ object NeverType : PrimitiveType {
     }
 }
 
-data class LiteralType(
+data class ArkLiteralType(
     val literalTypeName: String,
 ) : PrimitiveType {
     override val typeName: String
@@ -213,7 +213,7 @@ data class LiteralType(
 
 interface RefType : ArkType
 
-data class ClassType(
+data class ArkClassType(
     val classSignature: ClassSignature,
 ) : RefType {
     override val typeName: String
@@ -226,7 +226,7 @@ data class ClassType(
     }
 }
 
-data class ArrayType(
+data class ArkArrayType(
     val elementType: ArkType,
     val dimensions: Int,
 ) : RefType {
@@ -240,7 +240,7 @@ data class ArrayType(
     }
 }
 
-data class ArrayObjectType(
+data class ArkArrayObjectType(
     val elementType: ArkType,
 ) : RefType {
     override val typeName: String
@@ -253,7 +253,7 @@ data class ArrayObjectType(
     }
 }
 
-data class UnclearRefType(
+data class ArkUnclearRefType(
     override val typeName: String,
 ) : RefType {
     override fun toString(): String = typeName
