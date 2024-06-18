@@ -21,7 +21,7 @@ object TypeInference {
         TODO()
     }
 
-    fun infer(expr: BinaryExpr): ArkType {
+    fun infer(expr: ArkBinaryExpr): ArkType {
         TODO()
     }
 }

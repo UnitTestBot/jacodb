@@ -30,13 +30,13 @@ import org.jacodb.panda.dynamic.ark.base.ArkConstant
 import org.jacodb.panda.dynamic.ark.base.ArkEntity
 import org.jacodb.panda.dynamic.ark.base.ArkThis
 import org.jacodb.panda.dynamic.ark.base.ArkValue
-import org.jacodb.panda.dynamic.ark.base.ArrayAccess
-import org.jacodb.panda.dynamic.ark.base.CallExpr
+import org.jacodb.panda.dynamic.ark.base.ArkArrayAccess
+import org.jacodb.panda.dynamic.ark.base.ArkCallExpr
 import org.jacodb.panda.dynamic.ark.base.CastExpr
-import org.jacodb.panda.dynamic.ark.base.Immediate
-import org.jacodb.panda.dynamic.ark.base.InstanceFieldRef
-import org.jacodb.panda.dynamic.ark.base.ParameterRef
-import org.jacodb.panda.dynamic.ark.base.StaticFieldRef
+import org.jacodb.panda.dynamic.ark.base.ArkImmediate
+import org.jacodb.panda.dynamic.ark.base.ArkInstanceFieldRef
+import org.jacodb.panda.dynamic.ark.base.ArkParameterRef
+import org.jacodb.panda.dynamic.ark.base.ArkStaticFieldRef
 import org.jacodb.panda.dynamic.ark.base.Stmt
 import org.jacodb.panda.dynamic.ark.model.ArkFile
 import org.jacodb.panda.dynamic.ark.model.ArkMethod
@@ -51,7 +51,7 @@ interface ArkTraits : Traits<ArkMethod, Stmt> {
 
     override val CommonCallExpr.callee: ArkMethod
         get() {
-            check(this is CallExpr)
+            check(this is ArkCallExpr)
             // return cp.getMethodBySignature(method) ?: error("Method not found: $method")
             return ArkMethodImpl(method, emptyList())
         }
@@ -77,9 +77,9 @@ interface ArkTraits : Traits<ArkMethod, Stmt> {
         return this._toPath()
     }
 
-    override fun getArgument(param: CommonMethodParameter): ParameterRef {
+    override fun getArgument(param: CommonMethodParameter): ArkParameterRef {
         check(param is ArkMethodParameter)
-        return ParameterRef(index = param.index, type = param.type)
+        return ArkParameterRef(index = param.index, type = param.type)
     }
 
     override fun getArgumentsOf(method: ArkMethod): List<CommonArgument> {
@@ -107,7 +107,7 @@ interface ArkTraits : Traits<ArkMethod, Stmt> {
         TODO("Not yet implemented")
     }
 
-    override fun Stmt.getCallExpr(): CallExpr? {
+    override fun Stmt.getCallExpr(): ArkCallExpr? {
         return callExpr
     }
 
@@ -126,25 +126,25 @@ interface ArkTraits : Traits<ArkMethod, Stmt> {
 }
 
 fun ArkEntity.toPathOrNull(): AccessPath? = when (this) {
-    is Immediate -> AccessPath(this, emptyList())
+    is ArkImmediate -> AccessPath(this, emptyList())
 
     is ArkThis -> AccessPath(this, emptyList())
 
-    is ParameterRef -> AccessPath(this, emptyList())
+    is ArkParameterRef -> AccessPath(this, emptyList())
 
-    is ArrayAccess -> {
+    is ArkArrayAccess -> {
         array.toPathOrNull()?.let {
             it + ElementAccessor
         }
     }
 
-    is InstanceFieldRef -> {
+    is ArkInstanceFieldRef -> {
         instance.toPathOrNull()?.let {
             it + FieldAccessor(field.name)
         }
     }
 
-    is StaticFieldRef -> {
+    is ArkStaticFieldRef -> {
         AccessPath(null, listOf(FieldAccessor(field.name, isStatic = true)))
     }
 
@@ -157,5 +157,5 @@ fun ArkEntity.toPath(): AccessPath {
     return toPathOrNull() ?: error("Unable to build access path for value $this")
 }
 
-val Stmt.callExpr: CallExpr?
-    get() = _getOperands().filterIsInstance<CallExpr>().firstOrNull()
+val Stmt.callExpr: ArkCallExpr?
+    get() = _getOperands().filterIsInstance<ArkCallExpr>().firstOrNull()

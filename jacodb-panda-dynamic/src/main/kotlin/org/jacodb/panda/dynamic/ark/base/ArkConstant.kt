@@ -16,7 +16,7 @@
 
 package org.jacodb.panda.dynamic.ark.base
 
-interface ArkConstant : Immediate {
+interface ArkConstant : ArkImmediate {
     interface Visitor<out R> {
         fun visit(value: StringConstant): R
         fun visit(value: BooleanConstant): R
@@ -39,7 +39,7 @@ interface ArkConstant : Immediate {
         }
     }
 
-    override fun <R> accept(visitor: Immediate.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkImmediate.Visitor<R>): R {
         return accept(visitor as Visitor<R>)
     }
 

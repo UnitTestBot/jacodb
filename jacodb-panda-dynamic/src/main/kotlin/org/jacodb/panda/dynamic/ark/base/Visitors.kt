@@ -21,7 +21,7 @@ object ValuePrinter : ArkEntity.Visitor.Default<Unit> {
         println("defaultVisit<Value>($value)")
     }
 
-    override fun defaultVisit(value: Immediate) {
+    override fun defaultVisit(value: ArkImmediate) {
         println("defaultVisit<Immediate>($value)")
     }
 
@@ -29,7 +29,7 @@ object ValuePrinter : ArkEntity.Visitor.Default<Unit> {
         println("defaultVisit<Expr>($expr)")
     }
 
-    override fun defaultVisit(ref: Ref) {
+    override fun defaultVisit(ref: ArkRef) {
         println("defaultVisit<Ref>($ref)")
     }
 
@@ -37,7 +37,7 @@ object ValuePrinter : ArkEntity.Visitor.Default<Unit> {
         println("defaultVisit<Constant>($value)")
     }
 
-    override fun visit(value: Local) {
+    override fun visit(value: ArkLocal) {
         println("visit<Local>($value)")
     }
 
@@ -97,23 +97,23 @@ object ValuePrinter : ArkEntity.Visitor.Default<Unit> {
         println("visit<PhiExpr>($expr)")
     }
 
-    override fun visit(expr: UnaryOperation) {
+    override fun visit(expr: ArkUnaryOperation) {
         println("visit<UnaryOperation>($expr)")
     }
 
-    override fun visit(expr: BinaryOperation) {
+    override fun visit(expr: ArkBinaryOperation) {
         println("visit<BinaryOperation>($expr)")
     }
 
-    override fun visit(expr: RelationOperation) {
+    override fun visit(expr: ArkRelationOperation) {
         println("visit<RelationOperation>($expr)")
     }
 
-    override fun visit(expr: InstanceCallExpr) {
+    override fun visit(expr: ArkInstanceCallExpr) {
         println("visit<InstanceCallExpr>($expr)")
     }
 
-    override fun visit(expr: StaticCallExpr) {
+    override fun visit(expr: ArkStaticCallExpr) {
         println("visit<StaticCallExpr>($expr)")
     }
 
@@ -121,29 +121,29 @@ object ValuePrinter : ArkEntity.Visitor.Default<Unit> {
         println("visit<This>($ref)")
     }
 
-    override fun visit(ref: ParameterRef) {
+    override fun visit(ref: ArkParameterRef) {
         println("visit<ParameterRef>($ref)")
     }
 
-    override fun visit(ref: ArrayAccess) {
+    override fun visit(ref: ArkArrayAccess) {
         println("visit<ArrayAccess>($ref)")
     }
 
-    override fun visit(ref: InstanceFieldRef) {
+    override fun visit(ref: ArkInstanceFieldRef) {
         println("visit<InstanceFieldRef>($ref)")
     }
 
-    override fun visit(ref: StaticFieldRef) {
+    override fun visit(ref: ArkStaticFieldRef) {
         println("visit<StaticFieldRef>($ref)")
     }
 }
 
-object ImmediatePrinter : Immediate.Visitor.Default<Unit> {
-    override fun defaultVisit(value: Immediate) {
+object ImmediatePrinter : ArkImmediate.Visitor.Default<Unit> {
+    override fun defaultVisit(value: ArkImmediate) {
         println("defaultVisit<Immediate>($value)")
     }
 
-    override fun visit(value: Local) {
+    override fun visit(value: ArkLocal) {
         println("visit<Local>($value)")
     }
 
@@ -169,24 +169,24 @@ object ImmediatePrinter : Immediate.Visitor.Default<Unit> {
 }
 
 fun main() {
-    val local: Immediate = Local("kek", NumberType)
+    val local: ArkImmediate = ArkLocal("kek", NumberType)
     val stringConstant: ArkConstant = StringConstant("lol")
     val arrayLiteral = ArrayLiteral(listOf(local, stringConstant), ArrayType(NumberType, 1))
-    val expr: ArkExpr = BinaryOperation(BinaryOp.Add, local, stringConstant)
-    val ref: Ref = ArrayAccess(arrayLiteral, local, NumberType)
+    val expr: ArkExpr = ArkBinaryOperation(BinaryOp.Add, local, stringConstant)
+    val ref: ArkRef = ArkArrayAccess(arrayLiteral, local, NumberType)
 
     local.accept(ValuePrinter)
-    local.accept(ValuePrinter as Immediate.Visitor<Unit>)
+    local.accept(ValuePrinter as ArkImmediate.Visitor<Unit>)
     local.accept(ImmediatePrinter)
     println("-".repeat(40))
     stringConstant.accept(ValuePrinter)
-    stringConstant.accept(ValuePrinter as Immediate.Visitor<Unit>)
+    stringConstant.accept(ValuePrinter as ArkImmediate.Visitor<Unit>)
     stringConstant.accept(ValuePrinter as ArkConstant.Visitor<Unit>)
     stringConstant.accept(ImmediatePrinter)
     stringConstant.accept(ImmediatePrinter as ArkConstant.Visitor<Unit>)
     println("-".repeat(40))
     arrayLiteral.accept(ValuePrinter)
-    arrayLiteral.accept(ValuePrinter as Immediate.Visitor<Unit>)
+    arrayLiteral.accept(ValuePrinter as ArkImmediate.Visitor<Unit>)
     arrayLiteral.accept(ValuePrinter as ArkConstant.Visitor<Unit>)
     arrayLiteral.accept(ImmediatePrinter)
     arrayLiteral.accept(ImmediatePrinter as ArkConstant.Visitor<Unit>)
@@ -195,5 +195,5 @@ fun main() {
     expr.accept(ValuePrinter as ArkExpr.Visitor<Unit>)
     println("-".repeat(40))
     ref.accept(ValuePrinter)
-    ref.accept(ValuePrinter as Ref.Visitor<Unit>)
+    ref.accept(ValuePrinter as ArkRef.Visitor<Unit>)
 }

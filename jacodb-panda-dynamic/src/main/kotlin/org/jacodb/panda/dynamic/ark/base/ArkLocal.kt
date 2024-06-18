@@ -16,4 +16,15 @@
 
 package org.jacodb.panda.dynamic.ark.base
 
-interface LValue : ArkValue
+data class ArkLocal(
+    val name: String,
+    override val type: ArkType,
+) : ArkImmediate, ArkLValue {
+    override fun toString(): String {
+        return name
+    }
+
+    override fun <R> accept(visitor: ArkImmediate.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}

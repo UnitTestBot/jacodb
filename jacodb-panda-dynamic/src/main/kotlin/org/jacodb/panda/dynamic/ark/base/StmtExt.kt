@@ -18,5 +18,5 @@ package org.jacodb.panda.dynamic.ark.base
 
 import org.jacodb.panda.dynamic.ark.utils.getOperands
 
-val Stmt.callExpr: CallExpr?
-    get() = getOperands().filterIsInstance<CallExpr>().firstOrNull()
+val Stmt.callExpr: ArkCallExpr?
+    get() = getOperands().filterIsInstance<ArkCallExpr>().firstOrNull()

@@ -29,11 +29,11 @@ interface ArkExpr : ArkEntity {
         fun visit(expr: LengthExpr): R
         fun visit(expr: CastExpr): R
         fun visit(expr: PhiExpr): R
-        fun visit(expr: UnaryOperation): R
-        fun visit(expr: BinaryOperation): R
-        fun visit(expr: RelationOperation): R
-        fun visit(expr: InstanceCallExpr): R
-        fun visit(expr: StaticCallExpr): R
+        fun visit(expr: ArkUnaryOperation): R
+        fun visit(expr: ArkBinaryOperation): R
+        fun visit(expr: ArkRelationOperation): R
+        fun visit(expr: ArkInstanceCallExpr): R
+        fun visit(expr: ArkStaticCallExpr): R
 
         interface Default<out R> : Visitor<R> {
             override fun visit(expr: NewExpr): R = defaultVisit(expr)
@@ -43,11 +43,11 @@ interface ArkExpr : ArkEntity {
             override fun visit(expr: LengthExpr): R = defaultVisit(expr)
             override fun visit(expr: CastExpr): R = defaultVisit(expr)
             override fun visit(expr: PhiExpr): R = defaultVisit(expr)
-            override fun visit(expr: UnaryOperation): R = defaultVisit(expr)
-            override fun visit(expr: BinaryOperation): R = defaultVisit(expr)
-            override fun visit(expr: RelationOperation): R = defaultVisit(expr)
-            override fun visit(expr: InstanceCallExpr): R = defaultVisit(expr)
-            override fun visit(expr: StaticCallExpr): R = defaultVisit(expr)
+            override fun visit(expr: ArkUnaryOperation): R = defaultVisit(expr)
+            override fun visit(expr: ArkBinaryOperation): R = defaultVisit(expr)
+            override fun visit(expr: ArkRelationOperation): R = defaultVisit(expr)
+            override fun visit(expr: ArkInstanceCallExpr): R = defaultVisit(expr)
+            override fun visit(expr: ArkStaticCallExpr): R = defaultVisit(expr)
 
             fun defaultVisit(expr: ArkExpr): R
         }
@@ -175,17 +175,17 @@ data class PhiExpr(
     }
 }
 
-interface UnaryExpr : ArkExpr {
+interface ArkUnaryExpr : ArkExpr {
     val arg: ArkEntity
 
     override val type: ArkType
         get() = arg.type
 }
 
-data class UnaryOperation(
+data class ArkUnaryOperation(
     val op: UnaryOp,
     override val arg: ArkEntity,
-) : UnaryExpr {
+) : ArkUnaryExpr {
     override fun toString(): String {
         return "$op$arg"
     }
@@ -195,7 +195,7 @@ data class UnaryOperation(
     }
 }
 
-interface BinaryExpr : ArkExpr {
+interface ArkBinaryExpr : ArkExpr {
     val left: ArkEntity
     val right: ArkEntity
 
@@ -213,11 +213,11 @@ interface BinaryExpr : ArkExpr {
 //     }
 // }
 
-data class BinaryOperation(
+data class ArkBinaryOperation(
     val op: BinaryOp,
     override val left: ArkEntity,
     override val right: ArkEntity,
-) : BinaryExpr {
+) : ArkBinaryExpr {
     override fun toString(): String {
         return "$left $op $right"
     }
@@ -237,16 +237,16 @@ data class BinaryOperation(
 //     }
 // }
 
-interface ConditionExpr : BinaryExpr {
+interface ArkConditionExpr : ArkBinaryExpr {
     override val type: ArkType
         get() = BooleanType
 }
 
-data class RelationOperation(
+data class ArkRelationOperation(
     val relop: String,
     override val left: ArkEntity,
     override val right: ArkEntity,
-) : ConditionExpr {
+) : ArkConditionExpr {
     override fun toString(): String {
         return "$left $relop $right"
     }
@@ -256,7 +256,7 @@ data class RelationOperation(
     }
 }
 
-interface CallExpr : ArkExpr, CommonCallExpr {
+interface ArkCallExpr : ArkExpr, CommonCallExpr {
     val method: MethodSignature
     override val args: List<ArkValue>
 
@@ -264,11 +264,11 @@ interface CallExpr : ArkExpr, CommonCallExpr {
         get() = method.returnType
 }
 
-data class InstanceCallExpr(
-    val instance: Local,
+data class ArkInstanceCallExpr(
+    val instance: ArkLocal,
     override val method: MethodSignature,
     override val args: List<ArkValue>,
-) : CallExpr {
+) : ArkCallExpr {
     override fun toString(): String {
         return "$instance.${method.name}(${args.joinToString()})"
     }
@@ -278,10 +278,10 @@ data class InstanceCallExpr(
     }
 }
 
-data class StaticCallExpr(
+data class ArkStaticCallExpr(
     override val method: MethodSignature,
     override val args: List<ArkValue>,
-) : CallExpr {
+) : ArkCallExpr {
     override fun toString(): String {
         return "${method.enclosingClass.name}.${method.name}(${args.joinToString()})"
     }

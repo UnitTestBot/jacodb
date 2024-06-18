@@ -21,7 +21,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jacodb.panda.dynamic.ark.base.AnyType
 import org.jacodb.panda.dynamic.ark.base.ArkInstLocation
-import org.jacodb.panda.dynamic.ark.base.Local
+import org.jacodb.panda.dynamic.ark.base.ArkLocal
 import org.jacodb.panda.dynamic.ark.dto.ArkFileDto
 import org.jacodb.panda.dynamic.ark.dto.ClassSignatureDto
 import org.jacodb.panda.dynamic.ark.dto.ConstantDto
@@ -69,7 +69,7 @@ class ArkFromJsonTest {
         Assertions.assertEquals(LocalDto("x", "any"), valueDto)
         val value = convertToArkEntity(valueDto)
         println("value = $value")
-        Assertions.assertEquals(Local("x", AnyType), value)
+        Assertions.assertEquals(ArkLocal("x", AnyType), value)
     }
 
     @Test

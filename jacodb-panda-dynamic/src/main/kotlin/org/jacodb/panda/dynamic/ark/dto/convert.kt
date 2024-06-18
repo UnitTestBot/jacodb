@@ -17,34 +17,39 @@
 package org.jacodb.panda.dynamic.ark.dto
 
 import org.jacodb.panda.dynamic.ark.base.AnyType
+import org.jacodb.panda.dynamic.ark.base.ArkArrayAccess
+import org.jacodb.panda.dynamic.ark.base.ArkBinaryOperation
+import org.jacodb.panda.dynamic.ark.base.ArkCallExpr
+import org.jacodb.panda.dynamic.ark.base.ArkConditionExpr
 import org.jacodb.panda.dynamic.ark.base.ArkConstant
 import org.jacodb.panda.dynamic.ark.base.ArkEntity
 import org.jacodb.panda.dynamic.ark.base.ArkInstLocation
+import org.jacodb.panda.dynamic.ark.base.ArkInstanceCallExpr
+import org.jacodb.panda.dynamic.ark.base.ArkInstanceFieldRef
+import org.jacodb.panda.dynamic.ark.base.ArkLValue
+import org.jacodb.panda.dynamic.ark.base.ArkLocal
+import org.jacodb.panda.dynamic.ark.base.ArkParameterRef
+import org.jacodb.panda.dynamic.ark.base.ArkRelationOperation
+import org.jacodb.panda.dynamic.ark.base.ArkStaticCallExpr
+import org.jacodb.panda.dynamic.ark.base.ArkStaticFieldRef
 import org.jacodb.panda.dynamic.ark.base.ArkThis
 import org.jacodb.panda.dynamic.ark.base.ArkType
+import org.jacodb.panda.dynamic.ark.base.ArkUnaryOperation
 import org.jacodb.panda.dynamic.ark.base.ArkValue
-import org.jacodb.panda.dynamic.ark.base.ArrayAccess
 import org.jacodb.panda.dynamic.ark.base.ArrayLiteral
 import org.jacodb.panda.dynamic.ark.base.ArrayType
 import org.jacodb.panda.dynamic.ark.base.AssignStmt
 import org.jacodb.panda.dynamic.ark.base.BinaryOp
-import org.jacodb.panda.dynamic.ark.base.BinaryOperation
 import org.jacodb.panda.dynamic.ark.base.BooleanConstant
 import org.jacodb.panda.dynamic.ark.base.BooleanType
-import org.jacodb.panda.dynamic.ark.base.CallExpr
 import org.jacodb.panda.dynamic.ark.base.CallStmt
 import org.jacodb.panda.dynamic.ark.base.CastExpr
-import org.jacodb.panda.dynamic.ark.base.ConditionExpr
 import org.jacodb.panda.dynamic.ark.base.DeleteStmt
 import org.jacodb.panda.dynamic.ark.base.FieldRef
 import org.jacodb.panda.dynamic.ark.base.GotoStmt
 import org.jacodb.panda.dynamic.ark.base.IfStmt
-import org.jacodb.panda.dynamic.ark.base.InstanceCallExpr
-import org.jacodb.panda.dynamic.ark.base.InstanceFieldRef
 import org.jacodb.panda.dynamic.ark.base.InstanceOfExpr
-import org.jacodb.panda.dynamic.ark.base.LValue
 import org.jacodb.panda.dynamic.ark.base.LengthExpr
-import org.jacodb.panda.dynamic.ark.base.Local
 import org.jacodb.panda.dynamic.ark.base.NeverType
 import org.jacodb.panda.dynamic.ark.base.NewArrayExpr
 import org.jacodb.panda.dynamic.ark.base.NewExpr
@@ -54,12 +59,8 @@ import org.jacodb.panda.dynamic.ark.base.NullType
 import org.jacodb.panda.dynamic.ark.base.NumberConstant
 import org.jacodb.panda.dynamic.ark.base.NumberType
 import org.jacodb.panda.dynamic.ark.base.ObjectLiteral
-import org.jacodb.panda.dynamic.ark.base.ParameterRef
 import org.jacodb.panda.dynamic.ark.base.PhiExpr
-import org.jacodb.panda.dynamic.ark.base.RelationOperation
 import org.jacodb.panda.dynamic.ark.base.ReturnStmt
-import org.jacodb.panda.dynamic.ark.base.StaticCallExpr
-import org.jacodb.panda.dynamic.ark.base.StaticFieldRef
 import org.jacodb.panda.dynamic.ark.base.Stmt
 import org.jacodb.panda.dynamic.ark.base.StringConstant
 import org.jacodb.panda.dynamic.ark.base.StringType
@@ -67,7 +68,6 @@ import org.jacodb.panda.dynamic.ark.base.SwitchStmt
 import org.jacodb.panda.dynamic.ark.base.ThrowStmt
 import org.jacodb.panda.dynamic.ark.base.TypeOfExpr
 import org.jacodb.panda.dynamic.ark.base.UnaryOp
-import org.jacodb.panda.dynamic.ark.base.UnaryOperation
 import org.jacodb.panda.dynamic.ark.base.UnclearRefType
 import org.jacodb.panda.dynamic.ark.base.UndefinedConstant
 import org.jacodb.panda.dynamic.ark.base.UndefinedType
@@ -105,13 +105,13 @@ fun convertToArkStmt(stmt: StmtDto, location: ArkInstLocation): Stmt {
 
         is AssignStmtDto -> AssignStmt(
             location = location,
-            lhv = convertToArkEntity(stmt.left) as LValue,
+            lhv = convertToArkEntity(stmt.left) as ArkLValue,
             rhv = convertToArkEntity(stmt.right),
         )
 
         is CallStmtDto -> CallStmt(
             location = location,
-            expr = convertToArkEntity(stmt.expr) as CallExpr,
+            expr = convertToArkEntity(stmt.expr) as ArkCallExpr,
         )
 
         is DeleteStmtDto -> DeleteStmt(
@@ -138,7 +138,7 @@ fun convertToArkStmt(stmt: StmtDto, location: ArkInstLocation): Stmt {
 
         is IfStmtDto -> IfStmt(
             location = location,
-            condition = convertToArkEntity(stmt.condition) as ConditionExpr,
+            condition = convertToArkEntity(stmt.condition) as ArkConditionExpr,
         )
 
         is SwitchStmtDto -> SwitchStmt(
@@ -164,7 +164,7 @@ fun convertToArkEntity(value: ValueDto): ArkEntity {
             }
         }
 
-        is LocalDto -> Local(
+        is LocalDto -> ArkLocal(
             name = value.name,
             type = convertToArkType(value.type),
         )
@@ -214,30 +214,30 @@ fun convertToArkEntity(value: ValueDto): ArkEntity {
             type = convertToArkType(value.type),
         )
 
-        is UnaryOperationDto -> UnaryOperation(
+        is UnaryOperationDto -> ArkUnaryOperation(
             op = convertToArkUnaryOp(value.op),
             arg = convertToArkEntity(value.arg),
         )
 
-        is BinaryOperationDto -> BinaryOperation(
+        is BinaryOperationDto -> ArkBinaryOperation(
             op = convertToArkBinaryOp(value.op),
             left = convertToArkEntity(value.left),
             right = convertToArkEntity(value.right),
         )
 
-        is RelationOperationDto -> RelationOperation(
+        is RelationOperationDto -> ArkRelationOperation(
             relop = value.op,
             left = convertToArkEntity(value.left),
             right = convertToArkEntity(value.right),
         )
 
-        is InstanceCallExprDto -> InstanceCallExpr(
-            instance = convertToArkEntity(value.instance) as Local, // safe cast
+        is InstanceCallExprDto -> ArkInstanceCallExpr(
+            instance = convertToArkEntity(value.instance) as ArkLocal, // safe cast
             method = convertToArkMethodSignature(value.method),
             args = value.args.map { convertToArkEntity(it) as ArkValue },
         )
 
-        is StaticCallExprDto -> StaticCallExpr(
+        is StaticCallExprDto -> ArkStaticCallExpr(
             method = convertToArkMethodSignature(value.method),
             args = value.args.map { convertToArkEntity(it) as ArkValue },
         )
@@ -246,12 +246,12 @@ fun convertToArkEntity(value: ValueDto): ArkEntity {
             type = convertToArkType(value.type) // as ClassType
         )
 
-        is ParameterRefDto -> ParameterRef(
+        is ParameterRefDto -> ArkParameterRef(
             index = value.index,
             type = convertToArkType(value.type),
         )
 
-        is ArrayRefDto -> ArrayAccess(
+        is ArrayRefDto -> ArkArrayAccess(
             array = convertToArkEntity(value.array),
             index = convertToArkEntity(value.index),
             type = convertToArkType(value.type),
@@ -365,12 +365,12 @@ fun convertToArkBinaryOp(op: String): BinaryOp {
 fun convertToArkFieldRef(fieldRef: FieldRefDto): FieldRef {
     val field = convertToArkFieldSignature(fieldRef.field)
     return when (fieldRef) {
-        is InstanceFieldRefDto -> InstanceFieldRef(
+        is InstanceFieldRefDto -> ArkInstanceFieldRef(
             instance = convertToArkEntity(fieldRef.instance), // as Local
             field = field
         )
 
-        is StaticFieldRefDto -> StaticFieldRef(
+        is StaticFieldRefDto -> ArkStaticFieldRef(
             field = field
         )
     }
@@ -415,7 +415,7 @@ fun convertToArkMethodSignature(method: MethodSignatureDto): MethodSignature {
 fun convertToArkMethod(method: MethodDto): ArkMethod {
     val signature = convertToArkMethodSignature(method.signature)
     val locals = method.body.locals.map {
-        convertToArkEntity(it) as Local  // safe cast
+        convertToArkEntity(it) as ArkLocal  // safe cast
     }
     val arkMethod = ArkMethodImpl(signature, locals)
     val location = ArkInstLocation(arkMethod)

@@ -25,18 +25,18 @@ interface ArkEntity : CommonExpr {
         get() = type.typeName
 
     interface Visitor<out R> :
-        Immediate.Visitor<R>,
+        ArkImmediate.Visitor<R>,
         ArkExpr.Visitor<R>,
-        Ref.Visitor<R> {
+        ArkRef.Visitor<R> {
 
         interface Default<out R> : Visitor<R>,
-            Immediate.Visitor.Default<R>,
+            ArkImmediate.Visitor.Default<R>,
             ArkExpr.Visitor.Default<R>,
-            Ref.Visitor.Default<R> {
+            ArkRef.Visitor.Default<R> {
 
-            override fun defaultVisit(value: Immediate): R = defaultVisit(value as ArkEntity)
+            override fun defaultVisit(value: ArkImmediate): R = defaultVisit(value as ArkEntity)
             override fun defaultVisit(expr: ArkExpr): R = defaultVisit(expr as ArkEntity)
-            override fun defaultVisit(ref: Ref): R = defaultVisit(ref as ArkEntity)
+            override fun defaultVisit(ref: ArkRef): R = defaultVisit(ref as ArkEntity)
 
             fun defaultVisit(value: ArkEntity): R
         }

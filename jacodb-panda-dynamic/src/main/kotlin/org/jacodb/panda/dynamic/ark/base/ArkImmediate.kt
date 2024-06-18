@@ -18,18 +18,18 @@ package org.jacodb.panda.dynamic.ark.base
 
 import org.jacodb.api.common.cfg.CommonValue
 
-interface Immediate : ArkValue, CommonValue {
+interface ArkImmediate : ArkValue, CommonValue {
     interface Visitor<out R> : ArkConstant.Visitor<R> {
-        fun visit(value: Local): R
+        fun visit(value: ArkLocal): R
 
         interface Default<out R> : Visitor<R>,
             ArkConstant.Visitor.Default<R> {
 
-            override fun visit(value: Local): R = defaultVisit(value)
+            override fun visit(value: ArkLocal): R = defaultVisit(value)
 
-            override fun defaultVisit(value: ArkConstant): R = defaultVisit(value as Immediate)
+            override fun defaultVisit(value: ArkConstant): R = defaultVisit(value as ArkImmediate)
 
-            fun defaultVisit(value: Immediate): R
+            fun defaultVisit(value: ArkImmediate): R
         }
     }
 

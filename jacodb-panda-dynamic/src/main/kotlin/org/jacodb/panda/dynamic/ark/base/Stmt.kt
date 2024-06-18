@@ -74,7 +74,7 @@ data class NopStmt(
 
 data class AssignStmt(
     override val location: ArkInstLocation,
-    override val lhv: LValue,
+    override val lhv: ArkLValue,
     override val rhv: ArkEntity,
 ) : Stmt, CommonAssignInst {
     override fun toString(): String {
@@ -88,7 +88,7 @@ data class AssignStmt(
 
 data class CallStmt(
     override val location: ArkInstLocation,
-    val expr: CallExpr,
+    val expr: ArkCallExpr,
 ) : Stmt {
     override fun toString(): String {
         return expr.toString()
@@ -158,7 +158,7 @@ class GotoStmt(
 
 data class IfStmt(
     override val location: ArkInstLocation,
-    val condition: ConditionExpr,
+    val condition: ArkConditionExpr,
 ) : BranchingStmt {
     override fun toString(): String {
         return "if ($condition)"

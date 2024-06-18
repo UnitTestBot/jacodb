@@ -16,41 +16,41 @@
 
 package org.jacodb.panda.dynamic.ark.utils
 
+import org.jacodb.panda.dynamic.ark.base.ArkArrayAccess
+import org.jacodb.panda.dynamic.ark.base.ArkBinaryOperation
 import org.jacodb.panda.dynamic.ark.base.ArkEntity
+import org.jacodb.panda.dynamic.ark.base.ArkInstanceCallExpr
+import org.jacodb.panda.dynamic.ark.base.ArkInstanceFieldRef
+import org.jacodb.panda.dynamic.ark.base.ArkLocal
+import org.jacodb.panda.dynamic.ark.base.ArkParameterRef
+import org.jacodb.panda.dynamic.ark.base.ArkRelationOperation
+import org.jacodb.panda.dynamic.ark.base.ArkStaticCallExpr
+import org.jacodb.panda.dynamic.ark.base.ArkStaticFieldRef
 import org.jacodb.panda.dynamic.ark.base.ArkThis
-import org.jacodb.panda.dynamic.ark.base.ArrayAccess
+import org.jacodb.panda.dynamic.ark.base.ArkUnaryOperation
 import org.jacodb.panda.dynamic.ark.base.ArrayLiteral
 import org.jacodb.panda.dynamic.ark.base.AssignStmt
-import org.jacodb.panda.dynamic.ark.base.BinaryOperation
 import org.jacodb.panda.dynamic.ark.base.BooleanConstant
 import org.jacodb.panda.dynamic.ark.base.CallStmt
 import org.jacodb.panda.dynamic.ark.base.CastExpr
 import org.jacodb.panda.dynamic.ark.base.DeleteStmt
 import org.jacodb.panda.dynamic.ark.base.GotoStmt
 import org.jacodb.panda.dynamic.ark.base.IfStmt
-import org.jacodb.panda.dynamic.ark.base.InstanceCallExpr
-import org.jacodb.panda.dynamic.ark.base.InstanceFieldRef
 import org.jacodb.panda.dynamic.ark.base.InstanceOfExpr
 import org.jacodb.panda.dynamic.ark.base.LengthExpr
-import org.jacodb.panda.dynamic.ark.base.Local
 import org.jacodb.panda.dynamic.ark.base.NewArrayExpr
 import org.jacodb.panda.dynamic.ark.base.NewExpr
 import org.jacodb.panda.dynamic.ark.base.NopStmt
 import org.jacodb.panda.dynamic.ark.base.NullConstant
 import org.jacodb.panda.dynamic.ark.base.NumberConstant
 import org.jacodb.panda.dynamic.ark.base.ObjectLiteral
-import org.jacodb.panda.dynamic.ark.base.ParameterRef
 import org.jacodb.panda.dynamic.ark.base.PhiExpr
-import org.jacodb.panda.dynamic.ark.base.RelationOperation
 import org.jacodb.panda.dynamic.ark.base.ReturnStmt
-import org.jacodb.panda.dynamic.ark.base.StaticCallExpr
-import org.jacodb.panda.dynamic.ark.base.StaticFieldRef
 import org.jacodb.panda.dynamic.ark.base.Stmt
 import org.jacodb.panda.dynamic.ark.base.StringConstant
 import org.jacodb.panda.dynamic.ark.base.SwitchStmt
 import org.jacodb.panda.dynamic.ark.base.ThrowStmt
 import org.jacodb.panda.dynamic.ark.base.TypeOfExpr
-import org.jacodb.panda.dynamic.ark.base.UnaryOperation
 import org.jacodb.panda.dynamic.ark.base.UndefinedConstant
 
 fun Stmt.getOperands(): Sequence<ArkEntity> {
@@ -105,7 +105,7 @@ private object StmtGetOperands : Stmt.Visitor<Sequence<ArkEntity>> {
 }
 
 private object ValueGetOperands : ArkEntity.Visitor<Sequence<ArkEntity>> {
-    override fun visit(value: Local): Sequence<ArkEntity> = sequence {
+    override fun visit(value: ArkLocal): Sequence<ArkEntity> = sequence {
         // empty
     }
 
@@ -171,26 +171,26 @@ private object ValueGetOperands : ArkEntity.Visitor<Sequence<ArkEntity>> {
         yieldAll(expr.args)
     }
 
-    override fun visit(expr: UnaryOperation): Sequence<ArkEntity> = sequence {
+    override fun visit(expr: ArkUnaryOperation): Sequence<ArkEntity> = sequence {
         yield(expr.arg)
     }
 
-    override fun visit(expr: BinaryOperation): Sequence<ArkEntity> = sequence {
+    override fun visit(expr: ArkBinaryOperation): Sequence<ArkEntity> = sequence {
         yield(expr.left)
         yield(expr.right)
     }
 
-    override fun visit(expr: RelationOperation): Sequence<ArkEntity> = sequence {
+    override fun visit(expr: ArkRelationOperation): Sequence<ArkEntity> = sequence {
         yield(expr.left)
         yield(expr.right)
     }
 
-    override fun visit(expr: InstanceCallExpr): Sequence<ArkEntity> = sequence {
+    override fun visit(expr: ArkInstanceCallExpr): Sequence<ArkEntity> = sequence {
         yield(expr.instance)
         yieldAll(expr.args)
     }
 
-    override fun visit(expr: StaticCallExpr): Sequence<ArkEntity> = sequence {
+    override fun visit(expr: ArkStaticCallExpr): Sequence<ArkEntity> = sequence {
         yieldAll(expr.args)
     }
 
@@ -198,20 +198,20 @@ private object ValueGetOperands : ArkEntity.Visitor<Sequence<ArkEntity>> {
         // empty
     }
 
-    override fun visit(ref: ParameterRef): Sequence<ArkEntity> = sequence {
+    override fun visit(ref: ArkParameterRef): Sequence<ArkEntity> = sequence {
         // empty
     }
 
-    override fun visit(ref: ArrayAccess): Sequence<ArkEntity> = sequence {
+    override fun visit(ref: ArkArrayAccess): Sequence<ArkEntity> = sequence {
         yield(ref.array)
         yield(ref.index)
     }
 
-    override fun visit(ref: InstanceFieldRef): Sequence<ArkEntity> = sequence {
+    override fun visit(ref: ArkInstanceFieldRef): Sequence<ArkEntity> = sequence {
         yield(ref.instance)
     }
 
-    override fun visit(ref: StaticFieldRef): Sequence<ArkEntity> = sequence {
+    override fun visit(ref: ArkStaticFieldRef): Sequence<ArkEntity> = sequence {
         // empty
     }
 }

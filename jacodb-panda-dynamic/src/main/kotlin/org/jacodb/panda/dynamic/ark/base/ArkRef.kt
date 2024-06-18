@@ -20,22 +20,22 @@ import org.jacodb.api.common.cfg.CommonArgument
 import org.jacodb.api.common.cfg.CommonThis
 import org.jacodb.panda.dynamic.ark.model.FieldSignature
 
-interface Ref : ArkValue {
+interface ArkRef : ArkValue {
     interface Visitor<out R> {
         fun visit(ref: ArkThis): R
-        fun visit(ref: ParameterRef): R
-        fun visit(ref: ArrayAccess): R
-        fun visit(ref: InstanceFieldRef): R
-        fun visit(ref: StaticFieldRef): R
+        fun visit(ref: ArkParameterRef): R
+        fun visit(ref: ArkArrayAccess): R
+        fun visit(ref: ArkInstanceFieldRef): R
+        fun visit(ref: ArkStaticFieldRef): R
 
         interface Default<out R> : Visitor<R> {
             override fun visit(ref: ArkThis): R = defaultVisit(ref)
-            override fun visit(ref: ParameterRef): R = defaultVisit(ref)
-            override fun visit(ref: ArrayAccess): R = defaultVisit(ref)
-            override fun visit(ref: InstanceFieldRef): R = defaultVisit(ref)
-            override fun visit(ref: StaticFieldRef): R = defaultVisit(ref)
+            override fun visit(ref: ArkParameterRef): R = defaultVisit(ref)
+            override fun visit(ref: ArkArrayAccess): R = defaultVisit(ref)
+            override fun visit(ref: ArkInstanceFieldRef): R = defaultVisit(ref)
+            override fun visit(ref: ArkStaticFieldRef): R = defaultVisit(ref)
 
-            fun defaultVisit(ref: Ref): R
+            fun defaultVisit(ref: ArkRef): R
         }
     }
 
@@ -48,49 +48,49 @@ interface Ref : ArkValue {
 
 data class ArkThis(
     override val type: ArkType, // ClassType
-) : Ref, CommonThis {
+) : ArkRef, CommonThis {
     override fun toString(): String = "this"
 
-    override fun <R> accept(visitor: Ref.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkRef.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-data class ParameterRef(
+data class ArkParameterRef(
     val index: Int,
     override val type: ArkType,
-) : Ref, CommonArgument {
+) : ArkRef, CommonArgument {
     override fun toString(): String {
         return "arg$index"
     }
 
-    override fun <R> accept(visitor: Ref.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkRef.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-data class ArrayAccess(
+data class ArkArrayAccess(
     val array: ArkEntity,
     val index: ArkEntity,
     override val type: ArkType,
-) : Ref, LValue {
+) : ArkRef, ArkLValue {
     override fun toString(): String {
         return "$array[$index]"
     }
 
-    override fun <R> accept(visitor: Ref.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkRef.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-interface FieldRef : Ref, LValue {
+interface FieldRef : ArkRef, ArkLValue {
     val field: FieldSignature
 
     override val type: ArkType
         get() = this.field.sub.type
 }
 
-data class InstanceFieldRef(
+data class ArkInstanceFieldRef(
     val instance: ArkEntity, // Local
     override val field: FieldSignature,
 ) : FieldRef {
@@ -98,19 +98,19 @@ data class InstanceFieldRef(
         return "$instance.${field.sub.name}"
     }
 
-    override fun <R> accept(visitor: Ref.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkRef.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-data class StaticFieldRef(
+data class ArkStaticFieldRef(
     override val field: FieldSignature,
 ) : FieldRef {
     override fun toString(): String {
         return "${field.enclosingClass.name}.${field.sub.name}"
     }
 
-    override fun <R> accept(visitor: Ref.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkRef.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
