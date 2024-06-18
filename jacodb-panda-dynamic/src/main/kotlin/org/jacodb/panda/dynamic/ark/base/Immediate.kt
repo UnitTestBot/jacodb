@@ -18,7 +18,7 @@ package org.jacodb.panda.dynamic.ark.base
 
 import org.jacodb.api.common.cfg.CommonValue
 
-interface Immediate : ArkEntity, CommonValue {
+interface Immediate : ArkValue, CommonValue {
     interface Visitor<out R> : ArkConstant.Visitor<R> {
         fun visit(value: Local): R
 
