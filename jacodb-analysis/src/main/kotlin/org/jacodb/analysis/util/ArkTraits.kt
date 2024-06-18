@@ -40,6 +40,7 @@ import org.jacodb.panda.dynamic.ark.base.StaticFieldRef
 import org.jacodb.panda.dynamic.ark.base.Stmt
 import org.jacodb.panda.dynamic.ark.model.ArkFile
 import org.jacodb.panda.dynamic.ark.model.ArkMethod
+import org.jacodb.panda.dynamic.ark.model.ArkMethodImpl
 import org.jacodb.panda.dynamic.ark.model.ArkMethodParameter
 import org.jacodb.taint.configuration.ConstantValue
 import org.jacodb.analysis.util.toPath as _toPath
@@ -51,7 +52,8 @@ interface ArkTraits : Traits<ArkMethod, Stmt> {
     override val CommonCallExpr.callee: ArkMethod
         get() {
             check(this is CallExpr)
-            return cp.getMethodBySignature(method) ?: error("Method not found: $method")
+            // return cp.getMethodBySignature(method) ?: error("Method not found: $method")
+            return ArkMethodImpl(method, emptyList())
         }
 
     override val ArkMethod.thisInstance: ArkThis
@@ -106,7 +108,7 @@ interface ArkTraits : Traits<ArkMethod, Stmt> {
     }
 
     override fun Stmt.getCallExpr(): CallExpr? {
-        return _getOperands().filterIsInstance<CallExpr>().firstOrNull()
+        return callExpr
     }
 
     override fun CommonExpr.getValues(): Set<ArkValue> {
@@ -152,3 +154,6 @@ fun ArkEntity.toPathOrNull(): AccessPath? = when (this) {
 fun ArkEntity.toPath(): AccessPath {
     return toPathOrNull() ?: error("Unable to build access path for value $this")
 }
+
+val Stmt.callExpr: CallExpr?
+    get() = _getOperands().filterIsInstance<CallExpr>().firstOrNull()

@@ -17,10 +17,12 @@
 package org.jacodb.panda.dynamic.ark.graph
 
 import org.jacodb.api.common.analysis.ApplicationGraph
+import org.jacodb.panda.dynamic.ark.base.CallExpr
 import org.jacodb.panda.dynamic.ark.base.CallStmt
 import org.jacodb.panda.dynamic.ark.base.Stmt
 import org.jacodb.panda.dynamic.ark.model.ArkFile
 import org.jacodb.panda.dynamic.ark.model.ArkMethod
+import org.jacodb.panda.dynamic.ark.utils.getOperands
 
 class ArkApplicationGraph(
     override val project: ArkFile
@@ -39,7 +41,7 @@ class ArkApplicationGraph(
     }
 
     override fun callees(node: Stmt): Sequence<ArkMethod> {
-        val expr = (node as CallStmt).expr
+        val expr = node.getOperands().filterIsInstance<CallExpr>().firstOrNull() ?: return emptySequence()
         val method = expr.method
         val result = project.classes.asSequence().flatMap { it.methods }.filter { it.name == method.name }
         return result

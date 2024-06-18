@@ -16,10 +16,33 @@
 
 package ark
 
+import org.jacodb.analysis.ifds.SingletonUnit
+import org.jacodb.analysis.ifds.UnitResolver
+import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
+import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.util.ArkTraits
+import org.jacodb.panda.dynamic.ark.base.Stmt
 import org.jacodb.panda.dynamic.ark.dto.ArkFileDto
 import org.jacodb.panda.dynamic.ark.dto.convertToArkFile
+import org.jacodb.panda.dynamic.ark.graph.ArkApplicationGraph
 import org.jacodb.panda.dynamic.ark.model.ArkFile
+import org.jacodb.panda.dynamic.ark.model.ArkMethod
+import org.jacodb.taint.configuration.Argument
+import org.jacodb.taint.configuration.AssignMark
+import org.jacodb.taint.configuration.ConstantTrue
+import org.jacodb.taint.configuration.ContainsMark
+import org.jacodb.taint.configuration.CopyAllMarks
+import org.jacodb.taint.configuration.RemoveMark
+import org.jacodb.taint.configuration.Result
+import org.jacodb.taint.configuration.TaintConfigurationItem
+import org.jacodb.taint.configuration.TaintMark
+import org.jacodb.taint.configuration.TaintMethodSink
+import org.jacodb.taint.configuration.TaintMethodSource
+import org.jacodb.taint.configuration.TaintPassThrough
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.seconds
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -38,28 +61,67 @@ class ArkTaintAnalysisTest {
         }
     }
 
-    // @Test
-    // fun `test taint analysis`() {
-    //     val arkFile = loadArkFile("taint")
-    //     val graph = ArkApplicationGraph(arkFile)
-    //     val unitResolver = UnitResolver<ArkMethod> { SingletonUnit }
-    //     val getConfigForMethod: ForwardTaintFlowFunctions<ArkMethod, Stmt>.(ArkMethod) -> List<TaintConfigurationItem>? =
-    //         { _ ->
-    //             null
-    //         }
-    //     val manager = TaintManager(
-    //         graph = graph,
-    //         unitResolver = unitResolver,
-    //         getConfigForMethod = getConfigForMethod,
-    //     )
-    //
-    //     val methods = project.classes.flatMap { it.methods }
-    //     logger.info { "Methods: ${methods.size}" }
-    //     for (method in methods) {
-    //         logger.info { "  ${method.name}" }
-    //     }
-    //     val sinks = manager.analyze(methods, timeout = 60.seconds)
-    //     logger.info { "Sinks: $sinks" }
-    //     assertTrue(sinks.isNotEmpty())
-    // }
+    @Disabled("Doesn't work yet")
+    @Test
+    fun `test taint analysis`() {
+        val arkFile = loadArkFile("taint")
+        ArkTraits.cp = arkFile
+        val graph = ArkApplicationGraph(arkFile)
+        val unitResolver = UnitResolver<ArkMethod> { SingletonUnit }
+        val getConfigForMethod: ForwardTaintFlowFunctions<ArkMethod, Stmt>.(ArkMethod) -> List<TaintConfigurationItem>? =
+            { method ->
+                val rules = buildList {
+                    if (method.name == "source") add(
+                        TaintMethodSource(
+                            method = method,
+                            condition = ConstantTrue,
+                            actionsAfter = listOf(
+                                AssignMark(mark = TaintMark("TAINT"), position = Result),
+                            ),
+                        )
+                    )
+                    if (method.name == "sink") add(
+                        TaintMethodSink(
+                            method = method,
+                            ruleNote = "SINK", // FIXME
+                            cwe = listOf(), // FIXME
+                            condition = ContainsMark(position = Argument(0), mark = TaintMark("TAINT"))
+                        )
+                    )
+                    if (method.name == "pass") add(
+                        TaintPassThrough(
+                            method = method,
+                            condition = ConstantTrue,
+                            actionsAfter = listOf(
+                                CopyAllMarks(from = Argument(0), to = Result)
+                            ),
+                        )
+                    )
+                    if (method.name == "validate") add(
+                        TaintPassThrough(
+                            method = method,
+                            condition = ConstantTrue,
+                            actionsAfter = listOf(
+                                RemoveMark(mark = TaintMark("TAINT"), position = Argument(0))
+                            ),
+                        )
+                    )
+                }
+                rules.ifEmpty { null }
+            }
+        val manager = TaintManager(
+            graph = graph,
+            unitResolver = unitResolver,
+            getConfigForMethod = getConfigForMethod,
+        )
+
+        val methods = arkFile.classes.flatMap { it.methods }
+        logger.info { "Methods: ${methods.size}" }
+        for (method in methods) {
+            logger.info { "  ${method.name}" }
+        }
+        val sinks = manager.analyze(methods, timeout = 60.seconds)
+        logger.info { "Sinks: $sinks" }
+        assertTrue(sinks.isNotEmpty())
+    }
 }
