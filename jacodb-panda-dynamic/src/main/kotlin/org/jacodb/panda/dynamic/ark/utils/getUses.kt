@@ -67,9 +67,9 @@ private object StmtGetUses : Stmt.Visitor<Sequence<ArkEntity>> {
     }
 
     override fun visit(stmt: AssignStmt): Sequence<ArkEntity> = sequence {
-        yieldAll(stmt.left.getUses())
-        yield(stmt.right)
-        yieldAll(stmt.right.getUses())
+        yieldAll(stmt.lhv.getUses())
+        yield(stmt.rhv)
+        yieldAll(stmt.rhv.getUses())
     }
 
     override fun visit(stmt: CallStmt): Sequence<ArkEntity> = sequence {

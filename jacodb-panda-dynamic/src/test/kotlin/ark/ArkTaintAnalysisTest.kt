@@ -40,7 +40,6 @@ import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
 
@@ -54,14 +53,13 @@ class ArkTaintAnalysisTest {
             val stream = object {}::class.java.getResourceAsStream("/$path")
                 ?: error("Resource not found: $path")
             val arkDto = ArkFileDto.loadFromJson(stream)
-            println("arkDto = $arkDto")
+            // println("arkDto = $arkDto")
             val ark = convertToArkFile(arkDto)
-            println("ark = $ark")
+            // println("ark = $ark")
             return ark
         }
     }
 
-    @Disabled("Doesn't work yet")
     @Test
     fun `test taint analysis`() {
         val arkFile = loadArkFile("taint")
@@ -115,7 +113,7 @@ class ArkTaintAnalysisTest {
             getConfigForMethod = getConfigForMethod,
         )
 
-        val methods = arkFile.classes.flatMap { it.methods }
+        val methods = arkFile.classes.flatMap { it.methods }.filter { it.name == "bad" }
         logger.info { "Methods: ${methods.size}" }
         for (method in methods) {
             logger.info { "  ${method.name}" }

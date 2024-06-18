@@ -105,8 +105,8 @@ fun convertToArkStmt(stmt: StmtDto, location: ArkInstLocation): Stmt {
 
         is AssignStmtDto -> AssignStmt(
             location = location,
-            left = convertToArkEntity(stmt.left) as LValue,
-            right = convertToArkEntity(stmt.right),
+            lhv = convertToArkEntity(stmt.left) as LValue,
+            rhv = convertToArkEntity(stmt.right),
         )
 
         is CallStmtDto -> CallStmt(

@@ -21,7 +21,7 @@ import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.panda.dynamic.ark.graph.BasicBlock
 import org.jacodb.panda.dynamic.ark.model.MethodSignature
 
-interface ArkExpr : ArkEntity, CommonValue {
+interface ArkExpr : ArkEntity {
     interface Visitor<out R> {
         fun visit(expr: NewExpr): R
         fun visit(expr: NewArrayExpr): R

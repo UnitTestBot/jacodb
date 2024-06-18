@@ -21,7 +21,7 @@ import org.jacodb.api.common.cfg.CommonThis
 import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.panda.dynamic.ark.model.FieldSignature
 
-interface Ref : ArkEntity, CommonValue {
+interface Ref : ArkValue {
     interface Visitor<out R> {
         fun visit(ref: ArkThis): R
         fun visit(ref: ParameterRef): R

@@ -16,6 +16,7 @@
 
 package org.jacodb.panda.dynamic.ark.base
 
+import org.jacodb.api.common.cfg.CommonAssignInst
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonInstLocation
 import org.jacodb.panda.dynamic.ark.model.ArkMethod
@@ -73,11 +74,11 @@ data class NopStmt(
 
 data class AssignStmt(
     override val location: ArkInstLocation,
-    val left: LValue,
-    val right: ArkEntity,
-) : Stmt {
+    override val lhv: LValue,
+    override val rhv: ArkEntity,
+) : Stmt, CommonAssignInst {
     override fun toString(): String {
-        return "$left := $right"
+        return "$lhv := $rhv"
     }
 
     override fun <R> accept(visitor: Stmt.Visitor<R>): R {
