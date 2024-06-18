@@ -20,8 +20,8 @@ import org.jacodb.api.common.cfg.ControlFlowGraph
 import org.jacodb.panda.dynamic.ark.base.ArkStmt
 import org.jacodb.panda.dynamic.ark.base.TerminatingStmt
 
-class Cfg(
-    val blocks: Map<Int, BasicBlock>,
+class ArkCfg(
+    val blocks: Map<Int, ArkBasicBlock>,
 ) : ControlFlowGraph<ArkStmt> {
     val startingStmt: ArkStmt
         get() = blocks[0]!!.stmts.first()
@@ -51,11 +51,11 @@ class Cfg(
         }
     }
 
-    fun successors(block: BasicBlock): List<BasicBlock> {
+    fun successors(block: ArkBasicBlock): List<ArkBasicBlock> {
         return block.successors.map { blocks[it]!! }
     }
 
-    fun predecessors(block: BasicBlock): List<BasicBlock> {
+    fun predecessors(block: ArkBasicBlock): List<ArkBasicBlock> {
         return block.predecessors.map { blocks[it]!! }
     }
 

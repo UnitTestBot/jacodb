@@ -19,7 +19,7 @@ package org.jacodb.panda.dynamic.ark.model
 import org.jacodb.api.common.CommonMethodParameter
 import org.jacodb.panda.dynamic.ark.base.ArkType
 
-data class FileSignature(
+data class ArkFileSignature(
     val projectName: String,
     val fileName: String,
 ) {
@@ -30,10 +30,10 @@ data class FileSignature(
     }
 }
 
-data class NamespaceSignature(
+data class ArkNamespaceSignature(
     val name: String,
-    val namespace: NamespaceSignature? = null,
-    val file: FileSignature? = null,
+    val namespace: ArkNamespaceSignature? = null,
+    val file: ArkFileSignature? = null,
 ) {
     override fun toString(): String {
         if (namespace != null) {
@@ -46,10 +46,10 @@ data class NamespaceSignature(
     }
 }
 
-data class ClassSignature(
+data class ArkClassSignature(
     val name: String,
-    val namespace: NamespaceSignature? = null,
-    val file: FileSignature? = null,
+    val namespace: ArkNamespaceSignature? = null,
+    val file: ArkFileSignature? = null,
 ) {
     override fun toString(): String {
         if (namespace != null) {
@@ -62,9 +62,9 @@ data class ClassSignature(
     }
 }
 
-data class FieldSignature(
-    val enclosingClass: ClassSignature,
-    val sub: FieldSubSignature,
+data class ArkFieldSignature(
+    val enclosingClass: ArkClassSignature,
+    val sub: ArkFieldSubSignature,
 ) {
     val name: String
         get() = sub.name
@@ -77,7 +77,7 @@ data class FieldSignature(
     }
 }
 
-data class FieldSubSignature(
+data class ArkFieldSubSignature(
     val name: String,
     val type: ArkType,
 ) {
@@ -86,16 +86,16 @@ data class FieldSubSignature(
     }
 }
 
-data class MethodSignature(
-    val enclosingClass: ClassSignature,
+data class ArkMethodSignature(
+    val enclosingClass: ArkClassSignature,
     val name: String,
     val parameters: List<ArkMethodParameter>,
     val returnType: ArkType,
 ) {
 
     constructor(
-        enclosingClass: ClassSignature,
-        sub: MethodSubSignature,
+        enclosingClass: ArkClassSignature,
+        sub: ArkMethodSubSignature,
     ) : this(
         enclosingClass,
         sub.name,
@@ -109,7 +109,7 @@ data class MethodSignature(
     }
 }
 
-data class MethodSubSignature(
+data class ArkMethodSubSignature(
     val name: String,
     val parameters: List<ArkMethodParameter>,
     val returnType: ArkType,

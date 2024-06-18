@@ -18,7 +18,7 @@ package org.jacodb.panda.dynamic.ark.base
 
 import org.jacodb.api.common.CommonType
 import org.jacodb.api.common.CommonTypeName
-import org.jacodb.panda.dynamic.ark.model.ClassSignature
+import org.jacodb.panda.dynamic.ark.model.ArkClassSignature
 
 interface ArkType : CommonType, CommonTypeName {
     override val typeName: String
@@ -214,7 +214,7 @@ data class ArkLiteralType(
 interface RefType : ArkType
 
 data class ArkClassType(
-    val classSignature: ClassSignature,
+    val classSignature: ArkClassSignature,
 ) : RefType {
     override val typeName: String
         get() = classSignature.name

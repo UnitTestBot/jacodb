@@ -23,7 +23,7 @@ import org.jacodb.panda.dynamic.ark.base.ArkType
 
 interface ArkField {
     val enclosingClass: ArkClass?
-    val signature: FieldSignature
+    val signature: ArkFieldSignature
 
     val name: String
         get() = signature.sub.name
@@ -33,9 +33,9 @@ interface ArkField {
 }
 
 class ArkFieldImpl(
-    override val signature: FieldSignature,
+    override val signature: ArkFieldSignature,
     val accessFlags: AccessFlags = AccessFlags(),
-    val decorators: List<Decorator> = emptyList(),
+    val decorators: List<ArkDecorator> = emptyList(),
     val isOptional: Boolean = false,  // '?'
     val isDefinitelyAssigned: Boolean = false, // '!'
     val initializer: ArkEntity? = null,
@@ -56,7 +56,7 @@ data class AccessFlags(
     var isReadOnly: Boolean = false,
 )
 
-data class Decorator(
+data class ArkDecorator(
     val name: String,
     // TODO: args...
 )

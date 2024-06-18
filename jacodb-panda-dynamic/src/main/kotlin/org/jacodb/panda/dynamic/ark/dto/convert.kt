@@ -18,38 +18,29 @@ package org.jacodb.panda.dynamic.ark.dto
 
 import org.jacodb.panda.dynamic.ark.base.ArkAnyType
 import org.jacodb.panda.dynamic.ark.base.ArkArrayAccess
-import org.jacodb.panda.dynamic.ark.base.ArkBinaryOperation
-import org.jacodb.panda.dynamic.ark.base.ArkCallExpr
-import org.jacodb.panda.dynamic.ark.base.ArkConditionExpr
-import org.jacodb.panda.dynamic.ark.base.ArkConstant
-import org.jacodb.panda.dynamic.ark.base.ArkEntity
-import org.jacodb.panda.dynamic.ark.base.ArkInstLocation
-import org.jacodb.panda.dynamic.ark.base.ArkInstanceCallExpr
-import org.jacodb.panda.dynamic.ark.base.ArkInstanceFieldRef
-import org.jacodb.panda.dynamic.ark.base.ArkLValue
-import org.jacodb.panda.dynamic.ark.base.ArkLocal
-import org.jacodb.panda.dynamic.ark.base.ArkParameterRef
-import org.jacodb.panda.dynamic.ark.base.ArkRelationOperation
-import org.jacodb.panda.dynamic.ark.base.ArkStaticCallExpr
-import org.jacodb.panda.dynamic.ark.base.ArkStaticFieldRef
-import org.jacodb.panda.dynamic.ark.base.ArkThis
-import org.jacodb.panda.dynamic.ark.base.ArkType
-import org.jacodb.panda.dynamic.ark.base.ArkUnaryOperation
-import org.jacodb.panda.dynamic.ark.base.ArkValue
 import org.jacodb.panda.dynamic.ark.base.ArkArrayLiteral
 import org.jacodb.panda.dynamic.ark.base.ArkArrayType
 import org.jacodb.panda.dynamic.ark.base.ArkAssignStmt
-import org.jacodb.panda.dynamic.ark.base.BinaryOp
+import org.jacodb.panda.dynamic.ark.base.ArkBinaryOperation
 import org.jacodb.panda.dynamic.ark.base.ArkBooleanConstant
 import org.jacodb.panda.dynamic.ark.base.ArkBooleanType
+import org.jacodb.panda.dynamic.ark.base.ArkCallExpr
 import org.jacodb.panda.dynamic.ark.base.ArkCallStmt
 import org.jacodb.panda.dynamic.ark.base.ArkCastExpr
+import org.jacodb.panda.dynamic.ark.base.ArkConditionExpr
+import org.jacodb.panda.dynamic.ark.base.ArkConstant
 import org.jacodb.panda.dynamic.ark.base.ArkDeleteStmt
+import org.jacodb.panda.dynamic.ark.base.ArkEntity
 import org.jacodb.panda.dynamic.ark.base.ArkFieldRef
 import org.jacodb.panda.dynamic.ark.base.ArkGotoStmt
 import org.jacodb.panda.dynamic.ark.base.ArkIfStmt
+import org.jacodb.panda.dynamic.ark.base.ArkInstLocation
+import org.jacodb.panda.dynamic.ark.base.ArkInstanceCallExpr
+import org.jacodb.panda.dynamic.ark.base.ArkInstanceFieldRef
 import org.jacodb.panda.dynamic.ark.base.ArkInstanceOfExpr
+import org.jacodb.panda.dynamic.ark.base.ArkLValue
 import org.jacodb.panda.dynamic.ark.base.ArkLengthExpr
+import org.jacodb.panda.dynamic.ark.base.ArkLocal
 import org.jacodb.panda.dynamic.ark.base.ArkNeverType
 import org.jacodb.panda.dynamic.ark.base.ArkNewArrayExpr
 import org.jacodb.panda.dynamic.ark.base.ArkNewExpr
@@ -59,42 +50,51 @@ import org.jacodb.panda.dynamic.ark.base.ArkNullType
 import org.jacodb.panda.dynamic.ark.base.ArkNumberConstant
 import org.jacodb.panda.dynamic.ark.base.ArkNumberType
 import org.jacodb.panda.dynamic.ark.base.ArkObjectLiteral
+import org.jacodb.panda.dynamic.ark.base.ArkParameterRef
 import org.jacodb.panda.dynamic.ark.base.ArkPhiExpr
+import org.jacodb.panda.dynamic.ark.base.ArkRelationOperation
 import org.jacodb.panda.dynamic.ark.base.ArkReturnStmt
+import org.jacodb.panda.dynamic.ark.base.ArkStaticCallExpr
+import org.jacodb.panda.dynamic.ark.base.ArkStaticFieldRef
 import org.jacodb.panda.dynamic.ark.base.ArkStmt
 import org.jacodb.panda.dynamic.ark.base.ArkStringConstant
 import org.jacodb.panda.dynamic.ark.base.ArkStringType
 import org.jacodb.panda.dynamic.ark.base.ArkSwitchStmt
+import org.jacodb.panda.dynamic.ark.base.ArkThis
 import org.jacodb.panda.dynamic.ark.base.ArkThrowStmt
+import org.jacodb.panda.dynamic.ark.base.ArkType
 import org.jacodb.panda.dynamic.ark.base.ArkTypeOfExpr
-import org.jacodb.panda.dynamic.ark.base.UnaryOp
+import org.jacodb.panda.dynamic.ark.base.ArkUnaryOperation
 import org.jacodb.panda.dynamic.ark.base.ArkUnclearRefType
 import org.jacodb.panda.dynamic.ark.base.ArkUndefinedConstant
 import org.jacodb.panda.dynamic.ark.base.ArkUndefinedType
 import org.jacodb.panda.dynamic.ark.base.ArkUnknownType
+import org.jacodb.panda.dynamic.ark.base.ArkValue
 import org.jacodb.panda.dynamic.ark.base.ArkVoidType
-import org.jacodb.panda.dynamic.ark.graph.BasicBlock
-import org.jacodb.panda.dynamic.ark.graph.Cfg
+import org.jacodb.panda.dynamic.ark.base.BinaryOp
+import org.jacodb.panda.dynamic.ark.base.UnaryOp
+import org.jacodb.panda.dynamic.ark.graph.ArkBasicBlock
+import org.jacodb.panda.dynamic.ark.graph.ArkCfg
 import org.jacodb.panda.dynamic.ark.model.ArkClass
 import org.jacodb.panda.dynamic.ark.model.ArkClassImpl
+import org.jacodb.panda.dynamic.ark.model.ArkClassSignature
 import org.jacodb.panda.dynamic.ark.model.ArkField
 import org.jacodb.panda.dynamic.ark.model.ArkFieldImpl
+import org.jacodb.panda.dynamic.ark.model.ArkFieldSignature
+import org.jacodb.panda.dynamic.ark.model.ArkFieldSubSignature
 import org.jacodb.panda.dynamic.ark.model.ArkFile
 import org.jacodb.panda.dynamic.ark.model.ArkMethod
 import org.jacodb.panda.dynamic.ark.model.ArkMethodImpl
 import org.jacodb.panda.dynamic.ark.model.ArkMethodParameter
-import org.jacodb.panda.dynamic.ark.model.ClassSignature
-import org.jacodb.panda.dynamic.ark.model.FieldSignature
-import org.jacodb.panda.dynamic.ark.model.FieldSubSignature
-import org.jacodb.panda.dynamic.ark.model.MethodSignature
-import org.jacodb.panda.dynamic.ark.model.MethodSubSignature
+import org.jacodb.panda.dynamic.ark.model.ArkMethodSignature
+import org.jacodb.panda.dynamic.ark.model.ArkMethodSubSignature
 
 fun convertToArkStmt(stmt: StmtDto, location: ArkInstLocation): ArkStmt {
     return when (stmt) {
         is UnknownStmtDto -> object : ArkStmt {
             override val location: ArkInstLocation = location
 
-            override fun toString(): String = "UnknownStmt"
+            override fun toString(): String = "UNKNOWN"
 
             override fun <R> accept(visitor: ArkStmt.Visitor<R>): R {
                 error("UnknownStmt is not supported")
@@ -157,13 +157,13 @@ fun convertToArkEntity(value: ValueDto): ArkEntity {
             override val type: ArkType
                 get() = ArkUnknownType
 
-            override fun toString(): String = "UnknownValue"
+            override fun toString(): String = "UNKNOWN"
 
             override fun <R> accept(visitor: ArkEntity.Visitor<R>): R {
                 if (visitor is ArkEntity.Visitor.Default<R>) {
                     return visitor.defaultVisit(this)
                 }
-                error("UnknownValue is not supported")
+                error("UnknownEntity is not supported")
             }
         }
 
@@ -379,28 +379,28 @@ fun convertToArkFieldRef(fieldRef: FieldRefDto): ArkFieldRef {
     }
 }
 
-fun convertToArkClassSignature(clazz: ClassSignatureDto): ClassSignature {
-    return ClassSignature(
+fun convertToArkClassSignature(clazz: ClassSignatureDto): ArkClassSignature {
+    return ArkClassSignature(
         name = clazz.name,
         namespace = null, // TODO
         file = null, // TODO
     )
 }
 
-fun convertToArkFieldSignature(field: FieldSignatureDto): FieldSignature {
-    return FieldSignature(
+fun convertToArkFieldSignature(field: FieldSignatureDto): ArkFieldSignature {
+    return ArkFieldSignature(
         enclosingClass = convertToArkClassSignature(field.enclosingClass),
-        sub = FieldSubSignature(
+        sub = ArkFieldSubSignature(
             name = field.name,
             type = convertToArkType(field.fieldType),
         )
     )
 }
 
-fun convertToArkMethodSignature(method: MethodSignatureDto): MethodSignature {
-    return MethodSignature(
+fun convertToArkMethodSignature(method: MethodSignatureDto): ArkMethodSignature {
+    return ArkMethodSignature(
         enclosingClass = convertToArkClassSignature(method.enclosingClass),
-        sub = MethodSubSignature(
+        sub = ArkMethodSubSignature(
             name = method.name,
             parameters = method.parameters.mapIndexed { index, param ->
                 ArkMethodParameter(
@@ -423,23 +423,23 @@ fun convertToArkMethod(method: MethodDto): ArkMethod {
     val arkMethod = ArkMethodImpl(signature, locals)
     val location = ArkInstLocation(arkMethod)
     val blocks = method.body.cfg.blocks.associate { block ->
-        block.id to BasicBlock(
+        block.id to ArkBasicBlock(
             id = block.id,
             successors = block.successors,
             predecessors = block.predecessors,
             stmts = block.stmts.map { convertToArkStmt(it, location) },
         )
     }
-    val cfg = Cfg(blocks)
+    val cfg = ArkCfg(blocks)
     arkMethod.cfg = cfg
     return arkMethod
 }
 
 fun convertToArkField(field: FieldDto): ArkField {
     return ArkFieldImpl(
-        signature = FieldSignature(
+        signature = ArkFieldSignature(
             enclosingClass = convertToArkClassSignature(field.signature.enclosingClass),
-            sub = FieldSubSignature(
+            sub = ArkFieldSubSignature(
                 name = field.signature.name,
                 type = convertToArkType(field.signature.fieldType)
             )
@@ -453,7 +453,7 @@ fun convertToArkField(field: FieldDto): ArkField {
 
 fun convertToArkClass(clazz: ClassDto): ArkClass {
     return ArkClassImpl(
-        signature = ClassSignature(
+        signature = ArkClassSignature(
             name = clazz.signature.name,
             namespace = null, // TODO
             file = null, // TODO

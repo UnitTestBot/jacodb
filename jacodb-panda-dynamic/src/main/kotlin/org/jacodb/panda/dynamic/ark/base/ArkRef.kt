@@ -18,7 +18,7 @@ package org.jacodb.panda.dynamic.ark.base
 
 import org.jacodb.api.common.cfg.CommonArgument
 import org.jacodb.api.common.cfg.CommonThis
-import org.jacodb.panda.dynamic.ark.model.FieldSignature
+import org.jacodb.panda.dynamic.ark.model.ArkFieldSignature
 
 interface ArkRef : ArkValue {
     interface Visitor<out R> {
@@ -84,7 +84,7 @@ data class ArkArrayAccess(
 }
 
 interface ArkFieldRef : ArkRef, ArkLValue {
-    val field: FieldSignature
+    val field: ArkFieldSignature
 
     override val type: ArkType
         get() = this.field.sub.type
@@ -92,7 +92,7 @@ interface ArkFieldRef : ArkRef, ArkLValue {
 
 data class ArkInstanceFieldRef(
     val instance: ArkEntity, // Local
-    override val field: FieldSignature,
+    override val field: ArkFieldSignature,
 ) : ArkFieldRef {
     override fun toString(): String {
         return "$instance.${field.sub.name}"
@@ -104,7 +104,7 @@ data class ArkInstanceFieldRef(
 }
 
 data class ArkStaticFieldRef(
-    override val field: FieldSignature,
+    override val field: ArkFieldSignature,
 ) : ArkFieldRef {
     override fun toString(): String {
         return "${field.enclosingClass.name}.${field.sub.name}"

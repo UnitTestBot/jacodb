@@ -17,8 +17,8 @@
 package org.jacodb.panda.dynamic.ark.utils
 
 import org.jacodb.panda.dynamic.ark.base.ArkEntity
-import org.jacodb.panda.dynamic.ark.base.ArkValue
 import org.jacodb.panda.dynamic.ark.base.ArkStmt
+import org.jacodb.panda.dynamic.ark.base.ArkValue
 
 fun ArkStmt.getValues(): Sequence<ArkValue> =
     getOperands().filterIsInstance<ArkValue>()

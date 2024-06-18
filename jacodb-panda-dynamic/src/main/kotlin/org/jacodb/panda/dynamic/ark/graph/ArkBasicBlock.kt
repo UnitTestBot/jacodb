@@ -18,7 +18,7 @@ package org.jacodb.panda.dynamic.ark.graph
 
 import org.jacodb.panda.dynamic.ark.base.ArkStmt
 
-class BasicBlock(
+class ArkBasicBlock(
     val id: Int,
     val successors: List<Int>,
     val predecessors: List<Int>,

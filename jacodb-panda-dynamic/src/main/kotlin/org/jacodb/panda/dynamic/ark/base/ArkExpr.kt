@@ -17,8 +17,8 @@
 package org.jacodb.panda.dynamic.ark.base
 
 import org.jacodb.api.common.cfg.CommonCallExpr
-import org.jacodb.panda.dynamic.ark.graph.BasicBlock
-import org.jacodb.panda.dynamic.ark.model.MethodSignature
+import org.jacodb.panda.dynamic.ark.graph.ArkBasicBlock
+import org.jacodb.panda.dynamic.ark.model.ArkMethodSignature
 
 interface ArkExpr : ArkEntity {
     interface Visitor<out R> {
@@ -163,7 +163,7 @@ data class ArkCastExpr(
 
 data class ArkPhiExpr(
     val args: List<ArkEntity>,
-    val argToBlock: Map<ArkEntity, BasicBlock>,
+    val argToBlock: Map<ArkEntity, ArkBasicBlock>,
     override val type: ArkType,
 ) : ArkExpr {
     override fun toString(): String {
@@ -257,7 +257,7 @@ data class ArkRelationOperation(
 }
 
 interface ArkCallExpr : ArkExpr, CommonCallExpr {
-    val method: MethodSignature
+    val method: ArkMethodSignature
     override val args: List<ArkValue>
 
     override val type: ArkType
@@ -266,7 +266,7 @@ interface ArkCallExpr : ArkExpr, CommonCallExpr {
 
 data class ArkInstanceCallExpr(
     val instance: ArkLocal,
-    override val method: MethodSignature,
+    override val method: ArkMethodSignature,
     override val args: List<ArkValue>,
 ) : ArkCallExpr {
     override fun toString(): String {
@@ -279,7 +279,7 @@ data class ArkInstanceCallExpr(
 }
 
 data class ArkStaticCallExpr(
-    override val method: MethodSignature,
+    override val method: ArkMethodSignature,
     override val args: List<ArkValue>,
 ) : ArkCallExpr {
     override fun toString(): String {

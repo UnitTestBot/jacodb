@@ -17,7 +17,7 @@
 package org.jacodb.panda.dynamic.ark.model
 
 interface ArkClass {
-    val signature: ClassSignature
+    val signature: ArkClassSignature
     val superClass: ArkClass?
     val fields: List<ArkField>
     val methods: List<ArkMethod>
@@ -27,7 +27,7 @@ interface ArkClass {
 }
 
 class ArkClassImpl(
-    override val signature: ClassSignature,
+    override val signature: ArkClassSignature,
     override val fields: List<ArkField>,
     override val methods: List<ArkMethod>,
 ) : ArkClass {
