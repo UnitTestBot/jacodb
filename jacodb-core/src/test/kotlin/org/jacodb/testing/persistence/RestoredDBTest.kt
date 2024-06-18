@@ -18,7 +18,10 @@ package org.jacodb.testing.persistence
 
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcPersistenceImplSettings
 import org.jacodb.api.jvm.ext.HierarchyExtension
+import org.jacodb.impl.JcRamErsSettings
+import org.jacodb.impl.JcXodusKvErsSettings
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.testing.LifecycleTest
 import org.jacodb.testing.WithRestoredDB
@@ -27,7 +30,7 @@ import org.jacodb.testing.tests.DatabaseEnvTest
 import org.jacodb.testing.withDB
 
 @LifecycleTest
-class RestoredDBTest : DatabaseEnvTest() {
+open class RestoredDBTest : DatabaseEnvTest() {
 
     companion object : WithRestoredDB()
 
@@ -39,6 +42,13 @@ class RestoredDBTest : DatabaseEnvTest() {
     }
 
     override val hierarchyExt: HierarchyExtension by lazy { runBlocking { cp.hierarchyExt() } }
+}
 
+@LifecycleTest
+class RestoredXodusDBTest : RestoredDBTest() {
 
+    companion object : WithRestoredDB() {
+
+        override val implSettings: JcPersistenceImplSettings get() = JcXodusKvErsSettings
+    }
 }

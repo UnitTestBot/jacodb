@@ -25,10 +25,13 @@ import org.jacodb.impl.features.findSubclassesInMemory
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.impl.storage.dslContext
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
+import org.jacodb.impl.storage.txn
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.LifecycleTest
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.WithGlobalDB
+import org.jacodb.testing.WithGlobalRAMDB
+import org.jacodb.testing.WithRAMDB
 import org.jacodb.testing.WithRestoredDB
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -92,9 +95,11 @@ abstract class BaseInMemoryHierarchyTest : BaseTest() {
 
     @Test
     fun `find subclasses of Any`() {
-        val numberOfClasses = cp.db.persistence.read { it.dslContext.fetchCount(CLASSES) }
+        val numberOfClasses = getNumberOfClasses()
         assertEquals(numberOfClasses - 1, findSubClasses<Any>(allHierarchy = true).count())
     }
+
+    protected open fun getNumberOfClasses() = cp.db.persistence.read { it.dslContext.fetchCount(CLASSES) }
 
     @Test
     fun `find subclasses of Comparable`() {
@@ -133,11 +138,24 @@ class InMemoryHierarchyTest : BaseInMemoryHierarchyTest() {
     companion object : WithGlobalDB()
 }
 
+class InMemoryHierarchyRAMTest : BaseInMemoryHierarchyTest() {
+    companion object : WithGlobalRAMDB()
+
+    override fun getNumberOfClasses(): Int = cp.db.persistence.read { it.txn.all("Class").size.toInt() }
+}
+
 class RegularHierarchyTest : BaseInMemoryHierarchyTest() {
     companion object : WithDB()
 
-    override val isInMemory: Boolean
-        get() = false
+    override val isInMemory = false
+}
+
+class RegularHierarchyRAMTest : BaseInMemoryHierarchyTest() {
+    companion object : WithRAMDB()
+
+    override val isInMemory = false
+
+    override fun getNumberOfClasses(): Int = cp.db.persistence.read { it.txn.all("Class").size.toInt() }
 }
 
 @LifecycleTest

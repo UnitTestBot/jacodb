@@ -96,8 +96,10 @@ tasks.register<Copy>("downloadAndUnzipIdeaCommunity") {
 
 val benchmarkTasks = listOf(
     "testJcdbBenchmark",
+    "testJcdbRAMBenchmark",
     "testSootBenchmark",
     "testAwaitBackgroundBenchmark",
+    "testRamAwaitBackgroundBenchmark"
 )
 tasks.matching { it.name in benchmarkTasks }.configureEach {
     dependsOn("downloadAndUnzipIdeaCommunity")

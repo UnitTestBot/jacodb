@@ -144,7 +144,13 @@ open class WithGlobalRAMDB(vararg _classpathFeatures: JcClasspathFeature) : JcDa
 
 open class WithRestoredDB(vararg features: JcFeature<*, *>) : WithDB(*features) {
 
-    private val jdbcLocation = Files.createTempFile("jcdb-", null).toFile().absolutePath
+    private val location by lazy {
+        if (implSettings is JcSQLitePersistenceSettings) {
+            Files.createTempFile("jcdb-", null).toFile().absolutePath
+        } else {
+            Files.createTempDirectory("jcdb-").toFile().absolutePath
+        }
+    }
 
     var tempDb: JcDatabase? = newDB()
 
@@ -153,11 +159,17 @@ open class WithRestoredDB(vararg features: JcFeature<*, *>) : WithDB(*features) 
         tempDb = null
     }
 
+    open val implSettings: JcPersistenceImplSettings get() = JcSQLitePersistenceSettings
+
     private fun newDB(before: () -> Unit = {}): JcDatabase {
         before()
         return runBlocking {
             jacodb {
-                persistent(jdbcLocation)
+                require(implSettings !is JcRamErsSettings) { "cannot restore in-RAM database" }
+                persistent(
+                    location = location,
+                    implSettings = implSettings
+                )
                 loadByteCode(allClasspath)
                 useProcessJavaRuntime()
                 keepLocalVariableNames()

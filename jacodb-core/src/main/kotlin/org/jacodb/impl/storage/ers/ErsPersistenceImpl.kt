@@ -37,6 +37,7 @@ import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.fs.info
 import org.jacodb.impl.storage.AbstractJcDbPersistence
 import org.jacodb.impl.storage.AnnotationValueKind
+import org.jacodb.impl.storage.ers.ram.RAMEntityRelationshipStorage
 import org.jacodb.impl.storage.toJCDBContext
 import org.jacodb.impl.storage.txn
 import org.jacodb.impl.types.AnnotationInfo
@@ -75,8 +76,14 @@ class ErsPersistenceImpl(
     }
 
     override fun <T> read(action: (JCDBContext) -> T): T {
-        return ers.transactionalOptimistic(attempts = 10) { txn ->
-            action(toJCDBContext(txn))
+        return if (ers is RAMEntityRelationshipStorage) { // RAMEntityRelationshipStorage doesn't support readonly transactions
+            ers.transactionalOptimistic(attempts = 10) { txn ->
+                action(toJCDBContext(txn))
+            }
+        } else {
+            ers.transactional(readonly = true) { txn ->
+                action(toJCDBContext(txn))
+            }
         }
     }
 
@@ -178,12 +185,8 @@ class ErsPersistenceImpl(
             allClasses.forEach { classInfo ->
                 if (classInfo.superClass != null) {
                     classEntities[classInfo.name]?.let { clazz ->
-                        val inherits = links(clazz, "inherits")
                         classInfo.superClass.takeIf { JAVA_OBJECT != it }?.let { superClassName ->
-                            txn.findOrNew("SuperClass", "nameId", superClassName.asSymbolId(symbolInterner).compressed)
-                                .also { superClass ->
-                                    inherits += superClass
-                                }
+                            clazz["inherits"] = superClassName.asSymbolId(symbolInterner).compressed
                         }
                     }
                 }
@@ -196,6 +199,7 @@ class ErsPersistenceImpl(
                             txn.findOrNew("Interface", "nameId", interfaceName.asSymbolId(symbolInterner).compressed)
                                 .also { interfaceClass ->
                                     implements += interfaceClass
+                                    links(interfaceClass, "implementedBy") += clazz
                                 }
                         }
                     }

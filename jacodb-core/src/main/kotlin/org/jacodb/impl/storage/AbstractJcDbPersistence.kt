@@ -133,7 +133,7 @@ abstract class AbstractJcDbPersistence(
 
     override fun close() {
         try {
-            symbolInterner.setup(this)
+            symbolInterner.close()
         } catch (e: Exception) {
             // ignore
         }

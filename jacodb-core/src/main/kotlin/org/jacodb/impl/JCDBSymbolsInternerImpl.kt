@@ -69,7 +69,7 @@ class JCDBSymbolsInternerImpl : JCDBSymbolsInterner, Closeable {
                     val stringBinding = BuiltInBindingProvider.getBinding(String::class.java)
                     val longBinding = BuiltInBindingProvider.getBinding(Long::class.java)
                     kvTxn.navigateTo(symbolsMapName).forEach { idBytes, nameBytes ->
-                        val id = longBinding.getObject(idBytes)
+                        val id = longBinding.getObjectCompressed(idBytes)
                         val name = stringBinding.getObject(nameBytes)
                         symbolsCache[name] = id
                         idCache[id] = name
