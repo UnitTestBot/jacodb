@@ -28,20 +28,21 @@ import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.panda.dynamic.ark.base.ArkAnyType
 import org.jacodb.panda.dynamic.ark.base.ArkArrayAccess
 import org.jacodb.panda.dynamic.ark.base.ArkCallExpr
+import org.jacodb.panda.dynamic.ark.base.ArkCastExpr
 import org.jacodb.panda.dynamic.ark.base.ArkConstant
 import org.jacodb.panda.dynamic.ark.base.ArkEntity
 import org.jacodb.panda.dynamic.ark.base.ArkImmediate
 import org.jacodb.panda.dynamic.ark.base.ArkInstanceFieldRef
 import org.jacodb.panda.dynamic.ark.base.ArkParameterRef
 import org.jacodb.panda.dynamic.ark.base.ArkStaticFieldRef
+import org.jacodb.panda.dynamic.ark.base.ArkStmt
 import org.jacodb.panda.dynamic.ark.base.ArkThis
 import org.jacodb.panda.dynamic.ark.base.ArkValue
-import org.jacodb.panda.dynamic.ark.base.ArkCastExpr
-import org.jacodb.panda.dynamic.ark.base.ArkStmt
 import org.jacodb.panda.dynamic.ark.model.ArkFile
 import org.jacodb.panda.dynamic.ark.model.ArkMethod
 import org.jacodb.panda.dynamic.ark.model.ArkMethodImpl
 import org.jacodb.panda.dynamic.ark.model.ArkMethodParameter
+import org.jacodb.panda.dynamic.ark.utils.callExpr
 import org.jacodb.taint.configuration.ConstantValue
 import org.jacodb.analysis.util.toPath as _toPath
 import org.jacodb.analysis.util.toPathOrNull as _toPathOrNull
@@ -157,6 +158,3 @@ fun ArkEntity.toPathOrNull(): AccessPath? = when (this) {
 fun ArkEntity.toPath(): AccessPath {
     return toPathOrNull() ?: error("Unable to build access path for value $this")
 }
-
-val ArkStmt.callExpr: ArkCallExpr?
-    get() = _getOperands().filterIsInstance<ArkCallExpr>().firstOrNull()
