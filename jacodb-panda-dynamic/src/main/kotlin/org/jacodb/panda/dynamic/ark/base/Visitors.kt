@@ -16,155 +16,155 @@
 
 package org.jacodb.panda.dynamic.ark.base
 
-object ValuePrinter : ArkEntity.Visitor.Default<Unit> {
+object ArkEntityPrinter : ArkEntity.Visitor.Default<Unit> {
     override fun defaultVisit(value: ArkEntity) {
-        println("defaultVisit<Value>($value)")
+        println("defaultVisit<${value::class.java.simpleName}>(value = $value)")
     }
 
     override fun defaultVisit(value: ArkImmediate) {
-        println("defaultVisit<Immediate>($value)")
+        println("defaultVisit<${value::class.java.simpleName}>(value = $value)")
     }
 
     override fun defaultVisit(expr: ArkExpr) {
-        println("defaultVisit<Expr>($expr)")
+        println("defaultVisit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
     override fun defaultVisit(ref: ArkRef) {
-        println("defaultVisit<Ref>($ref)")
+        println("defaultVisit<${ref::class.java.simpleName}>(ref = $ref)")
     }
 
     override fun defaultVisit(value: ArkConstant) {
-        println("defaultVisit<Constant>($value)")
+        println("defaultVisit<${value::class.java.simpleName}>(value = ${value::class.java.simpleName}>(value = $value)")
     }
 
     override fun visit(value: ArkLocal) {
-        println("visit<Local>($value)")
+        println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
     override fun visit(value: StringConstant) {
-        println("visit<StringConstant>($value)")
+        println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
     override fun visit(value: BooleanConstant) {
-        println("visit<BooleanConstant>($value)")
+        println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
     override fun visit(value: NumberConstant) {
-        println("visit<NumberConstant>($value)")
+        println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
     override fun visit(value: NullConstant) {
-        println("visit<NullConstant>($value)")
+        println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
     override fun visit(value: UndefinedConstant) {
-        println("visit<UndefinedConstant>($value)")
+        println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
     override fun visit(value: ArrayLiteral) {
-        println("visit<ArrayLiteral>($value)")
+        println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
     override fun visit(value: ObjectLiteral) {
-        println("visit<ObjectLiteral>($value)")
+        println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
     override fun visit(expr: NewExpr) {
-        println("visit<NewExpr>($expr)")
+        println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
     override fun visit(expr: NewArrayExpr) {
-        println("visit<NewArrayExpr>($expr)")
+        println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
     override fun visit(expr: TypeOfExpr) {
-        println("visit<TypeOfExpr>($expr)")
+        println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
     override fun visit(expr: InstanceOfExpr) {
-        println("visit<InstanceOfExpr>($expr)")
+        println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
     override fun visit(expr: LengthExpr) {
-        println("visit<LengthExpr>($expr)")
+        println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
     override fun visit(expr: CastExpr) {
-        println("visit<CastExpr>($expr)")
+        println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
     override fun visit(expr: PhiExpr) {
-        println("visit<PhiExpr>($expr)")
+        println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
     override fun visit(expr: ArkUnaryOperation) {
-        println("visit<UnaryOperation>($expr)")
+        println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
     override fun visit(expr: ArkBinaryOperation) {
-        println("visit<BinaryOperation>($expr)")
+        println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
     override fun visit(expr: ArkRelationOperation) {
-        println("visit<RelationOperation>($expr)")
+        println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
     override fun visit(expr: ArkInstanceCallExpr) {
-        println("visit<InstanceCallExpr>($expr)")
+        println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
     override fun visit(expr: ArkStaticCallExpr) {
-        println("visit<StaticCallExpr>($expr)")
+        println("visit<${expr::class.java.simpleName}>(expr = $expr)")
     }
 
     override fun visit(ref: ArkThis) {
-        println("visit<This>($ref)")
+        println("visit<${ref::class.java.simpleName}>(ref = $ref)")
     }
 
     override fun visit(ref: ArkParameterRef) {
-        println("visit<ParameterRef>($ref)")
+        println("visit<${ref::class.java.simpleName}>(ref = $ref)")
     }
 
     override fun visit(ref: ArkArrayAccess) {
-        println("visit<ArrayAccess>($ref)")
+        println("visit<${ref::class.java.simpleName}>(ref = $ref)")
     }
 
     override fun visit(ref: ArkInstanceFieldRef) {
-        println("visit<InstanceFieldRef>($ref)")
+        println("visit<${ref::class.java.simpleName}>(ref = $ref)")
     }
 
     override fun visit(ref: ArkStaticFieldRef) {
-        println("visit<StaticFieldRef>($ref)")
+        println("visit<${ref::class.java.simpleName}>(ref = $ref)")
     }
 }
 
 object ImmediatePrinter : ArkImmediate.Visitor.Default<Unit> {
     override fun defaultVisit(value: ArkImmediate) {
-        println("defaultVisit<Immediate>($value)")
+        println("defaultVisit<${value::class.java.simpleName}>(value = $value)")
     }
 
     override fun visit(value: ArkLocal) {
-        println("visit<Local>($value)")
+        println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
     override fun visit(value: StringConstant) {
-        println("visit<StringConstant>($value)")
+        println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
     override fun visit(value: BooleanConstant) {
-        println("visit<BooleanConstant>($value)")
+        println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
     override fun visit(value: NumberConstant) {
-        println("visit<NumberConstant>($value)")
+        println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
     override fun visit(value: NullConstant) {
-        println("visit<NullConstant>($value)")
+        println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 
     override fun visit(value: UndefinedConstant) {
-        println("visit<UndefinedConstant>($value)")
+        println("visit<${value::class.java.simpleName}>(value = $value)")
     }
 }
 
@@ -175,25 +175,25 @@ fun main() {
     val expr: ArkExpr = ArkBinaryOperation(BinaryOp.Add, local, stringConstant)
     val ref: ArkRef = ArkArrayAccess(arrayLiteral, local, NumberType)
 
-    local.accept(ValuePrinter)
-    local.accept(ValuePrinter as ArkImmediate.Visitor<Unit>)
+    local.accept(ArkEntityPrinter)
+    local.accept(ArkEntityPrinter as ArkImmediate.Visitor<Unit>)
     local.accept(ImmediatePrinter)
     println("-".repeat(40))
-    stringConstant.accept(ValuePrinter)
-    stringConstant.accept(ValuePrinter as ArkImmediate.Visitor<Unit>)
-    stringConstant.accept(ValuePrinter as ArkConstant.Visitor<Unit>)
+    stringConstant.accept(ArkEntityPrinter)
+    stringConstant.accept(ArkEntityPrinter as ArkImmediate.Visitor<Unit>)
+    stringConstant.accept(ArkEntityPrinter as ArkConstant.Visitor<Unit>)
     stringConstant.accept(ImmediatePrinter)
     stringConstant.accept(ImmediatePrinter as ArkConstant.Visitor<Unit>)
     println("-".repeat(40))
-    arrayLiteral.accept(ValuePrinter)
-    arrayLiteral.accept(ValuePrinter as ArkImmediate.Visitor<Unit>)
-    arrayLiteral.accept(ValuePrinter as ArkConstant.Visitor<Unit>)
+    arrayLiteral.accept(ArkEntityPrinter)
+    arrayLiteral.accept(ArkEntityPrinter as ArkImmediate.Visitor<Unit>)
+    arrayLiteral.accept(ArkEntityPrinter as ArkConstant.Visitor<Unit>)
     arrayLiteral.accept(ImmediatePrinter)
     arrayLiteral.accept(ImmediatePrinter as ArkConstant.Visitor<Unit>)
     println("-".repeat(40))
-    expr.accept(ValuePrinter)
-    expr.accept(ValuePrinter as ArkExpr.Visitor<Unit>)
+    expr.accept(ArkEntityPrinter)
+    expr.accept(ArkEntityPrinter as ArkExpr.Visitor<Unit>)
     println("-".repeat(40))
-    ref.accept(ValuePrinter)
-    ref.accept(ValuePrinter as ArkRef.Visitor<Unit>)
+    ref.accept(ArkEntityPrinter)
+    ref.accept(ArkEntityPrinter as ArkRef.Visitor<Unit>)
 }
