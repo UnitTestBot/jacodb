@@ -14,7 +14,6 @@
  *  limitations under the License.
  */
 
-
 package panda.primary
 
 import org.jacodb.panda.dynamic.api.PandaInst
