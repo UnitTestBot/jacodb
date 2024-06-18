@@ -27,8 +27,6 @@ data class ArkInstLocation(
 ) : CommonInstLocation
 
 interface Stmt : CommonInst {
-    // override val operands: List<Value>
-
     override val location: ArkInstLocation
 
     override val method: ArkMethod
@@ -76,7 +74,7 @@ data class NopStmt(
 data class AssignStmt(
     override val location: ArkInstLocation,
     val left: LValue,
-    val right: Value,
+    val right: ArkEntity,
 ) : Stmt {
     override fun toString(): String {
         return "$left := $right"
@@ -117,7 +115,7 @@ interface TerminatingStmt : Stmt
 
 data class ReturnStmt(
     override val location: ArkInstLocation,
-    val arg: Value?,
+    val arg: ArkEntity?,
 ) : TerminatingStmt {
     override fun toString(): String {
         return if (arg != null) {
@@ -134,7 +132,7 @@ data class ReturnStmt(
 
 data class ThrowStmt(
     override val location: ArkInstLocation,
-    val arg: Value,
+    val arg: ArkEntity,
 ) : TerminatingStmt {
     override fun toString(): String {
         return "throw $arg"
@@ -172,8 +170,8 @@ data class IfStmt(
 
 data class SwitchStmt(
     override val location: ArkInstLocation,
-    val arg: Value,
-    val cases: List<Value>,
+    val arg: ArkEntity,
+    val cases: List<ArkEntity>,
 ) : BranchingStmt {
     override fun toString(): String {
         return "switch ($arg)"

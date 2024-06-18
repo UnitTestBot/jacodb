@@ -18,30 +18,27 @@ package org.jacodb.panda.dynamic.ark.base
 
 import org.jacodb.api.common.cfg.CommonExpr
 
-interface Value : CommonExpr {
-    val type: Type
+interface ArkEntity : CommonExpr {
+    val type: ArkType
 
     override val typeName: String
         get() = type.typeName
 
-    // override val operands: List<Value>
-    //     get() = TODO("Not yet implemented")
-
     interface Visitor<out R> :
         Immediate.Visitor<R>,
-        Expr.Visitor<R>,
+        ArkExpr.Visitor<R>,
         Ref.Visitor<R> {
 
         interface Default<out R> : Visitor<R>,
             Immediate.Visitor.Default<R>,
-            Expr.Visitor.Default<R>,
+            ArkExpr.Visitor.Default<R>,
             Ref.Visitor.Default<R> {
 
-            override fun defaultVisit(value: Immediate): R = defaultVisit(value as Value)
-            override fun defaultVisit(expr: Expr): R = defaultVisit(expr as Value)
-            override fun defaultVisit(ref: Ref): R = defaultVisit(ref as Value)
+            override fun defaultVisit(value: Immediate): R = defaultVisit(value as ArkEntity)
+            override fun defaultVisit(expr: ArkExpr): R = defaultVisit(expr as ArkEntity)
+            override fun defaultVisit(ref: Ref): R = defaultVisit(ref as ArkEntity)
 
-            fun defaultVisit(value: Value): R
+            fun defaultVisit(value: ArkEntity): R
         }
     }
 

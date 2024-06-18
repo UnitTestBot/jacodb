@@ -22,7 +22,6 @@ import org.jacodb.analysis.ifds.FieldAccessor
 import org.jacodb.analysis.util.getArgument
 import org.jacodb.analysis.util.toPathOrNull
 import org.jacodb.api.common.CommonMethodParameter
-import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonValue
@@ -100,15 +99,13 @@ interface PandaStaticTraits : Traits<PandaMethod, PandaInst> {
 
     override fun PandaInst.getCallExpr(): CommonCallExpr? = _callExpr
 
-    override fun CommonProject.getArgument(param: CommonMethodParameter): PandaArgument {
-        check(this is PandaProject)
+    override fun getArgument(param: CommonMethodParameter): PandaArgument {
         check(param is PandaMethod.Parameter)
-        return _getArgument(param)
+        return cp._getArgument(param)
     }
 
-    override fun CommonProject.getArgumentsOf(method: PandaMethod): List<PandaArgument> {
-        check(this is PandaProject)
-        return _getArgumentsOf(method)
+    override fun getArgumentsOf(method: PandaMethod): List<PandaArgument> {
+        return cp._getArgumentsOf(method)
     }
 
     override fun CommonValue.isConstant(): Boolean {
@@ -178,7 +175,9 @@ interface PandaStaticTraits : Traits<PandaMethod, PandaInst> {
     }
 
     // Ensure that all methods are default-implemented in the interface itself:
-    companion object : PandaStaticTraits
+    companion object : PandaStaticTraits {
+        lateinit var cp: PandaProject
+    }
 }
 
 val PandaMethod.thisInstance: PandaThis

@@ -16,7 +16,7 @@
 
 package org.jacodb.panda.dynamic.ark.base
 
-interface Constant : Immediate {
+interface ArkConstant : Immediate {
     interface Visitor<out R> {
         fun visit(value: StringConstant): R
         fun visit(value: BooleanConstant): R
@@ -35,7 +35,7 @@ interface Constant : Immediate {
             override fun visit(value: ArrayLiteral): R = defaultVisit(value)
             override fun visit(value: ObjectLiteral): R = defaultVisit(value)
 
-            fun defaultVisit(value: Constant): R
+            fun defaultVisit(value: ArkConstant): R
         }
     }
 
@@ -48,30 +48,30 @@ interface Constant : Immediate {
 
 data class StringConstant(
     val value: String,
-) : Constant {
-    override val type: Type
+) : ArkConstant {
+    override val type: ArkType
         get() = StringType
 
     override fun toString(): String {
         return "\"$value\""
     }
 
-    override fun <R> accept(visitor: Constant.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkConstant.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
 data class BooleanConstant(
     val value: Boolean,
-) : Constant {
-    override val type: Type
+) : ArkConstant {
+    override val type: ArkType
         get() = BooleanType
 
     override fun toString(): String {
         return if (value) "true" else "false"
     }
 
-    override fun <R> accept(visitor: Constant.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkConstant.Visitor<R>): R {
         return visitor.visit(this)
     }
 
@@ -83,45 +83,45 @@ data class BooleanConstant(
 
 data class NumberConstant(
     val value: Double,
-) : Constant {
-    override val type: Type
+) : ArkConstant {
+    override val type: ArkType
         get() = NumberType
 
     override fun toString(): String {
         return value.toString()
     }
 
-    override fun <R> accept(visitor: Constant.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkConstant.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-object NullConstant : Constant {
-    override val type: Type
+object NullConstant : ArkConstant {
+    override val type: ArkType
         get() = NullType
 
     override fun toString(): String = "null"
 
-    override fun <R> accept(visitor: Constant.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkConstant.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-object UndefinedConstant : Constant {
-    override val type: Type
+object UndefinedConstant : ArkConstant {
+    override val type: ArkType
         get() = UndefinedType
 
     override fun toString(): String = "undefined"
 
-    override fun <R> accept(visitor: Constant.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkConstant.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
 data class ArrayLiteral(
-    val elements: List<Value>,
+    val elements: List<ArkEntity>,
     override val type: ArrayType,
-) : Constant {
+) : ArkConstant {
     init {
         require(type.dimensions == 1) {
             "Array type of array literal must have exactly one dimension"
@@ -132,23 +132,23 @@ data class ArrayLiteral(
         return elements.joinToString(prefix = "[", postfix = "]")
     }
 
-    override fun <R> accept(visitor: Constant.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkConstant.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
 // TODO: replace `Pair<String, Value>` with `Property`
 data class ObjectLiteral(
-    val properties: List<Pair<String, Value>>,
-    override val type: Type, // TODO: consider ClassType
-) : Constant {
+    val properties: List<Pair<String, ArkEntity>>,
+    override val type: ArkType, // TODO: consider ClassType
+) : ArkConstant {
     override fun toString(): String {
         return properties.joinToString(prefix = "{", postfix = "}") { (name, value) ->
             "$name: $value"
         }
     }
 
-    override fun <R> accept(visitor: Constant.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkConstant.Visitor<R>): R {
         return visitor.visit(this)
     }
 }

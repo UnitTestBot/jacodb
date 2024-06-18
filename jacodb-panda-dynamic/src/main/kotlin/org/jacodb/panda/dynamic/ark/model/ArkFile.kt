@@ -22,4 +22,9 @@ class ArkFile(
     val name: String,
     val path: String? = null,
     val classes: List<ArkClass>,
-) : CommonProject
+) : CommonProject {
+
+    fun getMethodBySignature(signature: MethodSignature): ArkMethod? {
+        return classes.asSequence().flatMap { it.methods }.firstOrNull { it.signature == signature }
+    }
+}

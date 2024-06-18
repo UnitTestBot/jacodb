@@ -17,11 +17,11 @@
 package org.jacodb.panda.dynamic.ark.base
 
 object TypeInference {
-    fun commonType(type1: Type, type2: Type): Type {
+    fun commonType(type1: ArkType, type2: ArkType): ArkType {
         TODO()
     }
 
-    fun infer(expr: BinaryExpr): Type {
+    fun infer(expr: BinaryExpr): ArkType {
         TODO()
     }
 }

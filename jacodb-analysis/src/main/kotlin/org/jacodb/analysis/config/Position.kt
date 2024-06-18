@@ -79,7 +79,7 @@ class EntryPointPositionToValueResolver(
 
         is Argument -> {
             val p = method.parameters[position.index]
-            project.getArgument(p).toMaybe()
+            getArgument(p).toMaybe()
         }
 
         AnyArgument, Result, ResultAnyElement -> error("Unexpected $position")
@@ -96,7 +96,7 @@ class EntryPointPositionToAccessPathResolver(
 
         is Argument -> {
             val p = method.parameters[position.index]
-            project.getArgument(p)?.toPathOrNull().toMaybe()
+            getArgument(p)?.toPathOrNull().toMaybe()
         }
 
         AnyArgument, Result, ResultAnyElement -> error("Unexpected $position")

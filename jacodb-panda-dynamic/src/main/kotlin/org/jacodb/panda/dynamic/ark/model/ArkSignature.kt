@@ -17,7 +17,7 @@
 package org.jacodb.panda.dynamic.ark.model
 
 import org.jacodb.api.common.CommonMethodParameter
-import org.jacodb.panda.dynamic.ark.base.Type
+import org.jacodb.panda.dynamic.ark.base.ArkType
 
 data class FileSignature(
     val projectName: String,
@@ -66,6 +66,12 @@ data class FieldSignature(
     val enclosingClass: ClassSignature,
     val sub: FieldSubSignature,
 ) {
+    val name: String
+        get() = sub.name
+
+    val type: ArkType
+        get() = sub.type
+
     override fun toString(): String {
         return "${enclosingClass.name}::$sub"
     }
@@ -73,7 +79,7 @@ data class FieldSignature(
 
 data class FieldSubSignature(
     val name: String,
-    val type: Type,
+    val type: ArkType,
 ) {
     override fun toString(): String {
         return "$name: $type"
@@ -83,8 +89,8 @@ data class FieldSubSignature(
 data class MethodSignature(
     val enclosingClass: ClassSignature,
     val name: String,
-    val parameters: List<MethodParameter>,
-    val returnType: Type,
+    val parameters: List<ArkMethodParameter>,
+    val returnType: ArkType,
 ) {
 
     constructor(
@@ -105,8 +111,8 @@ data class MethodSignature(
 
 data class MethodSubSignature(
     val name: String,
-    val parameters: List<MethodParameter>,
-    val returnType: Type,
+    val parameters: List<ArkMethodParameter>,
+    val returnType: ArkType,
 ) {
     override fun toString(): String {
         val params = parameters.joinToString()
@@ -114,10 +120,11 @@ data class MethodSubSignature(
     }
 }
 
-data class MethodParameter(
+data class ArkMethodParameter(
+    val index: Int,
     val name: String,
-    override val type: Type,
-    val isOptional: Boolean = false,
+    override val type: ArkType,
+    val isOptional: Boolean = false
 ) : CommonMethodParameter {
     override fun toString(): String {
         return "$name${if (isOptional) "?" else ""}: $type"

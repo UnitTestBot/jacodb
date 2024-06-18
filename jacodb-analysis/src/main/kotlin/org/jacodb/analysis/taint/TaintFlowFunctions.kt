@@ -502,7 +502,7 @@ class ForwardTaintFlowFunctions<Method, Statement>(
         buildSet {
             // Transmit facts on arguments (from 'actual' to 'formal'):
             val actualParams = callExpr.args
-            val formalParams = cp.getArgumentsOf(callee)
+            val formalParams = getArgumentsOf(callee)
             for ((formal, actual) in formalParams.zip(actualParams)) {
                 addAll(transmitTaintArgumentActualToFormal(fact, from = actual, to = formal))
             }
@@ -543,7 +543,7 @@ class ForwardTaintFlowFunctions<Method, Statement>(
             // Transmit facts on arguments (from 'formal' back to 'actual'), if they are passed by-ref:
             if (fact.variable.isOnHeap) {
                 val actualParams = callExpr.args
-                val formalParams = cp.getArgumentsOf(callee)
+                val formalParams = getArgumentsOf(callee)
                 for ((formal, actual) in formalParams.zip(actualParams)) {
                     addAll(
                         transmitTaintArgumentFormalToActual(
@@ -758,7 +758,7 @@ class BackwardTaintFlowFunctions<Method, Statement>(
         buildSet {
             // Transmit facts on arguments (from 'actual' to 'formal'):
             val actualParams = callExpr.args
-            val formalParams = cp.getArgumentsOf(callee)
+            val formalParams = getArgumentsOf(callee)
             for ((formal, actual) in formalParams.zip(actualParams)) {
                 addAll(transmitTaintArgumentActualToFormal(fact, from = actual, to = formal))
             }
@@ -813,7 +813,7 @@ class BackwardTaintFlowFunctions<Method, Statement>(
             // Transmit facts on arguments (from 'formal' back to 'actual'), if they are passed by-ref:
             if (fact.variable.isOnHeap) {
                 val actualParams = callExpr.args
-                val formalParams = cp.getArgumentsOf(callee)
+                val formalParams = getArgumentsOf(callee)
                 for ((formal, actual) in formalParams.zip(actualParams)) {
                     addAll(
                         transmitTaintArgumentFormalToActual(

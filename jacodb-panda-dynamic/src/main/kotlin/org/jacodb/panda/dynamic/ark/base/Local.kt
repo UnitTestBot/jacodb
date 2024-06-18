@@ -18,7 +18,7 @@ package org.jacodb.panda.dynamic.ark.base
 
 data class Local(
     val name: String,
-    override val type: Type,
+    override val type: ArkType,
 ) : Immediate, LValue {
     override fun toString(): String {
         return name

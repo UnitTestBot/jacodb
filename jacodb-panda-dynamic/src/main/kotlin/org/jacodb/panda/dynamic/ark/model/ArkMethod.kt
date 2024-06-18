@@ -17,8 +17,8 @@
 package org.jacodb.panda.dynamic.ark.model
 
 import org.jacodb.api.common.CommonMethod
+import org.jacodb.panda.dynamic.ark.base.ArkType
 import org.jacodb.panda.dynamic.ark.base.Local
-import org.jacodb.panda.dynamic.ark.base.Type
 import org.jacodb.panda.dynamic.ark.graph.Cfg
 
 // TODO: modifiers
@@ -32,10 +32,10 @@ interface ArkMethod : CommonMethod {
     override val name: String
         get() = signature.name
 
-    override val parameters: List<MethodParameter>
+    override val parameters: List<ArkMethodParameter>
         get() = signature.parameters
 
-    override val returnType: Type
+    override val returnType: ArkType
         get() = signature.returnType
 
     override fun flowGraph(): Cfg {

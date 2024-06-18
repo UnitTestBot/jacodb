@@ -16,4 +16,4 @@
 
 package org.jacodb.panda.dynamic.ark.base
 
-interface LValue : Value
+interface LValue : ArkEntity

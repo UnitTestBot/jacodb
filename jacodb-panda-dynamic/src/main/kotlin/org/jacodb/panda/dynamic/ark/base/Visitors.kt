@@ -16,8 +16,8 @@
 
 package org.jacodb.panda.dynamic.ark.base
 
-object ValuePrinter : Value.Visitor.Default<Unit> {
-    override fun defaultVisit(value: Value) {
+object ValuePrinter : ArkEntity.Visitor.Default<Unit> {
+    override fun defaultVisit(value: ArkEntity) {
         println("defaultVisit<Value>($value)")
     }
 
@@ -25,7 +25,7 @@ object ValuePrinter : Value.Visitor.Default<Unit> {
         println("defaultVisit<Immediate>($value)")
     }
 
-    override fun defaultVisit(expr: Expr) {
+    override fun defaultVisit(expr: ArkExpr) {
         println("defaultVisit<Expr>($expr)")
     }
 
@@ -33,7 +33,7 @@ object ValuePrinter : Value.Visitor.Default<Unit> {
         println("defaultVisit<Ref>($ref)")
     }
 
-    override fun defaultVisit(value: Constant) {
+    override fun defaultVisit(value: ArkConstant) {
         println("defaultVisit<Constant>($value)")
     }
 
@@ -117,7 +117,7 @@ object ValuePrinter : Value.Visitor.Default<Unit> {
         println("visit<StaticCallExpr>($expr)")
     }
 
-    override fun visit(ref: This) {
+    override fun visit(ref: ArkThis) {
         println("visit<This>($ref)")
     }
 
@@ -170,9 +170,9 @@ object ImmediatePrinter : Immediate.Visitor.Default<Unit> {
 
 fun main() {
     val local: Immediate = Local("kek", NumberType)
-    val stringConstant: Constant = StringConstant("lol")
+    val stringConstant: ArkConstant = StringConstant("lol")
     val arrayLiteral = ArrayLiteral(listOf(local, stringConstant), ArrayType(NumberType, 1))
-    val expr: Expr = BinaryOperation(BinaryOp.Add, local, stringConstant)
+    val expr: ArkExpr = BinaryOperation(BinaryOp.Add, local, stringConstant)
     val ref: Ref = ArrayAccess(arrayLiteral, local, NumberType)
 
     local.accept(ValuePrinter)
@@ -181,18 +181,18 @@ fun main() {
     println("-".repeat(40))
     stringConstant.accept(ValuePrinter)
     stringConstant.accept(ValuePrinter as Immediate.Visitor<Unit>)
-    stringConstant.accept(ValuePrinter as Constant.Visitor<Unit>)
+    stringConstant.accept(ValuePrinter as ArkConstant.Visitor<Unit>)
     stringConstant.accept(ImmediatePrinter)
-    stringConstant.accept(ImmediatePrinter as Constant.Visitor<Unit>)
+    stringConstant.accept(ImmediatePrinter as ArkConstant.Visitor<Unit>)
     println("-".repeat(40))
     arrayLiteral.accept(ValuePrinter)
     arrayLiteral.accept(ValuePrinter as Immediate.Visitor<Unit>)
-    arrayLiteral.accept(ValuePrinter as Constant.Visitor<Unit>)
+    arrayLiteral.accept(ValuePrinter as ArkConstant.Visitor<Unit>)
     arrayLiteral.accept(ImmediatePrinter)
-    arrayLiteral.accept(ImmediatePrinter as Constant.Visitor<Unit>)
+    arrayLiteral.accept(ImmediatePrinter as ArkConstant.Visitor<Unit>)
     println("-".repeat(40))
     expr.accept(ValuePrinter)
-    expr.accept(ValuePrinter as Expr.Visitor<Unit>)
+    expr.accept(ValuePrinter as ArkExpr.Visitor<Unit>)
     println("-".repeat(40))
     ref.accept(ValuePrinter)
     ref.accept(ValuePrinter as Ref.Visitor<Unit>)

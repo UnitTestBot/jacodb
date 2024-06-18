@@ -30,9 +30,9 @@ import org.jacodb.panda.dynamic.ark.dto.FieldSignatureDto
 import org.jacodb.panda.dynamic.ark.dto.LocalDto
 import org.jacodb.panda.dynamic.ark.dto.MethodDto
 import org.jacodb.panda.dynamic.ark.dto.StmtDto
+import org.jacodb.panda.dynamic.ark.dto.convertToArkEntity
 import org.jacodb.panda.dynamic.ark.dto.convertToArkFile
 import org.jacodb.panda.dynamic.ark.dto.convertToArkStmt
-import org.jacodb.panda.dynamic.ark.dto.convertToArkValue
 import org.jacodb.panda.dynamic.ark.model.ArkMethodImpl
 import org.jacodb.panda.dynamic.ark.model.ClassSignature
 import org.jacodb.panda.dynamic.ark.model.MethodSignature
@@ -67,7 +67,7 @@ class ArkFromJsonTest {
         val valueDto = Json.decodeFromString<LocalDto>(jsonString)
         println("valueDto = $valueDto")
         Assertions.assertEquals(LocalDto("x", "any"), valueDto)
-        val value = convertToArkValue(valueDto)
+        val value = convertToArkEntity(valueDto)
         println("value = $value")
         Assertions.assertEquals(Local("x", AnyType), value)
     }

@@ -16,10 +16,12 @@
 
 package org.jacodb.panda.dynamic.ark.base
 
+import org.jacodb.api.common.cfg.CommonCallExpr
+import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.panda.dynamic.ark.graph.BasicBlock
 import org.jacodb.panda.dynamic.ark.model.MethodSignature
 
-interface Expr : Value {
+interface ArkExpr : ArkEntity, CommonValue {
     interface Visitor<out R> {
         fun visit(expr: NewExpr): R
         fun visit(expr: NewArrayExpr): R
@@ -48,11 +50,11 @@ interface Expr : Value {
             override fun visit(expr: InstanceCallExpr): R = defaultVisit(expr)
             override fun visit(expr: StaticCallExpr): R = defaultVisit(expr)
 
-            fun defaultVisit(expr: Expr): R
+            fun defaultVisit(expr: ArkExpr): R
         }
     }
 
-    override fun <R> accept(visitor: Value.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkEntity.Visitor<R>): R {
         return accept(visitor as Visitor<R>)
     }
 
@@ -60,89 +62,89 @@ interface Expr : Value {
 }
 
 data class NewExpr(
-    override val type: Type, // ClassType
-) : Expr {
+    override val type: ArkType, // ClassType
+) : ArkExpr {
     override fun toString(): String {
         return "new ${type.typeName}"
     }
 
-    override fun <R> accept(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkExpr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
 data class NewArrayExpr(
-    val elementType: Type,
-    val size: Value,
-) : Expr {
+    val elementType: ArkType,
+    val size: ArkEntity,
+) : ArkExpr {
     // TODO: support multi-dimensional arrays
-    override val type: Type
+    override val type: ArkType
         get() = ArrayType(elementType, 1)
 
     override fun toString(): String {
         return "new ${elementType.typeName}[$size]"
     }
 
-    override fun <R> accept(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkExpr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
 data class TypeOfExpr(
-    val arg: Value,
-) : Expr {
-    override val type: Type
+    val arg: ArkEntity,
+) : ArkExpr {
+    override val type: ArkType
         get() = StringType
 
     override fun toString(): String {
         return "typeof $arg"
     }
 
-    override fun <R> accept(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkExpr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
 data class InstanceOfExpr(
-    val arg: Value,
-    val checkType: Type,
-) : Expr {
-    override val type: Type
+    val arg: ArkEntity,
+    val checkType: ArkType,
+) : ArkExpr {
+    override val type: ArkType
         get() = BooleanType
 
     override fun toString(): String {
         return "$arg instanceof $checkType"
     }
 
-    override fun <R> accept(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkExpr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
 data class LengthExpr(
-    val arg: Value,
-) : Expr {
-    override val type: Type
+    val arg: ArkEntity,
+) : ArkExpr {
+    override val type: ArkType
         get() = NumberType
 
     override fun toString(): String {
         return "$arg.length"
     }
 
-    override fun <R> accept(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkExpr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
 data class CastExpr(
-    val arg: Value,
-    override val type: Type,
-) : Expr {
+    val arg: ArkEntity,
+    override val type: ArkType,
+) : ArkExpr {
     override fun toString(): String {
         return "$arg as $type"
     }
 
-    override fun <R> accept(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkExpr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -161,44 +163,44 @@ data class CastExpr(
 // }
 
 data class PhiExpr(
-    val args: List<Value>,
-    val argToBlock: Map<Value, BasicBlock>,
-    override val type: Type,
-) : Expr {
+    val args: List<ArkEntity>,
+    val argToBlock: Map<ArkEntity, BasicBlock>,
+    override val type: ArkType,
+) : ArkExpr {
     override fun toString(): String {
         return "phi(${args.joinToString()})"
     }
 
-    override fun <R> accept(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkExpr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-interface UnaryExpr : Expr {
-    val arg: Value
+interface UnaryExpr : ArkExpr {
+    val arg: ArkEntity
 
-    override val type: Type
+    override val type: ArkType
         get() = arg.type
 }
 
 data class UnaryOperation(
     val op: UnaryOp,
-    override val arg: Value,
+    override val arg: ArkEntity,
 ) : UnaryExpr {
     override fun toString(): String {
         return "$op$arg"
     }
 
-    override fun <R> accept(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkExpr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-interface BinaryExpr : Expr {
-    val left: Value
-    val right: Value
+interface BinaryExpr : ArkExpr {
+    val left: ArkEntity
+    val right: ArkEntity
 
-    override val type: Type
+    override val type: ArkType
         get() = TypeInference.infer(this)
 }
 
@@ -214,14 +216,14 @@ interface BinaryExpr : Expr {
 
 data class BinaryOperation(
     val op: BinaryOp,
-    override val left: Value,
-    override val right: Value,
+    override val left: ArkEntity,
+    override val right: ArkEntity,
 ) : BinaryExpr {
     override fun toString(): String {
         return "$left $op $right"
     }
 
-    override fun <R> accept(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkExpr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -237,55 +239,55 @@ data class BinaryOperation(
 // }
 
 interface ConditionExpr : BinaryExpr {
-    override val type: Type
+    override val type: ArkType
         get() = BooleanType
 }
 
 data class RelationOperation(
     val relop: String,
-    override val left: Value,
-    override val right: Value,
+    override val left: ArkEntity,
+    override val right: ArkEntity,
 ) : ConditionExpr {
     override fun toString(): String {
         return "$left $relop $right"
     }
 
-    override fun <R> accept(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkExpr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-interface CallExpr : Expr {
+interface CallExpr : ArkExpr, CommonCallExpr {
     val method: MethodSignature
-    val args: List<Value>
+    override val args: List<ArkValue>
 
-    override val type: Type
+    override val type: ArkType
         get() = method.returnType
 }
 
 data class InstanceCallExpr(
     val instance: Local,
     override val method: MethodSignature,
-    override val args: List<Value>,
+    override val args: List<ArkValue>,
 ) : CallExpr {
     override fun toString(): String {
         return "$instance.${method.name}(${args.joinToString()})"
     }
 
-    override fun <R> accept(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkExpr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
 data class StaticCallExpr(
     override val method: MethodSignature,
-    override val args: List<Value>,
+    override val args: List<ArkValue>,
 ) : CallExpr {
     override fun toString(): String {
         return "${method.enclosingClass.name}.${method.name}(${args.joinToString()})"
     }
 
-    override fun <R> accept(visitor: Expr.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkExpr.Visitor<R>): R {
         return visitor.visit(this)
     }
 }

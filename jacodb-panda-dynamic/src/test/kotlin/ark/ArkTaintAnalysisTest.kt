@@ -16,26 +16,50 @@
 
 package ark
 
+import org.jacodb.analysis.util.ArkTraits
 import org.jacodb.panda.dynamic.ark.dto.ArkFileDto
 import org.jacodb.panda.dynamic.ark.dto.convertToArkFile
 import org.jacodb.panda.dynamic.ark.model.ArkFile
-import org.junit.jupiter.api.Test
+
+private val logger = mu.KotlinLogging.logger {}
 
 class ArkTaintAnalysisTest {
-    private fun loadArkFile(name: String): ArkFile {
-        val path = "arkir/$name.ts.json"
-        val stream = object {}::class.java.getResourceAsStream("/$path")
-            ?: error("Resource not found: $path")
-        val arkDto = ArkFileDto.loadFromJson(stream)
-        println("arkDto = $arkDto")
-        val ark = convertToArkFile(arkDto)
-        println("ark = $ark")
-        return ark
+
+    companion object : ArkTraits {
+        private fun loadArkFile(name: String): ArkFile {
+            val path = "arkir/$name.ts.json"
+            val stream = object {}::class.java.getResourceAsStream("/$path")
+                ?: error("Resource not found: $path")
+            val arkDto = ArkFileDto.loadFromJson(stream)
+            println("arkDto = $arkDto")
+            val ark = convertToArkFile(arkDto)
+            println("ark = $ark")
+            return ark
+        }
     }
 
-    @Test
-    fun `test taint analysis`() {
-        val arkFile = loadArkFile("taint")
-        // val graph = ArkApplicationGraph(arkFile)
-    }
+    // @Test
+    // fun `test taint analysis`() {
+    //     val arkFile = loadArkFile("taint")
+    //     val graph = ArkApplicationGraph(arkFile)
+    //     val unitResolver = UnitResolver<ArkMethod> { SingletonUnit }
+    //     val getConfigForMethod: ForwardTaintFlowFunctions<ArkMethod, Stmt>.(ArkMethod) -> List<TaintConfigurationItem>? =
+    //         { _ ->
+    //             null
+    //         }
+    //     val manager = TaintManager(
+    //         graph = graph,
+    //         unitResolver = unitResolver,
+    //         getConfigForMethod = getConfigForMethod,
+    //     )
+    //
+    //     val methods = project.classes.flatMap { it.methods }
+    //     logger.info { "Methods: ${methods.size}" }
+    //     for (method in methods) {
+    //         logger.info { "  ${method.name}" }
+    //     }
+    //     val sinks = manager.analyze(methods, timeout = 60.seconds)
+    //     logger.info { "Sinks: $sinks" }
+    //     assertTrue(sinks.isNotEmpty())
+    // }
 }

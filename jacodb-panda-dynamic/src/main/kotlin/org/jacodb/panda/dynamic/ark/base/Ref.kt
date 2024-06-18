@@ -16,18 +16,21 @@
 
 package org.jacodb.panda.dynamic.ark.base
 
+import org.jacodb.api.common.cfg.CommonArgument
+import org.jacodb.api.common.cfg.CommonThis
+import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.panda.dynamic.ark.model.FieldSignature
 
-interface Ref : Value {
+interface Ref : ArkEntity, CommonValue {
     interface Visitor<out R> {
-        fun visit(ref: This): R
+        fun visit(ref: ArkThis): R
         fun visit(ref: ParameterRef): R
         fun visit(ref: ArrayAccess): R
         fun visit(ref: InstanceFieldRef): R
         fun visit(ref: StaticFieldRef): R
 
         interface Default<out R> : Visitor<R> {
-            override fun visit(ref: This): R = defaultVisit(ref)
+            override fun visit(ref: ArkThis): R = defaultVisit(ref)
             override fun visit(ref: ParameterRef): R = defaultVisit(ref)
             override fun visit(ref: ArrayAccess): R = defaultVisit(ref)
             override fun visit(ref: InstanceFieldRef): R = defaultVisit(ref)
@@ -37,16 +40,16 @@ interface Ref : Value {
         }
     }
 
-    override fun <R> accept(visitor: Value.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkEntity.Visitor<R>): R {
         return accept(visitor as Visitor<R>)
     }
 
     fun <R> accept(visitor: Visitor<R>): R
 }
 
-data class This(
-    override val type: Type, // ClassType
-) : Ref {
+data class ArkThis(
+    override val type: ArkType, // ClassType
+) : Ref, CommonThis {
     override fun toString(): String = "this"
 
     override fun <R> accept(visitor: Ref.Visitor<R>): R {
@@ -56,8 +59,8 @@ data class This(
 
 data class ParameterRef(
     val index: Int,
-    override val type: Type,
-) : Ref {
+    override val type: ArkType,
+) : Ref, CommonArgument {
     override fun toString(): String {
         return "arg$index"
     }
@@ -68,9 +71,9 @@ data class ParameterRef(
 }
 
 data class ArrayAccess(
-    val array: Value,
-    val index: Value,
-    override val type: Type,
+    val array: ArkEntity,
+    val index: ArkEntity,
+    override val type: ArkType,
 ) : Ref, LValue {
     override fun toString(): String {
         return "$array[$index]"
@@ -84,12 +87,12 @@ data class ArrayAccess(
 interface FieldRef : Ref, LValue {
     val field: FieldSignature
 
-    override val type: Type
+    override val type: ArkType
         get() = this.field.sub.type
 }
 
 data class InstanceFieldRef(
-    val instance: Value, // Local
+    val instance: ArkEntity, // Local
     override val field: FieldSignature,
 ) : FieldRef {
     override fun toString(): String {

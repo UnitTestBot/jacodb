@@ -53,45 +53,39 @@ import org.jacodb.panda.dynamic.ark.base.TypeOfExpr
 import org.jacodb.panda.dynamic.ark.base.UnaryOperation
 import org.jacodb.panda.dynamic.ark.base.UndefinedConstant
 
-fun Stmt.getUses(): Sequence<ArkEntity> {
-    return accept(StmtGetUses)
+fun Stmt.getOperands(): Sequence<ArkEntity> {
+    return accept(StmtGetOperands)
 }
 
-fun ArkEntity.getUses(): Sequence<ArkEntity> {
-    return accept(ValueGetUses)
+fun ArkEntity.getOperands(): Sequence<ArkEntity> {
+    return accept(ValueGetOperands)
 }
 
-private object StmtGetUses : Stmt.Visitor<Sequence<ArkEntity>> {
+private object StmtGetOperands : Stmt.Visitor<Sequence<ArkEntity>> {
     override fun visit(stmt: NopStmt): Sequence<ArkEntity> = sequence {
         // empty
     }
 
     override fun visit(stmt: AssignStmt): Sequence<ArkEntity> = sequence {
-        yieldAll(stmt.left.getUses())
         yield(stmt.right)
-        yieldAll(stmt.right.getUses())
     }
 
     override fun visit(stmt: CallStmt): Sequence<ArkEntity> = sequence {
         yield(stmt.expr)
-        yieldAll(stmt.expr.getUses())
     }
 
     override fun visit(stmt: DeleteStmt): Sequence<ArkEntity> = sequence {
         yield(stmt.arg)
-        yieldAll(stmt.arg.getUses())
     }
 
     override fun visit(stmt: ReturnStmt): Sequence<ArkEntity> = sequence {
         if (stmt.arg != null) {
             yield(stmt.arg)
-            yieldAll(stmt.arg.getUses())
         }
     }
 
     override fun visit(stmt: ThrowStmt): Sequence<ArkEntity> = sequence {
         yield(stmt.arg)
-        yieldAll(stmt.arg.getUses())
     }
 
     override fun visit(stmt: GotoStmt): Sequence<ArkEntity> = sequence {
@@ -100,20 +94,17 @@ private object StmtGetUses : Stmt.Visitor<Sequence<ArkEntity>> {
 
     override fun visit(stmt: IfStmt): Sequence<ArkEntity> = sequence {
         yield(stmt.condition)
-        yieldAll(stmt.condition.getUses())
     }
 
     override fun visit(stmt: SwitchStmt): Sequence<ArkEntity> = sequence {
         yield(stmt.arg)
-        yieldAll(stmt.arg.getUses())
         for (case in stmt.cases) {
             yield(case)
-            yieldAll(case.getUses())
         }
     }
 }
 
-private object ValueGetUses : ArkEntity.Visitor<Sequence<ArkEntity>> {
+private object ValueGetOperands : ArkEntity.Visitor<Sequence<ArkEntity>> {
     override fun visit(value: Local): Sequence<ArkEntity> = sequence {
         // empty
     }
@@ -142,7 +133,6 @@ private object ValueGetUses : ArkEntity.Visitor<Sequence<ArkEntity>> {
         // TODO: check
         for (element in value.elements) {
             yield(element)
-            yieldAll(element.getUses())
         }
     }
 
@@ -150,7 +140,6 @@ private object ValueGetUses : ArkEntity.Visitor<Sequence<ArkEntity>> {
         // TODO: check
         for ((_, v) in value.properties) {
             yield(v)
-            yieldAll(v.getUses())
         }
     }
 
@@ -160,68 +149,49 @@ private object ValueGetUses : ArkEntity.Visitor<Sequence<ArkEntity>> {
 
     override fun visit(expr: NewArrayExpr): Sequence<ArkEntity> = sequence {
         yield(expr.size)
-        yieldAll(expr.size.getUses())
     }
 
     override fun visit(expr: TypeOfExpr): Sequence<ArkEntity> = sequence {
         yield(expr.arg)
-        yieldAll(expr.arg.getUses())
     }
 
     override fun visit(expr: InstanceOfExpr): Sequence<ArkEntity> = sequence {
         yield(expr.arg)
-        yieldAll(expr.arg.getUses())
     }
 
     override fun visit(expr: LengthExpr): Sequence<ArkEntity> = sequence {
         yield(expr.arg)
-        yieldAll(expr.arg.getUses())
     }
 
     override fun visit(expr: CastExpr): Sequence<ArkEntity> = sequence {
         yield(expr.arg)
-        yieldAll(expr.arg.getUses())
     }
 
     override fun visit(expr: PhiExpr): Sequence<ArkEntity> = sequence {
-        for (arg in expr.args) {
-            yieldAll(arg.getUses())
-        }
+        yieldAll(expr.args)
     }
 
     override fun visit(expr: UnaryOperation): Sequence<ArkEntity> = sequence {
         yield(expr.arg)
-        yieldAll(expr.arg.getUses())
     }
 
     override fun visit(expr: BinaryOperation): Sequence<ArkEntity> = sequence {
         yield(expr.left)
-        yieldAll(expr.left.getUses())
         yield(expr.right)
-        yieldAll(expr.right.getUses())
     }
 
     override fun visit(expr: RelationOperation): Sequence<ArkEntity> = sequence {
         yield(expr.left)
-        yieldAll(expr.left.getUses())
         yield(expr.right)
-        yieldAll(expr.right.getUses())
     }
 
     override fun visit(expr: InstanceCallExpr): Sequence<ArkEntity> = sequence {
         yield(expr.instance)
-        yieldAll(expr.instance.getUses())
-        for (arg in expr.args) {
-            yield(arg)
-            yieldAll(arg.getUses())
-        }
+        yieldAll(expr.args)
     }
 
     override fun visit(expr: StaticCallExpr): Sequence<ArkEntity> = sequence {
-        for (arg in expr.args) {
-            yield(arg)
-            yieldAll(arg.getUses())
-        }
+        yieldAll(expr.args)
     }
 
     override fun visit(ref: ArkThis): Sequence<ArkEntity> = sequence {
@@ -234,14 +204,11 @@ private object ValueGetUses : ArkEntity.Visitor<Sequence<ArkEntity>> {
 
     override fun visit(ref: ArrayAccess): Sequence<ArkEntity> = sequence {
         yield(ref.array)
-        yieldAll(ref.array.getUses())
         yield(ref.index)
-        yieldAll(ref.index.getUses())
     }
 
     override fun visit(ref: InstanceFieldRef): Sequence<ArkEntity> = sequence {
         yield(ref.instance)
-        yieldAll(ref.instance.getUses())
     }
 
     override fun visit(ref: StaticFieldRef): Sequence<ArkEntity> = sequence {

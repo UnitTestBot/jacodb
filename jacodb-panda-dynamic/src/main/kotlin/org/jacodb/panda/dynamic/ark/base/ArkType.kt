@@ -20,7 +20,7 @@ import org.jacodb.api.common.CommonType
 import org.jacodb.api.common.CommonTypeName
 import org.jacodb.panda.dynamic.ark.model.ClassSignature
 
-interface Type : CommonType, CommonTypeName {
+interface ArkType : CommonType, CommonTypeName {
     override val typeName: String
 
     override val nullable: Boolean?
@@ -62,64 +62,64 @@ interface Type : CommonType, CommonTypeName {
             override fun visit(type: ArrayObjectType): R = defaultVisit(type)
             override fun visit(type: UnclearRefType): R = defaultVisit(type)
 
-            fun defaultVisit(type: Type): R
+            fun defaultVisit(type: ArkType): R
         }
     }
 
     fun <R> accept(visitor: Visitor<R>): R
 }
 
-object AnyType : Type {
+object AnyType : ArkType {
     override val typeName: String
         get() = "any"
 
     override fun toString(): String = typeName
 
-    override fun <R> accept(visitor: Type.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkType.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-object UnknownType : Type {
+object UnknownType : ArkType {
     override val typeName: String
         get() = "unknown"
 
     override fun toString(): String = typeName
 
-    override fun <R> accept(visitor: Type.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkType.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
 data class UnionType(
-    val types: List<Type>,
-) : Type {
+    val types: List<ArkType>,
+) : ArkType {
     override val typeName: String
         get() = types.joinToString(separator = " | ") { it.typeName }
 
     override fun toString(): String = typeName
 
-    override fun <R> accept(visitor: Type.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkType.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
 data class TupleType(
-    val types: List<Type>,
-) : Type {
+    val types: List<ArkType>,
+) : ArkType {
     override val typeName: String
         get() = types.joinToString(prefix = "[", postfix = "]") { it.typeName }
 
     override fun toString(): String = typeName
 
-    override fun <R> accept(visitor: Type.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkType.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
 // TODO: EnumType
 
-interface PrimitiveType : Type
+interface PrimitiveType : ArkType
 
 object BooleanType : PrimitiveType {
     override val typeName: String
@@ -127,7 +127,7 @@ object BooleanType : PrimitiveType {
 
     override fun toString(): String = typeName
 
-    override fun <R> accept(visitor: Type.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkType.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -138,7 +138,7 @@ object NumberType : PrimitiveType {
 
     override fun toString(): String = typeName
 
-    override fun <R> accept(visitor: Type.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkType.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -149,7 +149,7 @@ object StringType : PrimitiveType {
 
     override fun toString(): String = typeName
 
-    override fun <R> accept(visitor: Type.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkType.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -160,7 +160,7 @@ object NullType : PrimitiveType {
 
     override fun toString(): String = typeName
 
-    override fun <R> accept(visitor: Type.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkType.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -171,7 +171,7 @@ object UndefinedType : PrimitiveType {
 
     override fun toString(): String = typeName
 
-    override fun <R> accept(visitor: Type.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkType.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -182,7 +182,7 @@ object VoidType : PrimitiveType {
 
     override fun toString(): String = typeName
 
-    override fun <R> accept(visitor: Type.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkType.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -193,7 +193,7 @@ object NeverType : PrimitiveType {
 
     override fun toString(): String = typeName
 
-    override fun <R> accept(visitor: Type.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkType.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -206,12 +206,12 @@ data class LiteralType(
 
     override fun toString(): String = typeName
 
-    override fun <R> accept(visitor: Type.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkType.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
-interface RefType : Type
+interface RefType : ArkType
 
 data class ClassType(
     val classSignature: ClassSignature,
@@ -221,13 +221,13 @@ data class ClassType(
 
     override fun toString(): String = typeName
 
-    override fun <R> accept(visitor: Type.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkType.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
 data class ArrayType(
-    val elementType: Type,
+    val elementType: ArkType,
     val dimensions: Int,
 ) : RefType {
     override val typeName: String
@@ -235,20 +235,20 @@ data class ArrayType(
 
     override fun toString(): String = typeName
 
-    override fun <R> accept(visitor: Type.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkType.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
 
 data class ArrayObjectType(
-    val elementType: Type,
+    val elementType: ArkType,
 ) : RefType {
     override val typeName: String
         get() = "Array<${elementType.typeName}>"
 
     override fun toString(): String = typeName
 
-    override fun <R> accept(visitor: Type.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkType.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -258,7 +258,7 @@ data class UnclearRefType(
 ) : RefType {
     override fun toString(): String = typeName
 
-    override fun <R> accept(visitor: Type.Visitor<R>): R {
+    override fun <R> accept(visitor: ArkType.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
