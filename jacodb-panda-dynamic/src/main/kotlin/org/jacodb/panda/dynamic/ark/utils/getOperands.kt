@@ -58,7 +58,7 @@ fun Stmt.getOperands(): Sequence<ArkEntity> {
 }
 
 fun ArkEntity.getOperands(): Sequence<ArkEntity> {
-    return accept(ValueGetOperands)
+    return accept(EntityGetOperands)
 }
 
 private object StmtGetOperands : Stmt.Visitor<Sequence<ArkEntity>> {
@@ -98,13 +98,11 @@ private object StmtGetOperands : Stmt.Visitor<Sequence<ArkEntity>> {
 
     override fun visit(stmt: SwitchStmt): Sequence<ArkEntity> = sequence {
         yield(stmt.arg)
-        for (case in stmt.cases) {
-            yield(case)
-        }
+        yieldAll(stmt.cases)
     }
 }
 
-private object ValueGetOperands : ArkEntity.Visitor<Sequence<ArkEntity>> {
+private object EntityGetOperands : ArkEntity.Visitor<Sequence<ArkEntity>> {
     override fun visit(value: ArkLocal): Sequence<ArkEntity> = sequence {
         // empty
     }

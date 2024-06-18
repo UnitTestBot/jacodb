@@ -26,17 +26,17 @@ import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.panda.dynamic.ark.base.AnyType
-import org.jacodb.panda.dynamic.ark.base.ArkConstant
-import org.jacodb.panda.dynamic.ark.base.ArkEntity
-import org.jacodb.panda.dynamic.ark.base.ArkThis
-import org.jacodb.panda.dynamic.ark.base.ArkValue
 import org.jacodb.panda.dynamic.ark.base.ArkArrayAccess
 import org.jacodb.panda.dynamic.ark.base.ArkCallExpr
-import org.jacodb.panda.dynamic.ark.base.CastExpr
+import org.jacodb.panda.dynamic.ark.base.ArkConstant
+import org.jacodb.panda.dynamic.ark.base.ArkEntity
 import org.jacodb.panda.dynamic.ark.base.ArkImmediate
 import org.jacodb.panda.dynamic.ark.base.ArkInstanceFieldRef
 import org.jacodb.panda.dynamic.ark.base.ArkParameterRef
 import org.jacodb.panda.dynamic.ark.base.ArkStaticFieldRef
+import org.jacodb.panda.dynamic.ark.base.ArkThis
+import org.jacodb.panda.dynamic.ark.base.ArkValue
+import org.jacodb.panda.dynamic.ark.base.CastExpr
 import org.jacodb.panda.dynamic.ark.base.Stmt
 import org.jacodb.panda.dynamic.ark.model.ArkFile
 import org.jacodb.panda.dynamic.ark.model.ArkMethod
@@ -46,6 +46,7 @@ import org.jacodb.taint.configuration.ConstantValue
 import org.jacodb.analysis.util.toPath as _toPath
 import org.jacodb.analysis.util.toPathOrNull as _toPathOrNull
 import org.jacodb.panda.dynamic.ark.utils.getOperands as _getOperands
+import org.jacodb.panda.dynamic.ark.utils.getValues as _getValues
 
 interface ArkTraits : Traits<ArkMethod, Stmt> {
 
@@ -113,7 +114,7 @@ interface ArkTraits : Traits<ArkMethod, Stmt> {
 
     override fun CommonExpr.getValues(): Set<ArkValue> {
         check(this is ArkEntity)
-        return _getOperands().filterIsInstance<ArkValue>().toSet()
+        return _getValues().toSet()
     }
 
     override fun Stmt.getOperands(): List<ArkEntity> {

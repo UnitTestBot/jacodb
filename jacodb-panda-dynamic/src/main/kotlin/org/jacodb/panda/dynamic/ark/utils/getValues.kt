@@ -17,18 +17,11 @@
 package org.jacodb.panda.dynamic.ark.utils
 
 import org.jacodb.panda.dynamic.ark.base.ArkEntity
+import org.jacodb.panda.dynamic.ark.base.ArkValue
 import org.jacodb.panda.dynamic.ark.base.Stmt
 
-fun Stmt.getUses(): Sequence<ArkEntity> = sequence {
-    for (op in getOperands()) {
-        yield(op)
-        yieldAll(op.getUses())
-    }
-}
+fun Stmt.getValues(): Sequence<ArkValue> =
+    getOperands().filterIsInstance<ArkValue>()
 
-fun ArkEntity.getUses(): Sequence<ArkEntity> = sequence {
-    for (op in getOperands()) {
-        yield(op)
-        yieldAll(op.getUses())
-    }
-}
+fun ArkEntity.getValues(): Sequence<ArkValue> =
+    getOperands().filterIsInstance<ArkValue>()
