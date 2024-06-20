@@ -235,7 +235,7 @@ fun convertToArkEntity(value: ValueDto): ArkEntity {
         )
 
         is InstanceCallExprDto -> ArkInstanceCallExpr(
-            instance = convertToArkEntity(value.instance) as ArkLocal, // safe cast
+            instance = convertToArkEntity(value.instance),
             method = convertToArkMethodSignature(value.method),
             args = value.args.map { convertToArkEntity(it) as ArkValue },
         )
@@ -329,6 +329,8 @@ fun convertToArkUnaryOp(op: String): UnaryOp {
         "typeof" -> UnaryOp.Typeof
         "void" -> UnaryOp.Void
         "delete" -> UnaryOp.Delete
+        "MinusToken" -> UnaryOp.Minus
+        "PlusToken" -> UnaryOp.Plus
         else -> error("Unknown UnaryOp: $op")
     }
 }

@@ -265,7 +265,7 @@ interface ArkCallExpr : ArkExpr, CommonCallExpr {
 }
 
 data class ArkInstanceCallExpr(
-    val instance: ArkLocal,
+    val instance: ArkEntity,
     override val method: ArkMethodSignature,
     override val args: List<ArkValue>,
 ) : ArkCallExpr {

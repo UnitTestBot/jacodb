@@ -98,7 +98,7 @@ data class ImportInfoDto(
     val importClauseName: String,
     val importType: String,
     val importFrom: String,
-    val nameBeforeAs: String?,
+    val nameBeforeAs: String? = null,
     val modifiers: List<String>,
     val originTsPosition: LineColPositionDto,
 )

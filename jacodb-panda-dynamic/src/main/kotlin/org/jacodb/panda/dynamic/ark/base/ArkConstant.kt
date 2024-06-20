@@ -120,13 +120,15 @@ object ArkUndefinedConstant : ArkConstant {
 
 data class ArkArrayLiteral(
     val elements: List<ArkEntity>,
-    override val type: ArkArrayType,
+    override val type: ArkType, // ArkArrayType
 ) : ArkConstant {
-    init {
-        require(type.dimensions == 1) {
-            "Array type of array literal must have exactly one dimension"
-        }
-    }
+
+    // ArkArrayType
+    // init {
+    //     require(type.dimensions == 1) {
+    //         "Array type of array literal must have exactly one dimension"
+    //     }
+    // }
 
     override fun toString(): String {
         return elements.joinToString(prefix = "[", postfix = "]")
