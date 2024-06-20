@@ -450,16 +450,16 @@ fun cfg2cfg(cfg: CfgDto, arkMethod: ArkMethod): ArkCfg {
             }
         }
     }
-    val successorMap: MutableMap<ArkStmt, Set<ArkStmt>> = hashMapOf()
+    val successorMap: MutableMap<ArkStmt, List<ArkStmt>> = hashMapOf()
     for (block in cfg.blocks) {
         for (i in block.stmts.indices) {
             val arkStmt = stmts[blockStart[block.id]!! + i]
             if (i == block.stmts.lastIndex) {
-                successorMap[arkStmt] = block.successors.mapNotNullTo(hashSetOf()) { id ->
+                successorMap[arkStmt] = block.successors.mapNotNull { id ->
                     blockStart[id]?.let { stmts[it] }
                 }
             } else {
-                successorMap[arkStmt] = setOf(stmts[i + 1])
+                successorMap[arkStmt] = listOf(stmts[i + 1])
             }
         }
     }
