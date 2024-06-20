@@ -17,7 +17,6 @@
 package org.jacodb.panda.dynamic.ark.model
 
 import org.jacodb.api.common.CommonMethod
-import org.jacodb.panda.dynamic.ark.base.ArkLocal
 import org.jacodb.panda.dynamic.ark.base.ArkType
 import org.jacodb.panda.dynamic.ark.graph.ArkCfg
 
@@ -26,7 +25,6 @@ import org.jacodb.panda.dynamic.ark.graph.ArkCfg
 interface ArkMethod : CommonMethod {
     val enclosingClass: ArkClass
     val signature: ArkMethodSignature
-    val locals: List<ArkLocal>
     val cfg: ArkCfg
 
     override val name: String
@@ -45,7 +43,6 @@ interface ArkMethod : CommonMethod {
 
 class ArkMethodImpl(
     override val signature: ArkMethodSignature,
-    override val locals: List<ArkLocal>,
 ) : ArkMethod {
     override lateinit var enclosingClass: ArkClass
     override lateinit var cfg: ArkCfg

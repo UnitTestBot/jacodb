@@ -23,8 +23,7 @@ import org.jacodb.panda.dynamic.ark.model.ArkMethod
 
 data class ArkInstLocation(
     override val method: ArkMethod,
-    // val index: Int,
-    // val lineNumber: Int,
+    val index: Int,
 ) : CommonInstLocation
 
 interface ArkStmt : CommonInst {

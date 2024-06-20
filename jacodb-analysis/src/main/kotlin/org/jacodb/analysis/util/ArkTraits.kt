@@ -54,7 +54,7 @@ interface ArkTraits : Traits<ArkMethod, ArkStmt> {
         get() {
             check(this is ArkCallExpr)
             // return cp.getMethodBySignature(method) ?: error("Method not found: $method")
-            return ArkMethodImpl(method, emptyList())
+            return ArkMethodImpl(method)
         }
 
     override val ArkMethod.thisInstance: ArkThis

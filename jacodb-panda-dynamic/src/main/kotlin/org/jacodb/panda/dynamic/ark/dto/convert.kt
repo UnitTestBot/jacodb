@@ -73,7 +73,6 @@ import org.jacodb.panda.dynamic.ark.base.ArkValue
 import org.jacodb.panda.dynamic.ark.base.ArkVoidType
 import org.jacodb.panda.dynamic.ark.base.BinaryOp
 import org.jacodb.panda.dynamic.ark.base.UnaryOp
-import org.jacodb.panda.dynamic.ark.graph.ArkBasicBlock
 import org.jacodb.panda.dynamic.ark.graph.ArkCfg
 import org.jacodb.panda.dynamic.ark.model.ArkClass
 import org.jacodb.panda.dynamic.ark.model.ArkClassImpl
@@ -419,22 +418,52 @@ fun convertToArkMethodSignature(method: MethodSignatureDto): ArkMethodSignature 
 
 fun convertToArkMethod(method: MethodDto): ArkMethod {
     val signature = convertToArkMethodSignature(method.signature)
-    val locals = method.body.locals.map {
-        convertToArkEntity(it) as ArkLocal  // safe cast
-    }
-    val arkMethod = ArkMethodImpl(signature, locals)
-    val location = ArkInstLocation(arkMethod)
-    val blocks = method.body.cfg.blocks.associate { block ->
-        block.id to ArkBasicBlock(
-            id = block.id,
-            successors = block.successors,
-            predecessors = block.predecessors,
-            stmts = block.stmts.map { convertToArkStmt(it, location) },
-        )
-    }
-    val cfg = ArkCfg(blocks)
+    // Note: locals are not used in the current implementation
+    // val locals = method.body.locals.map {
+    //     convertToArkEntity(it) as ArkLocal  // safe cast
+    // }
+    val arkMethod = ArkMethodImpl(signature)
+    val cfg = cfg2cfg(method.body.cfg, arkMethod)
     arkMethod.cfg = cfg
     return arkMethod
+}
+
+fun cfg2cfg(cfg: CfgDto, arkMethod: ArkMethod): ArkCfg {
+    val stmts: MutableList<ArkStmt> = mutableListOf()
+    val blocks = cfg.blocks.associateBy { it.id }
+    val visited: MutableSet<Int> = hashSetOf()
+    val queue: ArrayDeque<Int> = ArrayDeque()
+    queue.add(0)
+    val blockStart: MutableMap<Int, Int> = hashMapOf()
+    while (queue.isNotEmpty()) {
+        val block = blocks[queue.removeFirst()]!!
+        for ((i, stmt) in block.stmts.withIndex()) {
+            if (i == 0) {
+                blockStart[block.id] = stmts.size
+            }
+            val location = ArkInstLocation(arkMethod, stmts.size)
+            stmts += convertToArkStmt(stmt, location)
+        }
+        for (next in block.successors) {
+            if (visited.add(next)) {
+                queue.addLast(next)
+            }
+        }
+    }
+    val successorMap: MutableMap<ArkStmt, List<ArkStmt>> = hashMapOf()
+    for (block in cfg.blocks) {
+        for (i in block.stmts.indices) {
+            val arkStmt = stmts[blockStart[block.id]!! + i]
+            if (i == block.stmts.lastIndex) {
+                successorMap[arkStmt] = block.successors.mapNotNull { id ->
+                    blockStart[id]?.let { stmts[it] }
+                }
+            } else {
+                successorMap[arkStmt] = listOf(stmts[i + 1])
+            }
+        }
+    }
+    return ArkCfg(stmts, successorMap)
 }
 
 fun convertToArkField(field: FieldDto): ArkField {

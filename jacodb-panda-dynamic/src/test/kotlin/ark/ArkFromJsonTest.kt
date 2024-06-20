@@ -33,8 +33,8 @@ import org.jacodb.panda.dynamic.ark.dto.StmtDto
 import org.jacodb.panda.dynamic.ark.dto.convertToArkEntity
 import org.jacodb.panda.dynamic.ark.dto.convertToArkFile
 import org.jacodb.panda.dynamic.ark.dto.convertToArkStmt
-import org.jacodb.panda.dynamic.ark.model.ArkMethodImpl
 import org.jacodb.panda.dynamic.ark.model.ArkClassSignature
+import org.jacodb.panda.dynamic.ark.model.ArkMethodImpl
 import org.jacodb.panda.dynamic.ark.model.ArkMethodSignature
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -113,8 +113,8 @@ class ArkFromJsonTest {
             parameters = emptyList(),
             returnType = ArkAnyType,
         )
-        val method = ArkMethodImpl(signature, emptyList())
-        val location = ArkInstLocation(method)
+        val method = ArkMethodImpl(signature)
+        val location = ArkInstLocation(method, -1)
         val stmt = convertToArkStmt(stmtDto, location)
         println("stmt = $stmt")
     }
