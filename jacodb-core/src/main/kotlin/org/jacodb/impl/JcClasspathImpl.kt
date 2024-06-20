@@ -20,6 +20,7 @@ import kotlinx.coroutines.*
 import org.jacodb.api.jvm.*
 import org.jacodb.api.jvm.JcClasspathExtFeature.JcResolvedClassResult
 import org.jacodb.api.jvm.JcClasspathExtFeature.JcResolvedTypeResult
+import org.jacodb.api.jvm.ext.JAVA_OBJECT
 import org.jacodb.api.jvm.ext.toType
 import org.jacodb.impl.bytecode.JcClassOrInterfaceImpl
 import org.jacodb.impl.features.JcFeatureEventImpl
@@ -36,6 +37,7 @@ import org.jacodb.impl.types.JcClassTypeImpl
 import org.jacodb.impl.types.substition.JcSubstitutorImpl
 import org.jacodb.impl.vfs.ClasspathVfs
 import org.jacodb.impl.vfs.GlobalClassesVfs
+import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcClasspathImpl(
     private val locationsRegistrySnapshot: LocationsRegistrySnapshot,
@@ -66,11 +68,17 @@ class JcClasspathImpl(
         }
     }
 
-    override fun findClassOrNull(name: String): JcClassOrInterface? {
-        return featuresChain.call<JcClasspathExtFeature, JcResolvedClassResult> {
+    private val javaObjectClass: JcClassOrInterface? by lazy(PUBLICATION) {
+        findClassWithCache(JAVA_OBJECT)
+    }
+
+    override fun findClassOrNull(name: String): JcClassOrInterface? =
+        if (JAVA_OBJECT == name) javaObjectClass else findClassWithCache(name)
+
+    private fun findClassWithCache(name: String): JcClassOrInterface? =
+        featuresChain.call<JcClasspathExtFeature, JcResolvedClassResult> {
             it.tryFindClass(this, name)
         }?.clazz
-    }
 
     override fun typeOf(
         jcClass: JcClassOrInterface,
@@ -105,9 +113,12 @@ class JcClasspathImpl(
         } ?: newClassOrInterface(source)
     }
 
-    override fun findTypeOrNull(name: String): JcType? {
-        return findTypeOrNullWithNullability(name)
+    private val javaObjectType: JcType? by lazy(PUBLICATION) {
+        findTypeOrNullWithNullability(JAVA_OBJECT)
     }
+
+    override fun findTypeOrNull(name: String): JcType? =
+        if (JAVA_OBJECT == name) javaObjectType else findTypeOrNullWithNullability(name)
 
     override suspend fun <T : JcClasspathTask> execute(task: T): T {
         val locations = registeredLocations.filter { task.shouldProcess(it) }

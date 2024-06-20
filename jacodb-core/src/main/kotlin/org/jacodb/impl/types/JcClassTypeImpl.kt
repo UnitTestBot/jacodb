@@ -173,13 +173,13 @@ class JcClassTypeImpl(
         other as JcClassTypeImpl
 
         if (nullable != other.nullable) return false
-        if (jcClass != other.jcClass) return false
+        if (name != other.name) return false
         return substitutor == other.substitutor
     }
 
     override fun hashCode(): Int {
         val result = nullable.hashCode()
-        return 31 * result + jcClass.hashCode()
+        return 31 * result + name.hashCode()
     }
 
     private fun typedMethods(
