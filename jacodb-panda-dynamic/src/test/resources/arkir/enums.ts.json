@@ -1,0 +1,1401 @@
+{
+  "name": "enums.ts",
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "_DEFAULT_ARK_METHOD",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@save/enums: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "Response1",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp0",
+                "type": "unknown"
+              },
+              {
+                "name": "respond",
+                "type": "unknown"
+              },
+              {
+                "name": "c",
+                "type": "Circle"
+              },
+              {
+                "name": "E",
+                "type": "unknown"
+              },
+              {
+                "name": "f",
+                "type": "unknown"
+              },
+              {
+                "name": "a2",
+                "type": "unknown"
+              },
+              {
+                "name": "Enum",
+                "type": "unknown"
+              },
+              {
+                "name": "nameOfA",
+                "type": "unknown"
+              },
+              {
+                "name": "directions",
+                "type": "(unknown)[]"
+              },
+              {
+                "name": "Directions",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp1",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp2",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp3",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp4",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp5",
+                "type": "(unknown)[]"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@save/enums: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@save/enums: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "Response1",
+                          "type": "unknown"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "Yes",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "respond",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "Princess Caroline",
+                            "type": "string"
+                          },
+                          {
+                            "_": "Local",
+                            "name": "$temp0",
+                            "type": "unknown"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "c",
+                        "type": "Circle"
+                      },
+                      "right": {
+                        "_": "ObjectLiteralExpr",
+                        "type": "@save/enums: AnonymousClass-enums.ts-1"
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "f",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "E",
+                            "type": "unknown"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "a2",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "Enum",
+                          "type": "unknown"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "A",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "nameOfA",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "Enum",
+                          "type": "unknown"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "a2",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "Directions",
+                          "type": "unknown"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "Up",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "Directions",
+                          "type": "unknown"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "Down",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp3",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "Directions",
+                          "type": "unknown"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "Left",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp4",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "Directions",
+                          "type": "unknown"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "Right",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp5",
+                        "type": "(unknown)[]"
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "type": "unknown",
+                        "size": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "directions",
+                        "type": "(unknown)[]"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp5",
+                        "type": "(unknown)[]"
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "respond",
+            "parameters": [
+              {
+                "name": "recipient",
+                "type": "string",
+                "isOptional": false
+              },
+              {
+                "name": "message",
+                "type": "Response1",
+                "isOptional": false
+              }
+            ],
+            "returnType": "void"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@save/enums: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "recipient",
+                "type": "string"
+              },
+              {
+                "name": "message",
+                "type": "Response1"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "recipient",
+                        "type": "string"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "message",
+                        "type": "Response1"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 1,
+                        "type": "Response1"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@save/enums: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@save/enums: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "f",
+            "parameters": [
+              {
+                "name": "obj",
+                "type": "@save/enums: AnonymousClass-enums.ts-0",
+                "isOptional": false
+              }
+            ],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@save/enums: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "obj",
+                "type": "@save/enums: AnonymousClass-enums.ts-0"
+              },
+              {
+                "name": "$temp0",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "obj",
+                        "type": "@save/enums: AnonymousClass-enums.ts-0"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": "@save/enums: AnonymousClass-enums.ts-0"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@save/enums: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@save/enums: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "obj",
+                          "type": "@save/enums: AnonymousClass-enums.ts-0"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "X",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "unknown"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "signature": {
+        "name": "Direction1"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Direction1"
+            },
+            "name": "Up",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "1",
+            "type": "number"
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Direction1"
+            },
+            "name": "Down",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Direction1"
+            },
+            "name": "Left",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Direction1"
+            },
+            "name": "Right",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        }
+      ],
+      "methods": []
+    },
+    {
+      "signature": {
+        "name": "Direction2"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Direction2"
+            },
+            "name": "Up",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "\"UP\"",
+            "type": "string"
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Direction2"
+            },
+            "name": "Down",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "\"DOWN\"",
+            "type": "string"
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Direction2"
+            },
+            "name": "Left",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "\"LEFT\"",
+            "type": "string"
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Direction2"
+            },
+            "name": "Right",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "\"RIGHT\"",
+            "type": "string"
+          }
+        }
+      ],
+      "methods": []
+    },
+    {
+      "signature": {
+        "name": "BooleanLikeHeterogeneousEnum"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "BooleanLikeHeterogeneousEnum"
+            },
+            "name": "No",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "0",
+            "type": "number"
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "BooleanLikeHeterogeneousEnum"
+            },
+            "name": "Yes",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "\"YES\"",
+            "type": "string"
+          }
+        }
+      ],
+      "methods": []
+    },
+    {
+      "signature": {
+        "name": "E1"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "E1"
+            },
+            "name": "X",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "E1"
+            },
+            "name": "Y",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "E1"
+            },
+            "name": "Z",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        }
+      ],
+      "methods": []
+    },
+    {
+      "signature": {
+        "name": "E2"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "E2"
+            },
+            "name": "A",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "1",
+            "type": "number"
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "E2"
+            },
+            "name": "B",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "E2"
+            },
+            "name": "C",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        }
+      ],
+      "methods": []
+    },
+    {
+      "signature": {
+        "name": "FileAccess"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "FileAccess"
+            },
+            "name": "None",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "FileAccess"
+            },
+            "name": "Read",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "BinopExpr",
+            "op": "<<",
+            "left": {
+              "_": "Constant",
+              "value": "1",
+              "type": "number"
+            },
+            "right": {
+              "_": "Constant",
+              "value": "1",
+              "type": "number"
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "FileAccess"
+            },
+            "name": "Write",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "BinopExpr",
+            "op": "<<",
+            "left": {
+              "_": "Constant",
+              "value": "1",
+              "type": "number"
+            },
+            "right": {
+              "_": "Constant",
+              "value": "2",
+              "type": "number"
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "FileAccess"
+            },
+            "name": "ReadWrite",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "BinopExpr",
+            "op": "|",
+            "left": {
+              "_": "Local",
+              "name": "Read",
+              "type": "unknown"
+            },
+            "right": {
+              "_": "Local",
+              "name": "Write",
+              "type": "unknown"
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "FileAccess"
+            },
+            "name": "G",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "InstanceFieldRef",
+            "instance": {
+              "_": "Constant",
+              "value": "\"123\"",
+              "type": "string"
+            },
+            "field": {
+              "enclosingClass": {
+                "name": ""
+              },
+              "name": "length",
+              "fieldType": "unknown"
+            }
+          }
+        }
+      ],
+      "methods": []
+    },
+    {
+      "signature": {
+        "name": "Response1"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Response1"
+            },
+            "name": "No",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "0",
+            "type": "number"
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Response1"
+            },
+            "name": "Yes",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "1",
+            "type": "number"
+          }
+        }
+      ],
+      "methods": []
+    },
+    {
+      "signature": {
+        "name": "ShapeKind"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "ShapeKind"
+            },
+            "name": "Circle",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "ShapeKind"
+            },
+            "name": "Square",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        }
+      ],
+      "methods": []
+    },
+    {
+      "signature": {
+        "name": "Circle"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Circle"
+            },
+            "name": "kind",
+            "fieldType": "ShapeKind.Circle"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Circle"
+            },
+            "name": "radius",
+            "fieldType": "number"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        }
+      ],
+      "methods": []
+    },
+    {
+      "signature": {
+        "name": "Square"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Square"
+            },
+            "name": "kind",
+            "fieldType": "ShapeKind.Square"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Square"
+            },
+            "name": "sideLength",
+            "fieldType": "number"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        }
+      ],
+      "methods": []
+    },
+    {
+      "signature": {
+        "name": "E"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "E"
+            },
+            "name": "X",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "E"
+            },
+            "name": "Y",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "E"
+            },
+            "name": "Z",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        }
+      ],
+      "methods": []
+    },
+    {
+      "signature": {
+        "name": "Enum"
+      },
+      "modifiers": [
+        "DeclareKeyword"
+      ],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Enum"
+            },
+            "name": "A",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        }
+      ],
+      "methods": []
+    },
+    {
+      "signature": {
+        "name": "Directions"
+      },
+      "modifiers": [
+        "ConstKeyword"
+      ],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Directions"
+            },
+            "name": "Up",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Directions"
+            },
+            "name": "Down",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Directions"
+            },
+            "name": "Left",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Directions"
+            },
+            "name": "Right",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        }
+      ],
+      "methods": []
+    },
+    {
+      "signature": {
+        "name": "AnonymousClass-enums.ts-1"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-enums.ts-1"
+            },
+            "name": "kind",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "InstanceFieldRef",
+            "instance": {
+              "_": "Local",
+              "name": "ShapeKind",
+              "type": "unknown"
+            },
+            "field": {
+              "enclosingClass": {
+                "name": ""
+              },
+              "name": "Circle",
+              "fieldType": "unknown"
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-enums.ts-1"
+            },
+            "name": "radius",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "100",
+            "type": "number"
+          }
+        }
+      ],
+      "methods": []
+    }
+  ],
+  "importInfos": [],
+  "exportInfos": []
+}

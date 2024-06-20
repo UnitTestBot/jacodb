@@ -117,8 +117,6 @@ data class ArkTupleType(
     }
 }
 
-// TODO: EnumType
-
 interface ArkPrimitiveType : ArkType
 
 object ArkBooleanType : ArkPrimitiveType {
