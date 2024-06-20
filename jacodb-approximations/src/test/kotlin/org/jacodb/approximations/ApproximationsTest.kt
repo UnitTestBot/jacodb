@@ -23,18 +23,21 @@ import org.jacodb.api.jvm.ext.findDeclaredFieldOrNull
 import org.jacodb.approximation.*
 import org.jacodb.approximation.Approximations.findApproximationByOriginOrNull
 import org.jacodb.approximation.Approximations.findOriginalByApproximationOrNull
+import org.jacodb.approximation.JcEnrichedVirtualField
+import org.jacodb.approximation.JcEnrichedVirtualMethod
+import org.jacodb.approximation.toApproximationName
+import org.jacodb.approximation.toOriginalName
 import org.jacodb.approximations.target.KotlinClass
 import org.jacodb.impl.fs.JarLocation
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
+import org.jacodb.testing.WithRAMDB
 import org.jacodb.testing.guavaLib
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.io.File
 
-class ApproximationsTest : BaseTest() {
-
-    companion object : WithDB(Approximations)
+abstract class ApproximationsTest : BaseTest() {
 
     @Test
     fun `kotlin approximation`() {
@@ -207,8 +210,8 @@ class ApproximationsTest : BaseTest() {
             override val majorVersion: Int
                 get() = 8
         }).classes
-        assertNotNull(classes)
-        classes!!.forEach {
+        assertFalse(classes.isEmpty())
+        classes.forEach {
             val clazz = cp.findClass(it.key)
             if (!clazz.isAnnotation && !clazz.isInterface) {
                 println("Testing class: ${it.key}")
@@ -218,4 +221,14 @@ class ApproximationsTest : BaseTest() {
             }
         }
     }
+}
+
+class ApproximationsSqlTest : ApproximationsTest() {
+
+    companion object : WithDB(Approximations)
+}
+
+class ApproximationsRAMTest : ApproximationsTest() {
+
+    companion object : WithRAMDB(Approximations)
 }

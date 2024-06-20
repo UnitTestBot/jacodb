@@ -64,16 +64,16 @@ interface JcClasspath : Closeable, CommonProject {
      */
     fun findTypeOrNull(name: String): JcType?
 
-    fun classTypeOf(
+    fun typeOf(
         jcClass: JcClassOrInterface,
         nullability: Boolean? = null,
-        annotations: List<JcAnnotation> = listOf(),
-    ): JcClassType
+        annotations: List<JcAnnotation> = listOf()
+    ): JcRefType
 
     fun arrayTypeOf(
         elementType: JcType,
         nullability: Boolean? = null,
-        annotations: List<JcAnnotation> = listOf(),
+        annotations: List<JcAnnotation> = listOf()
     ): JcArrayType
 
     fun toJcClass(source: ClassSource): JcClassOrInterface
@@ -161,7 +161,7 @@ interface JcClasspathExtFeature : JcClasspathFeature {
     /**
      * semantic is the same as for `tryFindClass` method
      */
-    fun tryFindType(classpath: JcClasspath, name: String): JcResolvedTypeResult? = null
+    fun tryFindType(classpath: JcClasspath, name: String, nullable: Boolean? = null): JcResolvedTypeResult? = null
 
     fun findClasses(classpath: JcClasspath, name: String): List<JcClassOrInterface>? = null
 

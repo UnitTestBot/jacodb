@@ -25,20 +25,28 @@ import org.jacodb.api.jvm.JcMethod
 interface HierarchyExtension {
 
     /**
-     * find all subclasses or implementations if name points to interface. If [allHierarchy] is true then search
+     * find all subclasses or implementations if name points to interface. If [entireHierarchy] is true then search
      * will be done recursively
      *
      * @return list with unique ClassId
      */
-    fun findSubClasses(name: String, allHierarchy: Boolean, includeOwn: Boolean = false): Sequence<JcClassOrInterface>
+    fun findSubClasses(
+        name: String,
+        entireHierarchy: Boolean,
+        includeOwn: Boolean = false
+    ): Sequence<JcClassOrInterface>
 
     /**
-     * find all subclasses or implementations if name points to interface. If [allHierarchy] is true then search
+     * find all subclasses or implementations if name points to interface. If [entireHierarchy] is true then search
      * will be done recursively
      *
      * @return list with unique ClassId
      */
-    fun findSubClasses(jcClass: JcClassOrInterface, allHierarchy: Boolean, includeOwn: Boolean = false): Sequence<JcClassOrInterface>
+    fun findSubClasses(
+        jcClass: JcClassOrInterface,
+        entireHierarchy: Boolean,
+        includeOwn: Boolean = false
+    ): Sequence<JcClassOrInterface>
 
     /**
      * find overrides of current method

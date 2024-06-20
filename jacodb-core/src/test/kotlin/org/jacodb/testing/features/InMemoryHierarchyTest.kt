@@ -23,9 +23,16 @@ import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.findSubclassesInMemory
 import org.jacodb.impl.features.hierarchyExt
+import org.jacodb.impl.storage.dslContext
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
-import org.jacodb.testing.*
-import org.junit.jupiter.api.Assertions.*
+import org.jacodb.testing.BaseTest
+import org.jacodb.testing.LifecycleTest
+import org.jacodb.testing.WithDB
+import org.jacodb.testing.WithGlobalDB
+import org.jacodb.testing.WithRestoredDB
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.w3c.dom.Document
 import java.util.*
@@ -85,7 +92,7 @@ abstract class BaseInMemoryHierarchyTest : BaseTest() {
 
     @Test
     fun `find subclasses of Any`() {
-        val numberOfClasses = cp.db.persistence.read { it.fetchCount(CLASSES) }
+        val numberOfClasses = cp.db.persistence.read { it.dslContext.fetchCount(CLASSES) }
         assertEquals(numberOfClasses - 1, findSubClasses<Any>(allHierarchy = true).count())
     }
 

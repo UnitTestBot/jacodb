@@ -1,0 +1,2 @@
+org.jacodb.impl.caches.guava.GuavaCacheProvider
+org.jacodb.impl.caches.xodus.XodusCacheProvider

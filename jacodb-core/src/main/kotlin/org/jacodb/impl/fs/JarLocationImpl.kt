@@ -19,6 +19,7 @@ package org.jacodb.impl.fs
 import mu.KLogging
 import org.jacodb.api.jvm.JavaVersion
 import org.jacodb.api.jvm.LocationType
+import org.jacodb.impl.softLazy
 import java.io.File
 import java.util.jar.JarFile
 
@@ -42,15 +43,14 @@ open class JarLocation(
 
     override fun currentHash() = fileChecksum
 
-    override val classes: Map<String, ByteArray>?
-        get() {
-            try {
-                return jarFacade.bytecode
-            } catch (e: Exception) {
-                logger.warn(e) { "error loading classes from jar: ${jarOrFolder.absolutePath}. returning empty loader" }
-                return null
-            }
+    override val classes: Map<String, ByteArray> by softLazy {
+        try {
+            jarFacade.bytecode
+        } catch (e: Exception) {
+            logger.warn(e) { "error loading classes from jar: ${jarOrFolder.absolutePath}. returning empty loader" }
+            emptyMap()
         }
+    }
 
     override val classNames: Set<String>?
         get() = jarFacade.classes.keys

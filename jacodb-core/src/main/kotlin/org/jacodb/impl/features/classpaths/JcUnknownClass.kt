@@ -138,8 +138,15 @@ object UnknownClasses : JcClasspathExtFeature {
         })
     }
 
-    override fun tryFindType(classpath: JcClasspath, name: String): JcClasspathExtFeature.JcResolvedTypeResult {
-        return AbstractJcResolvedResult.JcResolvedTypeResultImpl(name, JcUnknownType(classpath, name, location))
+    override fun tryFindType(
+        classpath: JcClasspath,
+        name: String,
+        nullable: Boolean?
+    ): JcClasspathExtFeature.JcResolvedTypeResult {
+        return AbstractJcResolvedResult.JcResolvedTypeResultImpl(
+            name,
+            JcUnknownType(classpath, name, location, nullable ?: true)
+        )
     }
 }
 

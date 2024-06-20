@@ -18,10 +18,13 @@ package org.jacodb.api.jvm
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
+import org.jacodb.api.jvm.storage.ers.EntityRelationshipStorage
+import org.jacodb.api.jvm.storage.ers.Transaction
 import org.jooq.DSLContext
 import java.io.Closeable
 import java.io.File
 import java.sql.Connection
+import java.util.concurrent.ConcurrentHashMap
 
 enum class LocationType {
     RUNTIME,
@@ -142,13 +145,15 @@ interface JcDatabasePersistence : Closeable {
 
     val locations: List<JcByteCodeLocation>
 
+    val ers: EntityRelationshipStorage
+
     fun setup()
 
-    fun <T> write(action: (DSLContext) -> T): T
-    fun <T> read(action: (DSLContext) -> T): T
+    fun <T> write(action: (JCDBContext) -> T): T
+    fun <T> read(action: (JCDBContext) -> T): T
 
     fun persist(location: RegisteredLocation, classes: List<ClassSource>)
-    fun findSymbolId(symbol: String): Long?
+    fun findSymbolId(symbol: String): Long
     fun findSymbolName(symbolId: Long): String
     fun findLocation(locationId: Long): RegisteredLocation
 
@@ -162,6 +167,44 @@ interface JcDatabasePersistence : Closeable {
     fun createIndexes() {}
 }
 
+/**
+ * Abstract database access context contains several named context objects.
+ * Normally, there should be implemented specific context classes for each persistence
+ * implementation with its specific context objects.
+ *
+ * For SQLite persistence, JCDBContext should contain [DSLContext] object and may contain [Connection] object.
+ *
+ * For [EntityRelationshipStorage] persistence, JCDBContext should contain [Transaction] object.
+ */
+@Suppress("UNCHECKED_CAST")
+class JCDBContext private constructor() {
+
+    private val contextObjects = ConcurrentHashMap<ContextProperty<*>, Any>()
+
+    fun <T : Any> setContextObject(contextKey: ContextProperty<T>, contextObject: T) = apply {
+        contextObjects[contextKey] = contextObject
+    }
+
+    fun <T : Any> getContextObject(property: ContextProperty<T>): T =
+        contextObjects[property] as? T?
+            ?: throw NullPointerException("JCDBContext doesn't contain context object $property")
+
+    fun <T : Any> hasContextObject(property: ContextProperty<T>): Boolean = contextObjects.containsKey(property)
+
+    companion object {
+        fun <T : Any> of(contextKey: ContextProperty<T>, contextObject: T): JCDBContext {
+            return JCDBContext().apply { this(contextKey, contextObject) }
+        }
+
+        fun empty() = JCDBContext()
+    }
+}
+
+interface ContextProperty<T : Any>
+
+operator fun <T : Any> JCDBContext.invoke(contextKey: ContextProperty<T>, contextObject: T) =
+    setContextObject(contextKey, contextObject)
+
 interface RegisteredLocation {
     val jcLocation: JcByteCodeLocation?
     val id: Long
@@ -170,7 +213,7 @@ interface RegisteredLocation {
 }
 
 interface JCDBSymbolsInterner {
-    val jooq: DSLContext
     fun findOrNew(symbol: String): Long
-    fun flush(conn: Connection)
+    fun findSymbolName(symbolId: Long): String?
+    fun flush(context: JCDBContext)
 }

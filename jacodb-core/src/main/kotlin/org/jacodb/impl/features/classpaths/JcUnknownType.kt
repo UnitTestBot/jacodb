@@ -23,7 +23,12 @@ import org.jacodb.impl.types.TypeNameImpl
 import org.objectweb.asm.Opcodes
 
 
-class JcUnknownType(override var classpath: JcClasspath, private val name: String, private val location: VirtualLocation) : JcClassType {
+class JcUnknownType(
+    override var classpath: JcClasspath,
+    private val name: String,
+    private val location: VirtualLocation,
+    override var nullable: Boolean
+) : JcClassType {
 
     override val lookup: JcLookup<JcTypedField, JcTypedMethod> = JcUnknownTypeLookup(this)
 
@@ -45,8 +50,6 @@ class JcUnknownType(override var classpath: JcClasspath, private val name: Strin
     override val typeName: String
         get() = name
 
-    override val nullable: Boolean
-        get() = true
     override val annotations: List<JcAnnotation> = emptyList()
 
     override fun copyWithAnnotations(annotations: List<JcAnnotation>) = this

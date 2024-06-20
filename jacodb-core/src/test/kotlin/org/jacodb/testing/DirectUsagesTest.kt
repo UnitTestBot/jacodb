@@ -16,7 +16,6 @@
 
 package org.jacodb.testing
 
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.ext.CONSTRUCTOR
@@ -137,7 +136,7 @@ class DirectUsagesTest : BaseTest() {
             val methods = jcClass.declaredMethods
 
             methods.map {
-                it.name to it.usedMethods.map { it.enclosingClass.name + "#" + it.name }.toImmutableList()
+                it.name to it.usedMethods.map { it.enclosingClass.name + "#" + it.name }
             }.filterNot { it.second.isEmpty() }.sortedBy { it.first }
         }
     }

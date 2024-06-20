@@ -23,13 +23,23 @@ import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
 import org.jacodb.testing.allClasspath
 import org.jacodb.testing.guavaLib
-import org.openjdk.jmh.annotations.*
+import org.openjdk.jmh.annotations.Benchmark
+import org.openjdk.jmh.annotations.BenchmarkMode
+import org.openjdk.jmh.annotations.Fork
+import org.openjdk.jmh.annotations.Level
+import org.openjdk.jmh.annotations.Measurement
+import org.openjdk.jmh.annotations.Mode
+import org.openjdk.jmh.annotations.OutputTimeUnit
+import org.openjdk.jmh.annotations.Scope
+import org.openjdk.jmh.annotations.State
+import org.openjdk.jmh.annotations.TearDown
+import org.openjdk.jmh.annotations.Warmup
 import java.io.File
 import java.util.concurrent.TimeUnit
 
 
 @State(Scope.Benchmark)
-@Fork(1, jvmArgs = ["-Xmx12288m"])
+@Fork(2, jvmArgs = ["-Xmx12g", "-Xms12g"])
 @Warmup(iterations = 2)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -122,8 +132,11 @@ class JcdbBenchmarks {
         }
     }
 
-    @TearDown(Level.Iteration)
+    @TearDown(Level.Invocation)
     fun tearDown() {
-        db?.close()
+        db?.let {
+            db = null
+            it.close()
+        }
     }
 }

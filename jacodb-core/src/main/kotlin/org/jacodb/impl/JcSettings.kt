@@ -20,10 +20,19 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import org.jacodb.api.jvm.Hook
 import org.jacodb.api.jvm.JcDatabase
-import org.jacodb.api.jvm.JcDatabasePersistence
 import org.jacodb.api.jvm.JcFeature
-import org.jacodb.impl.fs.JavaRuntime
-import org.jacodb.impl.storage.SQLitePersistenceImpl
+import org.jacodb.api.jvm.JcPersistenceImplSettings
+import org.jacodb.api.jvm.JcPersistenceSettings
+import org.jacodb.api.jvm.storage.ers.EmptyErsSettings
+import org.jacodb.api.jvm.storage.ers.ErsSettings
+import org.jacodb.impl.storage.SQLITE_DATABASE_PERSISTENCE_SPI
+import org.jacodb.impl.storage.ers.ERS_DATABASE_PERSISTENCE_SPI
+import org.jacodb.impl.storage.ers.kv.KV_ERS_SPI
+import org.jacodb.impl.storage.ers.ram.RAM_ERS_SPI
+import org.jacodb.impl.storage.ers.sql.SQL_ERS_SPI
+import org.jacodb.impl.storage.kv.lmdb.LMDB_KEY_VALUE_STORAGE_SPI
+import org.jacodb.impl.storage.kv.rocks.ROCKS_KEY_VALUE_STORAGE_SPI
+import org.jacodb.impl.storage.kv.xodus.XODUS_KEY_VALUE_STORAGE_SPI
 import java.io.File
 import java.time.Duration
 
@@ -37,13 +46,16 @@ class JcSettings {
         private set
 
     /** persisted  */
-    var persistentType: JcPersistenceType? = null
-        private set
+    val persistenceId: String?
+        get() = persistenceSettings.persistenceId
 
-    var persistentLocation: String? = null
-        private set
+    val persistenceLocation: String?
+        get() = persistenceSettings.persistenceLocation
 
-    var persistentClearOnStart: Boolean? = null
+    val persistenceClearOnStart: Boolean?
+        get() = persistenceSettings.persistenceClearOnStart
+
+    var persistenceSettings: JcPersistenceSettings = JcPersistenceSettings()
 
     var keepLocalVariableNames: Boolean = false
         private set
@@ -81,11 +93,15 @@ class JcSettings {
     fun persistent(
         location: String,
         clearOnStart: Boolean = false,
-        type: JcPersistenceType = PredefinedPersistenceType.SQLITE
+        implSettings: JcPersistenceImplSettings = JcSQLitePersistenceSettings
     ) = apply {
-        persistentLocation = location
-        persistentClearOnStart = clearOnStart
-        persistentType = type
+        persistenceSettings.persistenceLocation = location
+        persistenceSettings.persistenceClearOnStart = clearOnStart
+        persistenceSettings.implSettings = implSettings
+    }
+
+    fun persistenceImpl(persistenceImplSettings: JcPersistenceImplSettings) = apply {
+        persistenceSettings.implSettings = persistenceImplSettings
     }
 
     fun caching(settings: JcCacheSettings.() -> Unit) = apply {
@@ -161,32 +177,6 @@ class JcSettings {
     }
 }
 
-interface JcPersistenceType {
-
-    fun newPersistence(
-        runtime: JavaRuntime,
-        featuresRegistry: FeaturesRegistry,
-        settings: JcSettings
-    ): JcDatabasePersistence
-}
-
-enum class PredefinedPersistenceType : JcPersistenceType {
-    SQLITE {
-        override fun newPersistence(
-            runtime: JavaRuntime,
-            featuresRegistry: FeaturesRegistry,
-            settings: JcSettings
-        ): JcDatabasePersistence {
-            return SQLitePersistenceImpl(
-                javaRuntime = runtime,
-                featuresRegistry = featuresRegistry,
-                location = settings.persistentLocation,
-                clearOnStart = settings.persistentClearOnStart ?: false
-            )
-        }
-    }
-}
-
 class JcByteCodeCache(val prefixes: List<String> = persistentListOf("java.", "javax.", "kotlinx.", "kotlin."))
 
 data class JcCacheSegmentSettings(
@@ -234,4 +224,41 @@ class JcCacheSettings {
                 JcCacheSegmentSettings(maxSize = maxSize, expiration = expiration, valueStoreType = valueStoreType)
         }
 
+}
+
+object JcSQLitePersistenceSettings : JcPersistenceImplSettings {
+    override val persistenceId: String
+        get() = SQLITE_DATABASE_PERSISTENCE_SPI
+}
+
+open class JcErsSettings(
+    val ersId: String,
+    val ersSettings: ErsSettings = EmptyErsSettings
+) : JcPersistenceImplSettings {
+
+    override val persistenceId: String
+        get() = ERS_DATABASE_PERSISTENCE_SPI
+}
+
+object JcRamErsSettings : JcErsSettings(RAM_ERS_SPI)
+
+object JcSqlErsSettings : JcErsSettings(SQL_ERS_SPI)
+
+/**
+ * Id of pluggable K/V storage being passed for [org.jacodb.impl.storage.ers.kv.KVEntityRelationshipStorageSPI].
+ */
+open class JcKvErsSettings(val kvId: String) : ErsSettings
+
+object JcXodusKvErsSettings : JcErsSettings(KV_ERS_SPI, JcKvErsSettings(XODUS_KEY_VALUE_STORAGE_SPI))
+
+object JcRocksKvErsSettings : JcErsSettings(KV_ERS_SPI, JcKvErsSettings(ROCKS_KEY_VALUE_STORAGE_SPI))
+
+// by default, mapSize is 1Gb
+class JcLmdbErsSettings(val mapSize: Long = 0x40_00_00_00) : JcKvErsSettings(LMDB_KEY_VALUE_STORAGE_SPI)
+
+object JcLmdbKvErsSettings : JcErsSettings(KV_ERS_SPI, JcLmdbErsSettings()) {
+
+    fun withMapSize(mapSize: Long): JcErsSettings {
+        return JcErsSettings(KV_ERS_SPI, JcLmdbErsSettings(mapSize))
+    }
 }

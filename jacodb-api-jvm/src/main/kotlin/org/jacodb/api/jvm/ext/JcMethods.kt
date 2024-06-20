@@ -18,13 +18,13 @@
 
 package org.jacodb.api.jvm.ext
 
-import kotlinx.collections.immutable.toImmutableList
 import org.jacodb.api.jvm.JcField
 import org.jacodb.api.jvm.JcMethod
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
+import java.util.*
 
 
 const val CONSTRUCTOR = "<init>"
@@ -79,7 +79,7 @@ val JcMethod.usedMethods: List<JcMethod>
                 }
             }
         }
-        return result.toImmutableList()
+        return result.toList()
     }
 
 class FieldUsagesResult(
@@ -117,7 +117,7 @@ val JcMethod.usedFields: FieldUsagesResult
             }
         }
         return FieldUsagesResult(
-            reads = reads.toImmutableList(),
-            writes = writes.toImmutableList()
+            reads = reads.toList(),
+            writes = writes.toList()
         )
     }
