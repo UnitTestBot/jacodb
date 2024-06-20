@@ -35,14 +35,11 @@ class ArkCfg(
         map
     }
 
-    val startingStmt: ArkStmt
-        get() = stmts.first()
-
     override val instructions: List<ArkStmt>
         get() = stmts
 
     override val entries: List<ArkStmt>
-        get() = listOf(startingStmt)
+        get() = listOf(stmts.first())
 
     override val exits: List<ArkTerminatingStmt>
         get() = instructions.filterIsInstance<ArkTerminatingStmt>()
