@@ -119,9 +119,9 @@ data class ArkTupleType(
 
 // TODO: EnumType
 
-interface PrimitiveType : ArkType
+interface ArkPrimitiveType : ArkType
 
-object ArkBooleanType : PrimitiveType {
+object ArkBooleanType : ArkPrimitiveType {
     override val typeName: String
         get() = "boolean"
 
@@ -132,7 +132,7 @@ object ArkBooleanType : PrimitiveType {
     }
 }
 
-object ArkNumberType : PrimitiveType {
+object ArkNumberType : ArkPrimitiveType {
     override val typeName: String
         get() = "number"
 
@@ -143,7 +143,7 @@ object ArkNumberType : PrimitiveType {
     }
 }
 
-object ArkStringType : PrimitiveType {
+object ArkStringType : ArkPrimitiveType {
     override val typeName: String
         get() = "string"
 
@@ -154,7 +154,7 @@ object ArkStringType : PrimitiveType {
     }
 }
 
-object ArkNullType : PrimitiveType {
+object ArkNullType : ArkPrimitiveType {
     override val typeName: String
         get() = "null"
 
@@ -165,7 +165,7 @@ object ArkNullType : PrimitiveType {
     }
 }
 
-object ArkUndefinedType : PrimitiveType {
+object ArkUndefinedType : ArkPrimitiveType {
     override val typeName: String
         get() = "undefined"
 
@@ -176,7 +176,7 @@ object ArkUndefinedType : PrimitiveType {
     }
 }
 
-object ArkVoidType : PrimitiveType {
+object ArkVoidType : ArkPrimitiveType {
     override val typeName: String
         get() = "void"
 
@@ -187,7 +187,7 @@ object ArkVoidType : PrimitiveType {
     }
 }
 
-object ArkNeverType : PrimitiveType {
+object ArkNeverType : ArkPrimitiveType {
     override val typeName: String
         get() = "never"
 
@@ -200,7 +200,7 @@ object ArkNeverType : PrimitiveType {
 
 data class ArkLiteralType(
     val literalTypeName: String,
-) : PrimitiveType {
+) : ArkPrimitiveType {
     override val typeName: String
         get() = "literal"
 
@@ -211,11 +211,11 @@ data class ArkLiteralType(
     }
 }
 
-interface RefType : ArkType
+interface ArkRefType : ArkType
 
 data class ArkClassType(
     val classSignature: ArkClassSignature,
-) : RefType {
+) : ArkRefType {
     override val typeName: String
         get() = classSignature.name
 
@@ -229,7 +229,7 @@ data class ArkClassType(
 data class ArkArrayType(
     val elementType: ArkType,
     val dimensions: Int,
-) : RefType {
+) : ArkRefType {
     override val typeName: String
         get() = elementType.typeName + "[]".repeat(dimensions)
 
@@ -242,7 +242,7 @@ data class ArkArrayType(
 
 data class ArkArrayObjectType(
     val elementType: ArkType,
-) : RefType {
+) : ArkRefType {
     override val typeName: String
         get() = "Array<${elementType.typeName}>"
 
@@ -255,7 +255,7 @@ data class ArkArrayObjectType(
 
 data class ArkUnclearRefType(
     override val typeName: String,
-) : RefType {
+) : ArkRefType {
     override fun toString(): String = typeName
 
     override fun <R> accept(visitor: ArkType.Visitor<R>): R {
