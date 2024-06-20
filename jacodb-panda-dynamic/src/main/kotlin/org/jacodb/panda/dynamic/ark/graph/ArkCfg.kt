@@ -22,7 +22,7 @@ import org.jacodb.panda.dynamic.ark.base.ArkTerminatingStmt
 
 class ArkCfg(
     val stmts: List<ArkStmt>,
-    private val successorMap: Map<ArkStmt, List<ArkStmt>>,
+    private val successorMap: Map<ArkStmt, Set<ArkStmt>>,
 ) : ControlFlowGraph<ArkStmt> {
 
     private val predecessorMap: Map<ArkStmt, Set<ArkStmt>> by lazy {
@@ -48,10 +48,10 @@ class ArkCfg(
         get() = instructions.filterIsInstance<ArkTerminatingStmt>()
 
     override fun successors(node: ArkStmt): Set<ArkStmt> {
-        return successorMap[node]!!.toSet()
+        return successorMap[node]!!
     }
 
     override fun predecessors(node: ArkStmt): Set<ArkStmt> {
-        return predecessorMap[node]!!.toSet()
+        return predecessorMap[node]!!
     }
 }
