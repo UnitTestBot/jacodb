@@ -68,8 +68,10 @@ open class JcUnknownClassLookup(val clazz: JcClassOrInterface) : JcLookup<JcFiel
     override fun staticMethod(name: String, description: String): JcMethod =
         JcUnknownMethod.method(clazz, name, access = Opcodes.ACC_PUBLIC or Opcodes.ACC_STATIC, description)
 
-    override fun field(name: String, typeName: TypeName?): JcField {
-        return JcUnknownField(clazz, name, typeName ?: TypeNameImpl(OBJECT_CLASS))
+    override fun field(name: String, typeName: TypeName?, fieldKind: JcLookup.FieldKind): JcField {
+        val staticModifier = if (fieldKind == JcLookup.FieldKind.STATIC) Opcodes.ACC_STATIC else 0
+        val fieldType = typeName ?: TypeNameImpl(OBJECT_CLASS)
+        return JcUnknownField(clazz, name, access = Opcodes.ACC_PUBLIC or staticModifier, fieldType)
     }
 
     override fun method(name: String, description: String): JcMethod {
@@ -86,8 +88,10 @@ open class JcUnknownTypeLookup(val type: JcClassType) : JcLookup<JcTypedField, J
     override fun staticMethod(name: String, description: String): JcTypedMethod =
         JcUnknownMethod.typedMethod(type, name, access = Opcodes.ACC_PUBLIC or Opcodes.ACC_STATIC, description)
 
-    override fun field(name: String, typeName: TypeName?): JcTypedField {
-        return JcUnknownField.typedField(type, name, typeName ?: TypeNameImpl(OBJECT_CLASS))
+    override fun field(name: String, typeName: TypeName?, fieldKind: JcLookup.FieldKind): JcTypedField {
+        val staticModifier = if (fieldKind == JcLookup.FieldKind.STATIC) Opcodes.ACC_STATIC else 0
+        val fieldType = typeName ?: TypeNameImpl(OBJECT_CLASS)
+        return JcUnknownField.typedField(type, name, access = Opcodes.ACC_PUBLIC or staticModifier, fieldType)
     }
 
     override fun method(name: String, description: String): JcTypedMethod {
