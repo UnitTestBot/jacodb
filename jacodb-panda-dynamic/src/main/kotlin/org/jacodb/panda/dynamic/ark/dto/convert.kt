@@ -87,180 +87,273 @@ import org.jacodb.panda.dynamic.ark.model.ArkMethodParameter
 import org.jacodb.panda.dynamic.ark.model.ArkMethodSignature
 import org.jacodb.panda.dynamic.ark.model.ArkMethodSubSignature
 
-fun convertToArkStmt(stmt: StmtDto, location: ArkInstLocation): ArkStmt {
-    return when (stmt) {
-        is UnknownStmtDto -> object : ArkStmt {
-            override val location: ArkInstLocation = location
+class ArkMethodBuilder(
+    signature: ArkMethodSignature,
+) {
+    private val arkMethod = ArkMethodImpl(signature)
+    private var freeLocal: Int = 0
+    private val currentStmts: MutableList<ArkStmt> = mutableListOf()
 
-            override fun toString(): String = "UNKNOWN"
-
-            override fun <R> accept(visitor: ArkStmt.Visitor<R>): R {
-                error("UnknownStmt is not supported")
-            }
-        }
-
-        is NopStmtDto -> ArkNopStmt(location = location)
-
-        is AssignStmtDto -> ArkAssignStmt(
-            location = location,
-            lhv = convertToArkEntity(stmt.left) as ArkLValue,
-            rhv = convertToArkEntity(stmt.right),
-        )
-
-        is CallStmtDto -> ArkCallStmt(
-            location = location,
-            expr = convertToArkEntity(stmt.expr) as ArkCallExpr,
-        )
-
-        is DeleteStmtDto -> ArkDeleteStmt(
-            location = location,
-            arg = convertToArkFieldRef(stmt.arg),
-        )
-
-        is ReturnStmtDto -> ArkReturnStmt(
-            location = location,
-            arg = convertToArkEntity(stmt.arg),
-        )
-
-        is ReturnVoidStmtDto -> ArkReturnStmt(
-            location = location,
-            arg = null,
-        )
-
-        is ThrowStmtDto -> ArkThrowStmt(
-            location = location,
-            arg = convertToArkEntity(stmt.arg),
-        )
-
-        is GotoStmtDto -> ArkGotoStmt(location = location)
-
-        is IfStmtDto -> ArkIfStmt(
-            location = location,
-            condition = convertToArkEntity(stmt.condition) as ArkConditionExpr,
-        )
-
-        is SwitchStmtDto -> ArkSwitchStmt(
-            location = location,
-            arg = convertToArkEntity(stmt.arg),
-            cases = stmt.cases.map { convertToArkEntity(it) },
-        )
-
-        // else -> error("Unknown Stmt: $stmt")
+    private fun loc(): ArkInstLocation {
+        return ArkInstLocation(arkMethod, currentStmts.size)
     }
-}
 
-fun convertToArkEntity(value: ValueDto): ArkEntity {
-    return when (value) {
-        is UnknownValueDto -> object : ArkEntity {
-            override val type: ArkType
-                get() = ArkUnknownType
+    private var built: Boolean = false
 
-            override fun toString(): String = "UNKNOWN"
+    fun build(cfgDto: CfgDto): ArkMethod {
+        require(!built) { "Method has already been built" }
+        val cfg = cfg2cfg(cfgDto)
+        arkMethod.cfg = cfg
+        built = true
+        return arkMethod
+    }
 
-            override fun <R> accept(visitor: ArkEntity.Visitor<R>): R {
-                if (visitor is ArkEntity.Visitor.Default<R>) {
-                    return visitor.defaultVisit(this)
+    fun convertToArkStmt(stmt: StmtDto) {
+        val newStmt = when (stmt) {
+            is UnknownStmtDto -> object : ArkStmt {
+                override val location: ArkInstLocation = loc()
+
+                override fun toString(): String = "UNKNOWN"
+
+                override fun <R> accept(visitor: ArkStmt.Visitor<R>): R {
+                    error("UnknownStmt is not supported")
                 }
-                error("UnknownEntity is not supported")
+            }
+
+            is NopStmtDto -> ArkNopStmt(location = loc())
+
+            is AssignStmtDto -> ArkAssignStmt(
+                location = loc(),
+                lhv = convertToArkEntity(stmt.left) as ArkLValue,
+                rhv = convertToArkEntity(stmt.right),
+            )
+
+            is CallStmtDto -> ArkCallStmt(
+                location = loc(),
+                expr = convertToArkEntity(stmt.expr) as ArkCallExpr,
+            )
+
+            is DeleteStmtDto -> ArkDeleteStmt(
+                location = loc(),
+                arg = convertToArkFieldRef(stmt.arg),
+            )
+
+            is ReturnStmtDto -> ArkReturnStmt(
+                location = loc(),
+                arg = convertToArkEntity(stmt.arg),
+            )
+
+            is ReturnVoidStmtDto -> ArkReturnStmt(
+                location = loc(),
+                arg = null,
+            )
+
+            is ThrowStmtDto -> ArkThrowStmt(
+                location = loc(),
+                arg = convertToArkEntity(stmt.arg),
+            )
+
+            is GotoStmtDto -> ArkGotoStmt(location = loc())
+
+            is IfStmtDto -> ArkIfStmt(
+                location = loc(),
+                condition = convertToArkEntity(stmt.condition) as ArkConditionExpr,
+            )
+
+            is SwitchStmtDto -> ArkSwitchStmt(
+                location = loc(),
+                arg = convertToArkEntity(stmt.arg),
+                cases = stmt.cases.map { convertToArkEntity(it) },
+            )
+
+            // else -> error("Unknown Stmt: $stmt")
+        }
+        currentStmts += newStmt
+    }
+
+    fun convertToArkEntity(value: ValueDto): ArkEntity {
+        return when (value) {
+            is UnknownValueDto -> object : ArkEntity {
+                override val type: ArkType
+                    get() = ArkUnknownType
+
+                override fun toString(): String = "UNKNOWN"
+
+                override fun <R> accept(visitor: ArkEntity.Visitor<R>): R {
+                    if (visitor is ArkEntity.Visitor.Default<R>) {
+                        return visitor.defaultVisit(this)
+                    }
+                    error("UnknownEntity is not supported")
+                }
+            }
+
+            is LocalDto -> ArkLocal(
+                name = value.name,
+                type = convertToArkType(value.type),
+            )
+
+            is ConstantDto -> convertToArkConstant(value)
+
+            is NewExprDto -> ArkNewExpr(
+                type = convertToArkType(value.type) // as ClassType
+            )
+
+            is NewArrayExprDto -> ArkNewArrayExpr(
+                elementType = convertToArkType(value.type),
+                size = convertToArkEntity(value.size),
+            )
+
+            is TypeOfExprDto -> ArkTypeOfExpr(
+                arg = convertToArkEntity(value.arg)
+            )
+
+            is InstanceOfExprDto -> ArkInstanceOfExpr(
+                arg = convertToArkEntity(value.arg),
+                checkType = convertToArkType(value.checkType),
+            )
+
+            is LengthExprDto -> ArkLengthExpr(
+                arg = convertToArkEntity(value.arg)
+            )
+
+            is CastExprDto -> ArkCastExpr(
+                arg = convertToArkEntity(value.arg),
+                type = convertToArkType(value.type),
+            )
+
+            is PhiExprDto -> ArkPhiExpr(
+                args = value.args.map { convertToArkEntity(it) },
+                argToBlock = emptyMap(), // TODO
+                type = convertToArkType(value.type),
+            )
+
+            is ArrayLiteralDto -> ArkArrayLiteral(
+                elements = value.elements.map { convertToArkEntity(it) },
+                type = convertToArkType(value.type), // TODO: as ArkArrayType,
+            )
+
+            is ObjectLiteralDto -> ArkObjectLiteral(
+                properties = emptyList(), // TODO
+                type = convertToArkType(value.type),
+            )
+
+            is UnaryOperationDto -> ArkUnaryOperation(
+                op = convertToArkUnaryOp(value.op),
+                arg = convertToArkEntity(value.arg),
+            )
+
+            is BinaryOperationDto -> ArkBinaryOperation(
+                op = convertToArkBinaryOp(value.op),
+                left = convertToArkEntity(value.left),
+                right = convertToArkEntity(value.right),
+            )
+
+            is RelationOperationDto -> ArkRelationOperation(
+                relop = value.op,
+                left = convertToArkEntity(value.left),
+                right = convertToArkEntity(value.right),
+            )
+
+            is InstanceCallExprDto -> ArkInstanceCallExpr(
+                instance = convertToArkEntity(value.instance),
+                method = convertToArkMethodSignature(value.method),
+                args = value.args.map {
+                    val arkEntity = convertToArkEntity(it)
+                    if (arkEntity is ArkValue) return@map arkEntity
+                    val newLocal = ArkLocal("_tmp${freeLocal++}", ArkUnknownType)
+                    currentStmts += ArkAssignStmt(
+                        location = loc(),
+                        lhv = newLocal,
+                        rhv = arkEntity,
+                    )
+                    newLocal
+                },
+            )
+
+            is StaticCallExprDto -> ArkStaticCallExpr(
+                method = convertToArkMethodSignature(value.method),
+                args = value.args.map {
+                    val arkEntity = convertToArkEntity(it)
+                    if (arkEntity is ArkValue) return@map arkEntity
+                    TODO()
+                },
+            )
+
+            is ThisRefDto -> ArkThis(
+                type = convertToArkType(value.type) // TODO: as ClassType
+            )
+
+            is ParameterRefDto -> ArkParameterRef(
+                index = value.index,
+                type = convertToArkType(value.type),
+            )
+
+            is ArrayRefDto -> ArkArrayAccess(
+                array = convertToArkEntity(value.array),
+                index = convertToArkEntity(value.index),
+                type = convertToArkType(value.type),
+            )
+
+            is FieldRefDto -> convertToArkFieldRef(value)
+
+            // else -> error("Unknown Value: $value")
+        }
+    }
+
+    fun convertToArkFieldRef(fieldRef: FieldRefDto): ArkFieldRef {
+        val field = convertToArkFieldSignature(fieldRef.field)
+        return when (fieldRef) {
+            is InstanceFieldRefDto -> ArkInstanceFieldRef(
+                instance = convertToArkEntity(fieldRef.instance), // as Local
+                field = field
+            )
+
+            is StaticFieldRefDto -> ArkStaticFieldRef(
+                field = field
+            )
+        }
+    }
+
+    fun cfg2cfg(cfg: CfgDto): ArkCfg {
+        // val stmts: MutableList<ArkStmt> = mutableListOf()
+        val blocks = cfg.blocks.associateBy { it.id }
+        val visited: MutableSet<Int> = hashSetOf()
+        val queue: ArrayDeque<Int> = ArrayDeque()
+        queue.add(0)
+        val blockStart: MutableMap<Int, Int> = hashMapOf()
+        val blockEnd: MutableMap<Int, Int> = hashMapOf()
+        while (queue.isNotEmpty()) {
+            val block = blocks[queue.removeFirst()]!!
+            if (block.stmts.isNotEmpty()) {
+                blockStart[block.id] = currentStmts.size
+            }
+            for (stmt in block.stmts) {
+                convertToArkStmt(stmt)
+            }
+            if (block.stmts.isNotEmpty()) {
+                blockEnd[block.id] = currentStmts.lastIndex
+            }
+            for (next in block.successors) {
+                if (visited.add(next)) {
+                    queue.addLast(next)
+                }
             }
         }
-
-        is LocalDto -> ArkLocal(
-            name = value.name,
-            type = convertToArkType(value.type),
-        )
-
-        is ConstantDto -> convertToArkConstant(value)
-
-        is NewExprDto -> ArkNewExpr(
-            type = convertToArkType(value.type) // as ClassType
-        )
-
-        is NewArrayExprDto -> ArkNewArrayExpr(
-            elementType = convertToArkType(value.type),
-            size = convertToArkEntity(value.size),
-        )
-
-        is TypeOfExprDto -> ArkTypeOfExpr(
-            arg = convertToArkEntity(value.arg)
-        )
-
-        is InstanceOfExprDto -> ArkInstanceOfExpr(
-            arg = convertToArkEntity(value.arg),
-            checkType = convertToArkType(value.checkType),
-        )
-
-        is LengthExprDto -> ArkLengthExpr(
-            arg = convertToArkEntity(value.arg)
-        )
-
-        is CastExprDto -> ArkCastExpr(
-            arg = convertToArkEntity(value.arg),
-            type = convertToArkType(value.type),
-        )
-
-        is PhiExprDto -> ArkPhiExpr(
-            args = value.args.map { convertToArkEntity(it) },
-            argToBlock = emptyMap(), // TODO
-            type = convertToArkType(value.type),
-        )
-
-        is ArrayLiteralDto -> ArkArrayLiteral(
-            elements = value.elements.map { convertToArkEntity(it) },
-            type = convertToArkType(value.type), // TODO: as ArkArrayType,
-        )
-
-        is ObjectLiteralDto -> ArkObjectLiteral(
-            properties = emptyList(), // TODO
-            type = convertToArkType(value.type),
-        )
-
-        is UnaryOperationDto -> ArkUnaryOperation(
-            op = convertToArkUnaryOp(value.op),
-            arg = convertToArkEntity(value.arg),
-        )
-
-        is BinaryOperationDto -> ArkBinaryOperation(
-            op = convertToArkBinaryOp(value.op),
-            left = convertToArkEntity(value.left),
-            right = convertToArkEntity(value.right),
-        )
-
-        is RelationOperationDto -> ArkRelationOperation(
-            relop = value.op,
-            left = convertToArkEntity(value.left),
-            right = convertToArkEntity(value.right),
-        )
-
-        is InstanceCallExprDto -> ArkInstanceCallExpr(
-            instance = convertToArkEntity(value.instance),
-            method = convertToArkMethodSignature(value.method),
-            args = value.args.map { convertToArkEntity(it) as ArkValue },
-        )
-
-        is StaticCallExprDto -> ArkStaticCallExpr(
-            method = convertToArkMethodSignature(value.method),
-            args = value.args.map { convertToArkEntity(it) as ArkValue },
-        )
-
-        is ThisRefDto -> ArkThis(
-            type = convertToArkType(value.type) // TODO: as ClassType
-        )
-
-        is ParameterRefDto -> ArkParameterRef(
-            index = value.index,
-            type = convertToArkType(value.type),
-        )
-
-        is ArrayRefDto -> ArkArrayAccess(
-            array = convertToArkEntity(value.array),
-            index = convertToArkEntity(value.index),
-            type = convertToArkType(value.type),
-        )
-
-        is FieldRefDto -> convertToArkFieldRef(value)
-
-        // else -> error("Unknown Value: $value")
+        val successorMap: MutableMap<ArkStmt, List<ArkStmt>> = hashMapOf()
+        for (block in cfg.blocks) {
+            if (block.stmts.isEmpty()) {
+                continue
+            }
+            val startId = blockStart[block.id]!!
+            val endId = blockEnd[block.id]!!
+            for (i in startId until endId) {
+                successorMap[currentStmts[i]] = listOf(currentStmts[i + 1])
+            }
+            successorMap[currentStmts[endId]] = block.successors.mapNotNull { blockId ->
+                blockStart[blockId]?.let { currentStmts[it] }
+            }
+        }
+        return ArkCfg(currentStmts, successorMap)
     }
 }
 
@@ -365,20 +458,6 @@ fun convertToArkBinaryOp(op: String): BinaryOp {
     }
 }
 
-fun convertToArkFieldRef(fieldRef: FieldRefDto): ArkFieldRef {
-    val field = convertToArkFieldSignature(fieldRef.field)
-    return when (fieldRef) {
-        is InstanceFieldRefDto -> ArkInstanceFieldRef(
-            instance = convertToArkEntity(fieldRef.instance), // as Local
-            field = field
-        )
-
-        is StaticFieldRefDto -> ArkStaticFieldRef(
-            field = field
-        )
-    }
-}
-
 fun convertToArkClassSignature(clazz: ClassSignatureDto): ArkClassSignature {
     return ArkClassSignature(
         name = clazz.name,
@@ -421,48 +500,9 @@ fun convertToArkMethod(method: MethodDto): ArkMethod {
     // val locals = method.body.locals.map {
     //     convertToArkEntity(it) as ArkLocal  // safe cast
     // }
-    val arkMethod = ArkMethodImpl(signature)
-    val cfg = cfg2cfg(method.body.cfg, arkMethod)
-    arkMethod.cfg = cfg
+    val builder = ArkMethodBuilder(signature)
+    val arkMethod = builder.build(method.body.cfg)
     return arkMethod
-}
-
-fun cfg2cfg(cfg: CfgDto, arkMethod: ArkMethod): ArkCfg {
-    val stmts: MutableList<ArkStmt> = mutableListOf()
-    val blocks = cfg.blocks.associateBy { it.id }
-    val visited: MutableSet<Int> = hashSetOf()
-    val queue: ArrayDeque<Int> = ArrayDeque()
-    queue.add(0)
-    val blockStart: MutableMap<Int, Int> = hashMapOf()
-    while (queue.isNotEmpty()) {
-        val block = blocks[queue.removeFirst()]!!
-        for ((i, stmt) in block.stmts.withIndex()) {
-            if (i == 0) {
-                blockStart[block.id] = stmts.size
-            }
-            val location = ArkInstLocation(arkMethod, stmts.size)
-            stmts += convertToArkStmt(stmt, location)
-        }
-        for (next in block.successors) {
-            if (visited.add(next)) {
-                queue.addLast(next)
-            }
-        }
-    }
-    val successorMap: MutableMap<ArkStmt, List<ArkStmt>> = hashMapOf()
-    for (block in cfg.blocks) {
-        for (i in block.stmts.indices) {
-            val arkStmt = stmts[blockStart[block.id]!! + i]
-            if (i == block.stmts.lastIndex) {
-                successorMap[arkStmt] = block.successors.mapNotNull { id ->
-                    blockStart[id]?.let { stmts[it] }
-                }
-            } else {
-                successorMap[arkStmt] = listOf(stmts[i + 1])
-            }
-        }
-    }
-    return ArkCfg(stmts, successorMap)
 }
 
 fun convertToArkField(field: FieldDto): ArkField {
@@ -477,7 +517,7 @@ fun convertToArkField(field: FieldDto): ArkField {
         // TODO: decorators = field.modifiers...
         isOptional = field.isOptional,
         isDefinitelyAssigned = field.isDefinitelyAssigned,
-        initializer = field.initializer?.let { convertToArkEntity(it) }
+        initializer = null, // TODO: handle initializer - assign in constructor
     )
 }
 

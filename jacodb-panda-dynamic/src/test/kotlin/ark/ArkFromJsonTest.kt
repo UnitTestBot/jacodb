@@ -20,9 +20,9 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jacodb.panda.dynamic.ark.base.ArkAnyType
-import org.jacodb.panda.dynamic.ark.base.ArkInstLocation
 import org.jacodb.panda.dynamic.ark.base.ArkLocal
 import org.jacodb.panda.dynamic.ark.dto.ArkFileDto
+import org.jacodb.panda.dynamic.ark.dto.ArkMethodBuilder
 import org.jacodb.panda.dynamic.ark.dto.ClassSignatureDto
 import org.jacodb.panda.dynamic.ark.dto.ConstantDto
 import org.jacodb.panda.dynamic.ark.dto.FieldDto
@@ -30,11 +30,8 @@ import org.jacodb.panda.dynamic.ark.dto.FieldSignatureDto
 import org.jacodb.panda.dynamic.ark.dto.LocalDto
 import org.jacodb.panda.dynamic.ark.dto.MethodDto
 import org.jacodb.panda.dynamic.ark.dto.StmtDto
-import org.jacodb.panda.dynamic.ark.dto.convertToArkEntity
 import org.jacodb.panda.dynamic.ark.dto.convertToArkFile
-import org.jacodb.panda.dynamic.ark.dto.convertToArkStmt
 import org.jacodb.panda.dynamic.ark.model.ArkClassSignature
-import org.jacodb.panda.dynamic.ark.model.ArkMethodImpl
 import org.jacodb.panda.dynamic.ark.model.ArkMethodSignature
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -44,6 +41,13 @@ class ArkFromJsonTest {
         // classDiscriminator = "_"
         prettyPrint = true
     }
+
+    private val defaultSignature = ArkMethodSignature(
+        enclosingClass = ArkClassSignature(name = "_DEFAULT_ARK_CLASS"),
+        name = "_DEFAULT_ARK_METHOD",
+        parameters = emptyList(),
+        returnType = ArkAnyType,
+    )
 
     @Test
     fun testLoadArkFileFromJson() {
@@ -67,7 +71,8 @@ class ArkFromJsonTest {
         val valueDto = Json.decodeFromString<LocalDto>(jsonString)
         println("valueDto = $valueDto")
         Assertions.assertEquals(LocalDto("x", "any"), valueDto)
-        val value = convertToArkEntity(valueDto)
+        val ctx = ArkMethodBuilder(defaultSignature)
+        val value = ctx.convertToArkEntity(valueDto)
         println("value = $value")
         Assertions.assertEquals(ArkLocal("x", ArkAnyType), value)
     }
@@ -107,15 +112,8 @@ class ArkFromJsonTest {
         """.trimIndent()
         val stmtDto = Json.decodeFromString<StmtDto>(jsonString)
         println("stmtDto = $stmtDto")
-        val signature = ArkMethodSignature(
-            enclosingClass = ArkClassSignature(name = "_DEFAULT_ARK_CLASS"),
-            name = "_DEFAULT_ARK_METHOD",
-            parameters = emptyList(),
-            returnType = ArkAnyType,
-        )
-        val method = ArkMethodImpl(signature)
-        val location = ArkInstLocation(method, -1)
-        val stmt = convertToArkStmt(stmtDto, location)
+        val ctx = ArkMethodBuilder(defaultSignature)
+        val stmt = ctx.convertToArkStmt(stmtDto)
         println("stmt = $stmt")
     }
 
