@@ -73,16 +73,27 @@ data class ClassDto(
 data class FieldDto(
     val signature: FieldSignatureDto,
     val typeParameters: List<String>,
-    val modifiers: List<String>,
+    @Serializable(with = ListOfModifiersSerializer::class)
+    val modifiers: List<ModifierDto>? = null,
     @SerialName("questionToken") val isOptional: Boolean = false, // '?'
     @SerialName("exclamationToken") val isDefinitelyAssigned: Boolean = false, // '!'
     val initializer: ValueDto? = null,
 )
 
 @Serializable
+sealed class ModifierDto {
+    @Serializable
+    data class DecoratorItem(val kind: String, val content: String) : ModifierDto()
+
+    @Serializable
+    data class StringItem(val value: String) : ModifierDto()
+}
+
+@Serializable
 data class MethodDto(
     val signature: MethodSignatureDto,
-    val modifiers: List<String>,
+    @Serializable(with = ListOfModifiersSerializer::class)
+    val modifiers: List<ModifierDto>,
     val typeParameters: List<String>,
     val body: BodyDto,
 )

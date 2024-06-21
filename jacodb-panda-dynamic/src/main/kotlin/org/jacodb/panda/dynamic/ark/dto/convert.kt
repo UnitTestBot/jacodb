@@ -19,7 +19,6 @@ package org.jacodb.panda.dynamic.ark.dto
 import org.jacodb.panda.dynamic.ark.base.ArkAnyType
 import org.jacodb.panda.dynamic.ark.base.ArkArrayAccess
 import org.jacodb.panda.dynamic.ark.base.ArkArrayLiteral
-import org.jacodb.panda.dynamic.ark.base.ArkArrayType
 import org.jacodb.panda.dynamic.ark.base.ArkAssignStmt
 import org.jacodb.panda.dynamic.ark.base.ArkBinaryOperation
 import org.jacodb.panda.dynamic.ark.base.ArkBooleanConstant
@@ -208,7 +207,7 @@ fun convertToArkEntity(value: ValueDto): ArkEntity {
 
         is ArrayLiteralDto -> ArkArrayLiteral(
             elements = value.elements.map { convertToArkEntity(it) },
-            type = convertToArkType(value.type) as ArkArrayType,
+            type = convertToArkType(value.type), // TODO: as ArkArrayType,
         )
 
         is ObjectLiteralDto -> ArkObjectLiteral(
@@ -245,7 +244,7 @@ fun convertToArkEntity(value: ValueDto): ArkEntity {
         )
 
         is ThisRefDto -> ArkThis(
-            type = convertToArkType(value.type) // as ClassType
+            type = convertToArkType(value.type) // TODO: as ClassType
         )
 
         is ParameterRefDto -> ArkParameterRef(
