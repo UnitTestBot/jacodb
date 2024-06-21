@@ -23,14 +23,27 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonArray
 
 object ListOfModifiersSerializer : KSerializer<List<ModifierDto>> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("modifiers", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: List<ModifierDto>) {
+        val output = encoder as JsonEncoder
+        output.encodeJsonElement(JsonArray(value.map {
+            when (it) {
+                is ModifierDto.DecoratorItem -> output.json.encodeToJsonElement(it)
+                is ModifierDto.StringItem -> JsonPrimitive(it.value)
+            }
+        }))
+    }
 
     override fun deserialize(decoder: Decoder): List<ModifierDto> {
         val input = decoder as JsonDecoder
@@ -48,9 +61,5 @@ object ListOfModifiersSerializer : KSerializer<List<ModifierDto>> {
             }
         }
         return result
-    }
-
-    override fun serialize(encoder: Encoder, value: List<ModifierDto>) {
-        error("You do not want to serialize modifiers")
     }
 }
