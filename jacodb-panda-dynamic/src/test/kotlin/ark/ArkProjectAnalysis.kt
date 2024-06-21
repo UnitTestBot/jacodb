@@ -119,13 +119,8 @@ class ArkProjectAnalysis {
     }
 
     private fun handleFile(filename: String) {
-        // This files contain critical bugs
-        val banFiles: List<String> = listOf(
-            "base/sync/utils/SyncUtil"
-        )
         val fileLines = countFileLines("$BASE_PATH$filename.ts")
         try {
-            if (filename in banFiles) return
             logger.info { "Processing '$filename'" }
             val project = loadProjectForSample(filename)
             val startTime = System.currentTimeMillis()
@@ -135,7 +130,7 @@ class ArkProjectAnalysis {
             tsLinesSuccess += fileLines
         } catch (e: Exception) {
             logger.warn { "Failed to process '$filename': $e" }
-            // logger.warn { e.stackTraceToString() }
+            logger.warn { e.stackTraceToString() }
             tsLinesFailed += fileLines
         }
     }
