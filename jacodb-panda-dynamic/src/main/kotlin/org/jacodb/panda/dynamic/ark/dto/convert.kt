@@ -138,14 +138,28 @@ class ArkMethodBuilder(
                 arg = convertToArkFieldRef(stmt.arg),
             )
 
-            is ReturnStmtDto -> ArkReturnStmt(
-                location = loc(),
-                arg = convertToArkEntity(stmt.arg),
-            )
+            is ReturnStmtDto -> {
+                val arkEntity = convertToArkEntity(stmt.arg)
+                val arkValue = if (arkEntity is ArkValue) {
+                    arkEntity
+                } else {
+                    val newLocal = ArkLocal("_tmp${freeLocal++}", ArkUnknownType)
+                    currentStmts += ArkAssignStmt(
+                        location = loc(),
+                        lhv = newLocal,
+                        rhv = arkEntity,
+                    )
+                    newLocal
+                }
+                ArkReturnStmt(
+                    location = loc(),
+                    returnValue = arkValue,
+                )
+            }
 
             is ReturnVoidStmtDto -> ArkReturnStmt(
                 location = loc(),
-                arg = null,
+                returnValue = null,
             )
 
             is ThrowStmtDto -> ArkThrowStmt(
@@ -534,10 +548,12 @@ fun convertToArkClass(clazz: ClassDto): ArkClass {
 }
 
 fun convertToArkFile(file: ArkFileDto): ArkFile {
-    val classes = file.classes.map { convertToArkClass(it) }
+    val classesFromNamespaces = file.namespaces.flatMap { it.classes }
+    val allClasses = file.classes + classesFromNamespaces
+    val convertedClasses = allClasses.map { convertToArkClass(it) }
     return ArkFile(
         name = file.name,
         path = file.absoluteFilePath,
-        classes = classes,
+        classes = convertedClasses,
     )
 }

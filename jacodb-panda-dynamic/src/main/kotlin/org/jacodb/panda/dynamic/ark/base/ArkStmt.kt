@@ -19,6 +19,7 @@ package org.jacodb.panda.dynamic.ark.base
 import org.jacodb.api.common.cfg.CommonAssignInst
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonInstLocation
+import org.jacodb.api.common.cfg.CommonReturnInst
 import org.jacodb.panda.dynamic.ark.model.ArkMethod
 
 data class ArkInstLocation(
@@ -115,11 +116,11 @@ interface ArkTerminatingStmt : ArkStmt
 
 data class ArkReturnStmt(
     override val location: ArkInstLocation,
-    val arg: ArkEntity?,
-) : ArkTerminatingStmt {
+    override val returnValue: ArkValue?,
+) : ArkTerminatingStmt, CommonReturnInst {
     override fun toString(): String {
-        return if (arg != null) {
-            "return $arg"
+        return if (returnValue != null) {
+            "return $returnValue"
         } else {
             "return"
         }

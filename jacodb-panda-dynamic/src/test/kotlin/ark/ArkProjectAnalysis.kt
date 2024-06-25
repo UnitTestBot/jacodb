@@ -124,7 +124,7 @@ class ArkProjectAnalysis {
             logger.info { "Processing '$filename'" }
             val project = loadProjectForSample(filename)
             val startTime = System.currentTimeMillis()
-            runAnalysis(project, filename)
+            runAnalysis(project)
             val endTime = System.currentTimeMillis()
             analysisTime += (endTime - startTime).milliseconds
             tsLinesSuccess += fileLines
@@ -135,7 +135,7 @@ class ArkProjectAnalysis {
         }
     }
 
-    private fun runAnalysis(project: ArkFile, filename: String) {
+    private fun runAnalysis(project: ArkFile) {
         val graph = ArkApplicationGraph(project)
         val unitResolver = UnitResolver<ArkMethod> { SingletonUnit }
         val manager = TaintManager(
@@ -143,17 +143,7 @@ class ArkProjectAnalysis {
             unitResolver = unitResolver,
             getConfigForMethod = { method -> getConfigForMethod(method, rules) },
         )
-
-        var methods = project.classes.flatMap { it.methods }
-        if (filename == "base/account/AccountManager") {
-            val methodNames = setOf(
-                "getDeviceIdListWithCursor",
-                "requestGet",
-                "taintRun",
-                "taintSink"
-            )
-            methods = methods.filter { it.name in methodNames }
-        }
+        val methods = project.classes.flatMap { it.methods }
         val sinks = manager.analyze(methods, timeout = 10.seconds)
         totalPathEdges += manager.runnerForUnit.values.sumOf { it.getPathEdges().size }
         totalSinks += sinks

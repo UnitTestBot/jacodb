@@ -79,8 +79,8 @@ private object StmtGetOperands : ArkStmt.Visitor<Sequence<ArkEntity>> {
     }
 
     override fun visit(stmt: ArkReturnStmt): Sequence<ArkEntity> = sequence {
-        if (stmt.arg != null) {
-            yield(stmt.arg)
+        if (stmt.returnValue != null) {
+            yield(stmt.returnValue)
         }
     }
 
