@@ -1,0 +1,796 @@
+{
+  "name": "taintSamples\\SQLInjection.ts",
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "_DEFAULT_ARK_METHOD",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "query",
+            "parameters": [
+              {
+                "name": "sqlQuery",
+                "type": "string",
+                "isOptional": false
+              },
+              {
+                "name": "callback",
+                "type": "Function",
+                "isOptional": false
+              }
+            ],
+            "returnType": "void"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "sqlQuery",
+                "type": "string"
+              },
+              {
+                "name": "callback",
+                "type": "Function"
+              },
+              {
+                "name": "error",
+                "type": "null"
+              },
+              {
+                "name": "results",
+                "type": "(unknown)[]"
+              },
+              {
+                "name": "$temp0",
+                "type": "(unknown)[]"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "sqlQuery",
+                        "type": "string"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "callback",
+                        "type": "Function"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 1,
+                        "type": "Function"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "error",
+                        "type": "null"
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "null",
+                        "type": "null"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "(unknown)[]"
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "type": "unknown",
+                        "size": {
+                          "_": "Constant",
+                          "value": "0",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "results",
+                        "type": "(unknown)[]"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "(unknown)[]"
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "callback",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "error",
+                            "type": "null"
+                          },
+                          {
+                            "_": "Local",
+                            "name": "results",
+                            "type": "(unknown)[]"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "getUserData",
+            "parameters": [
+              {
+                "name": "username",
+                "type": "string",
+                "isOptional": false
+              },
+              {
+                "name": "callback",
+                "type": "Function",
+                "isOptional": false
+              }
+            ],
+            "returnType": "void"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "username",
+                "type": "string"
+              },
+              {
+                "name": "callback",
+                "type": "Function"
+              },
+              {
+                "name": "queryRequest",
+                "type": "string"
+              },
+              {
+                "name": "$temp0",
+                "type": "string"
+              },
+              {
+                "name": "$temp1",
+                "type": "string"
+              },
+              {
+                "name": "query",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "username",
+                        "type": "string"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "callback",
+                        "type": "Function"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 1,
+                        "type": "Function"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "string"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Constant",
+                          "value": "SELECT * FROM users WHERE username = '",
+                          "type": "string"
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "username",
+                          "type": "string"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "string"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": "string"
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "';",
+                          "type": "string"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "queryRequest",
+                        "type": "string"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "query",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "queryRequest",
+                            "type": "string"
+                          },
+                          {
+                            "_": "Local",
+                            "name": "callback",
+                            "type": "Function"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "getUserName",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Constant",
+                        "value": "'; DROP TABLE users; --",
+                        "type": "string"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "usage",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "username",
+                "type": "unknown"
+              },
+              {
+                "name": "getUserName",
+                "type": "unknown"
+              },
+              {
+                "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-0",
+                "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS.AnonymousMethod-_DEFAULT_ARK_CLASS-0(any)"
+              },
+              {
+                "name": "getUserData",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "username",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "getUserName",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "getUserData",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "username",
+                            "type": "unknown"
+                          },
+                          {
+                            "_": "Local",
+                            "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-0",
+                            "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS.AnonymousMethod-_DEFAULT_ARK_CLASS-0(any)"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-0",
+            "parameters": [
+              {
+                "name": "error",
+                "type": "any",
+                "isOptional": false
+              },
+              {
+                "name": "result",
+                "type": "any",
+                "isOptional": false
+              }
+            ],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "error",
+                "type": "any"
+              },
+              {
+                "name": "result",
+                "type": "any"
+              },
+              {
+                "name": "console",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1,
+                    3
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "error",
+                        "type": "any"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": "any"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "result",
+                        "type": "any"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 1,
+                        "type": "any"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/taintSamples/SQLInjection: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": "==",
+                        "left": {
+                          "_": "Local",
+                          "name": "error",
+                          "type": "any"
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "0",
+                          "type": "number"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2
+                  ],
+                  "predecessors": [
+                    0
+                  ],
+                  "stmts": [
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": "unknown"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "Result:",
+                            "type": "string"
+                          },
+                          {
+                            "_": "Local",
+                            "name": "result",
+                            "type": "any"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "predecessors": [
+                    1,
+                    3
+                  ],
+                  "stmts": [
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 3,
+                  "successors": [
+                    2
+                  ],
+                  "predecessors": [
+                    0
+                  ],
+                  "stmts": [
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": "unknown"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "error",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "Error:",
+                            "type": "string"
+                          },
+                          {
+                            "_": "Local",
+                            "name": "error",
+                            "type": "any"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "importInfos": [],
+  "exportInfos": []
+}

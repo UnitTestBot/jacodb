@@ -1,0 +1,490 @@
+{
+  "name": "loop\\FibonacciSequence.ts",
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "_DEFAULT_ARK_METHOD",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/loop/FibonacciSequence: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "fibonacciSeries",
+                "type": "unknown"
+              },
+              {
+                "name": "generateFibonacci",
+                "type": "unknown"
+              },
+              {
+                "name": "console",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/loop/FibonacciSequence: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/loop/FibonacciSequence: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "fibonacciSeries",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "generateFibonacci",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "10",
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": "unknown"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "Fibonacci Series:",
+                            "type": "string"
+                          },
+                          {
+                            "_": "Local",
+                            "name": "fibonacciSeries",
+                            "type": "unknown"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "generateFibonacci",
+            "parameters": [
+              {
+                "name": "n",
+                "type": "number",
+                "isOptional": false
+              }
+            ],
+            "returnType": "ArrayType"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/loop/FibonacciSequence: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "n",
+                "type": "number"
+              },
+              {
+                "name": "fib",
+                "type": "(number)[]"
+              },
+              {
+                "name": "$temp0",
+                "type": "(number)[]"
+              },
+              {
+                "name": "i",
+                "type": "number"
+              },
+              {
+                "name": "$temp1",
+                "type": "number"
+              },
+              {
+                "name": "$temp2",
+                "type": "number"
+              },
+              {
+                "name": "$temp3",
+                "type": "number"
+              },
+              {
+                "name": "$temp4",
+                "type": "number"
+              },
+              {
+                "name": "$temp5",
+                "type": "number"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "n",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": "number"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/loop/FibonacciSequence: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/loop/FibonacciSequence: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "(number)[]"
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "type": "number",
+                        "size": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "fib",
+                        "type": "(number)[]"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "(number)[]"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2,
+                    3
+                  ],
+                  "predecessors": [
+                    0,
+                    3
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "i",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "2",
+                        "type": "number"
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": ">=",
+                        "left": {
+                          "_": "Local",
+                          "name": "i",
+                          "type": "number"
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "n",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "i",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "i",
+                          "type": "number"
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": "number"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "predecessors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "fib",
+                        "type": "(number)[]"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 3,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "-",
+                        "left": {
+                          "_": "Local",
+                          "name": "i",
+                          "type": "number"
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "ArrayRef",
+                        "array": {
+                          "_": "Local",
+                          "name": "fib",
+                          "type": "(number)[]"
+                        },
+                        "index": {
+                          "_": "Local",
+                          "name": "$temp1",
+                          "type": "number"
+                        },
+                        "type": "number"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp3",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "-",
+                        "left": {
+                          "_": "Local",
+                          "name": "i",
+                          "type": "number"
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "2",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp4",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "ArrayRef",
+                        "array": {
+                          "_": "Local",
+                          "name": "fib",
+                          "type": "(number)[]"
+                        },
+                        "index": {
+                          "_": "Local",
+                          "name": "$temp3",
+                          "type": "number"
+                        },
+                        "type": "number"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp5",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp2",
+                          "type": "number"
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "$temp4",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "ArrayRef",
+                        "array": {
+                          "_": "Local",
+                          "name": "fib",
+                          "type": "(number)[]"
+                        },
+                        "index": {
+                          "_": "Local",
+                          "name": "i",
+                          "type": "number"
+                        },
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp5",
+                        "type": "number"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "importInfos": [],
+  "exportInfos": []
+}

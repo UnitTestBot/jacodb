@@ -1,0 +1,614 @@
+{
+  "name": "codeqlSamples\\missingMembers2.ts",
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "_DEFAULT_ARK_METHOD",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/codeqlSamples/missingMembers2: _DEFAULT_ARK_CLASS"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/codeqlSamples/missingMembers2: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/codeqlSamples/missingMembers2: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "callingMethods",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/codeqlSamples/missingMembers2: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "aura",
+                "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+              },
+              {
+                "name": "$temp0",
+                "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/codeqlSamples/missingMembers2: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/codeqlSamples/missingMembers2: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+                      },
+                      "right": {
+                        "_": "NewExpr",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "Aura"
+                          },
+                          "name": "constructor",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "aura",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "aura",
+                          "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "changeTo",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "mysterious",
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "aura",
+                          "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "increase",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "9",
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "accessingProperties",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/codeqlSamples/missingMembers2: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "aura",
+                "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+              },
+              {
+                "name": "$temp0",
+                "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+              },
+              {
+                "name": "$temp1",
+                "type": "unknown"
+              },
+              {
+                "name": "console",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp2",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/codeqlSamples/missingMembers2: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/codeqlSamples/missingMembers2: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+                      },
+                      "right": {
+                        "_": "NewExpr",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "Aura"
+                          },
+                          "name": "constructor",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "aura",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "aura",
+                          "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "points",
+                          "fieldType": "unknown"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "9",
+                        "type": "number"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "aura",
+                          "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "points",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": "unknown"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp1",
+                            "type": "unknown"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "aura",
+                          "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "isMysterious",
+                          "fieldType": "unknown"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "true",
+                        "type": "boolean"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "aura",
+                          "type": "@_UnkownProjectName/_UnkownFileName: Aura"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "isMysterious",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": "unknown"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp2",
+                            "type": "unknown"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "signature": {
+        "name": "Aura"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Aura"
+            },
+            "name": "points",
+            "fieldType": "number"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "0",
+            "type": "number"
+          }
+        }
+      ],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Aura"
+            },
+            "name": "increase",
+            "parameters": [
+              {
+                "name": "value",
+                "type": "number",
+                "isOptional": false
+              }
+            ],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/codeqlSamples/missingMembers2: Aura"
+              },
+              {
+                "name": "value",
+                "type": "number"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "value",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": "number"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/codeqlSamples/missingMembers2: Aura"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/codeqlSamples/missingMembers2: Aura"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": "@jacodbSamples/codeqlSamples/missingMembers2: Aura"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "points",
+                          "fieldType": "unknown"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "InstanceFieldRef",
+                          "instance": {
+                            "_": "Local",
+                            "name": "this",
+                            "type": "@jacodbSamples/codeqlSamples/missingMembers2: Aura"
+                          },
+                          "field": {
+                            "enclosingClass": {
+                              "name": ""
+                            },
+                            "name": "points",
+                            "fieldType": "unknown"
+                          }
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "value",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "importInfos": [],
+  "exportInfos": []
+}

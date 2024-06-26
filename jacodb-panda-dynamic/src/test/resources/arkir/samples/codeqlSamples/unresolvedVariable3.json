@@ -1,0 +1,505 @@
+{
+  "name": "codeqlSamples\\unresolvedVariable3.ts",
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "_DEFAULT_ARK_METHOD",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/codeqlSamples/unresolvedVariable3: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "foo",
+                "type": "unknown"
+              },
+              {
+                "name": "c",
+                "type": "string"
+              },
+              {
+                "name": "d",
+                "type": "string"
+              },
+              {
+                "name": "bar",
+                "type": "unknown"
+              },
+              {
+                "name": "k",
+                "type": "number"
+              },
+              {
+                "name": "baz",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/codeqlSamples/unresolvedVariable3: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/codeqlSamples/unresolvedVariable3: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "foo",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "2",
+                            "type": "number"
+                          },
+                          {
+                            "_": "Constant",
+                            "value": "3",
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "c",
+                        "type": "string"
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "ccc",
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "d",
+                        "type": "string"
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "ddd",
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "bar",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "k",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "11",
+                        "type": "number"
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "baz",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "foo",
+            "parameters": [
+              {
+                "name": "a",
+                "type": "unknown",
+                "isOptional": false
+              },
+              {
+                "name": "b",
+                "type": "unknown",
+                "isOptional": false
+              }
+            ],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/codeqlSamples/unresolvedVariable3: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "a",
+                "type": "unknown"
+              },
+              {
+                "name": "b",
+                "type": "unknown"
+              },
+              {
+                "name": "c",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp0",
+                "type": "unknown"
+              },
+              {
+                "name": "d",
+                "type": "unknown"
+              },
+              {
+                "name": "console",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "a",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": "unknown"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "b",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 1,
+                        "type": "unknown"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/codeqlSamples/unresolvedVariable3: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/codeqlSamples/unresolvedVariable3: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "a",
+                          "type": "unknown"
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "b",
+                          "type": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "c",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": "unknown"
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "d",
+                          "type": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": "unknown"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "c",
+                            "type": "unknown"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "bar",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/codeqlSamples/unresolvedVariable3: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "d",
+                "type": "unknown"
+              },
+              {
+                "name": "console",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/codeqlSamples/unresolvedVariable3: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/codeqlSamples/unresolvedVariable3: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": "unknown"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "d",
+                            "type": "unknown"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "baz",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/codeqlSamples/unresolvedVariable3: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "k",
+                "type": "number"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/codeqlSamples/unresolvedVariable3: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/codeqlSamples/unresolvedVariable3: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "k",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "10",
+                        "type": "number"
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "importInfos": [],
+  "exportInfos": []
+}

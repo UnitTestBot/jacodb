@@ -1,0 +1,732 @@
+{
+  "name": "DataFlowSecurity.ts",
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "_DEFAULT_ARK_METHOD",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "source",
+            "parameters": [],
+            "returnType": "number"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Constant",
+                        "value": "null",
+                        "type": "null"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "pass",
+            "parameters": [
+              {
+                "name": "data",
+                "type": "boolean",
+                "isOptional": false
+              }
+            ],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "data",
+                "type": "boolean"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "data",
+                        "type": "boolean"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": "boolean"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "data",
+                        "type": "boolean"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "validate",
+            "parameters": [
+              {
+                "name": "data",
+                "type": "unknown",
+                "isOptional": false
+              }
+            ],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "data",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1,
+                    2
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "data",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": "unknown"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": "!=",
+                        "left": {
+                          "_": "Local",
+                          "name": "data",
+                          "type": "unknown"
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "null",
+                          "type": "null"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [],
+                  "predecessors": [
+                    0,
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "data",
+                        "type": "unknown"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [
+                    0
+                  ],
+                  "stmts": [
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Constant",
+                        "value": "OK",
+                        "type": "string"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "sink",
+            "parameters": [
+              {
+                "name": "data",
+                "type": "unknown",
+                "isOptional": false
+              }
+            ],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "data",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp0",
+                "type": "@_UnkownProjectName/_UnkownFileName: Error"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1,
+                    2
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "data",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": "unknown"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": "!=",
+                        "left": {
+                          "_": "Local",
+                          "name": "data",
+                          "type": "unknown"
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "null",
+                          "type": "null"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [],
+                  "predecessors": [
+                    0,
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [
+                    0
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                      },
+                      "right": {
+                        "_": "NewExpr",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "Error"
+                          },
+                          "name": "constructor",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "Error!",
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ThrowStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "bad",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "data",
+                "type": "unknown"
+              },
+              {
+                "name": "source",
+                "type": "unknown"
+              },
+              {
+                "name": "pass",
+                "type": "unknown"
+              },
+              {
+                "name": "sink",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "data",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "source",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "data",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "pass",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "data",
+                            "type": "unknown"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "sink",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "data",
+                            "type": "unknown"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "good",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "data",
+                "type": "unknown"
+              },
+              {
+                "name": "source",
+                "type": "unknown"
+              },
+              {
+                "name": "validate",
+                "type": "unknown"
+              },
+              {
+                "name": "sink",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "data",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "source",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "data",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "validate",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "data",
+                            "type": "unknown"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "sink",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "data",
+                            "type": "unknown"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "importInfos": [],
+  "exportInfos": []
+}

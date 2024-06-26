@@ -1,0 +1,23 @@
+{
+    "sourceMethodConfigs": [
+        {
+            "methodName": "getUserData",
+            "markName": "UNTRUSTED",
+            "position": {
+                "type": "Result"
+            }
+        }
+    ],
+    "cleanerMethodConfigs": [
+    ],
+    "sinkMethodConfigs": [
+    ],
+    "startMethodNamesForAnalysis": [
+        "forLoop"
+    ],
+    "builtInOptions": [
+        {
+            "type": "UNTRUSTED_LOOP_BOUND_SINK_CHECK"
+        }
+    ]
+}

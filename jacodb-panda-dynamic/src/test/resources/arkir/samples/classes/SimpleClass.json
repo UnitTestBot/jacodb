@@ -1,0 +1,403 @@
+{
+  "name": "classes\\SimpleClass.ts",
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "_DEFAULT_ARK_METHOD",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/classes/SimpleClass: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "simpleObj",
+                "type": "@_UnkownProjectName/_UnkownFileName: SimpleClass"
+              },
+              {
+                "name": "$temp0",
+                "type": "@_UnkownProjectName/_UnkownFileName: SimpleClass"
+              },
+              {
+                "name": "$temp1",
+                "type": "unknown"
+              },
+              {
+                "name": "console",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/classes/SimpleClass: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/classes/SimpleClass: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "@_UnkownProjectName/_UnkownFileName: SimpleClass"
+                      },
+                      "right": {
+                        "_": "NewExpr",
+                        "type": "@_UnkownProjectName/_UnkownFileName: SimpleClass"
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": "@_UnkownProjectName/_UnkownFileName: SimpleClass"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "SimpleClass"
+                          },
+                          "name": "constructor",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "simpleObj",
+                        "type": "@_UnkownProjectName/_UnkownFileName: SimpleClass"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "@_UnkownProjectName/_UnkownFileName: SimpleClass"
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "simpleObj",
+                          "type": "@_UnkownProjectName/_UnkownFileName: SimpleClass"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "setName",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "Example",
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "simpleObj",
+                          "type": "@_UnkownProjectName/_UnkownFileName: SimpleClass"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "getName",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": "unknown"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp1",
+                            "type": "unknown"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "signature": {
+        "name": "SimpleClass"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "SimpleClass"
+            },
+            "name": "name",
+            "fieldType": "string"
+          },
+          "modifiers": [
+            "PrivateKeyword"
+          ],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        }
+      ],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "SimpleClass"
+            },
+            "name": "setName",
+            "parameters": [
+              {
+                "name": "name",
+                "type": "string",
+                "isOptional": false
+              }
+            ],
+            "returnType": "void"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/classes/SimpleClass: SimpleClass"
+              },
+              {
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "name",
+                        "type": "string"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/classes/SimpleClass: SimpleClass"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/classes/SimpleClass: SimpleClass"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": "@jacodbSamples/classes/SimpleClass: SimpleClass"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "name",
+                          "fieldType": "unknown"
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "name",
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "SimpleClass"
+            },
+            "name": "getName",
+            "parameters": [],
+            "returnType": "string"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/classes/SimpleClass: SimpleClass"
+              },
+              {
+                "name": "$temp0",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/classes/SimpleClass: SimpleClass"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/classes/SimpleClass: SimpleClass"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": "@jacodbSamples/classes/SimpleClass: SimpleClass"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "name",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "unknown"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "importInfos": [],
+  "exportInfos": []
+}

@@ -48,7 +48,7 @@ class ArkProjectAnalysis {
     private var totalSinks: MutableList<TaintVulnerability<ArkStmt>> = mutableListOf()
 
     companion object : ArkTraits {
-        const val PROJECT_PATH = "/samples/project2"
+        const val PROJECT_PATH = "/arkir/samples/project1"
         const val BASE_PATH = "$PROJECT_PATH/entry/src/main/ets/"
 
         private fun loadProjectForSample(programName: String): ArkFile {
@@ -91,9 +91,9 @@ class ArkProjectAnalysis {
     private fun makeReport() {
         logger.info { "Analysis Report On $PROJECT_PATH" }
         logger.info { "====================" }
-        // logger.info { "Total files processed: ${tsLinesSuccess + tsLinesFailed}" }
+        logger.info { "Total files processed: ${tsLinesSuccess + tsLinesFailed}" }
         logger.info { "Successfully processed lines: $tsLinesSuccess" }
-        // logger.info { "Failed lines: $tsLinesFailed" }
+        logger.info { "Failed lines: $tsLinesFailed" }
         logger.info { "Total analysis time: $analysisTime" }
         logger.info { "Total path edges: $totalPathEdges" }
         logger.info { "Found sinks: ${totalSinks.size}" }

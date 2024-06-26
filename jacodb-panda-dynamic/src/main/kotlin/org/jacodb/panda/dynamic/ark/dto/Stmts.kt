@@ -44,13 +44,21 @@ object NopStmtDto : StmtDto {
 data class AssignStmtDto(
     val left: ValueDto, // Local
     val right: ValueDto,
-) : StmtDto
+) : StmtDto {
+    override fun toString(): String {
+        return "$left = $right"
+    }
+}
 
 @Serializable
 @SerialName("CallStmt")
 data class CallStmtDto(
     val expr: CallExprDto,
-) : StmtDto
+) : StmtDto {
+    override fun toString(): String {
+        return expr.toString()
+    }
+}
 
 @Serializable
 @SerialName("DeleteStmt")
@@ -71,7 +79,11 @@ object ReturnVoidStmtDto : TerminatingStmtDto {
 @SerialName("ReturnStmt")
 data class ReturnStmtDto(
     val arg: ValueDto,
-) : TerminatingStmtDto
+) : TerminatingStmtDto {
+    override fun toString(): String {
+        return "return $arg"
+    }
+}
 
 @Serializable
 @SerialName("ThrowStmt")

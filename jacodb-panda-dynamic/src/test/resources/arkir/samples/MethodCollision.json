@@ -1,0 +1,997 @@
+{
+  "name": "MethodCollision.ts",
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "_DEFAULT_ARK_METHOD",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/MethodCollision: _DEFAULT_ARK_CLASS"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/MethodCollision: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/MethodCollision: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "add",
+            "parameters": [
+              {
+                "name": "a",
+                "type": "unknown",
+                "isOptional": false
+              },
+              {
+                "name": "b",
+                "type": "unknown",
+                "isOptional": false
+              }
+            ],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/MethodCollision: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "a",
+                "type": "unknown"
+              },
+              {
+                "name": "b",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp0",
+                "type": "@_UnkownProjectName/_UnkownFileName: Error"
+              },
+              {
+                "name": "$temp1",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1,
+                    2
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "a",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": "unknown"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "b",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 1,
+                        "type": "unknown"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/MethodCollision: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/MethodCollision: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": "==",
+                        "left": {
+                          "_": "TypeOfExpr",
+                          "arg": {
+                            "_": "Local",
+                            "name": "a",
+                            "type": "unknown"
+                          }
+                        },
+                        "right": {
+                          "_": "TypeOfExpr",
+                          "arg": {
+                            "_": "Local",
+                            "name": "b",
+                            "type": "unknown"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [],
+                  "predecessors": [
+                    0,
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "a",
+                          "type": "unknown"
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "b",
+                          "type": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "unknown"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [
+                    0
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                      },
+                      "right": {
+                        "_": "NewExpr",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "Error"
+                          },
+                          "name": "constructor",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "Types mismatch!",
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ThrowStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "main",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/MethodCollision: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "a",
+                "type": "@_UnkownProjectName/_UnkownFileName: Foo"
+              },
+              {
+                "name": "$temp0",
+                "type": "@_UnkownProjectName/_UnkownFileName: Foo"
+              },
+              {
+                "name": "b",
+                "type": "@_UnkownProjectName/_UnkownFileName: Bar"
+              },
+              {
+                "name": "$temp1",
+                "type": "@_UnkownProjectName/_UnkownFileName: Bar"
+              },
+              {
+                "name": "c",
+                "type": "@_UnkownProjectName/_UnkownFileName: Bar"
+              },
+              {
+                "name": "$temp2",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp3",
+                "type": "@_UnkownProjectName/_UnkownFileName: Bar"
+              },
+              {
+                "name": "add",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp4",
+                "type": "unknown"
+              },
+              {
+                "name": "console",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp5",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/MethodCollision: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/MethodCollision: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Foo"
+                      },
+                      "right": {
+                        "_": "NewExpr",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Foo"
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": "@_UnkownProjectName/_UnkownFileName: Foo"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "Foo"
+                          },
+                          "name": "constructor",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "a",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Foo"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Foo"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Bar"
+                      },
+                      "right": {
+                        "_": "NewExpr",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Bar"
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp1",
+                          "type": "@_UnkownProjectName/_UnkownFileName: Bar"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "Bar"
+                          },
+                          "name": "constructor",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "b",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Bar"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Bar"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "a",
+                          "type": "@_UnkownProjectName/_UnkownFileName: Foo"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "isSame",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "9",
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": "==",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp2",
+                          "type": "unknown"
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "0",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp3",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Bar"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "b",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Bar"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp3",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Bar"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "a",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Foo"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "c",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Bar"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp3",
+                        "type": "@_UnkownProjectName/_UnkownFileName: Bar"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "a",
+                          "type": "@_UnkownProjectName/_UnkownFileName: Foo"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "x",
+                          "fieldType": "unknown"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "9",
+                        "type": "number"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp4",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "add",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "123",
+                            "type": "number"
+                          },
+                          {
+                            "_": "Constant",
+                            "value": "15",
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": "unknown"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp4",
+                            "type": "unknown"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp5",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "c",
+                          "type": "@_UnkownProjectName/_UnkownFileName: Bar"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "isSame",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "9",
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": "unknown"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp5",
+                            "type": "unknown"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "signature": {
+        "name": "Foo"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Foo"
+            },
+            "name": "x",
+            "fieldType": "number"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        }
+      ],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Foo"
+            },
+            "name": "isSame",
+            "parameters": [
+              {
+                "name": "y",
+                "type": "number",
+                "isOptional": false
+              }
+            ],
+            "returnType": "boolean"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/MethodCollision: Foo"
+              },
+              {
+                "name": "y",
+                "type": "number"
+              },
+              {
+                "name": "$temp0",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp1",
+                "type": "boolean"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "y",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": "number"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/MethodCollision: Foo"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/MethodCollision: Foo"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": "@jacodbSamples/MethodCollision: Foo"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "x",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "boolean"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "===",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": "unknown"
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "y",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "boolean"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "signature": {
+        "name": "Bar"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Bar"
+            },
+            "name": "x",
+            "fieldType": "number"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        }
+      ],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Bar"
+            },
+            "name": "isSame",
+            "parameters": [
+              {
+                "name": "y",
+                "type": "number",
+                "isOptional": false
+              }
+            ],
+            "returnType": "boolean"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/MethodCollision: Bar"
+              },
+              {
+                "name": "y",
+                "type": "number"
+              },
+              {
+                "name": "$temp0",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp1",
+                "type": "boolean"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "y",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": "number"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/MethodCollision: Bar"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/MethodCollision: Bar"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": "@jacodbSamples/MethodCollision: Bar"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "x",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "boolean"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "===",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": "unknown"
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "y",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "boolean"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "importInfos": [],
+  "exportInfos": []
+}

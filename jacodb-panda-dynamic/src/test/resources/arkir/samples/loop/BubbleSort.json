@@ -1,0 +1,847 @@
+{
+  "name": "loop\\BubbleSort.ts",
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "_DEFAULT_ARK_METHOD",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/loop/BubbleSort: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "unsortedArray",
+                "type": "(number)[]"
+              },
+              {
+                "name": "$temp0",
+                "type": "(number)[]"
+              },
+              {
+                "name": "sortedArray",
+                "type": "unknown"
+              },
+              {
+                "name": "bubbleSort",
+                "type": "unknown"
+              },
+              {
+                "name": "console",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/loop/BubbleSort: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/loop/BubbleSort: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "(number)[]"
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "type": "number",
+                        "size": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "unsortedArray",
+                        "type": "(number)[]"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "(number)[]"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "sortedArray",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "bubbleSort",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "unsortedArray",
+                            "type": "(number)[]"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": "unknown"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "Sorted Array:",
+                            "type": "string"
+                          },
+                          {
+                            "_": "Local",
+                            "name": "sortedArray",
+                            "type": "unknown"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "bubbleSort",
+            "parameters": [
+              {
+                "name": "arr",
+                "type": "ArrayType",
+                "isOptional": false
+              }
+            ],
+            "returnType": "ArrayType"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/loop/BubbleSort: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "arr",
+                "type": "ArrayType"
+              },
+              {
+                "name": "n",
+                "type": "unknown"
+              },
+              {
+                "name": "i",
+                "type": "number"
+              },
+              {
+                "name": "$temp0",
+                "type": "unknown"
+              },
+              {
+                "name": "j",
+                "type": "number"
+              },
+              {
+                "name": "$temp1",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp2",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp3",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp4",
+                "type": "number"
+              },
+              {
+                "name": "$temp5",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp6",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp7",
+                "type": "number"
+              },
+              {
+                "name": "$temp8",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp9",
+                "type": "(unknown)[]"
+              },
+              {
+                "name": "$temp10",
+                "type": "number"
+              },
+              {
+                "name": "$temp11",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp12",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp13",
+                "type": "(unknown)[]"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "arr",
+                        "type": "ArrayType"
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": "ArrayType"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/loop/BubbleSort: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/loop/BubbleSort: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "n",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "arr",
+                          "type": "ArrayType"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "length",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2,
+                    3
+                  ],
+                  "predecessors": [
+                    0,
+                    3
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "i",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "0",
+                        "type": "number"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "-",
+                        "left": {
+                          "_": "Local",
+                          "name": "n",
+                          "type": "unknown"
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": ">=",
+                        "left": {
+                          "_": "Local",
+                          "name": "i",
+                          "type": "number"
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "i",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "i",
+                          "type": "number"
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": "number"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "predecessors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "arr",
+                        "type": "ArrayType"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 3,
+                  "successors": [
+                    1,
+                    4
+                  ],
+                  "predecessors": [
+                    1,
+                    5
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "j",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "0",
+                        "type": "number"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "-",
+                        "left": {
+                          "_": "Local",
+                          "name": "n",
+                          "type": "unknown"
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "i",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "-",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp1",
+                          "type": "unknown"
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": ">=",
+                        "left": {
+                          "_": "Local",
+                          "name": "j",
+                          "type": "number"
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "$temp2",
+                          "type": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "j",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "j",
+                          "type": "number"
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": "number"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 4,
+                  "successors": [
+                    5,
+                    6
+                  ],
+                  "predecessors": [
+                    3
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp3",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "arr",
+                          "type": "ArrayType"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "j",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp4",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "j",
+                          "type": "number"
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp5",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "arr",
+                          "type": "ArrayType"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "$temp4",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": "<=",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp3",
+                          "type": "unknown"
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "$temp5",
+                          "type": "unknown"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 5,
+                  "successors": [
+                    3
+                  ],
+                  "predecessors": [
+                    4,
+                    6
+                  ],
+                  "stmts": []
+                },
+                {
+                  "id": 6,
+                  "successors": [
+                    5
+                  ],
+                  "predecessors": [
+                    4
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp6",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "arr",
+                          "type": "ArrayType"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "j",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp7",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "j",
+                          "type": "number"
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp8",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "arr",
+                          "type": "ArrayType"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "$temp7",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp9",
+                        "type": "(unknown)[]"
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "type": "unknown",
+                        "size": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp10",
+                        "type": "number"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "j",
+                          "type": "number"
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp11",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "arr",
+                          "type": "ArrayType"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "$temp10",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp12",
+                        "type": "unknown"
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "arr",
+                          "type": "ArrayType"
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "j",
+                          "fieldType": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp13",
+                        "type": "(unknown)[]"
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "type": "unknown",
+                        "size": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp9",
+                        "type": "(unknown)[]"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp13",
+                        "type": "(unknown)[]"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "importInfos": [],
+  "exportInfos": []
+}

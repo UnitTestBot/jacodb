@@ -1,0 +1,326 @@
+{
+  "name": "loop\\NestedLoops.ts",
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "_DEFAULT_ARK_METHOD",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/loop/NestedLoops: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "colors",
+                "type": "(string)[]"
+              },
+              {
+                "name": "$temp0",
+                "type": "(string)[]"
+              },
+              {
+                "name": "sizes",
+                "type": "(string)[]"
+              },
+              {
+                "name": "$temp1",
+                "type": "(string)[]"
+              },
+              {
+                "name": "combinations",
+                "type": "(unknown)[]"
+              },
+              {
+                "name": "$temp2",
+                "type": "(unknown)[]"
+              },
+              {
+                "name": "console",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/loop/NestedLoops: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/loop/NestedLoops: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "(string)[]"
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "type": "string",
+                        "size": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "colors",
+                        "type": "(string)[]"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "(string)[]"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "(string)[]"
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "type": "string",
+                        "size": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "sizes",
+                        "type": "(string)[]"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "(string)[]"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": "(unknown)[]"
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "type": "unknown",
+                        "size": {
+                          "_": "Constant",
+                          "value": "0",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "combinations",
+                        "type": "(unknown)[]"
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": "(unknown)[]"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2,
+                    3
+                  ],
+                  "predecessors": [
+                    0,
+                    3
+                  ],
+                  "stmts": []
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "predecessors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": "unknown"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "Color and size combinations:",
+                            "type": "string"
+                          },
+                          {
+                            "_": "Local",
+                            "name": "combinations",
+                            "type": "(unknown)[]"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 3,
+                  "successors": [
+                    1,
+                    4
+                  ],
+                  "predecessors": [
+                    1,
+                    4
+                  ],
+                  "stmts": []
+                },
+                {
+                  "id": 4,
+                  "successors": [
+                    3
+                  ],
+                  "predecessors": [
+                    3
+                  ],
+                  "stmts": [
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "combinations",
+                          "type": "(unknown)[]"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "push",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "ObjectLiteralExpr",
+                            "type": "@jacodbSamples/loop/NestedLoops: AnonymousClass-loop\\NestedLoops.ts-0"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "signature": {
+        "name": "AnonymousClass-loop\\NestedLoops.ts-0"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-loop\\NestedLoops.ts-0"
+            },
+            "name": "color",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-loop\\NestedLoops.ts-0"
+            },
+            "name": "size",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        }
+      ],
+      "methods": []
+    }
+  ],
+  "importInfos": [],
+  "exportInfos": []
+}

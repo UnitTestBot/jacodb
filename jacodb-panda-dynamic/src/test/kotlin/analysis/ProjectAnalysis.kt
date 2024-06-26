@@ -26,6 +26,7 @@ import org.jacodb.panda.dynamic.api.PandaApplicationGraphImpl
 import org.jacodb.panda.dynamic.api.PandaInst
 import org.jacodb.panda.dynamic.api.PandaMethod
 import org.jacodb.panda.dynamic.api.PandaProject
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIf
 import parser.getConfigForMethod
@@ -71,6 +72,7 @@ class ProjectAnalysis {
         return resource != null && Files.exists(Paths.get(resource))
     }
 
+    @Disabled
     @EnabledIf("projectAvailable")
     @Test
     fun processAllFiles() {

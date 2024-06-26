@@ -53,9 +53,7 @@ class ArkTaintAnalysisTest {
             val stream = object {}::class.java.getResourceAsStream("/$path")
                 ?: error("Resource not found: $path")
             val arkDto = ArkFileDto.loadFromJson(stream)
-            // println("arkDto = $arkDto")
             val ark = convertToArkFile(arkDto)
-            // println("ark = $ark")
             return ark
         }
     }

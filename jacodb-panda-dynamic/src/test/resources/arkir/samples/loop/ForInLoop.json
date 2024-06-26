@@ -1,0 +1,330 @@
+{
+  "name": "loop\\ForInLoop.ts",
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "_DEFAULT_ARK_METHOD",
+            "parameters": [],
+            "returnType": "unknown"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": "@jacodbSamples/loop/ForInLoop: _DEFAULT_ARK_CLASS"
+              },
+              {
+                "name": "person",
+                "type": "@jacodbSamples/loop/ForInLoop: AnonymousClass-loop\\ForInLoop.ts-0"
+              },
+              {
+                "name": "key",
+                "type": "unknown"
+              },
+              {
+                "name": "$temp0",
+                "type": "string"
+              },
+              {
+                "name": "$temp1",
+                "type": "string"
+              },
+              {
+                "name": "$temp2",
+                "type": "string"
+              },
+              {
+                "name": "$temp3",
+                "type": "string"
+              },
+              {
+                "name": "console",
+                "type": "unknown"
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": "@jacodbSamples/loop/ForInLoop: _DEFAULT_ARK_CLASS"
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": "@jacodbSamples/loop/ForInLoop: _DEFAULT_ARK_CLASS"
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "person",
+                        "type": "@jacodbSamples/loop/ForInLoop: AnonymousClass-loop\\ForInLoop.ts-0"
+                      },
+                      "right": {
+                        "_": "ObjectLiteralExpr",
+                        "type": "@jacodbSamples/loop/ForInLoop: AnonymousClass-loop\\ForInLoop.ts-0"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2,
+                    3
+                  ],
+                  "predecessors": [
+                    0,
+                    3
+                  ],
+                  "stmts": []
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "predecessors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 3,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": "string"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Constant",
+                          "value": "",
+                          "type": "string"
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "key",
+                          "type": "unknown"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": "string"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": "string"
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": ": ",
+                          "type": "string"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": "string"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp1",
+                          "type": "string"
+                        },
+                        "right": {
+                          "_": "InstanceFieldRef",
+                          "instance": {
+                            "_": "Local",
+                            "name": "person",
+                            "type": "@jacodbSamples/loop/ForInLoop: AnonymousClass-loop\\ForInLoop.ts-0"
+                          },
+                          "field": {
+                            "enclosingClass": {
+                              "name": ""
+                            },
+                            "name": "key",
+                            "fieldType": "unknown"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp3",
+                        "type": "string"
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp2",
+                          "type": "string"
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "",
+                          "type": "string"
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": "unknown"
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": "unknown"
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp3",
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "signature": {
+        "name": "AnonymousClass-loop\\ForInLoop.ts-0"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-loop\\ForInLoop.ts-0"
+            },
+            "name": "firstName",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "\"John\"",
+            "type": "string"
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-loop\\ForInLoop.ts-0"
+            },
+            "name": "lastName",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "\"Doe\"",
+            "type": "string"
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-loop\\ForInLoop.ts-0"
+            },
+            "name": "age",
+            "fieldType": "UNDEFINED"
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "30",
+            "type": "number"
+          }
+        }
+      ],
+      "methods": []
+    }
+  ],
+  "importInfos": [],
+  "exportInfos": []
+}

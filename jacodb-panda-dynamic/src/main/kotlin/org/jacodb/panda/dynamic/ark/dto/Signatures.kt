@@ -21,14 +21,22 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ClassSignatureDto(
     val name: String,
-)
+) {
+    override fun toString(): String {
+        return name
+    }
+}
 
 @Serializable
 data class FieldSignatureDto(
     val enclosingClass: ClassSignatureDto,
     val name: String,
     val fieldType: String,
-)
+) {
+    override fun toString(): String {
+        return "$name: $fieldType"
+    }
+}
 
 @Serializable
 data class MethodSignatureDto(
@@ -36,7 +44,11 @@ data class MethodSignatureDto(
     val name: String,
     val parameters: List<MethodParameterDto>,
     val returnType: String,
-)
+) {
+    override fun toString(): String {
+        return "$name(${parameters.joinToString { it.toString() }}): $returnType"
+    }
+}
 
 @Serializable
 data class MethodParameterDto(

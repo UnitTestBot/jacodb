@@ -46,14 +46,22 @@ sealed interface ImmediateDto : ValueDto
 data class LocalDto(
     val name: String,
     override val type: String,
-) : ImmediateDto
+) : ImmediateDto {
+    override fun toString(): String {
+        return name
+    }
+}
 
 @Serializable
 @SerialName("Constant")
 data class ConstantDto(
     val value: String,
     override val type: String,
-) : ImmediateDto
+) : ImmediateDto {
+    override fun toString(): String {
+        return "'$value': $type"
+    }
+}
 
 // @Serializable
 // @SerialName("StringConstant")
@@ -127,7 +135,11 @@ sealed interface ExprDto : ValueDto
 @SerialName("NewExpr")
 data class NewExprDto(
     override val type: String,
-) : ExprDto
+) : ExprDto {
+    override fun toString(): String {
+        return "new $type()"
+    }
+}
 
 @Serializable
 @SerialName("NewArrayExpr")
@@ -153,6 +165,10 @@ data class InstanceOfExprDto(
 ) : ExprDto {
     override val type: String
         get() = "boolean"
+
+    override fun toString(): String {
+        return "$arg instanceof $checkType"
+    }
 }
 
 @Serializable
@@ -162,6 +178,10 @@ data class LengthExprDto(
 ) : ExprDto {
     override val type: String
         get() = "number"
+
+    override fun toString(): String {
+        return "$arg.length"
+    }
 }
 
 @Serializable
@@ -169,7 +189,11 @@ data class LengthExprDto(
 data class CastExprDto(
     val arg: ValueDto,
     override val type: String,
-) : ExprDto
+) : ExprDto {
+    override fun toString(): String {
+        return "($type)$arg"
+    }
+}
 
 @Serializable
 @SerialName("PhiExpr")
@@ -187,7 +211,11 @@ data class PhiExprDto(
 data class ArrayLiteralDto(
     val elements: List<ValueDto>,
     override val type: String,
-) : ExprDto
+) : ExprDto {
+    override fun toString(): String {
+        return elements.joinToString(prefix = "[", postfix = "]")
+    }
+}
 
 @Serializable
 @SerialName("ObjectLiteralExpr")
@@ -211,7 +239,11 @@ sealed interface UnaryExprDto : ExprDto {
 data class UnaryOperationDto(
     val op: String,
     override val arg: ValueDto,
-) : UnaryExprDto
+) : UnaryExprDto {
+    override fun toString(): String {
+        return "$op$arg"
+    }
+}
 
 @Serializable
 sealed interface BinaryExprDto : ExprDto {
@@ -267,14 +299,22 @@ data class InstanceCallExprDto(
     val instance: ValueDto, // Local
     override val method: MethodSignatureDto,
     override val args: List<ValueDto>,
-) : CallExprDto
+) : CallExprDto {
+    override fun toString(): String {
+        return "$instance.$method(${args.joinToString()})"
+    }
+}
 
 @Serializable
 @SerialName("StaticCallExpr")
 data class StaticCallExprDto(
     override val method: MethodSignatureDto,
     override val args: List<ValueDto>,
-) : CallExprDto
+) : CallExprDto {
+    override fun toString(): String {
+        return "$method(${args.joinToString()})"
+    }
+}
 
 @Serializable
 sealed interface RefDto : ValueDto
@@ -323,10 +363,18 @@ sealed interface FieldRefDto : RefDto {
 data class InstanceFieldRefDto(
     val instance: ValueDto, // Local
     override val field: FieldSignatureDto,
-) : FieldRefDto
+) : FieldRefDto {
+    override fun toString(): String {
+        return "$instance.$field"
+    }
+}
 
 @Serializable
 @SerialName("StaticFieldRef")
 data class StaticFieldRefDto(
     override val field: FieldSignatureDto,
-) : FieldRefDto
+) : FieldRefDto {
+    override fun toString(): String {
+        return field.toString()
+    }
+}
