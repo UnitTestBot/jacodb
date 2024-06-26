@@ -18,7 +18,7 @@ package org.jacodb.analysis.ifds
 
 import org.jacodb.api.common.cfg.CommonValue
 
-data class AccessPath internal constructor(
+data class AccessPath(
     val value: CommonValue?,
     val accesses: List<Accessor>,
 ) {
