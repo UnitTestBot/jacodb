@@ -28,7 +28,7 @@ import kotlinx.serialization.json.JsonElement
 sealed interface StmtDto
 
 @Serializable
-@SerialName("UnknownStmt")
+@SerialName("UNKNOWN")
 data class UnknownStmtDto(
     val stmt: JsonElement,
 ) : StmtDto

@@ -31,7 +31,7 @@ data class ClassSignatureDto(
 data class FieldSignatureDto(
     val enclosingClass: ClassSignatureDto,
     val name: String,
-    val fieldType: String,
+    val fieldType: TypeDto,
 ) {
     override fun toString(): String {
         return "$name: $fieldType"
@@ -43,7 +43,7 @@ data class MethodSignatureDto(
     val enclosingClass: ClassSignatureDto,
     val name: String,
     val parameters: List<MethodParameterDto>,
-    val returnType: String,
+    val returnType: TypeDto,
 ) {
     override fun toString(): String {
         return "$name(${parameters.joinToString { it.toString() }}): $returnType"
@@ -53,6 +53,10 @@ data class MethodSignatureDto(
 @Serializable
 data class MethodParameterDto(
     val name: String,
-    val type: String,
+    val type: TypeDto,
     val isOptional: Boolean = false,
-)
+) {
+    override fun toString(): String {
+        return "$name: $type"
+    }
+}

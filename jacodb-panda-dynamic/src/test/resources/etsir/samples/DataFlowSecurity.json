@@ -19,7 +19,9 @@
             },
             "name": "_DEFAULT_ARK_METHOD",
             "parameters": [],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -27,7 +29,12 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               }
             ],
             "cfg": {
@@ -42,11 +49,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -65,7 +82,9 @@
             },
             "name": "source",
             "parameters": [],
-            "returnType": "number"
+            "returnType": {
+              "_": "NumberType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -73,7 +92,12 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               }
             ],
             "cfg": {
@@ -88,11 +112,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -100,7 +134,9 @@
                       "arg": {
                         "_": "Constant",
                         "value": "null",
-                        "type": "null"
+                        "type": {
+                          "_": "NullType"
+                        }
                       }
                     }
                   ]
@@ -118,11 +154,15 @@
             "parameters": [
               {
                 "name": "data",
-                "type": "boolean",
+                "type": {
+                  "_": "BooleanType"
+                },
                 "isOptional": false
               }
             ],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -130,11 +170,18 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "data",
-                "type": "boolean"
+                "type": {
+                  "_": "BooleanType"
+                }
               }
             ],
             "cfg": {
@@ -149,12 +196,16 @@
                       "left": {
                         "_": "Local",
                         "name": "data",
-                        "type": "boolean"
+                        "type": {
+                          "_": "BooleanType"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
-                        "type": "boolean"
+                        "type": {
+                          "_": "BooleanType"
+                        }
                       }
                     },
                     {
@@ -162,11 +213,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -174,7 +235,9 @@
                       "arg": {
                         "_": "Local",
                         "name": "data",
-                        "type": "boolean"
+                        "type": {
+                          "_": "BooleanType"
+                        }
                       }
                     }
                   ]
@@ -192,11 +255,15 @@
             "parameters": [
               {
                 "name": "data",
-                "type": "unknown",
+                "type": {
+                  "_": "UnknownType"
+                },
                 "isOptional": false
               }
             ],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -204,11 +271,18 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "data",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               }
             ],
             "cfg": {
@@ -226,12 +300,16 @@
                       "left": {
                         "_": "Local",
                         "name": "data",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       }
                     },
                     {
@@ -239,11 +317,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -254,12 +342,19 @@
                         "left": {
                           "_": "Local",
                           "name": "data",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "null",
-                          "type": "null"
+                          "type": {
+                            "_": "NullType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     }
@@ -278,7 +373,9 @@
                       "arg": {
                         "_": "Local",
                         "name": "data",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       }
                     }
                   ]
@@ -297,7 +394,9 @@
                       "arg": {
                         "_": "Constant",
                         "value": "OK",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       }
                     }
                   ]
@@ -315,11 +414,15 @@
             "parameters": [
               {
                 "name": "data",
-                "type": "unknown",
+                "type": {
+                  "_": "UnknownType"
+                },
                 "isOptional": false
               }
             ],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -327,15 +430,27 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "data",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "$temp0",
-                "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Error"
+                  }
+                }
               }
             ],
             "cfg": {
@@ -353,12 +468,16 @@
                       "left": {
                         "_": "Local",
                         "name": "data",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       }
                     },
                     {
@@ -366,11 +485,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -381,12 +510,19 @@
                         "left": {
                           "_": "Local",
                           "name": "data",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "null",
-                          "type": "null"
+                          "type": {
+                            "_": "NullType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     }
@@ -419,11 +555,21 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
                       },
                       "right": {
                         "_": "NewExpr",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
                       }
                     },
                     {
@@ -433,7 +579,12 @@
                         "instance": {
                           "_": "Local",
                           "name": "$temp0",
-                          "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Error"
+                            }
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -441,13 +592,17 @@
                           },
                           "name": "constructor",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Constant",
                             "value": "Error!",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -457,7 +612,12 @@
                       "arg": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
                       }
                     }
                   ]
@@ -473,7 +633,9 @@
             },
             "name": "bad",
             "parameters": [],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -481,23 +643,36 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "data",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "source",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "pass",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "sink",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               }
             ],
             "cfg": {
@@ -512,11 +687,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -524,7 +709,9 @@
                       "left": {
                         "_": "Local",
                         "name": "data",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "StaticCallExpr",
@@ -534,7 +721,9 @@
                           },
                           "name": "source",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": []
                       }
@@ -544,7 +733,9 @@
                       "left": {
                         "_": "Local",
                         "name": "data",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "StaticCallExpr",
@@ -554,13 +745,17 @@
                           },
                           "name": "pass",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "data",
-                            "type": "unknown"
+                            "type": {
+                              "_": "UnknownType"
+                            }
                           }
                         ]
                       }
@@ -575,13 +770,17 @@
                           },
                           "name": "sink",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "data",
-                            "type": "unknown"
+                            "type": {
+                              "_": "UnknownType"
+                            }
                           }
                         ]
                       }
@@ -602,7 +801,9 @@
             },
             "name": "good",
             "parameters": [],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -610,23 +811,36 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "data",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "source",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "validate",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "sink",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               }
             ],
             "cfg": {
@@ -641,11 +855,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@jacodbSamples/DataFlowSecurity: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -653,7 +877,9 @@
                       "left": {
                         "_": "Local",
                         "name": "data",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "StaticCallExpr",
@@ -663,7 +889,9 @@
                           },
                           "name": "source",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": []
                       }
@@ -673,7 +901,9 @@
                       "left": {
                         "_": "Local",
                         "name": "data",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "StaticCallExpr",
@@ -683,13 +913,17 @@
                           },
                           "name": "validate",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "data",
-                            "type": "unknown"
+                            "type": {
+                              "_": "UnknownType"
+                            }
                           }
                         ]
                       }
@@ -704,13 +938,17 @@
                           },
                           "name": "sink",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "data",
-                            "type": "unknown"
+                            "type": {
+                              "_": "UnknownType"
+                            }
                           }
                         ]
                       }

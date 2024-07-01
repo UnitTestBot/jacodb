@@ -19,7 +19,9 @@
             },
             "name": "_DEFAULT_ARK_METHOD",
             "parameters": [],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -27,71 +29,117 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/enums: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "Response1",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "$temp0",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "respond",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "c",
-                "type": "Circle"
+                "type": {
+                  "_": "UnclearReferenceType",
+                  "name": "Circle"
+                }
               },
               {
                 "name": "E",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "f",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "a2",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "Enum",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "nameOfA",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "directions",
-                "type": "(unknown)[]"
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "UnknownType"
+                  },
+                  "dimensions": 1
+                }
               },
               {
                 "name": "Directions",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "$temp1",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "$temp2",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "$temp3",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "$temp4",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "$temp5",
-                "type": "(unknown)[]"
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "UnknownType"
+                  },
+                  "dimensions": 1
+                }
               }
             ],
             "cfg": {
@@ -106,11 +154,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/enums: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/enums: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -118,21 +176,27 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
                           "_": "Local",
                           "name": "Response1",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "field": {
                           "enclosingClass": {
                             "name": ""
                           },
                           "name": "Yes",
-                          "fieldType": "unknown"
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
                         }
                       }
                     },
@@ -146,18 +210,24 @@
                           },
                           "name": "respond",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Constant",
                             "value": "Princess Caroline",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           },
                           {
                             "_": "Local",
                             "name": "$temp0",
-                            "type": "unknown"
+                            "type": {
+                              "_": "UnknownType"
+                            }
                           }
                         ]
                       }
@@ -167,11 +237,19 @@
                       "left": {
                         "_": "Local",
                         "name": "c",
-                        "type": "Circle"
+                        "type": {
+                          "_": "UnclearReferenceType",
+                          "name": "Circle"
+                        }
                       },
                       "right": {
                         "_": "ObjectLiteralExpr",
-                        "type": "@save/enums: AnonymousClass-enums.ts-1"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-enums.ts-1"
+                          }
+                        }
                       }
                     },
                     {
@@ -184,13 +262,17 @@
                           },
                           "name": "f",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "E",
-                            "type": "unknown"
+                            "type": {
+                              "_": "UnknownType"
+                            }
                           }
                         ]
                       }
@@ -200,21 +282,27 @@
                       "left": {
                         "_": "Local",
                         "name": "a2",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
                           "_": "Local",
                           "name": "Enum",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "field": {
                           "enclosingClass": {
                             "name": ""
                           },
                           "name": "A",
-                          "fieldType": "unknown"
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
                         }
                       }
                     },
@@ -223,21 +311,27 @@
                       "left": {
                         "_": "Local",
                         "name": "nameOfA",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
                           "_": "Local",
                           "name": "Enum",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "field": {
                           "enclosingClass": {
                             "name": ""
                           },
                           "name": "a2",
-                          "fieldType": "unknown"
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
                         }
                       }
                     },
@@ -246,21 +340,27 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp1",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
                           "_": "Local",
                           "name": "Directions",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "field": {
                           "enclosingClass": {
                             "name": ""
                           },
                           "name": "Up",
-                          "fieldType": "unknown"
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
                         }
                       }
                     },
@@ -269,21 +369,27 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp2",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
                           "_": "Local",
                           "name": "Directions",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "field": {
                           "enclosingClass": {
                             "name": ""
                           },
                           "name": "Down",
-                          "fieldType": "unknown"
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
                         }
                       }
                     },
@@ -292,21 +398,27 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp3",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
                           "_": "Local",
                           "name": "Directions",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "field": {
                           "enclosingClass": {
                             "name": ""
                           },
                           "name": "Left",
-                          "fieldType": "unknown"
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
                         }
                       }
                     },
@@ -315,21 +427,27 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp4",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
                           "_": "Local",
                           "name": "Directions",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "field": {
                           "enclosingClass": {
                             "name": ""
                           },
                           "name": "Right",
-                          "fieldType": "unknown"
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
                         }
                       }
                     },
@@ -338,15 +456,25 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp5",
-                        "type": "(unknown)[]"
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "UnknownType"
+                          },
+                          "dimensions": 1
+                        }
                       },
                       "right": {
                         "_": "NewArrayExpr",
-                        "type": "unknown",
+                        "elementType": {
+                          "_": "UnknownType"
+                        },
                         "size": {
                           "_": "Constant",
                           "value": "1",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     },
@@ -355,12 +483,24 @@
                       "left": {
                         "_": "Local",
                         "name": "directions",
-                        "type": "(unknown)[]"
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "UnknownType"
+                          },
+                          "dimensions": 1
+                        }
                       },
                       "right": {
                         "_": "Local",
                         "name": "$temp5",
-                        "type": "(unknown)[]"
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "UnknownType"
+                          },
+                          "dimensions": 1
+                        }
                       }
                     },
                     {
@@ -381,16 +521,23 @@
             "parameters": [
               {
                 "name": "recipient",
-                "type": "string",
+                "type": {
+                  "_": "StringType"
+                },
                 "isOptional": false
               },
               {
                 "name": "message",
-                "type": "Response1",
+                "type": {
+                  "_": "UnclearReferenceType",
+                  "name": "Response1"
+                },
                 "isOptional": false
               }
             ],
-            "returnType": "void"
+            "returnType": {
+              "_": "VoidType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -398,15 +545,25 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/enums: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "recipient",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "message",
-                "type": "Response1"
+                "type": {
+                  "_": "UnclearReferenceType",
+                  "name": "Response1"
+                }
               }
             ],
             "cfg": {
@@ -421,12 +578,16 @@
                       "left": {
                         "_": "Local",
                         "name": "recipient",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       }
                     },
                     {
@@ -434,12 +595,18 @@
                       "left": {
                         "_": "Local",
                         "name": "message",
-                        "type": "Response1"
+                        "type": {
+                          "_": "UnclearReferenceType",
+                          "name": "Response1"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 1,
-                        "type": "Response1"
+                        "type": {
+                          "_": "UnclearReferenceType",
+                          "name": "Response1"
+                        }
                       }
                     },
                     {
@@ -447,11 +614,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/enums: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/enums: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -472,11 +649,18 @@
             "parameters": [
               {
                 "name": "obj",
-                "type": "@save/enums: AnonymousClass-enums.ts-0",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "AnonymousClass-enums.ts-0"
+                  }
+                },
                 "isOptional": false
               }
             ],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -484,15 +668,27 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/enums: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "obj",
-                "type": "@save/enums: AnonymousClass-enums.ts-0"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "AnonymousClass-enums.ts-0"
+                  }
+                }
               },
               {
                 "name": "$temp0",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               }
             ],
             "cfg": {
@@ -507,12 +703,22 @@
                       "left": {
                         "_": "Local",
                         "name": "obj",
-                        "type": "@save/enums: AnonymousClass-enums.ts-0"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-enums.ts-0"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
-                        "type": "@save/enums: AnonymousClass-enums.ts-0"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-enums.ts-0"
+                          }
+                        }
                       }
                     },
                     {
@@ -520,11 +726,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/enums: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/enums: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -532,21 +748,30 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
                           "_": "Local",
                           "name": "obj",
-                          "type": "@save/enums: AnonymousClass-enums.ts-0"
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "AnonymousClass-enums.ts-0"
+                            }
+                          }
                         },
                         "field": {
                           "enclosingClass": {
                             "name": ""
                           },
                           "name": "X",
-                          "fieldType": "unknown"
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
                         }
                       }
                     },
@@ -555,7 +780,9 @@
                       "arg": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       }
                     }
                   ]
@@ -581,7 +808,9 @@
               "name": "Direction1"
             },
             "name": "Up",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -590,7 +819,9 @@
           "initializer": {
             "_": "Constant",
             "value": "1",
-            "type": "number"
+            "type": {
+              "_": "NumberType"
+            }
           }
         },
         {
@@ -599,7 +830,9 @@
               "name": "Direction1"
             },
             "name": "Down",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -613,7 +846,9 @@
               "name": "Direction1"
             },
             "name": "Left",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -627,7 +862,9 @@
               "name": "Direction1"
             },
             "name": "Right",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -653,7 +890,9 @@
               "name": "Direction2"
             },
             "name": "Up",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -662,7 +901,9 @@
           "initializer": {
             "_": "Constant",
             "value": "\"UP\"",
-            "type": "string"
+            "type": {
+              "_": "StringType"
+            }
           }
         },
         {
@@ -671,7 +912,9 @@
               "name": "Direction2"
             },
             "name": "Down",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -680,7 +923,9 @@
           "initializer": {
             "_": "Constant",
             "value": "\"DOWN\"",
-            "type": "string"
+            "type": {
+              "_": "StringType"
+            }
           }
         },
         {
@@ -689,7 +934,9 @@
               "name": "Direction2"
             },
             "name": "Left",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -698,7 +945,9 @@
           "initializer": {
             "_": "Constant",
             "value": "\"LEFT\"",
-            "type": "string"
+            "type": {
+              "_": "StringType"
+            }
           }
         },
         {
@@ -707,7 +956,9 @@
               "name": "Direction2"
             },
             "name": "Right",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -716,7 +967,9 @@
           "initializer": {
             "_": "Constant",
             "value": "\"RIGHT\"",
-            "type": "string"
+            "type": {
+              "_": "StringType"
+            }
           }
         }
       ],
@@ -737,7 +990,9 @@
               "name": "BooleanLikeHeterogeneousEnum"
             },
             "name": "No",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -746,7 +1001,9 @@
           "initializer": {
             "_": "Constant",
             "value": "0",
-            "type": "number"
+            "type": {
+              "_": "NumberType"
+            }
           }
         },
         {
@@ -755,7 +1012,9 @@
               "name": "BooleanLikeHeterogeneousEnum"
             },
             "name": "Yes",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -764,7 +1023,9 @@
           "initializer": {
             "_": "Constant",
             "value": "\"YES\"",
-            "type": "string"
+            "type": {
+              "_": "StringType"
+            }
           }
         }
       ],
@@ -785,7 +1046,9 @@
               "name": "E1"
             },
             "name": "X",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -799,7 +1062,9 @@
               "name": "E1"
             },
             "name": "Y",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -813,7 +1078,9 @@
               "name": "E1"
             },
             "name": "Z",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -839,7 +1106,9 @@
               "name": "E2"
             },
             "name": "A",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -848,7 +1117,9 @@
           "initializer": {
             "_": "Constant",
             "value": "1",
-            "type": "number"
+            "type": {
+              "_": "NumberType"
+            }
           }
         },
         {
@@ -857,7 +1128,9 @@
               "name": "E2"
             },
             "name": "B",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -871,7 +1144,9 @@
               "name": "E2"
             },
             "name": "C",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -897,7 +1172,9 @@
               "name": "FileAccess"
             },
             "name": "None",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -911,7 +1188,9 @@
               "name": "FileAccess"
             },
             "name": "Read",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -923,12 +1202,16 @@
             "left": {
               "_": "Constant",
               "value": "1",
-              "type": "number"
+              "type": {
+                "_": "NumberType"
+              }
             },
             "right": {
               "_": "Constant",
               "value": "1",
-              "type": "number"
+              "type": {
+                "_": "NumberType"
+              }
             }
           }
         },
@@ -938,7 +1221,9 @@
               "name": "FileAccess"
             },
             "name": "Write",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -950,12 +1235,16 @@
             "left": {
               "_": "Constant",
               "value": "1",
-              "type": "number"
+              "type": {
+                "_": "NumberType"
+              }
             },
             "right": {
               "_": "Constant",
               "value": "2",
-              "type": "number"
+              "type": {
+                "_": "NumberType"
+              }
             }
           }
         },
@@ -965,7 +1254,9 @@
               "name": "FileAccess"
             },
             "name": "ReadWrite",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -977,12 +1268,16 @@
             "left": {
               "_": "Local",
               "name": "Read",
-              "type": "unknown"
+              "type": {
+                "_": "UnknownType"
+              }
             },
             "right": {
               "_": "Local",
               "name": "Write",
-              "type": "unknown"
+              "type": {
+                "_": "UnknownType"
+              }
             }
           }
         },
@@ -992,7 +1287,9 @@
               "name": "FileAccess"
             },
             "name": "G",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1003,14 +1300,18 @@
             "instance": {
               "_": "Constant",
               "value": "\"123\"",
-              "type": "string"
+              "type": {
+                "_": "StringType"
+              }
             },
             "field": {
               "enclosingClass": {
                 "name": ""
               },
               "name": "length",
-              "fieldType": "unknown"
+              "fieldType": {
+                "_": "UnknownType"
+              }
             }
           }
         }
@@ -1032,7 +1333,9 @@
               "name": "Response1"
             },
             "name": "No",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1041,7 +1344,9 @@
           "initializer": {
             "_": "Constant",
             "value": "0",
-            "type": "number"
+            "type": {
+              "_": "NumberType"
+            }
           }
         },
         {
@@ -1050,7 +1355,9 @@
               "name": "Response1"
             },
             "name": "Yes",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1059,7 +1366,9 @@
           "initializer": {
             "_": "Constant",
             "value": "1",
-            "type": "number"
+            "type": {
+              "_": "NumberType"
+            }
           }
         }
       ],
@@ -1080,7 +1389,9 @@
               "name": "ShapeKind"
             },
             "name": "Circle",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1094,7 +1405,9 @@
               "name": "ShapeKind"
             },
             "name": "Square",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1120,7 +1433,10 @@
               "name": "Circle"
             },
             "name": "kind",
-            "fieldType": "ShapeKind.Circle"
+            "fieldType": {
+              "_": "UnclearReferenceType",
+              "name": "ShapeKind.Circle"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1134,7 +1450,9 @@
               "name": "Circle"
             },
             "name": "radius",
-            "fieldType": "number"
+            "fieldType": {
+              "_": "NumberType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1160,7 +1478,10 @@
               "name": "Square"
             },
             "name": "kind",
-            "fieldType": "ShapeKind.Square"
+            "fieldType": {
+              "_": "UnclearReferenceType",
+              "name": "ShapeKind.Square"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1174,7 +1495,9 @@
               "name": "Square"
             },
             "name": "sideLength",
-            "fieldType": "number"
+            "fieldType": {
+              "_": "NumberType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1200,7 +1523,9 @@
               "name": "E"
             },
             "name": "X",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1214,7 +1539,9 @@
               "name": "E"
             },
             "name": "Y",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1228,7 +1555,9 @@
               "name": "E"
             },
             "name": "Z",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1256,7 +1585,9 @@
               "name": "Enum"
             },
             "name": "A",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1284,7 +1615,9 @@
               "name": "Directions"
             },
             "name": "Up",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1298,7 +1631,9 @@
               "name": "Directions"
             },
             "name": "Down",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1312,7 +1647,9 @@
               "name": "Directions"
             },
             "name": "Left",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1326,7 +1663,9 @@
               "name": "Directions"
             },
             "name": "Right",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1352,7 +1691,9 @@
               "name": "AnonymousClass-enums.ts-1"
             },
             "name": "kind",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1363,14 +1704,18 @@
             "instance": {
               "_": "Local",
               "name": "ShapeKind",
-              "type": "unknown"
+              "type": {
+                "_": "UnknownType"
+              }
             },
             "field": {
               "enclosingClass": {
                 "name": ""
               },
               "name": "Circle",
-              "fieldType": "unknown"
+              "fieldType": {
+                "_": "UnknownType"
+              }
             }
           }
         },
@@ -1380,7 +1725,9 @@
               "name": "AnonymousClass-enums.ts-1"
             },
             "name": "radius",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -1389,7 +1736,9 @@
           "initializer": {
             "_": "Constant",
             "value": "100",
-            "type": "number"
+            "type": {
+              "_": "NumberType"
+            }
           }
         }
       ],

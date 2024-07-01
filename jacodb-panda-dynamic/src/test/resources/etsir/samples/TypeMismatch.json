@@ -19,7 +19,9 @@
             },
             "name": "_DEFAULT_ARK_METHOD",
             "parameters": [],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -27,7 +29,12 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@jacodbSamples/TypeMismatch: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               }
             ],
             "cfg": {
@@ -42,11 +49,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@jacodbSamples/TypeMismatch: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@jacodbSamples/TypeMismatch: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -67,16 +84,22 @@
             "parameters": [
               {
                 "name": "a",
-                "type": "unknown",
+                "type": {
+                  "_": "UnknownType"
+                },
                 "isOptional": false
               },
               {
                 "name": "b",
-                "type": "unknown",
+                "type": {
+                  "_": "UnknownType"
+                },
                 "isOptional": false
               }
             ],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -84,23 +107,39 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@jacodbSamples/TypeMismatch: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "a",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "b",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "$temp0",
-                "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Error"
+                  }
+                }
               },
               {
                 "name": "$temp1",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               }
             ],
             "cfg": {
@@ -118,12 +157,16 @@
                       "left": {
                         "_": "Local",
                         "name": "a",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       }
                     },
                     {
@@ -131,12 +174,16 @@
                       "left": {
                         "_": "Local",
                         "name": "b",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 1,
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       }
                     },
                     {
@@ -144,11 +191,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@jacodbSamples/TypeMismatch: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@jacodbSamples/TypeMismatch: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -161,7 +218,9 @@
                           "arg": {
                             "_": "Local",
                             "name": "a",
-                            "type": "unknown"
+                            "type": {
+                              "_": "UnknownType"
+                            }
                           }
                         },
                         "right": {
@@ -169,8 +228,13 @@
                           "arg": {
                             "_": "Local",
                             "name": "b",
-                            "type": "unknown"
+                            "type": {
+                              "_": "UnknownType"
+                            }
                           }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     }
@@ -189,7 +253,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp1",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -197,12 +263,16 @@
                         "left": {
                           "_": "Local",
                           "name": "a",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "right": {
                           "_": "Local",
                           "name": "b",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         }
                       }
                     },
@@ -211,7 +281,9 @@
                       "arg": {
                         "_": "Local",
                         "name": "$temp1",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       }
                     }
                   ]
@@ -230,11 +302,21 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
                       },
                       "right": {
                         "_": "NewExpr",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
                       }
                     },
                     {
@@ -244,7 +326,12 @@
                         "instance": {
                           "_": "Local",
                           "name": "$temp0",
-                          "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Error"
+                            }
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -252,13 +339,17 @@
                           },
                           "name": "constructor",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Constant",
                             "value": "Types mismatch!",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -268,7 +359,12 @@
                       "arg": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
                       }
                     }
                   ]
@@ -284,7 +380,9 @@
             },
             "name": "main",
             "parameters": [],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -292,19 +390,30 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@jacodbSamples/TypeMismatch: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "add",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "$temp0",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "console",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               }
             ],
             "cfg": {
@@ -319,11 +428,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@jacodbSamples/TypeMismatch: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@jacodbSamples/TypeMismatch: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -331,7 +450,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "StaticCallExpr",
@@ -341,18 +462,24 @@
                           },
                           "name": "add",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Constant",
                             "value": "123",
-                            "type": "number"
+                            "type": {
+                              "_": "NumberType"
+                            }
                           },
                           {
                             "_": "Constant",
                             "value": "15",
-                            "type": "number"
+                            "type": {
+                              "_": "NumberType"
+                            }
                           }
                         ]
                       }
@@ -364,7 +491,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "console",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -372,13 +501,17 @@
                           },
                           "name": "log",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "$temp0",
-                            "type": "unknown"
+                            "type": {
+                              "_": "UnknownType"
+                            }
                           }
                         ]
                       }

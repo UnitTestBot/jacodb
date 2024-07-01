@@ -19,6 +19,7 @@ package org.jacodb.panda.dynamic.ets.base
 import org.jacodb.api.common.CommonType
 import org.jacodb.api.common.CommonTypeName
 import org.jacodb.panda.dynamic.ets.model.EtsClassSignature
+import org.jacodb.panda.dynamic.ets.model.EtsMethodSignature
 
 interface EtsType : CommonType, CommonTypeName {
     override val typeName: String
@@ -40,6 +41,7 @@ interface EtsType : CommonType, CommonTypeName {
         fun visit(type: EtsNeverType): R
         fun visit(type: EtsLiteralType): R
         fun visit(type: EtsClassType): R
+        fun visit(type: EtsCallableType): R
         fun visit(type: EtsArrayType): R
         fun visit(type: EtsArrayObjectType): R
         fun visit(type: EtsUnclearRefType): R
@@ -58,6 +60,7 @@ interface EtsType : CommonType, CommonTypeName {
             override fun visit(type: EtsNeverType): R = defaultVisit(type)
             override fun visit(type: EtsLiteralType): R = defaultVisit(type)
             override fun visit(type: EtsClassType): R = defaultVisit(type)
+            override fun visit(type: EtsCallableType): R = defaultVisit(type)
             override fun visit(type: EtsArrayType): R = defaultVisit(type)
             override fun visit(type: EtsArrayObjectType): R = defaultVisit(type)
             override fun visit(type: EtsUnclearRefType): R = defaultVisit(type)
@@ -216,6 +219,19 @@ data class EtsClassType(
 ) : EtsRefType {
     override val typeName: String
         get() = classSignature.name
+
+    override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: EtsType.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class EtsCallableType(
+    val method: EtsMethodSignature,
+) : EtsRefType {
+    override val typeName: String
+        get() = method.name
 
     override fun toString(): String = typeName
 

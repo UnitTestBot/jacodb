@@ -21,14 +21,16 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jacodb.panda.dynamic.ets.base.EtsAnyType
 import org.jacodb.panda.dynamic.ets.base.EtsLocal
-import org.jacodb.panda.dynamic.ets.dto.EtsFileDto
-import org.jacodb.panda.dynamic.ets.dto.EtsMethodBuilder
+import org.jacodb.panda.dynamic.ets.dto.AnyTypeDto
 import org.jacodb.panda.dynamic.ets.dto.ClassSignatureDto
 import org.jacodb.panda.dynamic.ets.dto.ConstantDto
+import org.jacodb.panda.dynamic.ets.dto.EtsFileDto
+import org.jacodb.panda.dynamic.ets.dto.EtsMethodBuilder
 import org.jacodb.panda.dynamic.ets.dto.FieldDto
 import org.jacodb.panda.dynamic.ets.dto.FieldSignatureDto
 import org.jacodb.panda.dynamic.ets.dto.LocalDto
 import org.jacodb.panda.dynamic.ets.dto.MethodDto
+import org.jacodb.panda.dynamic.ets.dto.NumberTypeDto
 import org.jacodb.panda.dynamic.ets.dto.StmtDto
 import org.jacodb.panda.dynamic.ets.dto.convertToEtsFile
 import org.jacodb.panda.dynamic.ets.model.EtsClassSignature
@@ -65,12 +67,14 @@ class EtsFromJsonTest {
         val jsonString = """
             {
               "name": "x",
-              "type": "any"
+              "type": {
+                "_": "AnyType"
+              }
             }
         """.trimIndent()
         val valueDto = Json.decodeFromString<LocalDto>(jsonString)
         println("valueDto = $valueDto")
-        Assertions.assertEquals(LocalDto("x", "any"), valueDto)
+        Assertions.assertEquals(LocalDto("x", AnyTypeDto), valueDto)
         val ctx = EtsMethodBuilder(defaultSignature)
         val value = ctx.convertToEtsEntity(valueDto)
         println("value = $value")
@@ -85,13 +89,13 @@ class EtsFromJsonTest {
                     name = "Test"
                 ),
                 name = "x",
-                fieldType = "number",
+                fieldType = NumberTypeDto,
             ),
             modifiers = emptyList(),
             typeParameters = emptyList(),
             isOptional = true,
             isDefinitelyAssigned = false,
-            initializer = ConstantDto("0", "number"),
+            initializer = ConstantDto("0", NumberTypeDto),
         )
         println("field = $field")
 
@@ -127,7 +131,9 @@ class EtsFromJsonTest {
                  },
                  "name": "_DEFAULT_ARK_METHOD",
                  "parameters": [],
-                 "returnType": "unknown"
+                 "returnType": {
+                    "_": "UnknownType"
+                  }
                },
                "modifiers": [],
                "typeParameters": [],

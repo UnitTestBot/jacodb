@@ -16,16 +16,20 @@
 
 package org.jacodb.panda.dynamic.ets.dto
 
+import org.jacodb.panda.dynamic.ets.base.BinaryOp
 import org.jacodb.panda.dynamic.ets.base.EtsAnyType
 import org.jacodb.panda.dynamic.ets.base.EtsArrayAccess
 import org.jacodb.panda.dynamic.ets.base.EtsArrayLiteral
+import org.jacodb.panda.dynamic.ets.base.EtsArrayType
 import org.jacodb.panda.dynamic.ets.base.EtsAssignStmt
 import org.jacodb.panda.dynamic.ets.base.EtsBinaryOperation
 import org.jacodb.panda.dynamic.ets.base.EtsBooleanConstant
 import org.jacodb.panda.dynamic.ets.base.EtsBooleanType
 import org.jacodb.panda.dynamic.ets.base.EtsCallExpr
 import org.jacodb.panda.dynamic.ets.base.EtsCallStmt
+import org.jacodb.panda.dynamic.ets.base.EtsCallableType
 import org.jacodb.panda.dynamic.ets.base.EtsCastExpr
+import org.jacodb.panda.dynamic.ets.base.EtsClassType
 import org.jacodb.panda.dynamic.ets.base.EtsConditionExpr
 import org.jacodb.panda.dynamic.ets.base.EtsConstant
 import org.jacodb.panda.dynamic.ets.base.EtsDeleteStmt
@@ -39,6 +43,7 @@ import org.jacodb.panda.dynamic.ets.base.EtsInstanceFieldRef
 import org.jacodb.panda.dynamic.ets.base.EtsInstanceOfExpr
 import org.jacodb.panda.dynamic.ets.base.EtsLValue
 import org.jacodb.panda.dynamic.ets.base.EtsLengthExpr
+import org.jacodb.panda.dynamic.ets.base.EtsLiteralType
 import org.jacodb.panda.dynamic.ets.base.EtsLocal
 import org.jacodb.panda.dynamic.ets.base.EtsNeverType
 import org.jacodb.panda.dynamic.ets.base.EtsNewArrayExpr
@@ -61,16 +66,17 @@ import org.jacodb.panda.dynamic.ets.base.EtsStringType
 import org.jacodb.panda.dynamic.ets.base.EtsSwitchStmt
 import org.jacodb.panda.dynamic.ets.base.EtsThis
 import org.jacodb.panda.dynamic.ets.base.EtsThrowStmt
+import org.jacodb.panda.dynamic.ets.base.EtsTupleType
 import org.jacodb.panda.dynamic.ets.base.EtsType
 import org.jacodb.panda.dynamic.ets.base.EtsTypeOfExpr
 import org.jacodb.panda.dynamic.ets.base.EtsUnaryOperation
 import org.jacodb.panda.dynamic.ets.base.EtsUnclearRefType
 import org.jacodb.panda.dynamic.ets.base.EtsUndefinedConstant
 import org.jacodb.panda.dynamic.ets.base.EtsUndefinedType
+import org.jacodb.panda.dynamic.ets.base.EtsUnionType
 import org.jacodb.panda.dynamic.ets.base.EtsUnknownType
 import org.jacodb.panda.dynamic.ets.base.EtsValue
 import org.jacodb.panda.dynamic.ets.base.EtsVoidType
-import org.jacodb.panda.dynamic.ets.base.BinaryOp
 import org.jacodb.panda.dynamic.ets.base.UnaryOp
 import org.jacodb.panda.dynamic.ets.graph.EtsCfg
 import org.jacodb.panda.dynamic.ets.model.EtsClass
@@ -113,7 +119,9 @@ class EtsMethodBuilder(
             is UnknownStmtDto -> object : EtsStmt {
                 override val location: EtsInstLocation = loc()
 
-                override fun toString(): String = "UNKNOWN"
+                override fun toString(): String = "Unknown(${stmt.stmt})"
+
+                // TODO: equals/hashCode ???
 
                 override fun <R> accept(visitor: EtsStmt.Visitor<R>): R {
                     error("UnknownStmt is not supported")
@@ -188,16 +196,15 @@ class EtsMethodBuilder(
     fun convertToEtsEntity(value: ValueDto): EtsEntity {
         return when (value) {
             is UnknownValueDto -> object : EtsEntity {
-                override val type: EtsType
-                    get() = EtsUnknownType
+                override val type: EtsType = EtsUnknownType
 
-                override fun toString(): String = "UNKNOWN"
+                override fun toString(): String = "Unknown(${value.value})"
 
                 override fun <R> accept(visitor: EtsEntity.Visitor<R>): R {
                     if (visitor is EtsEntity.Visitor.Default<R>) {
                         return visitor.defaultVisit(this)
                     }
-                    error("UnknownEntity is not supported")
+                    error("Cannot handle $this")
                 }
             }
 
@@ -371,55 +378,90 @@ class EtsMethodBuilder(
     }
 }
 
-fun convertToEtsType(type: String): EtsType {
+fun convertToEtsType(type: TypeDto): EtsType {
     return when (type) {
-        "any" -> EtsAnyType
-        "unknown" -> EtsUnknownType
-        // "union" -> UnionType
-        // "tuple" -> TupleType
-        "boolean" -> EtsBooleanType
-        "number" -> EtsNumberType
-        "string" -> EtsStringType
-        "null" -> EtsNullType
-        "undefined" -> EtsUndefinedType
-        "void" -> EtsVoidType
-        "never" -> EtsNeverType
-        // "literal" -> LiteralType
-        // "class" -> ClassType
-        // "array" -> ArrayType
-        // "object" -> ArrayObjectType
-        else -> EtsUnclearRefType(type)
+        is AbsolutelyUnknownTypeDto -> object : EtsType {
+            override val typeName: String
+                get() = type.type ?: "UNKNOWN"
+
+            override fun toString(): String {
+                return type.type ?: "UNKNOWN"
+            }
+
+            override fun <R> accept(visitor: EtsType.Visitor<R>): R {
+                error("Not supported: ${type.type}")
+            }
+        }
+
+        AnyTypeDto -> EtsAnyType
+
+        is ArrayTypeDto -> EtsArrayType(
+            elementType = convertToEtsType(type.elementType),
+            dimensions = type.dimensions,
+        )
+
+        is CallableTypeDto -> EtsCallableType(
+            method = convertToEtsMethodSignature(type.signature),
+        )
+
+        is ClassTypeDto -> EtsClassType(
+            classSignature = convertToEtsClassSignature(type.signature),
+        )
+
+        NeverTypeDto -> EtsNeverType
+
+        BooleanTypeDto -> EtsBooleanType
+
+        is LiteralTypeDto -> EtsLiteralType(
+            literalTypeName = type.literal,
+        )
+
+        NullTypeDto -> EtsNullType
+
+        NumberTypeDto -> EtsNumberType
+
+        StringTypeDto -> EtsStringType
+
+        UndefinedTypeDto -> EtsUndefinedType
+
+        is TupleTypeDto -> EtsTupleType(
+            types = type.types.map { convertToEtsType(it) }
+        )
+
+        is UnclearReferenceTypeDto -> EtsUnclearRefType(
+            typeName = type.name,
+        )
+
+        is UnionTypeDto -> EtsUnionType(
+            types = type.types.map { convertToEtsType(it) }
+        )
+
+        UnknownTypeDto -> EtsUnknownType
+
+        VoidTypeDto -> EtsVoidType
     }
 }
 
+// TODO: add EtsNeverConstant?
+// TODO: add EtsUnknownConstant(value: String)?
 fun convertToEtsConstant(value: ConstantDto): EtsConstant {
-    return when (value.type) {
-        "string" -> EtsStringConstant(
+    val type = convertToEtsType(value.type)
+    return when (type) {
+        EtsStringType -> EtsStringConstant(
             value = value.value
         )
 
-        "boolean" -> EtsBooleanConstant(
+        EtsBooleanType -> EtsBooleanConstant(
             value = value.value.toBoolean()
         )
 
-        "number" -> EtsNumberConstant(
+        EtsNumberType -> EtsNumberConstant(
             value = value.value.toDouble()
         )
 
-        "null" -> EtsNullConstant
+        EtsNullType -> EtsNullConstant
 
-        "undefined" -> EtsUndefinedConstant
-
-        "unknown" -> object : EtsConstant {
-            override val type: EtsType
-                get() = EtsUnknownType
-
-            override fun toString(): String = "UnknownConstant(${value.value})"
-
-            override fun <R> accept(visitor: EtsConstant.Visitor<R>): R {
-                TODO("UnknownConstant is not supported")
-            }
-        }
+        EtsUndefinedType -> EtsUndefinedConstant
 
         else -> error("Unknown Constant: $value")
     }

@@ -19,7 +19,9 @@
             },
             "name": "_DEFAULT_ARK_METHOD",
             "parameters": [],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -27,39 +29,72 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "someClass",
-                "type": "@save/basic: AnonymousClass-basic.ts-1"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "AnonymousClass-basic.ts-1"
+                  }
+                }
               },
               {
                 "name": "AnonymousClass-basic.ts-1",
-                "type": "@save/basic: AnonymousClass-basic.ts-1"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "AnonymousClass-basic.ts-1"
+                  }
+                }
               },
               {
                 "name": "m",
-                "type": "@_UnkownProjectName/_UnkownFileName: someClass"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "someClass"
+                  }
+                }
               },
               {
                 "name": "$temp0",
-                "type": "@_UnkownProjectName/_UnkownFileName: someClass"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "someClass"
+                  }
+                }
               },
               {
                 "name": "x",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               },
               {
                 "name": "soo",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               },
               {
                 "name": "forLoopTest",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "test",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               }
             ],
             "cfg": {
@@ -74,11 +109,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -86,12 +131,22 @@
                       "left": {
                         "_": "Local",
                         "name": "someClass",
-                        "type": "@save/basic: AnonymousClass-basic.ts-1"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-basic.ts-1"
+                          }
+                        }
                       },
                       "right": {
                         "_": "Local",
                         "name": "AnonymousClass-basic.ts-1",
-                        "type": "@save/basic: AnonymousClass-basic.ts-1"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-basic.ts-1"
+                          }
+                        }
                       }
                     },
                     {
@@ -99,11 +154,21 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "@_UnkownProjectName/_UnkownFileName: someClass"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "someClass"
+                          }
+                        }
                       },
                       "right": {
                         "_": "NewExpr",
-                        "type": "@_UnkownProjectName/_UnkownFileName: someClass"
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "someClass"
+                          }
+                        }
                       }
                     },
                     {
@@ -113,7 +178,12 @@
                         "instance": {
                           "_": "Local",
                           "name": "$temp0",
-                          "type": "@_UnkownProjectName/_UnkownFileName: someClass"
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "someClass"
+                            }
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -121,13 +191,17 @@
                           },
                           "name": "constructor",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Constant",
                             "value": "Hello, world",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -137,12 +211,22 @@
                       "left": {
                         "_": "Local",
                         "name": "m",
-                        "type": "@_UnkownProjectName/_UnkownFileName: someClass"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "someClass"
+                          }
+                        }
                       },
                       "right": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "@_UnkownProjectName/_UnkownFileName: someClass"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "someClass"
+                          }
+                        }
                       }
                     },
                     {
@@ -150,12 +234,16 @@
                       "left": {
                         "_": "Local",
                         "name": "x",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "Constant",
                         "value": "1",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     },
                     {
@@ -163,12 +251,16 @@
                       "left": {
                         "_": "Local",
                         "name": "soo",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "Constant",
                         "value": "123",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     },
                     {
@@ -181,7 +273,9 @@
                           },
                           "name": "forLoopTest",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": []
                       }
@@ -196,7 +290,9 @@
                           },
                           "name": "test",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": []
                       }
@@ -217,7 +313,9 @@
             },
             "name": "forLoopTest",
             "parameters": [],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -225,31 +323,54 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "myPerson",
-                "type": "@_UnkownProjectName/_UnkownFileName: Person"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Person"
+                  }
+                }
               },
               {
                 "name": "$temp0",
-                "type": "@_UnkownProjectName/_UnkownFileName: Person"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Person"
+                  }
+                }
               },
               {
                 "name": "i",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               },
               {
                 "name": "newAge",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "$temp1",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "logger",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               }
             ],
             "cfg": {
@@ -266,11 +387,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -278,11 +409,21 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Person"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Person"
+                          }
+                        }
                       },
                       "right": {
                         "_": "NewExpr",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Person"
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Person"
+                          }
+                        }
                       }
                     },
                     {
@@ -292,7 +433,12 @@
                         "instance": {
                           "_": "Local",
                           "name": "$temp0",
-                          "type": "@_UnkownProjectName/_UnkownFileName: Person"
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Person"
+                            }
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -300,13 +446,17 @@
                           },
                           "name": "constructor",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Constant",
                             "value": "10",
-                            "type": "number"
+                            "type": {
+                              "_": "NumberType"
+                            }
                           }
                         ]
                       }
@@ -316,12 +466,22 @@
                       "left": {
                         "_": "Local",
                         "name": "myPerson",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Person"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Person"
+                          }
+                        }
                       },
                       "right": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Person"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Person"
+                          }
+                        }
                       }
                     }
                   ]
@@ -342,12 +502,16 @@
                       "left": {
                         "_": "Local",
                         "name": "i",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "Constant",
                         "value": "0",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     },
                     {
@@ -358,12 +522,19 @@
                         "left": {
                           "_": "Local",
                           "name": "i",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "10",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     },
@@ -372,7 +543,9 @@
                       "left": {
                         "_": "Local",
                         "name": "i",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -380,12 +553,16 @@
                         "left": {
                           "_": "Local",
                           "name": "i",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "1",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     }
@@ -417,21 +594,30 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp1",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
                           "_": "Local",
                           "name": "myPerson",
-                          "type": "@_UnkownProjectName/_UnkownFileName: Person"
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Person"
+                            }
+                          }
                         },
                         "field": {
                           "enclosingClass": {
                             "name": ""
                           },
                           "name": "age",
-                          "fieldType": "unknown"
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
                         }
                       }
                     },
@@ -440,7 +626,9 @@
                       "left": {
                         "_": "Local",
                         "name": "newAge",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -448,12 +636,16 @@
                         "left": {
                           "_": "Local",
                           "name": "$temp1",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "right": {
                           "_": "Local",
                           "name": "i",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     },
@@ -464,7 +656,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "logger",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -472,13 +666,17 @@
                           },
                           "name": "info",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "newAge",
-                            "type": "unknown"
+                            "type": {
+                              "_": "UnknownType"
+                            }
                           }
                         ]
                       }
@@ -496,7 +694,9 @@
             },
             "name": "test",
             "parameters": [],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -504,119 +704,188 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "sampleData",
-                "type": "(number)[]"
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "NumberType"
+                  },
+                  "dimensions": 1
+                }
               },
               {
                 "name": "$temp0",
-                "type": "(number)[]"
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "NumberType"
+                  },
+                  "dimensions": 1
+                }
               },
               {
                 "name": "i",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               },
               {
                 "name": "$temp1",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "$temp2",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               },
               {
                 "name": "$temp3",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               },
               {
                 "name": "$temp4",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "$temp5",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "logger",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "$temp6",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "$temp7",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "count",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               },
               {
                 "name": "$temp8",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               },
               {
                 "name": "$temp9",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "$temp10",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "j",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               },
               {
                 "name": "$temp11",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "$temp12",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "k",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               },
               {
                 "name": "$temp13",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "$temp14",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "$temp15",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "$temp16",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "$temp17",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "$temp18",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "$temp19",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "$temp20",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "$temp21",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               }
             ],
             "cfg": {
@@ -633,11 +902,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -645,15 +924,25 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "(number)[]"
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "NumberType"
+                          },
+                          "dimensions": 1
+                        }
                       },
                       "right": {
                         "_": "NewArrayExpr",
-                        "type": "number",
+                        "elementType": {
+                          "_": "NumberType"
+                        },
                         "size": {
                           "_": "Constant",
                           "value": "1",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     },
@@ -662,12 +951,24 @@
                       "left": {
                         "_": "Local",
                         "name": "sampleData",
-                        "type": "(number)[]"
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "NumberType"
+                          },
+                          "dimensions": 1
+                        }
                       },
                       "right": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "(number)[]"
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "NumberType"
+                          },
+                          "dimensions": 1
+                        }
                       }
                     }
                   ]
@@ -688,12 +989,16 @@
                       "left": {
                         "_": "Local",
                         "name": "i",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "Constant",
                         "value": "0",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     },
                     {
@@ -701,21 +1006,31 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp1",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
                           "_": "Local",
                           "name": "sampleData",
-                          "type": "(number)[]"
+                          "type": {
+                            "_": "ArrayType",
+                            "elementType": {
+                              "_": "NumberType"
+                            },
+                            "dimensions": 1
+                          }
                         },
                         "field": {
                           "enclosingClass": {
                             "name": ""
                           },
                           "name": "length",
-                          "fieldType": "unknown"
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
                         }
                       }
                     },
@@ -727,12 +1042,19 @@
                         "left": {
                           "_": "Local",
                           "name": "i",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
                         "right": {
                           "_": "Local",
                           "name": "$temp1",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     },
@@ -741,7 +1063,9 @@
                       "left": {
                         "_": "Local",
                         "name": "i",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -749,12 +1073,16 @@
                         "left": {
                           "_": "Local",
                           "name": "i",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "1",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     }
@@ -787,21 +1115,33 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp2",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "ArrayRef",
                         "array": {
                           "_": "Local",
                           "name": "sampleData",
-                          "type": "(number)[]"
+                          "type": {
+                            "_": "ArrayType",
+                            "elementType": {
+                              "_": "NumberType"
+                            },
+                            "dimensions": 1
+                          }
                         },
                         "index": {
                           "_": "Local",
                           "name": "i",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     },
                     {
@@ -809,7 +1149,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp3",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -817,12 +1159,16 @@
                         "left": {
                           "_": "Local",
                           "name": "$temp2",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "2",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     },
@@ -834,12 +1180,19 @@
                         "left": {
                           "_": "Local",
                           "name": "$temp3",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "0",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     }
@@ -859,7 +1212,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp6",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -867,21 +1222,33 @@
                         "left": {
                           "_": "Constant",
                           "value": "",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         },
                         "right": {
                           "_": "ArrayRef",
                           "array": {
                             "_": "Local",
                             "name": "sampleData",
-                            "type": "(number)[]"
+                            "type": {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            }
                           },
                           "index": {
                             "_": "Local",
                             "name": "i",
-                            "type": "number"
+                            "type": {
+                              "_": "NumberType"
+                            }
                           },
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     },
@@ -890,7 +1257,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp7",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -898,12 +1267,16 @@
                         "left": {
                           "_": "Local",
                           "name": "$temp6",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": " 是奇数",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         }
                       }
                     },
@@ -914,7 +1287,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "logger",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -922,13 +1297,17 @@
                           },
                           "name": "info",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "$temp7",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -965,7 +1344,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "logger",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -973,13 +1354,17 @@
                           },
                           "name": "info",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Constant",
                             "value": "无法判断",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -1000,12 +1385,16 @@
                       "left": {
                         "_": "Local",
                         "name": "count",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "Constant",
                         "value": "0",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     }
                   ]
@@ -1026,21 +1415,33 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp8",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "ArrayRef",
                         "array": {
                           "_": "Local",
                           "name": "sampleData",
-                          "type": "(number)[]"
+                          "type": {
+                            "_": "ArrayType",
+                            "elementType": {
+                              "_": "NumberType"
+                            },
+                            "dimensions": 1
+                          }
                         },
                         "index": {
                           "_": "Local",
                           "name": "i",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     },
                     {
@@ -1051,12 +1452,19 @@
                         "left": {
                           "_": "Local",
                           "name": "count",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
                         "right": {
                           "_": "Local",
                           "name": "$temp8",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     }
@@ -1079,12 +1487,16 @@
                       "left": {
                         "_": "Local",
                         "name": "j",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "Constant",
                         "value": "0",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     },
                     {
@@ -1095,12 +1507,19 @@
                         "left": {
                           "_": "Local",
                           "name": "j",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "5",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     },
@@ -1109,7 +1528,9 @@
                       "left": {
                         "_": "Local",
                         "name": "j",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1117,12 +1538,16 @@
                         "left": {
                           "_": "Local",
                           "name": "j",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "1",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     }
@@ -1144,12 +1569,16 @@
                       "left": {
                         "_": "Local",
                         "name": "k",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "Constant",
                         "value": "0",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     },
                     {
@@ -1160,12 +1589,19 @@
                         "left": {
                           "_": "Local",
                           "name": "k",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "3",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     },
@@ -1174,7 +1610,9 @@
                       "left": {
                         "_": "Local",
                         "name": "k",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1182,12 +1620,16 @@
                         "left": {
                           "_": "Local",
                           "name": "k",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "1",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     }
@@ -1208,7 +1650,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp13",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1216,12 +1660,16 @@
                         "left": {
                           "_": "Constant",
                           "value": "外层循环计数: ",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         },
                         "right": {
                           "_": "Local",
                           "name": "k",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     },
@@ -1230,7 +1678,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp14",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1238,12 +1688,16 @@
                         "left": {
                           "_": "Local",
                           "name": "$temp13",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         }
                       }
                     },
@@ -1254,7 +1708,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "logger",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -1262,13 +1718,17 @@
                           },
                           "name": "info",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "$temp14",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -1278,7 +1738,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp15",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1286,12 +1748,16 @@
                         "left": {
                           "_": "Constant",
                           "value": "Department name: ",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         },
                         "right": {
                           "_": "Local",
                           "name": "k",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     },
@@ -1302,7 +1768,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "logger",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -1310,13 +1778,17 @@
                           },
                           "name": "info",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "$temp15",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -1329,12 +1801,19 @@
                         "left": {
                           "_": "Local",
                           "name": "k",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "1",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     }
@@ -1380,12 +1859,19 @@
                         "left": {
                           "_": "Local",
                           "name": "j",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "2",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     }
@@ -1405,7 +1891,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp11",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1413,12 +1901,16 @@
                         "left": {
                           "_": "Constant",
                           "value": "当前内层循环计数: ",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         },
                         "right": {
                           "_": "Local",
                           "name": "j",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     },
@@ -1427,7 +1919,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp12",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1435,12 +1929,16 @@
                         "left": {
                           "_": "Local",
                           "name": "$temp11",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         }
                       }
                     },
@@ -1451,7 +1949,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "logger",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -1459,13 +1959,17 @@
                           },
                           "name": "info",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "$temp12",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -1500,7 +2004,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp9",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1508,12 +2014,16 @@
                         "left": {
                           "_": "Constant",
                           "value": "当前计数: ",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         },
                         "right": {
                           "_": "Local",
                           "name": "count",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     },
@@ -1522,7 +2032,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp10",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1530,12 +2042,16 @@
                         "left": {
                           "_": "Local",
                           "name": "$temp9",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         }
                       }
                     },
@@ -1546,7 +2062,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "logger",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -1554,13 +2072,17 @@
                           },
                           "name": "info",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "$temp10",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -1570,7 +2092,9 @@
                       "left": {
                         "_": "Local",
                         "name": "count",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1578,12 +2102,16 @@
                         "left": {
                           "_": "Local",
                           "name": "count",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "1",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     }
@@ -1601,7 +2129,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp16",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1609,21 +2139,33 @@
                         "left": {
                           "_": "Constant",
                           "value": "",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         },
                         "right": {
                           "_": "ArrayRef",
                           "array": {
                             "_": "Local",
                             "name": "sampleData",
-                            "type": "(number)[]"
+                            "type": {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            }
                           },
                           "index": {
                             "_": "Local",
                             "name": "i",
-                            "type": "number"
+                            "type": {
+                              "_": "NumberType"
+                            }
                           },
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     },
@@ -1632,7 +2174,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp17",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1640,12 +2184,16 @@
                         "left": {
                           "_": "Local",
                           "name": "$temp16",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": " 除以 3 余 2",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         }
                       }
                     },
@@ -1656,7 +2204,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "logger",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -1664,13 +2214,17 @@
                           },
                           "name": "info",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "$temp17",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -1692,7 +2246,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp18",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1700,21 +2256,33 @@
                         "left": {
                           "_": "Constant",
                           "value": "",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         },
                         "right": {
                           "_": "ArrayRef",
                           "array": {
                             "_": "Local",
                             "name": "sampleData",
-                            "type": "(number)[]"
+                            "type": {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            }
                           },
                           "index": {
                             "_": "Local",
                             "name": "i",
-                            "type": "number"
+                            "type": {
+                              "_": "NumberType"
+                            }
                           },
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     },
@@ -1723,7 +2291,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp19",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1731,12 +2301,16 @@
                         "left": {
                           "_": "Local",
                           "name": "$temp18",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": " 除以 3 余 1",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         }
                       }
                     },
@@ -1747,7 +2321,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "logger",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -1755,13 +2331,17 @@
                           },
                           "name": "info",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "$temp19",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -1783,7 +2363,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp20",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1791,21 +2373,33 @@
                         "left": {
                           "_": "Constant",
                           "value": "",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         },
                         "right": {
                           "_": "ArrayRef",
                           "array": {
                             "_": "Local",
                             "name": "sampleData",
-                            "type": "(number)[]"
+                            "type": {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            }
                           },
                           "index": {
                             "_": "Local",
                             "name": "i",
-                            "type": "number"
+                            "type": {
+                              "_": "NumberType"
+                            }
                           },
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     },
@@ -1814,7 +2408,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp21",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1822,12 +2418,16 @@
                         "left": {
                           "_": "Local",
                           "name": "$temp20",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": " 可被 3 整除",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         }
                       }
                     },
@@ -1838,7 +2438,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "logger",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -1846,13 +2448,17 @@
                           },
                           "name": "info",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "$temp21",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -1876,7 +2482,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp4",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1884,21 +2492,33 @@
                         "left": {
                           "_": "Constant",
                           "value": "",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         },
                         "right": {
                           "_": "ArrayRef",
                           "array": {
                             "_": "Local",
                             "name": "sampleData",
-                            "type": "(number)[]"
+                            "type": {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            }
                           },
                           "index": {
                             "_": "Local",
                             "name": "i",
-                            "type": "number"
+                            "type": {
+                              "_": "NumberType"
+                            }
                           },
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     },
@@ -1907,7 +2527,9 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp5",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -1915,12 +2537,16 @@
                         "left": {
                           "_": "Local",
                           "name": "$temp4",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": " 是偶数",
-                          "type": "string"
+                          "type": {
+                            "_": "StringType"
+                          }
                         }
                       }
                     },
@@ -1931,7 +2557,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "logger",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -1939,13 +2567,17 @@
                           },
                           "name": "info",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "$temp5",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -1963,7 +2595,9 @@
             },
             "name": "classMethodTest",
             "parameters": [],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [
             "ExportKeyword"
@@ -1973,47 +2607,90 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "notPerson",
-                "type": "@_UnkownProjectName/_UnkownFileName: Person"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Person"
+                  }
+                }
               },
               {
                 "name": "$temp0",
-                "type": "@_UnkownProjectName/_UnkownFileName: Person"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Person"
+                  }
+                }
               },
               {
                 "name": "x",
-                "type": "@_UnkownProjectName/_UnkownFileName: Map"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Map"
+                  }
+                }
               },
               {
                 "name": "$temp1",
-                "type": "@_UnkownProjectName/_UnkownFileName: Map"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Map"
+                  }
+                }
               },
               {
                 "name": "z",
-                "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Error"
+                  }
+                }
               },
               {
                 "name": "$temp2",
-                "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Error"
+                  }
+                }
               },
               {
                 "name": "y",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "test",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "a",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "Person",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               }
             ],
             "cfg": {
@@ -2028,11 +2705,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -2040,11 +2727,21 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Person"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Person"
+                          }
+                        }
                       },
                       "right": {
                         "_": "NewExpr",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Person"
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Person"
+                          }
+                        }
                       }
                     },
                     {
@@ -2054,7 +2751,12 @@
                         "instance": {
                           "_": "Local",
                           "name": "$temp0",
-                          "type": "@_UnkownProjectName/_UnkownFileName: Person"
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Person"
+                            }
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -2062,13 +2764,17 @@
                           },
                           "name": "constructor",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Constant",
                             "value": "10",
-                            "type": "number"
+                            "type": {
+                              "_": "NumberType"
+                            }
                           }
                         ]
                       }
@@ -2078,12 +2784,22 @@
                       "left": {
                         "_": "Local",
                         "name": "notPerson",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Person"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Person"
+                          }
+                        }
                       },
                       "right": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Person"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Person"
+                          }
+                        }
                       }
                     },
                     {
@@ -2091,11 +2807,21 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp1",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Map"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Map"
+                          }
+                        }
                       },
                       "right": {
                         "_": "NewExpr",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Map"
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Map"
+                          }
+                        }
                       }
                     },
                     {
@@ -2105,7 +2831,12 @@
                         "instance": {
                           "_": "Local",
                           "name": "$temp1",
-                          "type": "@_UnkownProjectName/_UnkownFileName: Map"
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Map"
+                            }
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -2113,7 +2844,9 @@
                           },
                           "name": "constructor",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": []
                       }
@@ -2123,12 +2856,22 @@
                       "left": {
                         "_": "Local",
                         "name": "x",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Map"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Map"
+                          }
+                        }
                       },
                       "right": {
                         "_": "Local",
                         "name": "$temp1",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Map"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Map"
+                          }
+                        }
                       }
                     },
                     {
@@ -2136,11 +2879,21 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp2",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
                       },
                       "right": {
                         "_": "NewExpr",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
                       }
                     },
                     {
@@ -2150,7 +2903,12 @@
                         "instance": {
                           "_": "Local",
                           "name": "$temp2",
-                          "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Error"
+                            }
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -2158,7 +2916,9 @@
                           },
                           "name": "constructor",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": []
                       }
@@ -2168,12 +2928,22 @@
                       "left": {
                         "_": "Local",
                         "name": "z",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
                       },
                       "right": {
                         "_": "Local",
                         "name": "$temp2",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
                       }
                     },
                     {
@@ -2181,7 +2951,9 @@
                       "left": {
                         "_": "Local",
                         "name": "y",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "StaticCallExpr",
@@ -2191,7 +2963,9 @@
                           },
                           "name": "test",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": []
                       }
@@ -2201,21 +2975,30 @@
                       "left": {
                         "_": "Local",
                         "name": "a",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
                           "_": "Local",
                           "name": "notPerson",
-                          "type": "@_UnkownProjectName/_UnkownFileName: Person"
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Person"
+                            }
+                          }
                         },
                         "field": {
                           "enclosingClass": {
                             "name": ""
                           },
                           "name": "age",
-                          "fieldType": "unknown"
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
                         }
                       }
                     },
@@ -2226,7 +3009,12 @@
                         "instance": {
                           "_": "Local",
                           "name": "notPerson",
-                          "type": "@_UnkownProjectName/_UnkownFileName: Person"
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Person"
+                            }
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -2234,7 +3022,9 @@
                           },
                           "name": "growOld",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": []
                       }
@@ -2246,7 +3036,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "Person",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -2254,7 +3046,9 @@
                           },
                           "name": "wooooof",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": []
                       }
@@ -2277,11 +3071,15 @@
             "parameters": [
               {
                 "name": "x",
-                "type": "number",
+                "type": {
+                  "_": "NumberType"
+                },
                 "isOptional": false
               }
             ],
-            "returnType": "number"
+            "returnType": {
+              "_": "NumberType"
+            }
           },
           "modifiers": [
             "ExportKeyword"
@@ -2291,19 +3089,30 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "x",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               },
               {
                 "name": "y",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               },
               {
                 "name": "k",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               }
             ],
             "cfg": {
@@ -2320,12 +3129,16 @@
                       "left": {
                         "_": "Local",
                         "name": "x",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     },
                     {
@@ -2333,11 +3146,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -2345,12 +3168,16 @@
                       "left": {
                         "_": "Local",
                         "name": "y",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "Constant",
                         "value": "0",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     }
                   ]
@@ -2371,12 +3198,16 @@
                       "left": {
                         "_": "Local",
                         "name": "k",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "Constant",
                         "value": "0",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     },
                     {
@@ -2387,12 +3218,19 @@
                         "left": {
                           "_": "Local",
                           "name": "k",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
                         "right": {
                           "_": "Local",
                           "name": "x",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     },
@@ -2401,7 +3239,9 @@
                       "left": {
                         "_": "Local",
                         "name": "k",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -2409,12 +3249,16 @@
                         "left": {
                           "_": "Local",
                           "name": "k",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "1",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     }
@@ -2432,7 +3276,9 @@
                       "arg": {
                         "_": "Local",
                         "name": "y",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     }
                   ]
@@ -2451,7 +3297,9 @@
                       "left": {
                         "_": "Local",
                         "name": "y",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "BinopExpr",
@@ -2459,12 +3307,16 @@
                         "left": {
                           "_": "Local",
                           "name": "y",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         },
                         "right": {
                           "_": "Local",
                           "name": "k",
-                          "type": "number"
+                          "type": {
+                            "_": "NumberType"
+                          }
                         }
                       }
                     }
@@ -2483,21 +3335,32 @@
             "parameters": [
               {
                 "name": "u",
-                "type": "number",
+                "type": {
+                  "_": "NumberType"
+                },
                 "isOptional": false
               },
               {
                 "name": "v",
-                "type": "number",
+                "type": {
+                  "_": "NumberType"
+                },
                 "isOptional": false
               },
               {
                 "name": "w",
-                "type": "string",
+                "type": {
+                  "_": "StringType"
+                },
                 "isOptional": false
               }
             ],
-            "returnType": "@save/basic: AnonymousClass-basic.ts-0"
+            "returnType": {
+              "_": "ClassType",
+              "signature": {
+                "name": "AnonymousClass-basic.ts-0"
+              }
+            }
           },
           "modifiers": [
             "ExportKeyword"
@@ -2507,19 +3370,30 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "u",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               },
               {
                 "name": "v",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               },
               {
                 "name": "w",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               }
             ],
             "cfg": {
@@ -2534,12 +3408,16 @@
                       "left": {
                         "_": "Local",
                         "name": "u",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     },
                     {
@@ -2547,12 +3425,16 @@
                       "left": {
                         "_": "Local",
                         "name": "v",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 1,
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     },
                     {
@@ -2560,12 +3442,16 @@
                       "left": {
                         "_": "Local",
                         "name": "w",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 2,
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       }
                     },
                     {
@@ -2573,18 +3459,33 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
                       "_": "ReturnStmt",
                       "arg": {
                         "_": "ObjectLiteralExpr",
-                        "type": "@save/basic: AnonymousClass-basic.ts-2"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-basic.ts-2"
+                          }
+                        }
                       }
                     }
                   ]
@@ -2610,7 +3511,9 @@
               "name": "Person"
             },
             "name": "x",
-            "fieldType": "number"
+            "fieldType": {
+              "_": "NumberType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -2619,7 +3522,9 @@
           "initializer": {
             "_": "Constant",
             "value": "0",
-            "type": "number"
+            "type": {
+              "_": "NumberType"
+            }
           }
         },
         {
@@ -2628,7 +3533,9 @@
               "name": "Person"
             },
             "name": "growOld",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -2637,7 +3544,9 @@
           "initializer": {
             "_": "Constant",
             "value": "",
-            "type": "unknown"
+            "type": {
+              "_": "UnknownType"
+            }
           }
         }
       ],
@@ -2651,11 +3560,15 @@
             "parameters": [
               {
                 "name": "age",
-                "type": "number",
+                "type": {
+                  "_": "NumberType"
+                },
                 "isOptional": false
               }
             ],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -2663,11 +3576,18 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: Person"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Person"
+                  }
+                }
               },
               {
                 "name": "age",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               }
             ],
             "cfg": {
@@ -2682,12 +3602,16 @@
                       "left": {
                         "_": "Local",
                         "name": "age",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     },
                     {
@@ -2695,11 +3619,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: Person"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Person"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: Person"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Person"
+                          }
+                        }
                       }
                     },
                     {
@@ -2718,7 +3652,9 @@
             },
             "name": "getAge",
             "parameters": [],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [
             "PublicKeyword"
@@ -2728,11 +3664,18 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: Person"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Person"
+                  }
+                }
               },
               {
                 "name": "$temp0",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               }
             ],
             "cfg": {
@@ -2747,11 +3690,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: Person"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Person"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: Person"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Person"
+                          }
+                        }
                       }
                     },
                     {
@@ -2759,21 +3712,30 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
                           "_": "Local",
                           "name": "this",
-                          "type": "@save/basic: Person"
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Person"
+                            }
+                          }
                         },
                         "field": {
                           "enclosingClass": {
                             "name": ""
                           },
                           "name": "age",
-                          "fieldType": "unknown"
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
                         }
                       }
                     },
@@ -2782,7 +3744,9 @@
                       "arg": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       }
                     }
                   ]
@@ -2798,7 +3762,9 @@
             },
             "name": "wooooof",
             "parameters": [],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [
             "StaticKeyword"
@@ -2808,11 +3774,18 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: Person"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Person"
+                  }
+                }
               },
               {
                 "name": "logger",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               }
             ],
             "cfg": {
@@ -2827,11 +3800,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: Person"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Person"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: Person"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Person"
+                          }
+                        }
                       }
                     },
                     {
@@ -2841,7 +3824,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "logger",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -2849,13 +3834,17 @@
                           },
                           "name": "info",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Constant",
                             "value": "not a person sound",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -2888,7 +3877,9 @@
             },
             "name": "alert",
             "parameters": [],
-            "returnType": "void"
+            "returnType": {
+              "_": "VoidType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -2896,7 +3887,12 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: Alarm"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Alarm"
+                  }
+                }
               }
             ],
             "cfg": {
@@ -2911,11 +3907,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: Alarm"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Alarm"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: Alarm"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Alarm"
+                          }
+                        }
                       }
                     },
                     {
@@ -2946,7 +3952,9 @@
             },
             "name": "alert2",
             "parameters": [],
-            "returnType": "void"
+            "returnType": {
+              "_": "VoidType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -2954,7 +3962,12 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: Alarm2"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Alarm2"
+                  }
+                }
               }
             ],
             "cfg": {
@@ -2969,11 +3982,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: Alarm2"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Alarm2"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: Alarm2"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Alarm2"
+                          }
+                        }
                       }
                     },
                     {
@@ -3013,7 +4036,9 @@
               "name": "Adder"
             },
             "name": "add",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -3022,7 +4047,9 @@
           "initializer": {
             "_": "Constant",
             "value": "",
-            "type": "unknown"
+            "type": {
+              "_": "UnknownType"
+            }
           }
         }
       ],
@@ -3036,11 +4063,15 @@
             "parameters": [
               {
                 "name": "a",
-                "type": "number",
+                "type": {
+                  "_": "NumberType"
+                },
                 "isOptional": false
               }
             ],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -3048,11 +4079,18 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: Adder"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Adder"
+                  }
+                }
               },
               {
                 "name": "a",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               }
             ],
             "cfg": {
@@ -3067,12 +4105,16 @@
                       "left": {
                         "_": "Local",
                         "name": "a",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     },
                     {
@@ -3080,11 +4122,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: Adder"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Adder"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: Adder"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Adder"
+                          }
+                        }
                       }
                     },
                     {
@@ -3113,7 +4165,9 @@
               "name": "ExtendedAdder"
             },
             "name": "superAdd",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [
             "PrivateKeyword"
@@ -3126,14 +4180,18 @@
             "instance": {
               "_": "Constant",
               "value": "",
-              "type": "unknown"
+              "type": {
+                "_": "UnknownType"
+              }
             },
             "field": {
               "enclosingClass": {
                 "name": ""
               },
               "name": "add",
-              "fieldType": "unknown"
+              "fieldType": {
+                "_": "UnknownType"
+              }
             }
           }
         },
@@ -3143,7 +4201,9 @@
               "name": "ExtendedAdder"
             },
             "name": "add",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -3152,7 +4212,9 @@
           "initializer": {
             "_": "Constant",
             "value": "",
-            "type": "unknown"
+            "type": {
+              "_": "UnknownType"
+            }
           }
         }
       ],
@@ -3178,7 +4240,9 @@
               "name": "SecurityDoor"
             },
             "name": "x",
-            "fieldType": "number"
+            "fieldType": {
+              "_": "NumberType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -3187,7 +4251,9 @@
           "initializer": {
             "_": "Constant",
             "value": "0",
-            "type": "number"
+            "type": {
+              "_": "NumberType"
+            }
           }
         },
         {
@@ -3196,7 +4262,9 @@
               "name": "SecurityDoor"
             },
             "name": "y",
-            "fieldType": "string"
+            "fieldType": {
+              "_": "StringType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -3205,7 +4273,9 @@
           "initializer": {
             "_": "Constant",
             "value": "''",
-            "type": "string"
+            "type": {
+              "_": "StringType"
+            }
           }
         },
         {
@@ -3214,7 +4284,9 @@
               "name": "SecurityDoor"
             },
             "name": "Members",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [
             "PublicKeyword"
@@ -3225,7 +4297,9 @@
           "initializer": {
             "_": "Constant",
             "value": "",
-            "type": "unknown"
+            "type": {
+              "_": "UnknownType"
+            }
           }
         }
       ],
@@ -3237,7 +4311,9 @@
             },
             "name": "alert",
             "parameters": [],
-            "returnType": "void"
+            "returnType": {
+              "_": "VoidType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -3245,11 +4321,18 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: SecurityDoor"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "SecurityDoor"
+                  }
+                }
               },
               {
                 "name": "logger",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               }
             ],
             "cfg": {
@@ -3264,11 +4347,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: SecurityDoor"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "SecurityDoor"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: SecurityDoor"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "SecurityDoor"
+                          }
+                        }
                       }
                     },
                     {
@@ -3278,7 +4371,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "logger",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -3286,13 +4381,17 @@
                           },
                           "name": "info",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Constant",
                             "value": "SecurityDoor alert",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -3313,7 +4412,9 @@
             },
             "name": "alert2",
             "parameters": [],
-            "returnType": "void"
+            "returnType": {
+              "_": "VoidType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -3321,11 +4422,18 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: SecurityDoor"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "SecurityDoor"
+                  }
+                }
               },
               {
                 "name": "logger",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               }
             ],
             "cfg": {
@@ -3340,11 +4448,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: SecurityDoor"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "SecurityDoor"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: SecurityDoor"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "SecurityDoor"
+                          }
+                        }
                       }
                     },
                     {
@@ -3354,7 +4472,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "logger",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -3362,13 +4482,17 @@
                           },
                           "name": "info",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Constant",
                             "value": "SecurityDoor alert2",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -3389,7 +4513,9 @@
             },
             "name": "fooo",
             "parameters": [],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [
             "PublicKeyword"
@@ -3399,11 +4525,18 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: SecurityDoor"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "SecurityDoor"
+                  }
+                }
               },
               {
                 "name": "logger",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               }
             ],
             "cfg": {
@@ -3418,11 +4551,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: SecurityDoor"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "SecurityDoor"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: SecurityDoor"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "SecurityDoor"
+                          }
+                        }
                       }
                     },
                     {
@@ -3432,7 +4575,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "logger",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -3440,13 +4585,17 @@
                           },
                           "name": "info",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Constant",
                             "value": "This is fooo!",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -3469,16 +4618,22 @@
             "parameters": [
               {
                 "name": "x",
-                "type": "number",
+                "type": {
+                  "_": "NumberType"
+                },
                 "isOptional": false
               },
               {
                 "name": "y",
-                "type": "string",
+                "type": {
+                  "_": "StringType"
+                },
                 "isOptional": false
               }
             ],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -3486,19 +4641,30 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: SecurityDoor"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "SecurityDoor"
+                  }
+                }
               },
               {
                 "name": "x",
-                "type": "number"
+                "type": {
+                  "_": "NumberType"
+                }
               },
               {
                 "name": "y",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               },
               {
                 "name": "logger",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               }
             ],
             "cfg": {
@@ -3513,12 +4679,16 @@
                       "left": {
                         "_": "Local",
                         "name": "x",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     },
                     {
@@ -3526,12 +4696,16 @@
                       "left": {
                         "_": "Local",
                         "name": "y",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 1,
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       }
                     },
                     {
@@ -3539,11 +4713,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: SecurityDoor"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "SecurityDoor"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: SecurityDoor"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "SecurityDoor"
+                          }
+                        }
                       }
                     },
                     {
@@ -3556,7 +4740,9 @@
                           },
                           "name": "super",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": []
                       }
@@ -3568,20 +4754,29 @@
                         "instance": {
                           "_": "Local",
                           "name": "this",
-                          "type": "@save/basic: SecurityDoor"
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "SecurityDoor"
+                            }
+                          }
                         },
                         "field": {
                           "enclosingClass": {
                             "name": ""
                           },
                           "name": "x",
-                          "fieldType": "unknown"
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
                         }
                       },
                       "right": {
                         "_": "Local",
                         "name": "x",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     },
                     {
@@ -3591,20 +4786,29 @@
                         "instance": {
                           "_": "Local",
                           "name": "this",
-                          "type": "@save/basic: SecurityDoor"
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "SecurityDoor"
+                            }
+                          }
                         },
                         "field": {
                           "enclosingClass": {
                             "name": ""
                           },
                           "name": "y",
-                          "fieldType": "unknown"
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
                         }
                       },
                       "right": {
                         "_": "Local",
                         "name": "y",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       }
                     },
                     {
@@ -3614,7 +4818,9 @@
                         "instance": {
                           "_": "Local",
                           "name": "logger",
-                          "type": "unknown"
+                          "type": {
+                            "_": "UnknownType"
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -3622,13 +4828,17 @@
                           },
                           "name": "info",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Constant",
                             "value": "This is a constrctor!",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -3661,7 +4871,9 @@
               "name": "Animal"
             },
             "name": "name",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [
             "PublicKeyword"
@@ -3682,11 +4894,15 @@
             "parameters": [
               {
                 "name": "name",
-                "type": "string",
+                "type": {
+                  "_": "StringType"
+                },
                 "isOptional": false
               }
             ],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [
             "PublicKeyword"
@@ -3696,11 +4912,18 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: Animal"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Animal"
+                  }
+                }
               },
               {
                 "name": "name",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               }
             ],
             "cfg": {
@@ -3715,12 +4938,16 @@
                       "left": {
                         "_": "Local",
                         "name": "name",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       }
                     },
                     {
@@ -3728,11 +4955,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: Animal"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Animal"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: Animal"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Animal"
+                          }
+                        }
                       }
                     },
                     {
@@ -3742,20 +4979,29 @@
                         "instance": {
                           "_": "Local",
                           "name": "this",
-                          "type": "@save/basic: Animal"
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Animal"
+                            }
+                          }
                         },
                         "field": {
                           "enclosingClass": {
                             "name": ""
                           },
                           "name": "name",
-                          "fieldType": "unknown"
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
                         }
                       },
                       "right": {
                         "_": "Local",
                         "name": "name",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       }
                     },
                     {
@@ -3774,7 +5020,9 @@
             },
             "name": "sayHi",
             "parameters": [],
-            "returnType": "void"
+            "returnType": {
+              "_": "VoidType"
+            }
           },
           "modifiers": [
             "PublicKeyword",
@@ -3785,7 +5033,12 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: Animal"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Animal"
+                  }
+                }
               }
             ],
             "cfg": {
@@ -3800,11 +5053,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: Animal"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Animal"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: Animal"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Animal"
+                          }
+                        }
                       }
                     },
                     {
@@ -3835,7 +5098,9 @@
               "name": "StringValidator"
             },
             "name": "color",
-            "fieldType": "string"
+            "fieldType": {
+              "_": "StringType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -3849,7 +5114,9 @@
               "name": "StringValidator"
             },
             "name": "width",
-            "fieldType": "number"
+            "fieldType": {
+              "_": "NumberType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -3868,11 +5135,15 @@
             "parameters": [
               {
                 "name": "s",
-                "type": "string",
+                "type": {
+                  "_": "StringType"
+                },
                 "isOptional": true
               }
             ],
-            "returnType": "boolean"
+            "returnType": {
+              "_": "BooleanType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -3880,11 +5151,18 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: StringValidator"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "StringValidator"
+                  }
+                }
               },
               {
                 "name": "s",
-                "type": "string"
+                "type": {
+                  "_": "StringType"
+                }
               }
             ],
             "cfg": {
@@ -3899,12 +5177,16 @@
                       "left": {
                         "_": "Local",
                         "name": "s",
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
-                        "type": "string"
+                        "type": {
+                          "_": "StringType"
+                        }
                       }
                     },
                     {
@@ -3912,11 +5194,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: StringValidator"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "StringValidator"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: StringValidator"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "StringValidator"
+                          }
+                        }
                       }
                     },
                     {
@@ -3945,7 +5237,10 @@
               "name": "AnonymousClass-basic.ts-1"
             },
             "name": "content",
-            "fieldType": "Type"
+            "fieldType": {
+              "_": "UnclearReferenceType",
+              "name": "Type"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -3964,11 +5259,16 @@
             "parameters": [
               {
                 "name": "value",
-                "type": "Type",
+                "type": {
+                  "_": "UnclearReferenceType",
+                  "name": "Type"
+                },
                 "isOptional": false
               }
             ],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -3976,11 +5276,19 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/basic: AnonymousClass-basic.ts-1"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "AnonymousClass-basic.ts-1"
+                  }
+                }
               },
               {
                 "name": "value",
-                "type": "Type"
+                "type": {
+                  "_": "UnclearReferenceType",
+                  "name": "Type"
+                }
               }
             ],
             "cfg": {
@@ -3995,12 +5303,18 @@
                       "left": {
                         "_": "Local",
                         "name": "value",
-                        "type": "Type"
+                        "type": {
+                          "_": "UnclearReferenceType",
+                          "name": "Type"
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
-                        "type": "Type"
+                        "type": {
+                          "_": "UnclearReferenceType",
+                          "name": "Type"
+                        }
                       }
                     },
                     {
@@ -4008,11 +5322,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/basic: AnonymousClass-basic.ts-1"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-basic.ts-1"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/basic: AnonymousClass-basic.ts-1"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-basic.ts-1"
+                          }
+                        }
                       }
                     },
                     {
@@ -4022,20 +5346,30 @@
                         "instance": {
                           "_": "Local",
                           "name": "this",
-                          "type": "@save/basic: AnonymousClass-basic.ts-1"
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "AnonymousClass-basic.ts-1"
+                            }
+                          }
                         },
                         "field": {
                           "enclosingClass": {
                             "name": ""
                           },
                           "name": "content",
-                          "fieldType": "unknown"
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
                         }
                       },
                       "right": {
                         "_": "Local",
                         "name": "value",
-                        "type": "Type"
+                        "type": {
+                          "_": "UnclearReferenceType",
+                          "name": "Type"
+                        }
                       }
                     },
                     {
@@ -4064,7 +5398,9 @@
               "name": "AnonymousClass-basic.ts-2"
             },
             "name": "x",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -4073,7 +5409,9 @@
           "initializer": {
             "_": "Local",
             "name": "u",
-            "type": "unknown"
+            "type": {
+              "_": "UnknownType"
+            }
           }
         },
         {
@@ -4082,7 +5420,9 @@
               "name": "AnonymousClass-basic.ts-2"
             },
             "name": "y",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -4091,7 +5431,9 @@
           "initializer": {
             "_": "Local",
             "name": "v",
-            "type": "unknown"
+            "type": {
+              "_": "UnknownType"
+            }
           }
         },
         {
@@ -4100,7 +5442,9 @@
               "name": "AnonymousClass-basic.ts-2"
             },
             "name": "z",
-            "fieldType": "UNDEFINED"
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -4109,7 +5453,9 @@
           "initializer": {
             "_": "Local",
             "name": "w",
-            "type": "unknown"
+            "type": {
+              "_": "UnknownType"
+            }
           }
         }
       ],

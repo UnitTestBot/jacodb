@@ -19,7 +19,9 @@
             },
             "name": "_DEFAULT_ARK_METHOD",
             "parameters": [],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -27,7 +29,12 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               }
             ],
             "cfg": {
@@ -42,11 +49,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -65,7 +82,17 @@
             },
             "name": "source",
             "parameters": [],
-            "returnType": "number|null"
+            "returnType": {
+              "_": "UnionType",
+              "types": [
+                {
+                  "_": "NumberType"
+                },
+                {
+                  "_": "NullType"
+                }
+              ]
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -73,7 +100,12 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               }
             ],
             "cfg": {
@@ -88,11 +120,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -100,7 +142,9 @@
                       "arg": {
                         "_": "Constant",
                         "value": "null",
-                        "type": "null"
+                        "type": {
+                          "_": "NullType"
+                        }
                       }
                     }
                   ]
@@ -118,11 +162,31 @@
             "parameters": [
               {
                 "name": "data",
-                "type": "number|null",
+                "type": {
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
+                },
                 "isOptional": false
               }
             ],
-            "returnType": "number|null"
+            "returnType": {
+              "_": "UnionType",
+              "types": [
+                {
+                  "_": "NumberType"
+                },
+                {
+                  "_": "NullType"
+                }
+              ]
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -130,11 +194,26 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "data",
-                "type": "number|null"
+                "type": {
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
+                }
               }
             ],
             "cfg": {
@@ -149,12 +228,32 @@
                       "left": {
                         "_": "Local",
                         "name": "data",
-                        "type": "number|null"
+                        "type": {
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
-                        "type": "number|null"
+                        "type": {
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
+                        }
                       }
                     },
                     {
@@ -162,11 +261,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -174,7 +283,17 @@
                       "arg": {
                         "_": "Local",
                         "name": "data",
-                        "type": "number|null"
+                        "type": {
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
+                        }
                       }
                     }
                   ]
@@ -192,11 +311,23 @@
             "parameters": [
               {
                 "name": "data",
-                "type": "number|null",
+                "type": {
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
+                },
                 "isOptional": false
               }
             ],
-            "returnType": "number"
+            "returnType": {
+              "_": "NumberType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -204,11 +335,26 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "data",
-                "type": "number|null"
+                "type": {
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
+                }
               }
             ],
             "cfg": {
@@ -226,12 +372,32 @@
                       "left": {
                         "_": "Local",
                         "name": "data",
-                        "type": "number|null"
+                        "type": {
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
-                        "type": "number|null"
+                        "type": {
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
+                        }
                       }
                     },
                     {
@@ -239,11 +405,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -254,12 +430,27 @@
                         "left": {
                           "_": "Local",
                           "name": "data",
-                          "type": "number|null"
+                          "type": {
+                            "_": "UnionType",
+                            "types": [
+                              {
+                                "_": "NumberType"
+                              },
+                              {
+                                "_": "NullType"
+                              }
+                            ]
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "null",
-                          "type": "null"
+                          "type": {
+                            "_": "NullType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     }
@@ -278,7 +469,17 @@
                       "arg": {
                         "_": "Local",
                         "name": "data",
-                        "type": "number|null"
+                        "type": {
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
+                        }
                       }
                     }
                   ]
@@ -297,7 +498,9 @@
                       "arg": {
                         "_": "Constant",
                         "value": "0",
-                        "type": "number"
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     }
                   ]
@@ -315,11 +518,23 @@
             "parameters": [
               {
                 "name": "data",
-                "type": "number|null",
+                "type": {
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
+                },
                 "isOptional": false
               }
             ],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -327,15 +542,35 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "data",
-                "type": "number|null"
+                "type": {
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
+                }
               },
               {
                 "name": "$temp0",
-                "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Error"
+                  }
+                }
               }
             ],
             "cfg": {
@@ -353,12 +588,32 @@
                       "left": {
                         "_": "Local",
                         "name": "data",
-                        "type": "number|null"
+                        "type": {
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
+                        }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
-                        "type": "number|null"
+                        "type": {
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
+                        }
                       }
                     },
                     {
@@ -366,11 +621,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -381,12 +646,27 @@
                         "left": {
                           "_": "Local",
                           "name": "data",
-                          "type": "number|null"
+                          "type": {
+                            "_": "UnionType",
+                            "types": [
+                              {
+                                "_": "NumberType"
+                              },
+                              {
+                                "_": "NullType"
+                              }
+                            ]
+                          }
                         },
                         "right": {
                           "_": "Constant",
                           "value": "null",
-                          "type": "null"
+                          "type": {
+                            "_": "NullType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     }
@@ -419,11 +699,21 @@
                       "left": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
                       },
                       "right": {
                         "_": "NewExpr",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
                       }
                     },
                     {
@@ -433,7 +723,12 @@
                         "instance": {
                           "_": "Local",
                           "name": "$temp0",
-                          "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Error"
+                            }
+                          }
                         },
                         "method": {
                           "enclosingClass": {
@@ -441,13 +736,17 @@
                           },
                           "name": "constructor",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Constant",
                             "value": "Error!",
-                            "type": "string"
+                            "type": {
+                              "_": "StringType"
+                            }
                           }
                         ]
                       }
@@ -457,7 +756,12 @@
                       "arg": {
                         "_": "Local",
                         "name": "$temp0",
-                        "type": "@_UnkownProjectName/_UnkownFileName: Error"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
                       }
                     }
                   ]
@@ -473,7 +777,9 @@
             },
             "name": "bad",
             "parameters": [],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -481,23 +787,36 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "data",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "source",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "pass",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "sink",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               }
             ],
             "cfg": {
@@ -512,11 +831,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -524,7 +853,9 @@
                       "left": {
                         "_": "Local",
                         "name": "data",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "StaticCallExpr",
@@ -534,7 +865,9 @@
                           },
                           "name": "source",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": []
                       }
@@ -544,7 +877,9 @@
                       "left": {
                         "_": "Local",
                         "name": "data",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "StaticCallExpr",
@@ -554,13 +889,17 @@
                           },
                           "name": "pass",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "data",
-                            "type": "unknown"
+                            "type": {
+                              "_": "UnknownType"
+                            }
                           }
                         ]
                       }
@@ -575,13 +914,17 @@
                           },
                           "name": "sink",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "data",
-                            "type": "unknown"
+                            "type": {
+                              "_": "UnknownType"
+                            }
                           }
                         ]
                       }
@@ -602,7 +945,9 @@
             },
             "name": "good",
             "parameters": [],
-            "returnType": "unknown"
+            "returnType": {
+              "_": "UnknownType"
+            }
           },
           "modifiers": [],
           "typeParameters": [],
@@ -610,23 +955,36 @@
             "locals": [
               {
                 "name": "this",
-                "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
               },
               {
                 "name": "data",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "source",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "validate",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               },
               {
                 "name": "sink",
-                "type": "unknown"
+                "type": {
+                  "_": "UnknownType"
+                }
               }
             ],
             "cfg": {
@@ -641,11 +999,21 @@
                       "left": {
                         "_": "Local",
                         "name": "this",
-                        "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       },
                       "right": {
                         "_": "ThisRef",
-                        "type": "@save/taint: _DEFAULT_ARK_CLASS"
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
                       }
                     },
                     {
@@ -653,7 +1021,9 @@
                       "left": {
                         "_": "Local",
                         "name": "data",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "StaticCallExpr",
@@ -663,7 +1033,9 @@
                           },
                           "name": "source",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": []
                       }
@@ -673,7 +1045,9 @@
                       "left": {
                         "_": "Local",
                         "name": "data",
-                        "type": "unknown"
+                        "type": {
+                          "_": "UnknownType"
+                        }
                       },
                       "right": {
                         "_": "StaticCallExpr",
@@ -683,13 +1057,17 @@
                           },
                           "name": "validate",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "data",
-                            "type": "unknown"
+                            "type": {
+                              "_": "UnknownType"
+                            }
                           }
                         ]
                       }
@@ -704,13 +1082,17 @@
                           },
                           "name": "sink",
                           "parameters": [],
-                          "returnType": "unknown"
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
                         },
                         "args": [
                           {
                             "_": "Local",
                             "name": "data",
-                            "type": "unknown"
+                            "type": {
+                              "_": "UnknownType"
+                            }
                           }
                         ]
                       }
