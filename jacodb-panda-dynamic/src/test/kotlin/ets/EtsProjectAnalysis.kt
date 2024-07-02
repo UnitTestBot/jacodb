@@ -16,6 +16,8 @@
 
 package ets
 
+import ets.utils.getConfigForMethod
+import ets.utils.loadRules
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.TaintManager
@@ -30,8 +32,6 @@ import org.jacodb.panda.dynamic.ets.model.EtsFile
 import org.jacodb.panda.dynamic.ets.model.EtsMethod
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIf
-import parser.getConfigForMethod
-import parser.loadRules
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.time.Duration
