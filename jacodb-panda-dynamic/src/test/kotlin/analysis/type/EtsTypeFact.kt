@@ -3,6 +3,8 @@ package analysis.type
 import org.jacodb.panda.dynamic.ets.base.EtsType
 
 sealed interface EtsTypeFact {
+    sealed interface BasicType : EtsTypeFact
+
     fun union(other: EtsTypeFact): EtsTypeFact {
         if (this == other) return this
 
@@ -10,8 +12,10 @@ sealed interface EtsTypeFact {
             this is ObjectEtsTypeFact && other is ObjectEtsTypeFact -> union(this, other)
             this is UnionEtsTypeFact -> union(this, other)
             this is IntersectionEtsTypeFact -> union(this, other)
+            this is GuardedTypeFact -> union(this, other)
             other is UnionEtsTypeFact -> union(other, this)
             other is IntersectionEtsTypeFact -> union(other, this)
+            other is GuardedTypeFact -> union(other, this)
             else -> mkUnionType(this, other)
         }
     }
@@ -28,12 +32,14 @@ sealed interface EtsTypeFact {
             is StringEtsTypeFact -> when (other) {
                 is UnionEtsTypeFact -> intersect(other, this)
                 is IntersectionEtsTypeFact -> intersect(other, this)
+                is GuardedTypeFact -> intersect(other, this)
                 else -> null
             }
 
             is NumberEtsTypeFact -> when (other) {
                 is UnionEtsTypeFact -> intersect(other, this)
                 is IntersectionEtsTypeFact -> intersect(other, this)
+                is GuardedTypeFact -> intersect(other, this)
                 else -> null
             }
 
@@ -41,6 +47,7 @@ sealed interface EtsTypeFact {
                 is ObjectEtsTypeFact -> mkIntersectionType(this, other)
                 is UnionEtsTypeFact -> intersect(other, this)
                 is IntersectionEtsTypeFact -> intersect(other, this)
+                is GuardedTypeFact -> intersect(other, this)
                 else -> null
             }
 
@@ -49,42 +56,44 @@ sealed interface EtsTypeFact {
                 is FunctionEtsTypeFact -> mkIntersectionType(this, other)
                 is UnionEtsTypeFact -> intersect(other, this)
                 is IntersectionEtsTypeFact -> intersect(other, this)
+                is GuardedTypeFact -> intersect(other, this)
                 else -> null
             }
 
             is UnionEtsTypeFact -> intersect(this, other)
             is IntersectionEtsTypeFact -> intersect(this, other)
+            is GuardedTypeFact -> intersect(this, other)
         }
     }
 
     fun replaceUnknownWithAny(): EtsTypeFact
 
-    object UnknownEtsTypeFact : EtsTypeFact {
+    object UnknownEtsTypeFact : EtsTypeFact, BasicType {
         override fun toString(): String = "unknown"
         override fun replaceUnknownWithAny(): EtsTypeFact = AnyEtsTypeFact
     }
 
-    object AnyEtsTypeFact : EtsTypeFact {
+    object AnyEtsTypeFact : EtsTypeFact, BasicType {
         override fun toString(): String = "any"
         override fun replaceUnknownWithAny(): EtsTypeFact = this
     }
 
-    object StringEtsTypeFact : EtsTypeFact {
+    object StringEtsTypeFact : EtsTypeFact, BasicType {
         override fun toString(): String = "string"
         override fun replaceUnknownWithAny(): EtsTypeFact = this
     }
 
-    object NumberEtsTypeFact : EtsTypeFact {
+    object NumberEtsTypeFact : EtsTypeFact, BasicType {
         override fun toString(): String = "number"
         override fun replaceUnknownWithAny(): EtsTypeFact = this
     }
 
-    object FunctionEtsTypeFact : EtsTypeFact {
+    object FunctionEtsTypeFact : EtsTypeFact, BasicType {
         override fun toString(): String = "function"
         override fun replaceUnknownWithAny(): EtsTypeFact = this
     }
 
-    data class ObjectEtsTypeFact(val cls: EtsType?, val properties: Map<String, EtsTypeFact>) : EtsTypeFact {
+    data class ObjectEtsTypeFact(val cls: EtsType?, val properties: Map<String, EtsTypeFact>) : EtsTypeFact, BasicType {
         override fun replaceUnknownWithAny(): EtsTypeFact =
             ObjectEtsTypeFact(cls, properties.mapValues { (_, type) -> type.replaceUnknownWithAny() })
     }
@@ -97,6 +106,12 @@ sealed interface EtsTypeFact {
     data class IntersectionEtsTypeFact(val types: Set<EtsTypeFact>) : EtsTypeFact {
         override fun replaceUnknownWithAny(): EtsTypeFact =
             mkIntersectionType((types.mapTo(hashSetOf()) { it.replaceUnknownWithAny() }))
+    }
+
+    data class GuardedTypeFact(val guard: BasicType, val guardNegated: Boolean, val type: EtsTypeFact) : EtsTypeFact {
+        override fun replaceUnknownWithAny(): EtsTypeFact {
+            TODO("Not yet implemented")
+        }
     }
 
     companion object {
@@ -116,6 +131,20 @@ sealed interface EtsTypeFact {
                 }
             }
             return mkIntersectionType(result)
+        }
+
+        private fun intersect(guardedType: GuardedTypeFact, other: EtsTypeFact): EtsTypeFact? {
+            if (other is GuardedTypeFact) {
+                if (other.guard == guardedType.guard) {
+                    return if (other.guardNegated == guardedType.guardNegated) {
+                        guardedType.type.intersect(other.type)?.withGuard(guardedType.guard, guardedType.guardNegated)
+                    } else {
+                        guardedType.type.union(other.type)
+                    }
+                }
+            }
+
+            TODO()
         }
 
         private fun intersect(obj1: ObjectEtsTypeFact, obj2: ObjectEtsTypeFact): EtsTypeFact? {
@@ -145,6 +174,10 @@ sealed interface EtsTypeFact {
                 }
             }
             return mkUnionType(result)
+        }
+
+        private fun union(guardedType: GuardedTypeFact, other: EtsTypeFact): EtsTypeFact {
+            TODO()
         }
 
         private fun union(intersectionType: IntersectionEtsTypeFact, other: EtsTypeFact): EtsTypeFact {
@@ -197,4 +230,22 @@ sealed interface EtsTypeFact {
             return IntersectionEtsTypeFact(types)
         }
     }
+}
+
+fun EtsTypeFact.withGuard(guard: EtsTypeFact.BasicType, guardNegated: Boolean): EtsTypeFact {
+    val duplicateGuard = findDuplicateGuard(this, guard)
+
+    if (duplicateGuard != null) {
+        if (guardNegated == duplicateGuard.guardNegated) return this
+
+        TODO("Same guard with different sign")
+    }
+
+    return EtsTypeFact.GuardedTypeFact(guard, guardNegated, this)
+}
+
+private fun findDuplicateGuard(fact: EtsTypeFact, guard: EtsTypeFact.BasicType): EtsTypeFact.GuardedTypeFact? {
+    if (fact !is EtsTypeFact.GuardedTypeFact) return null
+    if (fact.guard == guard) return fact
+    return findDuplicateGuard(fact.type, guard)
 }

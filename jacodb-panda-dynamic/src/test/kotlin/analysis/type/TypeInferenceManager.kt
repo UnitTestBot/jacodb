@@ -17,7 +17,9 @@ import org.jacodb.analysis.ifds.QueueEmptinessChanged
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UniRunner
 import org.jacodb.api.common.analysis.ApplicationGraph
+import org.jacodb.impl.cfg.graphs.GraphDominators
 import org.jacodb.panda.dynamic.ets.base.EtsStmt
+import org.jacodb.panda.dynamic.ets.graph.findDominators
 import org.jacodb.panda.dynamic.ets.model.EtsMethod
 import java.util.concurrent.ConcurrentHashMap
 
@@ -29,9 +31,16 @@ class TypeInferenceManager(
     private val backwardSummaries = ConcurrentHashMap<EtsMethod, MutableSet<BackwardSummaryAnalyzerEvent>>()
     private val forwardSummaries = ConcurrentHashMap<EtsMethod, MutableSet<ForwardSummaryAnalyzerEvent>>()
 
+    private val methodDominatorsCache = ConcurrentHashMap<EtsMethod, GraphDominators<EtsStmt>>()
+
+    private fun methodDominators(method: EtsMethod): GraphDominators<EtsStmt> =
+        methodDominatorsCache.computeIfAbsent(method) {
+            method.flowGraph().findDominators()
+        }
+
     fun analyze(startMethods: List<EtsMethod>): Unit = runBlocking(Dispatchers.Default) {
         val backwardGraph = graph.reversed
-        val backwardAnalyzer = BackwardAnalyzer(backwardGraph)
+        val backwardAnalyzer = BackwardAnalyzer(backwardGraph, ::methodDominators)
         val backwardRunner = UniRunner(
             this@TypeInferenceManager,
             backwardGraph,

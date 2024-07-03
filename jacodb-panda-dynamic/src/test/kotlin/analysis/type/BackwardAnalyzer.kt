@@ -4,13 +4,15 @@ import org.jacodb.analysis.ifds.Analyzer
 import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.Vertex
 import org.jacodb.api.common.analysis.ApplicationGraph
+import org.jacodb.impl.cfg.graphs.GraphDominators
 import org.jacodb.panda.dynamic.ets.base.EtsStmt
 import org.jacodb.panda.dynamic.ets.model.EtsMethod
 
 class BackwardAnalyzer(
-    val graph: ApplicationGraph<EtsMethod, EtsStmt>
+    val graph: ApplicationGraph<EtsMethod, EtsStmt>,
+    dominators: (EtsMethod) -> GraphDominators<EtsStmt>
 ) : Analyzer<BackwardTypeDomainFact, AnalyzerEvent, EtsMethod, EtsStmt> {
-    override val flowFunctions = BackwardFlowFunction(graph)
+    override val flowFunctions = BackwardFlowFunction(graph, dominators)
 
     override fun handleCrossUnitCall(
         caller: Vertex<BackwardTypeDomainFact, EtsStmt>,

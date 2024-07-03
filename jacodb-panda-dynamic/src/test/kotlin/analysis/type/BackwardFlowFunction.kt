@@ -6,17 +6,27 @@ import org.jacodb.analysis.ifds.FieldAccessor
 import org.jacodb.analysis.ifds.FlowFunction
 import org.jacodb.analysis.ifds.FlowFunctions
 import org.jacodb.api.common.analysis.ApplicationGraph
+import org.jacodb.impl.cfg.graphs.GraphDominators
+import org.jacodb.panda.dynamic.ets.base.BinaryOp
 import org.jacodb.panda.dynamic.ets.base.EtsAssignStmt
+import org.jacodb.panda.dynamic.ets.base.EtsBinaryOperation
+import org.jacodb.panda.dynamic.ets.base.EtsEntity
+import org.jacodb.panda.dynamic.ets.base.EtsIfStmt
 import org.jacodb.panda.dynamic.ets.base.EtsInstanceCallExpr
 import org.jacodb.panda.dynamic.ets.base.EtsLValue
+import org.jacodb.panda.dynamic.ets.base.EtsNumberConstant
 import org.jacodb.panda.dynamic.ets.base.EtsRef
+import org.jacodb.panda.dynamic.ets.base.EtsRelationOperation
 import org.jacodb.panda.dynamic.ets.base.EtsReturnStmt
 import org.jacodb.panda.dynamic.ets.base.EtsStmt
+import org.jacodb.panda.dynamic.ets.base.EtsStringConstant
+import org.jacodb.panda.dynamic.ets.graph.EtsCfg
 import org.jacodb.panda.dynamic.ets.model.EtsMethod
 import org.jacodb.panda.dynamic.ets.utils.callExpr
 
 class BackwardFlowFunction(
-    val graph: ApplicationGraph<EtsMethod, EtsStmt>
+    val graph: ApplicationGraph<EtsMethod, EtsStmt>,
+    val dominators: (EtsMethod) -> GraphDominators<EtsStmt>
 ) : FlowFunctions<BackwardTypeDomainFact, EtsMethod, EtsStmt> {
     override fun obtainPossibleStartFacts(method: EtsMethod) = listOf(Zero)
 
@@ -28,6 +38,104 @@ class BackwardFlowFunction(
             Zero -> sequentZero(current)
             is TypedVariable -> sequentFact(current, fact)
         }
+    }
+
+    private fun TypedVariable.withTypeGuards(current: EtsStmt): TypedVariable {
+        val methodCfg = current.method.flowGraph()
+        val dominators = dominators(current.method).dominators(current).asReversed()
+
+        var result = this
+
+        for ((i, stmt) in dominators.withIndex()) {
+            if (stmt !is EtsIfStmt) continue
+
+            val assignments = dominators
+                .subList(fromIndex = i + 1, toIndex = dominators.size)
+                .filterIsInstance<EtsAssignStmt>()
+
+            val (guardedVariable, typeGuard) = resolveTypeGuard(stmt, assignments) ?: continue
+
+            if (guardedVariable != result.variable) continue
+
+            val branches = methodCfg.successors(stmt).toList()
+            check(branches.size == 2) { "Unexpected IF branches: $branches" }
+
+            val (falseBranch, trueBranch) = branches
+
+            val isTrueStatement = current.isReachableFrom(trueBranch, methodCfg)
+            val isFalseStatement = current.isReachableFrom(falseBranch, methodCfg)
+
+            if (isTrueStatement && !isFalseStatement) {
+                val type = result.type.withGuard(typeGuard, guardNegated = false)
+                result = TypedVariable(result.variable, type)
+            }
+
+            if (!isTrueStatement && isFalseStatement) {
+                val type = result.type.withGuard(typeGuard, guardNegated = true)
+                result = TypedVariable(result.variable, type)
+            }
+        }
+
+        return result
+    }
+
+    private fun resolveTypeGuard(branch: EtsIfStmt, assignments: List<EtsAssignStmt>): Pair<AccessPathBase, EtsTypeFact.BasicType>? {
+        val condition = branch.condition as? EtsRelationOperation ?: return null
+
+        if (condition.relop == "==" && condition.right == EtsNumberConstant(0.0)) {
+            return resolveTypeGuard(condition.left, assignments)
+        }
+
+        return null
+    }
+
+    private fun resolveTypeGuard(value: EtsEntity, assignments: List<EtsAssignStmt>): Pair<AccessPathBase, EtsTypeFact.BasicType>? {
+        for ((i, assignment) in assignments.withIndex()) {
+            if (assignment.lhv != value) continue
+
+            return when (val rhv = assignment.rhv) {
+                is EtsRef, is EtsLValue -> {
+                    resolveTypeGuard(rhv, assignments.subList(i + 1, toIndex = assignments.size))
+                }
+
+                is EtsBinaryOperation -> {
+                    when (rhv.op) {
+                        BinaryOp.In -> resolveTypeGuardFromIn(rhv.left, rhv.right)
+                        else -> null
+                    }
+                }
+
+                else -> null
+            }
+        }
+
+        return null
+    }
+
+    private fun resolveTypeGuardFromIn(left: EtsEntity, right: EtsEntity): Pair<AccessPathBase, EtsTypeFact.BasicType>? {
+        if (left !is EtsStringConstant) return null
+
+        val base = right.toBase()
+        val type = EtsTypeFact.ObjectEtsTypeFact(
+            cls = null,
+            properties = mapOf(left.value to EtsTypeFact.UnknownEtsTypeFact)
+        )
+        return base to type
+    }
+
+    private fun EtsStmt.isReachableFrom(stmt: EtsStmt, cfg: EtsCfg): Boolean {
+        val visited = hashSetOf<EtsStmt>()
+        val queue = mutableListOf(stmt)
+
+        while (queue.isNotEmpty()) {
+            val s = queue.removeLast()
+            if (this == s) return true
+
+            if (!visited.add(s)) continue
+            queue.addAll(cfg.successors(s))
+        }
+
+        return false
     }
 
     private fun sequentZero(current: EtsStmt): List<BackwardTypeDomainFact> {
@@ -51,8 +159,8 @@ class BackwardFlowFunction(
             }
 
             if (rhv != null) {
-                val type = if (rhv.accesses.isEmpty()) {
-                    EtsTypeFact.UnknownEtsTypeFact
+                if (rhv.accesses.isEmpty()) {
+                    result += TypedVariable(rhv.base, EtsTypeFact.UnknownEtsTypeFact)
                 } else {
                     val accessor = rhv.accesses.single()
 
@@ -60,13 +168,13 @@ class BackwardFlowFunction(
                         TODO("$accessor")
                     }
 
-                    EtsTypeFact.ObjectEtsTypeFact(
+                    val type = EtsTypeFact.ObjectEtsTypeFact(
                         cls = null,
                         properties = mapOf(accessor.name to EtsTypeFact.UnknownEtsTypeFact)
                     )
-                }
 
-                result += TypedVariable(rhv.base, type)
+                    result += TypedVariable(rhv.base, type).withTypeGuards(current)
+                }
             }
         }
 
@@ -92,7 +200,7 @@ class BackwardFlowFunction(
         if (fact.variable != lhv.base) return listOf(fact)
 
         if (lhv.accesses.isEmpty() && rhv.accesses.isEmpty()) {
-            return listOf(TypedVariable(rhv.base, fact.type))
+            return listOf(TypedVariable(rhv.base, fact.type).withTypeGuards(current))
         }
 
         if (lhv.accesses.isEmpty()) {
@@ -103,7 +211,7 @@ class BackwardFlowFunction(
             }
 
             val rhvType = EtsTypeFact.ObjectEtsTypeFact(cls = null, properties = mapOf(rhvAccessor.name to fact.type))
-            return listOf(TypedVariable(rhv.base, rhvType))
+            return listOf(TypedVariable(rhv.base, rhvType).withTypeGuards(current))
         }
 
         check(lhv.accesses.isNotEmpty() && rhv.accesses.isEmpty())
@@ -117,7 +225,7 @@ class BackwardFlowFunction(
         val (typeWithoutProperty, propertyType) = fact.type.removePropertyType(lhvAccessor.name)
 
         val updatedFact = TypedVariable(fact.variable, typeWithoutProperty)
-        val rhvType = propertyType?.let { TypedVariable(rhv.base, it) }
+        val rhvType = propertyType?.let { TypedVariable(rhv.base, it) }?.withTypeGuards(current)
         return listOfNotNull(updatedFact, rhvType)
     }
 
