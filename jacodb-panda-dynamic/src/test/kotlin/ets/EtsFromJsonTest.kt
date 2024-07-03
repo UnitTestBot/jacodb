@@ -54,7 +54,7 @@ class EtsFromJsonTest {
 
     @Test
     fun testLoadEtsFileFromJson() {
-        val path = "etsir/basic.ts.json"
+        val path = "ir/basic.json"
         val stream = object {}::class.java.getResourceAsStream("/$path")
             ?: error("Resource not found: $path")
         val etsDto = EtsFileDto.loadFromJson(stream)
