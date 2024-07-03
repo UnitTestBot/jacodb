@@ -23,9 +23,11 @@ import org.jacodb.panda.dynamic.ets.graph.EtsCfg
 // TODO: modifiers
 // TODO: typeParameters
 interface EtsMethod : CommonMethod {
-    val enclosingClass: EtsClass
     val signature: EtsMethodSignature
     val cfg: EtsCfg
+
+    val enclosingClass: EtsClassSignature
+        get() = signature.enclosingClass
 
     override val name: String
         get() = signature.name
@@ -44,7 +46,6 @@ interface EtsMethod : CommonMethod {
 class EtsMethodImpl(
     override val signature: EtsMethodSignature,
 ) : EtsMethod {
-    override lateinit var enclosingClass: EtsClass
     override lateinit var cfg: EtsCfg
 
     override fun toString(): String {
