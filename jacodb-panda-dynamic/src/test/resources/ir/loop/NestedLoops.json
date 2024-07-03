@@ -1,0 +1,476 @@
+{
+  "name": "loop\\NestedLoops.ts",
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "_DEFAULT_ARK_METHOD",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
+              },
+              {
+                "name": "colors",
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "StringType"
+                  },
+                  "dimensions": 1
+                }
+              },
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "StringType"
+                  },
+                  "dimensions": 1
+                }
+              },
+              {
+                "name": "sizes",
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "StringType"
+                  },
+                  "dimensions": 1
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "StringType"
+                  },
+                  "dimensions": 1
+                }
+              },
+              {
+                "name": "combinations",
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "UnknownType"
+                  },
+                  "dimensions": 1
+                }
+              },
+              {
+                "name": "$temp2",
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "UnknownType"
+                  },
+                  "dimensions": 1
+                }
+              },
+              {
+                "name": "console",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "StringType"
+                          },
+                          "dimensions": 1
+                        }
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "elementType": {
+                          "_": "StringType"
+                        },
+                        "size": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "colors",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "StringType"
+                          },
+                          "dimensions": 1
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "StringType"
+                          },
+                          "dimensions": 1
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "StringType"
+                          },
+                          "dimensions": 1
+                        }
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "elementType": {
+                          "_": "StringType"
+                        },
+                        "size": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "sizes",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "StringType"
+                          },
+                          "dimensions": 1
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "StringType"
+                          },
+                          "dimensions": 1
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "UnknownType"
+                          },
+                          "dimensions": 1
+                        }
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "elementType": {
+                          "_": "UnknownType"
+                        },
+                        "size": {
+                          "_": "Constant",
+                          "value": "0",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "combinations",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "UnknownType"
+                          },
+                          "dimensions": 1
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "UnknownType"
+                          },
+                          "dimensions": 1
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2,
+                    3
+                  ],
+                  "predecessors": [
+                    0,
+                    3
+                  ],
+                  "stmts": []
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "predecessors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "Color and size combinations:",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "combinations",
+                            "type": {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "UnknownType"
+                              },
+                              "dimensions": 1
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 3,
+                  "successors": [
+                    1,
+                    4
+                  ],
+                  "predecessors": [
+                    1,
+                    4
+                  ],
+                  "stmts": []
+                },
+                {
+                  "id": 4,
+                  "successors": [
+                    3
+                  ],
+                  "predecessors": [
+                    3
+                  ],
+                  "stmts": [
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "combinations",
+                          "type": {
+                            "_": "ArrayType",
+                            "elementType": {
+                              "_": "UnknownType"
+                            },
+                            "dimensions": 1
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "push",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "ObjectLiteralExpr",
+                            "type": {
+                              "_": "ClassType",
+                              "signature": {
+                                "name": "AnonymousClass-loop\\NestedLoops.ts-0"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "signature": {
+        "name": "AnonymousClass-loop\\NestedLoops.ts-0"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-loop\\NestedLoops.ts-0"
+            },
+            "name": "color",
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-loop\\NestedLoops.ts-0"
+            },
+            "name": "size",
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
+        }
+      ],
+      "methods": []
+    }
+  ],
+  "importInfos": [],
+  "exportInfos": []
+}
