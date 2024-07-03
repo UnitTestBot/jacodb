@@ -14,18 +14,12 @@ dependencies {
 
     antlr(Libs.antlr)
 
-    testImplementation(project(":jacodb-panda-analysis"))
     testImplementation(project(":jacodb-analysis"))
     testImplementation(testFixtures(project(":jacodb-core")))
     testImplementation(Libs.mockk)
 }
 
 tasks {
-    generateGrammarSource {
-        maxHeapSize = "64m"
-        arguments.addAll(listOf("-visitor", "-package", "antlr"))
-        outputDirectory = layout.buildDirectory.file("generated-src/antlr/main/java/antlr").get().asFile
-    }
 
     compileKotlin {
         dependsOn(generateGrammarSource)
