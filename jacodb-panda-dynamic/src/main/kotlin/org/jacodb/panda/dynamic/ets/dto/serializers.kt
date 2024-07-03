@@ -18,48 +18,40 @@ package org.jacodb.panda.dynamic.ets.dto
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
-import kotlinx.serialization.json.jsonArray
 
-object ListOfModifiersSerializer : KSerializer<List<ModifierDto>> {
+object ModifierSerializer : KSerializer<ModifierDto> {
     override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("modifiers", PrimitiveKind.STRING)
+        buildClassSerialDescriptor("Modifier") {
+            element<ModifierDto.DecoratorItem>("DecoratorItem")
+            element<String>("StringItem")
+        }
 
-    override fun serialize(encoder: Encoder, value: List<ModifierDto>) {
-        val output = encoder as JsonEncoder
-        output.encodeJsonElement(JsonArray(value.map {
-            when (it) {
-                is ModifierDto.DecoratorItem -> output.json.encodeToJsonElement(it)
-                is ModifierDto.StringItem -> JsonPrimitive(it.value)
-            }
-        }))
+    override fun serialize(encoder: Encoder, value: ModifierDto) {
+        require(encoder is JsonEncoder)
+        when (value) {
+            is ModifierDto.DecoratorItem -> encoder.json.encodeToJsonElement(value)
+            is ModifierDto.StringItem -> encoder.encodeString(value.value)
+        }
     }
 
-    override fun deserialize(decoder: Decoder): List<ModifierDto> {
-        val input = decoder as JsonDecoder
-        val jsonArray = input.decodeJsonElement().jsonArray
-        val result = mutableListOf<ModifierDto>()
-        jsonArray.forEach { jsonElement ->
-            if (jsonElement is JsonObject) {
-                if (jsonElement.containsKey("kind") && jsonElement.containsKey("content")) {
-                    result.add(input.json.decodeFromJsonElement(ModifierDto.DecoratorItem.serializer(), jsonElement))
-                }
-            } else if (jsonElement is JsonPrimitive && jsonElement.isString) {
-                result.add(ModifierDto.StringItem(jsonElement.content))
-            } else {
-                throw SerializationException("Unsupported modifier type: ${jsonElement::class}")
-            }
+    override fun deserialize(decoder: Decoder): ModifierDto {
+        require(decoder is JsonDecoder)
+        val element = decoder.decodeJsonElement()
+        return when {
+            element is JsonObject -> decoder.json.decodeFromJsonElement<ModifierDto.DecoratorItem>(element)
+            element is JsonPrimitive && element.isString -> ModifierDto.StringItem(element.content)
+            else -> throw SerializationException("Unsupported modifier type: ${element::class}")
         }
-        return result
     }
 }
