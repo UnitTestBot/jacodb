@@ -18,6 +18,7 @@ package org.jacodb.impl.features
 
 import org.jacodb.api.jvm.*
 import org.jacodb.api.jvm.ext.JAVA_OBJECT
+import org.jacodb.api.jvm.storage.ers.compressed
 import org.jacodb.api.jvm.storage.ers.links
 import org.jacodb.api.jvm.storage.ers.propertyOf
 import org.jacodb.impl.asSymbolId
@@ -220,9 +221,12 @@ object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
                     }
                 },
                 noSqlAction = { txn ->
-                    txn.all("Class").asSequence()
-                        .filter { clazz ->
-                            clazz.getCompressed<Long>("nameId") in allSubclasses && clazz.getCompressed<Long>("locationId") in locationIds
+                    allSubclasses.asSequence()
+                        .flatMap { classNameId ->
+                            txn.find("Class", "nameId", classNameId.compressed)
+                                .filter { clazz ->
+                                    clazz.getCompressed<Long>("locationId") in locationIds
+                                }
                         }
                         .map { clazz ->
                             val classId: Long = clazz.id.instanceId

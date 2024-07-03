@@ -29,7 +29,7 @@ interface JcLookup<Field : JcAccessible, Method : JcAccessible> {
      * lookup for field with specific name
      * @param name of field
      */
-    fun field(name: String): Field? = field(name, null)
+    fun field(name: String): Field? = field(name, typeName = null, fieldKind = FieldKind.ANY)
 
     /**
      * lookup for field with specific name and expected type. Used during instructions parsing. In this case field type is preserved
@@ -38,7 +38,7 @@ interface JcLookup<Field : JcAccessible, Method : JcAccessible> {
      * @param name of field
      * @param typeName expected type of field
      */
-    fun field(name: String, typeName: TypeName?): Field?
+    fun field(name: String, typeName: TypeName?, fieldKind: FieldKind): Field?
 
     /**
      * Lookup for method based on name and description:
@@ -65,4 +65,8 @@ interface JcLookup<Field : JcAccessible, Method : JcAccessible> {
      * @param description jvm description of method
      */
     fun specialMethod(name: String, description: String): Method?
+
+    enum class FieldKind {
+        INSTANCE, STATIC, ANY
+    }
 }
