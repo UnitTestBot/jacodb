@@ -16,10 +16,13 @@
 
 package org.jacodb.panda.dynamic.ets.dto
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.PolymorphicKind
 import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.buildSerialDescriptor
 import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
@@ -31,8 +34,9 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 
 object ModifierSerializer : KSerializer<ModifierDto> {
+    @OptIn(ExperimentalSerializationApi::class, InternalSerializationApi::class)
     override val descriptor: SerialDescriptor =
-        buildClassSerialDescriptor("Modifier") {
+        buildSerialDescriptor("Modifier", PolymorphicKind.SEALED) {
             element<ModifierDto.DecoratorItem>("DecoratorItem")
             element<String>("StringItem")
         }
@@ -51,7 +55,7 @@ object ModifierSerializer : KSerializer<ModifierDto> {
         return when {
             element is JsonObject -> decoder.json.decodeFromJsonElement<ModifierDto.DecoratorItem>(element)
             element is JsonPrimitive && element.isString -> ModifierDto.StringItem(element.content)
-            else -> throw SerializationException("Unsupported modifier type: ${element::class}")
+            else -> throw SerializationException("Unsupported modifier: $element")
         }
     }
 }
