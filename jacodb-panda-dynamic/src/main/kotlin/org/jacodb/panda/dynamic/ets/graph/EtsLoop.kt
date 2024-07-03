@@ -17,7 +17,7 @@
 package org.jacodb.panda.dynamic.ets.graph
 
 import org.jacodb.panda.dynamic.ets.base.EtsStmt
-import java.util.*
+import java.util.ArrayDeque
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class EtsLoop(
