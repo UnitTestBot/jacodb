@@ -150,7 +150,7 @@ tasks.dokkaHtmlMultiModule {
     )
 }
 
-val repoUrl: String? = project.properties["repoUrl"] as? String
+val repoUrl: String = project.properties["repoUrl"] as? String
     ?: "https://maven.pkg.github.com/UnitTestBot/jacodb"
 
 if (!repoUrl.isNullOrEmpty()) {
@@ -164,7 +164,6 @@ if (!repoUrl.isNullOrEmpty()) {
             project(":jacodb-taint-configuration"),
             project(":jacodb-panda-dynamic"),
             project(":jacodb-panda-static"),
-            project(":jacodb-panda-analysis")
         )
     ) {
         tasks {

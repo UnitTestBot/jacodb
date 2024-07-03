@@ -20,7 +20,6 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import org.jacodb.api.common.CommonMethod
-import org.jacodb.panda.taint.CaseTaintConfig
 import org.jacodb.taint.configuration.NameExactMatcher
 import org.jacodb.taint.configuration.NamePatternMatcher
 import org.jacodb.taint.configuration.SerializedTaintCleaner
@@ -108,12 +107,4 @@ fun SerializedTaintConfigurationItem.toItem(method: CommonMethod): TaintConfigur
             actionsAfter = actionsAfter
         )
     }
-}
-
-fun loadCaseTaintConfig(filename: String): CaseTaintConfig {
-    val configResource = object {}::class.java.getResourceAsStream("/etsir/samples/taintConfigs/$filename")
-        ?: error("Could not load config from '$filename'")
-    val configJson = configResource.bufferedReader().readText()
-    val config: CaseTaintConfig = Json.decodeFromString(configJson)
-    return config
 }
