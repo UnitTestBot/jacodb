@@ -21,11 +21,25 @@ data class AccessPath(val base: AccessPathBase, val accesses: List<Accessor>) {
 }
 
 sealed interface AccessPathBase {
-    object This : AccessPathBase
-    object Static : AccessPathBase
-    data class Arg(val index: Int) : AccessPathBase
-    data class Local(val name: String) : AccessPathBase
-    data class Const(val constant: EtsConstant) : AccessPathBase
+    object This : AccessPathBase {
+        override fun toString(): String = "<this>"
+    }
+
+    object Static : AccessPathBase {
+        override fun toString(): String = "<static>"
+    }
+
+    data class Arg(val index: Int) : AccessPathBase {
+        override fun toString(): String = "arg($index)"
+    }
+
+    data class Local(val name: String) : AccessPathBase {
+        override fun toString(): String = "local($name)"
+    }
+
+    data class Const(val constant: EtsConstant) : AccessPathBase {
+        override fun toString(): String = "const($constant)"
+    }
 }
 
 fun EtsEntity.toBase(): AccessPathBase = when (this) {
