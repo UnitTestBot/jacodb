@@ -41,7 +41,6 @@ import org.jacodb.panda.dynamic.ets.base.EtsInstLocation
 import org.jacodb.panda.dynamic.ets.base.EtsInstanceCallExpr
 import org.jacodb.panda.dynamic.ets.base.EtsInstanceFieldRef
 import org.jacodb.panda.dynamic.ets.base.EtsInstanceOfExpr
-import org.jacodb.panda.dynamic.ets.base.EtsLValue
 import org.jacodb.panda.dynamic.ets.base.EtsLengthExpr
 import org.jacodb.panda.dynamic.ets.base.EtsLiteralType
 import org.jacodb.panda.dynamic.ets.base.EtsLocal
@@ -93,6 +92,10 @@ import org.jacodb.panda.dynamic.ets.model.EtsMethodParameter
 import org.jacodb.panda.dynamic.ets.model.EtsMethodSignature
 import org.jacodb.panda.dynamic.ets.model.EtsMethodSubSignature
 
+interface BuilderContext {
+    fun loc(): EtsInstLocation
+}
+
 class EtsMethodBuilder(
     signature: EtsMethodSignature,
 ) {
@@ -132,7 +135,7 @@ class EtsMethodBuilder(
 
             is AssignStmtDto -> EtsAssignStmt(
                 location = loc(),
-                lhv = convertToEtsEntity(stmt.left) as EtsLValue,
+                lhv = convertToEtsEntity(stmt.left) as EtsValue,
                 rhv = convertToEtsEntity(stmt.right),
             )
 
@@ -296,7 +299,13 @@ class EtsMethodBuilder(
                 args = value.args.map {
                     val etsEntity = convertToEtsEntity(it)
                     if (etsEntity is EtsValue) return@map etsEntity
-                    TODO()
+                    val newLocal = EtsLocal("_tmp${freeLocal++}", EtsUnknownType)
+                    currentStmts += EtsAssignStmt(
+                        location = loc(),
+                        lhv = newLocal,
+                        rhv = etsEntity,
+                    )
+                    newLocal
                 },
             )
 
@@ -338,6 +347,11 @@ class EtsMethodBuilder(
     fun cfg2cfg(cfg: CfgDto): EtsCfg {
         // val stmts: MutableList<EtsStmt> = mutableListOf()
         val blocks = cfg.blocks.associateBy { it.id }
+
+        require(cfg.blocks.isNotEmpty()) {
+            "Method body should contain at least return stmt"
+        }
+
         val visited: MutableSet<Int> = hashSetOf()
         val queue: ArrayDeque<Int> = ArrayDeque()
         queue.add(0)
@@ -376,6 +390,87 @@ class EtsMethodBuilder(
         }
         return EtsCfg(currentStmts, successorMap)
     }
+}
+
+fun convertToEtsClass(classDto: ClassDto): EtsClass {
+    fun defaultConstructorDto(classSignatureDto: ClassSignatureDto) = MethodDto(
+        signature = MethodSignatureDto(
+            enclosingClass = classSignatureDto,
+            name = "constructor",
+            parameters = emptyList(),
+            returnType = ClassTypeDto(classSignatureDto)
+        ),
+        modifiers = emptyList(),
+        typeParameters = emptyList(),
+        body = BodyDto(
+            locals = emptyList(),
+            cfg = CfgDto(
+                blocks = listOf(
+                    BasicBlockDto(
+                        id = 0,
+                        successors = emptyList(),
+                        predecessors = emptyList(),
+                        stmts = listOf(
+                            ReturnStmtDto(
+                                arg = ThisRefDto(
+                                    type = ClassTypeDto(classSignatureDto)
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    )
+
+    fun isStaticField(field: FieldDto): Boolean {
+        val modifiers = field.modifiers ?: return false
+        return modifiers.contains(ModifierDto.StringItem("StaticKeyword"))
+    }
+
+    val signature = EtsClassSignature(
+        name = classDto.signature.name,
+        namespace = null, // TODO
+        file = null, // TODO
+    )
+
+    val (methodDtos, ctorDtos) = classDto.methods.partition { it.signature.name != "constructor" }
+    require(ctorDtos.size <= 1) { "Class should not have multiple constructors" }
+    val ctorDto = ctorDtos.singleOrNull() ?: defaultConstructorDto(classDto.signature)
+
+    val fields = classDto.fields.map { convertToEtsField(it) }
+    val methods = methodDtos.map { convertToEtsMethod(it) }
+
+    val initializers = classDto.fields.mapNotNull {
+        if (it.initializer != null && !isStaticField(it)) {
+            AssignStmtDto(
+                left = InstanceFieldRefDto(
+                    instance = ThisRefDto(ClassTypeDto(classDto.signature)),
+                    field = it.signature
+                ),
+                right = it.initializer
+            )
+        } else null
+    }
+
+    val ctorBlocks = ctorDto.body.cfg.blocks
+    val ctorStartingBlock = ctorBlocks.single { it.id == 0 }
+
+    check(ctorStartingBlock.predecessors.isEmpty()) {
+        "Starting block should not have predecessors, or else the (prepended) initializers will be evaluated multiple times"
+    }
+
+    val newStartingBlock = ctorStartingBlock.copy(stmts = initializers + ctorStartingBlock.stmts)
+
+    val ctorWithInitializersDto = ctorDto.copy(
+        body = ctorDto.body.copy(
+            cfg = CfgDto(ctorBlocks - ctorStartingBlock + newStartingBlock)
+        )
+    )
+
+    val ctor = convertToEtsMethod(ctorWithInitializersDto)
+
+    return EtsClassImpl(signature, fields, methods, ctor)
 }
 
 fun convertToEtsType(type: TypeDto): EtsType {
@@ -463,7 +558,18 @@ fun convertToEtsConstant(value: ConstantDto): EtsConstant {
 
         EtsUndefinedType -> EtsUndefinedConstant
 
-        else -> error("Unknown Constant: $value")
+        else -> object : EtsConstant {
+            override val type: EtsType = EtsUnknownType
+
+            override fun toString(): String = "Unknown(${value.value})"
+
+            override fun <R> accept(visitor: EtsConstant.Visitor<R>): R {
+                if (visitor is EtsConstant.Visitor.Default<R>) {
+                    return visitor.defaultVisit(this)
+                }
+                error("Cannot handle $this")
+            }
+        }
     }
 }
 
@@ -574,18 +680,6 @@ fun convertToEtsField(field: FieldDto): EtsField {
         isOptional = field.isOptional,
         isDefinitelyAssigned = field.isDefinitelyAssigned,
         initializer = null, // TODO: handle initializer - assign in constructor
-    )
-}
-
-fun convertToEtsClass(clazz: ClassDto): EtsClass {
-    return EtsClassImpl(
-        signature = EtsClassSignature(
-            name = clazz.signature.name,
-            namespace = null, // TODO
-            file = null, // TODO
-        ),
-        fields = clazz.fields.map { convertToEtsField(it) },
-        methods = clazz.methods.map { convertToEtsMethod(it) },
     )
 }
 

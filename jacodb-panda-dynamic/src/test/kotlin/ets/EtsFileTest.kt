@@ -17,9 +17,12 @@
 package ets
 
 import ets.utils.loadIr
+import org.jacodb.panda.dynamic.ets.base.EtsAssignStmt
+import org.jacodb.panda.dynamic.ets.base.EtsInstanceFieldRef
+import org.jacodb.panda.dynamic.ets.base.EtsReturnStmt
+import org.jacodb.panda.dynamic.ets.base.EtsThis
 import org.jacodb.panda.dynamic.ets.model.EtsFile
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 private val logger = mu.KotlinLogging.logger {}
@@ -83,5 +86,34 @@ class EtsFileTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun `test initializers prepended to class constructor`() {
+        val etsFile = load("PrependInitializer")
+        val cls = etsFile.classes.single { it.name == "Foo" }
+        val ctorBegin = cls.ctor.cfg.instructions.first() as EtsAssignStmt
+        val fieldRef = ctorBegin.lhv as EtsInstanceFieldRef
+        assert(fieldRef.instance is EtsThis)
+        assert(fieldRef.field.name == "x")
+    }
+
+    @Test
+    fun `test static field should not be initialized in constructor`() {
+        val etsFile = load("StaticField")
+        val cls = etsFile.classes.single { it.name == "Foo" }
+        assertFalse(cls.ctor.cfg.stmts.any {
+            it is EtsAssignStmt && it.lhv is EtsInstanceFieldRef
+        })
+    }
+
+    @Test
+    fun `test default constructor should be synthesized`() {
+        val etsFile = load("DefaultConstructor")
+        val cls = etsFile.classes.single { it.name == "Foo" }
+        val fieldInit = cls.ctor.cfg.instructions.first() as EtsAssignStmt
+        val fieldRef = fieldInit.lhv as EtsInstanceFieldRef
+        assert(fieldRef.instance is EtsThis)
+        assert(fieldRef.field.name == "x")
     }
 }

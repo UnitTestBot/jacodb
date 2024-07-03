@@ -16,11 +16,16 @@
 
 package org.jacodb.panda.dynamic.ets.model
 
+import org.jacodb.panda.dynamic.ets.base.EtsClassType
+import org.jacodb.panda.dynamic.ets.dto.CfgDto
+import org.jacodb.panda.dynamic.ets.dto.EtsMethodBuilder
+
 interface EtsClass {
     val signature: EtsClassSignature
     val superClass: EtsClass?
     val fields: List<EtsField>
     val methods: List<EtsMethod>
+    val ctor: EtsMethod
 
     val name: String
         get() = signature.name
@@ -30,6 +35,11 @@ class EtsClassImpl(
     override val signature: EtsClassSignature,
     override val fields: List<EtsField>,
     override val methods: List<EtsMethod>,
+    override val ctor: EtsMethod,
 ) : EtsClass {
     override var superClass: EtsClass? = null
+
+    init {
+        require(ctor !in methods)
+    }
 }

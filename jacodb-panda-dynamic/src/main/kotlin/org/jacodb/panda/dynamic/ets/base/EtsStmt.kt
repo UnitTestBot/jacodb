@@ -74,7 +74,7 @@ data class EtsNopStmt(
 
 data class EtsAssignStmt(
     override val location: EtsInstLocation,
-    override val lhv: EtsLValue,
+    override val lhv: EtsValue,
     override val rhv: EtsEntity,
 ) : EtsStmt, CommonAssignInst {
     override fun toString(): String {
