@@ -30,6 +30,7 @@ import org.jacodb.panda.dynamic.ets.dto.FieldDto
 import org.jacodb.panda.dynamic.ets.dto.FieldSignatureDto
 import org.jacodb.panda.dynamic.ets.dto.LocalDto
 import org.jacodb.panda.dynamic.ets.dto.MethodDto
+import org.jacodb.panda.dynamic.ets.dto.ModifierDto
 import org.jacodb.panda.dynamic.ets.dto.NumberTypeDto
 import org.jacodb.panda.dynamic.ets.dto.StmtDto
 import org.jacodb.panda.dynamic.ets.dto.convertToEtsFile
@@ -158,5 +159,44 @@ class EtsFromJsonTest {
         """.trimIndent()
         val methodDto = Json.decodeFromString<MethodDto>(jsonString)
         println("methodDto = $methodDto")
+    }
+
+    @Test
+    fun testLoadModifierFromJson() {
+        val jsonString = """
+            {
+              "kind": "cat",
+              "content": "Brian"
+            }
+        """.trimIndent()
+        val modifierDto = Json.decodeFromString<ModifierDto>(jsonString)
+        println("modifierDto = $modifierDto")
+        Assertions.assertEquals(ModifierDto.DecoratorItem("cat", "Brian"), modifierDto)
+        val jsonString2 = json.encodeToString(modifierDto)
+        println("json: $jsonString2")
+    }
+
+    @Test
+    fun testLoadListOfModifiersFromJson() {
+        val jsonString = """
+            [
+              {
+                "kind": "cat",
+                "content": "Bruce"
+              },
+              "public",
+              "static"
+            ]
+        """.trimIndent()
+        val modifiers = Json.decodeFromString<List<ModifierDto>>(jsonString)
+        println("modifiers = $modifiers")
+        Assertions.assertEquals(
+            listOf(
+                ModifierDto.DecoratorItem("cat", "Bruce"),
+                ModifierDto.StringItem("public"),
+                ModifierDto.StringItem("static"),
+            ),
+            modifiers
+        )
     }
 }

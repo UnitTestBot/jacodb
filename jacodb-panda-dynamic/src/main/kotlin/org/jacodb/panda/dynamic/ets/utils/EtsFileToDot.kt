@@ -24,7 +24,6 @@ import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.writeText
 
-
 fun EtsFileDto.toDot(): String {
     val lines: MutableList<String> = mutableListOf()
     lines += "digraph {"
