@@ -5,6 +5,7 @@ import analysis.type.BackwardTypeDomainFact.Zero
 import org.jacodb.analysis.ifds.FieldAccessor
 import org.jacodb.analysis.ifds.FlowFunction
 import org.jacodb.analysis.ifds.FlowFunctions
+import org.jacodb.analysis.ifds.Maybe
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.impl.cfg.graphs.GraphDominators
 import org.jacodb.panda.dynamic.ets.base.BinaryOp
@@ -20,7 +21,6 @@ import org.jacodb.panda.dynamic.ets.base.EtsRelationOperation
 import org.jacodb.panda.dynamic.ets.base.EtsReturnStmt
 import org.jacodb.panda.dynamic.ets.base.EtsStmt
 import org.jacodb.panda.dynamic.ets.base.EtsStringConstant
-import org.jacodb.panda.dynamic.ets.graph.EtsCfg
 import org.jacodb.panda.dynamic.ets.model.EtsMethod
 import org.jacodb.panda.dynamic.ets.utils.callExpr
 
@@ -41,29 +41,22 @@ class BackwardFlowFunction(
     }
 
     private fun TypedVariable.withTypeGuards(current: EtsStmt): TypedVariable {
-        val methodCfg = current.method.flowGraph()
         val dominators = dominators(current.method).dominators(current).asReversed()
 
         var result = this
 
-        for ((i, stmt) in dominators.withIndex()) {
-            if (stmt !is EtsIfStmt) continue
-
-            val assignments = dominators
-                .subList(fromIndex = i + 1, toIndex = dominators.size)
-                .filterIsInstance<EtsAssignStmt>()
-
-            val (guardedVariable, typeGuard) = resolveTypeGuard(stmt, assignments) ?: continue
+        for (stmt in dominators.filterIsInstance<EtsIfStmt>()) {
+            val (guardedVariable, typeGuard) = resolveTypeGuard(stmt) ?: continue
 
             if (guardedVariable != result.variable) continue
 
-            val branches = methodCfg.successors(stmt).toList()
+            val branches = graph.predecessors(stmt).toList() // graph is reversed
             check(branches.size == 2) { "Unexpected IF branches: $branches" }
 
             val (falseBranch, trueBranch) = branches
 
-            val isTrueStatement = current.isReachableFrom(trueBranch, methodCfg)
-            val isFalseStatement = current.isReachableFrom(falseBranch, methodCfg)
+            val isTrueStatement = current.isReachableFrom(trueBranch)
+            val isFalseStatement = current.isReachableFrom(falseBranch)
 
             if (isTrueStatement && !isFalseStatement) {
                 val type = result.type.withGuard(typeGuard, guardNegated = false)
@@ -79,40 +72,77 @@ class BackwardFlowFunction(
         return result
     }
 
-    private fun resolveTypeGuard(branch: EtsIfStmt, assignments: List<EtsAssignStmt>): Pair<AccessPathBase, EtsTypeFact.BasicType>? {
+    private fun resolveTypeGuard(branch: EtsIfStmt): Pair<AccessPathBase, EtsTypeFact.BasicType>? {
         val condition = branch.condition as? EtsRelationOperation ?: return null
 
         if (condition.relop == "==" && condition.right == EtsNumberConstant(0.0)) {
-            return resolveTypeGuard(condition.left, assignments)
+            return resolveTypeGuard(condition.left, branch)
         }
 
         return null
     }
 
-    private fun resolveTypeGuard(value: EtsEntity, assignments: List<EtsAssignStmt>): Pair<AccessPathBase, EtsTypeFact.BasicType>? {
-        for ((i, assignment) in assignments.withIndex()) {
-            if (assignment.lhv != value) continue
+    private fun resolveTypeGuard(value: EtsEntity, stmt: EtsStmt): Pair<AccessPathBase, EtsTypeFact.BasicType>? {
+        val valueAssignment = findAssignment(value, stmt) ?: return null
 
-            return when (val rhv = assignment.rhv) {
-                is EtsRef, is EtsLValue -> {
-                    resolveTypeGuard(rhv, assignments.subList(i + 1, toIndex = assignments.size))
-                }
-
-                is EtsBinaryOperation -> {
-                    when (rhv.op) {
-                        BinaryOp.In -> resolveTypeGuardFromIn(rhv.left, rhv.right)
-                        else -> null
-                    }
-                }
-
-                else -> null
+        return when (val rhv = valueAssignment.rhv) {
+            is EtsRef, is EtsLValue -> {
+                resolveTypeGuard(rhv, valueAssignment)
             }
-        }
 
-        return null
+            is EtsBinaryOperation -> {
+                when (rhv.op) {
+                    BinaryOp.In -> resolveTypeGuardFromIn(rhv.left, rhv.right)
+                    else -> null
+                }
+            }
+
+            else -> null
+        }
     }
 
-    private fun resolveTypeGuardFromIn(left: EtsEntity, right: EtsEntity): Pair<AccessPathBase, EtsTypeFact.BasicType>? {
+    private fun findAssignment(value: EtsEntity, stmt: EtsStmt): EtsAssignStmt? {
+        val cache = hashMapOf<EtsStmt, Maybe<EtsAssignStmt>>()
+        findAssignment(value, stmt, cache)
+        val maybeValue = cache.getValue(stmt)
+
+        return if (maybeValue.isNone) null else maybeValue.getOrThrow()
+    }
+
+    private fun findAssignment(
+        value: EtsEntity,
+        stmt: EtsStmt,
+        cache: MutableMap<EtsStmt, Maybe<EtsAssignStmt>>
+    ) {
+        if (stmt in cache) return
+
+        if (stmt is EtsAssignStmt && stmt.lhv == value) {
+            cache[stmt] = Maybe.some(stmt)
+            return
+        }
+
+        val predecessors = graph.successors(stmt) // graph is reversed
+        predecessors.forEach { findAssignment(value, it, cache) }
+
+        val predecessorValues = predecessors.map { cache.getValue(it) }
+        if (predecessorValues.any { it.isNone }) {
+            cache[stmt] = Maybe.none()
+            return
+        }
+
+        val values = predecessorValues.map { it.getOrThrow() }.toHashSet()
+        if (values.size == 1) {
+            cache[stmt] = Maybe.some(values.single())
+            return
+        }
+
+        cache[stmt] = Maybe.none()
+    }
+
+    private fun resolveTypeGuardFromIn(
+        left: EtsEntity,
+        right: EtsEntity
+    ): Pair<AccessPathBase, EtsTypeFact.BasicType>? {
         if (left !is EtsStringConstant) return null
 
         val base = right.toBase()
@@ -123,7 +153,7 @@ class BackwardFlowFunction(
         return base to type
     }
 
-    private fun EtsStmt.isReachableFrom(stmt: EtsStmt, cfg: EtsCfg): Boolean {
+    private fun EtsStmt.isReachableFrom(stmt: EtsStmt): Boolean {
         val visited = hashSetOf<EtsStmt>()
         val queue = mutableListOf(stmt)
 
@@ -132,7 +162,9 @@ class BackwardFlowFunction(
             if (this == s) return true
 
             if (!visited.add(s)) continue
-            queue.addAll(cfg.successors(s))
+
+            val successors = graph.predecessors(s) // graph is reversed
+            queue.addAll(successors)
         }
 
         return false

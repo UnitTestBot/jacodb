@@ -144,7 +144,8 @@ sealed interface EtsTypeFact {
                 }
             }
 
-            TODO()
+            // todo: evaluate types
+            return mkIntersectionType(guardedType, other)
         }
 
         private fun intersect(obj1: ObjectEtsTypeFact, obj2: ObjectEtsTypeFact): EtsTypeFact? {
@@ -177,7 +178,8 @@ sealed interface EtsTypeFact {
         }
 
         private fun union(guardedType: GuardedTypeFact, other: EtsTypeFact): EtsTypeFact {
-            TODO()
+            // todo: evaluate types
+            return mkUnionType(guardedType, other)
         }
 
         private fun union(intersectionType: IntersectionEtsTypeFact, other: EtsTypeFact): EtsTypeFact {
