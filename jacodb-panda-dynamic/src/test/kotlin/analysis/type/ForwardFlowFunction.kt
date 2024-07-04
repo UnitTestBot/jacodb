@@ -29,7 +29,7 @@ class ForwardFlowFunction(
         if (initialTypes != null) {
             for ((base, type) in initialTypes.types) {
                 val path = AccessPath(base, accesses = emptyList())
-                addTypes(path, type.replaceUnknownWithAny(), result)
+                addTypes(path, type, result)
             }
         }
 
@@ -37,12 +37,33 @@ class ForwardFlowFunction(
     }
 
     private fun addTypes(ap: AccessPath, type: EtsTypeFact, facts: MutableList<ForwardTypeDomainFact>) {
-        facts.add(TypedVariable(ap, type))
+        when (type) {
+            EtsTypeFact.UnknownEtsTypeFact -> facts.add(TypedVariable(ap, EtsTypeFact.AnyEtsTypeFact))
+            EtsTypeFact.AnyEtsTypeFact,
+            EtsTypeFact.FunctionEtsTypeFact,
+            EtsTypeFact.NumberEtsTypeFact,
+            EtsTypeFact.StringEtsTypeFact -> facts.add(TypedVariable(ap, type))
 
-        if (type is EtsTypeFact.ObjectEtsTypeFact) {
-            for ((propertyName, propertyType) in type.properties) {
-                val propertyAp = ap.plus(FieldAccessor(propertyName))
-                addTypes(propertyAp, propertyType, facts)
+            is EtsTypeFact.ObjectEtsTypeFact -> {
+                for ((propertyName, propertyType) in type.properties) {
+                    val propertyAp = ap.plus(FieldAccessor(propertyName))
+                    addTypes(propertyAp, propertyType, facts)
+                }
+
+                val objType = EtsTypeFact.ObjectEtsTypeFact(type.cls, properties = emptyMap())
+                facts.add(TypedVariable(ap, objType))
+            }
+
+            is EtsTypeFact.GuardedTypeFact -> {
+                addTypes(ap, type.type, facts)
+            }
+
+            is EtsTypeFact.IntersectionEtsTypeFact -> {
+                type.types.forEach { addTypes(ap, it, facts) }
+            }
+
+            is EtsTypeFact.UnionEtsTypeFact -> {
+                type.types.forEach { addTypes(ap, it, facts) }
             }
         }
     }

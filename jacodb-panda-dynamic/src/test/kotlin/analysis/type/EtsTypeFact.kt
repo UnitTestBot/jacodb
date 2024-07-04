@@ -69,52 +69,36 @@ sealed interface EtsTypeFact {
         }
     }
 
-    fun replaceUnknownWithAny(): EtsTypeFact
-
     object UnknownEtsTypeFact : EtsTypeFact, BasicType {
         override fun toString(): String = "unknown"
-        override fun replaceUnknownWithAny(): EtsTypeFact = AnyEtsTypeFact
     }
 
     object AnyEtsTypeFact : EtsTypeFact, BasicType {
         override fun toString(): String = "any"
-        override fun replaceUnknownWithAny(): EtsTypeFact = this
     }
 
     object StringEtsTypeFact : EtsTypeFact, BasicType {
         override fun toString(): String = "string"
-        override fun replaceUnknownWithAny(): EtsTypeFact = this
     }
 
     object NumberEtsTypeFact : EtsTypeFact, BasicType {
         override fun toString(): String = "number"
-        override fun replaceUnknownWithAny(): EtsTypeFact = this
     }
 
     object FunctionEtsTypeFact : EtsTypeFact, BasicType {
         override fun toString(): String = "function"
-        override fun replaceUnknownWithAny(): EtsTypeFact = this
     }
 
     data class ObjectEtsTypeFact(val cls: EtsType?, val properties: Map<String, EtsTypeFact>) : EtsTypeFact, BasicType {
-        override fun replaceUnknownWithAny(): EtsTypeFact =
-            ObjectEtsTypeFact(cls, properties.mapValues { (_, type) -> type.replaceUnknownWithAny() })
     }
 
     data class UnionEtsTypeFact(val types: Set<EtsTypeFact>) : EtsTypeFact {
-        override fun replaceUnknownWithAny(): EtsTypeFact =
-            mkUnionType(types.mapTo(hashSetOf()) { it.replaceUnknownWithAny() })
     }
 
     data class IntersectionEtsTypeFact(val types: Set<EtsTypeFact>) : EtsTypeFact {
-        override fun replaceUnknownWithAny(): EtsTypeFact =
-            mkIntersectionType((types.mapTo(hashSetOf()) { it.replaceUnknownWithAny() }))
     }
 
     data class GuardedTypeFact(val guard: BasicType, val guardNegated: Boolean, val type: EtsTypeFact) : EtsTypeFact {
-        override fun replaceUnknownWithAny(): EtsTypeFact {
-            TODO("Not yet implemented")
-        }
     }
 
     companion object {
