@@ -345,9 +345,6 @@ class EtsMethodBuilder(
     }
 
     fun cfg2cfg(cfg: CfgDto): EtsCfg {
-        // val stmts: MutableList<EtsStmt> = mutableListOf()
-        val blocks = cfg.blocks.associateBy { it.id }
-
         require(cfg.blocks.isNotEmpty()) {
             "Method body should contain at least return stmt"
         }
@@ -355,8 +352,11 @@ class EtsMethodBuilder(
         val visited: MutableSet<Int> = hashSetOf()
         val queue: ArrayDeque<Int> = ArrayDeque()
         queue.add(0)
+
+        val blocks = cfg.blocks.associateBy { it.id }
         val blockStart: MutableMap<Int, Int> = hashMapOf()
         val blockEnd: MutableMap<Int, Int> = hashMapOf()
+
         while (queue.isNotEmpty()) {
             val block = blocks[queue.removeFirst()]!!
             if (block.stmts.isNotEmpty()) {
@@ -374,6 +374,7 @@ class EtsMethodBuilder(
                 }
             }
         }
+
         val successorMap: MutableMap<EtsStmt, List<EtsStmt>> = hashMapOf()
         for (block in cfg.blocks) {
             if (block.stmts.isEmpty()) {
@@ -388,7 +389,11 @@ class EtsMethodBuilder(
                 blockStart[blockId]?.let { currentStmts[it] }
             }
         }
-        return EtsCfg(currentStmts, successorMap)
+
+        return EtsCfg(
+            stmts = currentStmts,
+            successorMap = successorMap,
+        )
     }
 }
 
@@ -435,7 +440,7 @@ fun convertToEtsClass(classDto: ClassDto): EtsClass {
     )
 
     val (methodDtos, ctorDtos) = classDto.methods.partition { it.signature.name != "constructor" }
-    require(ctorDtos.size <= 1) { "Class should not have multiple constructors" }
+    check(ctorDtos.size <= 1) { "Class should not have multiple constructors" }
     val ctorDto = ctorDtos.singleOrNull() ?: defaultConstructorDto(classDto.signature)
 
     val fields = classDto.fields.map { convertToEtsField(it) }
@@ -446,9 +451,9 @@ fun convertToEtsClass(classDto: ClassDto): EtsClass {
             AssignStmtDto(
                 left = InstanceFieldRefDto(
                     instance = ThisRefDto(ClassTypeDto(classDto.signature)),
-                    field = it.signature
+                    field = it.signature,
                 ),
-                right = it.initializer
+                right = it.initializer,
             )
         } else null
     }
@@ -460,17 +465,24 @@ fun convertToEtsClass(classDto: ClassDto): EtsClass {
         "Starting block should not have predecessors, or else the (prepended) initializers will be evaluated multiple times"
     }
 
-    val newStartingBlock = ctorStartingBlock.copy(stmts = initializers + ctorStartingBlock.stmts)
-
+    val newStartingBlock = ctorStartingBlock.copy(
+        stmts = initializers + ctorStartingBlock.stmts
+    )
     val ctorWithInitializersDto = ctorDto.copy(
         body = ctorDto.body.copy(
-            cfg = CfgDto(ctorBlocks - ctorStartingBlock + newStartingBlock)
+            cfg = CfgDto(
+                blocks = ctorBlocks - ctorStartingBlock + newStartingBlock
+            )
         )
     )
-
     val ctor = convertToEtsMethod(ctorWithInitializersDto)
 
-    return EtsClassImpl(signature, fields, methods, ctor)
+    return EtsClassImpl(
+        signature = signature,
+        fields = fields,
+        methods = methods,
+        ctor = ctor,
+    )
 }
 
 fun convertToEtsType(type: TypeDto): EtsType {
@@ -496,11 +508,11 @@ fun convertToEtsType(type: TypeDto): EtsType {
         )
 
         is CallableTypeDto -> EtsCallableType(
-            method = convertToEtsMethodSignature(type.signature),
+            method = convertToEtsMethodSignature(type.signature)
         )
 
         is ClassTypeDto -> EtsClassType(
-            classSignature = convertToEtsClassSignature(type.signature),
+            classSignature = convertToEtsClassSignature(type.signature)
         )
 
         NeverTypeDto -> EtsNeverType
@@ -508,7 +520,7 @@ fun convertToEtsType(type: TypeDto): EtsType {
         BooleanTypeDto -> EtsBooleanType
 
         is LiteralTypeDto -> EtsLiteralType(
-            literalTypeName = type.literal,
+            literalTypeName = type.literal
         )
 
         NullTypeDto -> EtsNullType
@@ -524,7 +536,7 @@ fun convertToEtsType(type: TypeDto): EtsType {
         )
 
         is UnclearReferenceTypeDto -> EtsUnclearRefType(
-            typeName = type.name,
+            typeName = type.name
         )
 
         is UnionTypeDto -> EtsUnionType(
@@ -673,7 +685,7 @@ fun convertToEtsField(field: FieldDto): EtsField {
             enclosingClass = convertToEtsClassSignature(field.signature.enclosingClass),
             sub = EtsFieldSubSignature(
                 name = field.signature.name,
-                type = convertToEtsType(field.signature.fieldType)
+                type = convertToEtsType(field.signature.fieldType),
             )
         ),
         // TODO: decorators = field.modifiers...
