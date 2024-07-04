@@ -33,9 +33,7 @@ inline fun <reified T> JcClasspath.findClassOrNull(): JcClassOrInterface? {
 }
 
 inline fun <reified T> JcClasspath.findTypeOrNull(): JcType? {
-    return findClassOrNull(T::class.java.name)?.let {
-        classTypeOf(it)
-    }
+    return findTypeOrNull(T::class.java.name)
 }
 
 fun JcClasspath.findTypeOrNull(typeName: TypeName): JcType? {

@@ -30,12 +30,14 @@ import org.jacodb.impl.features.classpaths.virtual.JcVirtualParameter
 import org.jacodb.impl.types.TypeNameImpl
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithDB
+import org.jacodb.testing.WithRAMDB
 import org.jacodb.testing.allClasspath
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class ConfigurationTest : BaseTest() {
+open class ConfigurationTest : BaseTest() {
+
     companion object : WithDB()
 
     override val cp: JcClasspath = runBlocking {
@@ -171,4 +173,9 @@ class ConfigurationTest : BaseTest() {
 
         assertTrue(rules.isEmpty())
     }
+}
+
+class ConfigurationRAMTest : ConfigurationTest() {
+
+    companion object : WithRAMDB()
 }

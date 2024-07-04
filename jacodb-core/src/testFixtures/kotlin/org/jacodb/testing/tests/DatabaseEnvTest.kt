@@ -30,6 +30,7 @@ import org.jacodb.impl.features.classpaths.virtual.JcVirtualField
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualMethod
 import org.jacodb.testing.*
 import org.jacodb.testing.hierarchies.Creature
+import org.jacodb.testing.skipAssertionsOn
 import org.jacodb.testing.structure.FieldsAndMethods
 import org.jacodb.testing.structure.HiddenFieldSuperClass.HiddenFieldSuccClass
 import org.jacodb.testing.types.AAA
@@ -261,7 +262,7 @@ abstract class DatabaseEnvTest {
         val clazz = cp.findClassOrNull<SuperDuper>()
         assertNotNull(clazz!!)
 
-        with(hierarchyExt.findSubClasses(clazz, allHierarchy = true).toList()) {
+        with(hierarchyExt.findSubClasses(clazz, entireHierarchy = true).toList()) {
             assertEquals(4, size) {
                 "expected 4 but got only: ${joinToString { it.name }}"
             }

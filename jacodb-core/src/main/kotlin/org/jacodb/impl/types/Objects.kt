@@ -16,11 +16,12 @@
 
 package org.jacodb.impl.types
 
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.serialization.Serializable
 import org.jacodb.api.jvm.ext.jcdbName
 import org.jacodb.api.jvm.TypeName
 import org.jacodb.impl.storage.AnnotationValueKind
+import org.jacodb.impl.util.adjustEmptyList
+import org.jacodb.impl.util.interned
 import org.objectweb.asm.Type
 
 @Serializable
@@ -60,8 +61,8 @@ class MethodInfo(
     val exceptions: List<String>,
     val parametersInfo: List<ParameterInfo>,
 ) {
-    val returnClass: String get() = Type.getReturnType(desc).className
-    val parameters: List<String> get() = Type.getArgumentTypes(desc).map { it.className }.toImmutableList()
+    val returnClass: String get() = Type.getReturnType(desc).className.interned
+    val parameters: List<String> get() = Type.getArgumentTypes(desc).map { it.className.interned }.adjustEmptyList()
 
 }
 
@@ -109,7 +110,7 @@ class EnumRef(val className: String, val enumName: String) : AnnotationValue()
 
 @Serializable
 data class TypeNameImpl(private val jvmName: String) : TypeName {
-    override val typeName: String = jvmName.jcdbName()
+    override val typeName: String = jvmName.jcdbName().interned
 
     override fun toString(): String = typeName
 }

@@ -21,6 +21,9 @@ import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcClasspathFeature
 import org.jacodb.api.jvm.JcDatabase
 import org.jacodb.api.jvm.JcFeature
+import org.jacodb.api.jvm.JcPersistenceImplSettings
+import org.jacodb.impl.JcRamErsSettings
+import org.jacodb.impl.JcSQLitePersistenceSettings
 import org.jacodb.impl.features.Builders
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
@@ -55,9 +58,7 @@ val Class<*>.withDB: JcDatabaseHolder
             return comp
         }
         val s = superclass
-        if (superclass == null) {
-            throw IllegalStateException("can't find WithDB companion object. Please check that test class has it.")
-        }
+            ?: throw IllegalStateException("can't find WithDB companion object. Please check that test class has it.")
         return s.withDB
     }
 
@@ -83,6 +84,7 @@ open class WithDB(vararg features: Any) : JcDatabaseHolder {
     override var db = runBlocking {
         jacodb {
             // persistent("D:\\work\\jacodb\\jcdb-index.db")
+            persistenceImpl(persistenceImpl())
             loadByteCode(allClasspath)
             useProcessJavaRuntime()
             keepLocalVariableNames()
@@ -92,16 +94,27 @@ open class WithDB(vararg features: Any) : JcDatabaseHolder {
         }
     }
 
-    override  fun cleanup() {
+    override fun cleanup() {
         db.close()
     }
+
+    internal open fun persistenceImpl(): JcPersistenceImplSettings = JcSQLitePersistenceSettings
+}
+
+open class WithRAMDB(vararg features: Any) : WithDB(*features) {
+
+    override fun persistenceImpl() = JcRamErsSettings
 }
 
 val globalDb by lazy {
     WithDB(Usages, Builders, InMemoryHierarchy).db
 }
 
-open class WithGlobalDB(vararg _classpathFeatures: JcClasspathFeature): JcDatabaseHolder {
+val globalRAMDb by lazy {
+    WithRAMDB(Usages, Builders, InMemoryHierarchy).db
+}
+
+open class WithGlobalDB(vararg _classpathFeatures: JcClasspathFeature) : JcDatabaseHolder {
 
     init {
         System.setProperty("org.jacodb.impl.storage.defaultBatchSize", "500")
@@ -115,11 +128,29 @@ open class WithGlobalDB(vararg _classpathFeatures: JcClasspathFeature): JcDataba
     }
 }
 
+open class WithGlobalRAMDB(vararg _classpathFeatures: JcClasspathFeature) : JcDatabaseHolder {
 
+    init {
+        System.setProperty("org.jacodb.impl.storage.defaultBatchSize", "500")
+    }
+
+    override val classpathFeatures: List<JcClasspathFeature> = _classpathFeatures.toList()
+
+    override val db: JcDatabase get() = globalRAMDb
+
+    override fun cleanup() {
+    }
+}
 
 open class WithRestoredDB(vararg features: JcFeature<*, *>) : WithDB(*features) {
 
-    private val jdbcLocation = Files.createTempFile("jcdb-", null).toFile().absolutePath
+    private val location by lazy {
+        if (implSettings is JcSQLitePersistenceSettings) {
+            Files.createTempFile("jcdb-", null).toFile().absolutePath
+        } else {
+            Files.createTempDirectory("jcdb-").toFile().absolutePath
+        }
+    }
 
     var tempDb: JcDatabase? = newDB()
 
@@ -128,11 +159,17 @@ open class WithRestoredDB(vararg features: JcFeature<*, *>) : WithDB(*features) 
         tempDb = null
     }
 
+    open val implSettings: JcPersistenceImplSettings get() = JcSQLitePersistenceSettings
+
     private fun newDB(before: () -> Unit = {}): JcDatabase {
         before()
         return runBlocking {
             jacodb {
-                persistent(jdbcLocation)
+                require(implSettings !is JcRamErsSettings) { "cannot restore in-RAM database" }
+                persistent(
+                    location = location,
+                    implSettings = implSettings
+                )
                 loadByteCode(allClasspath)
                 useProcessJavaRuntime()
                 keepLocalVariableNames()

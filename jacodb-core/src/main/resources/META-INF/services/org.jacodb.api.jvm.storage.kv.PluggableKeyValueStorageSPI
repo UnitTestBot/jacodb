@@ -1,0 +1,3 @@
+org.jacodb.impl.storage.kv.xodus.XodusKeyValueStorageSPI
+org.jacodb.impl.storage.kv.lmdb.LmdbKeyValueStorageSPI
+org.jacodb.impl.storage.kv.rocks.RocksKeyValueStorageSPI

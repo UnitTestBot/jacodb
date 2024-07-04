@@ -20,7 +20,6 @@ import org.jacodb.api.jvm.ClassSource
 import org.jacodb.api.jvm.JcDatabase
 import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.api.jvm.throwClassNotFound
-import org.jacodb.impl.vfs.PersistentByteCodeLocation
 
 class ClassSourceImpl(
     override val location: RegisteredLocation,
@@ -54,7 +53,7 @@ class PersistenceClassSource(
         byteCode
     )
 
-    override val location = PersistentByteCodeLocation(db, locationId)
+    override val location = db.persistence.findLocation(locationId)
 
     override val byteCode by lazy {
         cachedByteCode ?: db.persistence.findBytecode(classId)

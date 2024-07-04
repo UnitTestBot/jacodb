@@ -17,7 +17,6 @@
 package org.jacodb.testing.persistence
 
 import kotlinx.coroutines.runBlocking
-import org.jacodb.impl.FeaturesRegistry
 import org.jacodb.impl.JcSettings
 import org.jacodb.impl.features.Builders
 import org.jacodb.impl.features.Usages
@@ -25,6 +24,7 @@ import org.jacodb.impl.fs.JavaRuntime
 import org.jacodb.impl.jacodb
 import org.jacodb.impl.storage.LocationState
 import org.jacodb.impl.storage.SQLitePersistenceImpl
+import org.jacodb.impl.storage.dslContext
 import org.jacodb.impl.storage.jooq.tables.references.BYTECODELOCATIONS
 import org.jacodb.testing.LifecycleTest
 import org.jacodb.testing.allClasspath
@@ -69,7 +69,7 @@ class IncompleteDataTest {
         }
         val db = newDB(true)
         db.persistence.read {
-            val count = it.fetchCount(
+            val count = it.dslContext.fetchCount(
                 BYTECODELOCATIONS,
                 BYTECODELOCATIONS.STATE.notEqual(LocationState.PROCESSED.ordinal)
             )
@@ -93,7 +93,7 @@ class IncompleteDataTest {
         }
         val db = newDB(true)
         db.persistence.read {
-            it.selectFrom(BYTECODELOCATIONS)
+            it.dslContext.selectFrom(BYTECODELOCATIONS)
                 .where(BYTECODELOCATIONS.STATE.notEqual(LocationState.PROCESSED.ordinal))
                 .fetch {
                     assertTrue(
@@ -108,11 +108,11 @@ class IncompleteDataTest {
 
     private fun withPersistence(action: (DSLContext) -> Unit) {
         val persistence = SQLitePersistenceImpl(
-            JavaRuntime(javaHome), FeaturesRegistry(emptyList()), jdbcLocation, false
+            JavaRuntime(javaHome), false, jdbcLocation
         )
         persistence.use {
             it.write {
-                action(it)
+                action(it.dslContext)
             }
         }
     }

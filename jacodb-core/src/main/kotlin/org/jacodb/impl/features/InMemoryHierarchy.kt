@@ -18,15 +18,20 @@ package org.jacodb.impl.features
 
 import org.jacodb.api.jvm.*
 import org.jacodb.api.jvm.ext.JAVA_OBJECT
+import org.jacodb.api.jvm.storage.ers.compressed
+import org.jacodb.api.jvm.storage.ers.links
+import org.jacodb.api.jvm.storage.ers.propertyOf
+import org.jacodb.impl.asSymbolId
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.fs.className
 import org.jacodb.impl.storage.BatchedSequence
 import org.jacodb.impl.storage.defaultBatchSize
+import org.jacodb.impl.storage.execute
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.jacodb.impl.storage.jooq.tables.references.CLASSHIERARCHIES
 import org.jacodb.impl.storage.jooq.tables.references.SYMBOLS
+import org.jacodb.impl.storage.toJCDBContext
 import org.jacodb.impl.storage.withoutAutoCommit
-import org.jooq.DSLContext
 import org.jooq.impl.DSL
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
@@ -46,13 +51,13 @@ class InMemoryHierarchyIndexer(
     private val interner = persistence.symbolInterner
 
     override fun index(classNode: ClassNode) {
-        val clazzSymbolId = interner.findOrNew(classNode.name.className)
+        val clazzSymbolId = classNode.name.className.asSymbolId(interner)
         val superName = classNode.superName
         val superclasses = when {
             superName != null && superName != objectJvmName -> classNode.interfaces + superName
             else -> classNode.interfaces
         }
-        superclasses.map { interner.findOrNew(it.className) }
+        superclasses.map { it.className.asSymbolId(interner) }
             .forEach {
                 hierarchy.getOrPut(it) { ConcurrentHashMap() }
                     .getOrPut(location.id) { ConcurrentHashMap.newKeySet() }
@@ -60,10 +65,17 @@ class InMemoryHierarchyIndexer(
             }
     }
 
-    override fun flush(jooq: DSLContext) {
-        jooq.withoutAutoCommit { conn ->
-            interner.flush(conn)
-        }
+    override fun flush(context: JCDBContext) {
+        context.execute(
+            sqlAction = { jooq ->
+                jooq.withoutAutoCommit { conn ->
+                    interner.flush(toJCDBContext(jooq, conn))
+                }
+            },
+            noSqlAction = {
+                interner.flush(context)
+            }
+        )
     }
 }
 
@@ -76,18 +88,40 @@ object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
     override fun onSignal(signal: JcSignal) {
         when (signal) {
             is JcSignal.BeforeIndexing -> {
-                signal.jcdb.persistence.read { jooq ->
+                signal.jcdb.persistence.read { context ->
                     val cache = InMemoryHierarchyCache().also {
                         hierarchies[signal.jcdb] = it
                     }
-                    jooq.select(CLASSES.NAME, CLASSHIERARCHIES.SUPER_ID, CLASSES.LOCATION_ID)
-                        .from(CLASSHIERARCHIES)
-                        .join(CLASSES).on(CLASSHIERARCHIES.CLASS_ID.eq(CLASSES.ID))
-                        .fetch().forEach { (classSymbolId, superClassId, locationId) ->
-                            cache.getOrPut(superClassId!!) { ConcurrentHashMap() }
-                                .getOrPut(locationId!!) { ConcurrentHashMap.newKeySet() }
-                                .add(classSymbolId!!)
+                    val result = mutableListOf<Triple<Long?, Long?, Long?>>()
+                    context.execute(
+                        sqlAction = { jooq ->
+                            jooq.select(CLASSES.NAME, CLASSHIERARCHIES.SUPER_ID, CLASSES.LOCATION_ID)
+                                .from(CLASSHIERARCHIES)
+                                .join(CLASSES).on(CLASSHIERARCHIES.CLASS_ID.eq(CLASSES.ID))
+                                .fetch().forEach { (classSymbolId, superClassId, locationId) ->
+                                    result += (Triple(classSymbolId, superClassId, locationId))
+                                }
+                        },
+                        noSqlAction = { txn ->
+                            txn.all("Class").map { clazz ->
+                                val locationId: Long? = clazz.getCompressed("locationId")
+                                val classSymbolId: Long? = clazz.getCompressed("nameId")
+                                val superClasses = mutableListOf<Long>()
+                                clazz.getCompressed<Long>("inherits")?.let { nameId -> superClasses += nameId }
+                                links(clazz, "implements").asIterable.forEach { anInterface ->
+                                    anInterface.getCompressed<Long>("nameId")?.let { nameId -> superClasses += nameId }
+                                }
+                                superClasses.forEach { nameId ->
+                                    result += (Triple(classSymbolId, nameId, locationId))
+                                }
+                            }
                         }
+                    )
+                    result.forEach { (classSymbolId, superClassId, locationId) ->
+                        cache.getOrPut(superClassId!!) { ConcurrentHashMap() }
+                            .getOrPut(locationId!!) { ConcurrentHashMap.newKeySet() }
+                            .add(classSymbolId!!)
+                    }
                 }
             }
 
@@ -103,6 +137,7 @@ object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
             is JcSignal.Drop -> {
                 hierarchies[signal.jcdb]?.clear()
             }
+
             is JcSignal.Closed -> {
                 hierarchies.remove(signal.jcdb)
             }
@@ -117,9 +152,8 @@ object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
 
     fun syncQuery(classpath: JcClasspath, req: InMemoryHierarchyReq): Sequence<ClassSource> {
         val persistence = classpath.db.persistence
-        val locationIds = classpath.registeredLocations.map { it.id }
         if (req.name == JAVA_OBJECT) {
-            return classpath.allClassesExceptObject(!req.allHierarchy)
+            return persistence.read { classpath.allClassesExceptObject(it, !req.allHierarchy) }
         }
         val hierarchy = hierarchies[classpath.db] ?: return emptySequence()
 
@@ -135,52 +169,80 @@ object InMemoryHierarchy : JcFeature<InMemoryHierarchyReq, ClassSource> {
                     else -> emptyList()
                 }
             }.orEmpty().toSet()
-            result.addAll(subclasses)
+            if (subclasses.isNotEmpty()) {
+                result.addAll(subclasses)
+            }
             if (transitive) {
                 subclasses.forEach {
                     getSubclasses(it, locationIds, true, result)
                 }
             }
-
         }
 
-        val classSymbol = persistence.findSymbolId(req.name) ?: return emptySequence()
+        val locationIds = classpath.registeredLocations.mapTo(mutableSetOf()) { it.id }
+        val classSymbolId = persistence.findSymbolId(req.name)
 
         val allSubclasses = hashSetOf<Long>()
-        getSubclasses(classSymbol, locationIds.toSet(), req.allHierarchy, allSubclasses)
+        getSubclasses(classSymbolId, locationIds, req.allHierarchy, allSubclasses)
         if (allSubclasses.isEmpty()) {
             return emptySequence()
         }
-        val allIds = allSubclasses.toList()
-        return BatchedSequence<ClassSource>(defaultBatchSize) { offset, batchSize ->
-            persistence.read { jooq ->
-                val index = offset ?: 0
-                val ids = allIds.subList(index.toInt(), min(allIds.size, index.toInt() + batchSize))
-                if (ids.isEmpty()) {
-                    emptyList()
-                } else {
-                    jooq.select(
-                        SYMBOLS.NAME, CLASSES.ID, CLASSES.LOCATION_ID, when {
-                            req.full -> CLASSES.BYTECODE
-                            else -> DSL.inline(ByteArray(0)).`as`(CLASSES.BYTECODE)
+        return persistence.read { context ->
+            context.execute(
+                sqlAction = { jooq ->
+                    val allIds = allSubclasses.toList()
+                    BatchedSequence<ClassSource>(defaultBatchSize) { offset, batchSize ->
+                        val index = offset ?: 0
+                        val ids = allIds.subList(index.toInt(), min(allIds.size, index.toInt() + batchSize))
+                        if (ids.isEmpty()) {
+                            emptyList()
+                        } else {
+                            jooq.select(
+                                SYMBOLS.NAME, CLASSES.ID, CLASSES.LOCATION_ID, when {
+                                    req.full -> CLASSES.BYTECODE
+                                    else -> DSL.inline(ByteArray(0)).`as`(CLASSES.BYTECODE)
+                                }
+                            ).from(CLASSES)
+                                .join(SYMBOLS).on(SYMBOLS.ID.eq(CLASSES.NAME))
+                                .where(SYMBOLS.ID.`in`(ids).and(CLASSES.LOCATION_ID.`in`(locationIds)))
+                                .fetch()
+                                .mapNotNull { (className, classId, locationId, byteCode) ->
+                                    val source = PersistenceClassSource(
+                                        db = classpath.db,
+                                        classId = classId!!,
+                                        className = className!!,
+                                        locationId = locationId!!
+                                    ).let {
+                                        it.bind(byteCode.takeIf { req.full })
+                                    }
+                                    (batchSize + index) to source
+                                }
                         }
-                    ).from(CLASSES)
-                        .join(SYMBOLS).on(SYMBOLS.ID.eq(CLASSES.NAME))
-                        .where(SYMBOLS.ID.`in`(ids).and(CLASSES.LOCATION_ID.`in`(locationIds)))
-                        .fetch()
-                        .mapNotNull { (className, classId, locationId, byteCode) ->
-                            val source = PersistenceClassSource(
+                    }
+                },
+                noSqlAction = { txn ->
+                    allSubclasses.asSequence()
+                        .flatMap { classNameId ->
+                            txn.find("Class", "nameId", classNameId.compressed)
+                                .filter { clazz ->
+                                    clazz.getCompressed<Long>("locationId") in locationIds
+                                }
+                        }
+                        .map { clazz ->
+                            val classId: Long = clazz.id.instanceId
+                            PersistenceClassSource(
                                 db = classpath.db,
-                                classId = classId!!,
-                                className = className!!,
-                                locationId = locationId!!
-                            ).let {
-                                it.bind(byteCode.takeIf { req.full })
-                            }
-                            (batchSize + index) to source
+                                className = persistence.findSymbolName(clazz.getCompressed<Long>("nameId")!!),
+                                classId = classId,
+                                locationId = clazz.getCompressed<Long>("locationId")!!,
+                                cachedByteCode = if (req.full) persistence.findBytecode(classId) else null
+                            )
                         }
+                        // Eager evaluation is needed, because all computations must be done within current transaction,
+                        // i.e. ERS can't be used outside `persistence.read { ... }`, when sequence is actually iterated
+                        .toList().asSequence()
                 }
-            }
+            )
         }
     }
 

@@ -143,26 +143,22 @@ class JcClassTypeImpl(
             }
         }
 
-    override val declaredMethods: List<JcTypedMethod>
-        get() {
-            return typedMethods(true, fromSuperTypes = false, jcClass.packageName)
-        }
+    override val declaredMethods: List<JcTypedMethod> by lazy(PUBLICATION) {
+        typedMethods(true, fromSuperTypes = false, jcClass.packageName)
+    }
 
-    override val methods: List<JcTypedMethod>
-        get() {
-            //let's calculate visible methods from super types
-            return typedMethods(true, fromSuperTypes = true, jcClass.packageName)
-        }
+    override val methods: List<JcTypedMethod> by lazy(PUBLICATION) {
+        //let's calculate visible methods from super types
+        typedMethods(true, fromSuperTypes = true, jcClass.packageName)
+    }
 
-    override val declaredFields: List<JcTypedField>
-        get() {
-            return typedFields(true, fromSuperTypes = false, jcClass.packageName)
-        }
+    override val declaredFields: List<JcTypedField> by lazy(PUBLICATION) {
+        typedFields(true, fromSuperTypes = false, jcClass.packageName)
+    }
 
-    override val fields: List<JcTypedField>
-        get() {
-            return typedFields(true, fromSuperTypes = true, jcClass.packageName)
-        }
+    override val fields: List<JcTypedField> by lazy(PUBLICATION) {
+        typedFields(true, fromSuperTypes = true, jcClass.packageName)
+    }
 
     override fun copyWithNullability(nullability: Boolean?) =
         JcClassTypeImpl(classpath, name, outerType, substitutor, nullability, annotations)
@@ -177,13 +173,13 @@ class JcClassTypeImpl(
         other as JcClassTypeImpl
 
         if (nullable != other.nullable) return false
-        if (jcClass != other.jcClass) return false
+        if (name != other.name) return false
         return substitutor == other.substitutor
     }
 
     override fun hashCode(): Int {
         val result = nullable.hashCode()
-        return 31 * result + jcClass.hashCode()
+        return 31 * result + name.hashCode()
     }
 
     private fun typedMethods(

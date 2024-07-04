@@ -23,8 +23,8 @@ import org.jacodb.impl.bytecode.PolymorphicSignatureSupport
 
 class JcClassTypeLookupImpl(val type: JcClassType) : JcLookup<JcTypedField, JcTypedMethod> {
 
-    override fun field(name: String, typeName: TypeName?): JcTypedField? {
-        return JcClassTypeLookup.JcTypedFieldLookup(type, name).lookup()
+    override fun field(name: String, typeName: TypeName?, fieldKind: JcLookup.FieldKind): JcTypedField? {
+        return JcClassTypeLookup.JcTypedFieldLookup(type, name, fieldKind).lookup()
     }
 
     override fun method(name: String, description: String): JcTypedMethod? {
@@ -94,8 +94,11 @@ abstract class JcClassTypeLookup<Result : JcAccessible>(clazz: JcClassType) :
 
     }
 
-    internal class JcTypedFieldLookup(type: JcClassType, private val name: String) :
-        JcClassTypeLookup<JcTypedField>(type) {
+    internal class JcTypedFieldLookup(
+        type: JcClassType,
+        private val name: String,
+        private val kind: JcLookup.FieldKind
+    ) : JcClassTypeLookup<JcTypedField>(type) {
 
         override fun JcClassType.next() = listOfNotNull(superType) + interfaces
 
@@ -103,8 +106,13 @@ abstract class JcClassTypeLookup<Result : JcAccessible>(clazz: JcClassType) :
             get() = declaredFields
 
         override val predicate: (JcTypedField) -> Boolean
-            get() = { it.name == name }
+            get() = { it.name == name && it.matchKind() }
 
+        private fun JcTypedField.matchKind(): Boolean = when (kind) {
+            JcLookup.FieldKind.ANY -> true
+            JcLookup.FieldKind.STATIC -> isStatic
+            JcLookup.FieldKind.INSTANCE -> !isStatic
+        }
 
     }
 

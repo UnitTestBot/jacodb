@@ -17,13 +17,15 @@
 package org.jacodb.impl.storage
 
 import mu.KLogging
+import org.jacodb.api.jvm.JCDBContext
 import org.jacodb.impl.features.Builders
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.storage.jooq.tables.references.APPLICATIONMETADATA
 import org.jacodb.impl.storage.jooq.tables.references.REFACTORINGS
-import org.jooq.DSLContext
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
+
+private const val REFACTORING_TYPE = "Refactoring"
 
 abstract class JcRefactoring {
 
@@ -32,56 +34,71 @@ abstract class JcRefactoring {
     /**
      * executed inside transaction
      */
-    abstract fun run(jooq: DSLContext)
-
+    abstract fun run(context: JCDBContext)
 }
 
 class JcRefactoringChain(private val chain: List<JcRefactoring>) {
 
     companion object : KLogging()
 
-    private val applied = hashSetOf<String>()
-
     @OptIn(ExperimentalTime::class)
-    fun execute(jooq: DSLContext) {
-        try {
-            applied.addAll(jooq.select(REFACTORINGS.NAME).from(REFACTORINGS).fetchArray(REFACTORINGS.NAME))
-        } catch (e: Exception) {
-            logger.info("fail to fetch applied refactorings")
-        }
-
-        chain.forEach { ref ->
-            jooq.connection {
-                if (!applied.contains(ref.name)) {
-                    val time = measureTime {
-                        ref.run(jooq)
-                        jooq.insertInto(REFACTORINGS).set(REFACTORINGS.NAME, ref.name).execute()
+    fun execute(context: JCDBContext) {
+        context.execute(
+            sqlAction = { jooq ->
+                val applied = hashSetOf<String>()
+                try {
+                    applied.addAll(jooq.select(REFACTORINGS.NAME).from(REFACTORINGS).fetchArray(REFACTORINGS.NAME))
+                } catch (e: Exception) {
+                    logger.info("fail to fetch applied refactorings")
+                }
+                chain.forEach { ref ->
+                    jooq.connection {
+                        if (!applied.contains(ref.name)) {
+                            val time = measureTime {
+                                ref.run(context)
+                                jooq.insertInto(REFACTORINGS).set(REFACTORINGS.NAME, ref.name).execute()
+                            }
+                            logger.info("Refactoring ${ref.name} took $time msc")
+                        }
                     }
-                    logger.info("Refactoring ${ref.name} took $time msc")
+                }
+            },
+            noSqlAction = { txn ->
+                chain.forEach { refactoring ->
+                    val refactoringName = refactoring.name
+                    if (txn.find(REFACTORING_TYPE, "name", refactoringName).isEmpty) {
+                        val time = measureTime {
+                            refactoring.run(context)
+                            txn.newEntity(REFACTORING_TYPE)["name"] = refactoringName
+                        }
+                        logger.info("Refactoring $refactoringName took $time msc")
+                    }
                 }
             }
-        }
+        )
     }
-
 }
 
-class AddAppmetadataAndRefactoring : JcRefactoring() {
+class AddAppMetadataAndRefactoring : JcRefactoring() {
 
-    override fun run(jooq: DSLContext) {
-        jooq.createTableIfNotExists(APPLICATIONMETADATA)
-            .column(APPLICATIONMETADATA.VERSION)
-            .execute()
-
-        jooq.createTableIfNotExists(REFACTORINGS)
-            .column(REFACTORINGS.NAME)
-            .execute()
+    override fun run(context: JCDBContext) {
+        // This refactoring is applicable only for SQL context
+        if (context.isSqlContext) {
+            val jooq = context.dslContext
+            jooq.createTableIfNotExists(APPLICATIONMETADATA)
+                .column(APPLICATIONMETADATA.VERSION)
+                .execute()
+            jooq.createTableIfNotExists(REFACTORINGS)
+                .column(REFACTORINGS.NAME)
+                .execute()
+        }
     }
 }
 
 class UpdateUsageAndBuildersSchemeRefactoring : JcRefactoring() {
 
-    override fun run(jooq: DSLContext) {
-        Usages.create(jooq, true)
-        Builders.create(jooq, true)
+    override fun run(context: JCDBContext) {
+        Usages.create(context, true)
+        Builders.create(context, true)
     }
 }

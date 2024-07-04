@@ -16,8 +16,6 @@
 
 package org.jacodb.impl.features.classpaths
 
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheStats
 import mu.KLogging
 import org.jacodb.api.jvm.JcClassType
 import org.jacodb.api.jvm.JcClasspath
@@ -34,96 +32,123 @@ import org.jacodb.api.jvm.cfg.JcGraph
 import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.api.jvm.cfg.JcInstList
 import org.jacodb.api.jvm.cfg.JcRawInst
+import org.jacodb.api.jvm.ext.JAVA_OBJECT
 import org.jacodb.impl.JcCacheSegmentSettings
 import org.jacodb.impl.JcCacheSettings
-import org.jacodb.impl.ValueStoreType
+import org.jacodb.impl.caches.PluggableCache
+import org.jacodb.impl.caches.PluggableCacheProvider
+import org.jacodb.impl.caches.PluggableCacheStats
+import org.jacodb.impl.caches.guava.GUAVA_CACHE_PROVIDER_ID
 import org.jacodb.impl.features.classpaths.AbstractJcInstResult.JcFlowGraphResultImpl
 import org.jacodb.impl.features.classpaths.AbstractJcInstResult.JcInstListResultImpl
 import org.jacodb.impl.features.classpaths.AbstractJcInstResult.JcRawInstListResultImpl
 import java.text.NumberFormat
 
+private val PLUGGABLE_CACHE_PROVIDER_ID: String
+    get() = System.getProperty("org.jacodb.impl.features.classpaths.cacheProviderId", GUAVA_CACHE_PROVIDER_ID)
 
 /**
  * any class cache should extend this class
  */
 open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, JcMethodExtFeature {
 
-    companion object : KLogging()
+    private companion object : KLogging() {
 
-    private val classesCache = segmentBuilder(settings.classes)
-        .build<String, JcResolvedClassResult>()
+        private val cacheProvider = PluggableCacheProvider.getProvider(PLUGGABLE_CACHE_PROVIDER_ID)
 
-    private val typesCache = segmentBuilder(settings.types)
-        .build<String, JcResolvedTypeResult>()
+        fun <K : Any, V : Any> newSegment(settings: JcCacheSegmentSettings): PluggableCache<K, V> {
+            with(settings) {
+                return cacheProvider.newCache {
+                    maximumSize = maxSize.toInt()
+                    expirationDuration = expiration
+                    valueRefType = valueStoreType
+                }
+            }
+        }
+    }
 
-    private val rawInstCache = segmentBuilder(settings.rawInstLists)
-        .build<JcMethod, JcInstList<JcRawInst>>()
+    private val classesCache = newSegment<String, JcResolvedClassResult>(settings.classes)
 
-    private val instCache = segmentBuilder(settings.instLists)
-        .build<JcMethod, JcInstList<JcInst>>()
+    private val typesCache = newSegment<TypeKey, JcResolvedTypeResult>(settings.types)
 
-    private val cfgCache = segmentBuilder(settings.flowGraphs)
-        .build<JcMethod, JcGraph>()
+    private val rawInstCache = newSegment<JcMethod, JcInstList<JcRawInst>>(settings.rawInstLists)
 
+    private val instCache = newSegment<JcMethod, JcInstList<JcInst>>(settings.instLists)
+
+    private val cfgCache = newSegment<JcMethod, JcGraph>(settings.flowGraphs)
+
+    private var javaObjectResolvedClass: JcResolvedClassResult? = null
+    private var javaObjectResolvedType: JcResolvedTypeResult? = null
+    private var javaObjectResolvedNotNullType: JcResolvedTypeResult? = null
+    private var javaObjectResolvedNullableType: JcResolvedTypeResult? = null
 
     override fun tryFindClass(classpath: JcClasspath, name: String): JcResolvedClassResult? {
-        return classesCache.getIfPresent(name)
+        return if (name == JAVA_OBJECT) javaObjectResolvedClass else classesCache[name]
     }
 
-    override fun tryFindType(classpath: JcClasspath, name: String): JcResolvedTypeResult? {
-        return typesCache.getIfPresent(name)
+    override fun tryFindType(classpath: JcClasspath, name: String, nullable: Boolean?): JcResolvedTypeResult? {
+        if (name == JAVA_OBJECT) {
+            return when (nullable) {
+                null -> javaObjectResolvedType
+                true -> javaObjectResolvedNullableType
+                false -> javaObjectResolvedNotNullType
+            }
+        }
+        return typesCache[TypeKey(name, nullable)]
     }
 
-    override fun flowGraph(method: JcMethod) = cfgCache.getIfPresent(method)?.let {
+    override fun flowGraph(method: JcMethod) = cfgCache[method]?.let {
         JcFlowGraphResultImpl(method, it)
     }
-    override fun instList(method: JcMethod) = instCache.getIfPresent(method)?.let {
+
+    override fun instList(method: JcMethod) = instCache[method]?.let {
         JcInstListResultImpl(method, it)
     }
-    override fun rawInstList(method: JcMethod) = rawInstCache.getIfPresent(method)?.let {
+
+    override fun rawInstList(method: JcMethod) = rawInstCache[method]?.let {
         JcRawInstListResultImpl(method, it)
     }
 
     override fun on(event: JcFeatureEvent) {
         when (val result = event.result) {
-            is JcResolvedClassResult -> classesCache.put(result.name, result)
+            is JcResolvedClassResult -> {
+                val name = result.name
+                if (name == JAVA_OBJECT) {
+                    javaObjectResolvedClass = result
+                } else {
+                    classesCache[name] = result
+                }
+            }
 
             is JcResolvedTypeResult -> {
                 val found = result.type
                 if (found != null && found is JcClassType) {
-                    typesCache.put(result.name, result)
+                    val nullable = found.nullable
+                    val typeName = result.name
+                    if (typeName == JAVA_OBJECT) {
+                        when (nullable) {
+                            null -> javaObjectResolvedType = result
+                            true -> javaObjectResolvedNullableType = result
+                            false -> javaObjectResolvedNotNullType = result
+                        }
+                    } else {
+                        typesCache[TypeKey(typeName, nullable)] = result
+                    }
                 }
             }
 
-            is JcFlowGraphResult -> cfgCache.put(result.method, result.flowGraph)
-            is JcInstListResult -> instCache.put(result.method, result.instList)
-            is JcRawInstListResult -> rawInstCache.put(result.method, result.rawInstList)
+            is JcFlowGraphResult -> cfgCache[result.method] = result.flowGraph
+            is JcInstListResult -> instCache[result.method] = result.instList
+            is JcRawInstListResult -> rawInstCache[result.method] = result.rawInstList
         }
     }
 
-    protected fun segmentBuilder(settings: JcCacheSegmentSettings)
-            : CacheBuilder<Any, Any> {
-        val maxSize = settings.maxSize
-        val expiration = settings.expiration
-
-        return CacheBuilder.newBuilder()
-            .expireAfterAccess(expiration)
-            .recordStats()
-            .maximumSize(maxSize).let {
-                when (settings.valueStoreType) {
-                    ValueStoreType.WEAK -> it.weakValues()
-                    ValueStoreType.SOFT -> it.softValues()
-                    else -> it
-                }
-            }
-    }
-
-    open fun stats(): Map<String, CacheStats> = buildMap {
-        this["classes"] = classesCache.stats()
-        this["types"] = typesCache.stats()
-        this["cfg"] = cfgCache.stats()
-        this["raw-instructions"] = rawInstCache.stats()
-        this["instructions"] = instCache.stats()
+    open fun stats(): Map<String, PluggableCacheStats> = buildMap {
+        this["classes"] = classesCache.getStats()
+        this["types"] = typesCache.getStats()
+        this["cfg"] = cfgCache.getStats()
+        this["raw-instructions"] = rawInstCache.getStats()
+        this["instructions"] = instCache.getStats()
     }
 
     open fun dumpStats() {
@@ -132,13 +157,15 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
             .forEach { (key, stat) ->
                 logger.info(
                     "$key cache hit rate: ${
-                        stat.hitRate().forPercentages()
-                    }, total count ${stat.requestCount()}"
+                        stat.hitRate.forPercentages()
+                    }, total count ${stat.requestCount}"
                 )
             }
     }
 
-    protected fun Double.forPercentages(): String {
+    private fun Double.forPercentages(): String {
         return NumberFormat.getPercentInstance().format(this)
     }
+
+    private data class TypeKey(val typeName: String, val nullable: Boolean? = null)
 }
