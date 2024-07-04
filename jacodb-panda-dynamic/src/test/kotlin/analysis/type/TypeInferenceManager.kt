@@ -138,38 +138,69 @@ class TypeInferenceManager(
     ): EtsMethodTypeFacts {
         val typeFacts = summaries
             .mapNotNull { it.initialFact as? ForwardTypeDomainFact.TypedVariable }
-            .groupBy({ it.variable.base }, { normalizeTypeAccessPath(it.variable.accesses.iterator(), it.type) })
+            .groupBy({ it.variable.base }, { it })
             .filter { (base, _) -> base is AccessPathBase.This || base is AccessPathBase.Arg }
 
         val types = type.types.mapValues { (base, typeScheme) ->
             val typeRefinements = typeFacts[base] ?: return@mapValues typeScheme
-            val refinedScheme = typeRefinements.mapNotNull {
-                val refinedScheme = typeScheme.intersect(it)
 
-                if (refinedScheme == null) {
-                    System.err.println("Empty intersection type: $typeScheme & $it")
+            val propertyRefinements = typeRefinements
+                .groupBy ({ it.variable.accesses }, { it.type })
+                .mapValues { (_, types) -> types.reduce { acc, t -> acc.union(t) } }
+
+            var refinedScheme = typeScheme
+            for ((property, propertyType) in propertyRefinements) {
+                refinedScheme = refinedScheme.refineProperty(property, propertyType) ?: run {
+                    System.err.println("Empty intersection type: $typeScheme[$property] & $type")
+                    refinedScheme
                 }
-
-                refinedScheme
             }
 
-            refinedScheme.reduce { acc, type -> acc.union(type, ignoreUnknownType = true) }
+            refinedScheme
         }
 
         return EtsMethodTypeFacts(type.method, types)
     }
 
-    private fun normalizeTypeAccessPath(ap: Iterator<Accessor>, type: EtsTypeFact): EtsTypeFact {
-        if (!ap.hasNext()) return type
-
-        val accessor = ap.next()
-
-        if (accessor !is FieldAccessor) {
-            TODO()
+    private fun EtsTypeFact.refineProperty(property: List<Accessor>, type: EtsTypeFact): EtsTypeFact? =
+        when (this) {
+            is EtsTypeFact.BasicType -> refineProperty(property, type)
+            is EtsTypeFact.GuardedTypeFact -> this.type.refineProperty(property, type)?.withGuard(guard, guardNegated)
+            is EtsTypeFact.IntersectionEtsTypeFact -> EtsTypeFact.mkIntersectionType(
+                types.mapTo(hashSetOf()) { it.refineProperty(property, type) ?: return null }
+            )
+            is EtsTypeFact.UnionEtsTypeFact -> EtsTypeFact.mkUnionType(
+                types.mapNotNullTo(hashSetOf()) { it.refineProperty(property, type) }
+            )
         }
 
-        val normalized = normalizeTypeAccessPath(ap, type)
-        return EtsTypeFact.ObjectEtsTypeFact(cls = null, properties = mapOf(accessor.name to normalized))
+    private fun EtsTypeFact.BasicType.refineProperty(
+        property: List<Accessor>,
+        type: EtsTypeFact
+    ): EtsTypeFact? {
+        when (this) {
+            EtsTypeFact.AnyEtsTypeFact,
+            EtsTypeFact.FunctionEtsTypeFact,
+            EtsTypeFact.NumberEtsTypeFact,
+            EtsTypeFact.StringEtsTypeFact,
+            EtsTypeFact.UnknownEtsTypeFact -> return if (property.isNotEmpty()) this else intersect(type)
+
+            is EtsTypeFact.ObjectEtsTypeFact -> {
+                val propertyAccessor = property.firstOrNull() as? FieldAccessor
+                if (propertyAccessor == null) {
+                    if (type !is EtsTypeFact.ObjectEtsTypeFact || cls != null) {
+                        TODO("$this & $type")
+                    }
+
+                    return EtsTypeFact.ObjectEtsTypeFact(type.cls, properties)
+                }
+
+                val propertyType = properties[propertyAccessor.name] ?: return this
+                val refinedProperty = propertyType.refineProperty(property.drop(1), type) ?: return null
+                val properties = this.properties + (propertyAccessor.name to refinedProperty)
+                return EtsTypeFact.ObjectEtsTypeFact(cls, properties)
+            }
+        }
     }
 
     override fun handleEvent(event: AnalyzerEvent) {
