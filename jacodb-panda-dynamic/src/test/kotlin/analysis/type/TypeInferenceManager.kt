@@ -153,7 +153,7 @@ class TypeInferenceManager(
                 refinedScheme
             }
 
-            refinedScheme.reduce { acc, type -> acc.union(type) }
+            refinedScheme.reduce { acc, type -> acc.union(type, ignoreUnknownType = true) }
         }
 
         return EtsMethodTypeFacts(type.method, types)

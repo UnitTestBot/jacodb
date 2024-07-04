@@ -5,17 +5,20 @@ import org.jacodb.panda.dynamic.ets.base.EtsType
 sealed interface EtsTypeFact {
     sealed interface BasicType : EtsTypeFact
 
-    fun union(other: EtsTypeFact): EtsTypeFact {
+    fun union(other: EtsTypeFact, ignoreUnknownType: Boolean): EtsTypeFact {
         if (this == other) return this
 
+        if (ignoreUnknownType && this is UnknownEtsTypeFact) return other
+        if (ignoreUnknownType && other is UnknownEtsTypeFact) return this
+
         return when {
-            this is ObjectEtsTypeFact && other is ObjectEtsTypeFact -> union(this, other)
-            this is UnionEtsTypeFact -> union(this, other)
-            this is IntersectionEtsTypeFact -> union(this, other)
-            this is GuardedTypeFact -> union(this, other)
-            other is UnionEtsTypeFact -> union(other, this)
-            other is IntersectionEtsTypeFact -> union(other, this)
-            other is GuardedTypeFact -> union(other, this)
+            this is ObjectEtsTypeFact && other is ObjectEtsTypeFact -> union(this, other, ignoreUnknownType)
+            this is UnionEtsTypeFact -> union(this, other, ignoreUnknownType)
+            this is IntersectionEtsTypeFact -> union(this, other, ignoreUnknownType)
+            this is GuardedTypeFact -> union(this, other, ignoreUnknownType)
+            other is UnionEtsTypeFact -> union(other, this, ignoreUnknownType)
+            other is IntersectionEtsTypeFact -> union(other, this, ignoreUnknownType)
+            other is GuardedTypeFact -> union(other, this, ignoreUnknownType)
             else -> mkUnionType(this, other)
         }
     }
@@ -139,7 +142,7 @@ sealed interface EtsTypeFact {
                     return if (other.guardNegated == guardedType.guardNegated) {
                         guardedType.type.intersect(other.type)?.withGuard(guardedType.guard, guardedType.guardNegated)
                     } else {
-                        guardedType.type.union(other.type)
+                        guardedType.type.union(other.type, ignoreUnknownType = false)
                     }
                 }
             }
@@ -164,10 +167,10 @@ sealed interface EtsTypeFact {
             return ObjectEtsTypeFact(intersectionCls, intersectionProperties)
         }
 
-        private fun union(unionType: UnionEtsTypeFact, other: EtsTypeFact): EtsTypeFact {
+        private fun union(unionType: UnionEtsTypeFact, other: EtsTypeFact, ignoreUnknownType: Boolean): EtsTypeFact {
             val result = hashSetOf<EtsTypeFact>()
             for (type in unionType.types) {
-                val union = type.union(other)
+                val union = type.union(other, ignoreUnknownType)
                 if (union is UnionEtsTypeFact) {
                     result.addAll(union.types)
                 } else {
@@ -177,17 +180,17 @@ sealed interface EtsTypeFact {
             return mkUnionType(result)
         }
 
-        private fun union(guardedType: GuardedTypeFact, other: EtsTypeFact): EtsTypeFact {
+        private fun union(guardedType: GuardedTypeFact, other: EtsTypeFact, ignoreUnknownType: Boolean): EtsTypeFact {
             // todo: evaluate types
             return mkUnionType(guardedType, other)
         }
 
-        private fun union(intersectionType: IntersectionEtsTypeFact, other: EtsTypeFact): EtsTypeFact {
+        private fun union(intersectionType: IntersectionEtsTypeFact, other: EtsTypeFact, ignoreUnknownType: Boolean): EtsTypeFact {
             // todo: push union
             return mkUnionType(intersectionType, other)
         }
 
-        private fun union(obj1: ObjectEtsTypeFact, obj2: ObjectEtsTypeFact): EtsTypeFact {
+        private fun union(obj1: ObjectEtsTypeFact, obj2: ObjectEtsTypeFact, ignoreUnknownType: Boolean): EtsTypeFact {
             if (obj1.cls != null && obj2.cls != null && obj1.cls != obj2.cls) {
                 return mkUnionType(obj1, obj2)
             }
@@ -195,7 +198,7 @@ sealed interface EtsTypeFact {
             val commonProperties = obj1.properties.keys.intersect(obj2.properties.keys).associateWith { property ->
                 val thisType = obj1.properties.getValue(property)
                 val otherType = obj2.properties.getValue(property)
-                thisType.union(otherType)
+                thisType.union(otherType, ignoreUnknownType)
             }
 
             val o1OnlyProperties = obj1.properties.filter { it.key !in obj2.properties }
