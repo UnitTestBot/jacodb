@@ -35,6 +35,7 @@ import org.jacodb.taint.configuration.TaintConfigurationItem
 import org.jacodb.taint.configuration.TaintMark
 import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.TaintMethodSource
+import org.junit.jupiter.api.condition.EnabledIf
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
@@ -51,6 +52,9 @@ class PandaDemoCases {
         return project
     }
 
+    private fun stdlibAvailable() = EtsStdlib.stdlibAvailable()
+
+    @EnabledIf("stdlibAvailable")
     @Test
     fun `taint analysis on case1`() {
         val path = "cases/case1.ir"
@@ -89,6 +93,7 @@ class PandaDemoCases {
         assertTrue(sinks.isNotEmpty())
     }
 
+    @EnabledIf("stdlibAvailable")
     @Test
     fun `taint analysis on case2`() {
         val path = "cases/case2.ir"
