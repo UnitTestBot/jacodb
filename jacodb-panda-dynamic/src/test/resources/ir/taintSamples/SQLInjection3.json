@@ -1,0 +1,1627 @@
+{
+  "name": "taintSamples\\SQLInjection3.ts",
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "_DEFAULT_ARK_METHOD",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
+              },
+              {
+                "name": "app",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "express",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "port",
+                "type": {
+                  "_": "NumberType"
+                }
+              },
+              {
+                "name": "connection",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "mysql",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-0",
+                "type": {
+                  "_": "CallableType",
+                  "signature": {
+                    "enclosingClass": {
+                      "name": "_DEFAULT_ARK_CLASS"
+                    },
+                    "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-0",
+                    "parameters": [
+                      {
+                        "name": "err",
+                        "type": {
+                          "_": "UnknownType"
+                        },
+                        "isOptional": false
+                      }
+                    ],
+                    "returnType": {
+                      "_": "UnknownType"
+                    }
+                  }
+                }
+              },
+              {
+                "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-1",
+                "type": {
+                  "_": "CallableType",
+                  "signature": {
+                    "enclosingClass": {
+                      "name": "_DEFAULT_ARK_CLASS"
+                    },
+                    "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-1",
+                    "parameters": [
+                      {
+                        "name": "req",
+                        "type": {
+                          "_": "UnknownType"
+                        },
+                        "isOptional": false
+                      },
+                      {
+                        "name": "res",
+                        "type": {
+                          "_": "UnknownType"
+                        },
+                        "isOptional": false
+                      }
+                    ],
+                    "returnType": {
+                      "_": "UnknownType"
+                    }
+                  }
+                }
+              },
+              {
+                "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-3",
+                "type": {
+                  "_": "CallableType",
+                  "signature": {
+                    "enclosingClass": {
+                      "name": "_DEFAULT_ARK_CLASS"
+                    },
+                    "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-3",
+                    "parameters": [],
+                    "returnType": {
+                      "_": "UnknownType"
+                    }
+                  }
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "app",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "express",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "port",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "3000",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "connection",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "mysql",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "createConnection",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "ObjectLiteralExpr",
+                            "type": {
+                              "_": "ClassType",
+                              "signature": {
+                                "name": "AnonymousClass-taintSamples\\SQLInjection3.ts-0"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "connection",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "connect",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-0",
+                            "type": {
+                              "_": "CallableType",
+                              "signature": {
+                                "enclosingClass": {
+                                  "name": "_DEFAULT_ARK_CLASS"
+                                },
+                                "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-0",
+                                "parameters": [
+                                  {
+                                    "name": "err",
+                                    "type": {
+                                      "_": "UnknownType"
+                                    },
+                                    "isOptional": false
+                                  }
+                                ],
+                                "returnType": {
+                                  "_": "UnknownType"
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "app",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "get",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "/user",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-1",
+                            "type": {
+                              "_": "CallableType",
+                              "signature": {
+                                "enclosingClass": {
+                                  "name": "_DEFAULT_ARK_CLASS"
+                                },
+                                "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-1",
+                                "parameters": [
+                                  {
+                                    "name": "req",
+                                    "type": {
+                                      "_": "UnknownType"
+                                    },
+                                    "isOptional": false
+                                  },
+                                  {
+                                    "name": "res",
+                                    "type": {
+                                      "_": "UnknownType"
+                                    },
+                                    "isOptional": false
+                                  }
+                                ],
+                                "returnType": {
+                                  "_": "UnknownType"
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "app",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "listen",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "port",
+                            "type": {
+                              "_": "NumberType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-3",
+                            "type": {
+                              "_": "CallableType",
+                              "signature": {
+                                "enclosingClass": {
+                                  "name": "_DEFAULT_ARK_CLASS"
+                                },
+                                "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-3",
+                                "parameters": [],
+                                "returnType": {
+                                  "_": "UnknownType"
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-0",
+            "parameters": [
+              {
+                "name": "err",
+                "type": {
+                  "_": "UnknownType"
+                },
+                "isOptional": false
+              }
+            ],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
+              },
+              {
+                "name": "err",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "console",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1,
+                    2
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "err",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": "==",
+                        "left": {
+                          "_": "Local",
+                          "name": "err",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "0",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [],
+                  "predecessors": [
+                    0,
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "Connected to database",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [
+                    0
+                  ],
+                  "stmts": [
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "error",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "Error connecting to database:",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "err",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-2",
+            "parameters": [
+              {
+                "name": "err",
+                "type": {
+                  "_": "UnknownType"
+                },
+                "isOptional": false
+              },
+              {
+                "name": "results",
+                "type": {
+                  "_": "UnknownType"
+                },
+                "isOptional": false
+              }
+            ],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
+              },
+              {
+                "name": "err",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "results",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "res",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1,
+                    2
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "err",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "results",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 1,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": "==",
+                        "left": {
+                          "_": "Local",
+                          "name": "err",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "0",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [],
+                  "predecessors": [
+                    0,
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "res",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "json",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "results",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [
+                    0
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "res",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "status",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "500",
+                            "type": {
+                              "_": "NumberType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "send",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "Database query error",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-1",
+            "parameters": [
+              {
+                "name": "req",
+                "type": {
+                  "_": "UnknownType"
+                },
+                "isOptional": false
+              },
+              {
+                "name": "res",
+                "type": {
+                  "_": "UnknownType"
+                },
+                "isOptional": false
+              }
+            ],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
+              },
+              {
+                "name": "req",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "res",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "user",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "query",
+                "type": {
+                  "_": "StringType"
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "StringType"
+                }
+              },
+              {
+                "name": "$temp2",
+                "type": {
+                  "_": "StringType"
+                }
+              },
+              {
+                "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-2",
+                "type": {
+                  "_": "CallableType",
+                  "signature": {
+                    "enclosingClass": {
+                      "name": "_DEFAULT_ARK_CLASS"
+                    },
+                    "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-2",
+                    "parameters": [
+                      {
+                        "name": "err",
+                        "type": {
+                          "_": "UnknownType"
+                        },
+                        "isOptional": false
+                      },
+                      {
+                        "name": "results",
+                        "type": {
+                          "_": "UnknownType"
+                        },
+                        "isOptional": false
+                      }
+                    ],
+                    "returnType": {
+                      "_": "UnknownType"
+                    }
+                  }
+                }
+              },
+              {
+                "name": "connection",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "req",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "res",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 1,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "req",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "query",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "user",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "getUser",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Constant",
+                          "value": "SELECT * FROM users WHERE username = '",
+                          "type": {
+                            "_": "StringType"
+                          }
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "user",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp1",
+                          "type": {
+                            "_": "StringType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "'",
+                          "type": {
+                            "_": "StringType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "query",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "connection",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "query",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "query",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-2",
+                            "type": {
+                              "_": "CallableType",
+                              "signature": {
+                                "enclosingClass": {
+                                  "name": "_DEFAULT_ARK_CLASS"
+                                },
+                                "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-2",
+                                "parameters": [
+                                  {
+                                    "name": "err",
+                                    "type": {
+                                      "_": "UnknownType"
+                                    },
+                                    "isOptional": false
+                                  },
+                                  {
+                                    "name": "results",
+                                    "type": {
+                                      "_": "UnknownType"
+                                    },
+                                    "isOptional": false
+                                  }
+                                ],
+                                "returnType": {
+                                  "_": "UnknownType"
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "AnonymousMethod-_DEFAULT_ARK_CLASS-3",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
+              },
+              {
+                "name": "port",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "StringType"
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "StringType"
+                }
+              },
+              {
+                "name": "console",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Constant",
+                          "value": "Server is running on http://localhost:",
+                          "type": {
+                            "_": "StringType"
+                          }
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "port",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": {
+                            "_": "StringType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "",
+                          "type": {
+                            "_": "StringType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp1",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "signature": {
+        "name": "AnonymousClass-taintSamples\\SQLInjection3.ts-0"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-taintSamples\\SQLInjection3.ts-0"
+            },
+            "name": "host",
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "'localhost'",
+            "type": {
+              "_": "StringType"
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-taintSamples\\SQLInjection3.ts-0"
+            },
+            "name": "user",
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "'root'",
+            "type": {
+              "_": "StringType"
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-taintSamples\\SQLInjection3.ts-0"
+            },
+            "name": "password",
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "''",
+            "type": {
+              "_": "StringType"
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-taintSamples\\SQLInjection3.ts-0"
+            },
+            "name": "database",
+            "fieldType": {
+              "_": "UNKNOWN"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "'test_db'",
+            "type": {
+              "_": "StringType"
+            }
+          }
+        }
+      ],
+      "methods": []
+    }
+  ],
+  "importInfos": [
+    {
+      "importClauseName": "express",
+      "importType": "NamespaceImport",
+      "importFrom": "express",
+      "nameBeforeAs": "*",
+      "modifiers": [],
+      "originTsPosition": {
+        "line": 1,
+        "col": 1
+      }
+    },
+    {
+      "importClauseName": "mysql",
+      "importType": "NamespaceImport",
+      "importFrom": "mysql",
+      "nameBeforeAs": "*",
+      "modifiers": [],
+      "originTsPosition": {
+        "line": 2,
+        "col": 1
+      }
+    }
+  ],
+  "exportInfos": []
+}

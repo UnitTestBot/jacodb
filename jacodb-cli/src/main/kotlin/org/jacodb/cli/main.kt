@@ -156,6 +156,7 @@ fun main(args: Array<String>) {
         }
         jacodb.classpath(classpathAsFiles)
     }
+    JcTraits.cp = cp
 
     val startClassesAsList = startClasses.split(";")
     val startJcClasses = ConcurrentHashMap.newKeySet<JcClassOrInterface>()

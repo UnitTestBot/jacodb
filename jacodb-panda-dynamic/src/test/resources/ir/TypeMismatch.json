@@ -1,0 +1,533 @@
+{
+  "name": "TypeMismatch.ts",
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "_DEFAULT_ARK_METHOD",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "add",
+            "parameters": [
+              {
+                "name": "a",
+                "type": {
+                  "_": "UnknownType"
+                },
+                "isOptional": false
+              },
+              {
+                "name": "b",
+                "type": {
+                  "_": "UnknownType"
+                },
+                "isOptional": false
+              }
+            ],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
+              },
+              {
+                "name": "a",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "b",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Error"
+                  }
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1,
+                    2
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "a",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "b",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 1,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": "==",
+                        "left": {
+                          "_": "TypeOfExpr",
+                          "arg": {
+                            "_": "Local",
+                            "name": "a",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        },
+                        "right": {
+                          "_": "TypeOfExpr",
+                          "arg": {
+                            "_": "Local",
+                            "name": "b",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [],
+                  "predecessors": [
+                    0,
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "a",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "b",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [
+                    0
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "NewExpr",
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Error"
+                            }
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "Error"
+                          },
+                          "name": "constructor",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "Types mismatch!",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ThrowStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "main",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
+              },
+              {
+                "name": "add",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "console",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "add",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "123",
+                            "type": {
+                              "_": "NumberType"
+                            }
+                          },
+                          {
+                            "_": "Constant",
+                            "value": "15",
+                            "type": {
+                              "_": "NumberType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp0",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "importInfos": [],
+  "exportInfos": []
+}

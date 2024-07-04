@@ -1,0 +1,299 @@
+{
+  "name": "loop\\DoWhileLoop.ts",
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "_DEFAULT_ARK_METHOD",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
+              },
+              {
+                "name": "count",
+                "type": {
+                  "_": "NumberType"
+                }
+              },
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "StringType"
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "StringType"
+                }
+              },
+              {
+                "name": "console",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "count",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "0",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2
+                  ],
+                  "predecessors": [
+                    0,
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Constant",
+                          "value": "Count is ",
+                          "type": {
+                            "_": "StringType"
+                          }
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "count",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": {
+                            "_": "StringType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "",
+                          "type": {
+                            "_": "StringType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp1",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "count",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "count",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [
+                    1,
+                    3
+                  ],
+                  "predecessors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": ">=",
+                        "left": {
+                          "_": "Local",
+                          "name": "count",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "5",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 3,
+                  "successors": [],
+                  "predecessors": [
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "importInfos": [],
+  "exportInfos": []
+}

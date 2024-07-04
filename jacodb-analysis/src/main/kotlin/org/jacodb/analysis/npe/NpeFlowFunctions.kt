@@ -557,7 +557,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
         buildSet {
             // Transmit facts on arguments (from 'actual' to 'formal'):
             val actualParams = callExpr.args
-            val formalParams = cp.getArgumentsOf(callee)
+            val formalParams = getArgumentsOf(callee)
             for ((formal, actual) in formalParams.zip(actualParams)) {
                 addAll(
                     transmitTaintArgumentActualToFormal(
@@ -619,7 +619,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
             // Transmit facts on arguments (from 'formal' back to 'actual'), if they are passed by-ref:
             if (fact.variable.isOnHeap) {
                 val actualParams = callExpr.args
-                val formalParams = cp.getArgumentsOf(callee)
+                val formalParams = getArgumentsOf(callee)
                 for ((formal, actual) in formalParams.zip(actualParams)) {
                     addAll(
                         transmitTaintArgumentFormalToActual(

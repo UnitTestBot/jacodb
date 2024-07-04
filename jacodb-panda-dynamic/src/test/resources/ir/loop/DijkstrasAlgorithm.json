@@ -1,0 +1,2316 @@
+{
+  "name": "loop\\DijkstrasAlgorithm.ts",
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "_DEFAULT_ARK_METHOD",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
+              },
+              {
+                "name": "graph",
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "UnionType",
+                    "types": [
+                      {
+                        "_": "ArrayType",
+                        "elementType": {
+                          "_": "NumberType"
+                        },
+                        "dimensions": 1
+                      },
+                      {
+                        "_": "ArrayType",
+                        "elementType": {
+                          "_": "NumberType"
+                        },
+                        "dimensions": 1
+                      },
+                      {
+                        "_": "ArrayType",
+                        "elementType": {
+                          "_": "NumberType"
+                        },
+                        "dimensions": 1
+                      },
+                      {
+                        "_": "ArrayType",
+                        "elementType": {
+                          "_": "NumberType"
+                        },
+                        "dimensions": 1
+                      }
+                    ]
+                  },
+                  "dimensions": 1
+                }
+              },
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "NumberType"
+                  },
+                  "dimensions": 1
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "NumberType"
+                  },
+                  "dimensions": 1
+                }
+              },
+              {
+                "name": "$temp2",
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "NumberType"
+                  },
+                  "dimensions": 1
+                }
+              },
+              {
+                "name": "$temp3",
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "NumberType"
+                  },
+                  "dimensions": 1
+                }
+              },
+              {
+                "name": "$temp4",
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "UnionType",
+                    "types": [
+                      {
+                        "_": "ArrayType",
+                        "elementType": {
+                          "_": "NumberType"
+                        },
+                        "dimensions": 1
+                      },
+                      {
+                        "_": "ArrayType",
+                        "elementType": {
+                          "_": "NumberType"
+                        },
+                        "dimensions": 1
+                      },
+                      {
+                        "_": "ArrayType",
+                        "elementType": {
+                          "_": "NumberType"
+                        },
+                        "dimensions": 1
+                      },
+                      {
+                        "_": "ArrayType",
+                        "elementType": {
+                          "_": "NumberType"
+                        },
+                        "dimensions": 1
+                      }
+                    ]
+                  },
+                  "dimensions": 1
+                }
+              },
+              {
+                "name": "dijkstra",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp5",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "console",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "NumberType"
+                          },
+                          "dimensions": 1
+                        }
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "elementType": {
+                          "_": "NumberType"
+                        },
+                        "size": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "NumberType"
+                          },
+                          "dimensions": 1
+                        }
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "elementType": {
+                          "_": "NumberType"
+                        },
+                        "size": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "NumberType"
+                          },
+                          "dimensions": 1
+                        }
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "elementType": {
+                          "_": "NumberType"
+                        },
+                        "size": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp3",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "NumberType"
+                          },
+                          "dimensions": 1
+                        }
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "elementType": {
+                          "_": "NumberType"
+                        },
+                        "size": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp4",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "UnionType",
+                            "types": [
+                              {
+                                "_": "ArrayType",
+                                "elementType": {
+                                  "_": "NumberType"
+                                },
+                                "dimensions": 1
+                              },
+                              {
+                                "_": "ArrayType",
+                                "elementType": {
+                                  "_": "NumberType"
+                                },
+                                "dimensions": 1
+                              },
+                              {
+                                "_": "ArrayType",
+                                "elementType": {
+                                  "_": "NumberType"
+                                },
+                                "dimensions": 1
+                              },
+                              {
+                                "_": "ArrayType",
+                                "elementType": {
+                                  "_": "NumberType"
+                                },
+                                "dimensions": 1
+                              }
+                            ]
+                          },
+                          "dimensions": 1
+                        }
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "elementType": {
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            },
+                            {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            },
+                            {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            },
+                            {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            }
+                          ]
+                        },
+                        "size": {
+                          "_": "Constant",
+                          "value": "4",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "graph",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "UnionType",
+                            "types": [
+                              {
+                                "_": "ArrayType",
+                                "elementType": {
+                                  "_": "NumberType"
+                                },
+                                "dimensions": 1
+                              },
+                              {
+                                "_": "ArrayType",
+                                "elementType": {
+                                  "_": "NumberType"
+                                },
+                                "dimensions": 1
+                              },
+                              {
+                                "_": "ArrayType",
+                                "elementType": {
+                                  "_": "NumberType"
+                                },
+                                "dimensions": 1
+                              },
+                              {
+                                "_": "ArrayType",
+                                "elementType": {
+                                  "_": "NumberType"
+                                },
+                                "dimensions": 1
+                              }
+                            ]
+                          },
+                          "dimensions": 1
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp4",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "UnionType",
+                            "types": [
+                              {
+                                "_": "ArrayType",
+                                "elementType": {
+                                  "_": "NumberType"
+                                },
+                                "dimensions": 1
+                              },
+                              {
+                                "_": "ArrayType",
+                                "elementType": {
+                                  "_": "NumberType"
+                                },
+                                "dimensions": 1
+                              },
+                              {
+                                "_": "ArrayType",
+                                "elementType": {
+                                  "_": "NumberType"
+                                },
+                                "dimensions": 1
+                              },
+                              {
+                                "_": "ArrayType",
+                                "elementType": {
+                                  "_": "NumberType"
+                                },
+                                "dimensions": 1
+                              }
+                            ]
+                          },
+                          "dimensions": 1
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp5",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "dijkstra",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "graph",
+                            "type": {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "UnionType",
+                                "types": [
+                                  {
+                                    "_": "ArrayType",
+                                    "elementType": {
+                                      "_": "NumberType"
+                                    },
+                                    "dimensions": 1
+                                  },
+                                  {
+                                    "_": "ArrayType",
+                                    "elementType": {
+                                      "_": "NumberType"
+                                    },
+                                    "dimensions": 1
+                                  },
+                                  {
+                                    "_": "ArrayType",
+                                    "elementType": {
+                                      "_": "NumberType"
+                                    },
+                                    "dimensions": 1
+                                  },
+                                  {
+                                    "_": "ArrayType",
+                                    "elementType": {
+                                      "_": "NumberType"
+                                    },
+                                    "dimensions": 1
+                                  }
+                                ]
+                              },
+                              "dimensions": 1
+                            }
+                          },
+                          {
+                            "_": "Constant",
+                            "value": "0",
+                            "type": {
+                              "_": "NumberType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "Shortest paths from vertex 0:",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "$temp5",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "dijkstra",
+            "parameters": [
+              {
+                "name": "graph",
+                "type": {
+                  "_": "UnclearReferenceType",
+                  "name": "ArrayType"
+                },
+                "isOptional": false
+              },
+              {
+                "name": "startVertex",
+                "type": {
+                  "_": "NumberType"
+                },
+                "isOptional": false
+              }
+            ],
+            "returnType": {
+              "_": "UnclearReferenceType",
+              "name": "ArrayType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
+              },
+              {
+                "name": "graph",
+                "type": {
+                  "_": "UnclearReferenceType",
+                  "name": "ArrayType"
+                }
+              },
+              {
+                "name": "startVertex",
+                "type": {
+                  "_": "NumberType"
+                }
+              },
+              {
+                "name": "distances",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "Infinity",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "UnknownType"
+                  },
+                  "dimensions": 1
+                }
+              },
+              {
+                "name": "visited",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "UnknownType"
+                  },
+                  "dimensions": 1
+                }
+              },
+              {
+                "name": "i",
+                "type": {
+                  "_": "NumberType"
+                }
+              },
+              {
+                "name": "$temp2",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp3",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "minDistance",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "minIndex",
+                "type": {
+                  "_": "NumberType"
+                }
+              },
+              {
+                "name": "v",
+                "type": {
+                  "_": "NumberType"
+                }
+              },
+              {
+                "name": "$temp4",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp5",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp6",
+                "type": {
+                  "_": "BooleanType"
+                }
+              },
+              {
+                "name": "$temp7",
+                "type": {
+                  "_": "BooleanType"
+                }
+              },
+              {
+                "name": "$temp8",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp9",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp10",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp11",
+                "type": {
+                  "_": "BooleanType"
+                }
+              },
+              {
+                "name": "$temp12",
+                "type": {
+                  "_": "BooleanType"
+                }
+              },
+              {
+                "name": "$temp13",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp14",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp15",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp16",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp17",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp18",
+                "type": {
+                  "_": "BooleanType"
+                }
+              },
+              {
+                "name": "$temp19",
+                "type": {
+                  "_": "BooleanType"
+                }
+              },
+              {
+                "name": "$temp20",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp21",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp22",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp23",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "graph",
+                        "type": {
+                          "_": "UnclearReferenceType",
+                          "name": "ArrayType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": {
+                          "_": "UnclearReferenceType",
+                          "name": "ArrayType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "startVertex",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 1,
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "UnknownType"
+                          },
+                          "dimensions": 1
+                        }
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "elementType": {
+                          "_": "UnknownType"
+                        },
+                        "size": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "distances",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": {
+                            "_": "ArrayType",
+                            "elementType": {
+                              "_": "UnknownType"
+                            },
+                            "dimensions": 1
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "fill",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "Infinity",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "distances",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "startVertex",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "0",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "UnknownType"
+                          },
+                          "dimensions": 1
+                        }
+                      },
+                      "right": {
+                        "_": "NewArrayExpr",
+                        "elementType": {
+                          "_": "UnknownType"
+                        },
+                        "size": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "visited",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp1",
+                          "type": {
+                            "_": "ArrayType",
+                            "elementType": {
+                              "_": "UnknownType"
+                            },
+                            "dimensions": 1
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "fill",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "false",
+                            "type": {
+                              "_": "BooleanType"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2,
+                    3
+                  ],
+                  "predecessors": [
+                    0,
+                    6
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "i",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "0",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "graph",
+                          "type": {
+                            "_": "UnclearReferenceType",
+                            "name": "ArrayType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "length",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp3",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "-",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp2",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": ">=",
+                        "left": {
+                          "_": "Local",
+                          "name": "i",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "$temp3",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "i",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "i",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "predecessors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "distances",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 3,
+                  "successors": [
+                    4
+                  ],
+                  "predecessors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "minDistance",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "Infinity",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "minIndex",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      },
+                      "right": {
+                        "_": "UnopExpr",
+                        "op": "-",
+                        "arg": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 4,
+                  "successors": [
+                    5,
+                    10
+                  ],
+                  "predecessors": [
+                    3,
+                    11
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "v",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "0",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp4",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "graph",
+                          "type": {
+                            "_": "UnclearReferenceType",
+                            "name": "ArrayType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "length",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": ">=",
+                        "left": {
+                          "_": "Local",
+                          "name": "v",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "$temp4",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "v",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "v",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 5,
+                  "successors": [
+                    6
+                  ],
+                  "predecessors": [
+                    4
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "visited",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "minIndex",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "true",
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 6,
+                  "successors": [
+                    1,
+                    7
+                  ],
+                  "predecessors": [
+                    5,
+                    8
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "v",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "0",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp8",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "graph",
+                          "type": {
+                            "_": "UnclearReferenceType",
+                            "name": "ArrayType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "length",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": ">=",
+                        "left": {
+                          "_": "Local",
+                          "name": "v",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "$temp8",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "v",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "v",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 7,
+                  "successors": [
+                    8,
+                    9
+                  ],
+                  "predecessors": [
+                    6
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp9",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "graph",
+                          "type": {
+                            "_": "UnclearReferenceType",
+                            "name": "ArrayType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "minIndex",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp10",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp9",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "v",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp11",
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "!==",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp10",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "0",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp12",
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "&&",
+                        "left": {
+                          "_": "UnopExpr",
+                          "op": "!",
+                          "arg": {
+                            "_": "InstanceFieldRef",
+                            "instance": {
+                              "_": "Local",
+                              "name": "visited",
+                              "type": {
+                                "_": "UnknownType"
+                              }
+                            },
+                            "field": {
+                              "enclosingClass": {
+                                "name": ""
+                              },
+                              "name": "v",
+                              "fieldType": {
+                                "_": "UnknownType"
+                              }
+                            }
+                          }
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "$temp11",
+                          "type": {
+                            "_": "BooleanType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp13",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "distances",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "minIndex",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp14",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "graph",
+                          "type": {
+                            "_": "UnclearReferenceType",
+                            "name": "ArrayType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "minIndex",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp15",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp14",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "v",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp16",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp13",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "$temp15",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp17",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "distances",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "v",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp18",
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "<",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp16",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "$temp17",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp19",
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "&&",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp12",
+                          "type": {
+                            "_": "BooleanType"
+                          }
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "$temp18",
+                          "type": {
+                            "_": "BooleanType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": "==",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp19",
+                          "type": {
+                            "_": "BooleanType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "0",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 8,
+                  "successors": [
+                    6
+                  ],
+                  "predecessors": [
+                    7,
+                    9
+                  ],
+                  "stmts": []
+                },
+                {
+                  "id": 9,
+                  "successors": [
+                    8
+                  ],
+                  "predecessors": [
+                    7
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp20",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "distances",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "minIndex",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp21",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "graph",
+                          "type": {
+                            "_": "UnclearReferenceType",
+                            "name": "ArrayType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "minIndex",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp22",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp21",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "v",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp23",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp20",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "$temp22",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "distances",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "v",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp23",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 10,
+                  "successors": [
+                    11,
+                    12
+                  ],
+                  "predecessors": [
+                    4
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp5",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "distances",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "v",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp6",
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "<=",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp5",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "minDistance",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp7",
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "&&",
+                        "left": {
+                          "_": "UnopExpr",
+                          "op": "!",
+                          "arg": {
+                            "_": "InstanceFieldRef",
+                            "instance": {
+                              "_": "Local",
+                              "name": "visited",
+                              "type": {
+                                "_": "UnknownType"
+                              }
+                            },
+                            "field": {
+                              "enclosingClass": {
+                                "name": ""
+                              },
+                              "name": "v",
+                              "fieldType": {
+                                "_": "UnknownType"
+                              }
+                            }
+                          }
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "$temp6",
+                          "type": {
+                            "_": "BooleanType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": "==",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp7",
+                          "type": {
+                            "_": "BooleanType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "0",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 11,
+                  "successors": [
+                    4
+                  ],
+                  "predecessors": [
+                    10,
+                    12
+                  ],
+                  "stmts": []
+                },
+                {
+                  "id": 12,
+                  "successors": [
+                    11
+                  ],
+                  "predecessors": [
+                    10
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "minDistance",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "distances",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "v",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "minIndex",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "v",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "importInfos": [],
+  "exportInfos": []
+}

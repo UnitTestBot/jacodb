@@ -35,6 +35,7 @@ import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.api.jvm.cfg.JcLocal
 import org.jacodb.api.jvm.cfg.JcLocalVar
 import org.jacodb.api.jvm.cfg.JcReturnInst
+import org.jacodb.api.jvm.ext.cfg.callExpr
 import org.jacodb.api.jvm.ext.findTypeOrNull
 import org.jacodb.api.jvm.ext.packageName
 import org.jacodb.impl.features.InMemoryHierarchy
@@ -47,7 +48,6 @@ import org.jacodb.testing.WithRAMDB
 import org.jacodb.testing.allClasspath
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.jacodb.analysis.util.getArgument as _getArgument
 
 open class TaintFlowFunctionsTest : BaseTest() {
 
@@ -63,12 +63,14 @@ open class TaintFlowFunctionsTest : BaseTest() {
         } else {
             super.cp
         }
+    }.also {
+        JcTraits.cp = it
     }
 
     private val graph: JcApplicationGraph = mockk {
         every { project } returns cp
         every { callees(any()) } answers {
-            sequenceOf(arg<JcInst>(0).getCallExpr()!!.callee)
+            sequenceOf(arg<JcInst>(0).callExpr!!.callee)
         }
         every { methodOf(any()) } answers {
             arg<JcInst>(0).location.method
@@ -102,7 +104,7 @@ open class TaintFlowFunctionsTest : BaseTest() {
     fun `test obtain start facts`() {
         val flowSpace = ForwardTaintFlowFunctions(graph)
         val facts = flowSpace.obtainPossibleStartFacts(testMethod).toList()
-        val arg0 = cp.getArgument(testMethod.parameters[0])!!
+        val arg0 = getArgument(testMethod.parameters[0])!!
         val arg0Taint = Tainted(arg0.toPath(), TaintMark("EXAMPLE"))
         Assertions.assertEquals(listOf(TaintZeroFact, arg0Taint), facts)
     }
@@ -126,7 +128,7 @@ open class TaintFlowFunctionsTest : BaseTest() {
         // "x := test(...)", where 'test' is a source, should result in 'x' to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val callStatement = JcAssignInst(location = mockk(), lhv = x, rhv = mockk<JcCallExpr> {
-            every { callee } returns testMethod
+            every { method.method } returns testMethod
         })
         val flowSpace = ForwardTaintFlowFunctions(graph)
         val f = flowSpace.obtainCallToReturnSiteFlowFunction(callStatement, returnSite = mockk())
@@ -140,7 +142,7 @@ open class TaintFlowFunctionsTest : BaseTest() {
         // "test(x)", where 'x' is tainted, should result in 'x' NOT to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val callStatement = JcCallInst(location = mockk(), callExpr = mockk<JcCallExpr> {
-            every { callee } returns testMethod
+            every { method.method } returns testMethod
             every { args } returns listOf(x)
         })
         val flowSpace = ForwardTaintFlowFunctions(graph)
@@ -156,7 +158,7 @@ open class TaintFlowFunctionsTest : BaseTest() {
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val y: JcLocal = JcLocalVar(2, "y", stringType)
         val callStatement = JcAssignInst(location = mockk(), lhv = y, rhv = mockk<JcCallExpr> {
-            every { callee } returns testMethod
+            every { method.method } returns testMethod
             every { args } returns listOf(x)
         })
         val flowSpace = ForwardTaintFlowFunctions(graph)
@@ -176,7 +178,7 @@ open class TaintFlowFunctionsTest : BaseTest() {
         // "test(x)", where 'x' is tainted, should result in 'x' (formal argument of 'test') to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val callStatement = JcCallInst(location = mockk(), callExpr = mockk<JcCallExpr> {
-            every { callee } returns testMethod
+            every { method.method } returns testMethod
             every { args } returns listOf(x)
         })
         val flowSpace = ForwardTaintFlowFunctions(graph)
@@ -186,7 +188,7 @@ open class TaintFlowFunctionsTest : BaseTest() {
             }
         })
         val xTaint = Tainted(x.toPath(), TaintMark("TAINT"))
-        val arg0: JcArgument = cp._getArgument(testMethod.parameters[0])!!
+        val arg0: JcArgument = getArgument(testMethod.parameters[0])!!
         val arg0Taint = Tainted(arg0.toPath(), TaintMark("TAINT"))
         val facts = f.compute(xTaint).toList()
         Assertions.assertEquals(listOf(arg0Taint), facts)
@@ -201,7 +203,7 @@ open class TaintFlowFunctionsTest : BaseTest() {
         // "x := test()" + "return y", where 'y' is tainted, should result in 'x' to be tainted
         val x: JcLocal = JcLocalVar(1, "x", stringType)
         val callStatement = JcAssignInst(location = mockk(), lhv = x, rhv = mockk<JcCallExpr> {
-            every { callee } returns testMethod
+            every { method.method } returns testMethod
         })
         val y: JcLocal = JcLocalVar(1, "y", stringType)
         val exitStatement = JcReturnInst(location = mockk {

@@ -98,7 +98,7 @@ class UnusedVariableFlowFunctions<Method, Statement>(
             return@FlowFunction buildSet {
                 add(UnusedVariableZeroFact)
                 val callee = graph.methodOf(calleeStart)
-                val formalParams = cp.getArgumentsOf(callee)
+                val formalParams = getArgumentsOf(callee)
                 for (formal in formalParams) {
                     add(UnusedVariable(formal.toPath(), callStatement))
                 }

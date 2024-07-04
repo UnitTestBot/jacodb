@@ -1,0 +1,1405 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "BasicBlock": {
+      "properties": {
+        "id": {
+          "type": "number"
+        },
+        "predecessors": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "stmts": {
+          "items": {
+            "$ref": "#/definitions/Stmt"
+          },
+          "type": "array"
+        },
+        "successors": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "predecessors",
+        "stmts",
+        "successors"
+      ],
+      "type": "object"
+    },
+    "Body": {
+      "properties": {
+        "cfg": {
+          "$ref": "#/definitions/Cfg"
+        },
+        "locals": {
+          "items": {
+            "$ref": "#/definitions/Local"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "cfg",
+        "locals"
+      ],
+      "type": "object"
+    },
+    "CallExpr": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/CallExpr.InstanceCallExpr"
+        },
+        {
+          "$ref": "#/definitions/CallExpr.StaticCallExpr"
+        }
+      ]
+    },
+    "CallExpr.InstanceCallExpr": {
+      "properties": {
+        "_": {
+          "const": "InstanceCallExpr",
+          "type": "string"
+        },
+        "args": {
+          "items": {
+            "$ref": "#/definitions/Value"
+          },
+          "type": "array"
+        },
+        "instance": {
+          "$ref": "#/definitions/Value"
+        },
+        "method": {
+          "$ref": "#/definitions/MethodSignature"
+        }
+      },
+      "required": [
+        "_",
+        "args",
+        "instance",
+        "method"
+      ],
+      "type": "object"
+    },
+    "CallExpr.StaticCallExpr": {
+      "properties": {
+        "_": {
+          "const": "StaticCallExpr",
+          "type": "string"
+        },
+        "args": {
+          "items": {
+            "$ref": "#/definitions/Value"
+          },
+          "type": "array"
+        },
+        "method": {
+          "$ref": "#/definitions/MethodSignature"
+        }
+      },
+      "required": [
+        "_",
+        "args",
+        "method"
+      ],
+      "type": "object"
+    },
+    "Cfg": {
+      "properties": {
+        "blocks": {
+          "items": {
+            "$ref": "#/definitions/BasicBlock"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "blocks"
+      ],
+      "type": "object"
+    },
+    "Class": {
+      "properties": {
+        "fields": {
+          "items": {
+            "$ref": "#/definitions/Field"
+          },
+          "type": "array"
+        },
+        "implementedInterfaceNames": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "methods": {
+          "items": {
+            "$ref": "#/definitions/Method"
+          },
+          "type": "array"
+        },
+        "modifiers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "signature": {
+          "$ref": "#/definitions/ClassSignature"
+        },
+        "superClassName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "typeParameters": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "fields",
+        "implementedInterfaceNames",
+        "methods",
+        "modifiers",
+        "signature",
+        "superClassName",
+        "typeParameters"
+      ],
+      "type": "object"
+    },
+    "ClassSignature": {
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "ConditionExpr.ConditionExpr": {
+      "properties": {
+        "_": {
+          "const": "ConditionExpr",
+          "type": "string"
+        },
+        "left": {
+          "$ref": "#/definitions/Value"
+        },
+        "op": {
+          "type": "string"
+        },
+        "right": {
+          "$ref": "#/definitions/Value"
+        }
+      },
+      "required": [
+        "_",
+        "left",
+        "op",
+        "right"
+      ],
+      "type": "object"
+    },
+    "ExportInfo": {
+      "properties": {
+        "declaringSignature": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "exportClauseName": {
+          "type": "string"
+        },
+        "exportClauseType": {
+          "type": "number"
+        },
+        "exportFrom": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "importInfo": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ImportInfo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "modifiers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "nameBeforeAs": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "originTsPosition": {
+          "$ref": "#/definitions/LineColPosition"
+        }
+      },
+      "required": [
+        "exportClauseName",
+        "exportClauseType",
+        "isDefault",
+        "modifiers",
+        "originTsPosition"
+      ],
+      "type": "object"
+    },
+    "Field": {
+      "properties": {
+        "exclamationToken": {
+          "type": "boolean"
+        },
+        "initializer": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Value.ArrayLiteralExpr"
+            },
+            {
+              "$ref": "#/definitions/Value.ArrayRef"
+            },
+            {
+              "$ref": "#/definitions/Value.BinopExpr"
+            },
+            {
+              "$ref": "#/definitions/Value.CastExpr"
+            },
+            {
+              "$ref": "#/definitions/Value.ConditionExpr"
+            },
+            {
+              "$ref": "#/definitions/Value.Constant"
+            },
+            {
+              "$ref": "#/definitions/Value.InstanceCallExpr"
+            },
+            {
+              "$ref": "#/definitions/Value.InstanceFieldRef"
+            },
+            {
+              "$ref": "#/definitions/Value.InstanceOfExpr"
+            },
+            {
+              "$ref": "#/definitions/Value.LengthExpr"
+            },
+            {
+              "$ref": "#/definitions/Value.Local"
+            },
+            {
+              "$ref": "#/definitions/Value.NewArrayExpr"
+            },
+            {
+              "$ref": "#/definitions/Value.NewExpr"
+            },
+            {
+              "$ref": "#/definitions/Value.ObjectLiteralExpr"
+            },
+            {
+              "$ref": "#/definitions/Value.ParameterRef"
+            },
+            {
+              "$ref": "#/definitions/Value.PhiExpr"
+            },
+            {
+              "$ref": "#/definitions/Value.StaticCallExpr"
+            },
+            {
+              "$ref": "#/definitions/Value.StaticFieldRef"
+            },
+            {
+              "$ref": "#/definitions/Value.ThisRef"
+            },
+            {
+              "$ref": "#/definitions/Value.TypeOfExpr"
+            },
+            {
+              "$ref": "#/definitions/Value.UnknownValue"
+            },
+            {
+              "$ref": "#/definitions/Value.UnopExpr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "modifiers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "questionToken": {
+          "type": "boolean"
+        },
+        "signature": {
+          "$ref": "#/definitions/FieldSignature"
+        },
+        "typeParameters": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "modifiers",
+        "signature",
+        "typeParameters"
+      ],
+      "type": "object"
+    },
+    "FieldRef": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FieldRef.InstanceFieldRef"
+        },
+        {
+          "$ref": "#/definitions/FieldRef.StaticFieldRef"
+        }
+      ]
+    },
+    "FieldRef.InstanceFieldRef": {
+      "properties": {
+        "_": {
+          "const": "InstanceFieldRef",
+          "type": "string"
+        },
+        "field": {
+          "$ref": "#/definitions/FieldSignature"
+        },
+        "instance": {
+          "$ref": "#/definitions/Value"
+        }
+      },
+      "required": [
+        "_",
+        "field",
+        "instance"
+      ],
+      "type": "object"
+    },
+    "FieldRef.StaticFieldRef": {
+      "properties": {
+        "_": {
+          "const": "StaticFieldRef",
+          "type": "string"
+        },
+        "field": {
+          "$ref": "#/definitions/FieldSignature"
+        }
+      },
+      "required": [
+        "_",
+        "field"
+      ],
+      "type": "object"
+    },
+    "FieldSignature": {
+      "properties": {
+        "enclosingClass": {
+          "$ref": "#/definitions/ClassSignature"
+        },
+        "fieldType": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "enclosingClass",
+        "fieldType",
+        "name"
+      ],
+      "type": "object"
+    },
+    "FileSignature": {
+      "properties": {
+        "fileName": {
+          "type": "string"
+        },
+        "projectName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fileName",
+        "projectName"
+      ],
+      "type": "object"
+    },
+    "ImportInfo": {
+      "properties": {
+        "clauseType": {
+          "type": "string"
+        },
+        "importClauseName": {
+          "type": "string"
+        },
+        "importFrom": {
+          "type": "string"
+        },
+        "importFromSignature": {
+          "$ref": "#/definitions/FileSignature"
+        },
+        "importProjectType": {
+          "type": "string"
+        },
+        "importType": {
+          "type": "string"
+        },
+        "modifiers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "nameBeforeAs": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "originTsPosition": {
+          "$ref": "#/definitions/LineColPosition"
+        }
+      },
+      "required": [
+        "clauseType",
+        "importClauseName",
+        "importFrom",
+        "importFromSignature",
+        "importProjectType",
+        "importType",
+        "modifiers",
+        "nameBeforeAs",
+        "originTsPosition"
+      ],
+      "type": "object"
+    },
+    "LineColPosition": {
+      "properties": {
+        "col": {
+          "type": "number"
+        },
+        "line": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "col",
+        "line"
+      ],
+      "type": "object"
+    },
+    "Local": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "type"
+      ],
+      "type": "object"
+    },
+    "Method": {
+      "properties": {
+        "body": {
+          "$ref": "#/definitions/Body"
+        },
+        "modifiers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "signature": {
+          "$ref": "#/definitions/MethodSignature"
+        },
+        "typeParameters": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "body",
+        "modifiers",
+        "signature",
+        "typeParameters"
+      ],
+      "type": "object"
+    },
+    "MethodParameter": {
+      "properties": {
+        "isOptional": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "type"
+      ],
+      "type": "object"
+    },
+    "MethodSignature": {
+      "properties": {
+        "enclosingClass": {
+          "$ref": "#/definitions/ClassSignature"
+        },
+        "name": {
+          "type": "string"
+        },
+        "parameters": {
+          "items": {
+            "$ref": "#/definitions/MethodParameter"
+          },
+          "type": "array"
+        },
+        "returnType": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "enclosingClass",
+        "name",
+        "parameters",
+        "returnType"
+      ],
+      "type": "object"
+    },
+    "Namespace": {
+      "properties": {
+        "classes": {
+          "items": {
+            "$ref": "#/definitions/Class"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "classes",
+        "name"
+      ],
+      "type": "object"
+    },
+    "Stmt": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Stmt.AssignStmt"
+        },
+        {
+          "$ref": "#/definitions/Stmt.CallStmt"
+        },
+        {
+          "$ref": "#/definitions/Stmt.DeleteStmt"
+        },
+        {
+          "$ref": "#/definitions/Stmt.GotoStmt"
+        },
+        {
+          "$ref": "#/definitions/Stmt.IfStmt"
+        },
+        {
+          "$ref": "#/definitions/Stmt.NopStmt"
+        },
+        {
+          "$ref": "#/definitions/Stmt.ReturnStmt"
+        },
+        {
+          "$ref": "#/definitions/Stmt.ReturnVoidStmt"
+        },
+        {
+          "$ref": "#/definitions/Stmt.SwitchStmt"
+        },
+        {
+          "$ref": "#/definitions/Stmt.ThrowStmt"
+        },
+        {
+          "$ref": "#/definitions/Stmt.UnknownStmt"
+        }
+      ]
+    },
+    "Stmt.AssignStmt": {
+      "properties": {
+        "_": {
+          "const": "AssignStmt",
+          "type": "string"
+        },
+        "left": {
+          "$ref": "#/definitions/Value"
+        },
+        "right": {
+          "$ref": "#/definitions/Value"
+        }
+      },
+      "required": [
+        "_",
+        "left",
+        "right"
+      ],
+      "type": "object"
+    },
+    "Stmt.CallStmt": {
+      "properties": {
+        "_": {
+          "const": "CallStmt",
+          "type": "string"
+        },
+        "expr": {
+          "$ref": "#/definitions/CallExpr"
+        }
+      },
+      "required": [
+        "_",
+        "expr"
+      ],
+      "type": "object"
+    },
+    "Stmt.DeleteStmt": {
+      "properties": {
+        "_": {
+          "const": "DeleteStmt",
+          "type": "string"
+        },
+        "arg": {
+          "$ref": "#/definitions/FieldRef"
+        }
+      },
+      "required": [
+        "_",
+        "arg"
+      ],
+      "type": "object"
+    },
+    "Stmt.GotoStmt": {
+      "properties": {
+        "_": {
+          "const": "GotoStmt",
+          "type": "string"
+        }
+      },
+      "required": [
+        "_"
+      ],
+      "type": "object"
+    },
+    "Stmt.IfStmt": {
+      "properties": {
+        "_": {
+          "const": "IfStmt",
+          "type": "string"
+        },
+        "condition": {
+          "$ref": "#/definitions/ConditionExpr.ConditionExpr"
+        }
+      },
+      "required": [
+        "_",
+        "condition"
+      ],
+      "type": "object"
+    },
+    "Stmt.NopStmt": {
+      "properties": {
+        "_": {
+          "const": "NopStmt",
+          "type": "string"
+        }
+      },
+      "required": [
+        "_"
+      ],
+      "type": "object"
+    },
+    "Stmt.ReturnStmt": {
+      "properties": {
+        "_": {
+          "const": "ReturnStmt",
+          "type": "string"
+        },
+        "arg": {
+          "$ref": "#/definitions/Value"
+        }
+      },
+      "required": [
+        "_",
+        "arg"
+      ],
+      "type": "object"
+    },
+    "Stmt.ReturnVoidStmt": {
+      "properties": {
+        "_": {
+          "const": "ReturnVoidStmt",
+          "type": "string"
+        }
+      },
+      "required": [
+        "_"
+      ],
+      "type": "object"
+    },
+    "Stmt.SwitchStmt": {
+      "properties": {
+        "_": {
+          "const": "SwitchStmt",
+          "type": "string"
+        },
+        "arg": {
+          "$ref": "#/definitions/Value"
+        },
+        "cases": {
+          "items": {
+            "$ref": "#/definitions/Value"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "_",
+        "arg",
+        "cases"
+      ],
+      "type": "object"
+    },
+    "Stmt.ThrowStmt": {
+      "properties": {
+        "_": {
+          "const": "ThrowStmt",
+          "type": "string"
+        },
+        "arg": {
+          "$ref": "#/definitions/Value"
+        }
+      },
+      "required": [
+        "_",
+        "arg"
+      ],
+      "type": "object"
+    },
+    "Stmt.UnknownStmt": {
+      "properties": {
+        "_": {
+          "const": "UnknownStmt",
+          "type": "string"
+        },
+        "stmt": {}
+      },
+      "required": [
+        "_",
+        "stmt"
+      ],
+      "type": "object"
+    },
+    "Value": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Value.ArrayLiteralExpr"
+        },
+        {
+          "$ref": "#/definitions/Value.ArrayRef"
+        },
+        {
+          "$ref": "#/definitions/Value.BinopExpr"
+        },
+        {
+          "$ref": "#/definitions/Value.CastExpr"
+        },
+        {
+          "$ref": "#/definitions/Value.ConditionExpr"
+        },
+        {
+          "$ref": "#/definitions/Value.Constant"
+        },
+        {
+          "$ref": "#/definitions/Value.InstanceCallExpr"
+        },
+        {
+          "$ref": "#/definitions/Value.InstanceFieldRef"
+        },
+        {
+          "$ref": "#/definitions/Value.InstanceOfExpr"
+        },
+        {
+          "$ref": "#/definitions/Value.LengthExpr"
+        },
+        {
+          "$ref": "#/definitions/Value.Local"
+        },
+        {
+          "$ref": "#/definitions/Value.NewArrayExpr"
+        },
+        {
+          "$ref": "#/definitions/Value.NewExpr"
+        },
+        {
+          "$ref": "#/definitions/Value.ObjectLiteralExpr"
+        },
+        {
+          "$ref": "#/definitions/Value.ParameterRef"
+        },
+        {
+          "$ref": "#/definitions/Value.PhiExpr"
+        },
+        {
+          "$ref": "#/definitions/Value.StaticCallExpr"
+        },
+        {
+          "$ref": "#/definitions/Value.StaticFieldRef"
+        },
+        {
+          "$ref": "#/definitions/Value.ThisRef"
+        },
+        {
+          "$ref": "#/definitions/Value.TypeOfExpr"
+        },
+        {
+          "$ref": "#/definitions/Value.UnknownValue"
+        },
+        {
+          "$ref": "#/definitions/Value.UnopExpr"
+        }
+      ]
+    },
+    "Value.ArrayLiteralExpr": {
+      "properties": {
+        "_": {
+          "const": "ArrayLiteralExpr",
+          "type": "string"
+        },
+        "elements": {
+          "items": {
+            "$ref": "#/definitions/Value"
+          },
+          "type": "array"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_",
+        "elements",
+        "type"
+      ],
+      "type": "object"
+    },
+    "Value.ArrayRef": {
+      "properties": {
+        "_": {
+          "const": "ArrayRef",
+          "type": "string"
+        },
+        "array": {
+          "$ref": "#/definitions/Value"
+        },
+        "index": {
+          "$ref": "#/definitions/Value"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_",
+        "array",
+        "index",
+        "type"
+      ],
+      "type": "object"
+    },
+    "Value.BinopExpr": {
+      "properties": {
+        "_": {
+          "const": "BinopExpr",
+          "type": "string"
+        },
+        "left": {
+          "$ref": "#/definitions/Value"
+        },
+        "op": {
+          "type": "string"
+        },
+        "right": {
+          "$ref": "#/definitions/Value"
+        }
+      },
+      "required": [
+        "_",
+        "left",
+        "op",
+        "right"
+      ],
+      "type": "object"
+    },
+    "Value.CastExpr": {
+      "properties": {
+        "_": {
+          "const": "CastExpr",
+          "type": "string"
+        },
+        "arg": {
+          "$ref": "#/definitions/Value"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_",
+        "arg",
+        "type"
+      ],
+      "type": "object"
+    },
+    "Value.ConditionExpr": {
+      "properties": {
+        "_": {
+          "const": "ConditionExpr",
+          "type": "string"
+        },
+        "left": {
+          "$ref": "#/definitions/Value"
+        },
+        "op": {
+          "type": "string"
+        },
+        "right": {
+          "$ref": "#/definitions/Value"
+        }
+      },
+      "required": [
+        "_",
+        "left",
+        "op",
+        "right"
+      ],
+      "type": "object"
+    },
+    "Value.Constant": {
+      "properties": {
+        "_": {
+          "const": "Constant",
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_",
+        "type",
+        "value"
+      ],
+      "type": "object"
+    },
+    "Value.InstanceCallExpr": {
+      "properties": {
+        "_": {
+          "const": "InstanceCallExpr",
+          "type": "string"
+        },
+        "args": {
+          "items": {
+            "$ref": "#/definitions/Value"
+          },
+          "type": "array"
+        },
+        "instance": {
+          "$ref": "#/definitions/Value"
+        },
+        "method": {
+          "$ref": "#/definitions/MethodSignature"
+        }
+      },
+      "required": [
+        "_",
+        "args",
+        "instance",
+        "method"
+      ],
+      "type": "object"
+    },
+    "Value.InstanceFieldRef": {
+      "properties": {
+        "_": {
+          "const": "InstanceFieldRef",
+          "type": "string"
+        },
+        "field": {
+          "$ref": "#/definitions/FieldSignature"
+        },
+        "instance": {
+          "$ref": "#/definitions/Value"
+        }
+      },
+      "required": [
+        "_",
+        "field",
+        "instance"
+      ],
+      "type": "object"
+    },
+    "Value.InstanceOfExpr": {
+      "properties": {
+        "_": {
+          "const": "InstanceOfExpr",
+          "type": "string"
+        },
+        "arg": {
+          "$ref": "#/definitions/Value"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_",
+        "arg",
+        "type"
+      ],
+      "type": "object"
+    },
+    "Value.LengthExpr": {
+      "properties": {
+        "_": {
+          "const": "LengthExpr",
+          "type": "string"
+        },
+        "arg": {
+          "$ref": "#/definitions/Value"
+        }
+      },
+      "required": [
+        "_",
+        "arg"
+      ],
+      "type": "object"
+    },
+    "Value.Local": {
+      "properties": {
+        "_": {
+          "const": "Local",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_",
+        "name",
+        "type"
+      ],
+      "type": "object"
+    },
+    "Value.NewArrayExpr": {
+      "properties": {
+        "_": {
+          "const": "NewArrayExpr",
+          "type": "string"
+        },
+        "size": {
+          "$ref": "#/definitions/Value"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_",
+        "size",
+        "type"
+      ],
+      "type": "object"
+    },
+    "Value.NewExpr": {
+      "properties": {
+        "_": {
+          "const": "NewExpr",
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_",
+        "type"
+      ],
+      "type": "object"
+    },
+    "Value.ObjectLiteralExpr": {
+      "properties": {
+        "_": {
+          "const": "ObjectLiteralExpr",
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_",
+        "type"
+      ],
+      "type": "object"
+    },
+    "Value.ParameterRef": {
+      "properties": {
+        "_": {
+          "const": "ParameterRef",
+          "type": "string"
+        },
+        "index": {
+          "type": "number"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_",
+        "index",
+        "type"
+      ],
+      "type": "object"
+    },
+    "Value.PhiExpr": {
+      "properties": {
+        "_": {
+          "const": "PhiExpr",
+          "type": "string"
+        },
+        "args": {
+          "items": {
+            "$ref": "#/definitions/Value"
+          },
+          "type": "array"
+        },
+        "blocks": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "_",
+        "args",
+        "blocks"
+      ],
+      "type": "object"
+    },
+    "Value.StaticCallExpr": {
+      "properties": {
+        "_": {
+          "const": "StaticCallExpr",
+          "type": "string"
+        },
+        "args": {
+          "items": {
+            "$ref": "#/definitions/Value"
+          },
+          "type": "array"
+        },
+        "method": {
+          "$ref": "#/definitions/MethodSignature"
+        }
+      },
+      "required": [
+        "_",
+        "args",
+        "method"
+      ],
+      "type": "object"
+    },
+    "Value.StaticFieldRef": {
+      "properties": {
+        "_": {
+          "const": "StaticFieldRef",
+          "type": "string"
+        },
+        "field": {
+          "$ref": "#/definitions/FieldSignature"
+        }
+      },
+      "required": [
+        "_",
+        "field"
+      ],
+      "type": "object"
+    },
+    "Value.ThisRef": {
+      "properties": {
+        "_": {
+          "const": "ThisRef",
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_",
+        "type"
+      ],
+      "type": "object"
+    },
+    "Value.TypeOfExpr": {
+      "properties": {
+        "_": {
+          "const": "TypeOfExpr",
+          "type": "string"
+        },
+        "arg": {
+          "$ref": "#/definitions/Value"
+        }
+      },
+      "required": [
+        "_",
+        "arg"
+      ],
+      "type": "object"
+    },
+    "Value.UnknownValue": {
+      "properties": {
+        "_": {
+          "const": "UnknownValue",
+          "type": "string"
+        },
+        "value": {}
+      },
+      "required": [
+        "_",
+        "value"
+      ],
+      "type": "object"
+    },
+    "Value.UnopExpr": {
+      "properties": {
+        "_": {
+          "const": "UnopExpr",
+          "type": "string"
+        },
+        "arg": {
+          "$ref": "#/definitions/Value"
+        },
+        "op": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_",
+        "arg",
+        "op"
+      ],
+      "type": "object"
+    }
+  },
+  "properties": {
+    "absoluteFilePath": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "classes": {
+      "items": {
+        "$ref": "#/definitions/Class"
+      },
+      "type": "array"
+    },
+    "exportInfos": {
+      "items": {
+        "$ref": "#/definitions/ExportInfo"
+      },
+      "type": "array"
+    },
+    "importInfos": {
+      "items": {
+        "$ref": "#/definitions/ImportInfo"
+      },
+      "type": "array"
+    },
+    "name": {
+      "type": "string"
+    },
+    "namespaces": {
+      "items": {
+        "$ref": "#/definitions/Namespace"
+      },
+      "type": "array"
+    },
+    "projectDir": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "projectName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    }
+  },
+  "required": [
+    "classes",
+    "exportInfos",
+    "importInfos",
+    "name",
+    "namespaces"
+  ],
+  "type": "object"
+}
