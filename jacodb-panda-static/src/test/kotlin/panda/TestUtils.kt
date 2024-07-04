@@ -18,9 +18,21 @@ package panda
 
 import org.jacodb.panda.staticvm.cfg.toDot
 import org.jacodb.panda.staticvm.classpath.PandaProject
+import org.jacodb.panda.staticvm.ir.EtsStdlib
 import org.jacodb.panda.staticvm.ir.PandaProgramIr
 import org.jacodb.panda.staticvm.ir.dumpDot
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
+
+internal object EtsStdlib {
+    val STDLIB_FILE_PATH = EtsStdlib::class.java.getResource("stdlib.ir")
+
+    fun stdlibAvailable(): Boolean {
+        val resource = STDLIB_FILE_PATH?.toURI()
+        return resource != null && Files.exists(Paths.get(resource))
+    }
+}
 
 fun loadProgram(path: String): PandaProgramIr {
     val input = object {}::class.java.getResourceAsStream(path)
