@@ -16,9 +16,17 @@
 
 package panda
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.decodeFromStream
 import org.jacodb.panda.staticvm.cfg.PandaApplicationGraph
 import org.jacodb.panda.staticvm.classpath.PandaProject
+import org.jacodb.panda.staticvm.ir.PandaProgramIr
+import org.jacodb.panda.staticvm.ir.PandaProgramIr.Companion.json
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.EnabledIf
+import java.io.FileInputStream
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
 class PandaIrDeserializationTest {
 
@@ -26,6 +34,9 @@ class PandaIrDeserializationTest {
         private const val SAMPLE_FILE_PATH: String = "sample.abc.ir"
     }
 
+    private fun stdlibAvailable() = EtsStdlib.stdlibAvailable()
+
+    @EnabledIf("stdlibAvailable")
     @Test
     fun deserializationTest() {
         val filePath = SAMPLE_FILE_PATH
@@ -34,6 +45,7 @@ class PandaIrDeserializationTest {
         val applicationGraph = PandaApplicationGraph(project)
     }
 
+    @EnabledIf("stdlibAvailable")
     @Test
     fun catchTest() {
         val filePath = "testCatch.ir"
@@ -42,26 +54,25 @@ class PandaIrDeserializationTest {
         val applicationGraph = PandaApplicationGraph(project)
     }
 
-    /*
-    private val stdlibFilePath = javaClass.getResource("stdlib.ir")?.path!!
-
+    @EnabledIf("stdlibAvailable")
     @OptIn(ExperimentalSerializationApi::class, ExperimentalTime::class)
     @Test
     fun pandaStdLibTest() {
-        val input = FileInputStream(stdlibFilePath)
+        val input = FileInputStream(EtsStdlib.STDLIB_FILE_PATH!!.path)
 
         val (program, deserializationDuration) = measureTimedValue {
             json.decodeFromStream<PandaProgramIr>(input)
         }
         val (project, linkageDuration) = measureTimedValue {
-            PandaProject.fromProgramInfo(program)
+            PandaProject.fromProgramIr(program)
         }
 
         println("deserialization: $deserializationDuration, linkage: $linkageDuration")
         println("total: ${deserializationDuration + linkageDuration}")
     }
-    */
 
+
+    @EnabledIf("stdlibAvailable")
     @Test
     fun pandaClasspathFlowGraphTest() {
         val filePath = SAMPLE_FILE_PATH
