@@ -25,7 +25,7 @@ object EtsStdlib {
 
     init {
         val stream = this::class.java.getResourceAsStream("/stdlib.ir")
-            ?: error("Not found stdlib")
+            ?: error("Not found stdlib, run arkcompiler fork: \"es2panda --dump-ir --gen-stdlib > stdlib.ir\"")
         program = PandaProgramIr.json.decodeFromStream(stream)
     }
 }

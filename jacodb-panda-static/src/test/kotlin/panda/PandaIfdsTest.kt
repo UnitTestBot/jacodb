@@ -39,6 +39,7 @@ import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.EnabledIf
 import kotlin.time.Duration.Companion.seconds
 
 private val logger = mu.KotlinLogging.logger {}
@@ -47,6 +48,8 @@ class PandaIfdsTest {
 
     companion object : PandaStaticTraits
 
+    private fun stdlibAvailable() = EtsStdlib.stdlibAvailable()
+
     private fun loadProject(programName: String): PandaProject {
         val program = loadProgram("/$programName.ir")
         val project = PandaProject.fromProgramIr(program, withStdLib = true)
@@ -54,11 +57,13 @@ class PandaIfdsTest {
     }
 
     @Test
+    @EnabledIf("stdlibAvailable")
     fun `test taint analysis on program 2`() {
         runTaintAnalysis("Program2")
     }
 
     @Test
+    @EnabledIf("stdlibAvailable")
     fun `test taint analysis on program with catch`() {
         runTaintAnalysis("testCatch")
     }
