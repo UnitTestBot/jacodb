@@ -19,6 +19,7 @@ package org.jacodb.impl
 import kotlinx.collections.immutable.toPersistentList
 import org.jacodb.api.jvm.*
 import org.jacodb.impl.fs.fullAsmNode
+import org.objectweb.asm.tree.ClassNode
 import java.io.Closeable
 
 class FeaturesRegistry(features: List<JcFeature<*, *>>) : Closeable {
@@ -32,17 +33,23 @@ class FeaturesRegistry(features: List<JcFeature<*, *>>) : Closeable {
     }
 
     fun index(location: RegisteredLocation, classes: List<ClassSource>) {
+        val classNodes = hashMapOf<ClassSource, ClassNode>()
         features.forEach { feature ->
-            feature.index(location, classes)
+            feature.index(location, classes) { source ->
+                classNodes.getOrPut(source) {
+                    source.fullAsmNode
+                }
+            }
         }
     }
 
     private fun <REQ, RES> JcFeature<RES, REQ>.index(
         location: RegisteredLocation,
-        classes: List<ClassSource>
+        classes: List<ClassSource>,
+        classNodeProvider: (ClassSource) -> ClassNode
     ) {
         val indexer = newIndexer(jcdb, location)
-        classes.forEach { index(it, indexer) }
+        classes.forEach { index(it, indexer, classNodeProvider) }
         jcdb.persistence.write {
             indexer.flush(it)
         }
@@ -55,8 +62,8 @@ class FeaturesRegistry(features: List<JcFeature<*, *>>) : Closeable {
     override fun close() {
     }
 
-    private fun index(source: ClassSource, builder: ByteCodeIndexer) {
-        builder.index(source.fullAsmNode)
+    private fun index(source: ClassSource, builder: ByteCodeIndexer, classNodeProvider: (ClassSource) -> ClassNode) {
+        builder.index(classNodeProvider(source))
     }
 }
 

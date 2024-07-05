@@ -21,8 +21,12 @@ import org.jacodb.api.jvm.*
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.KotlinMetadata
 import org.jacodb.impl.features.classpaths.MethodInstructionsFeature
-import org.jacodb.impl.fs.*
-import org.jacodb.impl.storage.PersistentLocationRegistry
+import org.jacodb.impl.fs.JavaRuntime
+import org.jacodb.impl.fs.asByteCodeLocation
+import org.jacodb.impl.fs.filterExisted
+import org.jacodb.impl.fs.lazySources
+import org.jacodb.impl.fs.sources
+import org.jacodb.impl.storage.SQLITE_DATABASE_PERSISTENCE_SPI
 import org.jacodb.impl.vfs.GlobalClassesVfs
 import org.jacodb.impl.vfs.RemoveLocationsVisitor
 import java.io.File
@@ -32,15 +36,16 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class JcDatabaseImpl(
     internal val javaRuntime: JavaRuntime,
-    override val persistence: JcDatabasePersistence,
-    val featureRegistry: FeaturesRegistry,
     private val settings: JcSettings
 ) : JcDatabase {
+
+    override val persistence: JcDatabasePersistence
+    internal val featuresRegistry: FeaturesRegistry
+    internal val locationsRegistry: LocationsRegistry
 
     private val classesVfs = GlobalClassesVfs()
     private val hooks = settings.hooks.map { it(this) }
 
-    internal val locationsRegistry: LocationsRegistry
     private val backgroundJobs = ConcurrentHashMap<Int, Job>()
 
     private val isClosed = AtomicBoolean()
@@ -49,14 +54,17 @@ class JcDatabaseImpl(
     private val backgroundScope = BackgroundScope()
 
     init {
-        featureRegistry.bind(this)
-        locationsRegistry = PersistentLocationRegistry(this, featureRegistry)
+        val persistenceId = (settings.persistenceId ?: SQLITE_DATABASE_PERSISTENCE_SPI)
+        val persistenceSPI = JcDatabasePersistenceSPI.getProvider(persistenceId)
+        persistence = persistenceSPI.newPersistence(javaRuntime, settings)
+        featuresRegistry = FeaturesRegistry(settings.features).apply { bind(this@JcDatabaseImpl) }
+        locationsRegistry = persistenceSPI.newLocationsRegistry(this)
     }
 
-    override val locations: List<RegisteredLocation>
-        get() = locationsRegistry.actualLocations
+    override val locations: List<RegisteredLocation> get() = locationsRegistry.actualLocations
 
     suspend fun restore() {
+        featuresRegistry.broadcast(JcInternalSignal.BeforeIndexing(settings.persistenceClearOnStart ?: false))
         persistence.setup()
         locationsRegistry.cleanup()
         val runtime = JavaRuntime(settings.jre).allLocations
@@ -71,7 +79,11 @@ class JcDatabaseImpl(
         if (this != null && any { it is ClasspathCache }) {
             return this + listOf(KotlinMetadata, MethodInstructionsFeature(settings.keepLocalVariableNames))
         }
-        return listOf(ClasspathCache(settings.cacheSettings), KotlinMetadata, MethodInstructionsFeature(settings.keepLocalVariableNames)) + orEmpty()
+        return listOf(
+            ClasspathCache(settings.cacheSettings),
+            KotlinMetadata,
+            MethodInstructionsFeature(settings.keepLocalVariableNames)
+        ) + orEmpty()
     }
 
     override suspend fun classpath(dirOrJars: List<File>, features: List<JcClasspathFeature>?): JcClasspath {
@@ -145,7 +157,7 @@ class JcDatabaseImpl(
                             )
                         )
                     }
-                    parentScope.ifActive { featureRegistry.index(location, sources) }
+                    parentScope.ifActive { featuresRegistry.index(location, sources) }
                 }
             }.joinAll()
             if (createIndexes) {
@@ -166,7 +178,7 @@ class JcDatabaseImpl(
 
     override suspend fun rebuildFeatures() {
         awaitBackgroundJobs()
-        featureRegistry.broadcast(JcInternalSignal.Drop)
+        featuresRegistry.broadcast(JcInternalSignal.Drop)
 
         withContext(Dispatchers.IO) {
             val locations = locationsRegistry.actualLocations
@@ -174,7 +186,7 @@ class JcDatabaseImpl(
             locations.map {
                 async {
                     val addedClasses = persistence.findClassSources(this@JcDatabaseImpl, it)
-                    parentScope.ifActive { featureRegistry.index(it, addedClasses) }
+                    parentScope.ifActive { featuresRegistry.index(it, addedClasses) }
                 }
             }.joinAll()
         }
@@ -198,7 +210,7 @@ class JcDatabaseImpl(
     }
 
     override val features: List<JcFeature<*, *>>
-        get() = featureRegistry.features
+        get() = featuresRegistry.features
 
     suspend fun afterStart() {
         hooks.forEach { it.afterStart() }

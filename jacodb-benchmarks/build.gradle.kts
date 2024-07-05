@@ -49,6 +49,9 @@ benchmark {
         register("jcdb") {
             include("JcdbBenchmarks")
         }
+        register("jcdbRAM") {
+            include("JcdbRAMBenchmarks")
+        }
         register("soot") {
             include("SootBenchmarks")
         }
@@ -62,6 +65,17 @@ benchmark {
             include("JcdbJvmBackgroundBenchmarks")
             include("JcdbAllClasspathBackgroundBenchmarks")
             include("JcdbIdeaBackgroundBenchmarks")
+        }
+        register("ramAwaitBackground") {
+            include("JcdbRAMJvmBackgroundBenchmarks")
+            include("JcdbRAMAllClasspathBackgroundBenchmarks")
+            include("JcdbRAMIdeaBackgroundBenchmarks")
+        }
+        register("cache") {
+            warmups = 5
+            iterations = 10
+            include("GuavaCacheBenchmarks")
+            include("XodusCacheBenchmarks")
         }
     }
 }
@@ -82,8 +96,10 @@ tasks.register<Copy>("downloadAndUnzipIdeaCommunity") {
 
 val benchmarkTasks = listOf(
     "testJcdbBenchmark",
+    "testJcdbRAMBenchmark",
     "testSootBenchmark",
     "testAwaitBackgroundBenchmark",
+    "testRamAwaitBackgroundBenchmark"
 )
 tasks.matching { it.name in benchmarkTasks }.configureEach {
     dependsOn("downloadAndUnzipIdeaCommunity")

@@ -33,21 +33,11 @@ class JcFeaturesChain(val features: List<JcClasspathFeature>) {
     }
 
     inline fun <reified T : JcClasspathFeature, W> call(call: (T) -> W?): W? {
-        var result: W? = null
-        var event: JcFeatureEvent? = null
-        for (feature in features) {
-            if (feature is T) {
-                result = call(feature)
-                if (result != null) {
-                    event = feature.event(result)
-                    break
-                }
-            }
-        }
-        if (result != null && event != null) {
-            for (feature in features) {
-                feature.on(event)
-            }
+        val (result: W?, event: JcFeatureEvent?) = features.firstNotNullOfOrNull { feature ->
+            (feature as? T)?.let(call)?.let { result -> result to feature.event(result) }
+        } ?: return null
+        event?.let {
+            features.forEach { feature -> feature.on(event) }
         }
         return result
     }

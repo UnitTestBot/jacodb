@@ -18,19 +18,31 @@ package org.jacodb.testing.performance
 
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.impl.JcRamErsSettings
 import org.jacodb.impl.JcSettings
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.features.Usages
 import org.jacodb.impl.jacodb
-import org.jacodb.impl.storage.jooq.tables.references.*
 import org.jacodb.testing.allClasspath
-import org.openjdk.jmh.annotations.*
+import org.openjdk.jmh.annotations.Benchmark
+import org.openjdk.jmh.annotations.BenchmarkMode
+import org.openjdk.jmh.annotations.Fork
+import org.openjdk.jmh.annotations.Level
+import org.openjdk.jmh.annotations.Measurement
+import org.openjdk.jmh.annotations.Mode
+import org.openjdk.jmh.annotations.OutputTimeUnit
+import org.openjdk.jmh.annotations.Scope
+import org.openjdk.jmh.annotations.Setup
+import org.openjdk.jmh.annotations.State
+import org.openjdk.jmh.annotations.TearDown
+import org.openjdk.jmh.annotations.Threads
+import org.openjdk.jmh.annotations.Warmup
 import java.io.File
 import java.util.concurrent.TimeUnit
 
 abstract class JcdbAbstractAwaitBackgroundBenchmarks {
 
-    private lateinit var db: JcDatabase
+    private var db: JcDatabase? = null
 
     abstract fun JcSettings.configure()
 
@@ -47,19 +59,22 @@ abstract class JcdbAbstractAwaitBackgroundBenchmarks {
     @Benchmark
     fun awaitBackground() {
         runBlocking {
-            db.awaitBackgroundJobs()
+            db?.awaitBackgroundJobs()
         }
     }
 
     @TearDown(Level.Iteration)
     fun tearDown() {
-        db.close()
+        db?.let {
+            db = null
+            it.close()
+        }
     }
 }
 
 
 @State(Scope.Benchmark)
-@Fork(1, jvmArgs = ["-Xmx12288m"])
+@Fork(1, jvmArgs = ["-Xmx12g", "-Xms12g"])
 @Warmup(iterations = 2)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -67,12 +82,25 @@ abstract class JcdbAbstractAwaitBackgroundBenchmarks {
 class JcdbJvmBackgroundBenchmarks : JcdbAbstractAwaitBackgroundBenchmarks() {
 
     override fun JcSettings.configure() {
+        persistent(File.createTempFile("jcdb-", "-db").absolutePath)
     }
-
 }
 
 @State(Scope.Benchmark)
-@Fork(1, jvmArgs = ["-Xmx12288m"])
+@Fork(1, jvmArgs = ["-Xmx12g", "-Xms12g", "-XX:+HeapDumpOnOutOfMemoryError"])
+@Warmup(iterations = 2)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.MILLISECONDS)
+class JcdbRAMJvmBackgroundBenchmarks : JcdbAbstractAwaitBackgroundBenchmarks() {
+
+    override fun JcSettings.configure() {
+        persistenceImpl(JcRamErsSettings)
+    }
+}
+
+@State(Scope.Benchmark)
+@Fork(1, jvmArgs = ["-Xmx12g", "-Xms12g"])
 @Warmup(iterations = 2)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -81,16 +109,31 @@ class JcdbAllClasspathBackgroundBenchmarks : JcdbAbstractAwaitBackgroundBenchmar
 
     override fun JcSettings.configure() {
         loadByteCode(allClasspath)
+        persistent(File.createTempFile("jcdb-", "-db").absolutePath)
     }
-
 }
 
 @State(Scope.Benchmark)
-@Fork(1, jvmArgs = ["-Xmx12288m"])
+@Threads(1)
+@Fork(1, jvmArgs = ["-Xmx12g", "-Xms12g", "-XX:+HeapDumpOnOutOfMemoryError"])
 @Warmup(iterations = 2)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-@Measurement(iterations = 2, time = 1, timeUnit = TimeUnit.MILLISECONDS)
+@Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.MILLISECONDS)
+class JcdbRAMAllClasspathBackgroundBenchmarks : JcdbAbstractAwaitBackgroundBenchmarks() {
+
+    override fun JcSettings.configure() {
+        persistenceImpl(JcRamErsSettings)
+        loadByteCode(allClasspath)
+    }
+}
+
+@State(Scope.Benchmark)
+@Fork(1, jvmArgs = ["-Xmx12g", "-Xms12g"])
+@Warmup(iterations = 2)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.MILLISECONDS)
 class JcdbIdeaBackgroundBenchmarks : JcdbAbstractAwaitBackgroundBenchmarks() {
 
     override fun JcSettings.configure() {
@@ -98,5 +141,19 @@ class JcdbIdeaBackgroundBenchmarks : JcdbAbstractAwaitBackgroundBenchmarks() {
         installFeatures(Usages, InMemoryHierarchy)
         persistent(File.createTempFile("jcdb-", "-db").absolutePath)
     }
+}
 
+@State(Scope.Benchmark)
+@Fork(1, jvmArgs = ["-Xmx12g", "-Xms12g", "-XX:+HeapDumpOnOutOfMemoryError"])
+@Warmup(iterations = 2)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.MILLISECONDS)
+class JcdbRAMIdeaBackgroundBenchmarks : JcdbAbstractAwaitBackgroundBenchmarks() {
+
+    override fun JcSettings.configure() {
+        persistenceImpl(JcRamErsSettings)
+        loadByteCode(allIdeaJars)
+        installFeatures(Usages, InMemoryHierarchy)
+    }
 }

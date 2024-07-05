@@ -74,15 +74,15 @@ class JcUnknownMethod(
     }
 }
 
-class JcUnknownField(enclosingClass: JcClassOrInterface, name: String, type: TypeName) :
-    JcVirtualFieldImpl(name, type = type) {
+class JcUnknownField(enclosingClass: JcClassOrInterface, name: String, access: Int, type: TypeName) :
+    JcVirtualFieldImpl(name, access, type = type) {
 
     companion object {
 
-        fun typedField(type: JcClassType, name: String, fieldType: TypeName): JcTypedField {
+        fun typedField(type: JcClassType, name: String, access: Int, fieldType: TypeName): JcTypedField {
             return JcTypedFieldImpl(
                 type,
-                JcUnknownField(type.jcClass, name, fieldType),
+                JcUnknownField(type.jcClass, name, access, fieldType),
                 JcSubstitutorImpl.empty
             )
         }
@@ -138,8 +138,15 @@ object UnknownClasses : JcClasspathExtFeature {
         })
     }
 
-    override fun tryFindType(classpath: JcClasspath, name: String): JcClasspathExtFeature.JcResolvedTypeResult {
-        return AbstractJcResolvedResult.JcResolvedTypeResultImpl(name, JcUnknownType(classpath, name, location))
+    override fun tryFindType(
+        classpath: JcClasspath,
+        name: String,
+        nullable: Boolean?
+    ): JcClasspathExtFeature.JcResolvedTypeResult {
+        return AbstractJcResolvedResult.JcResolvedTypeResultImpl(
+            name,
+            JcUnknownType(classpath, name, location, nullable ?: true)
+        )
     }
 }
 

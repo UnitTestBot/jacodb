@@ -19,29 +19,10 @@ package org.jacodb.impl.vfs
 import org.jacodb.api.jvm.ClassSource
 import org.jacodb.api.jvm.RegisteredLocation
 import java.io.Closeable
-import java.util.concurrent.ConcurrentHashMap
 
 open class GlobalClassesVfs : Closeable {
 
     private val rootItem = PackageVfsItem(null, null)
-
-    private fun PackageVfsItem.findClassOrNew(
-        simpleClassName: String,
-        source: ClassSource
-    ): ClassVfsItem {
-        val nameIndex = classes.getOrPut(simpleClassName) {
-            ConcurrentHashMap<Long, ClassVfsItem>()
-        }
-        return nameIndex.getOrPut(source.location.id) {
-            ClassVfsItem(simpleClassName, this, source)
-        }
-    }
-
-    private fun PackageVfsItem.findPackageOrNew(subfolderName: String): PackageVfsItem {
-        return subpackages.getOrPut(subfolderName) {
-            PackageVfsItem(subfolderName, this)
-        }
-    }
 
     fun addClass(source: ClassSource): ClassVfsItem {
         val splitted = source.className.splitted
@@ -98,8 +79,6 @@ open class GlobalClassesVfs : Closeable {
     private val String.splitted get() = this.split(".")
 
     override fun close() {
-        rootItem.classes.clear()
-        rootItem.subpackages.clear()
+        rootItem.clear()
     }
-
 }

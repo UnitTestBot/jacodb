@@ -20,12 +20,14 @@ import kotlinx.coroutines.*
 import org.jacodb.api.jvm.*
 import org.jacodb.api.jvm.JcClasspathExtFeature.JcResolvedClassResult
 import org.jacodb.api.jvm.JcClasspathExtFeature.JcResolvedTypeResult
+import org.jacodb.api.jvm.ext.JAVA_OBJECT
 import org.jacodb.api.jvm.ext.toType
 import org.jacodb.impl.bytecode.JcClassOrInterfaceImpl
 import org.jacodb.impl.features.JcFeatureEventImpl
 import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.features.classpaths.AbstractJcResolvedResult.JcResolvedClassResultImpl
 import org.jacodb.impl.features.classpaths.AbstractJcResolvedResult.JcResolvedTypeResultImpl
+import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.JcUnknownClass
 import org.jacodb.impl.features.classpaths.UnknownClasses
 import org.jacodb.impl.features.classpaths.isResolveAllToUnknown
@@ -35,6 +37,7 @@ import org.jacodb.impl.types.JcClassTypeImpl
 import org.jacodb.impl.types.substition.JcSubstitutorImpl
 import org.jacodb.impl.vfs.ClasspathVfs
 import org.jacodb.impl.vfs.GlobalClassesVfs
+import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class JcClasspathImpl(
     private val locationsRegistrySnapshot: LocationsRegistrySnapshot,
@@ -47,10 +50,14 @@ class JcClasspathImpl(
     override val registeredLocations: List<RegisteredLocation> = locationsRegistrySnapshot.locations
 
     private val classpathVfs = ClasspathVfs(globalClassVFS, locationsRegistrySnapshot)
-    private val featuresChain = run{
+    private val featuresChain = run {
         val strictFeatures = features.filter { it !is UnknownClasses }
         val hasUnknownClasses = strictFeatures.size != features.size
-        JcFeaturesChain(strictFeatures + listOfNotNull(JcClasspathFeatureImpl(), UnknownClasses.takeIf { hasUnknownClasses }) )
+        JcFeaturesChain(
+            strictFeatures + listOfNotNull(
+                JcClasspathFeatureImpl(),
+                UnknownClasses.takeIf { hasUnknownClasses })
+        )
     }
 
     override suspend fun refreshed(closeOld: Boolean): JcClasspath {
@@ -61,25 +68,37 @@ class JcClasspathImpl(
         }
     }
 
-    override fun findClassOrNull(name: String): JcClassOrInterface? {
-        return featuresChain.call<JcClasspathExtFeature, JcResolvedClassResult> {
-            it.tryFindClass(this, name)
-        }?.clazz
+    private val javaObjectClass: JcClassOrInterface? by lazy(PUBLICATION) {
+        findClassWithCache(JAVA_OBJECT)
     }
 
-    override fun classTypeOf(
+    override fun findClassOrNull(name: String): JcClassOrInterface? =
+        if (JAVA_OBJECT == name) javaObjectClass else findClassWithCache(name)
+
+    private fun findClassWithCache(name: String): JcClassOrInterface? =
+        featuresChain.call<JcClasspathExtFeature, JcResolvedClassResult> {
+            it.tryFindClass(this, name)
+        }?.clazz
+
+    override fun typeOf(
         jcClass: JcClassOrInterface,
         nullability: Boolean?,
         annotations: List<JcAnnotation>
-    ): JcClassType {
-        return JcClassTypeImpl(
-            this,
-            jcClass.name,
-            jcClass.outerClass?.toType() as? JcClassTypeImpl,
-            JcSubstitutorImpl.empty,
-            nullability,
-            annotations
-        )
+    ): JcRefType {
+        val jcRefType = findTypeOrNullWithNullability(jcClass.name, nullability) as? JcRefType
+        jcRefType?.let {
+            //
+            // NB! cached type can have a different set of annotations,e.g., if it has
+            // been substituted by a "substitutor"
+            //
+            val cachedAnnotations = jcRefType.annotations
+            if (cachedAnnotations.size == annotations.size) {
+                if (annotations.isEmpty() || cachedAnnotations.toSet() == annotations.toSet()) {
+                    return jcRefType
+                }
+            }
+        }
+        return newClassType(jcClass, nullability, annotations)
     }
 
     override fun arrayTypeOf(elementType: JcType, nullability: Boolean?, annotations: List<JcAnnotation>): JcArrayType {
@@ -87,14 +106,19 @@ class JcClasspathImpl(
     }
 
     override fun toJcClass(source: ClassSource): JcClassOrInterface {
-        return JcClassOrInterfaceImpl(this, source, featuresChain)
+        // findClassOrNull() can return instance of JcVirtualClass which is not expected here
+        // also a duplicate class with different location can be cached
+        return (findCachedClass(source.className) as? JcClassOrInterfaceImpl)?.run {
+            if (source.location.id == declaration.location.id) this else null
+        } ?: newClassOrInterface(source)
     }
 
-    override fun findTypeOrNull(name: String): JcType? {
-        return featuresChain.call<JcClasspathExtFeature, JcResolvedTypeResult> {
-            it.tryFindType(this, name)
-        }?.type
+    private val javaObjectType: JcType? by lazy(PUBLICATION) {
+        findTypeOrNullWithNullability(JAVA_OBJECT)
     }
+
+    override fun findTypeOrNull(name: String): JcType? =
+        if (JAVA_OBJECT == name) javaObjectType else findTypeOrNullWithNullability(name)
 
     override suspend fun <T : JcClasspathTask> execute(task: T): T {
         val locations = registeredLocations.filter { task.shouldProcess(it) }
@@ -134,13 +158,42 @@ class JcClasspathImpl(
         locationsRegistrySnapshot.close()
     }
 
+    private fun findTypeOrNullWithNullability(name: String, nullable: Boolean? = null): JcType? {
+        return featuresChain.call<JcClasspathExtFeature, JcResolvedTypeResult> {
+            it.tryFindType(this, name, nullable)
+        }?.type
+    }
+
+    private fun newClassType(
+        jcClass: JcClassOrInterface,
+        nullability: Boolean?,
+        annotations: List<JcAnnotation>
+    ): JcClassTypeImpl {
+        return JcClassTypeImpl(
+            this,
+            jcClass.name,
+            jcClass.outerClass?.toType() as? JcClassTypeImpl,
+            JcSubstitutorImpl.empty,
+            nullability,
+            annotations
+        )
+    }
+
+    private fun newClassOrInterface(source: ClassSource) = JcClassOrInterfaceImpl(this, source, featuresChain)
+
+    private fun findCachedClass(name: String): JcClassOrInterface? {
+        return featuresChain.call<JcClasspathExtFeature, JcResolvedClassResult> { feature ->
+            if (feature is ClasspathCache) feature.tryFindClass(this, name) else null
+        }?.clazz ?: findClassOrNull(name)
+    }
+
     private inner class JcClasspathFeatureImpl : JcClasspathExtFeature {
 
         override fun tryFindClass(classpath: JcClasspath, name: String): JcResolvedClassResult? {
             val source = classpathVfs.firstClassOrNull(name)
-            val jcClass = source?.let { toJcClass(it.source) }
+            val jcClass = source?.let { newClassOrInterface(it.source) }
                 ?: db.persistence.findClassSourceByName(classpath, name)?.let {
-                    toJcClass(it)
+                    newClassOrInterface(it)
                 }
             if (jcClass == null && isResolveAllToUnknown) {
                 return null
@@ -148,7 +201,7 @@ class JcClasspathImpl(
             return JcResolvedClassResultImpl(name, jcClass)
         }
 
-        override fun tryFindType(classpath: JcClasspath, name: String): JcResolvedTypeResult? {
+        override fun tryFindType(classpath: JcClasspath, name: String, nullable: Boolean?): JcResolvedTypeResult? {
             if (name.endsWith("[]")) {
                 val targetName = name.removeSuffix("[]")
                 return JcResolvedTypeResultImpl(name,
@@ -162,12 +215,13 @@ class JcClasspathImpl(
             return when (val clazz = findClassOrNull(name)) {
                 null -> JcResolvedTypeResultImpl(name, null)
                 is JcUnknownClass -> null // delegating to UnknownClass feature
-                else -> JcResolvedTypeResultImpl(name, classTypeOf(clazz))
+                else -> JcResolvedTypeResultImpl(name, newClassType(clazz, nullable, clazz.annotations))
             }
         }
 
         override fun findClasses(classpath: JcClasspath, name: String): List<JcClassOrInterface> {
-            val vfsClasses = classpathVfs.findClassNodes(name).map { toJcClass(it.source) }
+            val findClassNodes = classpathVfs.findClassNodes(name)
+            val vfsClasses = findClassNodes.map { toJcClass(it.source) }
             val persistedClasses = db.persistence.findClassSources(classpath, name).map { toJcClass(it) }
             return buildSet {
                 addAll(vfsClasses)

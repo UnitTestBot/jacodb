@@ -17,6 +17,7 @@
 package org.jacodb.approximation
 
 import org.jacodb.api.jvm.ByteCodeIndexer
+import org.jacodb.api.jvm.JCDBContext
 import org.jacodb.api.jvm.JcClassExtFeature
 import org.jacodb.api.jvm.JcClassOrInterface
 import org.jacodb.api.jvm.JcClasspath
@@ -29,14 +30,16 @@ import org.jacodb.api.jvm.JcSignal
 import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.api.jvm.cfg.JcInstList
 import org.jacodb.api.jvm.cfg.JcRawInst
+import org.jacodb.api.jvm.storage.ers.compressed
 import org.jacodb.approximation.TransformerIntoVirtual.transformMethodIntoVirtual
 import org.jacodb.approximation.annotation.Approximate
 import org.jacodb.impl.cfg.JcInstListImpl
 import org.jacodb.impl.fs.className
+import org.jacodb.impl.storage.execute
 import org.jacodb.impl.storage.jooq.tables.references.ANNOTATIONS
 import org.jacodb.impl.storage.jooq.tables.references.ANNOTATIONVALUES
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
-import org.jooq.DSLContext
+import org.jacodb.impl.types.RefKind
 import org.objectweb.asm.tree.ClassNode
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -73,23 +76,41 @@ object Approximations : JcFeature<Any?, Any?>, JcClassExtFeature, JcInstExtFeatu
     override fun onSignal(signal: JcSignal) {
         if (signal is JcSignal.BeforeIndexing) {
             val persistence = signal.jcdb.persistence
-            persistence.read { jooq ->
-                val approxSymbol = persistence.findSymbolId(approximationAnnotationClassName)
-                jooq.select(CLASSES.NAME, ANNOTATIONVALUES.CLASS_SYMBOL)
-                    .from(ANNOTATIONS)
-                    .join(CLASSES).on(ANNOTATIONS.CLASS_ID.eq(CLASSES.ID))
-                    .join(ANNOTATIONVALUES).on(ANNOTATIONVALUES.ANNOTATION_ID.eq(ANNOTATIONS.ID))
-                    .where(
-                        ANNOTATIONS.ANNOTATION_NAME.eq(approxSymbol).and(
-                            ANNOTATIONVALUES.NAME.eq("value")
-                        )
-                    )
-                    .fetch().forEach { (approximation, original) ->
-                        val approximationClassName = persistence.findSymbolName(approximation!!).toApproximationName()
-                        val originalClassName = persistence.findSymbolName(original!!).toOriginalName()
-                        originalToApproximation[originalClassName] = approximationClassName
-                        approximationToOriginal[approximationClassName] = originalClassName
+            val approxSymbol = persistence.findSymbolId(approximationAnnotationClassName)
+            persistence.read { context ->
+                context.execute(
+                    sqlAction = { jooq ->
+                        jooq.select(CLASSES.NAME, ANNOTATIONVALUES.CLASS_SYMBOL)
+                            .from(ANNOTATIONS)
+                            .join(CLASSES).on(ANNOTATIONS.CLASS_ID.eq(CLASSES.ID))
+                            .join(ANNOTATIONVALUES).on(ANNOTATIONVALUES.ANNOTATION_ID.eq(ANNOTATIONS.ID))
+                            .where(
+                                ANNOTATIONS.ANNOTATION_NAME.eq(approxSymbol).and(
+                                    ANNOTATIONVALUES.NAME.eq("value")
+                                )
+                            )
+                            .fetch().asSequence().map { record -> record.value1() to record.value2() }
+                    },
+                    noSqlAction = { txn ->
+                        val valueId = persistence.findSymbolId("value")
+                        txn.find("Annotation", "nameId", approxSymbol.compressed).asSequence()
+                            .filter { it.getCompressedBlob<Int>("refKind") == RefKind.CLASS.ordinal }
+                            .flatMap { annotation ->
+                                annotation.getLink("ref").let { clazz ->
+                                    annotation.getLinks("values").asSequence().map { clazz to it }
+                                }
+                            }.filter { (_, annotationValue) ->
+                                valueId == annotationValue["nameId"]
+                            }.map { (clazz, annotationValue) ->
+                                clazz.getCompressed<Long>("nameId") to annotationValue.getCompressedBlob<Long>("classSymbolId")
+                            }
                     }
+                ).forEach { (approximation, original) ->
+                    val approximationClassName = persistence.findSymbolName(approximation!!).toApproximationName()
+                    val originalClassName = persistence.findSymbolName(original!!).toOriginalName()
+                    originalToApproximation[originalClassName] = approximationClassName
+                    approximationToOriginal[approximationClassName] = originalClassName
+                }
             }
         }
     }
@@ -172,7 +193,7 @@ private class ApproximationIndexer(
         approximationToOriginal[approximationClassName] = originalClassName
     }
 
-    override fun flush(jooq: DSLContext) {
+    override fun flush(context: JCDBContext) {
         // do nothing
     }
 }

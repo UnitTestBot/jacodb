@@ -1,0 +1,3 @@
+org.jacodb.impl.storage.ers.ram.RAMEntityRelationshipStorageSPI
+org.jacodb.impl.storage.ers.sql.SqlEntityRelationshipStorageSPI
+org.jacodb.impl.storage.ers.kv.KVEntityRelationshipStorageSPI

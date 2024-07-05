@@ -47,7 +47,7 @@ val JcClassOrInterface.isEnum: Boolean
     }
 
 fun JcClassOrInterface.toType(): JcClassType {
-    return classpath.classTypeOf(this) as JcClassType
+    return classpath.typeOf(this) as JcClassType
 }
 
 val JcClassOrInterface.packageName get() = name.substringBeforeLast(".", missingDelimiterValue = "")
@@ -202,7 +202,21 @@ infix fun JcClassOrInterface.isSubClassOf(another: JcClassOrInterface): Boolean 
     if (isInterface && !another.isInterface) {
         return false
     }
-    return allSuperHierarchy.any { it == another }
+
+    val checkInterfaces = another.isInterface
+    val uncheckedClasses = mutableListOf(this)
+    while (uncheckedClasses.isNotEmpty()) {
+        val cls = uncheckedClasses.removeLast()
+        if (cls == another) return true
+
+        cls.superClass?.let { uncheckedClasses.add(it) }
+
+        if (checkInterfaces) {
+            uncheckedClasses.addAll(cls.interfaces)
+        }
+    }
+
+    return false
 }
 
 val JcClassOrInterface.isKotlin: Boolean

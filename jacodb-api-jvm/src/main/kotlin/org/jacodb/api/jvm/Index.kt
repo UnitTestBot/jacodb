@@ -16,7 +16,6 @@
 
 package org.jacodb.api.jvm
 
-import org.jooq.DSLContext
 import org.objectweb.asm.tree.ClassNode
 
 /** index builder */
@@ -24,7 +23,7 @@ interface ByteCodeIndexer {
 
     fun index(classNode: ClassNode)
 
-    fun flush(jooq: DSLContext)
+    fun flush(context: JCDBContext)
 }
 
 interface JcFeature<REQ, RES> {
@@ -34,7 +33,6 @@ interface JcFeature<REQ, RES> {
     fun newIndexer(jcdb: JcDatabase, location: RegisteredLocation): ByteCodeIndexer
 
     fun onSignal(signal: JcSignal)
-
 }
 
 
