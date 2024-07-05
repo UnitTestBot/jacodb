@@ -21,10 +21,9 @@ import info.leadinglight.jdot.Graph
 import info.leadinglight.jdot.Node
 import info.leadinglight.jdot.enums.Color
 import info.leadinglight.jdot.enums.Shape
-import info.leadinglight.jdot.enums.Style
 import info.leadinglight.jdot.impl.Util
-import org.jacodb.api.common.cfg.ControlFlowGraph
 import org.jacodb.impl.cfg.graphs.GraphDominators
+import org.jacodb.panda.dynamic.ets.base.EtsIfStmt
 import org.jacodb.panda.dynamic.ets.base.EtsStmt
 import org.jacodb.panda.dynamic.ets.base.EtsTerminatingStmt
 import java.io.File
@@ -34,7 +33,7 @@ import java.nio.file.Path
 class EtsCfg(
     val stmts: List<EtsStmt>,
     private val successorMap: Map<EtsStmt, List<EtsStmt>>,
-) : ControlFlowGraph<EtsStmt>, EtsBytecodeGraph<EtsStmt> {
+) : EtsBytecodeGraph<EtsStmt> {
 
     private val predecessorMap: Map<EtsStmt, Set<EtsStmt>> by lazy {
         val map: MutableMap<EtsStmt, MutableSet<EtsStmt>> = hashMapOf()
@@ -101,34 +100,35 @@ fun EtsCfg.toFile(dotCmd: String, viewCatchConnections: Boolean = false, file: F
 
     for ((inst, node) in nodes) {
         when (inst) {
-            // TODO: Handle basic blocks
-            // is EtsIfStmt -> {
-            //     graph.addEdge(
-            //         Edge(node.name, nodes[inst(inst.trueBranch)]!!.name)
-            //             .also {
-            //                 it.setLabel("true")
-            //             }
-            //     )
-            //     graph.addEdge(
-            //         Edge(node.name, nodes[inst(inst.falseBranch)]!!.name)
-            //             .also {
-            //                 it.setLabel("false")
-            //             }
-            //     )
-            // }
+            is EtsIfStmt -> {
+                val successors = successors(inst).toList()
+                check(successors.size == 2)
+                graph.addEdge(
+                    Edge(node.name, nodes[successors[0]]!!.name)
+                        .also {
+                            it.setLabel("false")
+                        }
+                )
+                graph.addEdge(
+                    Edge(node.name, nodes[successors[1]]!!.name)
+                        .also {
+                            it.setLabel("true")
+                        }
+                )
+            }
 
             else -> for (successor in successors(inst)) {
                 graph.addEdge(Edge(node.name, nodes[successor]!!.name))
             }
         }
         if (viewCatchConnections) {
-            for (catcher in catchers(inst)) {
-                graph.addEdge(Edge(node.name, nodes[catcher]!!.name).also {
-                    // it.setLabel("catch ${catcher.throwable.type}")
-                    it.setLabel("catch")
-                    it.setStyle(Style.Edge.dashed)
-                })
-            }
+            // for (catcher in catchers(inst)) {
+            //     graph.addEdge(Edge(node.name, nodes[catcher]!!.name).also {
+            //         // it.setLabel("catch ${catcher.throwable.type}")
+            //         it.setLabel("catch")
+            //         it.setStyle(Style.Edge.dashed)
+            //     })
+            // }
         }
     }
 
