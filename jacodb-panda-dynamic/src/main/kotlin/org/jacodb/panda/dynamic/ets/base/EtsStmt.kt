@@ -37,7 +37,6 @@ interface EtsStmt : CommonInst {
         fun visit(stmt: EtsNopStmt): R
         fun visit(stmt: EtsAssignStmt): R
         fun visit(stmt: EtsCallStmt): R
-        fun visit(stmt: EtsDeleteStmt): R
         fun visit(stmt: EtsReturnStmt): R
         fun visit(stmt: EtsThrowStmt): R
         fun visit(stmt: EtsGotoStmt): R
@@ -48,7 +47,6 @@ interface EtsStmt : CommonInst {
             override fun visit(stmt: EtsNopStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsAssignStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsCallStmt): R = defaultVisit(stmt)
-            override fun visit(stmt: EtsDeleteStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsReturnStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsThrowStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsGotoStmt): R = defaultVisit(stmt)
@@ -92,19 +90,6 @@ data class EtsCallStmt(
 ) : EtsStmt {
     override fun toString(): String {
         return expr.toString()
-    }
-
-    override fun <R> accept(visitor: EtsStmt.Visitor<R>): R {
-        return visitor.visit(this)
-    }
-}
-
-data class EtsDeleteStmt(
-    override val location: EtsInstLocation,
-    val arg: EtsFieldRef,
-) : EtsStmt {
-    override fun toString(): String {
-        return "delete $arg"
     }
 
     override fun <R> accept(visitor: EtsStmt.Visitor<R>): R {

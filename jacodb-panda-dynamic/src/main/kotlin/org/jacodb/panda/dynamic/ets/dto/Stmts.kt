@@ -61,12 +61,6 @@ data class CallStmtDto(
 }
 
 @Serializable
-@SerialName("DeleteStmt")
-data class DeleteStmtDto(
-    val arg: FieldRefDto,
-) : StmtDto
-
-@Serializable
 sealed interface TerminatingStmtDto : StmtDto
 
 @Serializable

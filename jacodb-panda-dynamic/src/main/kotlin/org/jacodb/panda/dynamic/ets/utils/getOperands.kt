@@ -23,7 +23,6 @@ import org.jacodb.panda.dynamic.ets.base.EtsBinaryOperation
 import org.jacodb.panda.dynamic.ets.base.EtsBooleanConstant
 import org.jacodb.panda.dynamic.ets.base.EtsCallStmt
 import org.jacodb.panda.dynamic.ets.base.EtsCastExpr
-import org.jacodb.panda.dynamic.ets.base.EtsDeleteStmt
 import org.jacodb.panda.dynamic.ets.base.EtsEntity
 import org.jacodb.panda.dynamic.ets.base.EtsGotoStmt
 import org.jacodb.panda.dynamic.ets.base.EtsIfStmt
@@ -72,10 +71,6 @@ private object StmtGetOperands : EtsStmt.Visitor<Sequence<EtsEntity>> {
 
     override fun visit(stmt: EtsCallStmt): Sequence<EtsEntity> = sequence {
         yield(stmt.expr)
-    }
-
-    override fun visit(stmt: EtsDeleteStmt): Sequence<EtsEntity> = sequence {
-        yield(stmt.arg)
     }
 
     override fun visit(stmt: EtsReturnStmt): Sequence<EtsEntity> = sequence {
