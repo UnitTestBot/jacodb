@@ -47,7 +47,7 @@ interface EtsMethod : CommonMethod {
 class EtsMethodImpl(
     override val signature: EtsMethodSignature,
     // Default locals count is args + this
-    override val localsCount: Int = signature.parameters.size + 1
+    override val localsCount: Int = signature.parameters.size + 1,
 ) : EtsMethod {
     override lateinit var cfg: EtsCfg
 

@@ -91,14 +91,10 @@ import org.jacodb.panda.dynamic.ets.model.EtsMethodParameter
 import org.jacodb.panda.dynamic.ets.model.EtsMethodSignature
 import org.jacodb.panda.dynamic.ets.model.EtsMethodSubSignature
 
-interface BuilderContext {
-    fun loc(): EtsInstLocation
-}
-
 class EtsMethodBuilder(
     signature: EtsMethodSignature,
     // Default locals count is args + this
-    localsCount: Int = signature.parameters.size + 1
+    localsCount: Int = signature.parameters.size + 1,
 ) {
     private val etsMethod = EtsMethodImpl(signature, localsCount)
     private var freeLocal: Int = 0
