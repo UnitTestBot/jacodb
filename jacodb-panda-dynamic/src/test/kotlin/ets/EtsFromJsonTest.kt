@@ -20,7 +20,10 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jacodb.panda.dynamic.ets.base.EtsAnyType
+import org.jacodb.panda.dynamic.ets.base.EtsInstLocation
 import org.jacodb.panda.dynamic.ets.base.EtsLocal
+import org.jacodb.panda.dynamic.ets.base.EtsReturnStmt
+import org.jacodb.panda.dynamic.ets.base.EtsUnknownType
 import org.jacodb.panda.dynamic.ets.dto.AnyTypeDto
 import org.jacodb.panda.dynamic.ets.dto.ClassSignatureDto
 import org.jacodb.panda.dynamic.ets.dto.ConstantDto
@@ -34,6 +37,7 @@ import org.jacodb.panda.dynamic.ets.dto.ModifierDto
 import org.jacodb.panda.dynamic.ets.dto.NumberTypeDto
 import org.jacodb.panda.dynamic.ets.dto.StmtDto
 import org.jacodb.panda.dynamic.ets.dto.convertToEtsFile
+import org.jacodb.panda.dynamic.ets.dto.convertToEtsMethod
 import org.jacodb.panda.dynamic.ets.model.EtsClassSignature
 import org.jacodb.panda.dynamic.ets.model.EtsMethodSignature
 import org.junit.jupiter.api.Assertions
@@ -159,6 +163,27 @@ class EtsFromJsonTest {
         """.trimIndent()
         val methodDto = Json.decodeFromString<MethodDto>(jsonString)
         println("methodDto = $methodDto")
+        val method = convertToEtsMethod(methodDto)
+        println("method = $method")
+        Assertions.assertEquals(
+            EtsMethodSignature(
+                enclosingClass = EtsClassSignature(
+                    name = "_DEFAULT_ARK_CLASS",
+                ),
+                name = "_DEFAULT_ARK_METHOD",
+                parameters = emptyList(),
+                returnType = EtsUnknownType,
+            ),
+            method.signature
+        )
+        Assertions.assertEquals(0, method.localsCount)
+        Assertions.assertEquals(1, method.cfg.stmts.size)
+        Assertions.assertEquals(
+            listOf(
+                EtsReturnStmt(EtsInstLocation(method, 0), null),
+            ),
+            method.cfg.stmts
+        )
     }
 
     @Test
