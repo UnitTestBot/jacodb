@@ -59,7 +59,7 @@ class EtsFileTest {
             cls.methods.forEach { etsMethod ->
                 assertNotNull(etsMethod.name)
                 assertNotNull(etsMethod.cfg.instructions)
-                logger.info { "Ets method '$etsMethod'" }
+                logger.info { "Ets method '$etsMethod', localsCount = ${etsMethod.localsCount}" }
                 etsMethod.cfg.instructions.forEach { inst ->
                     logger.info { "${inst.location.index}. $inst" }
                 }
