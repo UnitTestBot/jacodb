@@ -61,8 +61,8 @@ data class NamespaceDto(
 @Serializable
 data class ClassDto(
     val signature: ClassSignatureDto,
-    val modifiers: List<String>,
-    val typeParameters: List<String>,
+    val modifiers: List<ModifierDto>,
+    val typeParameters: List<TypeDto>,
     val superClassName: String?,
     val implementedInterfaceNames: List<String>,
     val fields: List<FieldDto>,

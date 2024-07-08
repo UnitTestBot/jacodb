@@ -20,7 +20,6 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
-import kotlinx.serialization.json.JsonElement
 
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
@@ -29,13 +28,24 @@ sealed interface ValueDto {
     val type: TypeDto
 }
 
+// @Serializable
+// @SerialName("UNKNOWN")
+// data class UnknownValueDto(
+//     val value: JsonElement,
+// ) : ValueDto {
+//     override val type: TypeDto
+//         get() = UnknownTypeDto
+// }
+
 @Serializable
-@SerialName("UNKNOWN")
-data class UnknownValueDto(
-    val value: JsonElement,
-) : ValueDto {
+@SerialName("UNKNOWN_VALUE")
+object UnknownValueDto : ValueDto {
     override val type: TypeDto
         get() = UnknownTypeDto
+
+    override fun toString(): String {
+        return "UNKNOWN"
+    }
 }
 
 @Serializable

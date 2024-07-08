@@ -193,7 +193,7 @@ data class UnclearReferenceTypeDto(
 }
 
 @Serializable
-@SerialName("UNKNOWN")
+@SerialName("UNKNOWN_TYPE")
 data class AbsolutelyUnknownTypeDto(
     val type: String? = null,
 ) : TypeDto {

@@ -578,8 +578,7 @@
                 {
                   "id": 0,
                   "successors": [
-                    1,
-                    2
+                    1
                   ],
                   "predecessors": [],
                   "stmts": [
@@ -676,21 +675,6 @@
                   "id": 1,
                   "successors": [],
                   "predecessors": [
-                    0,
-                    2
-                  ],
-                  "stmts": [
-                    {
-                      "_": "ReturnVoidStmt"
-                    }
-                  ]
-                },
-                {
-                  "id": 2,
-                  "successors": [
-                    1
-                  ],
-                  "predecessors": [
                     0
                   ],
                   "stmts": [
@@ -763,6 +747,9 @@
                           }
                         }
                       }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
                     }
                   ]
                 }

@@ -195,7 +195,8 @@ class EtsMethodBuilder(
             is UnknownValueDto -> object : EtsEntity {
                 override val type: EtsType = EtsUnknownType
 
-                override fun toString(): String = "Unknown(${value.value})"
+                // override fun toString(): String = "Unknown(${value.value})"
+                override fun toString(): String = "Unknown"
 
                 override fun <R> accept(visitor: EtsEntity.Visitor<R>): R {
                     if (visitor is EtsEntity.Visitor.Default<R>) {
