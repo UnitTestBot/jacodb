@@ -686,7 +686,10 @@ fun convertToEtsField(field: FieldDto): EtsField {
                 type = convertToEtsType(field.signature.fieldType),
             )
         ),
-        // TODO: decorators = field.modifiers...
+        modifiers = field.modifiers
+            ?.filterIsInstance<ModifierDto.StringItem>()
+            ?.map { it.modifier }
+            .orEmpty(),
         isOptional = field.isOptional,
         isDefinitelyAssigned = field.isDefinitelyAssigned,
         initializer = null, // TODO: handle initializer - assign in constructor

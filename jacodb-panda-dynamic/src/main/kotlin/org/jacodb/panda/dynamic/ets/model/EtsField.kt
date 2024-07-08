@@ -35,7 +35,7 @@ interface EtsField {
 class EtsFieldImpl(
     override val signature: EtsFieldSignature,
     val accessFlags: AccessFlags = AccessFlags(),
-    val decorators: List<EtsDecorator> = emptyList(),
+    val modifiers: List<String> = emptyList(),
     val isOptional: Boolean = false,  // '?'
     val isDefinitelyAssigned: Boolean = false, // '!'
     val initializer: EtsEntity? = null,
@@ -56,7 +56,9 @@ data class AccessFlags(
     var isReadOnly: Boolean = false,
 )
 
-data class EtsDecorator(
-    val name: String,
-    // TODO: args...
-)
+// TODO
+// data class EtsDecorator(
+//     val kind: String,
+//     val content: String,
+//     val param: String,
+// )

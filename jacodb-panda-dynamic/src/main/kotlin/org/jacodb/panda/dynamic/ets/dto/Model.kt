@@ -82,10 +82,14 @@ data class FieldDto(
 @Serializable(with = ModifierSerializer::class)
 sealed class ModifierDto {
     @Serializable
-    data class DecoratorItem(val kind: String, val content: String) : ModifierDto()
+    data class DecoratorItem(
+        val kind: String,
+        val content: String? = null,
+        val param: String? = null,
+    ) : ModifierDto()
 
     @Serializable
-    data class StringItem(val value: String) : ModifierDto()
+    data class StringItem(val modifier: String) : ModifierDto()
 }
 
 @Serializable
