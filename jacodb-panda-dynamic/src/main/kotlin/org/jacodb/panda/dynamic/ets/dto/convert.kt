@@ -95,8 +95,9 @@ class EtsMethodBuilder(
     signature: EtsMethodSignature,
     // Default locals count is args + this
     localsCount: Int = signature.parameters.size + 1,
+    modifiers: List<String> = emptyList(),
 ) {
-    private val etsMethod = EtsMethodImpl(signature, localsCount)
+    private val etsMethod = EtsMethodImpl(signature, localsCount, modifiers)
     private var freeLocal: Int = 0
     private val currentStmts: MutableList<EtsStmt> = mutableListOf()
 
@@ -668,7 +669,10 @@ fun convertToEtsMethod(method: MethodDto): EtsMethod {
     //     convertToEtsEntity(it) as EtsLocal  // safe cast
     // }
     val localsCount = method.body.locals.size
-    val builder = EtsMethodBuilder(signature, localsCount)
+    val modifiers = method.modifiers
+        .filterIsInstance<ModifierDto.StringItem>()
+        .map { it.modifier }
+    val builder = EtsMethodBuilder(signature, localsCount, modifiers)
     val etsMethod = builder.build(method.body.cfg)
     return etsMethod
 }
