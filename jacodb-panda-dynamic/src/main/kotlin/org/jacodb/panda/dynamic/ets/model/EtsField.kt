@@ -38,7 +38,6 @@ class EtsFieldImpl(
     val modifiers: List<String> = emptyList(),
     val isOptional: Boolean = false,  // '?'
     val isDefinitelyAssigned: Boolean = false, // '!'
-    val initializer: EtsEntity? = null,
 ) : EtsField {
 
     override var enclosingClass: EtsClass? = null

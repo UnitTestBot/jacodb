@@ -692,7 +692,6 @@ fun convertToEtsField(field: FieldDto): EtsField {
             .orEmpty(),
         isOptional = field.isOptional,
         isDefinitelyAssigned = field.isDefinitelyAssigned,
-        initializer = null, // TODO: handle initializer - assign in constructor
     )
 }
 
