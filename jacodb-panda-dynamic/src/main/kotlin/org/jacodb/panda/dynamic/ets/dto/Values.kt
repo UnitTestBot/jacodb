@@ -170,6 +170,19 @@ data class NewArrayExprDto(
 }
 
 @Serializable
+@SerialName("DeleteExpr")
+data class DeleteExprDto(
+    val arg: ValueDto,
+) : ExprDto {
+    override val type: TypeDto
+        get() = BooleanTypeDto
+
+    override fun toString(): String {
+        return "delete $arg"
+    }
+}
+
+@Serializable
 @SerialName("TypeOfExpr")
 data class TypeOfExprDto(
     val arg: ValueDto,

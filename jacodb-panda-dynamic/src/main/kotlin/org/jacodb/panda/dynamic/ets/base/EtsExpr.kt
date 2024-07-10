@@ -24,6 +24,7 @@ interface EtsExpr : EtsEntity {
     interface Visitor<out R> {
         fun visit(expr: EtsNewExpr): R
         fun visit(expr: EtsNewArrayExpr): R
+        fun visit(expr: EtsDeleteExpr): R
         fun visit(expr: EtsTypeOfExpr): R
         fun visit(expr: EtsInstanceOfExpr): R
         fun visit(expr: EtsLengthExpr): R
@@ -38,6 +39,7 @@ interface EtsExpr : EtsEntity {
         interface Default<out R> : Visitor<R> {
             override fun visit(expr: EtsNewExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsNewArrayExpr): R = defaultVisit(expr)
+            override fun visit(expr: EtsDeleteExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsTypeOfExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsInstanceOfExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsLengthExpr): R = defaultVisit(expr)
@@ -65,6 +67,21 @@ data class EtsNewExpr(
 ) : EtsExpr {
     override fun toString(): String {
         return "new ${type.typeName}"
+    }
+
+    override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class EtsDeleteExpr(
+    val arg: EtsEntity,
+) : EtsExpr {
+    override val type: EtsType
+        get() = EtsBooleanType
+
+    override fun toString(): String {
+        return "delete $arg"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {

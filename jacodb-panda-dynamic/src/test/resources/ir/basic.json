@@ -16,39 +16,7 @@
             "enclosingClass": {
               "name": "_DEFAULT_ARK_CLASS"
             },
-            "name": "configure",
-            "fieldType": {
-              "_": "UnknownType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        },
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
             "name": "logger",
-            "fieldType": {
-              "_": "UnknownType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        },
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "getLogger",
             "fieldType": {
               "_": "UnknownType"
             }
@@ -179,6 +147,22 @@
           "questionToken": false,
           "exclamationToken": false,
           "initializer": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "deleteTest",
+            "fieldType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": null
         }
       ],
       "methods": [
@@ -280,6 +264,12 @@
               },
               {
                 "name": "controlTest",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "deleteTest",
                 "type": {
                   "_": "UnknownType"
                 }
@@ -531,6 +521,23 @@
                             "name": "_DEFAULT_ARK_CLASS"
                           },
                           "name": "controlTest",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          },
+                          "name": "deleteTest",
                           "parameters": [],
                           "returnType": {
                             "_": "UnknownType"
@@ -4159,6 +4166,300 @@
               ]
             }
           }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "deleteTest",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
+              },
+              {
+                "name": "x",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "AnonymousClass-deleteTest-9"
+                  }
+                }
+              },
+              {
+                "name": "bbb",
+                "type": {
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "NumberType"
+                  },
+                  "dimensions": 1
+                }
+              },
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "BooleanType"
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "BooleanType"
+                }
+              },
+              {
+                "name": "logger",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp2",
+                "type": {
+                  "_": "BooleanType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "x",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-deleteTest-9"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ObjectLiteralExpr",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-deleteTest-9"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "bbb",
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "NumberType"
+                          },
+                          "dimensions": 1
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "x",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "AnonymousClass-deleteTest-9"
+                            }
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "b",
+                          "fieldType": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      },
+                      "right": {
+                        "_": "DeleteExpr",
+                        "arg": {
+                          "_": "InstanceFieldRef",
+                          "instance": {
+                            "_": "Local",
+                            "name": "x",
+                            "type": {
+                              "_": "ClassType",
+                              "signature": {
+                                "name": "AnonymousClass-deleteTest-9"
+                              }
+                            }
+                          },
+                          "field": {
+                            "enclosingClass": {
+                              "name": ""
+                            },
+                            "name": "a",
+                            "fieldType": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      },
+                      "right": {
+                        "_": "DeleteExpr",
+                        "arg": {
+                          "_": "ArrayRef",
+                          "array": {
+                            "_": "Local",
+                            "name": "bbb",
+                            "type": {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            }
+                          },
+                          "index": {
+                            "_": "Constant",
+                            "value": "0",
+                            "type": {
+                              "_": "NumberType"
+                            }
+                          },
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "logger",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "info",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "x",
+                            "type": {
+                              "_": "ClassType",
+                              "signature": {
+                                "name": "AnonymousClass-deleteTest-9"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      },
+                      "right": {
+                        "_": "DeleteExpr",
+                        "arg": {
+                          "_": "Local",
+                          "name": "x",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "AnonymousClass-deleteTest-9"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
         }
       ]
     },
@@ -7033,6 +7334,85 @@
         }
       ],
       "methods": []
+    },
+    {
+      "signature": {
+        "name": "AnonymousClass-deleteTest-9"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-deleteTest-9"
+            },
+            "name": "a",
+            "fieldType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "42",
+            "type": {
+              "_": "NumberType"
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-deleteTest-9"
+            },
+            "name": "b",
+            "fieldType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "ArrayLiteralExpr",
+            "elements": [
+              {
+                "_": "Constant",
+                "value": "5",
+                "type": {
+                  "_": "NumberType"
+                }
+              },
+              {
+                "_": "Constant",
+                "value": "100",
+                "type": {
+                  "_": "NumberType"
+                }
+              }
+            ],
+            "type": {
+              "_": "UnionType",
+              "types": [
+                {
+                  "_": "NumberType"
+                },
+                {
+                  "_": "NumberType"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "methods": []
     }
   ],
   "importInfos": [
@@ -7118,7 +7498,7 @@
         "DefaultKeyword"
       ],
       "originTsPosition": {
-        "line": 205,
+        "line": 214,
         "col": 1
       }
     },
@@ -7130,7 +7510,7 @@
         "ExportKeyword"
       ],
       "originTsPosition": {
-        "line": 206,
+        "line": 215,
         "col": 1
       }
     },
@@ -7142,7 +7522,7 @@
         "ExportKeyword"
       ],
       "originTsPosition": {
-        "line": 207,
+        "line": 216,
         "col": 1
       }
     },
@@ -7155,7 +7535,7 @@
         "ExportKeyword"
       ],
       "originTsPosition": {
-        "line": 208,
+        "line": 217,
         "col": 1
       }
     },
@@ -7167,7 +7547,7 @@
       "isDefault": false,
       "modifiers": [],
       "originTsPosition": {
-        "line": 213,
+        "line": 222,
         "col": 1
       }
     },
@@ -7179,7 +7559,7 @@
       "isDefault": false,
       "modifiers": [],
       "originTsPosition": {
-        "line": 213,
+        "line": 222,
         "col": 1
       }
     }

@@ -32,6 +32,7 @@ import org.jacodb.panda.dynamic.ets.base.EtsCastExpr
 import org.jacodb.panda.dynamic.ets.base.EtsClassType
 import org.jacodb.panda.dynamic.ets.base.EtsConditionExpr
 import org.jacodb.panda.dynamic.ets.base.EtsConstant
+import org.jacodb.panda.dynamic.ets.base.EtsDeleteExpr
 import org.jacodb.panda.dynamic.ets.base.EtsEntity
 import org.jacodb.panda.dynamic.ets.base.EtsFieldRef
 import org.jacodb.panda.dynamic.ets.base.EtsGotoStmt
@@ -219,6 +220,10 @@ class EtsMethodBuilder(
             is NewArrayExprDto -> EtsNewArrayExpr(
                 elementType = convertToEtsType(value.type),
                 size = convertToEtsEntity(value.size),
+            )
+
+            is DeleteExprDto -> EtsDeleteExpr(
+                arg = convertToEtsEntity(value.arg)
             )
 
             is TypeOfExprDto -> EtsTypeOfExpr(
