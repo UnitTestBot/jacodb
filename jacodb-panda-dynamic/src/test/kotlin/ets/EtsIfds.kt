@@ -339,7 +339,7 @@ class EtsIfds {
     @EnabledIf("projectAvailable")
     @Test
     fun `test taint analysis on AccountManager`() {
-        val project = loadProjectForSample("project1/entry/src/main/ets/base/account/AccountManager")
+        val project = loadIr("/etsir/project1/entry/src/main/ets/base/account/AccountManager.ts.json")
         val graph = EtsApplicationGraph(project)
         val unitResolver = UnitResolver<EtsMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<EtsMethod, EtsStmt>.(EtsMethod) -> List<TaintConfigurationItem>? =

@@ -54,8 +54,8 @@ class EtsProjectAnalysis {
         const val BASE_PATH = PROJECT_PATH + START_PATH
         const val SOURCE_BASE_PATH = SOURCE_PROJECT_PATH + START_PATH
 
-        private fun loadProjectForSample(programName: String): EtsFile {
-            val jsonFile = "$BASE_PATH$programName.json"
+        private fun loadProjectForSample(filename: String): EtsFile {
+            val jsonFile = "$BASE_PATH$filename.json"
             val stream = object {}::class.java.getResourceAsStream(jsonFile)
                 ?: error("Resource not found: $jsonFile")
             val etsFileDto = EtsFileDto.loadFromJson(stream)
@@ -122,7 +122,7 @@ class EtsProjectAnalysis {
     }
 
     private fun handleFile(filename: String) {
-        val fileLines = countFileLines("$SOURCE_BASE_PATH$filename.ts")
+        val fileLines = countFileLines("$SOURCE_BASE_PATH$filename")
         try {
             logger.info { "Processing '$filename'" }
             val project = loadProjectForSample(filename)
