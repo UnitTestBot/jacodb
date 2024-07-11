@@ -47,12 +47,10 @@ private val logger = mu.KotlinLogging.logger {}
 class EtsTaintAnalysisTest {
 
     companion object : EtsTraits {
-        private const val PROJECT_PATH = "/etsir/project1"
-        private const val START_PATH = "/entry/src/main/ets"
-        private const val BASE_PATH = PROJECT_PATH + START_PATH
+        private const val BASE_PATH = "/etsir/samples"
 
         private fun loadFromProject(name: String): EtsFile {
-            return loadEtsFile("$BASE_PATH/$name.json")
+            return loadEtsFile("$BASE_PATH/$name.ts.json")
         }
     }
 
