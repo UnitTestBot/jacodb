@@ -20,7 +20,7 @@ dependencies {
 
 // Example usage:
 // ```
-// ARKANALYZER_DIR=~/dev/arkanalyzer ./gradlew :jacodb-panda-dynamic:generateTestResources
+// ARKANALYZER_DIR=~/dev/arkanalyzer ./gradlew generateTestResources
 // ```
 tasks.register("generateTestResources") {
     doLast {
@@ -43,31 +43,26 @@ tasks.register("generateTestResources") {
 
         val resources = projectDir.resolve("src/test/resources")
         val inputDir = "source"
-        val outDir = "etsir/generated/" // Note the final slash!
-        println("Generating test resources in '${resources.resolve(outDir)}'...")
+        val outputDir = "etsir/generated"
+        println("Generating test resources in '${resources.resolve(outputDir)}'...")
 
-        for (file in resources.resolve(inputDir).walkTopDown()) {
-            if (file.isFile) {
-                val inputPath = file.relativeTo(resources).path
-                val cmd = listOf("node", scriptPath, inputPath, outDir)
-                println("Running: '${cmd.joinToString(" ")}'")
-                val process = ProcessBuilder(cmd).directory(resources).start();
-                val ok = process.waitFor(10, TimeUnit.MINUTES)
+        val cmd = listOf("node", scriptPath, "--multi", inputDir, outputDir)
+        println("Running: '${cmd.joinToString(" ")}'")
+        val process = ProcessBuilder(cmd).directory(resources).start();
+        val ok = process.waitFor(10, TimeUnit.MINUTES)
 
-                val stdout = process.inputStream.bufferedReader().readText().trim()
-                if (stdout.isNotBlank()) {
-                    println("[STDOUT]\n--------\n$stdout\n--------")
-                }
-                val stderr = process.errorStream.bufferedReader().readText().trim()
-                if (stderr.isNotBlank()) {
-                    println("[STDERR]\n--------\n$stderr\n--------")
-                }
+        val stdout = process.inputStream.bufferedReader().readText().trim()
+        if (stdout.isNotBlank()) {
+            println("[STDOUT]:\n--------\n$stdout\n--------")
+        }
+        val stderr = process.errorStream.bufferedReader().readText().trim()
+        if (stderr.isNotBlank()) {
+            println("[STDERR]:\n--------\n$stderr\n--------")
+        }
 
-                if (!ok) {
-                    println("Timeout!")
-                    process.destroy()
-                }
-            }
+        if (!ok) {
+            println("Timeout!")
+            process.destroy()
         }
 
         println("Done generating test resources!")
