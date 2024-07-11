@@ -21,9 +21,7 @@ import org.jacodb.panda.dynamic.ets.base.EtsAssignStmt
 import org.jacodb.panda.dynamic.ets.base.EtsInstanceFieldRef
 import org.jacodb.panda.dynamic.ets.base.EtsThis
 import org.jacodb.panda.dynamic.ets.model.EtsFile
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 private val logger = mu.KotlinLogging.logger {}
@@ -32,7 +30,6 @@ class EtsFileTest {
 
     companion object {
         private const val BASE_PATH = "/etsir/samples"
-        private const val SAMPLE_NAME = "classes/SimpleClass"
 
         private fun loadSample(name: String): EtsFile {
             return loadEtsFile("$BASE_PATH/$name.ts.json")
@@ -40,30 +37,16 @@ class EtsFileTest {
     }
 
     @Test
-    fun getEtsMethods() {
-        val etsFile = loadSample(SAMPLE_NAME)
-        etsFile.classes.forEach { cls ->
-            cls.methods.forEach { etsMethod ->
-                assertNotNull(etsMethod.name)
-                assertNotNull(etsMethod.cfg.instructions)
-                logger.info { "Ets method '$etsMethod', instructions: ${etsMethod.cfg.instructions}" }
-
-            }
-        }
-    }
-
-    @Test
     fun printEtsInstructions() {
-        val etsFile = loadSample(SAMPLE_NAME)
+        val etsFile = loadSample("classes/SimpleClass")
         etsFile.classes.forEach { cls ->
-            cls.methods.forEach { etsMethod ->
-                assertNotNull(etsMethod.name)
-                assertNotNull(etsMethod.cfg.instructions)
-                logger.info { "Ets method '$etsMethod', localsCount = ${etsMethod.localsCount}" }
-                etsMethod.cfg.instructions.forEach { inst ->
+            cls.methods.forEach { method ->
+                logger.info {
+                    "Method '$method', locals: ${method.localsCount}, instructions: ${method.cfg.instructions.size}"
+                }
+                method.cfg.instructions.forEach { inst ->
                     logger.info { "${inst.location.index}. $inst" }
                 }
-                logger.info { "-------------------------------------" }
             }
         }
     }
@@ -73,15 +56,13 @@ class EtsFileTest {
         val etsFile = loadSample("TypeMismatch")
         etsFile.classes.forEach { cls ->
             cls.methods.forEach { etsMethod ->
-                assertNotNull(etsMethod.name)
-                assertNotNull(etsMethod.cfg.instructions)
                 when (etsMethod.name) {
                     "add" -> {
-                        assertEquals(9, etsMethod.cfg.instructions.size)
+                        Assertions.assertEquals(9, etsMethod.cfg.instructions.size)
                     }
 
                     "main" -> {
-                        assertEquals(4, etsMethod.cfg.instructions.size)
+                        Assertions.assertEquals(4, etsMethod.cfg.instructions.size)
                     }
                 }
             }
@@ -94,15 +75,15 @@ class EtsFileTest {
         val cls = etsFile.classes.single { it.name == "Foo" }
         val ctorBegin = cls.ctor.cfg.instructions.first() as EtsAssignStmt
         val fieldRef = ctorBegin.lhv as EtsInstanceFieldRef
-        assert(fieldRef.instance is EtsThis)
-        assert(fieldRef.field.name == "x")
+        Assertions.assertTrue(fieldRef.instance is EtsThis)
+        Assertions.assertEquals("x", fieldRef.field.name)
     }
 
     @Test
     fun `test static field should not be initialized in constructor`() {
         val etsFile = loadSample("StaticField")
         val cls = etsFile.classes.single { it.name == "Foo" }
-        assertFalse(cls.ctor.cfg.stmts.any {
+        Assertions.assertFalse(cls.ctor.cfg.stmts.any {
             it is EtsAssignStmt && it.lhv is EtsInstanceFieldRef
         })
     }
@@ -113,7 +94,7 @@ class EtsFileTest {
         val cls = etsFile.classes.single { it.name == "Foo" }
         val fieldInit = cls.ctor.cfg.instructions.first() as EtsAssignStmt
         val fieldRef = fieldInit.lhv as EtsInstanceFieldRef
-        assert(fieldRef.instance is EtsThis)
-        assert(fieldRef.field.name == "x")
+        Assertions.assertTrue(fieldRef.instance is EtsThis)
+        Assertions.assertEquals("x", fieldRef.field.name)
     }
 }
