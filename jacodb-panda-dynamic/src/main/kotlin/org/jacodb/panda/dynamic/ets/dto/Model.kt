@@ -55,7 +55,8 @@ data class EtsFileDto(
 @Serializable
 data class NamespaceDto(
     val name: String,
-    val classes: List<ClassDto>,
+    val namespaces: List<NamespaceDto> = emptyList(),
+    val classes: List<ClassDto> = emptyList(),
 )
 
 @Serializable
