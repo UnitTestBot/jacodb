@@ -27,26 +27,32 @@ tasks.register("generateTestResources") {
         val envVarName = "ARKANALYZER_DIR"
         val defaultArkAnalyzerDir = rootDir.resolve("../arkanalyzer").path
 
-        val arkAnalyzerDir = System.getenv(envVarName) ?: run {
+        val arkAnalyzerDir = File(System.getenv(envVarName) ?: run {
             println("Please, set $envVarName environment variable. Using default value: '$defaultArkAnalyzerDir'")
             defaultArkAnalyzerDir
-        }
-        if (!File(arkAnalyzerDir).exists()) {
+        })
+        if (!arkAnalyzerDir.exists()) {
             throw FileNotFoundException("ArkAnalyzer directory does not exist: '$arkAnalyzerDir'. Did you forget to set the '$envVarName' environment variable?")
         }
 
         val scriptSubPath = "src/save/serializeArkIR"
-        val scriptPath = "$arkAnalyzerDir/out/$scriptSubPath.js"
-        if (!File(scriptPath).exists()) {
-            throw FileNotFoundException("Script file not found: '$scriptPath'. Did you forget to execute 'npm run build' in the arkanalyzer project?")
+        val script = arkAnalyzerDir.resolve("out").resolve("$scriptSubPath.js")
+        if (!script.exists()) {
+            throw FileNotFoundException("Script file not found: '$script'. Did you forget to execute 'npm run build' in the arkanalyzer project?")
         }
 
         val resources = projectDir.resolve("src/test/resources")
-        val inputDir = "source"
-        val outputDir = "etsir/generated"
-        println("Generating test resources in '${resources.resolve(outputDir)}'...")
+        val input = resources.resolve("source")
+        val output = resources.resolve("etsir/generated")
+        println("Generating test resources in '${output.relativeTo(projectDir)}'...")
 
-        val cmd = listOf("node", scriptPath, "--multi", inputDir, outputDir)
+        val cmd: List<String> = listOf(
+            "node",
+            script.absolutePath,
+            "--multi",
+            input.relativeTo(resources).path,
+            output.relativeTo(resources).path,
+        )
         println("Running: '${cmd.joinToString(" ")}'")
         val process = ProcessBuilder(cmd).directory(resources).start();
         val ok = process.waitFor(10, TimeUnit.MINUTES)
