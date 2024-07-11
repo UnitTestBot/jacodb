@@ -50,7 +50,7 @@ class EtsProjectAnalysis {
     companion object : EtsTraits {
         private const val SOURCE_PROJECT_PATH = "/source/project1"
         private const val START_PATH = "/entry/src/main/ets/"
-        const val PROJECT_PATH = "/ir/project1"
+        const val PROJECT_PATH = "/etsir/project1"
         const val BASE_PATH = PROJECT_PATH + START_PATH
         const val SOURCE_BASE_PATH = SOURCE_PROJECT_PATH + START_PATH
 

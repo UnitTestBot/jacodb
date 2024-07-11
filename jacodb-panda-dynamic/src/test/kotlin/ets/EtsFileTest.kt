@@ -34,7 +34,7 @@ class EtsFileTest {
 
         private fun load(name: String): EtsFile {
             return loadIr(
-                filePath = "/ir/$name.json",
+                filePath = "/etsir/$name.json",
             )
         }
     }

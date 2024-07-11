@@ -49,7 +49,7 @@ class EtsTaintAnalysisTest {
 
     companion object : EtsTraits {
         private fun loadEtsFile(name: String): EtsFile {
-            val path = "ir/$name.json"
+            val path = "etsir/$name.json"
             val stream = object {}::class.java.getResourceAsStream("/$path")
                 ?: error("Resource not found: $path")
             val etsFileDto = EtsFileDto.loadFromJson(stream)
