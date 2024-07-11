@@ -44,7 +44,7 @@ object ModifierSerializer : KSerializer<ModifierDto> {
     override fun serialize(encoder: Encoder, value: ModifierDto) {
         require(encoder is JsonEncoder)
         when (value) {
-            is ModifierDto.DecoratorItem -> encoder.json.encodeToJsonElement(value)
+            is ModifierDto.DecoratorItem -> encoder.encodeJsonElement(encoder.json.encodeToJsonElement(value))
             is ModifierDto.StringItem -> encoder.encodeString(value.modifier)
         }
     }
