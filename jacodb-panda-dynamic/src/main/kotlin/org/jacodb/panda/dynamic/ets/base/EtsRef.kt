@@ -47,7 +47,7 @@ interface EtsRef : EtsValue {
 }
 
 data class EtsThis(
-    override val type: EtsType, // ClassType
+    override val type: EtsType,
 ) : EtsRef, CommonThis {
     override fun toString(): String = "this"
 

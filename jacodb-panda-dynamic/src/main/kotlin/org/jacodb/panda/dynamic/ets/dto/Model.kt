@@ -37,7 +37,6 @@ data class EtsFileDto(
 ) {
     companion object {
         private val json = Json {
-            // classDiscriminator = "_"
             prettyPrint = true
         }
 
@@ -127,12 +126,6 @@ data class ExportInfoDto(
     val modifiers: List<ModifierDto>,
     val originTsPosition: LineColPositionDto,
 )
-
-// @Serializable
-// data class Decorator(
-//     val kind: String,
-//     val type: String?,
-// )
 
 @Serializable
 data class LineColPositionDto(

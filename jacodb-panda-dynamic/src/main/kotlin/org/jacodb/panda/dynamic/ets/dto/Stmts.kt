@@ -42,7 +42,7 @@ object NopStmtDto : StmtDto {
 @Serializable
 @SerialName("AssignStmt")
 data class AssignStmtDto(
-    val left: ValueDto, // Local
+    val left: ValueDto,
     val right: ValueDto,
 ) : StmtDto {
     override fun toString(): String {

@@ -63,7 +63,7 @@ interface EtsExpr : EtsEntity {
 }
 
 data class EtsNewExpr(
-    override val type: EtsType, // ClassType
+    override val type: EtsType,
 ) : EtsExpr {
     override fun toString(): String {
         return "new ${type.typeName}"
@@ -165,19 +165,6 @@ data class EtsCastExpr(
     }
 }
 
-// data class TernaryExpr(
-//     val condition: Value,
-//     val trueBranch: Value,
-//     val falseBranch: Value,
-// ) : Expr {
-//     override val type: Type
-//         get() = TypeInference.commonType(trueBranch.type, trueBranch.type)
-//
-//     override fun toString(): String {
-//         return "$condition ? $trueBranch : $falseBranch"
-//     }
-// }
-
 data class EtsPhiExpr(
     val args: List<EtsEntity>,
     val argToBlock: Map<EtsEntity, EtsBasicBlock>,
@@ -215,9 +202,6 @@ data class EtsUnaryOperation(
 interface EtsBinaryExpr : EtsExpr {
     val left: EtsEntity
     val right: EtsEntity
-
-    override val type: EtsType
-        get() = TypeInference.infer(this)
 }
 
 // TODO: AddExpr and many others
@@ -243,16 +227,6 @@ data class EtsBinaryOperation(
         return visitor.visit(this)
     }
 }
-
-// data class ConditionExpr(
-//     val relop: String,
-//     override val left: Value,
-//     override val right: Value,
-// ) : BinaryExpr {
-//     override fun toString(): String {
-//         return "$left $relop $right"
-//     }
-// }
 
 interface EtsConditionExpr : EtsBinaryExpr {
     override val type: EtsType

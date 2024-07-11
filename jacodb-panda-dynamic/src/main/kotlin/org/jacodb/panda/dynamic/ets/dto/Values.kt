@@ -28,15 +28,6 @@ sealed interface ValueDto {
     val type: TypeDto
 }
 
-// @Serializable
-// @SerialName("UNKNOWN")
-// data class UnknownValueDto(
-//     val value: JsonElement,
-// ) : ValueDto {
-//     override val type: TypeDto
-//         get() = UnknownTypeDto
-// }
-
 @Serializable
 @SerialName("UNKNOWN_VALUE")
 object UnknownValueDto : ValueDto {
@@ -286,9 +277,6 @@ data class UnaryOperationDto(
 sealed interface BinaryExprDto : ExprDto {
     val left: ValueDto
     val right: ValueDto
-
-    // override val type: TypeDto
-    //     get() = UnknownTypeDto
 }
 
 @Serializable
@@ -305,10 +293,7 @@ data class BinaryOperationDto(
 }
 
 @Serializable
-sealed interface ConditionExprDto : BinaryExprDto {
-    // override val type: String
-    //     get() = "boolean"
-}
+sealed interface ConditionExprDto : BinaryExprDto
 
 @Serializable
 @SerialName("ConditionExpr")
@@ -382,7 +367,7 @@ data class ParameterRefDto(
 @Serializable
 @SerialName("ArrayRef")
 data class ArrayRefDto(
-    val array: ValueDto, // Local
+    val array: ValueDto,
     val index: ValueDto,
     override val type: TypeDto,
 ) : RefDto {
@@ -402,7 +387,7 @@ sealed interface FieldRefDto : RefDto {
 @Serializable
 @SerialName("InstanceFieldRef")
 data class InstanceFieldRefDto(
-    val instance: ValueDto, // Local
+    val instance: ValueDto,
     override val field: FieldSignatureDto,
 ) : FieldRefDto {
     override fun toString(): String {

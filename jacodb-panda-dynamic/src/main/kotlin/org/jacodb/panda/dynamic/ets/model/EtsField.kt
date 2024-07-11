@@ -16,7 +16,6 @@
 
 package org.jacodb.panda.dynamic.ets.model
 
-import org.jacodb.panda.dynamic.ets.base.EtsEntity
 import org.jacodb.panda.dynamic.ets.base.EtsType
 
 // for '!' field marker ("definitely assigned field"), see https://www.typescriptlang.org/docs/handbook/2/classes.html#--strictpropertyinitialization
@@ -54,10 +53,3 @@ data class AccessFlags(
     var isProtected: Boolean = false,
     var isReadOnly: Boolean = false,
 )
-
-// TODO
-// data class EtsDecorator(
-//     val kind: String,
-//     val content: String,
-//     val param: String,
-// )
