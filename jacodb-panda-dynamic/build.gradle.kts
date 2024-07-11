@@ -1,5 +1,4 @@
-import java.util.concurrent.TimeoutException
-import kotlin.time.measureTime
+import java.io.FileNotFoundException
 
 plugins {
     kotlin("plugin.serialization")
@@ -19,27 +18,48 @@ dependencies {
     testImplementation(Libs.mockk)
 }
 
-
-tasks.register("buildTestResources") {
+tasks.register("generateTestResources") {
     doLast {
-        val ENV_VAR_NAME = "ARKANALYZER_DIR"
-        val arkAnalyzerDir =
-            System.getenv(ENV_VAR_NAME)
-                ?: error("Please, set $ENV_VAR_NAME variable")
-        val scriptPath = "$arkAnalyzerDir/scripts/convertAllTsToJson.ts"
-        val resourcesDir = layout.projectDirectory.dir("src/test/resources")
-        val sourceDir = resourcesDir.dir("source")
-        val irDir = resourcesDir.dir("autoir")
-        println("Building test resources for '$sourceDir' into '$irDir'...")
-        val cmd = "npx ts-node $scriptPath ${sourceDir.asFile.absolutePath} ${irDir.asFile.absolutePath}"
-        println("Running: '$cmd'...")
-        val worker = Runtime.getRuntime().exec(cmd)
-        if (!worker.waitFor(2, TimeUnit.MINUTES)) {
-            worker.destroy()
-            throw TimeoutException("Build cancelled")
+        val envVarName = "ARKANALYZER_DIR"
+        val defaultArkAnalyzerDir = rootDir.resolve("../arkanalyzer").path
+
+        val arkAnalyzerDir = System.getenv(envVarName) ?: run {
+            println("Please, set $envVarName environment variable. Using default value: '$defaultArkAnalyzerDir'")
+            defaultArkAnalyzerDir
         }
-        println("Stdout: ${worker.inputStream.bufferedReader().readText()}")
-        println("Stderr: ${worker.errorStream.bufferedReader().readText()}")
-        println("Finished building test resources into '$irDir'")
+        if (!File(arkAnalyzerDir).exists()) {
+            throw FileNotFoundException("ArkAnalyzer directory does not exist: '$arkAnalyzerDir'. Did you forget to set the '$envVarName' environment variable?")
+        }
+
+        val scriptSubPath = "src/save/serializeArkIR"
+        val scriptPath = "$arkAnalyzerDir/out/$scriptSubPath.js"
+        if (!File(scriptPath).exists()) {
+            throw FileNotFoundException("Script file not found: '$scriptPath'. Did you forget to execute 'npm run build' in the arkanalyzer project?")
+        }
+
+        val resources = projectDir.resolve("src/test/resources")
+        val inputDir = "source"
+        val outDir = "etsir/generated"
+        println("Generating test resources in '${resources.resolve(outDir)}'...")
+        val cmd = listOf("node", scriptPath, "--project", inputDir, outDir)
+        println("Running: '${cmd.joinToString(" ")}'")
+        val process = ProcessBuilder(cmd).directory(resources).start();
+        val ok = process.waitFor(10, TimeUnit.MINUTES)
+
+        val stdout = process.inputStream.bufferedReader().readText().trim()
+        if (stdout.isNotBlank()) {
+            println("[STDOUT]\n--------\n$stdout\n--------")
+        }
+        val stderr = process.errorStream.bufferedReader().readText().trim()
+        if (stderr.isNotBlank()) {
+            println("[STDERR]\n--------\n$stderr\n--------")
+        }
+
+        if (!ok) {
+            println("Timeout!")
+            process.destroy()
+        }
+
+        println("Done generating test resources!")
     }
 }
