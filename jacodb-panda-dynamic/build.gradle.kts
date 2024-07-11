@@ -18,6 +18,10 @@ dependencies {
     testImplementation(Libs.mockk)
 }
 
+// Example usage:
+// ```
+// ARKANALYZER_DIR=~/dev/arkanalyzer ./gradlew :jacodb-panda-dynamic:generateTestResources
+// ```
 tasks.register("generateTestResources") {
     doLast {
         val envVarName = "ARKANALYZER_DIR"
