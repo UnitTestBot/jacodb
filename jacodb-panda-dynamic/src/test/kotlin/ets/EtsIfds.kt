@@ -54,7 +54,7 @@ class EtsIfds {
 
     companion object : EtsTraits {
         private fun loadProjectForSample(programName: String): EtsFile {
-            val etsFile = loadIr("/etsir/samples/${programName}.json")
+            val etsFile = loadIr("/etsir/samples/${programName}.ts.json")
             return etsFile
         }
     }
