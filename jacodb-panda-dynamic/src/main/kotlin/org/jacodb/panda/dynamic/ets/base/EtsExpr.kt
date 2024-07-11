@@ -219,6 +219,10 @@ data class EtsBinaryOperation(
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsBinaryExpr {
+    // TODO: either use a type inference mechanism or add a type field
+    override val type: EtsType
+        get() = EtsUnknownType
+
     override fun toString(): String {
         return "$left $op $right"
     }
