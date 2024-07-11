@@ -22,6 +22,7 @@ import org.jacodb.analysis.ifds.Analyzer
 import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.Reason
 import org.jacodb.analysis.util.Traits
+import org.jacodb.analysis.util.toPath
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonInst
@@ -33,6 +34,7 @@ import org.jacodb.panda.dynamic.ets.base.EtsIfStmt
 import org.jacodb.panda.dynamic.ets.base.EtsNewArrayExpr
 import org.jacodb.panda.dynamic.ets.base.EtsStmt
 import org.jacodb.panda.dynamic.ets.graph.loops
+import org.jacodb.panda.dynamic.ets.utils.getOperands
 import org.jacodb.panda.staticvm.utils.loops
 import org.jacodb.taint.configuration.TaintConfigurationItem
 import org.jacodb.taint.configuration.TaintMethodSink
@@ -130,8 +132,8 @@ class TaintAnalyzer<Method, Statement>(
                     val pandaGraph = statement.location.method.flowGraph()
                     val loops = pandaGraph.loops
                     if (loops.any { statement in it.instructions }) {
-                        for (s in statement.getOperands()) {
-                            val p = s.toPathOrNull()
+                        for (s in statement.condition.getOperands()) {
+                            val p = s.toPath()
                             if (p == fact.variable) {
                                 val message = "Untrusted loop bound"
                                 val vulnerability = TaintVulnerability(message, sink = edge.to)
