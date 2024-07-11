@@ -1,5 +1,5 @@
 {
-  "name": "taint/XSS.ts",
+  "name": "PrependInitializer.ts",
   "namespaces": [],
   "classes": [
     {
@@ -10,24 +10,7 @@
       "typeParameters": [],
       "superClassName": "",
       "implementedInterfaceNames": [],
-      "fields": [
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "usage",
-            "fieldType": {
-              "_": "UnknownType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        }
-      ],
+      "fields": [],
       "methods": [
         {
           "signature": {
@@ -52,12 +35,6 @@
                     "name": "_DEFAULT_ARK_CLASS"
                   }
                 }
-              },
-              {
-                "name": "usage",
-                "type": {
-                  "_": "UnknownType"
-                }
               }
             ],
             "cfg": {
@@ -90,23 +67,6 @@
                       }
                     },
                     {
-                      "_": "CallStmt",
-                      "expr": {
-                        "_": "StaticCallExpr",
-                        "method": {
-                          "enclosingClass": {
-                            "name": "_DEFAULT_ARK_CLASS"
-                          },
-                          "name": "usage",
-                          "parameters": [],
-                          "returnType": {
-                            "_": "UnknownType"
-                          }
-                        },
-                        "args": []
-                      }
-                    },
-                    {
                       "_": "ReturnVoidStmt"
                     }
                   ]
@@ -114,13 +74,72 @@
               ]
             }
           }
+        }
+      ]
+    },
+    {
+      "signature": {
+        "name": "Foo"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Foo"
+            },
+            "name": "x",
+            "fieldType": {
+              "_": "NumberType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "99",
+            "type": {
+              "_": "NumberType"
+            }
+          }
         },
         {
           "signature": {
             "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
+              "name": "Foo"
             },
-            "name": "getUserComment",
+            "name": "y",
+            "fieldType": {
+              "_": "NumberType"
+            }
+          },
+          "modifiers": [
+            "StaticKeyword"
+          ],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false,
+          "initializer": {
+            "_": "Constant",
+            "value": "109",
+            "type": {
+              "_": "NumberType"
+            }
+          }
+        }
+      ],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Foo"
+            },
+            "name": "constructor",
             "parameters": [],
             "returnType": {
               "_": "UnknownType"
@@ -135,8 +154,14 @@
                 "type": {
                   "_": "ClassType",
                   "signature": {
-                    "name": "_DEFAULT_ARK_CLASS"
+                    "name": "Foo"
                   }
+                }
+              },
+              {
+                "name": "console",
+                "type": {
+                  "_": "UnknownType"
                 }
               }
             ],
@@ -155,7 +180,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "_DEFAULT_ARK_CLASS"
+                            "name": "Foo"
                           }
                         }
                       },
@@ -164,20 +189,45 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "_DEFAULT_ARK_CLASS"
+                            "name": "Foo"
                           }
                         }
                       }
                     },
                     {
-                      "_": "ReturnStmt",
-                      "arg": {
-                        "_": "Constant",
-                        "value": "<script>alert('XSS Attack!');</script>",
-                        "type": {
-                          "_": "StringType"
-                        }
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "new Foo",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          }
+                        ]
                       }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
                     }
                   ]
                 }
@@ -188,18 +238,10 @@
         {
           "signature": {
             "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
+              "name": "Foo"
             },
-            "name": "displayComment",
-            "parameters": [
-              {
-                "name": "comment",
-                "type": {
-                  "_": "UnknownType"
-                },
-                "isOptional": false
-              }
-            ],
+            "name": "foo",
+            "parameters": [],
             "returnType": {
               "_": "UnknownType"
             }
@@ -213,38 +255,20 @@
                 "type": {
                   "_": "ClassType",
                   "signature": {
-                    "name": "_DEFAULT_ARK_CLASS"
+                    "name": "Foo"
                   }
                 }
               },
               {
-                "name": "comment",
+                "name": "Foo",
                 "type": {
                   "_": "UnknownType"
                 }
               },
               {
-                "name": "commentsDiv",
+                "name": "console",
                 "type": {
                   "_": "UnknownType"
-                }
-              },
-              {
-                "name": "document",
-                "type": {
-                  "_": "UnknownType"
-                }
-              },
-              {
-                "name": "$temp0",
-                "type": {
-                  "_": "StringType"
-                }
-              },
-              {
-                "name": "$temp1",
-                "type": {
-                  "_": "StringType"
                 }
               }
             ],
@@ -259,28 +283,11 @@
                       "_": "AssignStmt",
                       "left": {
                         "_": "Local",
-                        "name": "comment",
-                        "type": {
-                          "_": "UnknownType"
-                        }
-                      },
-                      "right": {
-                        "_": "ParameterRef",
-                        "index": 0,
-                        "type": {
-                          "_": "UnknownType"
-                        }
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
                         "name": "this",
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "_DEFAULT_ARK_CLASS"
+                            "name": "Foo"
                           }
                         }
                       },
@@ -289,102 +296,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "_DEFAULT_ARK_CLASS"
-                          }
-                        }
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "commentsDiv",
-                        "type": {
-                          "_": "UnknownType"
-                        }
-                      },
-                      "right": {
-                        "_": "InstanceCallExpr",
-                        "instance": {
-                          "_": "Local",
-                          "name": "document",
-                          "type": {
-                            "_": "UnknownType"
-                          }
-                        },
-                        "method": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
-                          "name": "getElementById",
-                          "parameters": [],
-                          "returnType": {
-                            "_": "UnknownType"
-                          }
-                        },
-                        "args": [
-                          {
-                            "_": "Constant",
-                            "value": "comments",
-                            "type": {
-                              "_": "StringType"
-                            }
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "$temp0",
-                        "type": {
-                          "_": "StringType"
-                        }
-                      },
-                      "right": {
-                        "_": "BinopExpr",
-                        "op": "+",
-                        "left": {
-                          "_": "Constant",
-                          "value": "<p>",
-                          "type": {
-                            "_": "StringType"
-                          }
-                        },
-                        "right": {
-                          "_": "Local",
-                          "name": "comment",
-                          "type": {
-                            "_": "UnknownType"
-                          }
-                        }
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "$temp1",
-                        "type": {
-                          "_": "StringType"
-                        }
-                      },
-                      "right": {
-                        "_": "BinopExpr",
-                        "op": "+",
-                        "left": {
-                          "_": "Local",
-                          "name": "$temp0",
-                          "type": {
-                            "_": "StringType"
-                          }
-                        },
-                        "right": {
-                          "_": "Constant",
-                          "value": "</p>",
-                          "type": {
-                            "_": "StringType"
+                            "name": "Foo"
                           }
                         }
                       }
@@ -395,7 +307,7 @@
                         "_": "InstanceFieldRef",
                         "instance": {
                           "_": "Local",
-                          "name": "commentsDiv",
+                          "name": "Foo",
                           "type": {
                             "_": "UnknownType"
                           }
@@ -404,41 +316,50 @@
                           "enclosingClass": {
                             "name": ""
                           },
-                          "name": "innerHTML",
+                          "name": "y",
                           "fieldType": {
                             "_": "UnknownType"
                           }
                         }
                       },
                       "right": {
-                        "_": "BinopExpr",
-                        "op": "+",
-                        "left": {
-                          "_": "InstanceFieldRef",
-                          "instance": {
-                            "_": "Local",
-                            "name": "commentsDiv",
-                            "type": {
-                              "_": "UnknownType"
-                            }
-                          },
-                          "field": {
-                            "enclosingClass": {
-                              "name": ""
-                            },
-                            "name": "innerHTML",
-                            "fieldType": {
-                              "_": "UnknownType"
-                            }
+                        "_": "Constant",
+                        "value": "112",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": {
+                            "_": "UnknownType"
                           }
                         },
-                        "right": {
-                          "_": "Local",
-                          "name": "$temp1",
-                          "type": {
-                            "_": "StringType"
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
                           }
-                        }
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "print-foo",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          }
+                        ]
                       }
                     },
                     {
@@ -453,15 +374,17 @@
         {
           "signature": {
             "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
+              "name": "Foo"
             },
-            "name": "usage",
+            "name": "bar",
             "parameters": [],
             "returnType": {
               "_": "UnknownType"
             }
           },
-          "modifiers": [],
+          "modifiers": [
+            "StaticKeyword"
+          ],
           "typeParameters": [],
           "body": {
             "locals": [
@@ -470,24 +393,12 @@
                 "type": {
                   "_": "ClassType",
                   "signature": {
-                    "name": "_DEFAULT_ARK_CLASS"
+                    "name": "Foo"
                   }
                 }
               },
               {
-                "name": "userComment",
-                "type": {
-                  "_": "UnknownType"
-                }
-              },
-              {
-                "name": "getUserComment",
-                "type": {
-                  "_": "UnknownType"
-                }
-              },
-              {
-                "name": "displayComment",
+                "name": "console",
                 "type": {
                   "_": "UnknownType"
                 }
@@ -508,7 +419,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "_DEFAULT_ARK_CLASS"
+                            "name": "Foo"
                           }
                         }
                       },
@@ -517,7 +428,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "_DEFAULT_ARK_CLASS"
+                            "name": "Foo"
                           }
                         }
                       }
@@ -525,36 +436,51 @@
                     {
                       "_": "AssignStmt",
                       "left": {
-                        "_": "Local",
-                        "name": "userComment",
-                        "type": {
-                          "_": "UnknownType"
-                        }
-                      },
-                      "right": {
-                        "_": "StaticCallExpr",
-                        "method": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Foo"
+                            }
+                          }
+                        },
+                        "field": {
                           "enclosingClass": {
                             "name": ""
                           },
-                          "name": "getUserComment",
-                          "parameters": [],
-                          "returnType": {
+                          "name": "y",
+                          "fieldType": {
                             "_": "UnknownType"
                           }
-                        },
-                        "args": []
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "111",
+                        "type": {
+                          "_": "NumberType"
+                        }
                       }
                     },
                     {
                       "_": "CallStmt",
                       "expr": {
-                        "_": "StaticCallExpr",
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
                         "method": {
                           "enclosingClass": {
                             "name": ""
                           },
-                          "name": "displayComment",
+                          "name": "log",
                           "parameters": [],
                           "returnType": {
                             "_": "UnknownType"
@@ -562,10 +488,10 @@
                         },
                         "args": [
                           {
-                            "_": "Local",
-                            "name": "userComment",
+                            "_": "Constant",
+                            "value": "print-bar",
                             "type": {
-                              "_": "UnknownType"
+                              "_": "StringType"
                             }
                           }
                         ]

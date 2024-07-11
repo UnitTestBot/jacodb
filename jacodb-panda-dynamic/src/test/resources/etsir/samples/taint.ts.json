@@ -1,5 +1,5 @@
 {
-  "name": "taint/passwordExposureFP.ts",
+  "name": "taint.ts",
   "namespaces": [],
   "classes": [
     {
@@ -80,10 +80,18 @@
             "enclosingClass": {
               "name": "_DEFAULT_ARK_CLASS"
             },
-            "name": "getUserData",
+            "name": "source",
             "parameters": [],
             "returnType": {
-              "_": "UnknownType"
+              "_": "UnionType",
+              "types": [
+                {
+                  "_": "NumberType"
+                },
+                {
+                  "_": "NullType"
+                }
+              ]
             }
           },
           "modifiers": [],
@@ -130,7 +138,14 @@
                       }
                     },
                     {
-                      "_": "ReturnVoidStmt"
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Constant",
+                        "value": "null",
+                        "type": {
+                          "_": "NullType"
+                        }
+                      }
                     }
                   ]
                 }
@@ -143,10 +158,34 @@
             "enclosingClass": {
               "name": "_DEFAULT_ARK_CLASS"
             },
-            "name": "getUserPassword",
-            "parameters": [],
+            "name": "pass",
+            "parameters": [
+              {
+                "name": "data",
+                "type": {
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
+                },
+                "isOptional": false
+              }
+            ],
             "returnType": {
-              "_": "UnknownType"
+              "_": "UnionType",
+              "types": [
+                {
+                  "_": "NumberType"
+                },
+                {
+                  "_": "NullType"
+                }
+              ]
             }
           },
           "modifiers": [],
@@ -163,15 +202,17 @@
                 }
               },
               {
-                "name": "password",
+                "name": "data",
                 "type": {
-                  "_": "UnknownType"
-                }
-              },
-              {
-                "name": "getUserData",
-                "type": {
-                  "_": "UnknownType"
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
                 }
               }
             ],
@@ -182,6 +223,39 @@
                   "successors": [],
                   "predecessors": [],
                   "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "data",
+                        "type": {
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": {
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
+                        }
+                      }
+                    },
                     {
                       "_": "AssignStmt",
                       "left": {
@@ -202,39 +276,23 @@
                             "name": "_DEFAULT_ARK_CLASS"
                           }
                         }
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "password",
-                        "type": {
-                          "_": "UnknownType"
-                        }
-                      },
-                      "right": {
-                        "_": "StaticCallExpr",
-                        "method": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
-                          "name": "getUserData",
-                          "parameters": [],
-                          "returnType": {
-                            "_": "UnknownType"
-                          }
-                        },
-                        "args": []
                       }
                     },
                     {
                       "_": "ReturnStmt",
                       "arg": {
                         "_": "Local",
-                        "name": "password",
+                        "name": "data",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
                         }
                       }
                     }
@@ -249,12 +307,227 @@
             "enclosingClass": {
               "name": "_DEFAULT_ARK_CLASS"
             },
-            "name": "processUserData",
+            "name": "validate",
             "parameters": [
               {
-                "name": "loggingOn",
+                "name": "data",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
+                },
+                "isOptional": false
+              }
+            ],
+            "returnType": {
+              "_": "NumberType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "_DEFAULT_ARK_CLASS"
+                  }
+                }
+              },
+              {
+                "name": "data",
+                "type": {
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1,
+                    2
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "data",
+                        "type": {
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": {
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": "!=",
+                        "left": {
+                          "_": "Local",
+                          "name": "data",
+                          "type": {
+                            "_": "UnionType",
+                            "types": [
+                              {
+                                "_": "NumberType"
+                              },
+                              {
+                                "_": "NullType"
+                              }
+                            ]
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "null",
+                          "type": {
+                            "_": "NullType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [],
+                  "predecessors": [
+                    0,
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "data",
+                        "type": {
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [
+                    0
+                  ],
+                  "stmts": [
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Constant",
+                        "value": "0",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "sink",
+            "parameters": [
+              {
+                "name": "data",
+                "type": {
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
                 },
                 "isOptional": false
               }
@@ -277,27 +550,26 @@
                 }
               },
               {
-                "name": "loggingOn",
+                "name": "data",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
                 }
               },
               {
-                "name": "password",
+                "name": "$temp0",
                 "type": {
-                  "_": "UnknownType"
-                }
-              },
-              {
-                "name": "getUserPassword",
-                "type": {
-                  "_": "UnknownType"
-                }
-              },
-              {
-                "name": "console",
-                "type": {
-                  "_": "UnknownType"
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Error"
+                  }
                 }
               }
             ],
@@ -314,16 +586,32 @@
                       "_": "AssignStmt",
                       "left": {
                         "_": "Local",
-                        "name": "loggingOn",
+                        "name": "data",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
                         }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
                         "type": {
-                          "_": "UnknownType"
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
                         }
                       }
                     },
@@ -350,46 +638,30 @@
                       }
                     },
                     {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "password",
-                        "type": {
-                          "_": "UnknownType"
-                        }
-                      },
-                      "right": {
-                        "_": "StaticCallExpr",
-                        "method": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
-                          "name": "getUserPassword",
-                          "parameters": [],
-                          "returnType": {
-                            "_": "UnknownType"
-                          }
-                        },
-                        "args": []
-                      }
-                    },
-                    {
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
                         "op": "!=",
                         "left": {
                           "_": "Local",
-                          "name": "loggingOn",
+                          "name": "data",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "UnionType",
+                            "types": [
+                              {
+                                "_": "NumberType"
+                              },
+                              {
+                                "_": "NullType"
+                              }
+                            ]
                           }
                         },
                         "right": {
                           "_": "Constant",
-                          "value": "1",
+                          "value": "null",
                           "type": {
-                            "_": "NumberType"
+                            "_": "NullType"
                           }
                         },
                         "type": {
@@ -407,115 +679,46 @@
                   ],
                   "stmts": [
                     {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "NewExpr",
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
+                      }
+                    },
+                    {
                       "_": "CallStmt",
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
                           "_": "Local",
-                          "name": "console",
+                          "name": "$temp0",
                           "type": {
-                            "_": "UnknownType"
-                          }
-                        },
-                        "method": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
-                          "name": "log",
-                          "parameters": [],
-                          "returnType": {
-                            "_": "UnknownType"
-                          }
-                        },
-                        "args": [
-                          {
-                            "_": "Local",
-                            "name": "password",
-                            "type": {
-                              "_": "UnknownType"
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Error"
                             }
                           }
-                        ]
-                      }
-                    },
-                    {
-                      "_": "ReturnVoidStmt"
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        },
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "usage1",
-            "parameters": [],
-            "returnType": {
-              "_": "UnknownType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "body": {
-            "locals": [
-              {
-                "name": "this",
-                "type": {
-                  "_": "ClassType",
-                  "signature": {
-                    "name": "_DEFAULT_ARK_CLASS"
-                  }
-                }
-              },
-              {
-                "name": "processUserData",
-                "type": {
-                  "_": "UnknownType"
-                }
-              }
-            ],
-            "cfg": {
-              "blocks": [
-                {
-                  "id": 0,
-                  "successors": [],
-                  "predecessors": [],
-                  "stmts": [
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "this",
-                        "type": {
-                          "_": "ClassType",
-                          "signature": {
-                            "name": "_DEFAULT_ARK_CLASS"
-                          }
-                        }
-                      },
-                      "right": {
-                        "_": "ThisRef",
-                        "type": {
-                          "_": "ClassType",
-                          "signature": {
-                            "name": "_DEFAULT_ARK_CLASS"
-                          }
-                        }
-                      }
-                    },
-                    {
-                      "_": "CallStmt",
-                      "expr": {
-                        "_": "StaticCallExpr",
+                        },
                         "method": {
                           "enclosingClass": {
-                            "name": ""
+                            "name": "Error"
                           },
-                          "name": "processUserData",
+                          "name": "constructor",
                           "parameters": [],
                           "returnType": {
                             "_": "UnknownType"
@@ -524,106 +727,25 @@
                         "args": [
                           {
                             "_": "Constant",
-                            "value": "0",
+                            "value": "Error!",
                             "type": {
-                              "_": "NumberType"
+                              "_": "StringType"
                             }
                           }
                         ]
                       }
                     },
                     {
-                      "_": "ReturnVoidStmt"
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        },
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "usage2",
-            "parameters": [],
-            "returnType": {
-              "_": "UnknownType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "body": {
-            "locals": [
-              {
-                "name": "this",
-                "type": {
-                  "_": "ClassType",
-                  "signature": {
-                    "name": "_DEFAULT_ARK_CLASS"
-                  }
-                }
-              },
-              {
-                "name": "processUserData",
-                "type": {
-                  "_": "UnknownType"
-                }
-              }
-            ],
-            "cfg": {
-              "blocks": [
-                {
-                  "id": 0,
-                  "successors": [],
-                  "predecessors": [],
-                  "stmts": [
-                    {
-                      "_": "AssignStmt",
-                      "left": {
+                      "_": "ThrowStmt",
+                      "arg": {
                         "_": "Local",
-                        "name": "this",
+                        "name": "$temp0",
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "_DEFAULT_ARK_CLASS"
+                            "name": "Error"
                           }
                         }
-                      },
-                      "right": {
-                        "_": "ThisRef",
-                        "type": {
-                          "_": "ClassType",
-                          "signature": {
-                            "name": "_DEFAULT_ARK_CLASS"
-                          }
-                        }
-                      }
-                    },
-                    {
-                      "_": "CallStmt",
-                      "expr": {
-                        "_": "StaticCallExpr",
-                        "method": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
-                          "name": "processUserData",
-                          "parameters": [],
-                          "returnType": {
-                            "_": "UnknownType"
-                          }
-                        },
-                        "args": [
-                          {
-                            "_": "Constant",
-                            "value": "1",
-                            "type": {
-                              "_": "NumberType"
-                            }
-                          }
-                        ]
                       }
                     },
                     {
@@ -640,7 +762,7 @@
             "enclosingClass": {
               "name": "_DEFAULT_ARK_CLASS"
             },
-            "name": "usage3",
+            "name": "bad",
             "parameters": [],
             "returnType": {
               "_": "UnknownType"
@@ -666,13 +788,19 @@
                 }
               },
               {
-                "name": "getUserData",
+                "name": "source",
                 "type": {
                   "_": "UnknownType"
                 }
               },
               {
-                "name": "console",
+                "name": "pass",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "sink",
                 "type": {
                   "_": "UnknownType"
                 }
@@ -722,7 +850,7 @@
                           "enclosingClass": {
                             "name": ""
                           },
-                          "name": "getUserData",
+                          "name": "source",
                           "parameters": [],
                           "returnType": {
                             "_": "UnknownType"
@@ -732,21 +860,46 @@
                       }
                     },
                     {
-                      "_": "CallStmt",
-                      "expr": {
-                        "_": "InstanceCallExpr",
-                        "instance": {
-                          "_": "Local",
-                          "name": "console",
-                          "type": {
-                            "_": "UnknownType"
-                          }
-                        },
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "data",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
                         "method": {
                           "enclosingClass": {
                             "name": ""
                           },
-                          "name": "log",
+                          "name": "pass",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "data",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "sink",
                           "parameters": [],
                           "returnType": {
                             "_": "UnknownType"
@@ -777,139 +930,7 @@
             "enclosingClass": {
               "name": "_DEFAULT_ARK_CLASS"
             },
-            "name": "printOnConsole",
-            "parameters": [
-              {
-                "name": "data",
-                "type": {
-                  "_": "UnknownType"
-                },
-                "isOptional": false
-              }
-            ],
-            "returnType": {
-              "_": "UnknownType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "body": {
-            "locals": [
-              {
-                "name": "this",
-                "type": {
-                  "_": "ClassType",
-                  "signature": {
-                    "name": "_DEFAULT_ARK_CLASS"
-                  }
-                }
-              },
-              {
-                "name": "data",
-                "type": {
-                  "_": "UnknownType"
-                }
-              },
-              {
-                "name": "console",
-                "type": {
-                  "_": "UnknownType"
-                }
-              }
-            ],
-            "cfg": {
-              "blocks": [
-                {
-                  "id": 0,
-                  "successors": [],
-                  "predecessors": [],
-                  "stmts": [
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "data",
-                        "type": {
-                          "_": "UnknownType"
-                        }
-                      },
-                      "right": {
-                        "_": "ParameterRef",
-                        "index": 0,
-                        "type": {
-                          "_": "UnknownType"
-                        }
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "this",
-                        "type": {
-                          "_": "ClassType",
-                          "signature": {
-                            "name": "_DEFAULT_ARK_CLASS"
-                          }
-                        }
-                      },
-                      "right": {
-                        "_": "ThisRef",
-                        "type": {
-                          "_": "ClassType",
-                          "signature": {
-                            "name": "_DEFAULT_ARK_CLASS"
-                          }
-                        }
-                      }
-                    },
-                    {
-                      "_": "CallStmt",
-                      "expr": {
-                        "_": "InstanceCallExpr",
-                        "instance": {
-                          "_": "Local",
-                          "name": "console",
-                          "type": {
-                            "_": "UnknownType"
-                          }
-                        },
-                        "method": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
-                          "name": "log",
-                          "parameters": [],
-                          "returnType": {
-                            "_": "UnknownType"
-                          }
-                        },
-                        "args": [
-                          {
-                            "_": "Local",
-                            "name": "data",
-                            "type": {
-                              "_": "UnknownType"
-                            }
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "_": "ReturnVoidStmt"
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        },
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "usage4",
+            "name": "good",
             "parameters": [],
             "returnType": {
               "_": "UnknownType"
@@ -935,13 +956,19 @@
                 }
               },
               {
-                "name": "getUserData",
+                "name": "source",
                 "type": {
                   "_": "UnknownType"
                 }
               },
               {
-                "name": "printOnConsole",
+                "name": "validate",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "sink",
                 "type": {
                   "_": "UnknownType"
                 }
@@ -991,13 +1018,45 @@
                           "enclosingClass": {
                             "name": ""
                           },
-                          "name": "getUserData",
+                          "name": "source",
                           "parameters": [],
                           "returnType": {
                             "_": "UnknownType"
                           }
                         },
                         "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "data",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "validate",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "data",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ]
                       }
                     },
                     {
@@ -1008,7 +1067,7 @@
                           "enclosingClass": {
                             "name": ""
                           },
-                          "name": "printOnConsole",
+                          "name": "sink",
                           "parameters": [],
                           "returnType": {
                             "_": "UnknownType"
