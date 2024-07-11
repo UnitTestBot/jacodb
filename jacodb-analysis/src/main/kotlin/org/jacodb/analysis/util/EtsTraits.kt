@@ -61,7 +61,7 @@ interface EtsTraits : Traits<EtsMethod, EtsStmt> {
         get() = EtsThis(EtsAnyType)
 
     override val EtsMethod.isConstructor: Boolean
-        get() = false
+        get() = name == "constructor"
 
     override fun CommonExpr.toPathOrNull(): AccessPath? {
         check(this is EtsEntity)
