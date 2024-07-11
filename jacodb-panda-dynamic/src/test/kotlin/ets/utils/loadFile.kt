@@ -20,7 +20,7 @@ import org.jacodb.panda.dynamic.ets.dto.EtsFileDto
 import org.jacodb.panda.dynamic.ets.dto.convertToEtsFile
 import org.jacodb.panda.dynamic.ets.model.EtsFile
 
-fun loadIr(filePath: String): EtsFile {
+fun loadEtsFile(filePath: String): EtsFile {
     val sampleFilePath = object {}::class.java.getResourceAsStream(filePath)
         ?: error("Resource not found: $filePath")
     val etsFileDto = EtsFileDto.loadFromJson(sampleFilePath)

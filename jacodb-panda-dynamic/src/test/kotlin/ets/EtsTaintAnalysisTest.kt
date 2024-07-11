@@ -16,14 +16,13 @@
 
 package ets
 
+import ets.utils.loadEtsFile
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.util.EtsTraits
 import org.jacodb.panda.dynamic.ets.base.EtsStmt
-import org.jacodb.panda.dynamic.ets.dto.EtsFileDto
-import org.jacodb.panda.dynamic.ets.dto.convertToEtsFile
 import org.jacodb.panda.dynamic.ets.graph.EtsApplicationGraph
 import org.jacodb.panda.dynamic.ets.model.EtsFile
 import org.jacodb.panda.dynamic.ets.model.EtsMethod
@@ -48,19 +47,18 @@ private val logger = mu.KotlinLogging.logger {}
 class EtsTaintAnalysisTest {
 
     companion object : EtsTraits {
-        private fun loadEtsFile(name: String): EtsFile {
-            val path = "etsir/samples/$name.ts.json"
-            val stream = object {}::class.java.getResourceAsStream("/$path")
-                ?: error("Resource not found: $path")
-            val etsFileDto = EtsFileDto.loadFromJson(stream)
-            val etsFile = convertToEtsFile(etsFileDto)
-            return etsFile
+        private const val PROJECT_PATH = "/etsir/project1"
+        private const val START_PATH = "/entry/src/main/ets"
+        private const val BASE_PATH = PROJECT_PATH + START_PATH
+
+        private fun loadFromProject(name: String): EtsFile {
+            return loadEtsFile("$BASE_PATH/$name.json")
         }
     }
 
     @Test
     fun `test taint analysis`() {
-        val etsFile = loadEtsFile("taint")
+        val etsFile = loadFromProject("taint")
         val graph = EtsApplicationGraph(etsFile)
         val unitResolver = UnitResolver<EtsMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<EtsMethod, EtsStmt>.(EtsMethod) -> List<TaintConfigurationItem>? =

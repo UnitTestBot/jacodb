@@ -16,6 +16,7 @@
 
 package ets
 
+import ets.utils.loadDto
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -27,7 +28,6 @@ import org.jacodb.panda.dynamic.ets.base.EtsUnknownType
 import org.jacodb.panda.dynamic.ets.dto.AnyTypeDto
 import org.jacodb.panda.dynamic.ets.dto.ClassSignatureDto
 import org.jacodb.panda.dynamic.ets.dto.ConstantDto
-import org.jacodb.panda.dynamic.ets.dto.EtsFileDto
 import org.jacodb.panda.dynamic.ets.dto.EtsMethodBuilder
 import org.jacodb.panda.dynamic.ets.dto.FieldDto
 import org.jacodb.panda.dynamic.ets.dto.FieldSignatureDto
@@ -44,6 +44,11 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 class EtsFromJsonTest {
+
+    companion object {
+        private const val BASE_PATH = "/etsir/samples"
+    }
+
     private val json = Json {
         // classDiscriminator = "_"
         prettyPrint = true
@@ -58,10 +63,7 @@ class EtsFromJsonTest {
 
     @Test
     fun testLoadEtsFileFromJson() {
-        val path = "etsir/samples/basic.ts.json"
-        val stream = object {}::class.java.getResourceAsStream("/$path")
-            ?: error("Resource not found: $path")
-        val etsDto = EtsFileDto.loadFromJson(stream)
+        val etsDto = loadDto("$BASE_PATH/basic.ts.json")
         println("etsDto = $etsDto")
         val ets = convertToEtsFile(etsDto)
         println("ets = $ets")

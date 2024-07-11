@@ -16,13 +16,14 @@
 
 package ets
 
-import ets.utils.loadIr
+import ets.utils.loadEtsFile
 import org.jacodb.panda.dynamic.ets.base.EtsAssignStmt
 import org.jacodb.panda.dynamic.ets.base.EtsInstanceFieldRef
-import org.jacodb.panda.dynamic.ets.base.EtsReturnStmt
 import org.jacodb.panda.dynamic.ets.base.EtsThis
 import org.jacodb.panda.dynamic.ets.model.EtsFile
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 
 private val logger = mu.KotlinLogging.logger {}
@@ -30,18 +31,17 @@ private val logger = mu.KotlinLogging.logger {}
 class EtsFileTest {
 
     companion object {
+        private const val BASE_PATH = "/etsir/samples"
         private const val SAMPLE_NAME = "classes/SimpleClass"
 
-        private fun load(name: String): EtsFile {
-            return loadIr(
-                filePath = "/etsir/samples/$name.ts.json",
-            )
+        private fun loadSample(name: String): EtsFile {
+            return loadEtsFile("$BASE_PATH/$name.ts.json")
         }
     }
 
     @Test
     fun getEtsMethods() {
-        val etsFile = load(SAMPLE_NAME)
+        val etsFile = loadSample(SAMPLE_NAME)
         etsFile.classes.forEach { cls ->
             cls.methods.forEach { etsMethod ->
                 assertNotNull(etsMethod.name)
@@ -54,7 +54,7 @@ class EtsFileTest {
 
     @Test
     fun printEtsInstructions() {
-        val etsFile = load(SAMPLE_NAME)
+        val etsFile = loadSample(SAMPLE_NAME)
         etsFile.classes.forEach { cls ->
             cls.methods.forEach { etsMethod ->
                 assertNotNull(etsMethod.name)
@@ -70,7 +70,7 @@ class EtsFileTest {
 
     @Test
     fun `test etsFile on TypeMismatch`() {
-        val etsFile = load("TypeMismatch")
+        val etsFile = loadSample("TypeMismatch")
         etsFile.classes.forEach { cls ->
             cls.methods.forEach { etsMethod ->
                 assertNotNull(etsMethod.name)
@@ -90,7 +90,7 @@ class EtsFileTest {
 
     @Test
     fun `test initializers prepended to class constructor`() {
-        val etsFile = load("PrependInitializer")
+        val etsFile = loadSample("PrependInitializer")
         val cls = etsFile.classes.single { it.name == "Foo" }
         val ctorBegin = cls.ctor.cfg.instructions.first() as EtsAssignStmt
         val fieldRef = ctorBegin.lhv as EtsInstanceFieldRef
@@ -100,7 +100,7 @@ class EtsFileTest {
 
     @Test
     fun `test static field should not be initialized in constructor`() {
-        val etsFile = load("StaticField")
+        val etsFile = loadSample("StaticField")
         val cls = etsFile.classes.single { it.name == "Foo" }
         assertFalse(cls.ctor.cfg.stmts.any {
             it is EtsAssignStmt && it.lhv is EtsInstanceFieldRef
@@ -109,7 +109,7 @@ class EtsFileTest {
 
     @Test
     fun `test default constructor should be synthesized`() {
-        val etsFile = load("DefaultConstructor")
+        val etsFile = loadSample("DefaultConstructor")
         val cls = etsFile.classes.single { it.name == "Foo" }
         val fieldInit = cls.ctor.cfg.instructions.first() as EtsAssignStmt
         val fieldRef = fieldInit.lhv as EtsInstanceFieldRef

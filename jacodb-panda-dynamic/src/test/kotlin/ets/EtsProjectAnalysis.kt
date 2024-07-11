@@ -17,6 +17,7 @@
 package ets
 
 import ets.utils.getConfigForMethod
+import ets.utils.loadEtsFile
 import ets.utils.loadRules
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
@@ -25,8 +26,6 @@ import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.analysis.util.EtsTraits
 import org.jacodb.analysis.util.getPathEdges
 import org.jacodb.panda.dynamic.ets.base.EtsStmt
-import org.jacodb.panda.dynamic.ets.dto.EtsFileDto
-import org.jacodb.panda.dynamic.ets.dto.convertToEtsFile
 import org.jacodb.panda.dynamic.ets.graph.EtsApplicationGraph
 import org.jacodb.panda.dynamic.ets.model.EtsFile
 import org.jacodb.panda.dynamic.ets.model.EtsMethod
@@ -34,6 +33,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIf
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.io.path.exists
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -48,22 +48,19 @@ class EtsProjectAnalysis {
     private var totalSinks: MutableList<TaintVulnerability<EtsStmt>> = mutableListOf()
 
     companion object : EtsTraits {
-        private const val SOURCE_PROJECT_PATH = "/source/project1"
-        private const val START_PATH = "/entry/src/main/ets/"
-        const val PROJECT_PATH = "/etsir/project1"
-        const val BASE_PATH = PROJECT_PATH + START_PATH
-        const val SOURCE_BASE_PATH = SOURCE_PROJECT_PATH + START_PATH
+        private const val SOURCE_PROJECT_PATH = "/project1"
+        private const val PROJECT_PATH = "/etsir/project1"
+        private const val START_PATH = "/entry/src/main/ets"
+        private const val BASE_PATH = PROJECT_PATH + START_PATH
+        private const val SOURCE_BASE_PATH = SOURCE_PROJECT_PATH + START_PATH
 
-        private fun loadProjectForSample(filename: String): EtsFile {
-            val jsonFile = "$BASE_PATH$filename.json"
-            val stream = object {}::class.java.getResourceAsStream(jsonFile)
-                ?: error("Resource not found: $jsonFile")
-            val etsFileDto = EtsFileDto.loadFromJson(stream)
-            return convertToEtsFile(etsFileDto)
+        private fun loadFromProject(filename: String): EtsFile {
+            return loadEtsFile("$BASE_PATH/$filename.json")
         }
 
         private fun countFileLines(path: String): Long {
-            val stream = object {}::class.java.getResourceAsStream(path) ?: error("Resource not found: $path")
+            val stream = object {}::class.java.getResourceAsStream("/$path")
+                ?: error("Resource not found: $path")
             stream.bufferedReader().use { reader ->
                 return reader.lines().count()
             }
@@ -74,7 +71,7 @@ class EtsProjectAnalysis {
 
     private fun projectAvailable(): Boolean {
         val resource = object {}::class.java.getResource(PROJECT_PATH)?.toURI()
-        return resource != null && Files.exists(Paths.get(resource))
+        return resource != null && Paths.get(resource).exists()
     }
 
     @EnabledIf("projectAvailable")
@@ -122,10 +119,10 @@ class EtsProjectAnalysis {
     }
 
     private fun handleFile(filename: String) {
-        val fileLines = countFileLines("$SOURCE_BASE_PATH$filename")
+        val fileLines = countFileLines("$SOURCE_BASE_PATH/$filename")
         try {
             logger.info { "Processing '$filename'" }
-            val project = loadProjectForSample(filename)
+            val project = loadFromProject(filename)
             val startTime = System.currentTimeMillis()
             runAnalysis(project)
             val endTime = System.currentTimeMillis()
