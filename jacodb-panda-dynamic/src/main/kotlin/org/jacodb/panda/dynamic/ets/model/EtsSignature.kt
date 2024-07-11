@@ -36,12 +36,12 @@ data class EtsNamespaceSignature(
     val file: EtsFileSignature? = null,
 ) {
     override fun toString(): String {
-        if (namespace != null) {
-            return "$namespace.$name"
+        return if (namespace != null) {
+            "$namespace.$name"
         } else if (file != null) {
-            return "$file: $name"
+            "$file: $name"
         } else {
-            return name
+            name
         }
     }
 }
@@ -52,12 +52,12 @@ data class EtsClassSignature(
     val file: EtsFileSignature? = null,
 ) {
     override fun toString(): String {
-        if (namespace != null) {
-            return "$namespace::$name"
+        return if (namespace != null) {
+            "$namespace::$name"
         } else if (file != null) {
-            return "$file: $name"
+            "$file: $name"
         } else {
-            return name
+            name
         }
     }
 }
