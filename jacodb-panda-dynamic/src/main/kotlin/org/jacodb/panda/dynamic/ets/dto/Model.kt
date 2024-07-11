@@ -73,7 +73,7 @@ data class ClassDto(
 @Serializable
 data class FieldDto(
     val signature: FieldSignatureDto,
-    val typeParameters: List<String>,
+    val typeParameters: List<TypeDto>,
     val modifiers: List<ModifierDto>? = null,
     @SerialName("questionToken") val isOptional: Boolean = false, // '?'
     @SerialName("exclamationToken") val isDefinitelyAssigned: Boolean = false, // '!'
@@ -97,7 +97,7 @@ sealed class ModifierDto {
 data class MethodDto(
     val signature: MethodSignatureDto,
     val modifiers: List<ModifierDto>,
-    val typeParameters: List<String>,
+    val typeParameters: List<TypeDto>,
     val body: BodyDto,
 )
 
@@ -113,7 +113,7 @@ data class ImportInfoDto(
     val importType: String,
     val importFrom: String,
     val nameBeforeAs: String? = null,
-    val modifiers: List<String>,
+    val modifiers: List<ModifierDto>,
     val originTsPosition: LineColPositionDto,
 )
 
@@ -124,7 +124,7 @@ data class ExportInfoDto(
     val exportFrom: String? = null,
     val nameBeforeAs: String? = null,
     val isDefault: Boolean,
-    val modifiers: List<String>,
+    val modifiers: List<ModifierDto>,
     val originTsPosition: LineColPositionDto,
 )
 
