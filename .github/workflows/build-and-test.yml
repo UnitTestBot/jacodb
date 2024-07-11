@@ -137,7 +137,6 @@ jobs:
           node-version: '22'
 
       - name: Set up ArkAnalyzer
-        working-directory: /
         run: |
           git clone --depth=1 --branch=lipen/json-printer https://gitee.com/Lipenx/arkanalyzer
           cd arkanalyzer
@@ -147,7 +146,7 @@ jobs:
       - name: Generate test resources for panda-dynamic module
         run: ./gradlew :jacodb-panda-dynamic:generateTestResources
         env:
-          ARKANALYZER_DIR: /arkanalyzer
+          ARKANALYZER_DIR: arkanalyzer
 
       - name: Build and run tests in panda-dynamic module
         run: ./gradlew --scan :jacodb-panda-dynamic:test
