@@ -59,7 +59,7 @@ class EtsProjectAnalysis {
         }
 
         private fun countFileLines(path: String): Long {
-            val stream = object {}::class.java.getResourceAsStream("/$path")
+            val stream = object {}::class.java.getResourceAsStream(path)
                 ?: error("Resource not found: $path")
             stream.bufferedReader().use { reader ->
                 return reader.lines().count()
