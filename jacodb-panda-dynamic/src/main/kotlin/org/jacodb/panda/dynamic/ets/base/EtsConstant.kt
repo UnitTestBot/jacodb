@@ -120,15 +120,16 @@ object EtsUndefinedConstant : EtsConstant {
 
 data class EtsArrayLiteral(
     val elements: List<EtsEntity>,
-    override val type: EtsType, // EtsArrayType
+    override val type: EtsType,
 ) : EtsConstant {
 
-    // EtsArrayType
-    // init {
-    //     require(type.dimensions == 1) {
-    //         "Array type of array literal must have exactly one dimension"
-    //     }
-    // }
+    init {
+        if (type is EtsArrayType) {
+            require(type.dimensions == 1) {
+                "Array type of array literal must have exactly one dimension"
+            }
+        }
+    }
 
     override fun toString(): String {
         return elements.joinToString(prefix = "[", postfix = "]")
