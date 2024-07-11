@@ -25,9 +25,9 @@ dependencies {
 tasks.register("generateTestResources") {
     doLast {
         val envVarName = "ARKANALYZER_DIR"
-        val defaultArkAnalyzerDir = rootDir.resolve("../arkanalyzer").path
+        val defaultArkAnalyzerDir = "../arkanalyzer"
 
-        val arkAnalyzerDir = File(System.getenv(envVarName) ?: run {
+        val arkAnalyzerDir = rootDir.resolve(System.getenv(envVarName) ?: run {
             println("Please, set $envVarName environment variable. Using default value: '$defaultArkAnalyzerDir'")
             defaultArkAnalyzerDir
         })
