@@ -112,8 +112,8 @@ jobs:
           files: "**/build/test-results/**/*.xml"
           check_name: "Lifecycle test results"
 
-  build-panda-dynamic:
-    name: Build and run jacodb-panda-dynamic
+  build-ets:
+    name: Build and run jacodb-ets
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -126,10 +126,6 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
-        # with:
-        #   # Only write to the cache for builds on the specific branches. (Default is 'main' only.)
-        #   # Builds on other branches will only read existing entries from the cache.
-        #   cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop' }}
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -143,10 +139,10 @@ jobs:
           npm install
           npm run build
 
-      - name: Generate test resources for panda-dynamic module
-        run: ./gradlew :jacodb-panda-dynamic:generateTestResources
+      - name: Generate test resources for jacodb-ets module
+        run: ./gradlew :jacodb-ets:generateTestResources
         env:
           ARKANALYZER_DIR: arkanalyzer
 
-      - name: Build and run tests in panda-dynamic module
-        run: ./gradlew --scan :jacodb-panda-dynamic:test
+      - name: Build and run tests in jacodb-ets module
+        run: ./gradlew --scan :jacodb-ets:test
