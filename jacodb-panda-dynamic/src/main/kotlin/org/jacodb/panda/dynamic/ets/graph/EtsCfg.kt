@@ -16,19 +16,9 @@
 
 package org.jacodb.panda.dynamic.ets.graph
 
-import info.leadinglight.jdot.Edge
-import info.leadinglight.jdot.Graph
-import info.leadinglight.jdot.Node
-import info.leadinglight.jdot.enums.Color
-import info.leadinglight.jdot.enums.Shape
-import info.leadinglight.jdot.impl.Util
 import org.jacodb.impl.cfg.graphs.GraphDominators
-import org.jacodb.panda.dynamic.ets.base.EtsIfStmt
 import org.jacodb.panda.dynamic.ets.base.EtsStmt
 import org.jacodb.panda.dynamic.ets.base.EtsTerminatingStmt
-import java.io.File
-import java.nio.file.Files
-import java.nio.file.Path
 
 class EtsCfg(
     val stmts: List<EtsStmt>,
@@ -73,69 +63,4 @@ class EtsCfg(
 
 fun EtsCfg.findDominators(): GraphDominators<EtsStmt> {
     return GraphDominators(this).also { it.find() }
-}
-
-fun EtsCfg.view(dotCmd: String, viewerCmd: String, viewCatchConnections: Boolean = false) {
-    Util.sh(arrayOf(viewerCmd, "file://${toFile(dotCmd, viewCatchConnections)}"))
-}
-
-fun EtsCfg.toFile(dotCmd: String, viewCatchConnections: Boolean = false, file: File? = null): Path {
-    Graph.setDefaultCmd(dotCmd)
-
-    val graph = Graph("etsCfg")
-
-    val nodes = mutableMapOf<EtsStmt, Node>()
-    for ((index, inst) in instructions.withIndex()) {
-        val node = Node("$index")
-            .setShape(Shape.box)
-            .setLabel(inst.toString().replace("\"", "\\\""))
-            .setFontSize(12.0)
-        nodes[inst] = node
-        graph.addNode(node)
-    }
-
-    graph.setBgColor(Color.X11.transparent)
-    graph.setFontSize(12.0)
-    graph.setFontName("Fira Mono")
-
-    for ((inst, node) in nodes) {
-        when (inst) {
-            is EtsIfStmt -> {
-                val successors = successors(inst).toList()
-                check(successors.size == 2)
-                graph.addEdge(
-                    Edge(node.name, nodes[successors[0]]!!.name)
-                        .also {
-                            it.setLabel("false")
-                        }
-                )
-                graph.addEdge(
-                    Edge(node.name, nodes[successors[1]]!!.name)
-                        .also {
-                            it.setLabel("true")
-                        }
-                )
-            }
-
-            else -> for (successor in successors(inst)) {
-                graph.addEdge(Edge(node.name, nodes[successor]!!.name))
-            }
-        }
-        if (viewCatchConnections) {
-            // TODO: uncomment when `catchers` are properly implemented
-            // for (catcher in catchers(inst)) {
-            //     graph.addEdge(Edge(node.name, nodes[catcher]!!.name).also {
-            //         // it.setLabel("catch ${catcher.throwable.type}")
-            //         it.setLabel("catch")
-            //         it.setStyle(Style.Edge.dashed)
-            //     })
-            // }
-        }
-    }
-
-    val outFile = graph.dot2file("svg")
-    val newFile = "${outFile.removeSuffix(".out")}.svg"
-    val resultingFile = file?.toPath() ?: File(newFile).toPath()
-    Files.move(File(outFile).toPath(), resultingFile)
-    return resultingFile
 }
