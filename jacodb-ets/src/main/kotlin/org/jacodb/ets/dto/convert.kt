@@ -400,35 +400,30 @@ class EtsMethodBuilder(
 }
 
 fun convertToEtsClass(classDto: ClassDto): EtsClass {
-    fun defaultConstructorDto(classSignatureDto: ClassSignatureDto) = MethodDto(
-        signature = MethodSignatureDto(
+    fun defaultConstructorDto(classSignatureDto: ClassSignatureDto): MethodDto {
+        val zeroBlock = BasicBlockDto(
+            id = 0,
+            successors = emptyList(),
+            predecessors = emptyList(),
+            stmts = listOf(
+                ReturnStmtDto(arg = ThisRefDto(type = ClassTypeDto(classSignatureDto)))
+            )
+        )
+        val cfg = CfgDto(blocks = listOf(zeroBlock))
+        val body = BodyDto(locals = emptyList(), cfg = cfg)
+        val signature = MethodSignatureDto(
             enclosingClass = classSignatureDto,
             name = "constructor",
             parameters = emptyList(),
-            returnType = ClassTypeDto(classSignatureDto)
-        ),
-        modifiers = emptyList(),
-        typeParameters = emptyList(),
-        body = BodyDto(
-            locals = emptyList(),
-            cfg = CfgDto(
-                blocks = listOf(
-                    BasicBlockDto(
-                        id = 0,
-                        successors = emptyList(),
-                        predecessors = emptyList(),
-                        stmts = listOf(
-                            ReturnStmtDto(
-                                arg = ThisRefDto(
-                                    type = ClassTypeDto(classSignatureDto)
-                                )
-                            )
-                        )
-                    )
-                )
-            )
+            returnType = ClassTypeDto(classSignatureDto),
         )
-    )
+        return MethodDto(
+            signature = signature,
+            modifiers = emptyList(),
+            typeParameters = emptyList(),
+            body = body,
+        )
+    }
 
     fun isStaticField(field: FieldDto): Boolean {
         val modifiers = field.modifiers ?: return false
