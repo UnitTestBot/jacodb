@@ -62,154 +62,108 @@ fun EtsEntity.getOperands(): Sequence<EtsEntity> {
 }
 
 private object StmtGetOperands : EtsStmt.Visitor<Sequence<EtsEntity>> {
-    override fun visit(stmt: EtsNopStmt): Sequence<EtsEntity> = sequence {
-        // empty
-    }
+    override fun visit(stmt: EtsNopStmt): Sequence<EtsEntity> =
+        emptySequence()
 
-    override fun visit(stmt: EtsAssignStmt): Sequence<EtsEntity> = sequence {
-        yield(stmt.rhv)
-    }
+    override fun visit(stmt: EtsAssignStmt): Sequence<EtsEntity> =
+        sequenceOf(stmt.rhv)
 
-    override fun visit(stmt: EtsCallStmt): Sequence<EtsEntity> = sequence {
-        yield(stmt.expr)
-    }
+    override fun visit(stmt: EtsCallStmt): Sequence<EtsEntity> =
+        sequenceOf(stmt.expr)
 
-    override fun visit(stmt: EtsReturnStmt): Sequence<EtsEntity> = sequence {
-        if (stmt.returnValue != null) {
-            yield(stmt.returnValue)
-        }
-    }
+    override fun visit(stmt: EtsReturnStmt): Sequence<EtsEntity> =
+        listOfNotNull(stmt.returnValue).asSequence()
 
-    override fun visit(stmt: EtsThrowStmt): Sequence<EtsEntity> = sequence {
-        yield(stmt.arg)
-    }
+    override fun visit(stmt: EtsThrowStmt): Sequence<EtsEntity> =
+        sequenceOf(stmt.arg)
 
-    override fun visit(stmt: EtsGotoStmt): Sequence<EtsEntity> = sequence {
-        // empty
-    }
+    override fun visit(stmt: EtsGotoStmt): Sequence<EtsEntity> =
+        emptySequence()
 
-    override fun visit(stmt: EtsIfStmt): Sequence<EtsEntity> = sequence {
-        yield(stmt.condition)
-    }
+    override fun visit(stmt: EtsIfStmt): Sequence<EtsEntity> =
+        sequenceOf(stmt.condition)
 
-    override fun visit(stmt: EtsSwitchStmt): Sequence<EtsEntity> = sequence {
-        yield(stmt.arg)
-        yieldAll(stmt.cases)
-    }
+    override fun visit(stmt: EtsSwitchStmt): Sequence<EtsEntity>  =
+        sequenceOf(stmt.arg) + stmt.cases.asSequence()
 }
 
 private object EntityGetOperands : EtsEntity.Visitor<Sequence<EtsEntity>> {
-    override fun visit(value: EtsLocal): Sequence<EtsEntity> = sequence {
-        // empty
-    }
+    override fun visit(value: EtsLocal): Sequence<EtsEntity> =
+        emptySequence()
 
-    override fun visit(value: EtsStringConstant): Sequence<EtsEntity> = sequence {
-        // empty
-    }
+    override fun visit(value: EtsStringConstant): Sequence<EtsEntity> =
+        emptySequence()
 
-    override fun visit(value: EtsBooleanConstant): Sequence<EtsEntity> = sequence {
-        // empty
-    }
+    override fun visit(value: EtsBooleanConstant): Sequence<EtsEntity> =
+        emptySequence()
 
-    override fun visit(value: EtsNumberConstant): Sequence<EtsEntity> = sequence {
-        // empty
-    }
+    override fun visit(value: EtsNumberConstant): Sequence<EtsEntity> =
+        emptySequence()
 
-    override fun visit(value: EtsNullConstant): Sequence<EtsEntity> = sequence {
-        // empty
-    }
+    override fun visit(value: EtsNullConstant): Sequence<EtsEntity> =
+        emptySequence()
 
-    override fun visit(value: EtsUndefinedConstant): Sequence<EtsEntity> = sequence {
-        // empty
-    }
+    override fun visit(value: EtsUndefinedConstant): Sequence<EtsEntity> =
+        emptySequence()
 
-    override fun visit(value: EtsArrayLiteral): Sequence<EtsEntity> = sequence {
-        // TODO: check
-        for (element in value.elements) {
-            yield(element)
-        }
-    }
+    override fun visit(value: EtsArrayLiteral): Sequence<EtsEntity> =
+        value.elements.asSequence()
 
-    override fun visit(value: EtsObjectLiteral): Sequence<EtsEntity> = sequence {
-        // TODO: check
-        for ((_, v) in value.properties) {
-            yield(v)
-        }
-    }
+    // TODO: check
+    override fun visit(value: EtsObjectLiteral): Sequence<EtsEntity> =
+        value.properties.asSequence().map { it.second }
 
-    override fun visit(expr: EtsNewExpr): Sequence<EtsEntity> = sequence {
-        // empty
-    }
+    override fun visit(expr: EtsNewExpr): Sequence<EtsEntity> =
+        emptySequence()
 
-    override fun visit(expr: EtsNewArrayExpr): Sequence<EtsEntity> = sequence {
-        yield(expr.size)
-    }
+    override fun visit(expr: EtsNewArrayExpr): Sequence<EtsEntity> =
+        sequenceOf(expr.size)
 
-    override fun visit(expr: EtsDeleteExpr): Sequence<EtsEntity> = sequence {
-        yield(expr.arg)
-    }
+    override fun visit(expr: EtsDeleteExpr): Sequence<EtsEntity> =
+        sequenceOf(expr.arg)
 
-    override fun visit(expr: EtsTypeOfExpr): Sequence<EtsEntity> = sequence {
-        yield(expr.arg)
-    }
+    override fun visit(expr: EtsTypeOfExpr): Sequence<EtsEntity> =
+        sequenceOf(expr.arg)
 
-    override fun visit(expr: EtsInstanceOfExpr): Sequence<EtsEntity> = sequence {
-        yield(expr.arg)
-    }
+    override fun visit(expr: EtsInstanceOfExpr): Sequence<EtsEntity> =
+        sequenceOf(expr.arg)
 
-    override fun visit(expr: EtsLengthExpr): Sequence<EtsEntity> = sequence {
-        yield(expr.arg)
-    }
+    override fun visit(expr: EtsLengthExpr): Sequence<EtsEntity> =
+        sequenceOf(expr.arg)
 
-    override fun visit(expr: EtsCastExpr): Sequence<EtsEntity> = sequence {
-        yield(expr.arg)
-    }
+    override fun visit(expr: EtsCastExpr): Sequence<EtsEntity> =
+        sequenceOf(expr.arg)
 
-    override fun visit(expr: EtsPhiExpr): Sequence<EtsEntity> = sequence {
-        yieldAll(expr.args)
-    }
+    override fun visit(expr: EtsPhiExpr): Sequence<EtsEntity> =
+        expr.args.asSequence()
 
-    override fun visit(expr: EtsUnaryOperation): Sequence<EtsEntity> = sequence {
-        yield(expr.arg)
-    }
+    override fun visit(expr: EtsUnaryOperation): Sequence<EtsEntity> =
+        sequenceOf(expr.arg)
 
-    override fun visit(expr: EtsBinaryOperation): Sequence<EtsEntity> = sequence {
-        yield(expr.left)
-        yield(expr.right)
-    }
+    override fun visit(expr: EtsBinaryOperation): Sequence<EtsEntity> =
+        sequenceOf(expr.left, expr.right)
 
-    override fun visit(expr: EtsRelationOperation): Sequence<EtsEntity> = sequence {
-        yield(expr.left)
-        yield(expr.right)
-    }
+    override fun visit(expr: EtsRelationOperation): Sequence<EtsEntity> =
+        sequenceOf(expr.left, expr.right)
 
-    override fun visit(expr: EtsInstanceCallExpr): Sequence<EtsEntity> = sequence {
-        yield(expr.instance)
-        yieldAll(expr.args)
-    }
+    override fun visit(expr: EtsInstanceCallExpr): Sequence<EtsEntity> =
+        sequenceOf(expr.instance) + expr.args.asSequence()
 
-    override fun visit(expr: EtsStaticCallExpr): Sequence<EtsEntity> = sequence {
-        yieldAll(expr.args)
-    }
+    override fun visit(expr: EtsStaticCallExpr): Sequence<EtsEntity> =
+        expr.args.asSequence()
 
-    override fun visit(ref: EtsThis): Sequence<EtsEntity> = sequence {
-        // empty
-    }
+    override fun visit(ref: EtsThis): Sequence<EtsEntity> =
+        emptySequence()
 
-    override fun visit(ref: EtsParameterRef): Sequence<EtsEntity> = sequence {
-        // empty
-    }
+    override fun visit(ref: EtsParameterRef): Sequence<EtsEntity> =
+        emptySequence()
 
-    override fun visit(ref: EtsArrayAccess): Sequence<EtsEntity> = sequence {
-        yield(ref.array)
-        yield(ref.index)
-    }
+    override fun visit(ref: EtsArrayAccess): Sequence<EtsEntity> =
+        sequenceOf(ref.array, ref.index)
 
-    override fun visit(ref: EtsInstanceFieldRef): Sequence<EtsEntity> = sequence {
-        yield(ref.instance)
-    }
+    override fun visit(ref: EtsInstanceFieldRef): Sequence<EtsEntity> =
+        sequenceOf(ref.instance)
 
-    override fun visit(ref: EtsStaticFieldRef): Sequence<EtsEntity> = sequence {
-        // empty
-    }
+    override fun visit(ref: EtsStaticFieldRef): Sequence<EtsEntity> =
+        emptySequence()
 }

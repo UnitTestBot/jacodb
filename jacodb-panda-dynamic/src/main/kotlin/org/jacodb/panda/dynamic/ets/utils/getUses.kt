@@ -19,16 +19,8 @@ package org.jacodb.panda.dynamic.ets.utils
 import org.jacodb.panda.dynamic.ets.base.EtsEntity
 import org.jacodb.panda.dynamic.ets.base.EtsStmt
 
-fun EtsStmt.getUses(): Sequence<EtsEntity> = sequence {
-    for (op in getOperands()) {
-        yield(op)
-        yieldAll(op.getUses())
-    }
-}
+fun EtsStmt.getUses(): Sequence<EtsEntity> =
+    getOperands().flatMap { sequenceOf(it) + it.getUses() }
 
-fun EtsEntity.getUses(): Sequence<EtsEntity> = sequence {
-    for (op in getOperands()) {
-        yield(op)
-        yieldAll(op.getUses())
-    }
-}
+fun EtsEntity.getUses(): Sequence<EtsEntity> =
+    getOperands().flatMap { sequenceOf(it) + it.getUses() }
