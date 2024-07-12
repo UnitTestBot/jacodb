@@ -309,7 +309,7 @@ class EtsMethodBuilder(
             )
 
             is ThisRefDto -> EtsThis(
-                type = convertToEtsType(value.type) // TODO: as ClassType
+                type = convertToEtsType(value.type) as EtsClassType // safe cast
             )
 
             is ParameterRefDto -> EtsParameterRef(

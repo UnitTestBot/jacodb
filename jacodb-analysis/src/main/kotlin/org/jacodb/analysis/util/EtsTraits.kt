@@ -29,6 +29,7 @@ import org.jacodb.ets.base.EtsAnyType
 import org.jacodb.ets.base.EtsArrayAccess
 import org.jacodb.ets.base.EtsCallExpr
 import org.jacodb.ets.base.EtsCastExpr
+import org.jacodb.ets.base.EtsClassType
 import org.jacodb.ets.base.EtsConstant
 import org.jacodb.ets.base.EtsEntity
 import org.jacodb.ets.base.EtsImmediate
@@ -62,7 +63,7 @@ interface EtsTraits : Traits<EtsMethod, EtsStmt> {
         }
 
     override val EtsMethod.thisInstance: EtsThis
-        get() = EtsThis(EtsAnyType)
+        get() = EtsThis(EtsClassType(enclosingClass))
 
     override val EtsMethod.isConstructor: Boolean
         get() = name == "constructor"

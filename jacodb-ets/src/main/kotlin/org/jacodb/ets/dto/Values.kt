@@ -345,7 +345,7 @@ sealed interface RefDto : ValueDto
 @Serializable
 @SerialName("ThisRef")
 data class ThisRefDto(
-    override val type: TypeDto,
+    override val type: TypeDto, // ClassType
 ) : RefDto {
     override fun toString(): String {
         return "this"
