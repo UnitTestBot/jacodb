@@ -49,11 +49,11 @@ import org.jacodb.api.jvm.cfg.JcBinaryExpr
 import org.jacodb.api.jvm.cfg.JcCastExpr
 import org.jacodb.api.jvm.cfg.JcDynamicCallExpr
 import org.jacodb.api.jvm.cfg.JcNegExpr
-import org.jacodb.panda.dynamic.ets.base.EtsBinaryExpr
-import org.jacodb.panda.dynamic.ets.base.EtsCastExpr
-import org.jacodb.panda.dynamic.ets.base.EtsPhiExpr
-import org.jacodb.panda.dynamic.ets.base.EtsUnaryExpr
-import org.jacodb.panda.dynamic.ets.utils.getOperands
+import org.jacodb.ets.base.EtsBinaryExpr
+import org.jacodb.ets.base.EtsCastExpr
+import org.jacodb.ets.base.EtsPhiExpr
+import org.jacodb.ets.base.EtsUnaryExpr
+import org.jacodb.ets.utils.getOperands
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.CopyAllMarks
 import org.jacodb.taint.configuration.CopyMark

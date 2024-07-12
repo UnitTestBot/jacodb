@@ -28,10 +28,10 @@ import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.jvm.cfg.JcInst
-import org.jacodb.panda.dynamic.ets.base.EtsStmt
+import org.jacodb.ets.base.EtsStmt
 import java.util.concurrent.ConcurrentHashMap
 import org.jacodb.api.jvm.ext.cfg.callExpr as jcCallExpr
-import org.jacodb.panda.dynamic.ets.utils.callExpr as etsCallExpr
+import org.jacodb.ets.utils.callExpr as etsCallExpr
 import org.jacodb.panda.staticvm.cfg.PandaInst as StaticPandaInst
 import org.jacodb.panda.staticvm.utils.callExpr as staticPandaCallExpr
 

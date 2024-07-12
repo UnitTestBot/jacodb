@@ -25,28 +25,28 @@ import org.jacodb.api.common.cfg.CommonArgument
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonValue
-import org.jacodb.panda.dynamic.ets.base.EtsAnyType
-import org.jacodb.panda.dynamic.ets.base.EtsArrayAccess
-import org.jacodb.panda.dynamic.ets.base.EtsCallExpr
-import org.jacodb.panda.dynamic.ets.base.EtsCastExpr
-import org.jacodb.panda.dynamic.ets.base.EtsConstant
-import org.jacodb.panda.dynamic.ets.base.EtsEntity
-import org.jacodb.panda.dynamic.ets.base.EtsImmediate
-import org.jacodb.panda.dynamic.ets.base.EtsInstanceFieldRef
-import org.jacodb.panda.dynamic.ets.base.EtsParameterRef
-import org.jacodb.panda.dynamic.ets.base.EtsStaticFieldRef
-import org.jacodb.panda.dynamic.ets.base.EtsStmt
-import org.jacodb.panda.dynamic.ets.base.EtsThis
-import org.jacodb.panda.dynamic.ets.base.EtsValue
-import org.jacodb.panda.dynamic.ets.model.EtsMethod
-import org.jacodb.panda.dynamic.ets.model.EtsMethodImpl
-import org.jacodb.panda.dynamic.ets.model.EtsMethodParameter
-import org.jacodb.panda.dynamic.ets.utils.callExpr
+import org.jacodb.ets.base.EtsAnyType
+import org.jacodb.ets.base.EtsArrayAccess
+import org.jacodb.ets.base.EtsCallExpr
+import org.jacodb.ets.base.EtsCastExpr
+import org.jacodb.ets.base.EtsConstant
+import org.jacodb.ets.base.EtsEntity
+import org.jacodb.ets.base.EtsImmediate
+import org.jacodb.ets.base.EtsInstanceFieldRef
+import org.jacodb.ets.base.EtsParameterRef
+import org.jacodb.ets.base.EtsStaticFieldRef
+import org.jacodb.ets.base.EtsStmt
+import org.jacodb.ets.base.EtsThis
+import org.jacodb.ets.base.EtsValue
+import org.jacodb.ets.model.EtsMethod
+import org.jacodb.ets.model.EtsMethodImpl
+import org.jacodb.ets.model.EtsMethodParameter
+import org.jacodb.ets.utils.callExpr
 import org.jacodb.taint.configuration.ConstantValue
 import org.jacodb.analysis.util.toPath as _toPath
 import org.jacodb.analysis.util.toPathOrNull as _toPathOrNull
-import org.jacodb.panda.dynamic.ets.utils.getOperands as _getOperands
-import org.jacodb.panda.dynamic.ets.utils.getValues as _getValues
+import org.jacodb.ets.utils.getOperands as _getOperands
+import org.jacodb.ets.utils.getValues as _getValues
 
 interface EtsTraits : Traits<EtsMethod, EtsStmt> {
 
@@ -93,7 +93,7 @@ interface EtsTraits : Traits<EtsMethod, EtsStmt> {
 
     override fun CommonValue.isConstant(): Boolean {
         check(this is EtsEntity)
-        return this is EtsConstant
+        return this is org.jacodb.ets.base.EtsConstant
     }
 
     override fun CommonValue.eqConstant(constant: ConstantValue): Boolean {

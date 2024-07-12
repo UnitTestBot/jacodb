@@ -162,7 +162,7 @@ if (!repoUrl.isNullOrEmpty()) {
             project(":jacodb-analysis"),
             project(":jacodb-approximations"),
             project(":jacodb-taint-configuration"),
-            project(":jacodb-panda-dynamic"),
+            project(":jacodb-ets"),
             project(":jacodb-panda-static"),
         )
     ) {
