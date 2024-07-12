@@ -334,7 +334,7 @@ class EtsMethodBuilder(
         return when (fieldRef) {
             is InstanceFieldRefDto -> EtsInstanceFieldRef(
                 instance = convertToEtsEntity(fieldRef.instance), // as Local
-                field = field
+                field = field,
             )
 
             is StaticFieldRefDto -> EtsStaticFieldRef(
@@ -626,7 +626,6 @@ fun convertToEtsBinaryOp(op: String): BinaryOp {
         "instanceof" -> BinaryOp.InstanceOf
         "**" -> BinaryOp.Exp
         "??" -> BinaryOp.NullishCoalescing
-
         else -> error("Unknown BinaryOp: $op")
     }
 }
