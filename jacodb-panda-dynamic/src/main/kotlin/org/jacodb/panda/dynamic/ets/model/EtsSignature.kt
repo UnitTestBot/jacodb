@@ -19,13 +19,18 @@ package org.jacodb.panda.dynamic.ets.model
 import org.jacodb.api.common.CommonMethodParameter
 import org.jacodb.panda.dynamic.ets.base.EtsType
 
+/**
+ * Precompiled [Regex] for `.d.ts` and `.ts` file extensions.
+ */
+private val REGEX_TS_SUFFIX: Regex = """(\.d\.ts|\.ts)$""".toRegex()
+
 data class EtsFileSignature(
     val projectName: String,
     val fileName: String,
 ) {
     override fun toString(): String {
         // Remove ".d.ts" and ".ts" file ext:
-        val tmp = fileName.replace("""(\.d\.ts|\.ts)$""".toRegex(), "")
+        val tmp = fileName.replace(REGEX_TS_SUFFIX, "")
         return "@$projectName/$tmp"
     }
 }
