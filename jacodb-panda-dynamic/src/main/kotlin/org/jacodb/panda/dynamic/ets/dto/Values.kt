@@ -391,7 +391,7 @@ data class InstanceFieldRefDto(
     override val field: FieldSignatureDto,
 ) : FieldRefDto {
     override fun toString(): String {
-        return "$instance.$field"
+        return "$instance.${field.name}"
     }
 }
 
