@@ -42,7 +42,7 @@ class EtsFileTest {
     @Disabled("Run manually, if needed")
     @Test
     fun dumpDot() {
-        val etsFileDto = loadDto("/etsir/samples/object.ts.json")
+        val etsFileDto = loadDto("$BASE_PATH/object.ts.json")
         etsFileDto.classes.forEach { cls ->
             cls.methods.forEach { method ->
                 logger.info {
