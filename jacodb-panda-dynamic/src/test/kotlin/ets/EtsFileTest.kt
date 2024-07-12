@@ -39,28 +39,6 @@ class EtsFileTest {
         }
     }
 
-    @Disabled("Run manually, if needed")
-    @Test
-    fun dumpDot() {
-        val etsFileDto = loadDto("$BASE_PATH/object.ts.json")
-        etsFileDto.classes.forEach { cls ->
-            cls.methods.forEach { method ->
-                logger.info {
-                    "Method '${method.signature}', locals = ${method.body.locals}, typeParameters = ${method.typeParameters}, blocks: ${method.body.cfg.blocks.size}"
-                }
-                method.body.cfg.blocks.forEach { block ->
-                    logger.info { "BLOCK ${block.id}" }
-                    block.stmts.forEachIndexed { i, inst ->
-                        logger.info { "${i + 1}. $inst" }
-                    }
-                    logger.info { "-----" }
-                }
-            }
-        }
-        etsFileDto.dumpDot("object.ts.json.dot")
-        Runtime.getRuntime().exec("dot -Tpdf -O object.ts.json.dot")
-    }
-
     @Test
     fun printEtsInstructions() {
         val etsFile = loadSample("classes/SimpleClass")
@@ -121,5 +99,27 @@ class EtsFileTest {
         val fieldRef = fieldInit.lhv as EtsInstanceFieldRef
         Assertions.assertTrue(fieldRef.instance is EtsThis)
         Assertions.assertEquals("x", fieldRef.field.name)
+    }
+
+    @Disabled("Run manually, if needed")
+    @Test
+    fun dumpDot() {
+        val etsFileDto = loadDto("$BASE_PATH/object.ts.json")
+        etsFileDto.classes.forEach { cls ->
+            cls.methods.forEach { method ->
+                logger.info {
+                    "Method '${method.signature}', locals = ${method.body.locals}, typeParameters = ${method.typeParameters}, blocks: ${method.body.cfg.blocks.size}"
+                }
+                method.body.cfg.blocks.forEach { block ->
+                    logger.info { "BLOCK ${block.id}" }
+                    block.stmts.forEachIndexed { i, inst ->
+                        logger.info { "${i + 1}. $inst" }
+                    }
+                    logger.info { "-----" }
+                }
+            }
+        }
+        etsFileDto.dumpDot("object.ts.json.dot")
+        Runtime.getRuntime().exec("dot -Tpdf -O object.ts.json.dot")
     }
 }
