@@ -74,7 +74,7 @@ data class TupleTypeDto(
     val types: List<TypeDto>,
 ) : TypeDto {
     override fun toString(): String {
-        return "[${types.joinToString(", ")}]"
+        return "[${types.joinToString()}]"
     }
 }
 
@@ -101,7 +101,7 @@ object NumberTypeDto : PrimitiveTypeDto {
         get() = "number"
 
     override fun toString(): String {
-        return BooleanTypeDto.name
+        return name
     }
 }
 
@@ -112,7 +112,7 @@ object StringTypeDto : PrimitiveTypeDto {
         get() = "string"
 
     override fun toString(): String {
-        return BooleanTypeDto.name
+        return name
     }
 }
 
@@ -123,7 +123,7 @@ object NullTypeDto : PrimitiveTypeDto {
         get() = "null"
 
     override fun toString(): String {
-        return BooleanTypeDto.name
+        return name
     }
 }
 
@@ -134,7 +134,7 @@ object UndefinedTypeDto : PrimitiveTypeDto {
         get() = "undefined"
 
     override fun toString(): String {
-        return BooleanTypeDto.name
+        return name
     }
 }
 
