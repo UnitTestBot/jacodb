@@ -64,22 +64,35 @@ data class ConstantDto(
     }
 }
 
+// TODO: uncomment and adapt the following code for different constants
+//       Currently, ArkIR stores all constants as strings (see ConstantDto above),
+//       but some day this is going to be fixed.
+//       I expect that the solution on the arkanalyzer's side to be similar to the one below,
+//       so I'm keeping it here for future reference.
+//
+// @Serializable
+// sealed interface ConstantDto: ImmediateDto
+//
 // @Serializable
 // @SerialName("StringConstant")
-// data class StringConstant(
+// data class StringConstantDto(
 //     val value: String,
-// ) : Constant {
+// ) : ConstantDto {
 //     override val type: Type
 //         get() = StringType
+//
+//     override fun toString(): String = "\"$value\""
 // }
 //
 // @Serializable
 // @SerialName("BooleanConstant")
-// data class BooleanConstant(
+// data class BooleanConstantDto(
 //     val value: Boolean,
-// ) : Constant {
+// ) : ConstantDto {
 //     override val type: Type
 //         get() = BooleanType
+//
+//     override fun toString(): String = value.toString()
 //
 //     companion object {
 //         val TRUE = BooleanConstant(true)
@@ -89,45 +102,32 @@ data class ConstantDto(
 //
 // @Serializable
 // @SerialName("NumberConstant")
-// data class NumberConstant(
+// data class NumberConstantDto(
 //     val value: Double,
-// ) : Constant {
+// ) : ConstantDto {
 //     override val type: Type
 //         get() = NumberType
+//
+//     override fun toString(): String = value.toString()
 // }
 //
 // @Serializable
 // @SerialName("NullConstant")
-// object NullConstant : Constant {
+// object NullConstantDto : ConstantDto {
 //     override val type: Type
 //         get() = NullType
 //
-//     override fun toString(): String = javaClass.simpleName
+//     override fun toString(): String = "null"
 // }
 //
 // @Serializable
 // @SerialName("UndefinedConstant")
-// object UndefinedConstant : Constant {
+// object UndefinedConstantDto : ConstantDto {
 //     override val type: Type
 //         get() = UndefinedType
 //
-//     override fun toString(): String = javaClass.simpleName
+//     override fun toString(): String = "undefined"
 // }
-
-// @Serializable
-// @SerialName("ArrayLiteral")
-// data class ArrayLiteral(
-//     val elements: List<Value>,
-//     override val type: ArrayType,
-// ) : Constant
-//
-// @Serializable
-// @SerialName("ObjectLiteral")
-// data class ObjectLiteral(
-//     val keys: List<String>,
-//     val values: List<Value>,
-//     override val type: Type,
-// ) : Constant
 
 @Serializable
 sealed interface ExprDto : ValueDto
