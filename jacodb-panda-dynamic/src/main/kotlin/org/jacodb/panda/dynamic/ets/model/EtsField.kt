@@ -25,10 +25,10 @@ interface EtsField {
     val signature: EtsFieldSignature
 
     val name: String
-        get() = signature.sub.name
+        get() = signature.name
 
     val type: EtsType
-        get() = signature.sub.type
+        get() = signature.type
 }
 
 class EtsFieldImpl(

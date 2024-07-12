@@ -87,7 +87,7 @@ interface EtsFieldRef : EtsRef, EtsLValue {
     val field: EtsFieldSignature
 
     override val type: EtsType
-        get() = this.field.sub.type
+        get() = this.field.type
 }
 
 data class EtsInstanceFieldRef(
@@ -95,7 +95,7 @@ data class EtsInstanceFieldRef(
     override val field: EtsFieldSignature,
 ) : EtsFieldRef {
     override fun toString(): String {
-        return "$instance.${field.sub.name}"
+        return "$instance.${field.name}"
     }
 
     override fun <R> accept(visitor: EtsRef.Visitor<R>): R {
@@ -107,7 +107,7 @@ data class EtsStaticFieldRef(
     override val field: EtsFieldSignature,
 ) : EtsFieldRef {
     override fun toString(): String {
-        return "${field.enclosingClass.name}.${field.sub.name}"
+        return "${field.enclosingClass.name}.${field.name}"
     }
 
     override fun <R> accept(visitor: EtsRef.Visitor<R>): R {
