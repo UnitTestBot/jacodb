@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "user",
-            "fieldType": {
+            "type": {
               "_": "ClassType",
               "signature": {
                 "name": "User"
@@ -36,7 +36,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "console",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -274,7 +274,7 @@
                             "name": "User"
                           },
                           "name": "name",
-                          "fieldType": {
+                          "type": {
                             "_": "StringType"
                           }
                         }
@@ -338,7 +338,7 @@
               "name": "User"
             },
             "name": "username",
-            "fieldType": {
+            "type": {
               "_": "StringType"
             }
           },
@@ -356,7 +356,7 @@
               "name": "User"
             },
             "name": "email",
-            "fieldType": {
+            "type": {
               "_": "StringType"
             }
           },
@@ -374,7 +374,7 @@
               "name": "User"
             },
             "name": "name",
-            "fieldType": {
+            "type": {
               "_": "StringType"
             }
           },
@@ -552,7 +552,7 @@
                             "name": ""
                           },
                           "name": "username",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -584,7 +584,7 @@
                             "name": ""
                           },
                           "name": "email",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -616,7 +616,7 @@
                             "name": ""
                           },
                           "name": "name",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }

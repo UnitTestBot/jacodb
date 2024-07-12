@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "childObj",
-            "fieldType": {
+            "type": {
               "_": "ClassType",
               "signature": {
                 "name": "ChildClass"
@@ -36,7 +36,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "console",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -398,7 +398,7 @@
               "name": "ParentClass"
             },
             "name": "name",
-            "fieldType": {
+            "type": {
               "_": "StringType"
             }
           },
@@ -516,7 +516,7 @@
                             "name": ""
                           },
                           "name": "name",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -624,7 +624,7 @@
                             "name": ""
                           },
                           "name": "name",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -663,7 +663,7 @@
               "name": "ChildClass"
             },
             "name": "age",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -837,7 +837,7 @@
                             "name": ""
                           },
                           "name": "age",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -945,7 +945,7 @@
                             "name": ""
                           },
                           "name": "age",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }

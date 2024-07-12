@@ -92,7 +92,7 @@
               "name": "Foo"
             },
             "name": "x",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -114,7 +114,7 @@
               "name": "Foo"
             },
             "name": "y",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -317,7 +317,7 @@
                             "name": ""
                           },
                           "name": "y",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -452,7 +452,7 @@
                             "name": ""
                           },
                           "name": "y",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }

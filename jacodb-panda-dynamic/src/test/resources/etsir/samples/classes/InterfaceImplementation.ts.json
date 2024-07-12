@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "circle",
-            "fieldType": {
+            "type": {
               "_": "ClassType",
               "signature": {
                 "name": "Circle"
@@ -36,7 +36,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "console",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -396,7 +396,7 @@
               "name": "Circle"
             },
             "name": "radius",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -515,7 +515,7 @@
                             "name": ""
                           },
                           "name": "radius",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -644,7 +644,7 @@
                             "name": ""
                           },
                           "name": "PI",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -676,7 +676,7 @@
                             "name": ""
                           },
                           "name": "radius",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }

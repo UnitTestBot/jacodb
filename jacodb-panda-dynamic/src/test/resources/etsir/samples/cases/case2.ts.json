@@ -442,7 +442,7 @@
               "name": "Size"
             },
             "name": "height",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -458,7 +458,7 @@
               "name": "Size"
             },
             "name": "width",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -659,7 +659,7 @@
               "name": "AnonymousClass-onRemoteMessageRequest-0"
             },
             "name": "height",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -681,7 +681,7 @@
               "name": "AnonymousClass-onRemoteMessageRequest-0"
             },
             "name": "width",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },

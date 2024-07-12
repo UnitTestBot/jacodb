@@ -354,7 +354,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     }
@@ -521,7 +521,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     }

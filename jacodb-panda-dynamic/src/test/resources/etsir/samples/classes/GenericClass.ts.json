@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "stringObj",
-            "fieldType": {
+            "type": {
               "_": "ClassType",
               "signature": {
                 "name": "GenericClass"
@@ -36,7 +36,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "console",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -52,7 +52,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "numberObj",
-            "fieldType": {
+            "type": {
               "_": "ClassType",
               "signature": {
                 "name": "GenericClass"
@@ -518,7 +518,7 @@
               "name": "GenericClass"
             },
             "name": "data",
-            "fieldType": {
+            "type": {
               "_": "UnclearReferenceType",
               "name": "T"
             }
@@ -642,7 +642,7 @@
                             "name": ""
                           },
                           "name": "data",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -752,7 +752,7 @@
                             "name": ""
                           },
                           "name": "data",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }

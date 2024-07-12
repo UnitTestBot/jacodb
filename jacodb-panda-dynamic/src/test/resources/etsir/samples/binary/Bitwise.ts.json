@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "a",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -33,7 +33,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "b",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -49,7 +49,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "andResult",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -65,7 +65,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "orResult",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -81,7 +81,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "xorResult",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -97,7 +97,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "notResult",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -113,7 +113,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "leftShiftResult",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -129,7 +129,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "rightShiftResult",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -145,7 +145,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "unsignedRightShiftResult",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -161,7 +161,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "c",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -177,7 +177,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "unsignedRightShiftNegativeResult",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },

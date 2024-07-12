@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "rectangle",
-            "fieldType": {
+            "type": {
               "_": "ClassType",
               "signature": {
                 "name": "Rectangle"
@@ -36,7 +36,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "console",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -405,7 +405,7 @@
               "name": "Rectangle"
             },
             "name": "width",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -421,7 +421,7 @@
               "name": "Rectangle"
             },
             "name": "height",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -584,7 +584,7 @@
                             "name": ""
                           },
                           "name": "width",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -616,7 +616,7 @@
                             "name": ""
                           },
                           "name": "height",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -736,7 +736,7 @@
                             "name": ""
                           },
                           "name": "width",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -768,7 +768,7 @@
                             "name": ""
                           },
                           "name": "height",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }

@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "result",
-            "fieldType": {
+            "type": {
               "_": "StringType"
             }
           },
@@ -33,7 +33,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "message",
-            "fieldType": {
+            "type": {
               "_": "StringType"
             }
           },
@@ -49,7 +49,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "console",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },

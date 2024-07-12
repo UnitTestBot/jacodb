@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "person",
-            "fieldType": {
+            "type": {
               "_": "ClassType",
               "signature": {
                 "name": "AnonymousClass-_DEFAULT_ARK_METHOD-0"
@@ -36,7 +36,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "key",
-            "fieldType": {
+            "type": {
               "_": "UndefinedType"
             }
           },
@@ -52,7 +52,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "console",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -469,7 +469,7 @@
                               "name": "AnonymousClass-_DEFAULT_ARK_METHOD-0"
                             },
                             "name": "key",
-                            "fieldType": {
+                            "type": {
                               "_": "UnknownType"
                             }
                           }
@@ -559,7 +559,7 @@
               "name": "AnonymousClass-_DEFAULT_ARK_METHOD-0"
             },
             "name": "firstName",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -581,7 +581,7 @@
               "name": "AnonymousClass-_DEFAULT_ARK_METHOD-0"
             },
             "name": "lastName",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -603,7 +603,7 @@
               "name": "AnonymousClass-_DEFAULT_ARK_METHOD-0"
             },
             "name": "age",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },

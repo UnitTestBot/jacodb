@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "tree",
-            "fieldType": {
+            "type": {
               "_": "ClassType",
               "signature": {
                 "name": "TreeNode"
@@ -36,7 +36,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "traversalResult",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -52,7 +52,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "iterativeDFS",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -68,7 +68,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "console",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -594,7 +594,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     }
@@ -846,7 +846,7 @@
                             "name": ""
                           },
                           "name": "length",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -872,7 +872,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     }
@@ -967,7 +967,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     }
@@ -1006,7 +1006,7 @@
                             "name": ""
                           },
                           "name": "value",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -1071,7 +1071,7 @@
                             "name": ""
                           },
                           "name": "right",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -1097,7 +1097,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     }
@@ -1137,7 +1137,7 @@
                             "name": ""
                           },
                           "name": "left",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -1163,7 +1163,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     }
@@ -1201,7 +1201,7 @@
                             "name": ""
                           },
                           "name": "left",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -1278,7 +1278,7 @@
                             "name": ""
                           },
                           "name": "right",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -1396,7 +1396,7 @@
               "name": "TreeNode"
             },
             "name": "value",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -1412,7 +1412,7 @@
               "name": "TreeNode"
             },
             "name": "left",
-            "fieldType": {
+            "type": {
               "_": "UnclearReferenceType",
               "name": "TreeNode"
             }
@@ -1429,7 +1429,7 @@
               "name": "TreeNode"
             },
             "name": "right",
-            "fieldType": {
+            "type": {
               "_": "UnclearReferenceType",
               "name": "TreeNode"
             }
@@ -1458,7 +1458,7 @@
               "name": "AnonymousClass-2"
             },
             "name": "value",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1492,7 +1492,7 @@
               "name": "AnonymousClass-3"
             },
             "name": "value",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1526,7 +1526,7 @@
               "name": "AnonymousClass-1"
             },
             "name": "value",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1548,7 +1548,7 @@
               "name": "AnonymousClass-1"
             },
             "name": "left",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1572,7 +1572,7 @@
               "name": "AnonymousClass-1"
             },
             "name": "right",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1608,7 +1608,7 @@
               "name": "AnonymousClass-5"
             },
             "name": "value",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1642,7 +1642,7 @@
               "name": "AnonymousClass-6"
             },
             "name": "value",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1676,7 +1676,7 @@
               "name": "AnonymousClass-4"
             },
             "name": "value",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1698,7 +1698,7 @@
               "name": "AnonymousClass-4"
             },
             "name": "left",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1722,7 +1722,7 @@
               "name": "AnonymousClass-4"
             },
             "name": "right",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1758,7 +1758,7 @@
               "name": "AnonymousClass-_DEFAULT_ARK_METHOD-0"
             },
             "name": "value",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1780,7 +1780,7 @@
               "name": "AnonymousClass-_DEFAULT_ARK_METHOD-0"
             },
             "name": "left",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1804,7 +1804,7 @@
               "name": "AnonymousClass-_DEFAULT_ARK_METHOD-0"
             },
             "name": "right",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },

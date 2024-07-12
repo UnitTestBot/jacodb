@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "c",
-            "fieldType": {
+            "type": {
               "_": "ClassType",
               "signature": {
                 "name": "Circle"
@@ -36,7 +36,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "a2",
-            "fieldType": {
+            "type": {
               "_": "AnyType"
             }
           },
@@ -52,7 +52,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "nameOfA",
-            "fieldType": {
+            "type": {
               "_": "AnyType"
             }
           },
@@ -68,7 +68,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "directions",
-            "fieldType": {
+            "type": {
               "_": "ArrayType",
               "elementType": {
                 "_": "UnknownType"
@@ -88,7 +88,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "Response1",
-            "fieldType": {
+            "type": {
               "_": "ClassType",
               "signature": {
                 "name": "Response1"
@@ -107,7 +107,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "respond",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -123,7 +123,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -139,7 +139,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "E",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -155,7 +155,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "f",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -171,7 +171,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "Enum",
-            "fieldType": {
+            "type": {
               "_": "ClassType",
               "signature": {
                 "name": "Enum"
@@ -190,7 +190,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "Directions",
-            "fieldType": {
+            "type": {
               "_": "ClassType",
               "signature": {
                 "name": "Directions"
@@ -582,11 +582,8 @@
                             "name": "Response1"
                           },
                           "name": "Yes",
-                          "fieldType": {
-                            "_": "ClassType",
-                            "signature": {
-                              "name": "Response1"
-                            }
+                          "type": {
+                            "_": "UnknownType"
                           }
                         }
                       }
@@ -708,11 +705,8 @@
                             "name": "Enum"
                           },
                           "name": "A",
-                          "fieldType": {
-                            "_": "ClassType",
-                            "signature": {
-                              "name": "Enum"
-                            }
+                          "type": {
+                            "_": "UnknownType"
                           }
                         }
                       }
@@ -743,7 +737,7 @@
                             "name": "Enum"
                           },
                           "name": "a2",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -765,11 +759,8 @@
                             "name": "Directions"
                           },
                           "name": "Up",
-                          "fieldType": {
-                            "_": "ClassType",
-                            "signature": {
-                              "name": "Directions"
-                            }
+                          "type": {
+                            "_": "UnknownType"
                           }
                         }
                       }
@@ -790,11 +781,8 @@
                             "name": "Directions"
                           },
                           "name": "Down",
-                          "fieldType": {
-                            "_": "ClassType",
-                            "signature": {
-                              "name": "Directions"
-                            }
+                          "type": {
+                            "_": "UnknownType"
                           }
                         }
                       }
@@ -815,11 +803,8 @@
                             "name": "Directions"
                           },
                           "name": "Left",
-                          "fieldType": {
-                            "_": "ClassType",
-                            "signature": {
-                              "name": "Directions"
-                            }
+                          "type": {
+                            "_": "UnknownType"
                           }
                         }
                       }
@@ -840,11 +825,8 @@
                             "name": "Directions"
                           },
                           "name": "Right",
-                          "fieldType": {
-                            "_": "ClassType",
-                            "signature": {
-                              "name": "Directions"
-                            }
+                          "type": {
+                            "_": "UnknownType"
                           }
                         }
                       }
@@ -1194,7 +1176,7 @@
                             "name": ""
                           },
                           "name": "X",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -1233,7 +1215,7 @@
               "name": "Direction1"
             },
             "name": "Up",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1251,7 +1233,7 @@
               "name": "Direction1"
             },
             "name": "Down",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1269,7 +1251,7 @@
               "name": "Direction1"
             },
             "name": "Left",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1287,7 +1269,7 @@
               "name": "Direction1"
             },
             "name": "Right",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1317,7 +1299,7 @@
               "name": "Direction2"
             },
             "name": "Up",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1335,7 +1317,7 @@
               "name": "Direction2"
             },
             "name": "Down",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1353,7 +1335,7 @@
               "name": "Direction2"
             },
             "name": "Left",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1371,7 +1353,7 @@
               "name": "Direction2"
             },
             "name": "Right",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1401,7 +1383,7 @@
               "name": "BooleanLikeHeterogeneousEnum"
             },
             "name": "No",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1419,7 +1401,7 @@
               "name": "BooleanLikeHeterogeneousEnum"
             },
             "name": "Yes",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1449,7 +1431,7 @@
               "name": "E1"
             },
             "name": "X",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1467,7 +1449,7 @@
               "name": "E1"
             },
             "name": "Y",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1485,7 +1467,7 @@
               "name": "E1"
             },
             "name": "Z",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1515,7 +1497,7 @@
               "name": "E2"
             },
             "name": "A",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1533,7 +1515,7 @@
               "name": "E2"
             },
             "name": "B",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1551,7 +1533,7 @@
               "name": "E2"
             },
             "name": "C",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1581,7 +1563,7 @@
               "name": "FileAccess"
             },
             "name": "None",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1599,7 +1581,7 @@
               "name": "FileAccess"
             },
             "name": "Read",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1617,7 +1599,7 @@
               "name": "FileAccess"
             },
             "name": "Write",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1635,7 +1617,7 @@
               "name": "FileAccess"
             },
             "name": "ReadWrite",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1653,7 +1635,7 @@
               "name": "FileAccess"
             },
             "name": "G",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1683,7 +1665,7 @@
               "name": "Response1"
             },
             "name": "No",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1701,11 +1683,8 @@
               "name": "Response1"
             },
             "name": "Yes",
-            "fieldType": {
-              "_": "ClassType",
-              "signature": {
-                "name": "Response1"
-              }
+            "type": {
+              "_": "UnknownType"
             }
           },
           "modifiers": [
@@ -1734,7 +1713,7 @@
               "name": "ShapeKind"
             },
             "name": "Circle",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1752,7 +1731,7 @@
               "name": "ShapeKind"
             },
             "name": "Square",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1782,7 +1761,7 @@
               "name": "Circle"
             },
             "name": "kind",
-            "fieldType": {
+            "type": {
               "_": "UnclearReferenceType",
               "name": "ShapeKind.Circle"
             }
@@ -1799,7 +1778,7 @@
               "name": "Circle"
             },
             "name": "radius",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -1827,7 +1806,7 @@
               "name": "Square"
             },
             "name": "kind",
-            "fieldType": {
+            "type": {
               "_": "UnclearReferenceType",
               "name": "ShapeKind.Square"
             }
@@ -1844,7 +1823,7 @@
               "name": "Square"
             },
             "name": "sideLength",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -1872,7 +1851,7 @@
               "name": "E"
             },
             "name": "X",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1890,7 +1869,7 @@
               "name": "E"
             },
             "name": "Y",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1908,7 +1887,7 @@
               "name": "E"
             },
             "name": "Z",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1940,11 +1919,8 @@
               "name": "Enum"
             },
             "name": "A",
-            "fieldType": {
-              "_": "ClassType",
-              "signature": {
-                "name": "Enum"
-              }
+            "type": {
+              "_": "UnknownType"
             }
           },
           "modifiers": [
@@ -1975,11 +1951,8 @@
               "name": "Directions"
             },
             "name": "Up",
-            "fieldType": {
-              "_": "ClassType",
-              "signature": {
-                "name": "Directions"
-              }
+            "type": {
+              "_": "UnknownType"
             }
           },
           "modifiers": [
@@ -1996,11 +1969,8 @@
               "name": "Directions"
             },
             "name": "Down",
-            "fieldType": {
-              "_": "ClassType",
-              "signature": {
-                "name": "Directions"
-              }
+            "type": {
+              "_": "UnknownType"
             }
           },
           "modifiers": [
@@ -2017,11 +1987,8 @@
               "name": "Directions"
             },
             "name": "Left",
-            "fieldType": {
-              "_": "ClassType",
-              "signature": {
-                "name": "Directions"
-              }
+            "type": {
+              "_": "UnknownType"
             }
           },
           "modifiers": [
@@ -2038,11 +2005,8 @@
               "name": "Directions"
             },
             "name": "Right",
-            "fieldType": {
-              "_": "ClassType",
-              "signature": {
-                "name": "Directions"
-              }
+            "type": {
+              "_": "UnknownType"
             }
           },
           "modifiers": [

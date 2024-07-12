@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "graph",
-            "fieldType": {
+            "type": {
               "_": "ArrayType",
               "elementType": {
                 "_": "UnionType",
@@ -67,7 +67,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "dijkstra",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -83,7 +83,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "console",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -985,37 +985,7 @@
                       "right": {
                         "_": "NewArrayExpr",
                         "elementType": {
-                          "_": "UnionType",
-                          "types": [
-                            {
-                              "_": "ArrayType",
-                              "elementType": {
-                                "_": "NumberType"
-                              },
-                              "dimensions": 1
-                            },
-                            {
-                              "_": "ArrayType",
-                              "elementType": {
-                                "_": "NumberType"
-                              },
-                              "dimensions": 1
-                            },
-                            {
-                              "_": "ArrayType",
-                              "elementType": {
-                                "_": "NumberType"
-                              },
-                              "dimensions": 1
-                            },
-                            {
-                              "_": "ArrayType",
-                              "elementType": {
-                                "_": "NumberType"
-                              },
-                              "dimensions": 1
-                            }
-                          ]
+                          "_": "AnyType"
                         },
                         "size": {
                           "_": "Constant",
@@ -1804,13 +1774,13 @@
               {
                 "name": "$temp8",
                 "type": {
-                  "_": "BooleanType"
+                  "_": "UnknownType"
                 }
               },
               {
                 "name": "$temp9",
                 "type": {
-                  "_": "BooleanType"
+                  "_": "UnknownType"
                 }
               },
               {
@@ -1846,13 +1816,13 @@
               {
                 "name": "$temp15",
                 "type": {
-                  "_": "BooleanType"
+                  "_": "UnknownType"
                 }
               },
               {
                 "name": "$temp16",
                 "type": {
-                  "_": "BooleanType"
+                  "_": "UnknownType"
                 }
               },
               {
@@ -1888,13 +1858,13 @@
               {
                 "name": "$temp22",
                 "type": {
-                  "_": "BooleanType"
+                  "_": "UnknownType"
                 }
               },
               {
                 "name": "$temp23",
                 "type": {
-                  "_": "BooleanType"
+                  "_": "UnknownType"
                 }
               },
               {
@@ -2022,7 +1992,7 @@
                               "name": ""
                             },
                             "name": "length",
-                            "fieldType": {
+                            "type": {
                               "_": "UnknownType"
                             }
                           }
@@ -2143,7 +2113,7 @@
                               "name": ""
                             },
                             "name": "length",
-                            "fieldType": {
+                            "type": {
                               "_": "UnknownType"
                             }
                           }
@@ -2251,7 +2221,7 @@
                             "name": ""
                           },
                           "name": "length",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -2305,7 +2275,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     },
@@ -2464,7 +2434,7 @@
                             "name": ""
                           },
                           "name": "length",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -2490,7 +2460,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     },
@@ -2622,7 +2592,7 @@
                             "name": ""
                           },
                           "name": "length",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -2648,7 +2618,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     },
@@ -2771,7 +2741,7 @@
                             "name": ""
                           },
                           "name": "minIndex",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -2800,7 +2770,7 @@
                             "name": ""
                           },
                           "name": "v",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -2812,7 +2782,7 @@
                         "_": "Local",
                         "name": "$temp15",
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       },
                       "right": {
@@ -2840,7 +2810,7 @@
                         "_": "Local",
                         "name": "$temp16",
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       },
                       "right": {
@@ -2857,7 +2827,7 @@
                           "_": "Local",
                           "name": "$temp15",
                           "type": {
-                            "_": "BooleanType"
+                            "_": "UnknownType"
                           }
                         }
                       }
@@ -2920,7 +2890,7 @@
                             "name": ""
                           },
                           "name": "minIndex",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -2949,7 +2919,7 @@
                             "name": ""
                           },
                           "name": "v",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -3023,7 +2993,7 @@
                         "_": "Local",
                         "name": "$temp22",
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       },
                       "right": {
@@ -3051,7 +3021,7 @@
                         "_": "Local",
                         "name": "$temp23",
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       },
                       "right": {
@@ -3061,14 +3031,14 @@
                           "_": "Local",
                           "name": "$temp16",
                           "type": {
-                            "_": "BooleanType"
+                            "_": "UnknownType"
                           }
                         },
                         "right": {
                           "_": "Local",
                           "name": "$temp22",
                           "type": {
-                            "_": "BooleanType"
+                            "_": "UnknownType"
                           }
                         }
                       }
@@ -3082,7 +3052,7 @@
                           "_": "Local",
                           "name": "$temp23",
                           "type": {
-                            "_": "BooleanType"
+                            "_": "UnknownType"
                           }
                         },
                         "right": {
@@ -3093,7 +3063,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     }
@@ -3166,7 +3136,7 @@
                             "name": ""
                           },
                           "name": "minIndex",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -3195,7 +3165,7 @@
                             "name": ""
                           },
                           "name": "v",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -3370,7 +3340,7 @@
                         "_": "Local",
                         "name": "$temp8",
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       },
                       "right": {
@@ -3398,7 +3368,7 @@
                         "_": "Local",
                         "name": "$temp9",
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       },
                       "right": {
@@ -3415,7 +3385,7 @@
                           "_": "Local",
                           "name": "$temp8",
                           "type": {
-                            "_": "BooleanType"
+                            "_": "UnknownType"
                           }
                         }
                       }
@@ -3429,7 +3399,7 @@
                           "_": "Local",
                           "name": "$temp9",
                           "type": {
-                            "_": "BooleanType"
+                            "_": "UnknownType"
                           }
                         },
                         "right": {
@@ -3440,7 +3410,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     }

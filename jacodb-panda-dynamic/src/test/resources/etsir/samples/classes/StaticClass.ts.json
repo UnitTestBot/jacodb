@@ -17,8 +17,11 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "StaticClass",
-            "fieldType": {
-              "_": "UnknownType"
+            "type": {
+              "_": "ClassType",
+              "signature": {
+                "name": "StaticClass"
+              }
             }
           },
           "modifiers": [],
@@ -33,7 +36,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "console",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -72,7 +75,10 @@
               {
                 "name": "StaticClass",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "StaticClass"
+                  }
                 }
               },
               {
@@ -216,7 +222,7 @@
               "name": "StaticClass"
             },
             "name": "count",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -324,7 +330,7 @@
                             "name": ""
                           },
                           "name": "count",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -455,7 +461,7 @@
                             "name": ""
                           },
                           "name": "count",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }

@@ -92,7 +92,7 @@
               "name": "Foo"
             },
             "name": "y",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },

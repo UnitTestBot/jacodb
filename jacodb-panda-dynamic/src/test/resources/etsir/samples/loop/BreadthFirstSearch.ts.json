@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "graph",
-            "fieldType": {
+            "type": {
               "_": "ClassType",
               "signature": {
                 "name": "Graph"
@@ -36,7 +36,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "visitOrder",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -52,7 +52,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "bfs",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -68,7 +68,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "console",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -691,7 +691,7 @@
                             "name": ""
                           },
                           "name": "length",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -717,7 +717,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     }
@@ -875,7 +875,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     }
@@ -950,7 +950,7 @@
                             "name": ""
                           },
                           "name": "node",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -1044,7 +1044,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     },
@@ -1202,7 +1202,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     }
@@ -1276,7 +1276,7 @@
               "name": "Graph"
             },
             "name": "IndexSignature-Graph-0",
-            "fieldType": {
+            "type": {
               "_": "UnclearReferenceType",
               "name": "ArrayType"
             }
@@ -1305,7 +1305,7 @@
               "name": "AnonymousClass-_DEFAULT_ARK_METHOD-0"
             },
             "name": "a",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1350,7 +1350,7 @@
               "name": "AnonymousClass-_DEFAULT_ARK_METHOD-0"
             },
             "name": "b",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1385,7 +1385,7 @@
               "name": "AnonymousClass-_DEFAULT_ARK_METHOD-0"
             },
             "name": "c",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1420,7 +1420,7 @@
               "name": "AnonymousClass-_DEFAULT_ARK_METHOD-0"
             },
             "name": "d",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1455,7 +1455,7 @@
               "name": "AnonymousClass-_DEFAULT_ARK_METHOD-0"
             },
             "name": "e",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -1478,7 +1478,7 @@
               "name": "AnonymousClass-_DEFAULT_ARK_METHOD-0"
             },
             "name": "f",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },

@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "A",
-            "fieldType": {
+            "type": {
               "_": "ArrayType",
               "elementType": {
                 "_": "UnionType",
@@ -53,7 +53,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "B",
-            "fieldType": {
+            "type": {
               "_": "ArrayType",
               "elementType": {
                 "_": "UnionType",
@@ -89,7 +89,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "product",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -105,7 +105,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "multiplyMatrices",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -121,7 +121,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "console",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -571,23 +571,7 @@
                       "right": {
                         "_": "NewArrayExpr",
                         "elementType": {
-                          "_": "UnionType",
-                          "types": [
-                            {
-                              "_": "ArrayType",
-                              "elementType": {
-                                "_": "NumberType"
-                              },
-                              "dimensions": 1
-                            },
-                            {
-                              "_": "ArrayType",
-                              "elementType": {
-                                "_": "NumberType"
-                              },
-                              "dimensions": 1
-                            }
-                          ]
+                          "_": "AnyType"
                         },
                         "size": {
                           "_": "Constant",
@@ -1017,23 +1001,7 @@
                       "right": {
                         "_": "NewArrayExpr",
                         "elementType": {
-                          "_": "UnionType",
-                          "types": [
-                            {
-                              "_": "ArrayType",
-                              "elementType": {
-                                "_": "NumberType"
-                              },
-                              "dimensions": 1
-                            },
-                            {
-                              "_": "ArrayType",
-                              "elementType": {
-                                "_": "NumberType"
-                              },
-                              "dimensions": 1
-                            }
-                          ]
+                          "_": "AnyType"
                         },
                         "size": {
                           "_": "Constant",
@@ -1664,7 +1632,7 @@
                             "name": ""
                           },
                           "name": "length",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -1694,7 +1662,7 @@
                             "name": ""
                           },
                           "name": "0",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -1723,7 +1691,7 @@
                             "name": ""
                           },
                           "name": "length",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -1753,7 +1721,7 @@
                             "name": ""
                           },
                           "name": "length",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -1783,7 +1751,7 @@
                             "name": ""
                           },
                           "name": "0",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -1812,7 +1780,7 @@
                             "name": ""
                           },
                           "name": "length",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -1896,7 +1864,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     }
@@ -1951,7 +1919,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     },
@@ -2052,7 +2020,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     },
@@ -2134,7 +2102,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     },
@@ -2200,7 +2168,7 @@
                             "name": ""
                           },
                           "name": "i",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -2230,7 +2198,7 @@
                             "name": ""
                           },
                           "name": "i",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -2259,7 +2227,7 @@
                             "name": ""
                           },
                           "name": "k",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -2289,7 +2257,7 @@
                             "name": ""
                           },
                           "name": "k",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -2318,7 +2286,7 @@
                             "name": ""
                           },
                           "name": "j",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -2368,7 +2336,7 @@
                             "name": ""
                           },
                           "name": "j",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -2390,7 +2358,7 @@
                               "name": ""
                             },
                             "name": "j",
-                            "fieldType": {
+                            "type": {
                               "_": "UnknownType"
                             }
                           }
@@ -2571,7 +2539,7 @@
               "name": "AnonymousClass-multiplyMatrices-0"
             },
             "name": "length",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },

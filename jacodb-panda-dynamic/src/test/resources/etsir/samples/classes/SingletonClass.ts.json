@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "logger",
-            "fieldType": {
+            "type": {
               "_": "ClassType",
               "signature": {
                 "name": "Logger"
@@ -36,8 +36,11 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "Logger",
-            "fieldType": {
-              "_": "UnknownType"
+            "type": {
+              "_": "ClassType",
+              "signature": {
+                "name": "Logger"
+              }
             }
           },
           "modifiers": [],
@@ -84,7 +87,10 @@
               {
                 "name": "Logger",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Logger"
+                  }
                 }
               }
             ],
@@ -216,7 +222,7 @@
               "name": "Logger"
             },
             "name": "instance",
-            "fieldType": {
+            "type": {
               "_": "UnclearReferenceType",
               "name": "Logger"
             }
@@ -550,7 +556,7 @@
                             "name": ""
                           },
                           "name": "instance",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -597,7 +603,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     }
@@ -634,7 +640,7 @@
                             "name": ""
                           },
                           "name": "instance",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -726,7 +732,7 @@
                             "name": ""
                           },
                           "name": "instance",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }

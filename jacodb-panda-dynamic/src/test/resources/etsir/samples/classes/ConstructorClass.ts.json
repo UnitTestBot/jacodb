@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "constructorObj",
-            "fieldType": {
+            "type": {
               "_": "ClassType",
               "signature": {
                 "name": "ConstructorClass"
@@ -36,7 +36,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "console",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -312,7 +312,7 @@
               "name": "ConstructorClass"
             },
             "name": "name",
-            "fieldType": {
+            "type": {
               "_": "StringType"
             }
           },
@@ -431,7 +431,7 @@
                             "name": ""
                           },
                           "name": "name",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -539,7 +539,7 @@
                             "name": ""
                           },
                           "name": "name",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }

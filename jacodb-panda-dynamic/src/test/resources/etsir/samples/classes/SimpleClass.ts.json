@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "simpleObj",
-            "fieldType": {
+            "type": {
               "_": "ClassType",
               "signature": {
                 "name": "SimpleClass"
@@ -36,7 +36,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "console",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
@@ -342,7 +342,7 @@
               "name": "SimpleClass"
             },
             "name": "name",
-            "fieldType": {
+            "type": {
               "_": "StringType"
             }
           },
@@ -460,7 +460,7 @@
                             "name": ""
                           },
                           "name": "name",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }
@@ -568,7 +568,7 @@
                             "name": ""
                           },
                           "name": "name",
-                          "fieldType": {
+                          "type": {
                             "_": "UnknownType"
                           }
                         }

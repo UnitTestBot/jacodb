@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "RESULT",
-            "fieldType": {
+            "type": {
               "_": "NumberType"
             }
           },
@@ -424,7 +424,7 @@
                           }
                         },
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnknownType"
                         }
                       }
                     },

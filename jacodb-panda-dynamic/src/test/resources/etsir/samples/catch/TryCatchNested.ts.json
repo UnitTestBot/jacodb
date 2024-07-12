@@ -17,7 +17,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "outerResult",
-            "fieldType": {
+            "type": {
               "_": "StringType"
             }
           },
@@ -33,7 +33,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "innerResult",
-            "fieldType": {
+            "type": {
               "_": "StringType"
             }
           },
@@ -49,7 +49,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "innerMessage",
-            "fieldType": {
+            "type": {
               "_": "StringType"
             }
           },
@@ -65,7 +65,7 @@
               "name": "_DEFAULT_ARK_CLASS"
             },
             "name": "console",
-            "fieldType": {
+            "type": {
               "_": "UnknownType"
             }
           },
