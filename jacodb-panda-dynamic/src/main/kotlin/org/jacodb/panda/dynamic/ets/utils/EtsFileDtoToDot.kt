@@ -35,6 +35,9 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
         lines += "  rankdir=LR;"
     }
     lines += "  compound=true;"
+    for (x in listOf("graph", "node", "edge")) {
+        lines += "  $x [fontname=\"JetBrains Mono,Source Code Pro,monospace\"];"
+    }
 
     fun classId(clazz: ClassDto): String {
         return clazz.signature.name
