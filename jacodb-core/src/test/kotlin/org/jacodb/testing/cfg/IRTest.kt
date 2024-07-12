@@ -66,12 +66,14 @@ import org.jacodb.testing.WithDB
 import org.jacodb.testing.WithRAMDB
 import org.jacodb.testing.asmLib
 import org.jacodb.testing.guavaLib
+import org.jacodb.testing.jgitLib
 import org.jacodb.testing.kotlinStdLib
 import org.jacodb.testing.kotlinxCoroutines
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import java.io.File
@@ -341,6 +343,12 @@ abstract class IRTest : BaseInstructionsTest() {
     @Test
     fun `get ir of guava`() {
         runAlongLib(guavaLib)
+    }
+
+    @Test
+    @Disabled
+    fun `get ir of jgit`() {
+        runAlongLib(jgitLib)
     }
 
     @Test

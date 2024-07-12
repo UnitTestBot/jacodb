@@ -1091,69 +1091,75 @@ class RawInstListBuilder(
             }
 
             // complex case --- we have a multiple predecessor frames and some of them may be unknown
-            else -> Array(size) { variable ->
-                val type = this[variable] ?: return@Array null
-                if (type == TOP) return@Array null
+            else -> {
+                val predFramesValues = predFrames.values.toList()
+                val hasNullFrames = predFramesValues.any { it == null }
+                Array(size) { variable ->
+                    val type = this[variable] ?: return@Array null
+                    if (type == TOP) return@Array null
 
-                var allFramesSameValue: JcRawValue? = null
-                var valueInitialized = false
-                var allFramesHaveSameValue = true
+                    if (!hasNullFrames) {
+                        var allFramesSameValue: JcRawValue? = null
+                        var valueInitialized = false
+                        var allFramesHaveSameValue = true
 
-                for (frame in predFrames.values) {
-                    val frameValue = frame?.findLocal(variable)
+                        for (frame in predFramesValues) {
+                            val frameValue = frame!!.findLocal(variable)
 
-                    if (!valueInitialized) {
-                        valueInitialized = true
-                        allFramesSameValue = frameValue
-                        continue
-                    }
+                            if (!valueInitialized) {
+                                valueInitialized = true
+                                allFramesSameValue = frameValue
+                                continue
+                            }
 
-                    if (allFramesSameValue != frameValue) {
-                        allFramesHaveSameValue = false
-                        break
-                    }
-                }
-
-                if (allFramesHaveSameValue) {
-                    return@Array allFramesSameValue
-                }
-
-                val actualLocalFromDebugInfo = methodNode.localVariables
-                    .firstOrNull { it.index == variable && curLabel.isBetween(it.start, it.end) }
-
-                val isArg = if (actualLocalFromDebugInfo == null) {
-                    variable < argCounter
-                } else {
-                    actualLocalFromDebugInfo.start == methodNode.instructions.firstOrNull { it is LabelNode }
-                }
-
-                if (variable < argCounter && isArg) {
-                    val value = frames.values.firstOrNull {
-                        val value = it.findLocal(variable)
-                        value != null && (value is JcRawArgument || value is JcRawThis)
-                    }?.getLocal(variable)
-
-                    return@Array value
-                }
-
-                val assignment = nextRegister(type)
-                for ((node, frame) in predFrames) {
-                    // TODO! Make anything with that (we should take into account subtyping)
-                    // assigment.isSubtypeOf(frame[variable]!!.typeName)
-                    if (frame != null) {
-                        val inst = JcRawAssignInst(method, assignment, frame.getLocal(variable))
-                        if (node.isBranchingInst) {
-                            addInstruction(node, inst, 0)
-                        } else {
-                            addInstruction(node, inst)
+                            if (allFramesSameValue != frameValue) {
+                                allFramesHaveSameValue = false
+                                break
+                            }
                         }
-                    } else {
-                        laterAssignments.getOrPut(node, ::mutableMapOf)[variable] = assignment
-                    }
-                }
 
-                assignment
-            }.trimEndNulls()
+                        if (allFramesHaveSameValue) {
+                            return@Array allFramesSameValue
+                        }
+                    }
+
+                    val actualLocalFromDebugInfo = methodNode.localVariables
+                        .firstOrNull { it.index == variable && curLabel.isBetween(it.start, it.end) }
+
+                    val isArg = if (actualLocalFromDebugInfo == null) {
+                        variable < argCounter
+                    } else {
+                        actualLocalFromDebugInfo.start == methodNode.instructions.firstOrNull { it is LabelNode }
+                    }
+
+                    if (variable < argCounter && isArg) {
+                        val value = frames.values.firstOrNull {
+                            val value = it.findLocal(variable)
+                            value != null && (value is JcRawArgument || value is JcRawThis)
+                        }?.getLocal(variable)
+
+                        return@Array value
+                    }
+
+                    val assignment = nextRegister(type)
+                    for ((node, frame) in predFrames) {
+                        // TODO! Make anything with that (we should take into account subtyping)
+                        // assigment.isSubtypeOf(frame[variable]!!.typeName)
+                        if (frame != null) {
+                            val inst = JcRawAssignInst(method, assignment, frame.getLocal(variable))
+                            if (node.isBranchingInst) {
+                                addInstruction(node, inst, 0)
+                            } else {
+                                addInstruction(node, inst)
+                            }
+                        } else {
+                            laterAssignments.getOrPut(node, ::mutableMapOf)[variable] = assignment
+                        }
+                    }
+
+                    assignment
+                }.trimEndNulls()
+            }
         }
 
     /**
