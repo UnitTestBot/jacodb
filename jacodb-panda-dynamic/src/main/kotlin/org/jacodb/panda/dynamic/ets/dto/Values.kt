@@ -401,6 +401,6 @@ data class StaticFieldRefDto(
     override val field: FieldSignatureDto,
 ) : FieldRefDto {
     override fun toString(): String {
-        return field.toString()
+        return "${field.enclosingClass.name}.${field.name}"
     }
 }
