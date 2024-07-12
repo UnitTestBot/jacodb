@@ -53,7 +53,11 @@ interface EtsTraits : Traits<EtsMethod, EtsStmt> {
     override val CommonCallExpr.callee: EtsMethod
         get() {
             check(this is EtsCallExpr)
-            // return cp.getMethodBySignature(method) ?: error("Method not found: $method")
+            // TODO: here, we should use the classpath to resolve the method by its signature, like so:
+            //       `return cp.getMethodBySignature(method) ?: error("Method not found: $method")`
+            //       However, currently EtsFile (classpath) is not able to perform method lookup by signature,
+            //       and even is not available in this context.
+            //       So, we just construct a new method instance with necessary signature, but without a CFG, for now.
             return EtsMethodImpl(method)
         }
 
