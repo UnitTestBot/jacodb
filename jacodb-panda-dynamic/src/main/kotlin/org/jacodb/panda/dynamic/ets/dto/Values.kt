@@ -381,7 +381,7 @@ sealed interface FieldRefDto : RefDto {
     val field: FieldSignatureDto
 
     override val type: TypeDto
-        get() = this.field.fieldType
+        get() = this.field.type
 }
 
 @Serializable

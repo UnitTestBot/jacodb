@@ -644,7 +644,7 @@ fun convertToEtsFieldSignature(field: FieldSignatureDto): EtsFieldSignature {
         enclosingClass = convertToEtsClassSignature(field.enclosingClass),
         sub = EtsFieldSubSignature(
             name = field.name,
-            type = convertToEtsType(field.fieldType),
+            type = convertToEtsType(field.type),
         )
     )
 }
@@ -688,7 +688,7 @@ fun convertToEtsField(field: FieldDto): EtsField {
             enclosingClass = convertToEtsClassSignature(field.signature.enclosingClass),
             sub = EtsFieldSubSignature(
                 name = field.signature.name,
-                type = convertToEtsType(field.signature.fieldType),
+                type = convertToEtsType(field.signature.type),
             )
         ),
         modifiers = field.modifiers

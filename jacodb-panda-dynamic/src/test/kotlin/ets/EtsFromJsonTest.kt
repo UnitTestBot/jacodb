@@ -96,7 +96,7 @@ class EtsFromJsonTest {
                     name = "Test"
                 ),
                 name = "x",
-                fieldType = NumberTypeDto,
+                type = NumberTypeDto,
             ),
             modifiers = emptyList(),
             typeParameters = emptyList(),

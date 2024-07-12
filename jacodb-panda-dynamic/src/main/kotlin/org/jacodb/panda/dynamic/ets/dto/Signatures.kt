@@ -31,10 +31,10 @@ data class ClassSignatureDto(
 data class FieldSignatureDto(
     val enclosingClass: ClassSignatureDto,
     val name: String,
-    val fieldType: TypeDto,
+    val type: TypeDto,
 ) {
     override fun toString(): String {
-        return "$name: $fieldType"
+        return "$name: $type"
     }
 }
 
