@@ -122,6 +122,7 @@ fun EtsCfg.toFile(dotCmd: String, viewCatchConnections: Boolean = false, file: F
             }
         }
         if (viewCatchConnections) {
+            // TODO: uncomment when `catchers` are properly implemented
             // for (catcher in catchers(inst)) {
             //     graph.addEdge(Edge(node.name, nodes[catcher]!!.name).also {
             //         // it.setLabel("catch ${catcher.throwable.type}")
