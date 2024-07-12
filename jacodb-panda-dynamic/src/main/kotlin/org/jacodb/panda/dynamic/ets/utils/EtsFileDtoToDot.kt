@@ -68,7 +68,7 @@ fun EtsFileDto.toDot(useLR: Boolean = true): String {
     }
 
     fun blockLabel(bb: BasicBlockDto): String {
-        return "BB ${bb.id}\nsuccessors = ${bb.successors}"
+        return "BB ${bb.id}\\nsuccessors = ${bb.successors}"
     }
 
     fun statementLabel(stmt: StmtDto): String {
