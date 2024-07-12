@@ -140,10 +140,10 @@ data class EtsArrayLiteral(
     }
 }
 
-// TODO: replace `Pair<String, Value>` with `Property`
+// TODO: see TypeScript reference for different types of elements inside object literals, such as property assignment, shorthand property assignment, method definition, spread assignment, and getter/setter accessors.
 data class EtsObjectLiteral(
     val properties: List<Pair<String, EtsEntity>>,
-    override val type: EtsType, // TODO: consider ClassType
+    override val type: EtsType,
 ) : EtsConstant {
     override fun toString(): String {
         return properties.joinToString(prefix = "{", postfix = "}") { (name, value) ->
