@@ -546,8 +546,6 @@ fun convertToEtsType(type: TypeDto): EtsType {
     }
 }
 
-// TODO: add EtsNeverConstant?
-// TODO: add EtsUnknownConstant(value: String)?
 fun convertToEtsConstant(value: ConstantDto): EtsConstant {
     val type = convertToEtsType(value.type)
     return when (type) {
