@@ -195,7 +195,10 @@ class EtsMethodBuilder(
             is UnknownValueDto -> object : EtsEntity {
                 override val type: EtsType = EtsUnknownType
 
-                // override fun toString(): String = "Unknown(${value.value})"
+                // TODO: change to this `toString()` implementation when `value.value` field is restored.
+                //       override fun toString(): String = "Unknown(${value.value})"
+                //       Note: `value` field was removed from `UnknownValueDto` due to circular references in ArkIR,
+                //       which forbid their serialization.
                 override fun toString(): String = "Unknown"
 
                 override fun <R> accept(visitor: EtsEntity.Visitor<R>): R {
