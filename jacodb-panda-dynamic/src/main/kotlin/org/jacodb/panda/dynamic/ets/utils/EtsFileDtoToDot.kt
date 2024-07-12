@@ -87,7 +87,7 @@ fun EtsFileDto.toDot(useLR: Boolean = true): String {
         clazz.methods.forEach { method ->
             val m = methodId(clazz, method)
             val label = methodLabel(clazz, method)
-            lines += """  "$m" [shape=diamond,label="$label"];"""
+            lines += """  "$m" [shape=oval,label="$label"];"""
             val c = classId(clazz)
             lines += """  "$c" -> "$m";"""
         }
