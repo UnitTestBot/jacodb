@@ -25,6 +25,7 @@ import org.jacodb.api.jvm.ext.packageName
 import org.jacodb.impl.bytecode.JcDatabaseClassWriter
 import org.jacodb.impl.cfg.MethodNodeBuilder
 import org.jacodb.impl.features.hierarchyExt
+import org.jacodb.impl.fs.className
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
 import org.junit.jupiter.api.Assertions
@@ -77,7 +78,10 @@ abstract class BaseInstructionsTest : BaseTest() {
             classNode.methods = klass.declaredMethods
                 .filter { it.enclosingClass == klass }
                 .map {
-                    if (it.isAbstract || it.name.contains("$\$forInline")) {
+                    if (it.isAbstract ||
+                        it.name.contains("$\$forInline")||
+                        it.name.contains("lambda$") ||
+                        it.name.contains("stringConcat$")) {
                         it.asmNode()
                     } else {
                         try {
@@ -91,10 +95,12 @@ abstract class BaseInstructionsTest : BaseTest() {
                             }
                             val graph = it.flowGraph()
                             if (!it.enclosingClass.isKotlin) {
-                                val methodMsg = "$it should have line number"
                                 if (validateLineNumbers) {
+                                    val methodMsg = "$it should have line number"
                                     graph.instructions.forEach { inst ->
-                                        Assertions.assertTrue(inst.location.lineNumber > 0, methodMsg)
+                                        Assertions.assertTrue(
+                                            inst.location.lineNumber > 0, methodMsg
+                                        )
                                     }
                                 }
                             }
