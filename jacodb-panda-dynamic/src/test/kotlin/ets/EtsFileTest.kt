@@ -16,13 +16,17 @@
 
 package ets
 
+import ets.utils.loadDto
 import ets.utils.loadEtsFile
 import org.jacodb.panda.dynamic.ets.base.EtsAssignStmt
 import org.jacodb.panda.dynamic.ets.base.EtsInstanceFieldRef
 import org.jacodb.panda.dynamic.ets.base.EtsThis
 import org.jacodb.panda.dynamic.ets.model.EtsFile
+import org.jacodb.panda.dynamic.ets.utils.toDot
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import java.io.File
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -34,6 +38,28 @@ class EtsFileTest {
         private fun loadSample(name: String): EtsFile {
             return loadEtsFile("$BASE_PATH/$name.ts.json")
         }
+    }
+
+    @Disabled("Run manually, if needed")
+    @Test
+    fun dumpDot() {
+        val etsFileDto = loadDto("/etsir/samples/object.ts.json")
+        File("object.ts.json.dot").writeText(etsFileDto.toDot(false))
+        etsFileDto.classes.forEach { cls ->
+            cls.methods.forEach { method ->
+                logger.info {
+                    "Method '${method.signature}', locals = ${method.body.locals}, typeParameters = ${method.typeParameters}, blocks: ${method.body.cfg.blocks.size}"
+                }
+                method.body.cfg.blocks.forEach { block ->
+                    logger.info { "BLOCK ${block.id}" }
+                    block.stmts.forEachIndexed { i, inst ->
+                        logger.info { "${i + 1}. $inst" }
+                    }
+                    logger.info { "-----" }
+                }
+            }
+        }
+        Runtime.getRuntime().exec("dot -Tpdf -O object.ts.json.dot")
     }
 
     @Test
