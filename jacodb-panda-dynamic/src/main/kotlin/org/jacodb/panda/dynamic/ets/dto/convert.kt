@@ -214,7 +214,7 @@ class EtsMethodBuilder(
             is ConstantDto -> convertToEtsConstant(value)
 
             is NewExprDto -> EtsNewExpr(
-                type = convertToEtsType(value.type) // as ClassType
+                type = convertToEtsType(value.classType as ClassTypeDto) // safe cast
             )
 
             is NewArrayExprDto -> EtsNewArrayExpr(
@@ -232,7 +232,7 @@ class EtsMethodBuilder(
 
             is InstanceOfExprDto -> EtsInstanceOfExpr(
                 arg = convertToEtsEntity(value.arg),
-                checkType = convertToEtsType(value.checkType),
+                checkType = value.checkType,
             )
 
             is LengthExprDto -> EtsLengthExpr(

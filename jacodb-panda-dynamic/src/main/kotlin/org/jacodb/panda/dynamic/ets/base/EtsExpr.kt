@@ -93,12 +93,11 @@ data class EtsNewArrayExpr(
     val elementType: EtsType,
     val size: EtsEntity,
 ) : EtsExpr {
-    // TODO: support multi-dimensional arrays
     override val type: EtsType
         get() = EtsArrayType(elementType, 1)
 
     override fun toString(): String {
-        return "new ${elementType.typeName}[$size]"
+        return "new Array<${elementType.typeName}>($size)"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
@@ -123,7 +122,7 @@ data class EtsTypeOfExpr(
 
 data class EtsInstanceOfExpr(
     val arg: EtsEntity,
-    val checkType: EtsType,
+    val checkType: String, // TODO: what should it be?
 ) : EtsExpr {
     override val type: EtsType
         get() = EtsBooleanType
@@ -144,7 +143,7 @@ data class EtsLengthExpr(
         get() = EtsNumberType
 
     override fun toString(): String {
-        return "$arg.length"
+        return "${arg}.length"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {

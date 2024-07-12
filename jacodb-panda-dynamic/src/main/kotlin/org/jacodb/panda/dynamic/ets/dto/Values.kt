@@ -135,10 +135,10 @@ sealed interface ExprDto : ValueDto
 @Serializable
 @SerialName("NewExpr")
 data class NewExprDto(
-    val classType: TypeDto,
+    val classType: TypeDto, // ClassTypeDto
 ) : ExprDto {
     override val type: TypeDto
-        get() = classType
+        get() = classType as ClassTypeDto // safe cast
 
     override fun toString(): String {
         return "new $type()"
@@ -151,12 +151,11 @@ data class NewArrayExprDto(
     val elementType: TypeDto,
     val size: ValueDto,
 ) : ExprDto {
-    // TODO: support multi-dimensional arrays, when upstream implement it
     override val type: TypeDto
         get() = ArrayTypeDto(elementType, 1)
 
     override fun toString(): String {
-        return "new $elementType[$size]"
+        return "new Array<$elementType>($size)"
     }
 }
 
@@ -190,7 +189,7 @@ data class TypeOfExprDto(
 @SerialName("InstanceOfExpr")
 data class InstanceOfExprDto(
     val arg: ValueDto,
-    @SerialName("type") val checkType: TypeDto,
+    val checkType: String,
 ) : ExprDto {
     override val type: TypeDto
         get() = BooleanTypeDto
@@ -220,7 +219,7 @@ data class CastExprDto(
     override val type: TypeDto,
 ) : ExprDto {
     override fun toString(): String {
-        return "($type) $arg"
+        return "$arg as $type"
     }
 }
 
@@ -241,7 +240,7 @@ data class ArrayLiteralDto(
     override val type: TypeDto,
 ) : ExprDto {
     override fun toString(): String {
-        return elements.joinToString(prefix = "[", postfix = "]")
+        return "[" + elements.joinToString() + "]"
     }
 }
 
