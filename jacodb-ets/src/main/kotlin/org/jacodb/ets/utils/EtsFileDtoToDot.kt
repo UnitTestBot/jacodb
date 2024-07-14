@@ -52,7 +52,15 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
         }
         labelLines += "Methods: (${clazz.methods.size})"
         clazz.methods.forEach { method ->
-            labelLines += "  ${method.signature.name}: ${method.signature.returnType}"
+            val name = method.signature.name
+            val params = method.signature.parameters.joinToString()
+            val generics = if (method.typeParameters.isNotEmpty()) {
+                "<${method.typeParameters.joinToString()}>"
+            } else {
+                ""
+            }
+            val returnType = method.signature.returnType
+            labelLines += "  $name$generics($params): $returnType"
         }
         return labelLines.joinToString("") { "$it\\l" }
     }
@@ -82,76 +90,38 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
 
     classes.forEach { clazz ->
         // CLASS
-        run {
-            val c = classId(clazz)
-            val label = classLabel(clazz)
-            lines += ""
-            lines += """  "$c" [shape=rectangle,label="$label"]"""
-        }
+        val c = classId(clazz)
+        val clabel = classLabel(clazz)
+        lines += ""
+        lines += """  "$c" [shape=rect,label="$clabel"]"""
 
         // Methods inside class:
         clazz.methods.forEach { method ->
+            // METHOD
             val m = methodId(clazz, method)
-            val label = methodLabel(clazz, method)
-            lines += """  "$m" [shape=oval,label="$label"];"""
-            val c = classId(clazz)
-            lines += """  "$c" -> "$m";"""
-        }
+            val mlabel = methodLabel(clazz, method)
+            lines += """  "$m" [shape=oval,label="$mlabel"];"""
 
-        // Instructions inside method:
-        clazz.methods.forEach { method ->
-            // Link to the first basic block inside etsMethod:
+            // Link class to method:
+            lines += """  "$c" -> "$m" [dir=none];"""
+
+            // Link method to its first basic block:
             if (method.body.cfg.blocks.isNotEmpty()) {
-                val m = methodId(clazz, method)
                 val b = blockId(clazz, method, method.body.cfg.blocks.first().id)
                 lines += """  "$m" -> "${b}.0" [lhead="$b"];"""
             }
 
-            method.body.cfg.blocks.forEach { bb ->
-                val last = bb.stmts.lastOrNull()
-                val i = if (bb.stmts.isNotEmpty()) bb.stmts.lastIndex else 0
-                when (last ?: NopStmtDto) {
-                    is IfStmtDto -> {
-                        for ((j, succ) in bb.successors.withIndex()) {
-                            val b = blockId(clazz, method, bb.id)
-                            val bs = blockId(clazz, method, succ)
-                            val label = if (j == 0) "true" else "false"
-                            lines += """  "${b}.${i}" -> "${bs}.0" [lhead=$bs, label="$label"];"""
-                        }
-                    }
-
-                    is SwitchStmtDto -> {
-                        for ((j, succ) in bb.successors.withIndex()) {
-                            val b = blockId(clazz, method, bb.id)
-                            val bs = blockId(clazz, method, succ)
-                            val label = if (j == 0) "default" else "case ${j - 1}"
-                            lines += """  "${b}.${i}" -> "${bs}.0" [lhead="$b", label="$label"];"""
-                        }
-                    }
-
-                    else -> {
-                        // check(bb.successors.size <= 1)
-                        for (succ in bb.successors) {
-                            val b = blockId(clazz, method, bb.id)
-                            val bs = blockId(clazz, method, succ)
-                            lines += """  "${b}.${i}" -> "${bs}.0" [lhead="$bs"];"""
-                        }
-                    }
-                }
-            }
-
             // Basic blocks with instructions:
             method.body.cfg.blocks.forEach { bb ->
+                // BLOCK
                 val b = blockId(clazz, method, bb.id)
+                val blabel = blockLabel(bb)
+                lines += ""
+                lines += """  subgraph "$b" {"""
+                lines += """    cluster=true;"""
+                lines += """    label="$blabel";"""
 
-                run {
-                    val label = blockLabel(bb)
-                    lines += ""
-                    lines += """  subgraph "$b" {"""
-                    lines += """    cluster=true;"""
-                    lines += """    label="$label";"""
-                }
-
+                // Empty block:
                 if (bb.stmts.isEmpty()) {
                     lines += """    "${b}.0" [shape=box, label="NOP"];"""
                 }
@@ -171,6 +141,39 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
                 }
 
                 lines += "  }"
+            }
+
+            // Links to successor blocks:
+            method.body.cfg.blocks.forEach { bb ->
+                val last = bb.stmts.lastOrNull()
+                val i = if (bb.stmts.isNotEmpty()) bb.stmts.lastIndex else 0
+                when (last ?: NopStmtDto) {
+                    is IfStmtDto -> {
+                        for ((j, succ) in bb.successors.withIndex()) {
+                            val b = blockId(clazz, method, bb.id)
+                            val bs = blockId(clazz, method, succ)
+                            val label = if (j == 0) "true" else "false"
+                            lines += """  "${b}.${i}" -> "${bs}.0" [lhead="$bs", label="$label"];"""
+                        }
+                    }
+
+                    is SwitchStmtDto -> {
+                        for ((j, succ) in bb.successors.withIndex()) {
+                            val b = blockId(clazz, method, bb.id)
+                            val bs = blockId(clazz, method, succ)
+                            val label = if (j == 0) "default" else "case ${j - 1}"
+                            lines += """  "${b}.${i}" -> "${bs}.0" [lhead="$b", label="$label"];"""
+                        }
+                    }
+
+                    else -> {
+                        for (succ in bb.successors) {
+                            val b = blockId(clazz, method, bb.id)
+                            val bs = blockId(clazz, method, succ)
+                            lines += """  "${b}.${i}" -> "${bs}.0" [lhead="$bs"];"""
+                        }
+                    }
+                }
             }
         }
     }

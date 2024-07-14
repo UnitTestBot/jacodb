@@ -17,8 +17,6 @@
 package org.jacodb.ets.test.utils
 
 import org.jacodb.ets.dto.EtsFileDto
-import org.jacodb.ets.dto.convertToEtsFile
-import org.jacodb.ets.graph.loops
 import org.jacodb.ets.utils.dumpDot
 import java.io.File
 
@@ -71,7 +69,7 @@ object DumpEtsFileDtoToDot {
 }
 
 object DumpEtsFileToDot {
-    private  const val BASE_PATH = "/etsir/samples"
+    private const val BASE_PATH = "/etsir/samples"
     private const val NAME = "basic" // <-- change it
     private const val DOT_PATH = "ets.dot"
 
@@ -105,10 +103,10 @@ object DumpEtsFileToDot {
             }
         }
 
-        // println("Rendering EtsFile to DOT...")
-        // render(DOT_PATH) { file ->
-        //     etsFile.dumpDot(file)
-        // }
+        println("Rendering EtsFile to DOT...")
+        render(DOT_PATH) { file ->
+            etsFile.dumpDot(file)
+        }
     }
 }
 

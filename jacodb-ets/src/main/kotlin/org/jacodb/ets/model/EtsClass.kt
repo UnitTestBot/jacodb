@@ -16,10 +16,6 @@
 
 package org.jacodb.ets.model
 
-import org.jacodb.ets.base.EtsClassType
-import org.jacodb.ets.dto.CfgDto
-import org.jacodb.ets.dto.EtsMethodBuilder
-
 interface EtsClass {
     val signature: EtsClassSignature
     val superClass: EtsClass?

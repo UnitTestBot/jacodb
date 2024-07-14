@@ -83,7 +83,7 @@ private object StmtGetOperands : EtsStmt.Visitor<Sequence<EtsEntity>> {
     override fun visit(stmt: EtsIfStmt): Sequence<EtsEntity> =
         sequenceOf(stmt.condition)
 
-    override fun visit(stmt: EtsSwitchStmt): Sequence<EtsEntity>  =
+    override fun visit(stmt: EtsSwitchStmt): Sequence<EtsEntity> =
         sequenceOf(stmt.arg) + stmt.cases.asSequence()
 }
 

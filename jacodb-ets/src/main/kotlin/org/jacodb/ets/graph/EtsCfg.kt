@@ -16,9 +16,9 @@
 
 package org.jacodb.ets.graph
 
-import org.jacodb.impl.cfg.graphs.GraphDominators
 import org.jacodb.ets.base.EtsStmt
 import org.jacodb.ets.base.EtsTerminatingStmt
+import org.jacodb.impl.cfg.graphs.GraphDominators
 
 class EtsCfg(
     val stmts: List<EtsStmt>,
