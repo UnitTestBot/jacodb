@@ -283,6 +283,6 @@ fun MavenPublication.addPom() {
 }
 
 tasks.wrapper {
-    gradleVersion = "8.3"
+    gradleVersion = "8.9"
     distributionType = Wrapper.DistributionType.ALL
 }
