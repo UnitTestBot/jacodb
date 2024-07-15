@@ -324,7 +324,7 @@ data class InstanceCallExprDto(
     override val args: List<ValueDto>,
 ) : CallExprDto {
     override fun toString(): String {
-        return "$instance.$method(${args.joinToString()})"
+        return "$instance.${method.name}(${args.joinToString()})"
     }
 }
 
@@ -335,7 +335,7 @@ data class StaticCallExprDto(
     override val args: List<ValueDto>,
 ) : CallExprDto {
     override fun toString(): String {
-        return "$method(${args.joinToString()})"
+        return "${method.name}(${args.joinToString()})"
     }
 }
 
