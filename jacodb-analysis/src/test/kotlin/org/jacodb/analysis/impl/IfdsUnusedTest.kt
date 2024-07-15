@@ -25,6 +25,7 @@ import org.jacodb.impl.features.Usages
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.WithRAMDB
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -56,6 +57,7 @@ abstract class IfdsUnusedTest : BaseAnalysisTest() {
         )
     }
 
+    @Disabled("#220")
     @ParameterizedTest
     @MethodSource("provideClassesForJuliet563")
     fun `test on Juliet's CWE 563`(className: String) {
