@@ -35,9 +35,6 @@ class UnusedVariableFlowFunctions<Method, Statement>(
     where Method : CommonMethod,
           Statement : CommonInst {
 
-    private val cp: CommonProject
-        get() = graph.project
-
     override fun obtainPossibleStartFacts(
         method: Method,
     ): Collection<UnusedVariableDomainFact> {

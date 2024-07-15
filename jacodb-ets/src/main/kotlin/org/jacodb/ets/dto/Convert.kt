@@ -321,8 +321,8 @@ class EtsMethodBuilder(
             )
 
             is ArrayRefDto -> EtsArrayAccess(
-                array = convertToEtsEntity(value.array),
-                index = convertToEtsEntity(value.index),
+                array = convertToEtsEntity(value.array) as EtsValue, // TODO: check whether the cast is safe
+                index = convertToEtsEntity(value.index) as EtsValue, // TODO: check whether the cast is safe
                 type = convertToEtsType(value.type),
             )
 

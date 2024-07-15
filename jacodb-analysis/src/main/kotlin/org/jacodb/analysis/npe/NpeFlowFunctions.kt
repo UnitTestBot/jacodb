@@ -37,15 +37,14 @@ import org.jacodb.analysis.taint.Tainted
 import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.startsWith
 import org.jacodb.api.common.CommonMethod
-import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonAssignInst
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonThis
 import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.api.jvm.JcArrayType
-import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
 import org.jacodb.api.jvm.cfg.JcArgument
 import org.jacodb.api.jvm.cfg.JcAssignInst
 import org.jacodb.api.jvm.cfg.JcCallExpr
@@ -82,13 +81,9 @@ class ForwardNpeFlowFunctions<Method, Statement>(
     where Method : CommonMethod,
           Statement : CommonInst {
 
-    private val cp: CommonProject
-        get() = graph.project
-
     internal val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
-        val cp = cp
-        if (cp is JcClasspath) {
-            cp.features
+        if (graph is JcApplicationGraph) {
+            graph.cp.features
                 ?.singleOrNull { it is TaintConfigurationFeature }
                 ?.let { it as TaintConfigurationFeature }
         } else {
@@ -106,7 +101,7 @@ class ForwardNpeFlowFunctions<Method, Statement>(
 
         // Possibly null arguments:
         for (p in method.parameters.filter { it.isNullable != false }) {
-            val t = (cp as JcClasspath).findType(p.type.typeName)
+            val t = (graph as JcApplicationGraph).cp.findType(p.type.typeName)
             val arg = JcArgument.of(p.index, p.name, t)
             val path = arg.toPath()
             add(Tainted(path, TaintMark.NULLNESS))
@@ -129,8 +124,8 @@ class ForwardNpeFlowFunctions<Method, Statement>(
             }
         }
         if (config != null) {
-            val conditionEvaluator = BasicConditionEvaluator(EntryPointPositionToValueResolver(method, cp))
-            val actionEvaluator = TaintActionEvaluator(EntryPointPositionToAccessPathResolver(method, cp))
+            val conditionEvaluator = BasicConditionEvaluator(EntryPointPositionToValueResolver(method))
+            val actionEvaluator = TaintActionEvaluator(EntryPointPositionToAccessPathResolver(method))
 
             // Handle EntryPointSource config items:
             for (item in config.filterIsInstance<TaintEntryPointSource>()) {

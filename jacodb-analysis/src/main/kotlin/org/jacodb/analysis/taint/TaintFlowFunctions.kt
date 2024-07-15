@@ -33,7 +33,6 @@ import org.jacodb.analysis.ifds.onSome
 import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.startsWith
 import org.jacodb.api.common.CommonMethod
-import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonAssignInst
 import org.jacodb.api.common.cfg.CommonExpr
@@ -42,8 +41,8 @@ import org.jacodb.api.common.cfg.CommonInstanceCallExpr
 import org.jacodb.api.common.cfg.CommonReturnInst
 import org.jacodb.api.common.cfg.CommonThis
 import org.jacodb.api.common.cfg.CommonValue
-import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.analysis.JcApplicationGraph
 import org.jacodb.api.jvm.cfg.JcAssignInst
 import org.jacodb.api.jvm.cfg.JcBinaryExpr
 import org.jacodb.api.jvm.cfg.JcCastExpr
@@ -92,17 +91,13 @@ class ForwardTaintFlowFunctions<Method, Statement>(
     where Method : CommonMethod,
           Statement : CommonInst {
 
-    private val cp: CommonProject
-        get() = graph.project
-
     // // TODO: inline
     // private fun CommonExpr.toPathOrNull(): AccessPath? = traits.toPathOrNull(this)
     // private fun CommonValue.toPath(): AccessPath = traits.toPath(this)
 
     private val taintConfigurationFeature: TaintConfigurationFeature? by lazy {
-        val cp = cp
-        if (cp is JcClasspath) {
-            cp.features
+        if (graph is JcApplicationGraph) {
+            graph.cp.features
                 ?.singleOrNull { it is TaintConfigurationFeature }
                 ?.let { it as TaintConfigurationFeature }
         } else {
@@ -120,10 +115,10 @@ class ForwardTaintFlowFunctions<Method, Statement>(
         val config = getConfigForMethod(method)
         if (config != null) {
             val conditionEvaluator = BasicConditionEvaluator(
-                EntryPointPositionToValueResolver(method, cp)
+                EntryPointPositionToValueResolver(method)
             )
             val actionEvaluator = TaintActionEvaluator(
-                EntryPointPositionToAccessPathResolver(method, cp)
+                EntryPointPositionToAccessPathResolver(method)
             )
 
             // Handle EntryPointSource config items:
@@ -589,9 +584,6 @@ class BackwardTaintFlowFunctions<Method, Statement>(
 ) : FlowFunctions<TaintDomainFact, Method, Statement>
     where Method : CommonMethod,
           Statement : CommonInst {
-
-    private val cp: CommonProject
-        get() = graph.project
 
     override fun obtainPossibleStartFacts(
         method: Method,

@@ -68,7 +68,7 @@ open class TaintFlowFunctionsTest : BaseTest() {
     }
 
     private val graph: JcApplicationGraph = mockk {
-        every { project } returns cp
+        every { cp } returns cp
         every { callees(any()) } answers {
             sequenceOf(arg<JcInst>(0).callExpr!!.callee)
         }

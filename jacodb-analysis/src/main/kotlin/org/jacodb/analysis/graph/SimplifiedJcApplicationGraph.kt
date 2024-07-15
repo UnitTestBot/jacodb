@@ -39,7 +39,7 @@ internal class SimplifiedJcApplicationGraph(
     private val bannedPackagePrefixes: List<String>,
 ) : JcApplicationGraph by graph {
     private val hierarchyExtension = runBlocking {
-        project.hierarchyExt()
+        cp.hierarchyExt()
     }
 
     private val visitedCallers: MutableMap<JcMethod, MutableSet<JcInst>> = mutableMapOf()

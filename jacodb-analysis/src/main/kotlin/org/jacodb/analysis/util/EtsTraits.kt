@@ -51,6 +51,11 @@ import org.jacodb.ets.utils.getValues as _getValues
 
 interface EtsTraits : Traits<EtsMethod, EtsStmt> {
 
+    companion object : EtsTraits {
+        // Note: unused for now
+        // lateinit var cp: EtsFile
+    }
+
     override val CommonCallExpr.callee: EtsMethod
         get() {
             check(this is EtsCallExpr)
@@ -124,11 +129,6 @@ interface EtsTraits : Traits<EtsMethod, EtsStmt> {
 
     override fun EtsStmt.getOperands(): List<EtsEntity> {
         return _getOperands().toList()
-    }
-
-    companion object : EtsTraits {
-        // Note: unused for now
-        // lateinit var cp: EtsFile
     }
 }
 

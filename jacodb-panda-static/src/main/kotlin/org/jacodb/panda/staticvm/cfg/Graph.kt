@@ -94,9 +94,9 @@ class PandaGraph private constructor(
 }
 
 class PandaApplicationGraph(
-    override val project: PandaProject,
+    val cp: PandaProject,
 ) : ApplicationGraph<PandaMethod, PandaInst> {
-    private val callersMap = project.methods
+    private val callersMap = cp.methods
         .flatMap { it.flowGraph().instructions }
         .flatMap { inst -> callees(inst).map { it to inst } }
         .groupBy(Pair<PandaMethod, PandaInst>::first, Pair<PandaMethod, PandaInst>::second)

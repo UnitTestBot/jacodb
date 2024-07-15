@@ -70,8 +70,8 @@ data class EtsParameterRef(
 }
 
 data class EtsArrayAccess(
-    val array: EtsEntity,
-    val index: EtsEntity,
+    val array: EtsValue,
+    val index: EtsValue,
     override val type: EtsType,
 ) : EtsRef, EtsLValue {
     override fun toString(): String {

@@ -24,7 +24,7 @@ import org.jacodb.ets.model.EtsMethod
 import org.jacodb.ets.utils.callExpr
 
 class EtsApplicationGraph(
-    override val project: EtsFile,
+    val cp: EtsFile,
 ) : ApplicationGraph<EtsMethod, EtsStmt> {
 
     override fun predecessors(node: EtsStmt): Sequence<EtsStmt> {
@@ -42,13 +42,13 @@ class EtsApplicationGraph(
     override fun callees(node: EtsStmt): Sequence<EtsMethod> {
         val expr = node.callExpr ?: return emptySequence()
         val callee = expr.method
-        return project.classes.asSequence()
+        return cp.classes.asSequence()
             .flatMap { it.methods }
             .filter { it.name == callee.name }
     }
 
     override fun callers(method: EtsMethod): Sequence<EtsStmt> {
-        return project.classes.asSequence()
+        return cp.classes.asSequence()
             .flatMap { it.methods }
             .flatMap { it.cfg.instructions }
             .filterIsInstance<EtsCallStmt>()
