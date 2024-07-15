@@ -24,7 +24,7 @@ object Versions {
     const val junit = "5.9.2"
     const val kotlin = "1.7.21"
     const val kotlin_logging = "1.8.3"
-    const val kotlinx_benchmark = "0.4.11"
+    const val kotlinx_benchmark = "0.4.6"
     const val kotlinx_cli = "0.3.5"
     const val kotlinx_collections_immutable = "0.3.5"
     const val kotlinx_coroutines = "1.6.4"
