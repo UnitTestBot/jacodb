@@ -268,7 +268,7 @@ data class UnaryOperationDto(
     override val arg: ValueDto,
 ) : UnaryExprDto {
     override fun toString(): String {
-        return "$op$arg"
+        return "$op $arg"
     }
 }
 
