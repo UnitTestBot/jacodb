@@ -235,6 +235,10 @@ data class ClassMatcher(
 ) : TypeMatcher
 
 @Serializable
+@SerialName("TypeNameMatcher")
+data class JcTypeNameMatcher(val typeName: String): TypeMatcher
+
+@Serializable
 @SerialName("AnyTypeMatches")
 object AnyTypeMatcher : TypeMatcher {
     override fun toString(): String = javaClass.simpleName
@@ -245,6 +249,7 @@ object AnyTypeMatcher : TypeMatcher {
 data class FunctionMatcher(
     val cls: ClassMatcher,
     val functionName: NameMatcher,
+    val parametersNumberMatcher: Int? = null,
     val parametersMatchers: List<ParameterMatcher>,
     val returnTypeMatcher: TypeMatcher,
     val applyToOverrides: Boolean,
