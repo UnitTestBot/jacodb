@@ -16,7 +16,6 @@
 
 package org.jacodb.ets.test
 
-import org.jacodb.ets.test.utils.loadDto
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -40,6 +39,7 @@ import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.dto.convertToEtsMethod
 import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsMethodSignature
+import org.jacodb.ets.test.utils.loadDto
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
@@ -125,7 +125,7 @@ class EtsFromJsonTest {
         println("stmtDto = $stmtDto")
         val ctx = EtsMethodBuilder(defaultSignature)
         val stmt = ctx.convertToEtsStmt(stmtDto)
-        println("stmt = $stmt")
+        Assertions.assertEquals(EtsReturnStmt(EtsInstLocation(ctx.etsMethod, 0), null), stmt)
     }
 
     @Test

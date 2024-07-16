@@ -97,9 +97,10 @@ class EtsMethodBuilder(
     localsCount: Int = signature.parameters.size + 1,
     modifiers: List<String> = emptyList(),
 ) {
-    private val etsMethod = EtsMethodImpl(signature, localsCount, modifiers)
-    private var freeLocal: Int = 0
+    val etsMethod = EtsMethodImpl(signature, localsCount, modifiers)
+
     private val currentStmts: MutableList<EtsStmt> = mutableListOf()
+    private var freeLocal: Int = 0
 
     private fun loc(): EtsInstLocation {
         return EtsInstLocation(etsMethod, currentStmts.size)
@@ -109,14 +110,14 @@ class EtsMethodBuilder(
 
     fun build(cfgDto: CfgDto): EtsMethod {
         require(!built) { "Method has already been built" }
-        val cfg = cfg2cfg(cfgDto)
+        val cfg = convertToEtsCfg(cfgDto)
         etsMethod.cfg = cfg
         built = true
         return etsMethod
     }
 
-    fun convertToEtsStmt(stmt: StmtDto) {
-        val newStmt = when (stmt) {
+    fun convertToEtsStmt(stmt: StmtDto): EtsStmt {
+        return when (stmt) {
             is UnknownStmtDto -> object : EtsStmt {
                 override val location: EtsInstLocation = loc()
 
@@ -186,7 +187,6 @@ class EtsMethodBuilder(
 
             // else -> error("Unknown Stmt: $stmt")
         }
-        currentStmts += newStmt
     }
 
     fun convertToEtsEntity(value: ValueDto): EtsEntity {
@@ -341,7 +341,7 @@ class EtsMethodBuilder(
         }
     }
 
-    fun cfg2cfg(cfg: CfgDto): EtsCfg {
+    fun convertToEtsCfg(cfg: CfgDto): EtsCfg {
         require(cfg.blocks.isNotEmpty()) {
             "Method body should contain at least return stmt"
         }
@@ -360,7 +360,7 @@ class EtsMethodBuilder(
                 blockStart[block.id] = currentStmts.size
             }
             for (stmt in block.stmts) {
-                convertToEtsStmt(stmt)
+                currentStmts += convertToEtsStmt(stmt)
             }
             if (block.stmts.isNotEmpty()) {
                 blockEnd[block.id] = currentStmts.lastIndex
