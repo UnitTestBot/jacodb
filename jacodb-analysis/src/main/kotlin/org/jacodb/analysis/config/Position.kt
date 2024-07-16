@@ -18,6 +18,7 @@ package org.jacodb.analysis.config
 
 import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.ifds.ElementAccessor
+import org.jacodb.analysis.ifds.FieldAccessor
 import org.jacodb.analysis.ifds.Maybe
 import org.jacodb.analysis.ifds.fmap
 import org.jacodb.analysis.ifds.toMaybe
@@ -31,7 +32,9 @@ import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.taint.configuration.AnyArgument
 import org.jacodb.taint.configuration.Argument
 import org.jacodb.taint.configuration.Position
+import org.jacodb.taint.configuration.PositionAccessor
 import org.jacodb.taint.configuration.PositionResolver
+import org.jacodb.taint.configuration.PositionWithAccess
 import org.jacodb.taint.configuration.Result
 import org.jacodb.taint.configuration.ResultAnyElement
 import org.jacodb.taint.configuration.This
@@ -50,6 +53,12 @@ class CallPositionToAccessPathResolver(
         Result -> (callStatement as? CommonAssignInst)?.lhv?.toPathOrNull().toMaybe()
         ResultAnyElement -> (callStatement as? CommonAssignInst)?.lhv?.toPathOrNull().toMaybe()
             .fmap { it + ElementAccessor }
+        is PositionWithAccess -> resolve(position.base).fmap { pos ->
+            when (val access = position.access) {
+                PositionAccessor.ElementAccessor -> pos + ElementAccessor
+                is PositionAccessor.FieldAccessor -> pos + FieldAccessor(access.fieldName)
+            }
+        }
     }
 }
 
@@ -66,6 +75,7 @@ class CallPositionToValueResolver(
         This -> (callExpr as? CommonInstanceCallExpr)?.instance.toMaybe()
         Result -> (callStatement as? CommonAssignInst)?.lhv.toMaybe()
         ResultAnyElement -> Maybe.none()
+        is PositionWithAccess -> TODO()
     }
 }
 
@@ -82,6 +92,7 @@ class EntryPointPositionToValueResolver(
         }
 
         AnyArgument, Result, ResultAnyElement -> error("Unexpected $position")
+        is PositionWithAccess -> TODO()
     }
 }
 
@@ -98,5 +109,6 @@ class EntryPointPositionToAccessPathResolver(
         }
 
         AnyArgument, Result, ResultAnyElement -> error("Unexpected $position")
+        is PositionWithAccess -> TODO()
     }
 }
