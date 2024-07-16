@@ -53,3 +53,25 @@ object Result : Position {
 object ResultAnyElement : Position {
     override fun toString(): String = javaClass.simpleName
 }
+
+@Serializable
+sealed interface PositionAccessor {
+    @Serializable
+    @SerialName("ElementAccessor")
+    object ElementAccessor : PositionAccessor {
+        override fun toString(): String = javaClass.simpleName
+    }
+
+    @Serializable
+    data class FieldAccessor(
+        val className: String,
+        val fieldName: String,
+        val fieldType: String
+    ) : PositionAccessor
+}
+
+@Serializable
+data class PositionWithAccess(
+    val base: Position,
+    val access: PositionAccessor
+): Position

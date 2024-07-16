@@ -152,9 +152,15 @@ class TaintConfigurationFeature private constructor(
 
     private fun FunctionMatcher.matches(method: JcMethod): Boolean {
         val functionNameMatcher = functionName
-        val functionName = if (method.isConstructor) "init^" else method.name
-        val functionNameMatches = matches(functionNameMatcher, functionName)
+        val functionNameMatches = if (method.isConstructor) {
+            val constructorNames = arrayOf("init^", "<init>")
+            constructorNames.any { matches(functionNameMatcher, it) }
+        } else {
+            matches(functionNameMatcher, method.name)
+        }
         if (!functionNameMatches) return false
+
+        if (parametersNumberMatcher != null && method.parameters.size != parametersNumberMatcher) return false
 
         val parameterMatches = parametersMatchers.all {
             val parameter = method.parameters.getOrNull(it.index) ?: return@all false
@@ -201,6 +207,7 @@ class TaintConfigurationFeature private constructor(
     private fun TypeMatcher.matches(typeName: String): Boolean =
         when (this) {
             AnyTypeMatcher -> true
+            is JcTypeNameMatcher -> this.typeName == typeName
             is ClassMatcher -> matches(typeName)
             is PrimitiveNameMatcher -> name == typeName
         }
@@ -274,6 +281,7 @@ class TaintConfigurationFeature private constructor(
             This -> !method.isStatic
             Result -> method.returnType.typeName != PredefinedPrimitives.Void
             ResultAnyElement -> method.returnType.isArray
+            is PositionWithAccess -> inBounds(method, position.base)
         }
 
     private inner class ActionSpecializer(val method: JcMethod) : TaintActionVisitor<List<Action>> {
@@ -330,6 +338,13 @@ class TaintConfigurationFeature private constructor(
                 return mkOr(position.map { ConstantTrue })
             }
 
+            val cp = method.enclosingClass.classpath
+
+            if (typeMatcher is JcTypeNameMatcher) {
+                val type = cp.findTypeOrNull(typeMatcher.typeName) ?: return ConstantTrue
+                return mkOr(position.map { TypeMatches(it, type) })
+            }
+
             if (typeMatcher is PrimitiveNameMatcher) {
                 val types = primitiveTypes(method).filter { typeMatcher.matches(it.typeName) }
                 return mkOr(types.flatMap { type -> position.map { TypeMatches(it, type) } })
@@ -338,8 +353,6 @@ class TaintConfigurationFeature private constructor(
             val typeMatchers = (typeMatcher as ClassMatcher).extractAlternatives()
             val unresolvedMatchers = mutableListOf<ClassMatcher>()
             val disjuncts = mutableListOf<Condition>()
-
-            val cp = method.enclosingClass.classpath
 
             for (matcher in typeMatchers) {
                 val pkgMatcher = matcher.pkg
@@ -405,6 +418,7 @@ class TaintConfigurationFeature private constructor(
                 }
 
                 Result -> TODO("What does it mean?")
+                is PositionWithAccess -> TODO("What does it mean?")
                 AnyArgument -> error("Must not occur here")
                 ResultAnyElement -> error("Must not occur here")
             }
