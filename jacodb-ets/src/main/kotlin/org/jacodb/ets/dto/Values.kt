@@ -228,9 +228,11 @@ data class CastExprDto(
 data class PhiExprDto(
     val args: List<ValueDto>,
     val blocks: List<Int>,
+    override val type: TypeDto,
 ) : ExprDto {
-    override val type: TypeDto
-        get() = args.first().type
+    override fun toString(): String {
+        return "phi(${args.joinToString()})"
+    }
 }
 
 @Serializable

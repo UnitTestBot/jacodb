@@ -54,7 +54,6 @@ import org.jacodb.ets.base.EtsNumberConstant
 import org.jacodb.ets.base.EtsNumberType
 import org.jacodb.ets.base.EtsObjectLiteral
 import org.jacodb.ets.base.EtsParameterRef
-import org.jacodb.ets.base.EtsPhiExpr
 import org.jacodb.ets.base.EtsRelationOperation
 import org.jacodb.ets.base.EtsReturnStmt
 import org.jacodb.ets.base.EtsStaticCallExpr
@@ -247,11 +246,7 @@ class EtsMethodBuilder(
                 type = convertToEtsType(value.type),
             )
 
-            is PhiExprDto -> EtsPhiExpr(
-                args = value.args.map { convertToEtsEntity(it) },
-                argToBlock = emptyMap(), // TODO
-                type = convertToEtsType(value.type),
-            )
+            is PhiExprDto -> error("PhiExpr is not supported")
 
             is ArrayLiteralDto -> EtsArrayLiteral(
                 elements = value.elements.map { convertToEtsEntity(it) },

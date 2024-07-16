@@ -17,7 +17,6 @@
 package org.jacodb.ets.base
 
 import org.jacodb.api.common.cfg.CommonCallExpr
-import org.jacodb.ets.graph.EtsBasicBlock
 import org.jacodb.ets.model.EtsMethodSignature
 
 interface EtsExpr : EtsEntity {
@@ -29,7 +28,6 @@ interface EtsExpr : EtsEntity {
         fun visit(expr: EtsInstanceOfExpr): R
         fun visit(expr: EtsLengthExpr): R
         fun visit(expr: EtsCastExpr): R
-        fun visit(expr: EtsPhiExpr): R
         fun visit(expr: EtsUnaryOperation): R
         fun visit(expr: EtsBinaryOperation): R
         fun visit(expr: EtsRelationOperation): R
@@ -44,7 +42,6 @@ interface EtsExpr : EtsEntity {
             override fun visit(expr: EtsInstanceOfExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsLengthExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsCastExpr): R = defaultVisit(expr)
-            override fun visit(expr: EtsPhiExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsUnaryOperation): R = defaultVisit(expr)
             override fun visit(expr: EtsBinaryOperation): R = defaultVisit(expr)
             override fun visit(expr: EtsRelationOperation): R = defaultVisit(expr)
@@ -157,20 +154,6 @@ data class EtsCastExpr(
 ) : EtsExpr {
     override fun toString(): String {
         return "$arg as $type"
-    }
-
-    override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
-        return visitor.visit(this)
-    }
-}
-
-data class EtsPhiExpr(
-    val args: List<EtsEntity>,
-    val argToBlock: Map<EtsEntity, EtsBasicBlock>,
-    override val type: EtsType,
-) : EtsExpr {
-    override fun toString(): String {
-        return "phi(${args.joinToString()})"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {

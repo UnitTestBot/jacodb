@@ -50,7 +50,6 @@ import org.jacodb.api.jvm.cfg.JcDynamicCallExpr
 import org.jacodb.api.jvm.cfg.JcNegExpr
 import org.jacodb.ets.base.EtsBinaryExpr
 import org.jacodb.ets.base.EtsCastExpr
-import org.jacodb.ets.base.EtsPhiExpr
 import org.jacodb.ets.base.EtsUnaryExpr
 import org.jacodb.ets.utils.getOperands
 import org.jacodb.taint.configuration.AssignMark
@@ -194,16 +193,6 @@ class ForwardTaintFlowFunctions<Method, Statement>(
                 is StaticPandaPhiExpr -> {
                     val facts: MutableSet<TaintDomainFact> = mutableSetOf()
                     for (input in rhv.inputs) {
-                        facts += transmitTaintAssign(fact, from = input, to = current.lhv)
-                    }
-                    // For empty phi, pass-through:
-                    val pass = transmitTaintNormal(fact, current)
-                    facts + pass
-                }
-
-                is EtsPhiExpr -> {
-                    val facts: MutableSet<TaintDomainFact> = mutableSetOf()
-                    for (input in rhv.getOperands()) {
                         facts += transmitTaintAssign(fact, from = input, to = current.lhv)
                     }
                     // For empty phi, pass-through:

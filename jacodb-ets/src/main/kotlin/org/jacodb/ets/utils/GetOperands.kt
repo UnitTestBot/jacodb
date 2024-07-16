@@ -39,7 +39,6 @@ import org.jacodb.ets.base.EtsNullConstant
 import org.jacodb.ets.base.EtsNumberConstant
 import org.jacodb.ets.base.EtsObjectLiteral
 import org.jacodb.ets.base.EtsParameterRef
-import org.jacodb.ets.base.EtsPhiExpr
 import org.jacodb.ets.base.EtsRelationOperation
 import org.jacodb.ets.base.EtsReturnStmt
 import org.jacodb.ets.base.EtsStaticCallExpr
@@ -133,9 +132,6 @@ private object EntityGetOperands : EtsEntity.Visitor<Sequence<EtsEntity>> {
 
     override fun visit(expr: EtsCastExpr): Sequence<EtsEntity> =
         sequenceOf(expr.arg)
-
-    override fun visit(expr: EtsPhiExpr): Sequence<EtsEntity> =
-        expr.args.asSequence()
 
     override fun visit(expr: EtsUnaryOperation): Sequence<EtsEntity> =
         sequenceOf(expr.arg)
