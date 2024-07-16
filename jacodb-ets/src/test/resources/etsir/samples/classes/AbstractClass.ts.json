@@ -173,24 +173,12 @@
                             "name": "Rectangle"
                           },
                           "name": "constructor",
-                          "parameters": [
-                            {
-                              "name": "width",
-                              "type": {
-                                "_": "NumberType"
-                              },
-                              "isOptional": false
-                            },
-                            {
-                              "name": "height",
-                              "type": {
-                                "_": "NumberType"
-                              },
-                              "isOptional": false
-                            }
-                          ],
+                          "parameters": [],
                           "returnType": {
-                            "_": "UnknownType"
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Rectangle"
+                            }
                           }
                         },
                         "args": [

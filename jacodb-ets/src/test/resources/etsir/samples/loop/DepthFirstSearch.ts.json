@@ -175,6 +175,9 @@
                       },
                       "right": {
                         "_": "ObjectLiteralExpr",
+                        "anonymousClass": {
+                          "name": "AnonymousClass-_DEFAULT_ARK_METHOD-0"
+                        },
                         "type": {
                           "_": "ClassType",
                           "signature": {
@@ -1558,6 +1561,9 @@
           "exclamationToken": false,
           "initializer": {
             "_": "ObjectLiteralExpr",
+            "anonymousClass": {
+              "name": "AnonymousClass-2"
+            },
             "type": {
               "_": "ClassType",
               "signature": {
@@ -1582,6 +1588,9 @@
           "exclamationToken": false,
           "initializer": {
             "_": "ObjectLiteralExpr",
+            "anonymousClass": {
+              "name": "AnonymousClass-3"
+            },
             "type": {
               "_": "ClassType",
               "signature": {
@@ -1708,6 +1717,9 @@
           "exclamationToken": false,
           "initializer": {
             "_": "ObjectLiteralExpr",
+            "anonymousClass": {
+              "name": "AnonymousClass-5"
+            },
             "type": {
               "_": "ClassType",
               "signature": {
@@ -1732,6 +1744,9 @@
           "exclamationToken": false,
           "initializer": {
             "_": "ObjectLiteralExpr",
+            "anonymousClass": {
+              "name": "AnonymousClass-6"
+            },
             "type": {
               "_": "ClassType",
               "signature": {
@@ -1790,6 +1805,9 @@
           "exclamationToken": false,
           "initializer": {
             "_": "ObjectLiteralExpr",
+            "anonymousClass": {
+              "name": "AnonymousClass-1"
+            },
             "type": {
               "_": "ClassType",
               "signature": {
@@ -1814,6 +1832,9 @@
           "exclamationToken": false,
           "initializer": {
             "_": "ObjectLiteralExpr",
+            "anonymousClass": {
+              "name": "AnonymousClass-4"
+            },
             "type": {
               "_": "ClassType",
               "signature": {

@@ -246,10 +246,8 @@ data class ArrayLiteralDto(
 
 @Serializable
 @SerialName("ObjectLiteralExpr")
-// TODO: keys and values
 data class ObjectLiteralDto(
-    // val keys: List<String>,
-    // val values: List<Value>,
+    val anonymousClass: ClassSignatureDto,
     override val type: TypeDto,
 ) : ExprDto
 

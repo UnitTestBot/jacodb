@@ -173,17 +173,12 @@
                             "name": "ConstructorClass"
                           },
                           "name": "constructor",
-                          "parameters": [
-                            {
-                              "name": "name",
-                              "type": {
-                                "_": "StringType"
-                              },
-                              "isOptional": false
-                            }
-                          ],
+                          "parameters": [],
                           "returnType": {
-                            "_": "UnknownType"
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "ConstructorClass"
+                            }
                           }
                         },
                         "args": [

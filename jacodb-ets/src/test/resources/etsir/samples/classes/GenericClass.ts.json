@@ -216,18 +216,12 @@
                             "name": "GenericClass"
                           },
                           "name": "constructor",
-                          "parameters": [
-                            {
-                              "name": "data",
-                              "type": {
-                                "_": "UnclearReferenceType",
-                                "name": "T"
-                              },
-                              "isOptional": false
-                            }
-                          ],
+                          "parameters": [],
                           "returnType": {
-                            "_": "UnknownType"
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "GenericClass"
+                            }
                           }
                         },
                         "args": [
@@ -372,18 +366,12 @@
                             "name": "GenericClass"
                           },
                           "name": "constructor",
-                          "parameters": [
-                            {
-                              "name": "data",
-                              "type": {
-                                "_": "UnclearReferenceType",
-                                "name": "T"
-                              },
-                              "isOptional": false
-                            }
-                          ],
+                          "parameters": [],
                           "returnType": {
-                            "_": "UnknownType"
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "GenericClass"
+                            }
                           }
                         },
                         "args": [

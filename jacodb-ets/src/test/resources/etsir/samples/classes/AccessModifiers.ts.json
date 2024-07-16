@@ -173,31 +173,12 @@
                             "name": "User"
                           },
                           "name": "constructor",
-                          "parameters": [
-                            {
-                              "name": "username",
-                              "type": {
-                                "_": "StringType"
-                              },
-                              "isOptional": false
-                            },
-                            {
-                              "name": "email",
-                              "type": {
-                                "_": "StringType"
-                              },
-                              "isOptional": false
-                            },
-                            {
-                              "name": "name",
-                              "type": {
-                                "_": "StringType"
-                              },
-                              "isOptional": false
-                            }
-                          ],
+                          "parameters": [],
                           "returnType": {
-                            "_": "UnknownType"
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "User"
+                            }
                           }
                         },
                         "args": [

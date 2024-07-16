@@ -173,17 +173,12 @@
                             "name": "Circle"
                           },
                           "name": "constructor",
-                          "parameters": [
-                            {
-                              "name": "radius",
-                              "type": {
-                                "_": "NumberType"
-                              },
-                              "isOptional": false
-                            }
-                          ],
+                          "parameters": [],
                           "returnType": {
-                            "_": "UnknownType"
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Circle"
+                            }
                           }
                         },
                         "args": [

@@ -179,24 +179,12 @@
                             "name": "ChildClass"
                           },
                           "name": "constructor",
-                          "parameters": [
-                            {
-                              "name": "name",
-                              "type": {
-                                "_": "StringType"
-                              },
-                              "isOptional": false
-                            },
-                            {
-                              "name": "age",
-                              "type": {
-                                "_": "NumberType"
-                              },
-                              "isOptional": false
-                            }
-                          ],
+                          "parameters": [],
                           "returnType": {
-                            "_": "UnknownType"
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "ChildClass"
+                            }
                           }
                         },
                         "args": [

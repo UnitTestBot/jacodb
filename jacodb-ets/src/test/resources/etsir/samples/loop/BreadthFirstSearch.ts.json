@@ -175,6 +175,9 @@
                       },
                       "right": {
                         "_": "ObjectLiteralExpr",
+                        "anonymousClass": {
+                          "name": "AnonymousClass-_DEFAULT_ARK_METHOD-0"
+                        },
                         "type": {
                           "_": "ClassType",
                           "signature": {

@@ -242,6 +242,9 @@
                       },
                       "right": {
                         "_": "ObjectLiteralExpr",
+                        "anonymousClass": {
+                          "name": "AnonymousClass-main-0"
+                        },
                         "type": {
                           "_": "ClassType",
                           "signature": {
@@ -264,6 +267,9 @@
                       },
                       "right": {
                         "_": "ObjectLiteralExpr",
+                        "anonymousClass": {
+                          "name": "AnonymousClass-main-1"
+                        },
                         "type": {
                           "_": "ClassType",
                           "signature": {
