@@ -84,7 +84,7 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
 
     fun statementLabel(stmt: StmtDto): String {
         val labelLines: MutableList<String> = mutableListOf()
-        labelLines += "$stmt"
+        labelLines += "$stmt".replace("\"", "\\\"")
         return labelLines.joinToString("") { "${it}\\l" }
     }
 
@@ -137,7 +137,7 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
                     val ids = List(bb.stmts.size) { i ->
                         "${b}.${i}"
                     }
-                    lines += "    ${ids.joinToString(" -> ") { """"$it"""" }};"
+                    lines += "    ${ids.joinToString(" -> ") { "\"$it\"" }};"
                 }
 
                 lines += "  }"
