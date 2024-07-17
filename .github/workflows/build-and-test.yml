@@ -134,7 +134,7 @@ jobs:
 
       - name: Set up ArkAnalyzer
         run: |
-          git clone --depth=1 --branch=lipen/json-printer https://gitee.com/Lipenx/arkanalyzer
+          git clone --depth=1 --branch=jacodb https://gitee.com/Lipenx/arkanalyzer
           cd arkanalyzer
           npm install
           npm run build
