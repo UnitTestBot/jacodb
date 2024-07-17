@@ -113,7 +113,7 @@ data class ImportInfoDto(
     val importFrom: String,
     val nameBeforeAs: String? = null,
     val modifiers: List<ModifierDto>,
-    val originTsPosition: LineColPositionDto,
+    val originTsPosition: LineColPositionDto? = null,
 )
 
 @Serializable
@@ -124,7 +124,7 @@ data class ExportInfoDto(
     val nameBeforeAs: String? = null,
     val isDefault: Boolean,
     val modifiers: List<ModifierDto>,
-    val originTsPosition: LineColPositionDto,
+    val originTsPosition: LineColPositionDto? = null,
 )
 
 @Serializable

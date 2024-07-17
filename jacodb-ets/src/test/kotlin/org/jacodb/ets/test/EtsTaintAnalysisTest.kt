@@ -49,16 +49,16 @@ class EtsTaintAnalysisTest {
     companion object : EtsTraits {
         private const val BASE_PATH = "/etsir/samples"
 
+        private const val DECOMPILED_PATH = "/decompiled"
+
         private fun loadFromProject(name: String): EtsFile {
             return loadEtsFile("$BASE_PATH/$name.ts.json")
         }
-    }
 
-    @Test
-    fun `test taint analysis`() {
-        val etsFile = loadFromProject("taint")
-        val graph = EtsApplicationGraph(etsFile)
-        val unitResolver = UnitResolver<EtsMethod> { SingletonUnit }
+        private fun loadDecompiled(name: String): EtsFile {
+            return loadEtsFile("$DECOMPILED_PATH/$name.ts.abc.json")
+        }
+
         val getConfigForMethod: ForwardTaintFlowFunctions<EtsMethod, EtsStmt>.(EtsMethod) -> List<TaintConfigurationItem>? =
             { method ->
                 val rules = buildList {
@@ -100,6 +100,12 @@ class EtsTaintAnalysisTest {
                 }
                 rules.ifEmpty { null }
             }
+    }
+
+    fun runTaintAnalysis(etsFile: EtsFile) {
+        val graph = EtsApplicationGraph(etsFile)
+        val unitResolver = UnitResolver<EtsMethod> { SingletonUnit }
+
         val manager = TaintManager(
             graph = graph,
             unitResolver = unitResolver,
@@ -114,5 +120,17 @@ class EtsTaintAnalysisTest {
         val sinks = manager.analyze(methods, timeout = 60.seconds)
         logger.info { "Sinks: $sinks" }
         assertTrue(sinks.isNotEmpty())
+    }
+
+    @Test
+    fun `test taint analysis`() {
+        val etsFile = loadFromProject("taint")
+        runTaintAnalysis(etsFile)
+    }
+
+    @Test
+    fun `test taint analysis on decompiled file`() {
+        val etsFile = loadDecompiled("DataFlowSecurity")
+        runTaintAnalysis(etsFile)
     }
 }

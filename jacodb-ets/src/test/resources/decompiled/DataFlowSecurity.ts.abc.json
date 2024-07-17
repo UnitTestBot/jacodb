@@ -1,0 +1,1053 @@
+{
+  "name": "samples/DataFlowSecurity.ts",
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "good",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [],
+                  "stmts": []
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          },
+                          "name": "source",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          },
+                          "name": "validate",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp0",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          },
+                          "name": "sink",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp1",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "bad",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [],
+                  "stmts": []
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          },
+                          "name": "source",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          },
+                          "name": "pass",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp0",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": "_DEFAULT_ARK_CLASS"
+                          },
+                          "name": "sink",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp1",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "validate",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp2",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [],
+                  "stmts": []
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2,
+                    4
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "null",
+                        "type": {
+                          "_": "NullType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": "==",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "$temp1",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [
+                    3
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 3,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": []
+                },
+                {
+                  "id": 4,
+                  "successors": [
+                    3
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "\"OK\"",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "pass",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [],
+                  "stmts": []
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "sink",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [],
+                  "stmts": []
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2,
+                    4
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 0,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "null",
+                        "type": {
+                          "_": "NullType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": "==",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "right": {
+                          "_": "Local",
+                          "name": "$temp1",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [
+                    3
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 3,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": []
+                },
+                {
+                  "id": 4,
+                  "successors": [
+                    3
+                  ],
+                  "predecessors": [],
+                  "stmts": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "source",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [],
+                  "stmts": []
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Constant",
+                        "value": "null",
+                        "type": {
+                          "_": "NullType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "_DEFAULT_ARK_CLASS"
+            },
+            "name": "func_main_0",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "good",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "bad",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "validate",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "pass",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "sink",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "source",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [],
+                  "stmts": []
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "good",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$anon$495",
+                        "type": {
+                          "_": "CallableType",
+                          "signature": {
+                            "enclosingClass": {
+                              "name": "_DEFAULT_ARK_CLASS"
+                            },
+                            "name": "$anon$495",
+                            "parameters": [],
+                            "returnType": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "bad",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$anon$467",
+                        "type": {
+                          "_": "CallableType",
+                          "signature": {
+                            "enclosingClass": {
+                              "name": "_DEFAULT_ARK_CLASS"
+                            },
+                            "name": "$anon$467",
+                            "parameters": [],
+                            "returnType": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "validate",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$anon$607",
+                        "type": {
+                          "_": "CallableType",
+                          "signature": {
+                            "enclosingClass": {
+                              "name": "_DEFAULT_ARK_CLASS"
+                            },
+                            "name": "$anon$607",
+                            "parameters": [],
+                            "returnType": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "pass",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$anon$523",
+                        "type": {
+                          "_": "CallableType",
+                          "signature": {
+                            "enclosingClass": {
+                              "name": "_DEFAULT_ARK_CLASS"
+                            },
+                            "name": "$anon$523",
+                            "parameters": [],
+                            "returnType": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "sink",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$anon$551",
+                        "type": {
+                          "_": "CallableType",
+                          "signature": {
+                            "enclosingClass": {
+                              "name": "_DEFAULT_ARK_CLASS"
+                            },
+                            "name": "$anon$551",
+                            "parameters": [],
+                            "returnType": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "source",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$anon$579",
+                        "type": {
+                          "_": "CallableType",
+                          "signature": {
+                            "enclosingClass": {
+                              "name": "_DEFAULT_ARK_CLASS"
+                            },
+                            "name": "$anon$579",
+                            "parameters": [],
+                            "returnType": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": []
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "importInfos": [],
+  "exportInfos": [
+    {
+      "exportClauseName": "bad",
+      "exportClauseType": 4,
+      "nameBeforeAs": "bad",
+      "isDefault": false,
+      "modifiers": []
+    },
+    {
+      "exportClauseName": "good",
+      "exportClauseType": 4,
+      "nameBeforeAs": "good",
+      "isDefault": false,
+      "modifiers": []
+    },
+    {
+      "exportClauseName": "pass",
+      "exportClauseType": 4,
+      "nameBeforeAs": "pass",
+      "isDefault": false,
+      "modifiers": []
+    },
+    {
+      "exportClauseName": "sink",
+      "exportClauseType": 4,
+      "nameBeforeAs": "sink",
+      "isDefault": false,
+      "modifiers": []
+    },
+    {
+      "exportClauseName": "source",
+      "exportClauseType": 4,
+      "nameBeforeAs": "source",
+      "isDefault": false,
+      "modifiers": []
+    },
+    {
+      "exportClauseName": "validate",
+      "exportClauseType": 4,
+      "nameBeforeAs": "validate",
+      "isDefault": false,
+      "modifiers": []
+    }
+  ]
+}
