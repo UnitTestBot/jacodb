@@ -134,8 +134,10 @@ jobs:
 
       - name: Set up ArkAnalyzer
         run: |
-          git clone --depth=1 --branch=jacodb https://gitee.com/Lipenx/arkanalyzer
+          git clone https://gitee.com/openharmony-sig/arkanalyzer
           cd arkanalyzer
+          # checkout master on 2024-07-17
+          git switch --detach a9d9fd6070fce5896d8e760ed7fd175b62b16605
           npm install
           npm run build
 
