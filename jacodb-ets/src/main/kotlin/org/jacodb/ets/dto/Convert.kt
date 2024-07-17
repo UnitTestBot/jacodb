@@ -356,15 +356,17 @@ class EtsMethodBuilder(
 
         while (queue.isNotEmpty()) {
             val block = blocks[queue.removeFirst()]!!
+            blockStart[block.id] = currentStmts.size
             if (block.stmts.isNotEmpty()) {
-                blockStart[block.id] = currentStmts.size
+                for (stmt in block.stmts) {
+                    currentStmts += convertToEtsStmt(stmt)
+                }
+            } else {
+                currentStmts += EtsNopStmt(loc())
             }
-            for (stmt in block.stmts) {
-                currentStmts += convertToEtsStmt(stmt)
-            }
-            if (block.stmts.isNotEmpty()) {
-                blockEnd[block.id] = currentStmts.lastIndex
-            }
+            blockEnd[block.id] = currentStmts.lastIndex
+            check(blockStart[block.id]!! <= blockEnd[block.id]!!)
+
             for (next in block.successors) {
                 if (visited.add(next)) {
                     queue.addLast(next)
@@ -374,9 +376,6 @@ class EtsMethodBuilder(
 
         val successorMap: MutableMap<EtsStmt, List<EtsStmt>> = hashMapOf()
         for (block in cfg.blocks) {
-            if (block.stmts.isEmpty()) {
-                continue
-            }
             val startId = blockStart[block.id]!!
             val endId = blockEnd[block.id]!!
             for (i in startId until endId) {
