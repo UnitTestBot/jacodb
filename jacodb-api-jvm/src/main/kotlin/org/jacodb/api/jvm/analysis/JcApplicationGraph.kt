@@ -25,5 +25,5 @@ import org.jacodb.api.jvm.cfg.JcInst
  * Interface for [JcApplicationGraph] built with jacodb.
  */
 interface JcApplicationGraph : ApplicationGraph<JcMethod, JcInst> {
-    override val project: JcClasspath
+    val cp: JcClasspath
 }

@@ -98,6 +98,8 @@ abstract class BaseAnalysisTest : BaseTest() {
         } else {
             super.cp
         }
+    }.also {
+        JcTraits.cp = it
     }
 
     protected val graph: JcApplicationGraph by lazy {

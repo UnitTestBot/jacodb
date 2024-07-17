@@ -22,7 +22,6 @@ import org.jacodb.analysis.ifds.FieldAccessor
 import org.jacodb.analysis.util.getArgument
 import org.jacodb.analysis.util.toPathOrNull
 import org.jacodb.api.common.CommonMethodParameter
-import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonValue
@@ -37,9 +36,9 @@ import org.jacodb.api.jvm.cfg.JcCastExpr
 import org.jacodb.api.jvm.cfg.JcConstant
 import org.jacodb.api.jvm.cfg.JcExpr
 import org.jacodb.api.jvm.cfg.JcFieldRef
+import org.jacodb.api.jvm.cfg.JcImmediate
 import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.api.jvm.cfg.JcInt
-import org.jacodb.api.jvm.cfg.JcImmediate
 import org.jacodb.api.jvm.cfg.JcStringConstant
 import org.jacodb.api.jvm.cfg.JcThis
 import org.jacodb.api.jvm.cfg.JcValue
@@ -69,6 +68,9 @@ import org.jacodb.api.jvm.ext.cfg.callExpr as _callExpr
  */
 interface JcTraits : Traits<JcMethod, JcInst> {
 
+    val cp: JcClasspath
+        get() = JcTraits.cp
+
     override val JcMethod.thisInstance: JcThis
         get() = _thisInstance
 
@@ -97,15 +99,13 @@ interface JcTraits : Traits<JcMethod, JcInst> {
             return _callee
         }
 
-    override fun CommonProject.getArgument(param: CommonMethodParameter): JcArgument? {
-        check(this is JcClasspath)
+    override fun getArgument(param: CommonMethodParameter): JcArgument? {
         check(param is JcParameter)
-        return _getArgument(param)
+        return cp._getArgument(param)
     }
 
-    override fun CommonProject.getArgumentsOf(method: JcMethod): List<JcArgument> {
-        check(this is JcClasspath)
-        return _getArgumentsOf(method)
+    override fun getArgumentsOf(method: JcMethod): List<JcArgument> {
+        return cp._getArgumentsOf(method)
     }
 
     override fun CommonValue.isConstant(): Boolean {
@@ -174,7 +174,9 @@ interface JcTraits : Traits<JcMethod, JcInst> {
     }
 
     // Ensure that all methods are default-implemented in the interface itself:
-    companion object : JcTraits
+    companion object : JcTraits {
+        override lateinit var cp: JcClasspath
+    }
 }
 
 val JcMethod.thisInstance: JcThis

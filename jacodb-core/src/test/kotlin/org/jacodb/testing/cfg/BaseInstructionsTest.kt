@@ -77,26 +77,26 @@ abstract class BaseInstructionsTest : BaseTest() {
             val classNode = klass.asmNode()
             classNode.methods = klass.declaredMethods
                 .filter { it.enclosingClass == klass }
-                .map {
-                    if (it.isAbstract ||
-                        it.name.contains("$\$forInline")||
-                        it.name.contains("lambda$") ||
-                        it.name.contains("stringConcat$")) {
-                        it.asmNode()
+                .map { method ->
+                    if (method.isAbstract ||
+                        method.name.contains("$\$forInline")||
+                        method.name.contains("lambda$") ||
+                        method.name.contains("stringConcat$")) {
+                        method.asmNode()
                     } else {
                         try {
-                            val instructionList = it.rawInstList
-                            it.instList.forEachIndexed { index, inst ->
+                            val instructionList = method.rawInstList
+                            method.instList.forEachIndexed { index, inst ->
                                 Assertions.assertEquals(
                                     index,
                                     inst.location.index,
-                                    "indexes not matched for $it at $index"
+                                    "indexes not matched for $method at $index"
                                 )
                             }
-                            val graph = it.flowGraph()
-                            if (!it.enclosingClass.isKotlin) {
+                            val graph = method.flowGraph()
+                            if (!method.enclosingClass.isKotlin) {
                                 if (validateLineNumbers) {
-                                    val methodMsg = "$it should have line number"
+                                    val methodMsg = "$method should have line number"
                                     graph.instructions.forEach { inst ->
                                         Assertions.assertTrue(
                                             inst.location.lineNumber > 0, methodMsg
@@ -105,12 +105,12 @@ abstract class BaseInstructionsTest : BaseTest() {
                                 }
                             }
                             graph.applyAndGet(OverridesResolver(ext)) {}
-                            if (!muteGraphChecker) JcGraphChecker(it, graph).check()
-                            val newBody = MethodNodeBuilder(it, instructionList).build()
+                            if (!muteGraphChecker) JcGraphChecker(method, graph).check()
+                            val newBody = MethodNodeBuilder(method, instructionList).build()
                             newBody
                         } catch (e: Throwable) {
-                            it.dumpInstructions()
-                            throw IllegalStateException("error handling $it", e)
+                            method.dumpInstructions()
+                            throw IllegalStateException("error handling $method", e)
                         }
 
                     }

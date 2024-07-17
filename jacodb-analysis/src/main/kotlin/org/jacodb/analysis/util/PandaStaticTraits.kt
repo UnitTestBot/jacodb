@@ -22,7 +22,6 @@ import org.jacodb.analysis.ifds.FieldAccessor
 import org.jacodb.analysis.util.getArgument
 import org.jacodb.analysis.util.toPathOrNull
 import org.jacodb.api.common.CommonMethodParameter
-import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonExpr
 import org.jacodb.api.common.cfg.CommonValue
@@ -41,7 +40,6 @@ import org.jacodb.panda.staticvm.cfg.PandaValue
 import org.jacodb.panda.staticvm.classpath.PandaClass
 import org.jacodb.panda.staticvm.classpath.PandaClassType
 import org.jacodb.panda.staticvm.classpath.PandaMethod
-import org.jacodb.panda.staticvm.classpath.PandaProject
 import org.jacodb.taint.configuration.ConstantBooleanValue
 import org.jacodb.taint.configuration.ConstantIntValue
 import org.jacodb.taint.configuration.ConstantStringValue
@@ -100,14 +98,12 @@ interface PandaStaticTraits : Traits<PandaMethod, PandaInst> {
 
     override fun PandaInst.getCallExpr(): CommonCallExpr? = _callExpr
 
-    override fun CommonProject.getArgument(param: CommonMethodParameter): PandaArgument {
-        check(this is PandaProject)
+    override fun getArgument(param: CommonMethodParameter): PandaArgument {
         check(param is PandaMethod.Parameter)
         return _getArgument(param)
     }
 
-    override fun CommonProject.getArgumentsOf(method: PandaMethod): List<PandaArgument> {
-        check(this is PandaProject)
+    override fun getArgumentsOf(method: PandaMethod): List<PandaArgument> {
         return _getArgumentsOf(method)
     }
 
@@ -178,7 +174,10 @@ interface PandaStaticTraits : Traits<PandaMethod, PandaInst> {
     }
 
     // Ensure that all methods are default-implemented in the interface itself:
-    companion object : PandaStaticTraits
+    companion object : PandaStaticTraits {
+        // Note: unused for now
+        // lateinit var cp: PandaProject
+    }
 }
 
 val PandaMethod.thisInstance: PandaThis
@@ -224,10 +223,10 @@ fun PandaValue.toPath(): AccessPath {
     return toPathOrNull() ?: error("Unable to build access path for value $this")
 }
 
-fun PandaProject.getArgument(param: PandaMethod.Parameter): PandaArgument {
+fun getArgument(param: PandaMethod.Parameter): PandaArgument {
     return PandaArgument(param.index, "arg${param.index}", param.type)
 }
 
-fun PandaProject.getArgumentsOf(method: PandaMethod): List<PandaArgument> {
+fun getArgumentsOf(method: PandaMethod): List<PandaArgument> {
     return method.parameters.map { getArgument(it) }
 }

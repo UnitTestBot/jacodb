@@ -21,6 +21,7 @@ import org.jacodb.analysis.ifds.SingletonUnitResolver
 import org.jacodb.analysis.npe.NpeManager
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.unused.UnusedVariableManager
+import org.jacodb.analysis.util.JcTraits
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.taint.configuration.TaintConfigurationFeature
@@ -46,6 +47,8 @@ class JodaDateTimeAnalysisTest : BaseAnalysisTest() {
         } else {
             super.cp
         }
+    }.also {
+        JcTraits.cp = it
     }
 
     @Test

@@ -22,20 +22,22 @@ import org.jacodb.analysis.ifds.Analyzer
 import org.jacodb.analysis.ifds.Edge
 import org.jacodb.analysis.ifds.Reason
 import org.jacodb.analysis.util.Traits
+import org.jacodb.analysis.util.toPath
 import org.jacodb.api.common.CommonMethod
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.jvm.cfg.JcIfInst
 import org.jacodb.impl.cfg.util.loops
-import org.jacodb.panda.dynamic.api.loops
+import org.jacodb.ets.base.EtsArrayAccess
+import org.jacodb.ets.base.EtsAssignStmt
+import org.jacodb.ets.base.EtsIfStmt
+import org.jacodb.ets.base.EtsNewArrayExpr
+import org.jacodb.ets.base.EtsStmt
+import org.jacodb.ets.graph.loops
+import org.jacodb.ets.utils.getOperands
 import org.jacodb.panda.staticvm.utils.loops
 import org.jacodb.taint.configuration.TaintConfigurationItem
 import org.jacodb.taint.configuration.TaintMethodSink
-import org.jacodb.panda.dynamic.api.PandaArrayAccess as DynamicPandaArrayAccess
-import org.jacodb.panda.dynamic.api.PandaAssignInst as DynamicPandaAssignInst
-import org.jacodb.panda.dynamic.api.PandaIfInst as DynamicPandaIfInst
-import org.jacodb.panda.dynamic.api.PandaInst as DynamicPandaInst
-import org.jacodb.panda.dynamic.api.PandaNewExpr as DynamicPandaNewExpr
 import org.jacodb.panda.staticvm.cfg.PandaIfInst as StaticPandaIfInst
 
 private val logger = mu.KotlinLogging.logger {}
@@ -126,11 +128,11 @@ class TaintAnalyzer<Method, Statement>(
                             }
                         }
                     }
-                } else if (statement is DynamicPandaIfInst) {
+                } else if (statement is EtsIfStmt) {
                     val pandaGraph = statement.location.method.flowGraph()
                     val loops = pandaGraph.loops
                     if (loops.any { statement in it.instructions }) {
-                        for (s in statement.condition.operands) {
+                        for (s in statement.condition.getOperands()) {
                             val p = s.toPath()
                             if (p == fact.variable) {
                                 val message = "Untrusted loop bound"
@@ -146,11 +148,11 @@ class TaintAnalyzer<Method, Statement>(
             val statement = edge.to.statement
             val fact = edge.to.fact
             if (fact is Tainted && fact.mark.name == "UNTRUSTED") {
-                if (statement is DynamicPandaAssignInst) {
+                if (statement is EtsAssignStmt) {
                     val expr = statement.rhv
-                    if (expr is DynamicPandaNewExpr && expr.typeName in listOf("Array", "ArrayBuffer")) {
-                        val arg = expr.params.first()
-                        if (arg.toPath() == fact.variable) {
+                    if (expr is EtsNewArrayExpr) {
+                        val arg = expr.size
+                        if (arg.toPathOrNull() == fact.variable) {
                             val message = "Untrusted array size"
                             val vulnerability = TaintVulnerability(message, sink = edge.to)
                             add(NewVulnerability(vulnerability))
@@ -163,11 +165,11 @@ class TaintAnalyzer<Method, Statement>(
             val statement = edge.to.statement
             val fact = edge.to.fact
             if (fact is Tainted && fact.mark.name == "UNTRUSTED") {
-                if (statement is DynamicPandaInst) {
-                    for (op in statement.operands) {
-                        if (op is DynamicPandaArrayAccess) {
+                if (statement is EtsStmt) {
+                    for (op in statement.getOperands()) {
+                        if (op is EtsArrayAccess) {
                             val arg = op.index
-                            if (arg.toPath() == fact.variable) {
+                            if (arg.toPathOrNull() == fact.variable) {
                                 val message = "Untrusted index for access array"
                                 val vulnerability = TaintVulnerability(message, sink = edge.to)
                                 add(NewVulnerability(vulnerability))

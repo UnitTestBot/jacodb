@@ -7,8 +7,8 @@ dependencies {
     api(project(":jacodb-api-jvm"))
     api(project(":jacodb-core"))
     api(project(":jacodb-taint-configuration"))
+    api(project(":jacodb-ets"))
     api(project(":jacodb-panda-static"))
-    api(project(":jacodb-panda-dynamic"))
 
     implementation(Libs.kotlin_logging)
     implementation(Libs.slf4j_simple)

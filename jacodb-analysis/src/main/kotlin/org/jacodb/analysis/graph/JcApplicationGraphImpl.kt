@@ -27,7 +27,7 @@ import org.jacodb.impl.features.SyncUsagesExtension
  * Possible we will need JcRawInst instead of JcInst
  */
 open class JcApplicationGraphImpl(
-    override val project: JcClasspath,
+    override val cp: JcClasspath,
     private val usages: SyncUsagesExtension,
 ) : JcApplicationGraph {
     override fun predecessors(node: JcInst): Sequence<JcInst> {
