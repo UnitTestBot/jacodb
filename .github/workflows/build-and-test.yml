@@ -162,7 +162,7 @@ jobs:
           npm install
           npm run build
 
-          export ARKANALYZER_DIR=$DEST_DIR
+          echo "ARKANALYZER_DIR=$DEST_DIR" >> $GITHUB_ENV
 
       - name: Generate test resources for jacodb-ets module
         run: ./gradlew :jacodb-ets:generateTestResources
