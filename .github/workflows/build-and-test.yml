@@ -134,19 +134,38 @@ jobs:
 
       - name: Set up ArkAnalyzer
         run: |
-          git clone --depth=1 https://gitee.com/openharmony-sig/arkanalyzer
-          cd arkanalyzer
+          REPO_URL="https://gitee.com/openharmony-sig/arkanalyzer.git"
+          DEST_DIR="arkanalyzer"
+          MAX_RETRIES=10
+          RETRY_DELAY=5  # Delay between retries in seconds
+
+          for ((i=1; i<=MAX_RETRIES; i++)); do
+              git clone --depth=1 $REPO_URL $DEST_DIR && break
+              echo "Clone failed, retrying in $RETRY_DELAY seconds..."
+              sleep "$RETRY_DELAY"
+          done
+
+          if [[ $i -gt $MAX_RETRIES ]]; then
+              echo "Failed to clone the repository after $MAX_RETRIES attempts."
+              exit 1
+          else
+              echo "Repository cloned successfully."
+          fi
+
+          cd $DEST_DIR
+
           # checkout master on 2024-07-17
           rev=a9d9fd6070fce5896d8e760ed7fd175b62b16605
           git fetch --depth=1 origin $rev
           git switch --detach $rev
-          npm install
+
+          npm ci
           npm run build
+
+          export ARKANALYZER_DIR=$DEST_DIR
 
       - name: Generate test resources for jacodb-ets module
         run: ./gradlew :jacodb-ets:generateTestResources
-        env:
-          ARKANALYZER_DIR: arkanalyzer
 
       - name: Build and run tests in jacodb-ets module
         run: ./gradlew --scan :jacodb-ets:test
