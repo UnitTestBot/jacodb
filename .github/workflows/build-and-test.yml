@@ -134,8 +134,12 @@ jobs:
 
       - name: Set up ArkAnalyzer
         run: |
-          git clone --depth=1 --branch=lipen/json-printer https://gitee.com/Lipenx/arkanalyzer
+          git clone --depth=1 https://gitee.com/openharmony-sig/arkanalyzer
           cd arkanalyzer
+          # checkout master on 2024-07-17
+          rev=a9d9fd6070fce5896d8e760ed7fd175b62b16605
+          git fetch --depth=1 origin $rev
+          git switch --detach $rev
           npm install
           npm run build
 
