@@ -159,7 +159,7 @@ jobs:
           git fetch --depth=1 origin $rev
           git switch --detach $rev
 
-          npm ci
+          npm install
           npm run build
 
           export ARKANALYZER_DIR=$DEST_DIR
