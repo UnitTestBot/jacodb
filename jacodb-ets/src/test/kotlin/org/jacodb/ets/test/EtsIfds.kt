@@ -16,7 +16,7 @@
 
 package org.jacodb.ets.test
 
-import org.jacodb.ets.test.utils.loadEtsFile
+import org.jacodb.ets.test.utils.loadEtsFileFromResource
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
@@ -43,8 +43,11 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIf
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.io.path.exists
+import kotlin.io.path.toPath
 import kotlin.time.Duration.Companion.seconds
 
 private val logger = mu.KotlinLogging.logger {}
@@ -56,13 +59,13 @@ class EtsIfds {
         private const val BASE_PATH = "/etsir/samples"
 
         private fun loadSample(programName: String): EtsFile {
-            return loadEtsFile("$BASE_PATH/${programName}.ts.json")
+            return loadEtsFileFromResource("$BASE_PATH/${programName}.ts.json")
         }
     }
 
     private fun projectAvailable(): Boolean {
         val resource = object {}::class.java.getResource("/samples/project1")?.toURI()
-        return resource != null && Files.exists(Paths.get(resource))
+        return resource != null && resource.toPath().exists()
     }
 
     @Test
@@ -73,7 +76,7 @@ class EtsIfds {
         val getConfigForMethod: ForwardTaintFlowFunctions<EtsMethod, EtsStmt>.(EtsMethod) -> List<TaintConfigurationItem>? =
             { method ->
                 val rules = buildList {
-                    if (method.name == "isSame" && method.enclosingClass.name == "Foo") add(
+                    if (method.name == "isSame" && method.signature.enclosingClass.name == "Foo") add(
                         TaintMethodSource(
                             method = method,
                             condition = ConstantTrue,
@@ -340,7 +343,7 @@ class EtsIfds {
     @EnabledIf("projectAvailable")
     @Test
     fun `test taint analysis on AccountManager`() {
-        val project = loadEtsFile("/etsir/project1/entry/src/main/ets/base/account/AccountManager.ts.json")
+        val project = loadEtsFileFromResource("/etsir/project1/entry/src/main/ets/base/account/AccountManager.ts.json")
         val graph = EtsApplicationGraph(project)
         val unitResolver = UnitResolver<EtsMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<EtsMethod, EtsStmt>.(EtsMethod) -> List<TaintConfigurationItem>? =

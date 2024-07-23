@@ -30,7 +30,8 @@ object DumpEtsFileDtoToDot {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val etsFileDto: EtsFileDto = loadDto("$BASE_PATH/${NAME}.ts.json")
+        val path = "$BASE_PATH/${NAME}.ts.json"
+        val etsFileDto: EtsFileDto = loadEtsFileDtoFromResource(path)
 
         println("EtsFileDto '${etsFileDto.name}':")
         etsFileDto.classes.forEach { clazz ->
@@ -75,7 +76,8 @@ object DumpEtsFileToDot {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val etsFile = loadEtsFile("$BASE_PATH/${NAME}.ts.json")
+        val path = "$BASE_PATH/${NAME}.ts.json"
+        val etsFile = loadEtsFileFromResource(path)
 
         println("EtsFile '${etsFile.name}':")
         etsFile.classes.forEach { clazz ->
@@ -87,10 +89,8 @@ object DumpEtsFileToDot {
             }
             println("  constructor = '${clazz.ctor.signature}'")
             println("    stmts: ${clazz.ctor.cfg.stmts.size}")
-            run {
-                clazz.ctor.cfg.stmts.forEachIndexed { i, stmt ->
-                    println("    ${i + 1}. $stmt")
-                }
+            clazz.ctor.cfg.stmts.forEachIndexed { i, stmt ->
+                println("    ${i + 1}. $stmt")
             }
             println("  methods: ${clazz.methods.size}")
             clazz.methods.forEach { method ->
