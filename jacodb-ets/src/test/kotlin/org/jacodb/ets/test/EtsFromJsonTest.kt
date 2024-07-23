@@ -40,6 +40,7 @@ import org.jacodb.ets.dto.convertToEtsMethod
 import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsMethodSignature
 import org.jacodb.ets.test.utils.loadEtsFileDtoFromResource
+import org.jacodb.ets.utils.loadEtsFileAutoConvert
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
@@ -67,6 +68,12 @@ class EtsFromJsonTest {
         println("etsDto = $etsDto")
         val ets = convertToEtsFile(etsDto)
         println("ets = $ets")
+    }
+
+    @Test
+    fun testLoadEtsFileAutoConvert() {
+        val etsFile = loadEtsFileAutoConvert("src/test/resources/source/example.ts")
+        println("etsFile = $etsFile")
     }
 
     @Test
