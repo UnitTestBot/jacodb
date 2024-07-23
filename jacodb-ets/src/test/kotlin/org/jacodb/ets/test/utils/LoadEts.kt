@@ -20,15 +20,6 @@ import mu.KotlinLogging
 import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.model.EtsFile
-import java.io.File
-import java.io.FileNotFoundException
-import java.nio.file.Paths
-import java.util.concurrent.TimeUnit
-import kotlin.io.path.createTempFile
-import kotlin.io.path.exists
-import kotlin.io.path.inputStream
-import kotlin.io.path.notExists
-import kotlin.io.path.pathString
 
 private val logger = KotlinLogging.logger {}
 
@@ -41,57 +32,4 @@ fun loadEtsFileDtoFromResource(jsonPath: String): EtsFileDto {
 fun loadEtsFileFromResource(jsonPath: String): EtsFile {
     val etsFileDto = loadEtsFileDtoFromResource(jsonPath)
     return convertToEtsFile(etsFileDto)
-}
-
-private const val ENV_VAR_ARK_ANALYZER_DIR = "ARKANALYZER_DIR"
-private const val DEFAULT_ARK_ANALYZER_DIR = "arkanalyzer"
-
-private const val ENV_VAR_SERIALIZE_SCRIPT_PATH = "SERIALIZE_SCRIPT_PATH"
-private const val DEFAULT_SERIALIZE_SCRIPT_PATH = "out/src/save/serializeArkIR.js"
-
-private const val ENV_VAR_NODE_EXECUTABLE = "NODE_EXECUTABLE"
-private const val DEFAULT_NODE_EXECUTABLE = "node"
-
-fun loadEtsFileAutoConvert(tsPath: String): EtsFile {
-    val arkAnalyzerDir = Paths.get(System.getenv(ENV_VAR_ARK_ANALYZER_DIR) ?: DEFAULT_ARK_ANALYZER_DIR)
-    if (arkAnalyzerDir.notExists()) {
-        throw FileNotFoundException("ArkAnalyzer directory does not exist: '$arkAnalyzerDir'. Did you forget to set the '$ENV_VAR_ARK_ANALYZER_DIR' environment variable?")
-    }
-
-    val scriptPath = System.getenv(ENV_VAR_SERIALIZE_SCRIPT_PATH) ?: DEFAULT_SERIALIZE_SCRIPT_PATH
-    val script = arkAnalyzerDir.resolve(scriptPath)
-    if (!script.exists()) {
-        throw FileNotFoundException("Script file not found: '$script'. Did you forget to execute 'npm run build' in the arkanalyzer project?")
-    }
-
-    val node = System.getenv(ENV_VAR_NODE_EXECUTABLE) ?: DEFAULT_NODE_EXECUTABLE
-    val output = createTempFile(prefix = File(tsPath).nameWithoutExtension + "_", suffix = ".json")
-    val cmd: List<String> = listOf(
-        node,
-        script.pathString,
-        tsPath,
-        output.pathString,
-    )
-    logger.info { "Running: '${cmd.joinToString(" ")}'" }
-    val process = ProcessBuilder(cmd).start();
-    val ok = process.waitFor(1, TimeUnit.MINUTES)
-
-    val stdout = process.inputStream.bufferedReader().readText().trim()
-    if (stdout.isNotBlank()) {
-        logger.info { "STDOUT:\n$stdout" }
-    }
-    val stderr = process.errorStream.bufferedReader().readText().trim()
-    if (stderr.isNotBlank()) {
-        logger.info { "STDERR:\n$stderr" }
-    }
-
-    if (!ok) {
-        logger.info { "Timeout!" }
-        process.destroy()
-    }
-
-    output.inputStream().use { stream ->
-        val etsFileDto = EtsFileDto.loadFromJson(stream)
-        return convertToEtsFile(etsFileDto)
-    }
 }

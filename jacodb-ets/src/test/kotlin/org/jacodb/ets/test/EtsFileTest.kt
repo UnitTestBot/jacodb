@@ -20,7 +20,7 @@ import org.jacodb.ets.base.EtsAssignStmt
 import org.jacodb.ets.base.EtsInstanceFieldRef
 import org.jacodb.ets.base.EtsThis
 import org.jacodb.ets.model.EtsFile
-import org.jacodb.ets.test.utils.loadEtsFileAutoConvert
+import org.jacodb.ets.utils.loadEtsFileAutoConvert
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
