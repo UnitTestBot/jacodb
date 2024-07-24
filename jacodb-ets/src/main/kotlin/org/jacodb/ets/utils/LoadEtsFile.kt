@@ -43,7 +43,7 @@ private const val DEFAULT_NODE_EXECUTABLE = "node"
 fun loadEtsFileAutoConvert(tsPath: String): EtsFile {
     val arkAnalyzerDir = Paths.get(System.getenv(ENV_VAR_ARK_ANALYZER_DIR) ?: DEFAULT_ARK_ANALYZER_DIR)
     if (!arkAnalyzerDir.exists()) {
-        throw FileNotFoundException("ArkAnalyzer directory does not exist: '$arkAnalyzerDir'. Did you forget to set the '$ENV_VAR_ARK_ANALYZER_DIR' environment variable? Current value is '${System.getenv(ENV_VAR_ARK_ANALYZER_DIR)}'. Current dir: ${Paths.get("").toAbsolutePath()}")
+        throw FileNotFoundException("ArkAnalyzer directory does not exist: '$arkAnalyzerDir'. Did you forget to set the '$ENV_VAR_ARK_ANALYZER_DIR' environment variable? Current value is '${System.getenv(ENV_VAR_ARK_ANALYZER_DIR)}', current dir is '${Paths.get("").toAbsolutePath()}'.")
     }
 
     val scriptPath = System.getenv(ENV_VAR_SERIALIZE_SCRIPT_PATH) ?: DEFAULT_SERIALIZE_SCRIPT_PATH
