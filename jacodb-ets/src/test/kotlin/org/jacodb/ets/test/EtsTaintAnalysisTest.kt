@@ -16,7 +16,7 @@
 
 package org.jacodb.ets.test
 
-import org.jacodb.ets.test.utils.loadEtsFile
+import org.jacodb.ets.test.utils.loadEtsFileFromResource
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
@@ -52,11 +52,11 @@ class EtsTaintAnalysisTest {
         private const val DECOMPILED_PATH = "/decompiled"
 
         private fun loadFromProject(name: String): EtsFile {
-            return loadEtsFile("$BASE_PATH/$name.ts.json")
+            return loadEtsFileFromResource("$BASE_PATH/$name.ts.json")
         }
 
         private fun loadDecompiled(name: String): EtsFile {
-            return loadEtsFile("$DECOMPILED_PATH/$name.ts.abc.json")
+            return loadEtsFileFromResource("$DECOMPILED_PATH/$name.ts.abc.json")
         }
 
         val getConfigForMethod: ForwardTaintFlowFunctions<EtsMethod, EtsStmt>.(EtsMethod) -> List<TaintConfigurationItem>? =

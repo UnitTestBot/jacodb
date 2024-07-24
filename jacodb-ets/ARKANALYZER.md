@@ -6,10 +6,10 @@ Clone and install the ArkAnalyzer via NPM:
 
 ```shell
 cd ~/dev
-git clone --branch lipen/json-printer https://gitee.com/openharmony-sig/arkanalyzer
+git clone https://gitee.com/openharmony-sig/arkanalyzer
 cd arkanalyzer
 npm install
-nmp run build
+npm run build
 ```
 
 The `npm run build` command will generate the `out` directory, which contains the compiled code.

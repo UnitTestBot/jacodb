@@ -36,17 +36,13 @@ data class EtsFileDto(
     val exportInfos: List<ExportInfoDto>,
 ) {
     companion object {
-        private val json = Json {
-            prettyPrint = true
-        }
-
         fun loadFromJson(jsonString: String): EtsFileDto {
-            return json.decodeFromString(jsonString)
+            return Json.decodeFromString(jsonString)
         }
 
         @OptIn(ExperimentalSerializationApi::class)
         fun loadFromJson(stream: InputStream): EtsFileDto {
-            return json.decodeFromStream(stream)
+            return Json.decodeFromStream(stream)
         }
     }
 }

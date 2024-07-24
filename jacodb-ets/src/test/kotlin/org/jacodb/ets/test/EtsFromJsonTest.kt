@@ -39,14 +39,15 @@ import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.dto.convertToEtsMethod
 import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsMethodSignature
-import org.jacodb.ets.test.utils.loadDto
+import org.jacodb.ets.test.utils.loadEtsFileDtoFromResource
+import org.jacodb.ets.utils.loadEtsFileAutoConvert
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 class EtsFromJsonTest {
 
     companion object {
-        private const val BASE_PATH = "/etsir/samples"
+        private const val BASE_PATH = "etsir/samples"
     }
 
     private val json = Json {
@@ -63,10 +64,19 @@ class EtsFromJsonTest {
 
     @Test
     fun testLoadEtsFileFromJson() {
-        val etsDto = loadDto("$BASE_PATH/basic.ts.json")
+        val etsDto = loadEtsFileDtoFromResource("/$BASE_PATH/basic.ts.json")
         println("etsDto = $etsDto")
         val ets = convertToEtsFile(etsDto)
         println("ets = $ets")
+    }
+
+    @Test
+    fun testLoadEtsFileAutoConvert() {
+        val path = "source/example.ts"
+        val res = this::class.java.getResource("/$path")
+            ?: error("Resource not found: $path")
+        val etsFile = loadEtsFileAutoConvert(res.path)
+        println("etsFile = $etsFile")
     }
 
     @Test

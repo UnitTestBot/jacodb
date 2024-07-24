@@ -20,7 +20,7 @@ import org.jacodb.ets.base.EtsAssignStmt
 import org.jacodb.ets.base.EtsInstanceFieldRef
 import org.jacodb.ets.base.EtsThis
 import org.jacodb.ets.model.EtsFile
-import org.jacodb.ets.test.utils.loadEtsFile
+import org.jacodb.ets.test.utils.loadEtsFileFromResource
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
@@ -29,16 +29,14 @@ private val logger = mu.KotlinLogging.logger {}
 class EtsFileTest {
 
     companion object {
-        private const val BASE_PATH = "/etsir/samples"
-
-        private fun loadSample(name: String): EtsFile {
-            return loadEtsFile("$BASE_PATH/$name.ts.json")
+        private fun load(name: String): EtsFile {
+            return loadEtsFileFromResource("/$name.ts.json")
         }
     }
 
     @Test
     fun printEtsInstructions() {
-        val etsFile = loadSample("classes/SimpleClass")
+        val etsFile = load("etsir/samples/classes/SimpleClass")
         etsFile.classes.forEach { cls ->
             cls.methods.forEach { method ->
                 logger.info {
@@ -53,7 +51,7 @@ class EtsFileTest {
 
     @Test
     fun `test etsFile on TypeMismatch`() {
-        val etsFile = loadSample("TypeMismatch")
+        val etsFile = load("etsir/samples/TypeMismatch")
         etsFile.classes.forEach { cls ->
             cls.methods.forEach { etsMethod ->
                 when (etsMethod.name) {
@@ -71,7 +69,7 @@ class EtsFileTest {
 
     @Test
     fun `test initializers prepended to class constructor`() {
-        val etsFile = loadSample("PrependInitializer")
+        val etsFile = load("etsir/samples/PrependInitializer")
         val cls = etsFile.classes.single { it.name == "Foo" }
         val ctorBegin = cls.ctor.cfg.instructions.first() as EtsAssignStmt
         val fieldRef = ctorBegin.lhv as EtsInstanceFieldRef
@@ -81,7 +79,7 @@ class EtsFileTest {
 
     @Test
     fun `test static field should not be initialized in constructor`() {
-        val etsFile = loadSample("StaticField")
+        val etsFile = load("etsir/samples/StaticField")
         val cls = etsFile.classes.single { it.name == "Foo" }
         Assertions.assertFalse(cls.ctor.cfg.stmts.any {
             it is EtsAssignStmt && it.lhv is EtsInstanceFieldRef
@@ -90,7 +88,7 @@ class EtsFileTest {
 
     @Test
     fun `test default constructor should be synthesized`() {
-        val etsFile = loadSample("DefaultConstructor")
+        val etsFile = load("etsir/samples/DefaultConstructor")
         val cls = etsFile.classes.single { it.name == "Foo" }
         val fieldInit = cls.ctor.cfg.instructions.first() as EtsAssignStmt
         val fieldRef = fieldInit.lhv as EtsInstanceFieldRef

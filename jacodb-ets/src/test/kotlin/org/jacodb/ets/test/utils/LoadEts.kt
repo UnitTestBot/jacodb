@@ -20,15 +20,13 @@ import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.model.EtsFile
 
-fun loadEtsFile(filePath: String): EtsFile {
-    val sampleFilePath = object {}::class.java.getResourceAsStream(filePath)
-        ?: error("Resource not found: $filePath")
-    val etsFileDto = EtsFileDto.loadFromJson(sampleFilePath)
-    return convertToEtsFile(etsFileDto)
+fun loadEtsFileDtoFromResource(jsonPath: String): EtsFileDto {
+    val sampleFilePath = object {}::class.java.getResourceAsStream(jsonPath)
+        ?: error("Resource not found: $jsonPath")
+    return EtsFileDto.loadFromJson(sampleFilePath)
 }
 
-fun loadDto(filePath: String): EtsFileDto {
-    val sampleFilePath = object {}::class.java.getResourceAsStream(filePath)
-        ?: error("Resource not found: $filePath")
-    return EtsFileDto.loadFromJson(sampleFilePath)
+fun loadEtsFileFromResource(jsonPath: String): EtsFile {
+    val etsFileDto = loadEtsFileDtoFromResource(jsonPath)
+    return convertToEtsFile(etsFileDto)
 }

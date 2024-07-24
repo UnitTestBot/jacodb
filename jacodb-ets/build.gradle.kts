@@ -23,6 +23,8 @@ dependencies {
 // ARKANALYZER_DIR=~/dev/arkanalyzer ./gradlew generateTestResources
 // ```
 tasks.register("generateTestResources") {
+    group = "build"
+    description = "Generates test resources from TypeScript files using ArkAnalyzer."
     doLast {
         val envVarName = "ARKANALYZER_DIR"
         val defaultArkAnalyzerDir = "../arkanalyzer"
@@ -42,16 +44,16 @@ tasks.register("generateTestResources") {
         }
 
         val resources = projectDir.resolve("src/test/resources")
-        val input = resources.resolve("source")
-        val output = resources.resolve("etsir/generated")
-        println("Generating test resources in '${output.relativeTo(projectDir)}'...")
+        val inputDir = resources.resolve("source")
+        val outputDir = resources.resolve("etsir/generated")
+        println("Generating test resources in '${outputDir.relativeTo(projectDir)}'...")
 
         val cmd: List<String> = listOf(
             "node",
             script.absolutePath,
             "--multi",
-            input.relativeTo(resources).path,
-            output.relativeTo(resources).path,
+            inputDir.relativeTo(resources).path,
+            outputDir.relativeTo(resources).path,
         )
         println("Running: '${cmd.joinToString(" ")}'")
         val process = ProcessBuilder(cmd).directory(resources).start();

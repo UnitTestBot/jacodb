@@ -17,7 +17,7 @@
 package org.jacodb.ets.test
 
 import org.jacodb.ets.test.utils.getConfigForMethod
-import org.jacodb.ets.test.utils.loadEtsFile
+import org.jacodb.ets.test.utils.loadEtsFileFromResource
 import org.jacodb.ets.test.utils.loadRules
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
@@ -55,7 +55,7 @@ class EtsProjectAnalysis {
         private const val SOURCE_BASE_PATH = SOURCE_PROJECT_PATH + START_PATH
 
         private fun loadFromProject(filename: String): EtsFile {
-            return loadEtsFile("$BASE_PATH/$filename.json")
+            return loadEtsFileFromResource("$BASE_PATH/$filename.json")
         }
 
         private fun countFileLines(path: String): Long {
