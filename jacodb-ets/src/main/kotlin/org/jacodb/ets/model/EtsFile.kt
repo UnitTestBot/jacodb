@@ -27,4 +27,8 @@ class EtsFile(
     fun getMethodBySignature(signature: EtsMethodSignature): EtsMethod? {
         return classes.asSequence().flatMap { it.methods }.firstOrNull { it.signature == signature }
     }
+
+    fun getClassBySignature(signature: EtsClassSignature): EtsClass? {
+        return classes.firstOrNull { it.signature == signature }
+    }
 }
