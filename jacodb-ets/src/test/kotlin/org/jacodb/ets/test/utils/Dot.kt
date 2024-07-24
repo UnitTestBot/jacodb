@@ -80,7 +80,7 @@ object DumpEtsFileToDot {
         println("EtsFile '${etsFile.name}':")
         etsFile.classes.forEach { clazz ->
             println("= CLASS '${clazz.signature}':")
-            println("  superClass = '${clazz.superClass?.signature}'")
+            println("  superClass = '${clazz.superClass}'")
             println("  fields: ${clazz.fields.size}")
             clazz.fields.forEach { field ->
                 println("  - FIELD '${field.signature}'")

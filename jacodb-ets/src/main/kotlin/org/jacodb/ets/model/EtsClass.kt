@@ -18,7 +18,7 @@ package org.jacodb.ets.model
 
 interface EtsClass {
     val signature: EtsClassSignature
-    val superClass: EtsClass?
+    val superClass: EtsClassSignature?
     val fields: List<EtsField>
     val methods: List<EtsMethod>
     val ctor: EtsMethod
@@ -33,7 +33,7 @@ class EtsClassImpl(
     override val methods: List<EtsMethod>,
     override val ctor: EtsMethod,
 ) : EtsClass {
-    override var superClass: EtsClass? = null
+    override var superClass: EtsClassSignature? = null
 
     init {
         require(ctor !in methods)

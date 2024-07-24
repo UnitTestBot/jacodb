@@ -430,6 +430,14 @@ fun convertToEtsClass(classDto: ClassDto): EtsClass {
         file = null, // TODO
     )
 
+    val superclassSignature = classDto.superClassName?.takeIf { it != "" }?.let { spName ->
+        EtsClassSignature(
+            name = spName,
+            namespace = null, // TODO
+            file = null, // TODO
+        )
+    }
+
     val (methodDtos, ctorDtos) = classDto.methods.partition { it.signature.name != "constructor" }
     check(ctorDtos.size <= 1) { "Class should not have multiple constructors" }
     val ctorDto = ctorDtos.singleOrNull() ?: defaultConstructorDto(classDto.signature)
@@ -473,7 +481,7 @@ fun convertToEtsClass(classDto: ClassDto): EtsClass {
         fields = fields,
         methods = methods,
         ctor = ctor,
-    )
+    ).apply { this.superClass = superclassSignature }
 }
 
 fun convertToEtsType(type: TypeDto): EtsType {

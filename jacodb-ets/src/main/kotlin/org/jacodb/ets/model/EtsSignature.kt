@@ -65,6 +65,10 @@ data class EtsClassSignature(
             name
         }
     }
+
+    override fun equals(other: Any?): Boolean = (other as? EtsClassSignature)?.let { sig ->
+        this.name == sig.name && this.file == sig.file
+    } ?: false
 }
 
 data class EtsFieldSignature(
