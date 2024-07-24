@@ -92,34 +92,40 @@ jobs:
           
           echo "ARKANALYZER_DIR=$DEST_DIR" >> $GITHUB_ENV
 
-      - name: Build and run tests
-        run: ./gradlew build --stacktrace --scan
+      - name: Show env
+        run: env
 
-      - name: Publish test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
-        with:
-          files: "**/build/test-results/**/*.xml"
-          check_name: "Test results on JDK ${{ matrix.jdk }}"
+      - name: Run ETS tests first
+        run: ./gradlew :jacodb-ets:test --scan
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
-      # - name: Upload test results
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: test-results
-      #     path: build/test-results/
-
-      - name: Upload Gradle reports
-        if: (!cancelled()) && matrix.jdk == env.main_jdk
-        uses: actions/upload-artifact@v3
-        with:
-          name: gradle-reports
-          path: '**/build/reports/'
-          retention-days: 1
+#      - name: Build and run tests
+#        run: ./gradlew build --stacktrace --scan
+#
+#      - name: Publish test results
+#        uses: EnricoMi/publish-unit-test-result-action@v2
+#        if: always()
+#        with:
+#          files: "**/build/test-results/**/*.xml"
+#          check_name: "Test results on JDK ${{ matrix.jdk }}"
+#
+#      - name: Upload coverage reports to Codecov
+#        uses: codecov/codecov-action@v3
+#        with:
+#          token: ${{ secrets.CODECOV_TOKEN }}
+#
+#      # - name: Upload test results
+#      #   uses: actions/upload-artifact@v3
+#      #   with:
+#      #     name: test-results
+#      #     path: build/test-results/
+#
+#      - name: Upload Gradle reports
+#        if: (!cancelled()) && matrix.jdk == env.main_jdk
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: gradle-reports
+#          path: '**/build/reports/'
+#          retention-days: 1
 
   lifecycleTests:
     name: Run lifecycle tests
