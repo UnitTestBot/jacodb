@@ -47,7 +47,7 @@ import org.junit.jupiter.api.Test
 class EtsFromJsonTest {
 
     companion object {
-        private const val BASE_PATH = "/etsir/samples"
+        private const val BASE_PATH = "etsir/samples"
     }
 
     private val json = Json {
@@ -64,7 +64,7 @@ class EtsFromJsonTest {
 
     @Test
     fun testLoadEtsFileFromJson() {
-        val etsDto = loadEtsFileDtoFromResource("$BASE_PATH/basic.ts.json")
+        val etsDto = loadEtsFileDtoFromResource("/$BASE_PATH/basic.ts.json")
         println("etsDto = $etsDto")
         val ets = convertToEtsFile(etsDto)
         println("ets = $ets")
@@ -72,7 +72,10 @@ class EtsFromJsonTest {
 
     @Test
     fun testLoadEtsFileAutoConvert() {
-        val etsFile = loadEtsFileAutoConvert("src/test/resources/source/example.ts")
+        val path = "source/example.ts"
+        val res = this::class.java.getResource("/$path")
+            ?: error("Resource not found: $path")
+        val etsFile = loadEtsFileAutoConvert(res.path)
         println("etsFile = $etsFile")
     }
 
