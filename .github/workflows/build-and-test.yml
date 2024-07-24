@@ -60,7 +60,7 @@ jobs:
           REPO_URL="https://gitee.com/openharmony-sig/arkanalyzer.git"
           DEST_DIR="arkanalyzer"
           MAX_RETRIES=10
-          RETRY_DELAY=3  # Delay between retries in seconds
+          RETRY_DELAY=3  # Delay between retries in seconds  
           
           for ((i=1; i<=MAX_RETRIES; i++)); do
               git clone --depth=1 $REPO_URL $DEST_DIR && break
@@ -75,9 +75,8 @@ jobs:
               echo "Repository cloned successfully."
           fi
           
-          pwd
+          echo "ARKANALYZER_DIR=$(realpath $DEST_DIR)" >> $GITHUB_ENV
           cd $DEST_DIR
-          pwd
           
           # checkout master on 2024-07-17
           rev=a9d9fd6070fce5896d8e760ed7fd175b62b16605
@@ -92,14 +91,6 @@ jobs:
           
           npm install
           npm run build
-          
-          pwd
-          ls -al
-          ls -al arkanalyzer || true
-          
-          echo "DEST_DIR=$DEST_DIR"
-          echo "realpath DEST_DIR=$(realpath $DEST_DIR)"
-          echo "ARKANALYZER_DIR=$(realpath $DEST_DIR)" >> $GITHUB_ENV
 
       - name: Run ETS tests first
         run: ./gradlew :jacodb-ets:test --scan
