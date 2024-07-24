@@ -66,9 +66,12 @@ data class EtsClassSignature(
         }
     }
 
-    override fun equals(other: Any?): Boolean = (other as? EtsClassSignature)?.let { sig ->
-        this.name == sig.name && this.file == sig.file
-    } ?: false
+    // Since namespaces are currently irrelevant to the final IR
+    // they are removed from comparison for stability reasons
+    override fun equals(other: Any?): Boolean {
+        if (other !is EtsClassSignature) return false
+        return this.name == other.name && this.file == other.file
+    }
 }
 
 data class EtsFieldSignature(

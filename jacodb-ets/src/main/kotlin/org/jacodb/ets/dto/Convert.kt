@@ -481,7 +481,8 @@ fun convertToEtsClass(classDto: ClassDto): EtsClass {
         fields = fields,
         methods = methods,
         ctor = ctor,
-    ).apply { this.superClass = superclassSignature }
+        superClass = superclassSignature
+    )
 }
 
 fun convertToEtsType(type: TypeDto): EtsType {

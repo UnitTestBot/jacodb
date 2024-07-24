@@ -32,8 +32,8 @@ class EtsClassImpl(
     override val fields: List<EtsField>,
     override val methods: List<EtsMethod>,
     override val ctor: EtsMethod,
+    override val superClass: EtsClassSignature?,
 ) : EtsClass {
-    override var superClass: EtsClassSignature? = null
 
     init {
         require(ctor !in methods)
