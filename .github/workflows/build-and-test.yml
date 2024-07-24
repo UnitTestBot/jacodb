@@ -91,7 +91,7 @@ jobs:
           npm install
           npm run build
           
-          echo "ARKANALYZER_DIR=$(realpath DEST_DIR)" >> $GITHUB_ENV
+          echo "ARKANALYZER_DIR=$(realpath $DEST_DIR)" >> $GITHUB_ENV
 
       - name: Run ETS tests first
         run: ./gradlew :jacodb-ets:test --scan
