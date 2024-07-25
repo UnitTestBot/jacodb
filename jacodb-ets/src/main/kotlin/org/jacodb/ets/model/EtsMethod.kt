@@ -20,15 +20,29 @@ import org.jacodb.api.common.CommonMethod
 import org.jacodb.ets.base.EtsType
 import org.jacodb.ets.graph.EtsCfg
 
-// TODO: modifiers
+// TODO: decorators
 // TODO: typeParameters
 interface EtsMethod : CommonMethod {
     val signature: EtsMethodSignature
     val localsCount: Int
     val cfg: EtsCfg
+    val modifiers: List<String>
 
     val enclosingClass: EtsClassSignature
         get() = signature.enclosingClass
+
+    val isStatic: Boolean
+        get() = modifiers.contains("StaticKeyword")
+
+    val isPrivate: Boolean
+        get() = modifiers.contains("PrivateKeyword")
+
+    // If not specified, entity is public if not private and not protected
+    val isPublic: Boolean
+        get() = modifiers.contains("PublicKeyword") || (!isPrivate && !isProtected)
+
+    val isProtected: Boolean
+        get() = modifiers.contains("ProtectedKeyword")
 
     override val name: String
         get() = signature.name
@@ -48,7 +62,7 @@ class EtsMethodImpl(
     override val signature: EtsMethodSignature,
     // Default locals count is args + this
     override val localsCount: Int = signature.parameters.size + 1,
-    val modifiers: List<String> = emptyList(),
+    override val modifiers: List<String> = emptyList(),
 ) : EtsMethod {
     override lateinit var cfg: EtsCfg
 
