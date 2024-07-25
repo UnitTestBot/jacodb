@@ -20,7 +20,7 @@ import org.jacodb.api.common.CommonMethod
 import org.jacodb.ets.base.EtsType
 import org.jacodb.ets.graph.EtsCfg
 
-// TODO: modifiers
+// TODO: decorators
 // TODO: typeParameters
 interface EtsMethod : CommonMethod {
     val signature: EtsMethodSignature
@@ -37,8 +37,9 @@ interface EtsMethod : CommonMethod {
     val isPrivate: Boolean
         get() = modifiers.contains("PrivateKeyword")
 
+    // If not specified, entity is public if not private and not protected
     val isPublic: Boolean
-        get() = !isPrivate
+        get() = modifiers.contains("PublicKeyword") || (!isPrivate && !isProtected)
 
     val isProtected: Boolean
         get() = modifiers.contains("ProtectedKeyword")
