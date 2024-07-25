@@ -26,9 +26,22 @@ interface EtsMethod : CommonMethod {
     val signature: EtsMethodSignature
     val localsCount: Int
     val cfg: EtsCfg
+    val modifiers: List<String>
 
     val enclosingClass: EtsClassSignature
         get() = signature.enclosingClass
+
+    val isStatic: Boolean
+        get() = modifiers.contains("StaticKeyword")
+
+    val isPrivate: Boolean
+        get() = modifiers.contains("PrivateKeyword")
+
+    val isPublic: Boolean
+        get() = !isPrivate
+
+    val isProtected: Boolean
+        get() = modifiers.contains("ProtectedKeyword")
 
     override val name: String
         get() = signature.name
@@ -48,7 +61,7 @@ class EtsMethodImpl(
     override val signature: EtsMethodSignature,
     // Default locals count is args + this
     override val localsCount: Int = signature.parameters.size + 1,
-    val modifiers: List<String> = emptyList(),
+    override val modifiers: List<String> = emptyList(),
 ) : EtsMethod {
     override lateinit var cfg: EtsCfg
 
