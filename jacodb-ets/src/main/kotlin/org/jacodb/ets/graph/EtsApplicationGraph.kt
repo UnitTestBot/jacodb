@@ -17,15 +17,18 @@
 package org.jacodb.ets.graph
 
 import org.jacodb.api.common.analysis.ApplicationGraph
-import org.jacodb.ets.base.EtsCallStmt
 import org.jacodb.ets.base.EtsStmt
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsMethod
 import org.jacodb.ets.utils.callExpr
 
-class EtsApplicationGraph(
-    val cp: EtsFile,
-) : ApplicationGraph<EtsMethod, EtsStmt> {
+interface EtsApplicationGraph : ApplicationGraph<EtsMethod, EtsStmt> {
+    val cp: EtsFile
+}
+
+class EtsApplicationGraphImpl(
+    override val cp: EtsFile,
+) : EtsApplicationGraph {
 
     override fun predecessors(node: EtsStmt): Sequence<EtsStmt> {
         val graph = node.method.flowGraph()
@@ -48,12 +51,14 @@ class EtsApplicationGraph(
     }
 
     override fun callers(method: EtsMethod): Sequence<EtsStmt> {
-        return cp.classes.asSequence()
-            .flatMap { it.methods }
-            .flatMap { it.cfg.instructions }
-            .filterIsInstance<EtsCallStmt>()
-            // TODO: consider comparing only by name
-            .filter { it.expr.method == method.signature }
+        // Note: currently, nobody uses `callers`, so if is safe to disable it for now.
+        // Note: comparing methods by signature may be incorrect, and comparing only by name fails for constructors.
+        TODO("disabled for now, need re-design")
+        // return cp.classes.asSequence()
+        //     .flatMap { it.methods }
+        //     .flatMap { it.cfg.instructions }
+        //     .filterIsInstance<EtsCallStmt>()
+        //     .filter { it.expr.method == method.signature }
     }
 
     override fun entryPoints(method: EtsMethod): Sequence<EtsStmt> {

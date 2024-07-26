@@ -26,7 +26,7 @@ import org.jacodb.analysis.taint.TaintVulnerability
 import org.jacodb.analysis.util.EtsTraits
 import org.jacodb.analysis.util.getPathEdges
 import org.jacodb.ets.base.EtsStmt
-import org.jacodb.ets.graph.EtsApplicationGraph
+import org.jacodb.ets.graph.EtsApplicationGraphImpl
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsMethod
 import org.junit.jupiter.api.Test
@@ -136,7 +136,7 @@ class EtsProjectAnalysis {
     }
 
     private fun runAnalysis(project: EtsFile) {
-        val graph = EtsApplicationGraph(project)
+        val graph = EtsApplicationGraphImpl(project)
         val unitResolver = UnitResolver<EtsMethod> { SingletonUnit }
         val manager = TaintManager(
             graph = graph,
