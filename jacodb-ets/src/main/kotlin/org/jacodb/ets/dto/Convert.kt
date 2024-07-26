@@ -34,6 +34,7 @@ import org.jacodb.ets.base.EtsConditionExpr
 import org.jacodb.ets.base.EtsConstant
 import org.jacodb.ets.base.EtsDeleteExpr
 import org.jacodb.ets.base.EtsEntity
+import org.jacodb.ets.base.EtsExpr
 import org.jacodb.ets.base.EtsFieldRef
 import org.jacodb.ets.base.EtsGotoStmt
 import org.jacodb.ets.base.EtsIfStmt
@@ -100,7 +101,8 @@ class EtsMethodBuilder(
     val etsMethod = EtsMethodImpl(signature, localsCount, modifiers)
 
     private val currentStmts: MutableList<EtsStmt> = mutableListOf()
-    private var freeLocal: Int = 0
+
+    private var freeTempLocal: Int = 0
 
     private fun loc(): EtsInstLocation {
         return EtsInstLocation(etsMethod, currentStmts.size)
@@ -114,6 +116,24 @@ class EtsMethodBuilder(
         etsMethod.cfg = cfg
         built = true
         return etsMethod
+    }
+
+    private fun ensureOneAddress(entity: EtsEntity): EtsValue {
+        // TODO: think about whether 'CastExpr' should be considered "one-address". This would require changing the return type of this function to `EtsEntity`.
+        // if (entity is EtsCastExpr) return entity
+
+        if (entity is EtsExpr || entity is EtsFieldRef || entity is EtsArrayAccess) {
+            val newLocal = EtsLocal("_tmp${freeTempLocal++}", entity.type)
+            currentStmts += EtsAssignStmt(
+                location = loc(),
+                lhv = newLocal,
+                rhv = entity,
+            )
+            return newLocal
+        } else {
+            check(entity is EtsValue)
+            return entity
+        }
     }
 
     fun convertToEtsStmt(stmt: StmtDto): EtsStmt {
@@ -135,7 +155,7 @@ class EtsMethodBuilder(
             is AssignStmtDto -> EtsAssignStmt(
                 location = loc(),
                 lhv = convertToEtsEntity(stmt.left) as EtsValue,
-                rhv = convertToEtsEntity(stmt.right),
+                rhv = ensureOneAddress(convertToEtsEntity(stmt.right)),
             )
 
             is CallStmtDto -> EtsCallStmt(
@@ -144,21 +164,9 @@ class EtsMethodBuilder(
             )
 
             is ReturnStmtDto -> {
-                val etsEntity = convertToEtsEntity(stmt.arg)
-                val etsValue = if (etsEntity is EtsValue) {
-                    etsEntity
-                } else {
-                    val newLocal = EtsLocal("_tmp${freeLocal++}", EtsUnknownType)
-                    currentStmts += EtsAssignStmt(
-                        location = loc(),
-                        lhv = newLocal,
-                        rhv = etsEntity,
-                    )
-                    newLocal
-                }
                 EtsReturnStmt(
                     location = loc(),
-                    returnValue = etsValue,
+                    returnValue = ensureOneAddress(convertToEtsEntity(stmt.arg)),
                 )
             }
 
@@ -279,30 +287,14 @@ class EtsMethodBuilder(
                 instance = convertToEtsEntity(value.instance),
                 method = convertToEtsMethodSignature(value.method),
                 args = value.args.map {
-                    val etsEntity = convertToEtsEntity(it)
-                    if (etsEntity is EtsValue) return@map etsEntity
-                    val newLocal = EtsLocal("_tmp${freeLocal++}", EtsUnknownType)
-                    currentStmts += EtsAssignStmt(
-                        location = loc(),
-                        lhv = newLocal,
-                        rhv = etsEntity,
-                    )
-                    newLocal
+                    ensureOneAddress(convertToEtsEntity(it))
                 },
             )
 
             is StaticCallExprDto -> EtsStaticCallExpr(
                 method = convertToEtsMethodSignature(value.method),
                 args = value.args.map {
-                    val etsEntity = convertToEtsEntity(it)
-                    if (etsEntity is EtsValue) return@map etsEntity
-                    val newLocal = EtsLocal("_tmp${freeLocal++}", EtsUnknownType)
-                    currentStmts += EtsAssignStmt(
-                        location = loc(),
-                        lhv = newLocal,
-                        rhv = etsEntity,
-                    )
-                    newLocal
+                    ensureOneAddress(convertToEtsEntity(it))
                 },
             )
 
