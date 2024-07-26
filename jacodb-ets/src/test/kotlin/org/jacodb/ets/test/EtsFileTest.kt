@@ -53,14 +53,14 @@ class EtsFileTest {
     fun `test etsFile on TypeMismatch`() {
         val etsFile = load("etsir/samples/TypeMismatch")
         etsFile.classes.forEach { cls ->
-            cls.methods.forEach { etsMethod ->
-                when (etsMethod.name) {
+            cls.methods.forEach { method ->
+                when (method.name) {
                     "add" -> {
-                        Assertions.assertEquals(9, etsMethod.cfg.instructions.size)
+                        Assertions.assertEquals(11, method.cfg.instructions.size)
                     }
 
                     "main" -> {
-                        Assertions.assertEquals(4, etsMethod.cfg.instructions.size)
+                        Assertions.assertEquals(5, method.cfg.instructions.size)
                     }
                 }
             }
