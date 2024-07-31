@@ -66,7 +66,7 @@ class Controller(private val service: Service) {
 private val JcInst.ref: String
     get() {
         val method = location.method
-        val sourceFile = method.enclosingClass.asmNode().sourceFile
+        val sourceFile = method.enclosingClass.withAsmNode { it.sourceFile }
         return "${method.enclosingClass.name}.${method.name}($sourceFile:${location.lineNumber})"
     }
 

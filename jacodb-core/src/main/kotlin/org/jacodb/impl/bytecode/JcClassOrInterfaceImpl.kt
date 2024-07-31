@@ -96,7 +96,13 @@ class JcClassOrInterfaceImpl(
         classSource.fullAsmNode
     }
 
-    override fun asmNode() = lazyAsmNode
+    override fun <T> withAsmNode(body: (ClassNode) -> T): T {
+        val asmNode = lazyAsmNode
+        return synchronized(asmNode) {
+            body(asmNode)
+        }
+    }
+
     override fun bytecode(): ByteArray = classSource.byteCode
 
     override fun <T> extensionValue(key: String): T? {

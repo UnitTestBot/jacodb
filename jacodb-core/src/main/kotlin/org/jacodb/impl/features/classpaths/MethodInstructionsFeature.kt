@@ -39,7 +39,6 @@ class MethodInstructionsFeature(
     private val JcMethod.methodFeatures
         get() = enclosingClass.classpath.features?.filterIsInstance<JcInstExtFeature>().orEmpty()
 
-    @Synchronized
     override fun flowGraph(method: JcMethod): JcMethodExtFeature.JcFlowGraphResult {
         return JcFlowGraphResultImpl(method, JcGraphImpl(method, method.instList.instructions))
     }
@@ -52,7 +51,9 @@ class MethodInstructionsFeature(
     }
 
     override fun rawInstList(method: JcMethod): JcMethodExtFeature.JcRawInstListResult {
-        val list: JcInstList<JcRawInst> = RawInstListBuilder(method, method.asmNode(), keepLocalVariableNames).build()
+        val list: JcInstList<JcRawInst> = method.withAsmNode { methodNode ->
+            RawInstListBuilder(method, methodNode, keepLocalVariableNames).build()
+        }
         return JcRawInstListResultImpl(method, method.methodFeatures.fold(list) { value, feature ->
             feature.transformRawInstList(method, value)
         })

@@ -68,7 +68,7 @@ public class JavaReadMeExamples {
         System.out.println(JcClasses.getConstructors(jcClass).size());
 
         // At this point the database read the method bytecode and return the result.
-        return jcClass.getDeclaredMethods().get(0).asmNode();
+        return jcClass.getDeclaredMethods().get(0).withAsmNode(it -> it);
     }
 
     public static void watchFileChanges() throws Exception {

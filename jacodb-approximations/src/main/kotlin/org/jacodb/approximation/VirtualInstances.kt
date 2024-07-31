@@ -53,7 +53,9 @@ class JcEnrichedVirtualMethod(
             it.instList(this)
         }!!.instList
 
-    override fun asmNode(): MethodNode = asmNode
+    override fun <T> withAsmNode(body: (MethodNode) -> T): T = synchronized(asmNode) {
+        body(asmNode)
+    }
 
     override fun flowGraph(): JcGraph = featuresChain.call<JcMethodExtFeature, JcFlowGraphResult> {
         it.flowGraph(this)
