@@ -90,7 +90,7 @@ fun EtsFile.toDot(useLR: Boolean = false): String {
         lines += """  "$c" [shape=box,label="$clabel"]"""
 
         // Methods inside class:
-        clazz.methods.forEach { method ->
+        (clazz.methods + clazz.ctor).forEach { method ->
             // METHOD
             val m = methodId(clazz, method)
             val mlabel = methodLabel(clazz, method)
