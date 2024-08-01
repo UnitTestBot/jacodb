@@ -75,6 +75,7 @@ import org.jacodb.ets.base.EtsUnionType
 import org.jacodb.ets.base.EtsUnknownType
 import org.jacodb.ets.base.EtsValue
 import org.jacodb.ets.base.EtsVoidType
+import org.jacodb.ets.base.RelationOp
 import org.jacodb.ets.base.UnaryOp
 import org.jacodb.ets.graph.EtsCfg
 import org.jacodb.ets.model.EtsClass
@@ -270,7 +271,7 @@ class EtsMethodBuilder(
             )
 
             is RelationOperationDto -> EtsRelationOperation(
-                relop = value.op,
+                relop = RelationOp.fromString(value.op) ?: error("Unknown RelationOp: ${value.op}"),
                 left = convertToEtsEntity(value.left),
                 right = convertToEtsEntity(value.right),
             )
@@ -598,36 +599,7 @@ fun convertToEtsUnaryOp(op: String): UnaryOp {
     }
 }
 
-fun convertToEtsBinaryOp(op: String): BinaryOp {
-    return when (op) {
-        "+" -> BinaryOp.Add
-        "-" -> BinaryOp.Sub
-        "*" -> BinaryOp.Mul
-        "/" -> BinaryOp.Div
-        "%" -> BinaryOp.Mod
-        "==" -> BinaryOp.EqEq
-        "!=" -> BinaryOp.NotEq
-        "===" -> BinaryOp.EqEqEq
-        "!==" -> BinaryOp.NotEqEq
-        "<" -> BinaryOp.Lt
-        "<=" -> BinaryOp.LtEq
-        ">" -> BinaryOp.Gt
-        ">=" -> BinaryOp.GtEq
-        "<<" -> BinaryOp.LShift
-        ">>" -> BinaryOp.RShift
-        ">>>" -> BinaryOp.ZeroFillRShift
-        "&" -> BinaryOp.BitAnd
-        "|" -> BinaryOp.BitOr
-        "^" -> BinaryOp.BitXor
-        "&&" -> BinaryOp.LogicalAnd
-        "||" -> BinaryOp.LogicalOr
-        "in" -> BinaryOp.In
-        "instanceof" -> BinaryOp.InstanceOf
-        "**" -> BinaryOp.Exp
-        "??" -> BinaryOp.NullishCoalescing
-        else -> error("Unknown BinaryOp: $op")
-    }
-}
+fun convertToEtsBinaryOp(op: String): BinaryOp = BinaryOp.fromString(op)
 
 fun convertToEtsClassSignature(clazz: ClassSignatureDto): EtsClassSignature {
     return EtsClassSignature(

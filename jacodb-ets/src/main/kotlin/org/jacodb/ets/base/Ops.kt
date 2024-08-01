@@ -65,131 +65,88 @@ enum class UpdateOp {
     Dec,
 }
 
-enum class BinaryOp {
-    /**
-     * `==`
-     */
-    EqEq,
+interface BinaryOp {
 
-    /**
-     * `!=`
-     */
-    NotEq,
+    companion object {
+        fun fromString(value: String): BinaryOp {
+            return RelationOp.fromString(value)
+                ?: ArithOp.fromString(value)
+                ?: LogicalOp.fromString(value)
+                ?: BitOp.fromString(value)
+                ?: NullishCoalescing.fromString(value)
+                ?: error("Unknown BinaryOp: $value")
+        }
+    }
+}
 
-    /**
-     * `===`
-     */
-    EqEqEq,
+enum class RelationOp(private val str: String) : BinaryOp {
 
-    /**
-     * `!==`
-     */
-    NotEqEq,
+    EqEq("=="),
+    NotEq("!="),
+    EqEqEq("==="),
+    NotEqEq("!=="),
+    Lt("<"),
+    LtEq("<="),
+    Gt(">"),
+    GtEq(">=");
 
-    /**
-     * `<`
-     */
-    Lt,
+    companion object {
+        fun fromString(value: String): RelationOp? = RelationOp.values().firstOrNull {it.str == value}
+    }
 
-    /**
-     * `<=`
-     */
-    LtEq,
+    override fun toString(): String = str
+}
 
-    /**
-     * `>`
-     */
-    Gt,
+enum class ArithOp(private val str: String) : BinaryOp {
 
-    /**
-     * `>=`
-     */
-    GtEq,
+    Add("+"),
+    Sub("-"),
+    Mul("*"),
+    Div("/"),
+    Mod("%"),
+    Exp("**");
 
-    /**
-     * `<<`
-     */
-    LShift,
+    companion object {
+        fun fromString(value: String): ArithOp? = ArithOp.values().firstOrNull {it.str == value}
+    }
 
-    /**
-     * `>>`
-     */
-    RShift,
+    override fun toString(): String = str
+}
 
-    /**
-     * `>>>`
-     */
-    ZeroFillRShift,
+enum class BitOp(private val str: String) : BinaryOp {
 
-    /**
-     * `+`
-     */
-    Add,
+    LShift("<<"),
+    RShift(">>"),
+    ZeroFillRShift(">>>"),
+    BitOr("|"),
+    BitXor("^"),
+    BitAnd("&");
 
-    /**
-     * `-`
-     */
-    Sub,
+    companion object {
+        fun fromString(value: String): BitOp? = BitOp.values().firstOrNull {it.str == value}
+    }
 
-    /**
-     * `*`
-     */
-    Mul,
+    override fun toString(): String = str
+}
 
-    /**
-     * '/'
-     */
-    Div,
+enum class LogicalOp(private val str: String) : BinaryOp {
 
-    /**
-     * `%`
-     */
-    Mod,
+    LogicalOr("||"),
+    LogicalAnd("&&"),
+    In("in"),
+    InstanceOf("instanceof");
 
-    /**
-     * `|`
-     */
-    BitOr,
+    companion object {
+        fun fromString(value: String): LogicalOp? = LogicalOp.values().firstOrNull {it.str == value}
+    }
 
-    /**
-     * `^`
-     */
-    BitXor,
+    override fun toString(): String = str
+}
 
-    /**
-     * `&`
-     */
-    BitAnd,
+object NullishCoalescing : BinaryOp {
+    override fun toString(): String = "??"
 
-    /**
-     * `||`
-     */
-    LogicalOr,
-
-    /**
-     * `&&`
-     */
-    LogicalAnd,
-
-    /**
-     * `in`
-     */
-    In,
-
-    /**
-     * `instanceof`
-     */
-    InstanceOf,
-
-    /**
-     * `**`
-     */
-    Exp,
-
-    /**
-     * `??`
-     */
-    NullishCoalescing,
+    fun fromString(value: String): NullishCoalescing? = NullishCoalescing.takeIf { value == "??" }
 }
 
 enum class AssignOp {

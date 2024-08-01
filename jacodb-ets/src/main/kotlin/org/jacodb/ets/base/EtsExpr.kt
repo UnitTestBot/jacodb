@@ -220,7 +220,7 @@ interface EtsConditionExpr : EtsBinaryExpr {
 }
 
 data class EtsRelationOperation(
-    val relop: String,
+    val relop: RelationOp,
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsConditionExpr {
