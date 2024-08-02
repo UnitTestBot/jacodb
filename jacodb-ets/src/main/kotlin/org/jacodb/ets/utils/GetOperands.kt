@@ -22,6 +22,7 @@ import org.jacodb.ets.base.EtsArrayAccess
 import org.jacodb.ets.base.EtsArrayLiteral
 import org.jacodb.ets.base.EtsAssignStmt
 import org.jacodb.ets.base.EtsBitAndExpr
+import org.jacodb.ets.base.EtsBitNotExpr
 import org.jacodb.ets.base.EtsBitOrExpr
 import org.jacodb.ets.base.EtsBitXorExpr
 import org.jacodb.ets.base.EtsBooleanConstant
@@ -185,6 +186,9 @@ private object EntityGetOperands : EtsEntity.Visitor<Sequence<EtsEntity>> {
         sequenceOf(expr.arg)
 
     override fun visit(expr: EtsNotExpr): Sequence<EtsEntity> =
+        sequenceOf(expr.arg)
+
+    override fun visit(expr: EtsBitNotExpr): Sequence<EtsEntity> =
         sequenceOf(expr.arg)
 
     override fun visit(expr: EtsNegExpr): Sequence<EtsEntity> =

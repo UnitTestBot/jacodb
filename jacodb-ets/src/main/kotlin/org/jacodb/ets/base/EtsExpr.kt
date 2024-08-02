@@ -32,6 +32,7 @@ interface EtsExpr : EtsEntity {
         fun visit(expr: EtsTypeOfExpr): R
         fun visit(expr: EtsVoidExpr): R
         fun visit(expr: EtsNotExpr): R
+        fun visit(expr: EtsBitNotExpr): R
         fun visit(expr: EtsNegExpr): R
         fun visit(expr: EtsUnaryPlusExpr): R
         fun visit(expr: EtsPreIncExpr): R
@@ -90,6 +91,7 @@ interface EtsExpr : EtsEntity {
             override fun visit(expr: EtsTypeOfExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsVoidExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsNotExpr): R = defaultVisit(expr)
+            override fun visit(expr: EtsBitNotExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsNegExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsUnaryPlusExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsPreIncExpr): R = defaultVisit(expr)
@@ -278,9 +280,22 @@ data class EtsNotExpr(
     }
 }
 
-data class EtsNegExpr(
-    override val arg: EtsEntity,
+data class EtsBitNotExpr(
     override val type: EtsType,
+    override val arg: EtsEntity,
+) : EtsUnaryExpr {
+    override fun toString(): String {
+        return "~$arg"
+    }
+
+    override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class EtsNegExpr(
+    override val type: EtsType,
+    override val arg: EtsEntity,
 ) : EtsUnaryExpr {
     override fun toString(): String {
         return "-$arg"

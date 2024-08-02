@@ -24,6 +24,7 @@ import org.jacodb.ets.base.EtsArrayLiteral
 import org.jacodb.ets.base.EtsArrayType
 import org.jacodb.ets.base.EtsAssignStmt
 import org.jacodb.ets.base.EtsBitAndExpr
+import org.jacodb.ets.base.EtsBitNotExpr
 import org.jacodb.ets.base.EtsBitOrExpr
 import org.jacodb.ets.base.EtsBitXorExpr
 import org.jacodb.ets.base.EtsBooleanConstant
@@ -33,6 +34,7 @@ import org.jacodb.ets.base.EtsCallStmt
 import org.jacodb.ets.base.EtsCallableType
 import org.jacodb.ets.base.EtsCastExpr
 import org.jacodb.ets.base.EtsClassType
+import org.jacodb.ets.base.EtsCommaExpr
 import org.jacodb.ets.base.EtsConstant
 import org.jacodb.ets.base.EtsDeleteExpr
 import org.jacodb.ets.base.EtsDivExpr
@@ -98,7 +100,6 @@ import org.jacodb.ets.base.EtsUnionType
 import org.jacodb.ets.base.EtsUnknownType
 import org.jacodb.ets.base.EtsUnsignedRightShiftExpr
 import org.jacodb.ets.base.EtsValue
-import org.jacodb.ets.base.EtsVoidExpr
 import org.jacodb.ets.base.EtsVoidType
 import org.jacodb.ets.base.Ops
 import org.jacodb.ets.graph.EtsCfg
@@ -285,15 +286,14 @@ class EtsMethodBuilder(
 
             is UnaryOperationDto -> {
                 val arg = convertToEtsEntity(value.arg)
+                // Note: `value.type` is ignored here!
                 when (value.op) {
-                    Ops.DELETE -> EtsDeleteExpr(arg)
-                    Ops.TYPEOF -> EtsTypeOfExpr(arg)
-                    Ops.VOID -> EtsVoidExpr(arg)
-                    Ops.BANG -> EtsNotExpr(arg)
-                    Ops.MINUS -> EtsNegExpr(arg, arg.type)
+                    Ops.NOT -> EtsNotExpr(arg)
+                    Ops.BIT_NOT -> EtsBitNotExpr(arg.type, arg)
+                    Ops.MINUS -> EtsNegExpr(arg.type, arg)
                     Ops.PLUS -> EtsUnaryPlusExpr(arg)
-                    Ops.PLUS_PLUS -> EtsPreIncExpr(arg.type, arg)
-                    Ops.MINUS_MINUS -> EtsPreDecExpr(arg.type, arg)
+                    Ops.INC -> EtsPreIncExpr(arg.type, arg)
+                    Ops.DEC -> EtsPreDecExpr(arg.type, arg)
                     else -> error("Unknown unop: '${value.op}'")
                 }
             }
@@ -303,8 +303,8 @@ class EtsMethodBuilder(
                 val right = convertToEtsEntity(value.right)
                 val type = convertToEtsType(value.type)
                 when (value.op) {
-                    Ops.PLUS -> EtsAddExpr(type, left, right)
-                    Ops.MINUS -> EtsSubExpr(type, left, right)
+                    Ops.ADD -> EtsAddExpr(type, left, right)
+                    Ops.SUB -> EtsSubExpr(type, left, right)
                     Ops.MUL -> EtsMulExpr(type, left, right)
                     Ops.DIV -> EtsDivExpr(type, left, right)
                     Ops.MOD -> EtsRemExpr(type, left, right)
@@ -318,6 +318,7 @@ class EtsMethodBuilder(
                     Ops.AND -> EtsAndExpr(type, left, right)
                     Ops.OR -> EtsOrExpr(type, left, right)
                     Ops.NULLISH -> EtsNullishCoalescingExpr(type, left, right)
+                    Ops.COMMA -> EtsCommaExpr(left, right) // Note: `type` is ignored here!
                     else -> error("Unknown binop: ${value.op}")
                 }
             }
@@ -328,9 +329,9 @@ class EtsMethodBuilder(
                 // Note: `value.type` is ignored here!
                 when (value.op) {
                     Ops.EQ_EQ -> EtsEqExpr(left, right)
-                    Ops.NOT_EQ_EQ -> EtsNotEqExpr(left, right)
+                    Ops.NOT_EQ -> EtsNotEqExpr(left, right)
                     Ops.EQ_EQ_EQ -> EtsStrictEqExpr(left, right)
-                    Ops.NOT_EQ_EQ_EQ -> EtsStrictNotEqExpr(left, right)
+                    Ops.NOT_EQ_EQ -> EtsStrictNotEqExpr(left, right)
                     Ops.LT -> EtsLtExpr(left, right)
                     Ops.LT_EQ -> EtsLtEqExpr(left, right)
                     Ops.GT -> EtsGtExpr(left, right)
