@@ -143,7 +143,7 @@ class EtsGotoStmt(
 
 data class EtsIfStmt(
     override val location: EtsInstLocation,
-    val condition: EtsConditionExpr,
+    val condition: EtsEntity,
 ) : EtsBranchingStmt {
     override fun toString(): String {
         return "if ($condition)"

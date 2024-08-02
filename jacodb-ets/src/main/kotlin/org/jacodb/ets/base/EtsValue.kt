@@ -18,4 +18,50 @@ package org.jacodb.ets.base
 
 import org.jacodb.api.common.cfg.CommonValue
 
-interface EtsValue : EtsEntity, CommonValue
+interface EtsValue : EtsEntity, CommonValue {
+    interface Visitor<out R> {
+        fun visit(value: EtsLocal): R
+
+        // Constant
+        fun visit(value: EtsStringConstant): R
+        fun visit(value: EtsBooleanConstant): R
+        fun visit(value: EtsNumberConstant): R
+        fun visit(value: EtsNullConstant): R
+        fun visit(value: EtsUndefinedConstant): R
+        fun visit(value: EtsArrayLiteral): R
+        fun visit(value: EtsObjectLiteral): R
+
+        // Ref
+        fun visit(value: EtsThis): R
+        fun visit(value: EtsParameterRef): R
+        fun visit(value: EtsArrayAccess): R
+        fun visit(value: EtsInstanceFieldRef): R
+        fun visit(value: EtsStaticFieldRef): R
+
+        interface Default<out R> : Visitor<R> {
+            override fun visit(value: EtsLocal): R = defaultVisit(value)
+
+            override fun visit(value: EtsStringConstant): R = defaultVisit(value)
+            override fun visit(value: EtsBooleanConstant): R = defaultVisit(value)
+            override fun visit(value: EtsNumberConstant): R = defaultVisit(value)
+            override fun visit(value: EtsNullConstant): R = defaultVisit(value)
+            override fun visit(value: EtsUndefinedConstant): R = defaultVisit(value)
+            override fun visit(value: EtsArrayLiteral): R = defaultVisit(value)
+            override fun visit(value: EtsObjectLiteral): R = defaultVisit(value)
+
+            override fun visit(value: EtsThis): R = defaultVisit(value)
+            override fun visit(value: EtsParameterRef): R = defaultVisit(value)
+            override fun visit(value: EtsArrayAccess): R = defaultVisit(value)
+            override fun visit(value: EtsInstanceFieldRef): R = defaultVisit(value)
+            override fun visit(value: EtsStaticFieldRef): R = defaultVisit(value)
+
+            fun defaultVisit(value: EtsValue): R
+        }
+    }
+
+    override fun <R> accept(visitor: EtsEntity.Visitor<R>): R {
+        return accept(visitor as Visitor<R>)
+    }
+
+    fun <R> accept(visitor: Visitor<R>): R
+}

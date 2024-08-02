@@ -16,13 +16,16 @@
 
 package org.jacodb.ets.dto
 
-import org.jacodb.ets.base.BinaryOp
+import org.jacodb.ets.base.EtsAddExpr
+import org.jacodb.ets.base.EtsAndExpr
 import org.jacodb.ets.base.EtsAnyType
 import org.jacodb.ets.base.EtsArrayAccess
 import org.jacodb.ets.base.EtsArrayLiteral
 import org.jacodb.ets.base.EtsArrayType
 import org.jacodb.ets.base.EtsAssignStmt
-import org.jacodb.ets.base.EtsBinaryOperation
+import org.jacodb.ets.base.EtsBitAndExpr
+import org.jacodb.ets.base.EtsBitOrExpr
+import org.jacodb.ets.base.EtsBitXorExpr
 import org.jacodb.ets.base.EtsBooleanConstant
 import org.jacodb.ets.base.EtsBooleanType
 import org.jacodb.ets.base.EtsCallExpr
@@ -30,52 +33,74 @@ import org.jacodb.ets.base.EtsCallStmt
 import org.jacodb.ets.base.EtsCallableType
 import org.jacodb.ets.base.EtsCastExpr
 import org.jacodb.ets.base.EtsClassType
-import org.jacodb.ets.base.EtsConditionExpr
 import org.jacodb.ets.base.EtsConstant
 import org.jacodb.ets.base.EtsDeleteExpr
+import org.jacodb.ets.base.EtsDivExpr
 import org.jacodb.ets.base.EtsEntity
+import org.jacodb.ets.base.EtsEqExpr
+import org.jacodb.ets.base.EtsExpExpr
 import org.jacodb.ets.base.EtsFieldRef
 import org.jacodb.ets.base.EtsGotoStmt
+import org.jacodb.ets.base.EtsGtEqExpr
+import org.jacodb.ets.base.EtsGtExpr
 import org.jacodb.ets.base.EtsIfStmt
+import org.jacodb.ets.base.EtsInExpr
 import org.jacodb.ets.base.EtsInstLocation
 import org.jacodb.ets.base.EtsInstanceCallExpr
 import org.jacodb.ets.base.EtsInstanceFieldRef
 import org.jacodb.ets.base.EtsInstanceOfExpr
+import org.jacodb.ets.base.EtsLeftShiftExpr
 import org.jacodb.ets.base.EtsLengthExpr
 import org.jacodb.ets.base.EtsLiteralType
 import org.jacodb.ets.base.EtsLocal
+import org.jacodb.ets.base.EtsLtEqExpr
+import org.jacodb.ets.base.EtsLtExpr
+import org.jacodb.ets.base.EtsMulExpr
+import org.jacodb.ets.base.EtsNegExpr
 import org.jacodb.ets.base.EtsNeverType
 import org.jacodb.ets.base.EtsNewArrayExpr
 import org.jacodb.ets.base.EtsNewExpr
 import org.jacodb.ets.base.EtsNopStmt
+import org.jacodb.ets.base.EtsNotEqExpr
+import org.jacodb.ets.base.EtsNotExpr
 import org.jacodb.ets.base.EtsNullConstant
 import org.jacodb.ets.base.EtsNullType
+import org.jacodb.ets.base.EtsNullishCoalescingExpr
 import org.jacodb.ets.base.EtsNumberConstant
 import org.jacodb.ets.base.EtsNumberType
 import org.jacodb.ets.base.EtsObjectLiteral
+import org.jacodb.ets.base.EtsOrExpr
 import org.jacodb.ets.base.EtsParameterRef
-import org.jacodb.ets.base.EtsRelationOperation
+import org.jacodb.ets.base.EtsPreDecExpr
+import org.jacodb.ets.base.EtsPreIncExpr
+import org.jacodb.ets.base.EtsRemExpr
 import org.jacodb.ets.base.EtsReturnStmt
+import org.jacodb.ets.base.EtsRightShiftExpr
 import org.jacodb.ets.base.EtsStaticCallExpr
 import org.jacodb.ets.base.EtsStaticFieldRef
 import org.jacodb.ets.base.EtsStmt
+import org.jacodb.ets.base.EtsStrictEqExpr
+import org.jacodb.ets.base.EtsStrictNotEqExpr
 import org.jacodb.ets.base.EtsStringConstant
 import org.jacodb.ets.base.EtsStringType
+import org.jacodb.ets.base.EtsSubExpr
 import org.jacodb.ets.base.EtsSwitchStmt
 import org.jacodb.ets.base.EtsThis
 import org.jacodb.ets.base.EtsThrowStmt
 import org.jacodb.ets.base.EtsTupleType
 import org.jacodb.ets.base.EtsType
 import org.jacodb.ets.base.EtsTypeOfExpr
-import org.jacodb.ets.base.EtsUnaryOperation
+import org.jacodb.ets.base.EtsUnaryPlusExpr
 import org.jacodb.ets.base.EtsUnclearRefType
 import org.jacodb.ets.base.EtsUndefinedConstant
 import org.jacodb.ets.base.EtsUndefinedType
 import org.jacodb.ets.base.EtsUnionType
 import org.jacodb.ets.base.EtsUnknownType
+import org.jacodb.ets.base.EtsUnsignedRightShiftExpr
 import org.jacodb.ets.base.EtsValue
+import org.jacodb.ets.base.EtsVoidExpr
 import org.jacodb.ets.base.EtsVoidType
-import org.jacodb.ets.base.UnaryOp
+import org.jacodb.ets.base.Ops
 import org.jacodb.ets.graph.EtsCfg
 import org.jacodb.ets.model.EtsClass
 import org.jacodb.ets.model.EtsClassImpl
@@ -176,7 +201,7 @@ class EtsMethodBuilder(
 
             is IfStmtDto -> EtsIfStmt(
                 location = loc(),
-                condition = convertToEtsEntity(stmt.condition) as EtsConditionExpr,
+                condition = convertToEtsEntity(stmt.condition),
             )
 
             is SwitchStmtDto -> EtsSwitchStmt(
@@ -258,22 +283,62 @@ class EtsMethodBuilder(
                 type = convertToEtsType(value.type),
             )
 
-            is UnaryOperationDto -> EtsUnaryOperation(
-                op = convertToEtsUnaryOp(value.op),
-                arg = convertToEtsEntity(value.arg),
-            )
+            is UnaryOperationDto -> {
+                val arg = convertToEtsEntity(value.arg)
+                when (value.op) {
+                    Ops.DELETE -> EtsDeleteExpr(arg)
+                    Ops.TYPEOF -> EtsTypeOfExpr(arg)
+                    Ops.VOID -> EtsVoidExpr(arg)
+                    Ops.BANG -> EtsNotExpr(arg)
+                    Ops.MINUS -> EtsNegExpr(arg, arg.type)
+                    Ops.PLUS -> EtsUnaryPlusExpr(arg)
+                    Ops.PLUS_PLUS -> EtsPreIncExpr(arg.type, arg)
+                    Ops.MINUS_MINUS -> EtsPreDecExpr(arg.type, arg)
+                    else -> error("Unknown unop: '${value.op}'")
+                }
+            }
 
-            is BinaryOperationDto -> EtsBinaryOperation(
-                op = convertToEtsBinaryOp(value.op),
-                left = convertToEtsEntity(value.left),
-                right = convertToEtsEntity(value.right),
-            )
+            is BinaryOperationDto -> {
+                val left = convertToEtsEntity(value.left)
+                val right = convertToEtsEntity(value.right)
+                val type = convertToEtsType(value.type)
+                when (value.op) {
+                    Ops.PLUS -> EtsAddExpr(type, left, right)
+                    Ops.MINUS -> EtsSubExpr(type, left, right)
+                    Ops.MUL -> EtsMulExpr(type, left, right)
+                    Ops.DIV -> EtsDivExpr(type, left, right)
+                    Ops.MOD -> EtsRemExpr(type, left, right)
+                    Ops.EXP -> EtsExpExpr(type, left, right)
+                    Ops.BIT_AND -> EtsBitAndExpr(type, left, right)
+                    Ops.BIT_OR -> EtsBitOrExpr(type, left, right)
+                    Ops.BIT_XOR -> EtsBitXorExpr(type, left, right)
+                    Ops.LSH -> EtsLeftShiftExpr(type, left, right)
+                    Ops.RSH -> EtsRightShiftExpr(type, left, right)
+                    Ops.URSH -> EtsUnsignedRightShiftExpr(type, left, right)
+                    Ops.AND -> EtsAndExpr(type, left, right)
+                    Ops.OR -> EtsOrExpr(type, left, right)
+                    Ops.NULLISH -> EtsNullishCoalescingExpr(type, left, right)
+                    else -> error("Unknown binop: ${value.op}")
+                }
+            }
 
-            is RelationOperationDto -> EtsRelationOperation(
-                relop = value.op,
-                left = convertToEtsEntity(value.left),
-                right = convertToEtsEntity(value.right),
-            )
+            is RelationOperationDto -> {
+                val left = convertToEtsEntity(value.left)
+                val right = convertToEtsEntity(value.right)
+                // Note: `value.type` is ignored here!
+                when (value.op) {
+                    Ops.EQ_EQ -> EtsEqExpr(left, right)
+                    Ops.NOT_EQ_EQ -> EtsNotEqExpr(left, right)
+                    Ops.EQ_EQ_EQ -> EtsStrictEqExpr(left, right)
+                    Ops.NOT_EQ_EQ_EQ -> EtsStrictNotEqExpr(left, right)
+                    Ops.LT -> EtsLtExpr(left, right)
+                    Ops.LT_EQ -> EtsLtEqExpr(left, right)
+                    Ops.GT -> EtsGtExpr(left, right)
+                    Ops.GT_EQ -> EtsGtEqExpr(left, right)
+                    Ops.IN -> EtsInExpr(left, right)
+                    else -> error("Unknown relop: ${value.op}")
+                }
+            }
 
             is InstanceCallExprDto -> EtsInstanceCallExpr(
                 instance = convertToEtsEntity(value.instance),
@@ -573,59 +638,13 @@ fun convertToEtsConstant(value: ConstantDto): EtsConstant {
 
             override fun toString(): String = "Unknown(${value.value})"
 
-            override fun <R> accept(visitor: EtsConstant.Visitor<R>): R {
-                if (visitor is EtsConstant.Visitor.Default<R>) {
+            override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
+                if (visitor is EtsValue.Visitor.Default<R>) {
                     return visitor.defaultVisit(this)
                 }
                 error("Cannot handle $this")
             }
         }
-    }
-}
-
-fun convertToEtsUnaryOp(op: String): UnaryOp {
-    return when (op) {
-        "+" -> UnaryOp.Plus
-        "-" -> UnaryOp.Minus
-        "!" -> UnaryOp.Bang
-        "~" -> UnaryOp.Tilde
-        "typeof" -> UnaryOp.Typeof
-        "void" -> UnaryOp.Void
-        "delete" -> UnaryOp.Delete
-        "MinusToken" -> UnaryOp.Minus
-        "PlusToken" -> UnaryOp.Plus
-        else -> error("Unknown UnaryOp: $op")
-    }
-}
-
-fun convertToEtsBinaryOp(op: String): BinaryOp {
-    return when (op) {
-        "+" -> BinaryOp.Add
-        "-" -> BinaryOp.Sub
-        "*" -> BinaryOp.Mul
-        "/" -> BinaryOp.Div
-        "%" -> BinaryOp.Mod
-        "==" -> BinaryOp.EqEq
-        "!=" -> BinaryOp.NotEq
-        "===" -> BinaryOp.EqEqEq
-        "!==" -> BinaryOp.NotEqEq
-        "<" -> BinaryOp.Lt
-        "<=" -> BinaryOp.LtEq
-        ">" -> BinaryOp.Gt
-        ">=" -> BinaryOp.GtEq
-        "<<" -> BinaryOp.LShift
-        ">>" -> BinaryOp.RShift
-        ">>>" -> BinaryOp.ZeroFillRShift
-        "&" -> BinaryOp.BitAnd
-        "|" -> BinaryOp.BitOr
-        "^" -> BinaryOp.BitXor
-        "&&" -> BinaryOp.LogicalAnd
-        "||" -> BinaryOp.LogicalOr
-        "in" -> BinaryOp.In
-        "instanceof" -> BinaryOp.InstanceOf
-        "**" -> BinaryOp.Exp
-        "??" -> BinaryOp.NullishCoalescing
-        else -> error("Unknown BinaryOp: $op")
     }
 }
 

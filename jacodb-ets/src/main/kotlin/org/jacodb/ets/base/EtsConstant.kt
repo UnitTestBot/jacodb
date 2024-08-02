@@ -16,35 +16,7 @@
 
 package org.jacodb.ets.base
 
-interface EtsConstant : EtsImmediate {
-    interface Visitor<out R> {
-        fun visit(value: EtsStringConstant): R
-        fun visit(value: EtsBooleanConstant): R
-        fun visit(value: EtsNumberConstant): R
-        fun visit(value: EtsNullConstant): R
-        fun visit(value: EtsUndefinedConstant): R
-        fun visit(value: EtsArrayLiteral): R
-        fun visit(value: EtsObjectLiteral): R
-
-        interface Default<out R> : Visitor<R> {
-            override fun visit(value: EtsStringConstant): R = defaultVisit(value)
-            override fun visit(value: EtsBooleanConstant): R = defaultVisit(value)
-            override fun visit(value: EtsNumberConstant): R = defaultVisit(value)
-            override fun visit(value: EtsNullConstant): R = defaultVisit(value)
-            override fun visit(value: EtsUndefinedConstant): R = defaultVisit(value)
-            override fun visit(value: EtsArrayLiteral): R = defaultVisit(value)
-            override fun visit(value: EtsObjectLiteral): R = defaultVisit(value)
-
-            fun defaultVisit(value: EtsConstant): R
-        }
-    }
-
-    override fun <R> accept(visitor: EtsImmediate.Visitor<R>): R {
-        return accept(visitor as Visitor<R>)
-    }
-
-    fun <R> accept(visitor: Visitor<R>): R
-}
+interface EtsConstant : EtsImmediate
 
 data class EtsStringConstant(
     val value: String,
@@ -56,7 +28,7 @@ data class EtsStringConstant(
         return "\"$value\""
     }
 
-    override fun <R> accept(visitor: EtsConstant.Visitor<R>): R {
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -71,7 +43,7 @@ data class EtsBooleanConstant(
         return if (value) "true" else "false"
     }
 
-    override fun <R> accept(visitor: EtsConstant.Visitor<R>): R {
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
         return visitor.visit(this)
     }
 
@@ -91,7 +63,7 @@ data class EtsNumberConstant(
         return value.toString()
     }
 
-    override fun <R> accept(visitor: EtsConstant.Visitor<R>): R {
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -102,7 +74,7 @@ object EtsNullConstant : EtsConstant {
 
     override fun toString(): String = "null"
 
-    override fun <R> accept(visitor: EtsConstant.Visitor<R>): R {
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -113,7 +85,7 @@ object EtsUndefinedConstant : EtsConstant {
 
     override fun toString(): String = "undefined"
 
-    override fun <R> accept(visitor: EtsConstant.Visitor<R>): R {
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -135,7 +107,7 @@ data class EtsArrayLiteral(
         return elements.joinToString(prefix = "[", postfix = "]")
     }
 
-    override fun <R> accept(visitor: EtsConstant.Visitor<R>): R {
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -151,7 +123,7 @@ data class EtsObjectLiteral(
         }
     }
 
-    override fun <R> accept(visitor: EtsConstant.Visitor<R>): R {
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
