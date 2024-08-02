@@ -16,260 +16,41 @@
 
 package org.jacodb.ets.base
 
-enum class UnaryOp {
-    /**
-     * '-'
-     */
-    Minus,
-
-    /**
-     * '+'
-     */
-    Plus,
-
-    /**
-     * '!'
-     */
-    Bang,
-
-    /**
-     * '~'
-     */
-    Tilde,
-
-    /**
-     * 'typeof'
-     */
-    Typeof,
-
-    /**
-     * 'void'
-     */
-    Void,
-
-    /**
-     * 'delete'
-     */
-    Delete,
-}
-
-enum class UpdateOp {
-    /**
-     * '++'
-     */
-    Inc,
-
-    /**
-     * '--'
-     */
-    Dec,
-}
-
-enum class BinaryOp {
-    /**
-     * `==`
-     */
-    EqEq,
-
-    /**
-     * `!=`
-     */
-    NotEq,
-
-    /**
-     * `===`
-     */
-    EqEqEq,
-
-    /**
-     * `!==`
-     */
-    NotEqEq,
-
-    /**
-     * `<`
-     */
-    Lt,
-
-    /**
-     * `<=`
-     */
-    LtEq,
-
-    /**
-     * `>`
-     */
-    Gt,
-
-    /**
-     * `>=`
-     */
-    GtEq,
-
-    /**
-     * `<<`
-     */
-    LShift,
-
-    /**
-     * `>>`
-     */
-    RShift,
-
-    /**
-     * `>>>`
-     */
-    ZeroFillRShift,
-
-    /**
-     * `+`
-     */
-    Add,
-
-    /**
-     * `-`
-     */
-    Sub,
-
-    /**
-     * `*`
-     */
-    Mul,
-
-    /**
-     * '/'
-     */
-    Div,
-
-    /**
-     * `%`
-     */
-    Mod,
-
-    /**
-     * `|`
-     */
-    BitOr,
-
-    /**
-     * `^`
-     */
-    BitXor,
-
-    /**
-     * `&`
-     */
-    BitAnd,
-
-    /**
-     * `||`
-     */
-    LogicalOr,
-
-    /**
-     * `&&`
-     */
-    LogicalAnd,
-
-    /**
-     * `in`
-     */
-    In,
-
-    /**
-     * `instanceof`
-     */
-    InstanceOf,
-
-    /**
-     * `**`
-     */
-    Exp,
-
-    /**
-     * `??`
-     */
-    NullishCoalescing,
-}
-
-enum class AssignOp {
-    /**
-     * '='
-     */
-    Assign,
-
-    /**
-     * '+='
-     */
-    AddAssign,
-
-    /**
-     * '-='
-     */
-    SubAssign,
-
-    /**
-     * '*='
-     */
-    MulAssign,
-
-    /**
-     * '/='
-     */
-    DivAssign,
-
-    /**
-     * '%='
-     */
-    ModAssign,
-
-    /**
-     * '<<='
-     */
-    LShiftAssign,
-
-    /**
-     * '>>='
-     */
-    RShiftAssign,
-
-    /**
-     * '>>>='
-     */
-    ZeroFillRShiftAssign,
-
-    /**
-     * '|='
-     */
-    BitOrAssign,
-
-    /**
-     * '^='
-     */
-    BitXorAssign,
-
-    /**
-     * '&='
-     */
-    BitAndAssign,
-
-    /**
-     * '**='
-     */
-    ExpAssign,
-
-    /**
-     * '&&='
-     */
-    AndAssign,
-
-    /**
-     * '||='
-     */
-    OrAssign,
-
-    /**
-     * '??='
-     */
-    NullishAssign,
+object Ops {
+    const val EQ_EQ = "=="
+    const val NOT_EQ = "!="
+    const val EQ_EQ_EQ = "==="
+    const val NOT_EQ_EQ = "!=="
+    const val GT = ">"
+    const val GT_EQ = ">="
+    const val LT = "<"
+    const val LT_EQ = "<="
+    const val IN = "in"
+    const val PLUS = "+" // unary
+    const val MINUS = "-" // unary
+    const val ADD = "+" // binary
+    const val SUB = "-" // binary
+    const val MUL = "*"
+    const val DIV = "/"
+    const val MOD = "%"
+    const val EXP = "**"
+    const val INC = "++"
+    const val DEC = "--"
+    const val LSH = "<<"
+    const val RSH = ">>"
+    const val URSH = ">>>"
+    const val BIT_AND = "&"
+    const val BIT_OR = "|"
+    const val BIT_XOR = "^"
+    const val BIT_NOT = "~"
+    const val NOT = "!"
+    const val AND = "&&"
+    const val OR = "||"
+    const val NULLISH = "??"
+    const val COMMA = ","
+    // const val DELETE = "delete"
+    // const val TYPEOF = "typeof"
+    // const val VOID = "void"
+    // const val AS = "as"
+    // const val INSTANCEOF = "instanceof"
 }

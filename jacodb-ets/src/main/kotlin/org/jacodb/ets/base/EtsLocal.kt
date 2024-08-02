@@ -24,7 +24,7 @@ data class EtsLocal(
         return name
     }
 
-    override fun <R> accept(visitor: EtsImmediate.Visitor<R>): R {
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
         return visitor.visit(this)
     }
 }

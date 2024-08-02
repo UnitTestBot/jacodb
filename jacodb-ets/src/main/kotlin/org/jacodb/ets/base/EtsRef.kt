@@ -20,38 +20,14 @@ import org.jacodb.api.common.cfg.CommonArgument
 import org.jacodb.api.common.cfg.CommonThis
 import org.jacodb.ets.model.EtsFieldSignature
 
-interface EtsRef : EtsValue {
-    interface Visitor<out R> {
-        fun visit(ref: EtsThis): R
-        fun visit(ref: EtsParameterRef): R
-        fun visit(ref: EtsArrayAccess): R
-        fun visit(ref: EtsInstanceFieldRef): R
-        fun visit(ref: EtsStaticFieldRef): R
-
-        interface Default<out R> : Visitor<R> {
-            override fun visit(ref: EtsThis): R = defaultVisit(ref)
-            override fun visit(ref: EtsParameterRef): R = defaultVisit(ref)
-            override fun visit(ref: EtsArrayAccess): R = defaultVisit(ref)
-            override fun visit(ref: EtsInstanceFieldRef): R = defaultVisit(ref)
-            override fun visit(ref: EtsStaticFieldRef): R = defaultVisit(ref)
-
-            fun defaultVisit(ref: EtsRef): R
-        }
-    }
-
-    override fun <R> accept(visitor: EtsEntity.Visitor<R>): R {
-        return accept(visitor as Visitor<R>)
-    }
-
-    fun <R> accept(visitor: Visitor<R>): R
-}
+interface EtsRef : EtsValue
 
 data class EtsThis(
     override val type: EtsClassType,
 ) : EtsRef, CommonThis {
     override fun toString(): String = "this"
 
-    override fun <R> accept(visitor: EtsRef.Visitor<R>): R {
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -64,7 +40,7 @@ data class EtsParameterRef(
         return "arg$index"
     }
 
-    override fun <R> accept(visitor: EtsRef.Visitor<R>): R {
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -78,7 +54,7 @@ data class EtsArrayAccess(
         return "$array[$index]"
     }
 
-    override fun <R> accept(visitor: EtsRef.Visitor<R>): R {
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -98,7 +74,7 @@ data class EtsInstanceFieldRef(
         return "$instance.${field.name}"
     }
 
-    override fun <R> accept(visitor: EtsRef.Visitor<R>): R {
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
         return visitor.visit(this)
     }
 }
@@ -110,7 +86,7 @@ data class EtsStaticFieldRef(
         return "${field.enclosingClass.name}.${field.name}"
     }
 
-    override fun <R> accept(visitor: EtsRef.Visitor<R>): R {
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
         return visitor.visit(this)
     }
 }

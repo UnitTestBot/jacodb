@@ -16,26 +16,4 @@
 
 package org.jacodb.ets.base
 
-import org.jacodb.api.common.cfg.CommonValue
-
-interface EtsImmediate : EtsValue, CommonValue {
-    interface Visitor<out R> : EtsConstant.Visitor<R> {
-        fun visit(value: EtsLocal): R
-
-        interface Default<out R> : Visitor<R>,
-            EtsConstant.Visitor.Default<R> {
-
-            override fun visit(value: EtsLocal): R = defaultVisit(value)
-
-            override fun defaultVisit(value: EtsConstant): R = defaultVisit(value as EtsImmediate)
-
-            fun defaultVisit(value: EtsImmediate): R
-        }
-    }
-
-    override fun <R> accept(visitor: EtsEntity.Visitor<R>): R {
-        return this.accept(visitor as Visitor<R>)
-    }
-
-    fun <R> accept(visitor: Visitor<R>): R
-}
+interface EtsImmediate : EtsValue
