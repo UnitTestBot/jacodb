@@ -24,7 +24,7 @@ import org.jacodb.analysis.taint.TaintAnalysisOptions
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.util.EtsTraits
 import org.jacodb.ets.base.EtsStmt
-import org.jacodb.ets.graph.EtsApplicationGraph
+import org.jacodb.ets.graph.EtsApplicationGraphImpl
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsMethod
 import org.jacodb.taint.configuration.Argument
@@ -43,9 +43,6 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIf
-import java.io.File
-import java.nio.file.Files
-import java.nio.file.Paths
 import kotlin.io.path.exists
 import kotlin.io.path.toPath
 import kotlin.time.Duration.Companion.seconds
@@ -71,7 +68,7 @@ class EtsIfds {
     @Test
     fun `test taint analysis on MethodCollision`() {
         val project = loadSample("MethodCollision")
-        val graph = EtsApplicationGraph(project)
+        val graph = EtsApplicationGraphImpl(project)
         val unitResolver = UnitResolver<EtsMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<EtsMethod, EtsStmt>.(EtsMethod) -> List<TaintConfigurationItem>? =
             { method ->
@@ -115,7 +112,7 @@ class EtsIfds {
     @Test
     fun `test taint analysis on TypeMismatch`() {
         val project = loadSample("TypeMismatch")
-        val graph = EtsApplicationGraph(project)
+        val graph = EtsApplicationGraphImpl(project)
         val unitResolver = UnitResolver<EtsMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<EtsMethod, EtsStmt>.(EtsMethod) -> List<TaintConfigurationItem>? =
             { method ->
@@ -160,7 +157,7 @@ class EtsIfds {
     @Test
     fun `test taint analysis on DataFlowSecurity`() {
         val project = loadSample("DataFlowSecurity")
-        val graph = EtsApplicationGraph(project)
+        val graph = EtsApplicationGraphImpl(project)
         val unitResolver = UnitResolver<EtsMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<EtsMethod, EtsStmt>.(EtsMethod) -> List<TaintConfigurationItem>? =
             { method ->
@@ -225,7 +222,7 @@ class EtsIfds {
     @Test
     fun `test taint analysis on case1 - untrusted loop bound scenario`() {
         val project = loadSample("cases/case1")
-        val graph = EtsApplicationGraph(project)
+        val graph = EtsApplicationGraphImpl(project)
         val unitResolver = UnitResolver<EtsMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<EtsMethod, EtsStmt>.(EtsMethod) -> List<TaintConfigurationItem>? =
             { method ->
@@ -262,7 +259,7 @@ class EtsIfds {
     @Test
     fun `test taint analysis on case2 - untrusted array buffer size scenario`() {
         val project = loadSample("cases/case2")
-        val graph = EtsApplicationGraph(project)
+        val graph = EtsApplicationGraphImpl(project)
         val unitResolver = UnitResolver<EtsMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<EtsMethod, EtsStmt>.(EtsMethod) -> List<TaintConfigurationItem>? =
             { method ->
@@ -300,7 +297,7 @@ class EtsIfds {
     @Test
     fun `test taint analysis on case3 - send plain information with sensitive data`() {
         val project = loadSample("cases/case3")
-        val graph = EtsApplicationGraph(project)
+        val graph = EtsApplicationGraphImpl(project)
         val unitResolver = UnitResolver<EtsMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<EtsMethod, EtsStmt>.(EtsMethod) -> List<TaintConfigurationItem>? =
             { method ->
@@ -344,7 +341,7 @@ class EtsIfds {
     @Test
     fun `test taint analysis on AccountManager`() {
         val project = loadEtsFileFromResource("/etsir/project1/entry/src/main/ets/base/account/AccountManager.ts.json")
-        val graph = EtsApplicationGraph(project)
+        val graph = EtsApplicationGraphImpl(project)
         val unitResolver = UnitResolver<EtsMethod> { SingletonUnit }
         val getConfigForMethod: ForwardTaintFlowFunctions<EtsMethod, EtsStmt>.(EtsMethod) -> List<TaintConfigurationItem>? =
             { method ->

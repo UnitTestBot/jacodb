@@ -25,18 +25,15 @@ interface EtsEntity : CommonExpr {
         get() = type.typeName
 
     interface Visitor<out R> :
-        EtsImmediate.Visitor<R>,
-        EtsExpr.Visitor<R>,
-        EtsRef.Visitor<R> {
+        EtsValue.Visitor<R>,
+        EtsExpr.Visitor<R> {
 
         interface Default<out R> : Visitor<R>,
-            EtsImmediate.Visitor.Default<R>,
-            EtsExpr.Visitor.Default<R>,
-            EtsRef.Visitor.Default<R> {
+            EtsValue.Visitor.Default<R>,
+            EtsExpr.Visitor.Default<R> {
 
-            override fun defaultVisit(value: EtsImmediate): R = defaultVisit(value as EtsEntity)
+            override fun defaultVisit(value: EtsValue): R = defaultVisit(value as EtsEntity)
             override fun defaultVisit(expr: EtsExpr): R = defaultVisit(expr as EtsEntity)
-            override fun defaultVisit(ref: EtsRef): R = defaultVisit(ref as EtsEntity)
 
             fun defaultVisit(value: EtsEntity): R
         }

@@ -23,7 +23,7 @@ import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
 import org.jacodb.analysis.taint.TaintManager
 import org.jacodb.analysis.util.EtsTraits
 import org.jacodb.ets.base.EtsStmt
-import org.jacodb.ets.graph.EtsApplicationGraph
+import org.jacodb.ets.graph.EtsApplicationGraphImpl
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsMethod
 import org.jacodb.taint.configuration.Argument
@@ -103,7 +103,7 @@ class EtsTaintAnalysisTest {
     }
 
     fun runTaintAnalysis(etsFile: EtsFile) {
-        val graph = EtsApplicationGraph(etsFile)
+        val graph = EtsApplicationGraphImpl(etsFile)
         val unitResolver = UnitResolver<EtsMethod> { SingletonUnit }
 
         val manager = TaintManager(
