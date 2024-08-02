@@ -41,6 +41,7 @@ import org.jacodb.ets.base.EtsDivExpr
 import org.jacodb.ets.base.EtsEntity
 import org.jacodb.ets.base.EtsEqExpr
 import org.jacodb.ets.base.EtsExpExpr
+import org.jacodb.ets.base.EtsExpr
 import org.jacodb.ets.base.EtsFieldRef
 import org.jacodb.ets.base.EtsGotoStmt
 import org.jacodb.ets.base.EtsGtEqExpr
@@ -129,6 +130,10 @@ class EtsMethodBuilder(
 
     private var freeTempLocal: Int = 0
 
+    private fun newTempLocal(type: EtsType): EtsLocal {
+        return EtsLocal("_tmp${freeTempLocal++}", type)
+    }
+
     private fun loc(): EtsInstLocation {
         return EtsInstLocation(etsMethod, currentStmts.size)
     }
@@ -148,7 +153,7 @@ class EtsMethodBuilder(
         // if (entity is EtsCastExpr) return entity
 
         if (entity is EtsExpr || entity is EtsFieldRef || entity is EtsArrayAccess) {
-            val newLocal = EtsLocal("_tmp${freeTempLocal++}", entity.type)
+            val newLocal = newTempLocal(entity.type)
             currentStmts += EtsAssignStmt(
                 location = loc(),
                 lhv = newLocal,
