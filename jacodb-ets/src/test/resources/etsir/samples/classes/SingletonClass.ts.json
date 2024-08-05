@@ -10,46 +10,7 @@
       "typeParameters": [],
       "superClassName": "",
       "implementedInterfaceNames": [],
-      "fields": [
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "logger",
-            "type": {
-              "_": "ClassType",
-              "signature": {
-                "name": "Logger"
-              }
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        },
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "Logger",
-            "type": {
-              "_": "ClassType",
-              "signature": {
-                "name": "Logger"
-              }
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        }
-      ],
+      "fields": [],
       "methods": [
         {
           "signature": {
@@ -78,19 +39,13 @@
               {
                 "name": "logger",
                 "type": {
-                  "_": "ClassType",
-                  "signature": {
-                    "name": "Logger"
-                  }
+                  "_": "UnknownType"
                 }
               },
               {
                 "name": "Logger",
                 "type": {
-                  "_": "ClassType",
-                  "signature": {
-                    "name": "Logger"
-                  }
+                  "_": "UnknownType"
                 }
               }
             ],
@@ -129,25 +84,26 @@
                         "_": "Local",
                         "name": "logger",
                         "type": {
-                          "_": "ClassType",
-                          "signature": {
-                            "name": "Logger"
-                          }
+                          "_": "UnknownType"
                         }
                       },
                       "right": {
-                        "_": "StaticCallExpr",
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "Logger",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
                         "method": {
                           "enclosingClass": {
-                            "name": "Logger"
+                            "name": ""
                           },
                           "name": "getInstance",
                           "parameters": [],
                           "returnType": {
-                            "_": "ClassType",
-                            "signature": {
-                              "name": "Logger"
-                            }
+                            "_": "UnknownType"
                           }
                         },
                         "args": []
@@ -161,28 +117,17 @@
                           "_": "Local",
                           "name": "logger",
                           "type": {
-                            "_": "ClassType",
-                            "signature": {
-                              "name": "Logger"
-                            }
+                            "_": "UnknownType"
                           }
                         },
                         "method": {
                           "enclosingClass": {
-                            "name": "Logger"
+                            "name": ""
                           },
                           "name": "log",
-                          "parameters": [
-                            {
-                              "name": "message",
-                              "type": {
-                                "_": "StringType"
-                              },
-                              "isOptional": false
-                            }
-                          ],
+                          "parameters": [],
                           "returnType": {
-                            "_": "VoidType"
+                            "_": "UnknownType"
                           }
                         },
                         "args": [
@@ -233,11 +178,110 @@
           ],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
+          "exclamationToken": false
         }
       ],
       "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Logger"
+            },
+            "name": "@instance_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Logger"
+            },
+            "name": "@static_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
         {
           "signature": {
             "enclosingClass": {
@@ -292,6 +336,30 @@
                             "name": "Logger"
                           }
                         }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "Logger"
+                          },
+                          "name": "@instance_init",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
                       }
                     },
                     {
@@ -445,10 +513,8 @@
             "name": "getInstance",
             "parameters": [],
             "returnType": {
-              "_": "ClassType",
-              "signature": {
-                "name": "Logger"
-              }
+              "_": "UnclearReferenceType",
+              "name": "Logger"
             }
           },
           "modifiers": [
@@ -603,7 +669,7 @@
                           }
                         },
                         "type": {
-                          "_": "UnknownType"
+                          "_": "BooleanType"
                         }
                       }
                     }

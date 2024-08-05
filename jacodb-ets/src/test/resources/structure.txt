@@ -1,0 +1,38 @@
+resources/                   #
+├── source/                  # Sample source (TS/ETS) files
+│   ├── *.ts                 #
+│   └── *.ets                #
+├── etsir/                   # EtsIR (JSON dump of ArkIR for ETS sources) for samples
+│   └── *.ts.json            #
+├── abc/                     # Compiled samples (ABC)
+│   └── *.abc                #
+├── abcir/                   # AbcIR (JSON dump of ArkIR for ABC inputs) for samples
+│   └── *.abc.json           #
+├── dot/                     # DOT files for visualizing IRs
+│   ├── *.ts.json.dot        #
+│   └── *.abc.json.dot       #
+├── pdf/                     # Rendered PDFs from DOT files
+│   └── *.ts.json.pdf        #
+│   └── *.abc.json.pdf       #
+│                            #
+└── projects/                # Directory for individual projects
+    ├── projects.txt         # List of projects and their URLs
+    ├── <project>/           # Some individual project
+    │   ├── README.md        #
+    │   ├── source/          # TS/ETS files for the project
+    │   │   ├── *.ts         #   (note: can be an actual git repo)
+    │   │   └── *.ets        #   (note: typically, deeply nested)
+    │   ├── etsir/           # JSON dump of ArkIR for TS files in the project
+    │   │   └── *.ts.json    #
+    │   ├── hap/             # HAP files for the project
+    │   │   └── *.hap        #
+    │   ├── abc/             # Compiled ABC files (or extracted from HAP) for the project
+    │   │   └── *.abc        #
+    │   ├── abcir/           # IR for ABC files for the project
+    │   │   └── *.abc.json   #
+    │   ├── dot/             # DOT files for visualizing IRs for the project
+    │   │   └── *.dot        #
+    │   └── pdf/             # Rendered PDFs from DOT files for the project
+    │       └── *.pdf        #
+    ├── <project>/           #
+    ...

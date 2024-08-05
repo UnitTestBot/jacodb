@@ -50,13 +50,15 @@ object DumpEtsFileDtoToDot {
             println("  methods: ${clazz.methods.size}")
             clazz.methods.forEach { method ->
                 println("  - METHOD '${method.signature}':")
-                println("    locals = ${method.body.locals}")
+                println("    locals = ${method.body?.locals}")
                 println("    typeParameters = ${method.typeParameters}")
-                println("    blocks: ${method.body.cfg.blocks.size}")
-                method.body.cfg.blocks.forEach { block ->
-                    println("    - BLOCK ${block.id} with ${block.stmts.size} statements:")
-                    block.stmts.forEachIndexed { i, inst ->
-                        println("      ${i + 1}. $inst")
+                method.body?.let { body ->
+                    println("    blocks: ${body.cfg.blocks.size}")
+                    body.cfg.blocks.forEach { block ->
+                        println("    - BLOCK ${block.id} with ${block.stmts.size} statements:")
+                        block.stmts.forEachIndexed { i, inst ->
+                            println("      ${i + 1}. $inst")
+                        }
                     }
                 }
             }

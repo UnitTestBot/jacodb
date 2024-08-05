@@ -67,7 +67,7 @@ interface EtsFieldRef : EtsRef, EtsLValue {
 }
 
 data class EtsInstanceFieldRef(
-    val instance: EtsEntity, // Local
+    val instance: EtsLocal,
     override val field: EtsFieldSignature,
 ) : EtsFieldRef {
     override fun toString(): String {

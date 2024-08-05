@@ -10,43 +10,7 @@
       "typeParameters": [],
       "superClassName": "",
       "implementedInterfaceNames": [],
-      "fields": [
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "simpleObj",
-            "type": {
-              "_": "ClassType",
-              "signature": {
-                "name": "SimpleClass"
-              }
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        },
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "console",
-            "type": {
-              "_": "UnknownType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        }
-      ],
+      "fields": [],
       "methods": [
         {
           "signature": {
@@ -93,7 +57,7 @@
               {
                 "name": "$temp1",
                 "type": {
-                  "_": "StringType"
+                  "_": "UnknownType"
                 }
               },
               {
@@ -175,10 +139,7 @@
                           "name": "constructor",
                           "parameters": [],
                           "returnType": {
-                            "_": "ClassType",
-                            "signature": {
-                              "name": "SimpleClass"
-                            }
+                            "_": "UnknownType"
                           }
                         },
                         "args": []
@@ -223,20 +184,12 @@
                         },
                         "method": {
                           "enclosingClass": {
-                            "name": "SimpleClass"
+                            "name": ""
                           },
                           "name": "setName",
-                          "parameters": [
-                            {
-                              "name": "name",
-                              "type": {
-                                "_": "StringType"
-                              },
-                              "isOptional": false
-                            }
-                          ],
+                          "parameters": [],
                           "returnType": {
-                            "_": "VoidType"
+                            "_": "UnknownType"
                           }
                         },
                         "args": [
@@ -256,7 +209,7 @@
                         "_": "Local",
                         "name": "$temp1",
                         "type": {
-                          "_": "StringType"
+                          "_": "UnknownType"
                         }
                       },
                       "right": {
@@ -273,12 +226,12 @@
                         },
                         "method": {
                           "enclosingClass": {
-                            "name": "SimpleClass"
+                            "name": ""
                           },
                           "name": "getName",
                           "parameters": [],
                           "returnType": {
-                            "_": "StringType"
+                            "_": "UnknownType"
                           }
                         },
                         "args": []
@@ -310,7 +263,7 @@
                             "_": "Local",
                             "name": "$temp1",
                             "type": {
-                              "_": "StringType"
+                              "_": "UnknownType"
                             }
                           }
                         ]
@@ -351,11 +304,110 @@
           ],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
+          "exclamationToken": false
         }
       ],
       "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "SimpleClass"
+            },
+            "name": "@instance_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "SimpleClass"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "SimpleClass"
+            },
+            "name": "@static_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "SimpleClass"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
         {
           "signature": {
             "enclosingClass": {
@@ -583,6 +635,56 @@
                           "_": "UnknownType"
                         }
                       }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "SimpleClass"
+            },
+            "name": "constructor",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "SimpleClass"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
                     }
                   ]
                 }

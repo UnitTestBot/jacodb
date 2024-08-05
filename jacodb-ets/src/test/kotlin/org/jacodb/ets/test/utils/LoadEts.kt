@@ -21,9 +21,9 @@ import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.model.EtsFile
 
 fun loadEtsFileDtoFromResource(jsonPath: String): EtsFileDto {
-    val sampleFilePath = object {}::class.java.getResourceAsStream(jsonPath)
+    val stream = object {}::class.java.getResourceAsStream(jsonPath)
         ?: error("Resource not found: $jsonPath")
-    return EtsFileDto.loadFromJson(sampleFilePath)
+    return EtsFileDto.loadFromJson(stream)
 }
 
 fun loadEtsFileFromResource(jsonPath: String): EtsFile {

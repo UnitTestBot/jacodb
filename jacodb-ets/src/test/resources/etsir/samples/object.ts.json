@@ -10,24 +10,7 @@
       "typeParameters": [],
       "superClassName": "",
       "implementedInterfaceNames": [],
-      "fields": [
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "main",
-            "type": {
-              "_": "UnknownType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        }
-      ],
+      "fields": [],
       "methods": [
         {
           "signature": {
@@ -95,7 +78,7 @@
                         "_": "StaticCallExpr",
                         "method": {
                           "enclosingClass": {
-                            "name": "_DEFAULT_ARK_CLASS"
+                            "name": ""
                           },
                           "name": "main",
                           "parameters": [],
@@ -150,7 +133,16 @@
                 "type": {
                   "_": "ClassType",
                   "signature": {
-                    "name": "AnonymousClass-main-0"
+                    "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-0"
+                  }
+                }
+              },
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-0"
                   }
                 }
               },
@@ -159,7 +151,16 @@
                 "type": {
                   "_": "ClassType",
                   "signature": {
-                    "name": "AnonymousClass-main-1"
+                    "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
+                  }
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
                   }
                 }
               },
@@ -170,13 +171,13 @@
                 }
               },
               {
-                "name": "$temp0",
+                "name": "$temp2",
                 "type": {
                   "_": "UnknownType"
                 }
               },
               {
-                "name": "$temp1",
+                "name": "$temp3",
                 "type": {
                   "_": "UnknownType"
                 }
@@ -232,25 +233,121 @@
                       "_": "AssignStmt",
                       "left": {
                         "_": "Local",
-                        "name": "c",
+                        "name": "$temp0",
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "AnonymousClass-main-0"
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-0"
                           }
                         }
                       },
                       "right": {
-                        "_": "ObjectLiteralExpr",
-                        "anonymousClass": {
-                          "name": "AnonymousClass-main-0"
+                        "_": "NewExpr",
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-0"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-0"
+                            }
+                          }
                         },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-0"
+                          },
+                          "name": "constructor",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "c",
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "AnonymousClass-main-0"
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-0"
                           }
                         }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-0"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "NewExpr",
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp1",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
+                            }
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
+                          },
+                          "name": "constructor",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
                       }
                     },
                     {
@@ -261,19 +358,17 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "AnonymousClass-main-1"
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
                           }
                         }
                       },
                       "right": {
-                        "_": "ObjectLiteralExpr",
-                        "anonymousClass": {
-                          "name": "AnonymousClass-main-1"
-                        },
+                        "_": "Local",
+                        "name": "$temp1",
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "AnonymousClass-main-1"
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
                           }
                         }
                       }
@@ -306,7 +401,7 @@
                             "type": {
                               "_": "ClassType",
                               "signature": {
-                                "name": "AnonymousClass-main-1"
+                                "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
                               }
                             }
                           }
@@ -323,7 +418,7 @@
                           "type": {
                             "_": "ClassType",
                             "signature": {
-                              "name": "AnonymousClass-main-1"
+                              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
                             }
                           }
                         },
@@ -344,7 +439,7 @@
                       "_": "AssignStmt",
                       "left": {
                         "_": "Local",
-                        "name": "$temp0",
+                        "name": "$temp2",
                         "type": {
                           "_": "UnknownType"
                         }
@@ -357,7 +452,7 @@
                           "type": {
                             "_": "ClassType",
                             "signature": {
-                              "name": "AnonymousClass-main-1"
+                              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
                             }
                           }
                         },
@@ -396,7 +491,7 @@
                         "args": [
                           {
                             "_": "Local",
-                            "name": "$temp0",
+                            "name": "$temp2",
                             "type": {
                               "_": "UnknownType"
                             }
@@ -414,7 +509,7 @@
                           "type": {
                             "_": "ClassType",
                             "signature": {
-                              "name": "AnonymousClass-main-1"
+                              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
                             }
                           }
                         },
@@ -440,7 +535,7 @@
                       "_": "AssignStmt",
                       "left": {
                         "_": "Local",
-                        "name": "$temp1",
+                        "name": "$temp3",
                         "type": {
                           "_": "UnknownType"
                         }
@@ -453,7 +548,7 @@
                           "type": {
                             "_": "ClassType",
                             "signature": {
-                              "name": "AnonymousClass-main-1"
+                              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
                             }
                           }
                         },
@@ -492,7 +587,7 @@
                         "args": [
                           {
                             "_": "Local",
-                            "name": "$temp1",
+                            "name": "$temp3",
                             "type": {
                               "_": "UnknownType"
                             }
@@ -513,7 +608,7 @@
     },
     {
       "signature": {
-        "name": "AnonymousClass-main-0"
+        "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-0"
       },
       "modifiers": [],
       "typeParameters": [],
@@ -523,7 +618,7 @@
         {
           "signature": {
             "enclosingClass": {
-              "name": "AnonymousClass-main-0"
+              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-0"
             },
             "name": "c1",
             "type": {
@@ -533,19 +628,12 @@
           "modifiers": [],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": {
-            "_": "Constant",
-            "value": "3",
-            "type": {
-              "_": "NumberType"
-            }
-          }
+          "exclamationToken": false
         },
         {
           "signature": {
             "enclosingClass": {
-              "name": "AnonymousClass-main-0"
+              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-0"
             },
             "name": "c2",
             "type": {
@@ -555,21 +643,129 @@
           "modifiers": [],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": {
-            "_": "Constant",
-            "value": "4",
-            "type": {
-              "_": "NumberType"
+          "exclamationToken": false
+        }
+      ],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-0"
+            },
+            "name": "@instance_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-0"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-0"
+                            }
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-0"
+                          },
+                          "name": "c1",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "3",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-0"
+                            }
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-0"
+                          },
+                          "name": "c2",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "4",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
             }
           }
         }
-      ],
-      "methods": []
+      ]
     },
     {
       "signature": {
-        "name": "AnonymousClass-main-1"
+        "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
       },
       "modifiers": [],
       "typeParameters": [],
@@ -579,7 +775,7 @@
         {
           "signature": {
             "enclosingClass": {
-              "name": "AnonymousClass-main-1"
+              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
             },
             "name": "a",
             "type": {
@@ -589,19 +785,12 @@
           "modifiers": [],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": {
-            "_": "Constant",
-            "value": "1",
-            "type": {
-              "_": "NumberType"
-            }
-          }
+          "exclamationToken": false
         },
         {
           "signature": {
             "enclosingClass": {
-              "name": "AnonymousClass-main-1"
+              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
             },
             "name": "b",
             "type": {
@@ -611,13 +800,12 @@
           "modifiers": [],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
+          "exclamationToken": false
         },
         {
           "signature": {
             "enclosingClass": {
-              "name": "AnonymousClass-main-1"
+              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
             },
             "name": "",
             "type": {
@@ -627,19 +815,12 @@
           "modifiers": [],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": {
-            "_": "Local",
-            "name": "c",
-            "type": {
-              "_": "UnknownType"
-            }
-          }
+          "exclamationToken": false
         },
         {
           "signature": {
             "enclosingClass": {
-              "name": "AnonymousClass-main-1"
+              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
             },
             "name": "_value",
             "type": {
@@ -649,21 +830,128 @@
           "modifiers": [],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": {
-            "_": "Constant",
-            "value": "0",
-            "type": {
-              "_": "NumberType"
-            }
-          }
+          "exclamationToken": false
         }
       ],
       "methods": [
         {
           "signature": {
             "enclosingClass": {
-              "name": "AnonymousClass-main-1"
+              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
+            },
+            "name": "@instance_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
+                            }
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
+                          },
+                          "name": "a",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "1",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
+                            }
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
+                          },
+                          "name": "_value",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "0",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
             },
             "name": "method",
             "parameters": [],
@@ -680,7 +968,7 @@
                 "type": {
                   "_": "ClassType",
                   "signature": {
-                    "name": "AnonymousClass-main-1"
+                    "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
                   }
                 }
               },
@@ -706,7 +994,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "AnonymousClass-main-1"
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
                           }
                         }
                       },
@@ -715,7 +1003,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "AnonymousClass-main-1"
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
                           }
                         }
                       }
@@ -764,7 +1052,7 @@
         {
           "signature": {
             "enclosingClass": {
-              "name": "AnonymousClass-main-1"
+              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
             },
             "name": "Get-accessor",
             "parameters": [],
@@ -781,7 +1069,7 @@
                 "type": {
                   "_": "ClassType",
                   "signature": {
-                    "name": "AnonymousClass-main-1"
+                    "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
                   }
                 }
               }
@@ -801,7 +1089,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "AnonymousClass-main-1"
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
                           }
                         }
                       },
@@ -810,7 +1098,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "AnonymousClass-main-1"
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
                           }
                         }
                       }
@@ -834,7 +1122,7 @@
         {
           "signature": {
             "enclosingClass": {
-              "name": "AnonymousClass-main-1"
+              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
             },
             "name": "Set-accessor",
             "parameters": [
@@ -859,12 +1147,18 @@
                 "type": {
                   "_": "ClassType",
                   "signature": {
-                    "name": "AnonymousClass-main-1"
+                    "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
                   }
                 }
               },
               {
                 "name": "value",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "console",
                 "type": {
                   "_": "UnknownType"
                 }
@@ -902,7 +1196,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "AnonymousClass-main-1"
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
                           }
                         }
                       },
@@ -911,9 +1205,48 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "AnonymousClass-main-1"
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-main-1"
                           }
                         }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "console",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "log",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Constant",
+                            "value": "setter",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "value",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ]
                       }
                     },
                     {

@@ -1,5 +1,5 @@
 {
-  "name": "PrependInitializer.ts",
+  "name": "initializers.ts",
   "namespaces": [],
   "classes": [
     {
@@ -99,14 +99,7 @@
           "modifiers": [],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": {
-            "_": "Constant",
-            "value": "99",
-            "type": {
-              "_": "NumberType"
-            }
-          }
+          "exclamationToken": false
         },
         {
           "signature": {
@@ -123,17 +116,174 @@
           ],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": {
-            "_": "Constant",
-            "value": "109",
-            "type": {
-              "_": "NumberType"
-            }
-          }
+          "exclamationToken": false
         }
       ],
       "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Foo"
+            },
+            "name": "@instance_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Foo"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Foo"
+                            }
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": "Foo"
+                          },
+                          "name": "x",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "99",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Foo"
+            },
+            "name": "@static_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Foo"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Foo"
+                            }
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": "Foo"
+                          },
+                          "name": "y",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "111",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
         {
           "signature": {
             "enclosingClass": {
@@ -200,6 +350,30 @@
                         "_": "InstanceCallExpr",
                         "instance": {
                           "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "Foo"
+                          },
+                          "name": "@instance_init",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"
@@ -218,7 +392,7 @@
                         "args": [
                           {
                             "_": "Constant",
-                            "value": "new Foo",
+                            "value": "inside Foo::constructor",
                             "type": {
                               "_": "StringType"
                             }
@@ -324,7 +498,7 @@
                       },
                       "right": {
                         "_": "Constant",
-                        "value": "112",
+                        "value": "222",
                         "type": {
                           "_": "NumberType"
                         }
@@ -354,7 +528,7 @@
                         "args": [
                           {
                             "_": "Constant",
-                            "value": "print-foo",
+                            "value": "inside Foo::foo",
                             "type": {
                               "_": "StringType"
                             }
@@ -459,7 +633,7 @@
                       },
                       "right": {
                         "_": "Constant",
-                        "value": "111",
+                        "value": "333",
                         "type": {
                           "_": "NumberType"
                         }
@@ -489,7 +663,7 @@
                         "args": [
                           {
                             "_": "Constant",
-                            "value": "print-bar",
+                            "value": "inside Foo::bar",
                             "type": {
                               "_": "StringType"
                             }

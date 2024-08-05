@@ -97,81 +97,7 @@
           },
           "modifiers": [],
           "typeParameters": [],
-          "body": {
-            "locals": [
-              {
-                "name": "this",
-                "type": {
-                  "_": "ClassType",
-                  "signature": {
-                    "name": "_DEFAULT_ARK_CLASS"
-                  }
-                }
-              },
-              {
-                "name": "err",
-                "type": {
-                  "_": "UnclearReferenceType",
-                  "name": "MyError"
-                }
-              }
-            ],
-            "cfg": {
-              "blocks": [
-                {
-                  "id": 0,
-                  "successors": [],
-                  "predecessors": [],
-                  "stmts": [
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "err",
-                        "type": {
-                          "_": "UnclearReferenceType",
-                          "name": "MyError"
-                        }
-                      },
-                      "right": {
-                        "_": "ParameterRef",
-                        "index": 0,
-                        "type": {
-                          "_": "UnclearReferenceType",
-                          "name": "MyError"
-                        }
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "this",
-                        "type": {
-                          "_": "ClassType",
-                          "signature": {
-                            "name": "_DEFAULT_ARK_CLASS"
-                          }
-                        }
-                      },
-                      "right": {
-                        "_": "ThisRef",
-                        "type": {
-                          "_": "ClassType",
-                          "signature": {
-                            "name": "_DEFAULT_ARK_CLASS"
-                          }
-                        }
-                      }
-                    },
-                    {
-                      "_": "ReturnVoidStmt"
-                    }
-                  ]
-                }
-              ]
-            }
-          }
+          "body": null
         },
         {
           "signature": {
@@ -432,8 +358,7 @@
           "modifiers": [],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
+          "exclamationToken": false
         },
         {
           "signature": {
@@ -448,8 +373,7 @@
           "modifiers": [],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
+          "exclamationToken": false
         },
         {
           "signature": {
@@ -464,8 +388,7 @@
           "modifiers": [],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
+          "exclamationToken": false
         },
         {
           "signature": {
@@ -480,8 +403,7 @@
           "modifiers": [],
           "typeParameters": [],
           "questionToken": true,
-          "exclamationToken": false,
-          "initializer": null
+          "exclamationToken": false
         }
       ],
       "methods": []
@@ -511,17 +433,143 @@
           ],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": {
-            "_": "Constant",
-            "value": "\"\"",
-            "type": {
-              "_": "StringType"
-            }
-          }
+          "exclamationToken": false
         }
       ],
       "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "CommonSecurity"
+            },
+            "name": "@instance_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "CommonSecurity"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "CommonSecurity"
+                            }
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": "CommonSecurity"
+                          },
+                          "name": "publish",
+                          "type": {
+                            "_": "UnclearReferenceType",
+                            "name": "String"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "CommonSecurity"
+            },
+            "name": "@static_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "CommonSecurity"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
         {
           "signature": {
             "enclosingClass": {
@@ -839,13 +887,13 @@
               {
                 "name": "$temp2",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "StringType"
                 }
               },
               {
                 "name": "$temp3",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "StringType"
                 }
               },
               {
@@ -857,13 +905,13 @@
               {
                 "name": "$temp5",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "StringType"
                 }
               },
               {
                 "name": "$temp6",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "StringType"
                 }
               },
               {
@@ -875,13 +923,13 @@
               {
                 "name": "$temp8",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "StringType"
                 }
               },
               {
                 "name": "$temp9",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "StringType"
                 }
               },
               {
@@ -893,7 +941,7 @@
               {
                 "name": "$temp11",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "StringType"
                 }
               }
             ],
@@ -903,7 +951,7 @@
                   "id": 0,
                   "successors": [
                     1,
-                    2
+                    3
                   ],
                   "predecessors": [],
                   "stmts": [
@@ -995,7 +1043,7 @@
                           }
                         },
                         "type": {
-                          "_": "UnknownType"
+                          "_": "BooleanType"
                         }
                       }
                     }
@@ -1003,7 +1051,9 @@
                 },
                 {
                   "id": 1,
-                  "successors": [],
+                  "successors": [
+                    2
+                  ],
                   "predecessors": [
                     0
                   ],
@@ -1046,6 +1096,21 @@
                   "id": 2,
                   "successors": [],
                   "predecessors": [
+                    1,
+                    3
+                  ],
+                  "stmts": [
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 3,
+                  "successors": [
+                    2
+                  ],
+                  "predecessors": [
                     0
                   ],
                   "stmts": [
@@ -1084,7 +1149,7 @@
                         "_": "Local",
                         "name": "$temp2",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "StringType"
                         }
                       },
                       "right": {
@@ -1112,7 +1177,7 @@
                         "_": "Local",
                         "name": "$temp3",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "StringType"
                         }
                       },
                       "right": {
@@ -1122,7 +1187,7 @@
                           "_": "Local",
                           "name": "$temp2",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "StringType"
                           }
                         },
                         "right": {
@@ -1169,7 +1234,7 @@
                         "_": "Local",
                         "name": "$temp5",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "StringType"
                         }
                       },
                       "right": {
@@ -1179,7 +1244,7 @@
                           "_": "Local",
                           "name": "$temp3",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "StringType"
                           }
                         },
                         "right": {
@@ -1197,7 +1262,7 @@
                         "_": "Local",
                         "name": "$temp6",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "StringType"
                         }
                       },
                       "right": {
@@ -1207,7 +1272,7 @@
                           "_": "Local",
                           "name": "$temp5",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "StringType"
                           }
                         },
                         "right": {
@@ -1254,7 +1319,7 @@
                         "_": "Local",
                         "name": "$temp8",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "StringType"
                         }
                       },
                       "right": {
@@ -1264,7 +1329,7 @@
                           "_": "Local",
                           "name": "$temp6",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "StringType"
                           }
                         },
                         "right": {
@@ -1282,7 +1347,7 @@
                         "_": "Local",
                         "name": "$temp9",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "StringType"
                         }
                       },
                       "right": {
@@ -1292,7 +1357,7 @@
                           "_": "Local",
                           "name": "$temp8",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "StringType"
                           }
                         },
                         "right": {
@@ -1339,7 +1404,7 @@
                         "_": "Local",
                         "name": "$temp11",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "StringType"
                         }
                       },
                       "right": {
@@ -1349,7 +1414,7 @@
                           "_": "Local",
                           "name": "$temp9",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "StringType"
                           }
                         },
                         "right": {
@@ -1389,7 +1454,54 @@
                         "_": "Local",
                         "name": "$temp11",
                         "type": {
+                          "_": "StringType"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "CommonSecurity"
+            },
+            "name": "constructor",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
                           "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "CommonSecurity"
+                          }
                         }
                       }
                     },

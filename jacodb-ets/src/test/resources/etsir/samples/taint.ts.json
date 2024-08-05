@@ -450,7 +450,7 @@
                           }
                         },
                         "type": {
-                          "_": "UnknownType"
+                          "_": "BooleanType"
                         }
                       }
                     }
@@ -578,7 +578,8 @@
                 {
                   "id": 0,
                   "successors": [
-                    1
+                    1,
+                    2
                   ],
                   "predecessors": [],
                   "stmts": [
@@ -665,7 +666,7 @@
                           }
                         },
                         "type": {
-                          "_": "UnknownType"
+                          "_": "BooleanType"
                         }
                       }
                     }
@@ -674,6 +675,21 @@
                 {
                   "id": 1,
                   "successors": [],
+                  "predecessors": [
+                    0,
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [
+                    1
+                  ],
                   "predecessors": [
                     0
                   ],
@@ -747,9 +763,6 @@
                           }
                         }
                       }
-                    },
-                    {
-                      "_": "ReturnVoidStmt"
                     }
                   ]
                 }

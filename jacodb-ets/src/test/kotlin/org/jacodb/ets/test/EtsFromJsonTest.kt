@@ -26,7 +26,6 @@ import org.jacodb.ets.base.EtsReturnStmt
 import org.jacodb.ets.base.EtsUnknownType
 import org.jacodb.ets.dto.AnyTypeDto
 import org.jacodb.ets.dto.ClassSignatureDto
-import org.jacodb.ets.dto.ConstantDto
 import org.jacodb.ets.dto.EtsMethodBuilder
 import org.jacodb.ets.dto.FieldDto
 import org.jacodb.ets.dto.FieldSignatureDto
@@ -46,10 +45,6 @@ import org.junit.jupiter.api.Test
 
 class EtsFromJsonTest {
 
-    companion object {
-        private const val BASE_PATH = "etsir/samples"
-    }
-
     private val json = Json {
         // classDiscriminator = "_"
         prettyPrint = true
@@ -64,7 +59,8 @@ class EtsFromJsonTest {
 
     @Test
     fun testLoadEtsFileFromJson() {
-        val etsDto = loadEtsFileDtoFromResource("/$BASE_PATH/basic.ts.json")
+        val path = "etsir/samples/save/basic.ts.json"
+        val etsDto = loadEtsFileDtoFromResource("/$path")
         println("etsDto = $etsDto")
         val ets = convertToEtsFile(etsDto)
         println("ets = $ets")
@@ -112,7 +108,6 @@ class EtsFromJsonTest {
             typeParameters = emptyList(),
             isOptional = true,
             isDefinitelyAssigned = false,
-            initializer = ConstantDto("0", NumberTypeDto),
         )
         println("field = $field")
 
