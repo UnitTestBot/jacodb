@@ -16,7 +16,6 @@
 
 package org.jacodb.ets.utils
 
-import mu.KotlinLogging
 import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.model.EtsFile
@@ -28,8 +27,6 @@ import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.seconds
-
-private val logger = KotlinLogging.logger {}
 
 private const val ENV_VAR_ARK_ANALYZER_DIR = "ARKANALYZER_DIR"
 private const val DEFAULT_ARK_ANALYZER_DIR = "arkanalyzer"
