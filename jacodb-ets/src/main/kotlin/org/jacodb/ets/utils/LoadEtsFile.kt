@@ -22,12 +22,12 @@ import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.model.EtsFile
 import java.io.File
 import java.io.FileNotFoundException
+import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
-import kotlin.io.path.notExists
 import kotlin.io.path.pathString
+import kotlin.time.Duration.Companion.seconds
 
 private val logger = KotlinLogging.logger {}
 
@@ -40,7 +40,7 @@ private const val DEFAULT_SERIALIZE_SCRIPT_PATH = "out/src/save/serializeArkIR.j
 private const val ENV_VAR_NODE_EXECUTABLE = "NODE_EXECUTABLE"
 private const val DEFAULT_NODE_EXECUTABLE = "node"
 
-fun loadEtsFileAutoConvert(tsPath: String): EtsFile {
+fun generateEtsFileIR(tsPath: String): Path {
     val arkAnalyzerDir = Paths.get(System.getenv(ENV_VAR_ARK_ANALYZER_DIR) ?: DEFAULT_ARK_ANALYZER_DIR)
     if (!arkAnalyzerDir.exists()) {
         throw FileNotFoundException("ArkAnalyzer directory does not exist: '$arkAnalyzerDir'. Did you forget to set the '$ENV_VAR_ARK_ANALYZER_DIR' environment variable? Current value is '${System.getenv(ENV_VAR_ARK_ANALYZER_DIR)}', current dir is '${Paths.get("").toAbsolutePath()}'.")
@@ -60,26 +60,32 @@ fun loadEtsFileAutoConvert(tsPath: String): EtsFile {
         tsPath,
         output.pathString,
     )
-    logger.info { "Running: '${cmd.joinToString(" ")}'" }
-    val process = ProcessBuilder(cmd).start()
-    val ok = process.waitFor(1, TimeUnit.MINUTES)
+    runProcess(cmd, 60.seconds)
+    return output
+}
 
-    val stdout = process.inputStream.bufferedReader().readText().trim()
-    if (stdout.isNotBlank()) {
-        logger.info { "STDOUT:\n$stdout" }
-    }
-    val stderr = process.errorStream.bufferedReader().readText().trim()
-    if (stderr.isNotBlank()) {
-        logger.info { "STDERR:\n$stderr" }
-    }
-
-    if (!ok) {
-        logger.info { "Timeout!" }
-        process.destroy()
-    }
-
-    output.inputStream().use { stream ->
+fun loadEtsFileAutoConvert(tsPath: String): EtsFile {
+    val irFilePath = generateEtsFileIR(tsPath)
+    irFilePath.inputStream().use { stream ->
         val etsFileDto = EtsFileDto.loadFromJson(stream)
-        return convertToEtsFile(etsFileDto)
+        val etsFile = convertToEtsFile(etsFileDto)
+        return etsFile
+    }
+}
+
+fun loadEtsFileAutoConvertWithDot(tsPath: String, dotDir: String): EtsFile {
+    val irFilePath = generateEtsFileIR(tsPath)
+    irFilePath.inputStream().use { stream ->
+        val etsFileDto = EtsFileDto.loadFromJson(stream)
+        val etsFile = convertToEtsFile(etsFileDto)
+        val etsFileDtoDotFileName = "$dotDir/${tsPath.substringAfterLast("/")}".replace(".ts", "Dto.dot")
+        val etsFileDotFileName = "$dotDir/${tsPath.substringAfterLast("/")}".replace(".ts", ".dot")
+        render(etsFileDtoDotFileName) { file ->
+            etsFileDto.dumpDot(file)
+        }
+        render(etsFileDotFileName) { file ->
+            etsFile.dumpDot(file)
+        }
+        return etsFile
     }
 }
