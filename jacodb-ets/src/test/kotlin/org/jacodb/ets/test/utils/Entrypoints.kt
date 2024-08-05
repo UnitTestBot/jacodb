@@ -17,9 +17,15 @@
 package org.jacodb.ets.test.utils
 
 import org.jacodb.ets.dto.EtsFileDto
+import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.utils.dumpDot
 import org.jacodb.ets.utils.dumpHuimpleTo
 import org.jacodb.ets.utils.render
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+
+private val logger = mu.KotlinLogging.logger {}
 
 /**
  * Visualize classes and methods in [EtsFileDto].
@@ -50,6 +56,60 @@ object DumpEtsFileToDot {
         etsFile.dumpHuimpleTo(output)
         render(DOT_PATH) { file ->
             etsFile.dumpDot(file)
+        }
+    }
+}
+
+object DumpEtsFilesToDot {
+    private const val DIR = "/etsir/samples/"
+    private const val DOT_DIR = "dot"
+
+    @JvmStatic
+    fun main(args: Array<String>) {
+        val baseDirUrl = object {}::class.java.getResource(DIR)
+        val baseDir = Paths.get(baseDirUrl?.toURI() ?: error("Resource not found"))
+
+        val dotDirPath = baseDir.resolveSibling(DOT_DIR)
+        if (!Files.exists(dotDirPath)) {
+            Files.createDirectories(dotDirPath)
+        }
+
+        Files.walk(baseDir)
+            .filter { it.toString().endsWith(".json") }
+            .forEach { path ->
+                val relativePath = baseDir.relativize(path)
+                val fileName = path.fileName.toString().substringBefore(".")
+
+                processFile(relativePath, fileName, dotDirPath, ::loadEtsFileDtoFromResource, "Dto")
+                processFile(relativePath, fileName, dotDirPath, ::loadEtsFileFromResource, "")
+
+                logger.info { "Processed: $path" }
+            }
+    }
+
+    private fun <T> processFile(
+        relativePath: Path,
+        fileName: String,
+        dotDirPath: Path,
+        loadFunction: (String) -> T,
+        suffix: String
+    ) {
+        try {
+            val resourcePath = DIR + relativePath.toString()
+            val fileData = loadFunction(resourcePath)
+            val outputDir = dotDirPath.resolve(relativePath.parent ?: dotDirPath)
+            if (!Files.exists(outputDir)) {
+                Files.createDirectories(outputDir)
+            }
+            val outputPath = outputDir.resolve("${fileName}$suffix.dot").toString()
+            render(outputPath) { file ->
+                when (fileData) {
+                    is EtsFileDto -> fileData.dumpDot(file)
+                    is EtsFile -> fileData.dumpDot(file)
+                }
+            }
+        } catch (e: Exception) {
+            logger.error { e.stackTraceToString() }
         }
     }
 }
