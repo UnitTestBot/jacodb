@@ -75,8 +75,14 @@ class JcMethodImpl(
 
     override val description get() = methodInfo.desc
 
-    override fun asmNode(): MethodNode {
-        return enclosingClass.asmNode().methods.first { it.name == name && it.desc == methodInfo.desc }.jsrInlined
+    override fun <T> withAsmNode(body: (MethodNode) -> T): T {
+        val methodNode = enclosingClass.withAsmNode { classNode ->
+            classNode.methods.first { it.name == name && it.desc == methodInfo.desc }
+        }
+
+        return synchronized(methodNode) {
+            body(methodNode.jsrInlined)
+        }
     }
 
     override val rawInstList: JcInstList<JcRawInst>

@@ -54,7 +54,7 @@ suspend fun findNormalDistribution(): Any {
     println(jcClass.annotations.size)
 
     // At this point the database read the method bytecode and return the result.
-    return jcClass.methods[0].asmNode()
+    return jcClass.methods[0].withAsmNode { it }
 }
 
 suspend fun watchFileChanges() {

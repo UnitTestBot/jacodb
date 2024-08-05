@@ -36,7 +36,7 @@ interface JcVirtualMethod : JcMethod {
 
     fun bind(clazz: JcClassOrInterface)
 
-    override fun asmNode() = MethodNode()
+    override fun <T> withAsmNode(body: (MethodNode) -> T): T = body(MethodNode())
 
     override val rawInstList: JcInstList<JcRawInst>
         get() = JcInstListImpl(emptyList())

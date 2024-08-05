@@ -63,8 +63,7 @@ open class IgnoreSubstitutionProblemsTest : BaseTest() {
         return runBlocking { db.classpath(listOf(target.toFile()), listOf(IgnoreSubstitutionProblems)).findClass("GenericsApiConsumer") }
     }
 
-    private fun JcClassOrInterface.tweakClass(action: ClassNode.() -> Unit = {}) {
-        val classNode = asmNode()
+    private fun JcClassOrInterface.tweakClass(action: ClassNode.() -> Unit = {}): Unit = withAsmNode { classNode ->
         classNode.action()
         val cw = JcDatabaseClassWriter(cp, ClassWriter.COMPUTE_FRAMES)
         val checker = CheckClassAdapter(cw)

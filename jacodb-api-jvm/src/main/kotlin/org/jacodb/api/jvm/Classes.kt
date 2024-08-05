@@ -40,7 +40,8 @@ interface JcClassOrInterface : JcAnnotatedSymbol, JcAccessible {
     val signature: String?
     val isAnonymous: Boolean
 
-    fun asmNode(): ClassNode
+    fun <T> withAsmNode(body: (ClassNode) -> T): T
+
     fun bytecode(): ByteArray
 
     val superClass: JcClassOrInterface?
@@ -99,7 +100,8 @@ interface JcMethod : JcSymbol, JcAnnotatedSymbol, JcAccessible, CommonMethod {
 
     val exceptions: List<TypeName>
 
-    fun asmNode(): MethodNode
+    fun <T> withAsmNode(body: (MethodNode) -> T): T
+
     override fun flowGraph(): JcGraph
 
     val rawInstList: JcInstList<JcRawInst>
