@@ -21,9 +21,14 @@ import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.utils.dumpDot
 import org.jacodb.ets.utils.dumpHuimpleTo
 import org.jacodb.ets.utils.render
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
+import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.walk
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -37,14 +42,19 @@ object DumpEtsFileDtoToDot {
     @JvmStatic
     fun main(args: Array<String>) {
         val etsFileDto: EtsFileDto = loadEtsFileDtoFromResource(PATH)
+
         val output = System.out.bufferedWriter()
         etsFileDto.dumpHuimpleTo(output)
+
         render(DOT_PATH) { file ->
             etsFileDto.dumpDot(file)
         }
     }
 }
 
+/**
+ * Visualize classes and methods in [EtsFile].
+ */
 object DumpEtsFileToDot {
     private const val PATH = "/etsir/samples/basic.ts.json"
     private const val DOT_PATH = "basic.dot"
@@ -52,14 +62,17 @@ object DumpEtsFileToDot {
     @JvmStatic
     fun main(args: Array<String>) {
         val etsFile = loadEtsFileFromResource(PATH)
+
         val output = System.out.bufferedWriter()
         etsFile.dumpHuimpleTo(output)
+
         render(DOT_PATH) { file ->
             etsFile.dumpDot(file)
         }
     }
 }
 
+@OptIn(ExperimentalPathApi::class)
 object DumpEtsFilesToDot {
     private const val DIR = "/etsir/samples/"
     private const val DOT_DIR = "dot"
@@ -67,41 +80,46 @@ object DumpEtsFilesToDot {
     @JvmStatic
     fun main(args: Array<String>) {
         val baseDirUrl = object {}::class.java.getResource(DIR)
-        val baseDir = Paths.get(baseDirUrl?.toURI() ?: error("Resource not found"))
+            ?: error("Resource not found: '$DIR'")
+        val baseDir = Paths.get(baseDirUrl.toURI())
 
-        val dotDirPath = baseDir.resolveSibling(DOT_DIR)
-        if (!Files.exists(dotDirPath)) {
-            Files.createDirectories(dotDirPath)
+        val dotDir = baseDir.resolveSibling(DOT_DIR)
+        if (!dotDir.exists()) {
+            dotDir.createDirectories()
         }
 
-        Files.walk(baseDir)
-            .filter { it.toString().endsWith(".json") }
+        baseDir.walk()
+            .filter { it.name.endsWith(".json") }
             .forEach { path ->
                 val relativePath = baseDir.relativize(path)
-                val fileName = path.fileName.toString().substringBefore(".")
+                val fileName = path.nameWithoutExtension
 
-                processFile(relativePath, fileName, dotDirPath, ::loadEtsFileDtoFromResource, "Dto")
-                processFile(relativePath, fileName, dotDirPath, ::loadEtsFileFromResource, "")
+                process(relativePath, fileName, dotDir, "Dto") {
+                    loadEtsFileDtoFromResource(it)
+                }
+                process(relativePath, fileName, dotDir, "") {
+                    loadEtsFileFromResource(it)
+                }
 
                 logger.info { "Processed: $path" }
             }
     }
 
-    private fun <T> processFile(
-        relativePath: Path,
-        fileName: String,
-        dotDirPath: Path,
-        loadFunction: (String) -> T,
-        suffix: String
+    private fun <T> process(
+        path: Path,
+        name: String,
+        dotDir: Path,
+        suffix: String,
+        load: (String) -> T,
     ) {
         try {
-            val resourcePath = DIR + relativePath.toString()
-            val fileData = loadFunction(resourcePath)
-            val outputDir = dotDirPath.resolve(relativePath.parent ?: dotDirPath)
-            if (!Files.exists(outputDir)) {
-                Files.createDirectories(outputDir)
+            val resourcePath = DIR + path.toString()
+            val fileData = load(resourcePath)
+            val outputDir = dotDir.resolve(path.parent ?: dotDir)
+            if (!outputDir.exists()) {
+                outputDir.createDirectories()
             }
-            val outputPath = outputDir.resolve("${fileName}$suffix.dot").toString()
+            val outputPath = outputDir.resolve("${name}${suffix}.dot").toString()
             render(outputPath) { file ->
                 when (fileData) {
                     is EtsFileDto -> fileData.dumpDot(file)
