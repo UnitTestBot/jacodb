@@ -40,6 +40,7 @@ import org.jacodb.ets.dto.convertToEtsMethod
 import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsMethodSignature
 import org.jacodb.ets.test.utils.loadEtsFileDtoFromResource
+import org.jacodb.ets.utils.loadEtsFileAutoConvert
 import org.jacodb.ets.utils.loadEtsFileAutoConvertWithDot
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -75,7 +76,16 @@ class EtsFromJsonTest {
         val path = "/source/example.ts"
         val res = this::class.java.getResource(path)
             ?: error("Resource not found: $path")
-        val etsFile = loadEtsFileAutoConvertWithDot(res.path.drop(1), res.path.drop(1).substringBeforeLast("/"))
+        val etsFile = loadEtsFileAutoConvert(res.path)
+        println("etsFile = $etsFile")
+    }
+
+    @Test
+    fun testLoadEtsFileAutoConvertWithDot() {
+        val path = "/source/example.ts"
+        val res = this::class.java.getResource(path)
+            ?: error("Resource not found: $path")
+        val etsFile = loadEtsFileAutoConvertWithDot(res.path, res.path.substringBeforeLast("/"))
         println("etsFile = $etsFile")
     }
 
