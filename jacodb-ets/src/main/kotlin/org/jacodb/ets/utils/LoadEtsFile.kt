@@ -23,7 +23,7 @@ import org.jacodb.ets.model.EtsFile
 import java.io.File
 import java.io.FileNotFoundException
 import java.nio.file.Path
-import java.nio.file.Paths
+import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.pathString
@@ -41,9 +41,9 @@ private const val ENV_VAR_NODE_EXECUTABLE = "NODE_EXECUTABLE"
 private const val DEFAULT_NODE_EXECUTABLE = "node"
 
 fun generateEtsFileIR(tsPath: String): Path {
-    val arkAnalyzerDir = Paths.get(System.getenv(ENV_VAR_ARK_ANALYZER_DIR) ?: DEFAULT_ARK_ANALYZER_DIR)
+    val arkAnalyzerDir = Path(System.getenv(ENV_VAR_ARK_ANALYZER_DIR) ?: DEFAULT_ARK_ANALYZER_DIR)
     if (!arkAnalyzerDir.exists()) {
-        throw FileNotFoundException("ArkAnalyzer directory does not exist: '$arkAnalyzerDir'. Did you forget to set the '$ENV_VAR_ARK_ANALYZER_DIR' environment variable? Current value is '${System.getenv(ENV_VAR_ARK_ANALYZER_DIR)}', current dir is '${Paths.get("").toAbsolutePath()}'.")
+        throw FileNotFoundException("ArkAnalyzer directory does not exist: '$arkAnalyzerDir'. Did you forget to set the '$ENV_VAR_ARK_ANALYZER_DIR' environment variable? Current value is '${System.getenv(ENV_VAR_ARK_ANALYZER_DIR)}', current dir is '${Path("").toAbsolutePath()}'.")
     }
 
     val scriptPath = System.getenv(ENV_VAR_SERIALIZE_SCRIPT_PATH) ?: DEFAULT_SERIALIZE_SCRIPT_PATH
