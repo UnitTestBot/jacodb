@@ -25,11 +25,6 @@ import kotlin.time.Duration
 
 private val logger = KotlinLogging.logger {}
 
-internal fun BufferedWriter.writeln(s: String) {
-    write(s)
-    newLine()
-}
-
 internal fun runProcess(cmd: List<String>, timeout: Duration? = null) {
     logger.info { "Running: '${cmd.joinToString(" ")}'" }
     val process = ProcessBuilder(cmd).start()
@@ -53,6 +48,11 @@ internal fun runProcess(cmd: List<String>, timeout: Duration? = null) {
         logger.info { "Timeout!" }
         process.destroy()
     }
+}
+
+internal fun BufferedWriter.writeln(s: String) {
+    write(s)
+    newLine()
 }
 
 fun EtsFileDto.dumpContentTo(output: BufferedWriter): Unit = with(output) {
