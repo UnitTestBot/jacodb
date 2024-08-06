@@ -34,6 +34,7 @@ import org.jacodb.ets.dto.LocalDto
 import org.jacodb.ets.dto.MethodDto
 import org.jacodb.ets.dto.ModifierDto
 import org.jacodb.ets.dto.NumberTypeDto
+import org.jacodb.ets.dto.ReturnVoidStmtDto
 import org.jacodb.ets.dto.StmtDto
 import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.dto.convertToEtsMethod
@@ -133,9 +134,7 @@ class EtsFromJsonTest {
         """.trimIndent()
         val stmtDto = Json.decodeFromString<StmtDto>(jsonString)
         println("stmtDto = $stmtDto")
-        val ctx = EtsMethodBuilder(defaultSignature)
-        val stmt = ctx.convertToEtsStmt(stmtDto)
-        Assertions.assertEquals(EtsReturnStmt(EtsInstLocation(ctx.etsMethod, 0), null), stmt)
+        Assertions.assertEquals(ReturnVoidStmtDto, stmtDto)
     }
 
     @Test
