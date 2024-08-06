@@ -50,11 +50,6 @@ internal fun runProcess(cmd: List<String>, timeout: Duration? = null) {
     }
 }
 
-internal fun BufferedWriter.writeln(s: String) {
-    write(s)
-    newLine()
-}
-
 fun EtsFileDto.toText(): String {
     val lines: MutableList<String> = mutableListOf()
     lines += "EtsFileDto '${name}':"
