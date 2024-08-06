@@ -71,6 +71,9 @@ object DumpEtsFileToDot {
     }
 }
 
+/**
+ * Visualize classes and methods in [EtsFileDto] and [EtsFile] from directory.
+ */
 @OptIn(ExperimentalPathApi::class)
 object DumpEtsFilesToDot {
     private const val ETSIR_DIR = "/etsir/samples"
