@@ -370,7 +370,7 @@ class EtsMethodBuilder(
             }
 
             is InstanceCallExprDto -> EtsInstanceCallExpr(
-                instance = convertToEtsEntity(value.instance),
+                instance = convertToEtsEntity(value.instance) as EtsLocal, // safe cast
                 method = convertToEtsMethodSignature(value.method),
                 args = value.args.map {
                     ensureOneAddress(convertToEtsEntity(it))

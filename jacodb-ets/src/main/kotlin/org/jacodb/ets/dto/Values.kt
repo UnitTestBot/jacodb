@@ -319,7 +319,7 @@ sealed interface CallExprDto : ExprDto {
 @Serializable
 @SerialName("InstanceCallExpr")
 data class InstanceCallExprDto(
-    val instance: ValueDto, // Local
+    val instance: LocalDto,
     override val method: MethodSignatureDto,
     override val args: List<ValueDto>,
 ) : CallExprDto {

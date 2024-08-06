@@ -730,7 +730,7 @@ interface EtsCallExpr : EtsExpr, CommonCallExpr {
 }
 
 data class EtsInstanceCallExpr(
-    val instance: EtsEntity,
+    val instance: EtsLocal,
     override val method: EtsMethodSignature,
     override val args: List<EtsValue>,
 ) : EtsCallExpr {
