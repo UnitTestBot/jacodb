@@ -24,6 +24,7 @@ import org.jacodb.ets.model.EtsFile
 private val logger = KotlinLogging.logger {}
 
 fun loadEtsFileDtoFromResource(jsonPath: String): EtsFileDto {
+    require(jsonPath.startsWith("/")) { "Resource path must start with '/': $jsonPath" }
     logger.debug { "Loading EtsIR from resource: '$jsonPath'" }
     val stream = object {}::class.java.getResourceAsStream(jsonPath)
         ?: error("Resource not found: $jsonPath")

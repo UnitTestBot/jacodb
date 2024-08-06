@@ -180,48 +180,72 @@ class EtsMethodBuilder(
                 }
             }
 
-            is NopStmtDto -> EtsNopStmt(location = loc())
+            is NopStmtDto -> {
+                EtsNopStmt(location = loc())
+            }
 
-            is AssignStmtDto -> EtsAssignStmt(
-                location = loc(),
-                lhv = convertToEtsEntity(stmt.left) as EtsValue,
-                rhv = ensureOneAddress(convertToEtsEntity(stmt.right)),
-            )
-
-            is CallStmtDto -> EtsCallStmt(
-                location = loc(),
-                expr = convertToEtsEntity(stmt.expr) as EtsCallExpr,
-            )
-
-            is ReturnStmtDto -> {
-                EtsReturnStmt(
+            is AssignStmtDto -> {
+                val lhv = convertToEtsEntity(stmt.left) as EtsValue
+                val rhv = ensureOneAddress(convertToEtsEntity(stmt.right))
+                EtsAssignStmt(
                     location = loc(),
-                    returnValue = ensureOneAddress(convertToEtsEntity(stmt.arg)),
+                    lhv = lhv,
+                    rhv = rhv,
                 )
             }
 
-            is ReturnVoidStmtDto -> EtsReturnStmt(
-                location = loc(),
-                returnValue = null,
-            )
+            is CallStmtDto -> {
+                val expr = convertToEtsEntity(stmt.expr) as EtsCallExpr
+                EtsCallStmt(
+                    location = loc(),
+                    expr = expr,
+                )
+            }
 
-            is ThrowStmtDto -> EtsThrowStmt(
-                location = loc(),
-                arg = convertToEtsEntity(stmt.arg),
-            )
+            is ReturnStmtDto -> {
+                val returnValue = ensureOneAddress(convertToEtsEntity(stmt.arg))
+                EtsReturnStmt(
+                    location = loc(),
+                    returnValue = returnValue,
+                )
+            }
 
-            is GotoStmtDto -> EtsGotoStmt(location = loc())
+            is ReturnVoidStmtDto -> {
+                EtsReturnStmt(
+                    location = loc(),
+                    returnValue = null,
+                )
+            }
 
-            is IfStmtDto -> EtsIfStmt(
-                location = loc(),
-                condition = convertToEtsEntity(stmt.condition),
-            )
+            is ThrowStmtDto -> {
+                val arg = convertToEtsEntity(stmt.arg)
+                EtsThrowStmt(
+                    location = loc(),
+                    arg = arg,
+                )
+            }
 
-            is SwitchStmtDto -> EtsSwitchStmt(
-                location = loc(),
-                arg = convertToEtsEntity(stmt.arg),
-                cases = stmt.cases.map { convertToEtsEntity(it) },
-            )
+            is GotoStmtDto -> {
+                EtsGotoStmt(location = loc())
+            }
+
+            is IfStmtDto -> {
+                val condition = convertToEtsEntity(stmt.condition)
+                EtsIfStmt(
+                    location = loc(),
+                    condition = condition,
+                )
+            }
+
+            is SwitchStmtDto -> {
+                val arg = convertToEtsEntity(stmt.arg)
+                val cases = stmt.cases.map { convertToEtsEntity(it) }
+                EtsSwitchStmt(
+                    location = loc(),
+                    arg = arg,
+                    cases = cases,
+                )
+            }
 
             // else -> error("Unknown Stmt: $stmt")
         }

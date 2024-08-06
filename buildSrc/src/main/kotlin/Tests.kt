@@ -1,7 +1,7 @@
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import java.util.*
+import java.util.StringTokenizer
 
 object Tests {
     val lifecycleTag = "lifecycle"

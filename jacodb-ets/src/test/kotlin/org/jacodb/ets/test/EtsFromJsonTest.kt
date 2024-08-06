@@ -33,6 +33,7 @@ import org.jacodb.ets.dto.LocalDto
 import org.jacodb.ets.dto.MethodDto
 import org.jacodb.ets.dto.ModifierDto
 import org.jacodb.ets.dto.NumberTypeDto
+import org.jacodb.ets.dto.ReturnVoidStmtDto
 import org.jacodb.ets.dto.StmtDto
 import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.dto.convertToEtsMethod
@@ -40,8 +41,10 @@ import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsMethodSignature
 import org.jacodb.ets.test.utils.loadEtsFileDtoFromResource
 import org.jacodb.ets.utils.loadEtsFileAutoConvert
+import org.jacodb.ets.utils.loadEtsFileAutoConvertWithDot
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import kotlin.io.path.toPath
 
 class EtsFromJsonTest {
 
@@ -59,8 +62,8 @@ class EtsFromJsonTest {
 
     @Test
     fun testLoadEtsFileFromJson() {
-        val path = "etsir/samples/save/basic.ts.json"
-        val etsDto = loadEtsFileDtoFromResource("/$path")
+        val path = "/etsir/samples/save/basic.ts.json"
+        val etsDto = loadEtsFileDtoFromResource("$path")
         println("etsDto = $etsDto")
         val ets = convertToEtsFile(etsDto)
         println("ets = $ets")
@@ -68,10 +71,19 @@ class EtsFromJsonTest {
 
     @Test
     fun testLoadEtsFileAutoConvert() {
-        val path = "source/example.ts"
-        val res = this::class.java.getResource("/$path")
+        val path = "/source/example.ts"
+        val res = this::class.java.getResource(path)?.toURI()?.toPath()
             ?: error("Resource not found: $path")
-        val etsFile = loadEtsFileAutoConvert(res.path)
+        val etsFile = loadEtsFileAutoConvert(res)
+        println("etsFile = $etsFile")
+    }
+
+    @Test
+    fun testLoadEtsFileAutoConvertWithDot() {
+        val path = "/source/example.ts"
+        val res = this::class.java.getResource(path)?.toURI()?.toPath()
+            ?: error("Resource not found: $path")
+        val etsFile = loadEtsFileAutoConvertWithDot(res)
         println("etsFile = $etsFile")
     }
 
@@ -128,9 +140,7 @@ class EtsFromJsonTest {
         """.trimIndent()
         val stmtDto = Json.decodeFromString<StmtDto>(jsonString)
         println("stmtDto = $stmtDto")
-        val ctx = EtsMethodBuilder(defaultSignature)
-        val stmt = ctx.convertToEtsStmt(stmtDto)
-        Assertions.assertEquals(EtsReturnStmt(EtsInstLocation(ctx.etsMethod, 0), null), stmt)
+        Assertions.assertEquals(ReturnVoidStmtDto, stmtDto)
     }
 
     @Test

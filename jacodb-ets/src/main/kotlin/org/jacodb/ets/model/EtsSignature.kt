@@ -72,6 +72,11 @@ data class EtsClassSignature(
         if (other !is EtsClassSignature) return false
         return this.name == other.name && this.file == other.file
     }
+
+    override fun hashCode(): Int {
+        return name.hashCode()
+    }
+
 }
 
 data class EtsFieldSignature(
