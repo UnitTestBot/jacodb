@@ -34,8 +34,11 @@ class EtsClassImpl(
     override val ctor: EtsMethod,
     override val superClass: EtsClassSignature? = null,
 ) : EtsClass {
-
     init {
         require(ctor !in methods)
+    }
+
+    override fun toString(): String {
+        return signature.toString()
     }
 }
