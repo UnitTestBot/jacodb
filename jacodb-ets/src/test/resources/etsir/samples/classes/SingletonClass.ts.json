@@ -611,7 +611,6 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "Logger",
                           "type": {
                             "_": "UnknownType"
@@ -695,7 +694,6 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "Logger",
                           "type": {
                             "_": "UnknownType"
@@ -787,7 +785,6 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "Logger",
                           "type": {
                             "_": "UnknownType"

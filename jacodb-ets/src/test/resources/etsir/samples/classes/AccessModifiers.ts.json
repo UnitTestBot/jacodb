@@ -202,7 +202,6 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "user",
                           "type": {
                             "_": "ClassType",
@@ -601,7 +600,6 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -633,7 +631,6 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -665,7 +662,6 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",

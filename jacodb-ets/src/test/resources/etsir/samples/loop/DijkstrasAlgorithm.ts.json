@@ -1953,7 +1953,6 @@
                         "size": {
                           "_": "InstanceFieldRef",
                           "instance": {
-                            "_": "Local",
                             "name": "graph",
                             "type": {
                               "_": "ArrayType",
@@ -2081,7 +2080,6 @@
                         "size": {
                           "_": "InstanceFieldRef",
                           "instance": {
-                            "_": "Local",
                             "name": "graph",
                             "type": {
                               "_": "ArrayType",
@@ -2207,7 +2205,6 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "graph",
                           "type": {
                             "_": "ArrayType",
@@ -2398,7 +2395,6 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "graph",
                           "type": {
                             "_": "ArrayType",
@@ -2534,7 +2530,6 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "graph",
                           "type": {
                             "_": "ArrayType",

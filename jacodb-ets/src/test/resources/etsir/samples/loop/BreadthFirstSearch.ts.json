@@ -675,7 +675,6 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "queue",
                           "type": {
                             "_": "ArrayType",
@@ -937,7 +936,6 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "graph",
                           "type": {
                             "_": "UnclearReferenceType",
@@ -1058,7 +1056,6 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "$temp6",
                           "type": {
                             "_": "ClassType",
@@ -1126,7 +1123,6 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "$temp6",
                           "type": {
                             "_": "ClassType",
@@ -1646,7 +1642,6 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -1743,7 +1738,6 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -1840,7 +1834,6 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -1937,7 +1930,6 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -2000,7 +1992,6 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -2063,7 +2054,6 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
-                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -2092,6 +2082,80 @@
                           },
                           "dimensions": 1
                         }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-_DEFAULT_ARK_CLASS-_DEFAULT_ARK_METHOD-0"
+            },
+            "name": "constructor",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-_DEFAULT_ARK_METHOD-0"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "AnonymousClass-_DEFAULT_ARK_CLASS-_DEFAULT_ARK_METHOD-0"
+                          },
+                          "name": "@instance_init",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
                       }
                     },
                     {
