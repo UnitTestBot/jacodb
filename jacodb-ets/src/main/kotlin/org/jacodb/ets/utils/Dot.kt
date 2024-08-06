@@ -25,8 +25,8 @@ import kotlin.time.Duration.Companion.seconds
 
 private val logger = KotlinLogging.logger {}
 
-fun render(dotPath: Path) {
-    for (format in listOf("pdf")) {
+fun render(dotPath: Path, listOfFormats: List<String> = listOf("pdf")) {
+    for (format in listOfFormats) {
         logger.info { "Rendering DOT to ${format.uppercase()}..." }
         val formatFile = dotPath.resolveSibling(dotPath.nameWithoutExtension + ".$format")
         val cmd: List<String> = listOf(
