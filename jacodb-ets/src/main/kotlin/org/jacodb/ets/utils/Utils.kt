@@ -72,18 +72,21 @@ fun EtsFileDto.dumpContentTo(output: BufferedWriter): Unit = with(output) {
         }
         writeln("  methods: ${clazz.methods.size}")
         clazz.methods.forEach { method ->
-            writeln("  - METHOD '${method.signature}':")
+            writeln("  - METHOD '${method.signature}'")
             writeln("    locals = ${method.body.locals}")
             writeln("    typeParameters = ${method.typeParameters}")
             writeln("    blocks: ${method.body.cfg.blocks.size}")
             method.body.cfg.blocks.forEach { block ->
-                writeln("    - BLOCK ${block.id} with ${block.stmts.size} statements:")
+                writeln("    - BLOCK ${block.id}")
+                writeln("      successors = ${block.successors}")
+                writeln("      predecessors = ${block.predecessors}")
+                writeln("      statements: ${block.stmts.size}")
                 block.stmts.forEachIndexed { i, inst ->
                     writeln("      ${i + 1}. $inst")
                 }
+                }
             }
         }
-    }
 }
 
 fun EtsFile.dumpContentTo(output: BufferedWriter): Unit = with(output) {
@@ -107,6 +110,8 @@ fun EtsFile.dumpContentTo(output: BufferedWriter): Unit = with(output) {
             writeln("    stmts: ${method.cfg.stmts.size}")
             method.cfg.stmts.forEachIndexed { i, stmt ->
                 writeln("    ${i + 1}. $stmt")
+                val pad = " ".repeat(2 + "${i + 1}".length) // number + dot + space
+                writeln("    ${pad}successors = ${method.cfg.successors(stmt)}")
             }
         }
     }
