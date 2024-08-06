@@ -17,25 +17,30 @@
 package org.jacodb.ets.utils
 
 import mu.KotlinLogging
-import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.absolute
+import kotlin.io.path.nameWithoutExtension
 import kotlin.time.Duration.Companion.seconds
 
 private val logger = KotlinLogging.logger {}
 
-fun render(path: String, dump: (File) -> Unit) {
-    val dotFile = File(path)
-    dump(dotFile)
-    logger.info { "Generated DOT file: ${dotFile.absolutePath}" }
+fun render(dotPath: Path) {
     for (format in listOf("pdf")) {
-        val formatFile = dotFile.resolveSibling(dotFile.nameWithoutExtension + ".$format")
+        logger.info { "Rendering DOT to ${format.uppercase()}..." }
+        val formatFile = dotPath.resolveSibling(dotPath.nameWithoutExtension + ".$format")
         val cmd: List<String> = listOf(
             "dot",
             "-T$format",
-            "$dotFile",
+            "$dotPath",
             "-o",
             "$formatFile"
         )
         runProcess(cmd, 60.seconds)
-        logger.info { "Generated ${format.uppercase()} file: ${formatFile.absolutePath}" }
+        logger.info { "Generated ${format.uppercase()} file: ${formatFile.absolute()}" }
     }
+}
+
+fun render(dotPath: String) {
+    render(Path(dotPath))
 }

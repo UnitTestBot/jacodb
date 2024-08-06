@@ -18,16 +18,17 @@ package org.jacodb.ets.test.utils
 
 import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.model.EtsFile
+import org.jacodb.ets.utils.dumpContentTo
 import org.jacodb.ets.utils.dumpDot
-import org.jacodb.ets.utils.dumpHuimpleTo
 import org.jacodb.ets.utils.render
 import java.nio.file.Path
-import java.nio.file.Paths
 import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
-import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.relativeTo
+import kotlin.io.path.toPath
 import kotlin.io.path.walk
 
 private val logger = mu.KotlinLogging.logger {}
@@ -44,11 +45,10 @@ object DumpEtsFileDtoToDot {
         val etsFileDto: EtsFileDto = loadEtsFileDtoFromResource(PATH)
 
         val output = System.out.bufferedWriter()
-        etsFileDto.dumpHuimpleTo(output)
+        etsFileDto.dumpContentTo(output)
 
-        render(DOT_PATH) { file ->
-            etsFileDto.dumpDot(file)
-        }
+        etsFileDto.dumpDot(DOT_PATH)
+        render(DOT_PATH)
     }
 }
 
@@ -64,40 +64,38 @@ object DumpEtsFileToDot {
         val etsFile = loadEtsFileFromResource(PATH)
 
         val output = System.out.bufferedWriter()
-        etsFile.dumpHuimpleTo(output)
+        etsFile.dumpContentTo(output)
 
-        render(DOT_PATH) { file ->
-            etsFile.dumpDot(file)
-        }
+        etsFile.dumpDot(DOT_PATH)
+        render(DOT_PATH)
     }
 }
 
 @OptIn(ExperimentalPathApi::class)
 object DumpEtsFilesToDot {
-    private const val DIR = "/etsir/samples/"
-    private const val DOT_DIR = "dot"
+    private const val ETSIR_DIR = "/etsir/samples"
+    private const val DOT_DIR = "dot/samples"
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val baseDirUrl = object {}::class.java.getResource(DIR)
-            ?: error("Resource not found: '$DIR'")
-        val baseDir = Paths.get(baseDirUrl.toURI())
+        val baseDir = object {}::class.java.getResource(ETSIR_DIR)?.toURI()?.toPath()
+            ?: error("Resource not found: '$ETSIR_DIR'")
+        logger.info { "baseDir = $baseDir" }
 
-        val dotDir = baseDir.resolveSibling(DOT_DIR)
-        if (!dotDir.exists()) {
-            dotDir.createDirectories()
-        }
+        val dotDir = Path(DOT_DIR)
+        dotDir.createDirectories()
+        logger.info { "dotDir = $dotDir" }
 
         baseDir.walk()
             .filter { it.name.endsWith(".json") }
             .forEach { path ->
-                val relativePath = baseDir.relativize(path)
-                val fileName = path.nameWithoutExtension
+                val relative = path.relativeTo(baseDir)
+                val name = path.nameWithoutExtension
 
-                process(relativePath, fileName, dotDir, "Dto") {
+                process(relative, name, dotDir, "_DTO") {
                     loadEtsFileDtoFromResource(it)
                 }
-                process(relativePath, fileName, dotDir, "") {
+                process(relative, name, dotDir, "") {
                     loadEtsFileFromResource(it)
                 }
 
@@ -112,22 +110,13 @@ object DumpEtsFilesToDot {
         suffix: String,
         load: (String) -> T,
     ) {
-        try {
-            val resourcePath = DIR + path.toString()
-            val fileData = load(resourcePath)
-            val outputDir = dotDir.resolve(path.parent ?: dotDir)
-            if (!outputDir.exists()) {
-                outputDir.createDirectories()
-            }
-            val outputPath = outputDir.resolve("${name}${suffix}.dot").toString()
-            render(outputPath) { file ->
-                when (fileData) {
-                    is EtsFileDto -> fileData.dumpDot(file)
-                    is EtsFile -> fileData.dumpDot(file)
-                }
-            }
-        } catch (e: Exception) {
-            logger.error { e.stackTraceToString() }
+        val resourcePath = "$ETSIR_DIR/$path"
+        val dotPath = dotDir.resolve("${name}${suffix}.dot")
+        when (val f = load(resourcePath)) {
+            is EtsFileDto -> f.dumpDot(dotPath)
+            is EtsFile -> f.dumpDot(dotPath)
+            else -> error("Unknown type: $f")
         }
+        render(dotPath)
     }
 }

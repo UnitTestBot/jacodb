@@ -27,6 +27,7 @@ import org.jacodb.ets.dto.SwitchStmtDto
 import java.io.BufferedWriter
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.createDirectories
 import kotlin.io.path.writeText
 
 fun EtsFileDto.toDot(useLR: Boolean = false): String {
@@ -183,43 +184,13 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
     return lines.joinToString("\n")
 }
 
-fun EtsFileDto.dumpHuimpleTo(output: BufferedWriter) {
-    output.writeln("EtsFileDto '${name}':")
-    classes.forEach { clazz ->
-        output.writeln("= CLASS '${clazz.signature}':")
-        output.writeln("  superClass = '${clazz.superClassName}'")
-        output.writeln("  typeParameters = ${clazz.typeParameters}")
-        output.writeln("  modifiers = ${clazz.modifiers}")
-        output.writeln("  fields: ${clazz.fields.size}")
-        clazz.fields.forEach { field ->
-            output.writeln("  - FIELD '${field.signature}'")
-            output.writeln("    typeParameters = ${field.typeParameters}")
-            output.writeln("    modifiers = ${field.modifiers}")
-            output.writeln("    isOptional = ${field.isOptional}")
-            output.writeln("    isDefinitelyAssigned = ${field.isDefinitelyAssigned}")
-        }
-        output.writeln("  methods: ${clazz.methods.size}")
-        clazz.methods.forEach { method ->
-            output.writeln("  - METHOD '${method.signature}':")
-            output.writeln("    locals = ${method.body.locals}")
-            output.writeln("    typeParameters = ${method.typeParameters}")
-            output.writeln("    blocks: ${method.body.cfg.blocks.size}")
-            method.body.cfg.blocks.forEach { block ->
-                output.writeln("    - BLOCK ${block.id} with ${block.stmts.size} statements:")
-                block.stmts.forEachIndexed { i, inst ->
-                    output.writeln("      ${i + 1}. $inst")
-                }
-            }
-        }
-    }
+fun EtsFileDto.dumpDot(path: Path) {
+    path.parent?.createDirectories()
+    path.writeText(toDot())
 }
 
 fun EtsFileDto.dumpDot(file: File) {
-    file.writeText(toDot())
-}
-
-fun EtsFileDto.dumpDot(path: Path) {
-    path.writeText(toDot())
+    dumpDot(file.toPath())
 }
 
 fun EtsFileDto.dumpDot(path: String) {

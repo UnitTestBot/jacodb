@@ -339,6 +339,17 @@ class EtsMethodBuilder(
                     //  so we just *unsafely* extract the type name from the "pseudo-local" here:
                     "instanceof" -> EtsInstanceOfExpr(left, (right as EtsLocal).name)
 
+                    // TODO: remove this when ArkIR is fixed
+                    Ops.EQ_EQ -> EtsEqExpr(left, right)
+                    Ops.NOT_EQ -> EtsNotEqExpr(left, right)
+                    Ops.EQ_EQ_EQ -> EtsStrictEqExpr(left, right)
+                    Ops.NOT_EQ_EQ -> EtsStrictNotEqExpr(left, right)
+                    Ops.LT -> EtsLtExpr(left, right)
+                    Ops.LT_EQ -> EtsLtEqExpr(left, right)
+                    Ops.GT -> EtsGtExpr(left, right)
+                    Ops.GT_EQ -> EtsGtEqExpr(left, right)
+                    Ops.IN -> EtsInExpr(left, right)
+
                     else -> error("Unknown binop: ${value.op}")
                 }
             }

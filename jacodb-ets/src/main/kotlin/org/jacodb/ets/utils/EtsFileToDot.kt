@@ -23,6 +23,7 @@ import org.jacodb.ets.model.EtsMethod
 import java.io.BufferedWriter
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.createDirectories
 import kotlin.io.path.writeText
 
 fun EtsFile.toDot(useLR: Boolean = false): String {
@@ -147,38 +148,13 @@ fun EtsFile.toDot(useLR: Boolean = false): String {
     return lines.joinToString("\n")
 }
 
-fun EtsFile.dumpHuimpleTo(output: BufferedWriter) {
-    output.writeln("EtsFile '${name}':")
-    classes.forEach { clazz ->
-        output.writeln("= CLASS '${clazz.signature}':")
-        output.writeln("  superClass = '${clazz.superClass}'")
-        output.writeln("  fields: ${clazz.fields.size}")
-        clazz.fields.forEach { field ->
-            output.writeln("  - FIELD '${field.signature}'")
-        }
-        output.writeln("  constructor = '${clazz.ctor.signature}'")
-        output.writeln("    stmts: ${clazz.ctor.cfg.stmts.size}")
-        clazz.ctor.cfg.stmts.forEachIndexed { i, stmt ->
-            output.writeln("    ${i + 1}. $stmt")
-        }
-        output.writeln("  methods: ${clazz.methods.size}")
-        clazz.methods.forEach { method ->
-            output.writeln("  - METHOD '${method.signature}':")
-            output.writeln("    locals = ${method.localsCount}")
-            output.writeln("    stmts: ${method.cfg.stmts.size}")
-            method.cfg.stmts.forEachIndexed { i, stmt ->
-                output.writeln("    ${i + 1}. $stmt")
-            }
-        }
-    }
+fun EtsFile.dumpDot(path: Path) {
+    path.parent?.createDirectories()
+    path.writeText(toDot())
 }
 
 fun EtsFile.dumpDot(file: File) {
-    file.writeText(toDot())
-}
-
-fun EtsFile.dumpDot(path: Path) {
-    path.writeText(toDot())
+    dumpDot(file.toPath())
 }
 
 fun EtsFile.dumpDot(path: String) {

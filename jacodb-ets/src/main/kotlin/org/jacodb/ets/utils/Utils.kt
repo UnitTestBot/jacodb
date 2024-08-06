@@ -17,6 +17,8 @@
 package org.jacodb.ets.utils
 
 import mu.KotlinLogging
+import org.jacodb.ets.dto.EtsFileDto
+import org.jacodb.ets.model.EtsFile
 import java.io.BufferedWriter
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
@@ -50,5 +52,62 @@ internal fun runProcess(cmd: List<String>, timeout: Duration? = null) {
     if (!ok) {
         logger.info { "Timeout!" }
         process.destroy()
+    }
+}
+
+fun EtsFileDto.dumpContentTo(output: BufferedWriter) {
+    output.writeln("EtsFileDto '${name}':")
+    classes.forEach { clazz ->
+        output.writeln("= CLASS '${clazz.signature}':")
+        output.writeln("  superClass = '${clazz.superClassName}'")
+        output.writeln("  typeParameters = ${clazz.typeParameters}")
+        output.writeln("  modifiers = ${clazz.modifiers}")
+        output.writeln("  fields: ${clazz.fields.size}")
+        clazz.fields.forEach { field ->
+            output.writeln("  - FIELD '${field.signature}'")
+            output.writeln("    typeParameters = ${field.typeParameters}")
+            output.writeln("    modifiers = ${field.modifiers}")
+            output.writeln("    isOptional = ${field.isOptional}")
+            output.writeln("    isDefinitelyAssigned = ${field.isDefinitelyAssigned}")
+        }
+        output.writeln("  methods: ${clazz.methods.size}")
+        clazz.methods.forEach { method ->
+            output.writeln("  - METHOD '${method.signature}':")
+            output.writeln("    locals = ${method.body.locals}")
+            output.writeln("    typeParameters = ${method.typeParameters}")
+            output.writeln("    blocks: ${method.body.cfg.blocks.size}")
+            method.body.cfg.blocks.forEach { block ->
+                output.writeln("    - BLOCK ${block.id} with ${block.stmts.size} statements:")
+                block.stmts.forEachIndexed { i, inst ->
+                    output.writeln("      ${i + 1}. $inst")
+                }
+            }
+        }
+    }
+}
+
+fun EtsFile.dumpContentTo(output: BufferedWriter) {
+    output.writeln("EtsFile '${name}':")
+    classes.forEach { clazz ->
+        output.writeln("= CLASS '${clazz.signature}':")
+        output.writeln("  superClass = '${clazz.superClass}'")
+        output.writeln("  fields: ${clazz.fields.size}")
+        clazz.fields.forEach { field ->
+            output.writeln("  - FIELD '${field.signature}'")
+        }
+        output.writeln("  constructor = '${clazz.ctor.signature}'")
+        output.writeln("    stmts: ${clazz.ctor.cfg.stmts.size}")
+        clazz.ctor.cfg.stmts.forEachIndexed { i, stmt ->
+            output.writeln("    ${i + 1}. $stmt")
+        }
+        output.writeln("  methods: ${clazz.methods.size}")
+        clazz.methods.forEach { method ->
+            output.writeln("  - METHOD '${method.signature}':")
+            output.writeln("    locals = ${method.localsCount}")
+            output.writeln("    stmts: ${method.cfg.stmts.size}")
+            method.cfg.stmts.forEachIndexed { i, stmt ->
+                output.writeln("    ${i + 1}. $stmt")
+            }
+        }
     }
 }
