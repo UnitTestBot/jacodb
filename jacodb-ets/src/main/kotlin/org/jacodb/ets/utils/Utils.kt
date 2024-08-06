@@ -56,30 +56,32 @@ internal fun runProcess(cmd: List<String>, timeout: Duration? = null) {
 }
 
 fun EtsFileDto.dumpContentTo(output: BufferedWriter) {
-    output.writeln("EtsFileDto '${name}':")
-    classes.forEach { clazz ->
-        output.writeln("= CLASS '${clazz.signature}':")
-        output.writeln("  superClass = '${clazz.superClassName}'")
-        output.writeln("  typeParameters = ${clazz.typeParameters}")
-        output.writeln("  modifiers = ${clazz.modifiers}")
-        output.writeln("  fields: ${clazz.fields.size}")
-        clazz.fields.forEach { field ->
-            output.writeln("  - FIELD '${field.signature}'")
-            output.writeln("    typeParameters = ${field.typeParameters}")
-            output.writeln("    modifiers = ${field.modifiers}")
-            output.writeln("    isOptional = ${field.isOptional}")
-            output.writeln("    isDefinitelyAssigned = ${field.isDefinitelyAssigned}")
-        }
-        output.writeln("  methods: ${clazz.methods.size}")
-        clazz.methods.forEach { method ->
-            output.writeln("  - METHOD '${method.signature}':")
-            output.writeln("    locals = ${method.body.locals}")
-            output.writeln("    typeParameters = ${method.typeParameters}")
-            output.writeln("    blocks: ${method.body.cfg.blocks.size}")
-            method.body.cfg.blocks.forEach { block ->
-                output.writeln("    - BLOCK ${block.id} with ${block.stmts.size} statements:")
-                block.stmts.forEachIndexed { i, inst ->
-                    output.writeln("      ${i + 1}. $inst")
+    with(output) {
+        writeln("EtsFileDto '${name}':")
+        classes.forEach { clazz ->
+            writeln("= CLASS '${clazz.signature}':")
+            writeln("  superClass = '${clazz.superClassName}'")
+            writeln("  typeParameters = ${clazz.typeParameters}")
+            writeln("  modifiers = ${clazz.modifiers}")
+            writeln("  fields: ${clazz.fields.size}")
+            clazz.fields.forEach { field ->
+                writeln("  - FIELD '${field.signature}'")
+                writeln("    typeParameters = ${field.typeParameters}")
+                writeln("    modifiers = ${field.modifiers}")
+                writeln("    isOptional = ${field.isOptional}")
+                writeln("    isDefinitelyAssigned = ${field.isDefinitelyAssigned}")
+            }
+            writeln("  methods: ${clazz.methods.size}")
+            clazz.methods.forEach { method ->
+                writeln("  - METHOD '${method.signature}':")
+                writeln("    locals = ${method.body.locals}")
+                writeln("    typeParameters = ${method.typeParameters}")
+                writeln("    blocks: ${method.body.cfg.blocks.size}")
+                method.body.cfg.blocks.forEach { block ->
+                    writeln("    - BLOCK ${block.id} with ${block.stmts.size} statements:")
+                    block.stmts.forEachIndexed { i, inst ->
+                        writeln("      ${i + 1}. $inst")
+                    }
                 }
             }
         }
@@ -87,26 +89,28 @@ fun EtsFileDto.dumpContentTo(output: BufferedWriter) {
 }
 
 fun EtsFile.dumpContentTo(output: BufferedWriter) {
-    output.writeln("EtsFile '${name}':")
-    classes.forEach { clazz ->
-        output.writeln("= CLASS '${clazz.signature}':")
-        output.writeln("  superClass = '${clazz.superClass}'")
-        output.writeln("  fields: ${clazz.fields.size}")
-        clazz.fields.forEach { field ->
-            output.writeln("  - FIELD '${field.signature}'")
-        }
-        output.writeln("  constructor = '${clazz.ctor.signature}'")
-        output.writeln("    stmts: ${clazz.ctor.cfg.stmts.size}")
-        clazz.ctor.cfg.stmts.forEachIndexed { i, stmt ->
-            output.writeln("    ${i + 1}. $stmt")
-        }
-        output.writeln("  methods: ${clazz.methods.size}")
-        clazz.methods.forEach { method ->
-            output.writeln("  - METHOD '${method.signature}':")
-            output.writeln("    locals = ${method.localsCount}")
-            output.writeln("    stmts: ${method.cfg.stmts.size}")
-            method.cfg.stmts.forEachIndexed { i, stmt ->
-                output.writeln("    ${i + 1}. $stmt")
+    with(output) {
+        writeln("EtsFile '${name}':")
+        classes.forEach { clazz ->
+            writeln("= CLASS '${clazz.signature}':")
+            writeln("  superClass = '${clazz.superClass}'")
+            writeln("  fields: ${clazz.fields.size}")
+            clazz.fields.forEach { field ->
+                writeln("  - FIELD '${field.signature}'")
+            }
+            writeln("  constructor = '${clazz.ctor.signature}'")
+            writeln("    stmts: ${clazz.ctor.cfg.stmts.size}")
+            clazz.ctor.cfg.stmts.forEachIndexed { i, stmt ->
+                writeln("    ${i + 1}. $stmt")
+            }
+            writeln("  methods: ${clazz.methods.size}")
+            clazz.methods.forEach { method ->
+                writeln("  - METHOD '${method.signature}':")
+                writeln("    locals = ${method.localsCount}")
+                writeln("    stmts: ${method.cfg.stmts.size}")
+                method.cfg.stmts.forEachIndexed { i, stmt ->
+                    writeln("    ${i + 1}. $stmt")
+                }
             }
         }
     }
