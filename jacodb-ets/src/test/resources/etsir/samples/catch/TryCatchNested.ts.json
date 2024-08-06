@@ -203,7 +203,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "$temp0",
                           "type": {
                             "_": "ClassType",
@@ -260,7 +259,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"
@@ -292,7 +290,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"

@@ -183,7 +183,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"

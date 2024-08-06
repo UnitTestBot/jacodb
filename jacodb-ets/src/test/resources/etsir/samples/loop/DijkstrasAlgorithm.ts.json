@@ -1498,7 +1498,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"
@@ -1994,7 +1993,6 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "$temp0",
                           "type": {
                             "_": "ArrayType",
@@ -2121,7 +2119,6 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "$temp1",
                           "type": {
                             "_": "ArrayType",

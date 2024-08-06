@@ -90,7 +90,6 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "Logger",
                           "type": {
                             "_": "UnknownType"
@@ -114,7 +113,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "logger",
                           "type": {
                             "_": "UnknownType"
@@ -343,7 +341,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "UnknownType"
@@ -469,7 +466,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"
@@ -758,7 +754,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "$temp2",
                           "type": {
                             "_": "ClassType",

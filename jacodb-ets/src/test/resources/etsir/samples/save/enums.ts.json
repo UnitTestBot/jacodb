@@ -555,7 +555,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "$temp4",
                           "type": {
                             "_": "ClassType",
@@ -610,7 +609,6 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "Object",
                           "type": {
                             "_": "UnknownType"
@@ -652,7 +650,6 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "$temp5",
                           "type": {
                             "_": "UnknownType"
@@ -702,7 +699,6 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "$temp6",
                           "type": {
                             "_": "ClassType",
@@ -806,7 +802,6 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "obj",
                           "type": {
                             "_": "UnclearReferenceType",
@@ -940,7 +935,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"
@@ -2137,7 +2131,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "UnknownType"

@@ -235,7 +235,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "$temp0",
                           "type": {
                             "_": "ClassType",
@@ -476,7 +475,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "UnknownType"
@@ -693,7 +691,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "UnknownType"
@@ -1003,7 +1000,6 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "data",
                           "type": {
                             "_": "UnclearReferenceType",
@@ -1111,7 +1107,6 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "data",
                           "type": {
                             "_": "UnclearReferenceType",
@@ -1143,7 +1138,6 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "data",
                           "type": {
                             "_": "UnclearReferenceType",
@@ -1175,7 +1169,6 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "data",
                           "type": {
                             "_": "UnclearReferenceType",
@@ -1222,7 +1215,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "$temp1",
                           "type": {
                             "_": "ClassType",
@@ -1279,7 +1271,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "$temp2",
                           "type": {
                             "_": "ClassType",
@@ -1398,7 +1389,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "UnknownType"
@@ -1627,7 +1617,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "UnknownType"

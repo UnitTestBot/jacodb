@@ -601,7 +601,6 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "colors",
                           "type": {
                             "_": "ArrayType",
@@ -655,7 +654,6 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "$temp3",
                           "type": {
                             "_": "ClassType",
@@ -749,7 +747,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"
@@ -870,7 +867,6 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "sizes",
                           "type": {
                             "_": "ArrayType",
@@ -924,7 +920,6 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "$temp7",
                           "type": {
                             "_": "ClassType",
@@ -1096,7 +1091,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "$temp11",
                           "type": {
                             "_": "ClassType",
@@ -1123,7 +1117,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "combinations",
                           "type": {
                             "_": "ArrayType",
@@ -1302,7 +1295,6 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
-                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "UnknownType"
