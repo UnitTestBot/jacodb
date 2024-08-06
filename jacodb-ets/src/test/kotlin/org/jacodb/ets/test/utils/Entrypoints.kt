@@ -24,7 +24,7 @@ import org.jacodb.ets.utils.toText
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.Path
-import kotlin.io.path.createDirectories
+import kotlin.io.path.div
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.relativeTo
@@ -37,8 +37,10 @@ private val logger = mu.KotlinLogging.logger {}
  * Visualize classes and methods in [EtsFileDto].
  */
 object DumpEtsFileDtoToDot {
-    private const val PATH = "/etsir/samples/basic.ts.json"
-    private const val DOT_PATH = "basicDto.dot"
+    private const val NAME = "basic"
+    private const val PATH = "/etsir/samples/$NAME.ts.json"
+    private val DOT_DIR = Path("dot")
+    private val DOT_PATH = Path("$NAME.dto.dot") // relative to DOT_DIR
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -47,8 +49,8 @@ object DumpEtsFileDtoToDot {
         val text = etsFileDto.toText()
         logger.info { "Text representation of EtsFileDto:\n$text" }
 
-        etsFileDto.dumpDot(DOT_PATH)
-        render(DOT_PATH)
+        etsFileDto.dumpDot(DOT_DIR / DOT_PATH)
+        render(DOT_DIR, DOT_PATH)
     }
 }
 
@@ -56,8 +58,10 @@ object DumpEtsFileDtoToDot {
  * Visualize classes and methods in [EtsFile].
  */
 object DumpEtsFileToDot {
-    private const val PATH = "/etsir/samples/basic.ts.json"
-    private const val DOT_PATH = "basic.dot"
+    private const val NAME = "basic"
+    private const val PATH = "/etsir/samples/$NAME.ts.json"
+    private val DOT_DIR = Path("dot")
+    private val DOT_PATH = Path("$NAME.dto.dot") // relative to DOT_DIR
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -66,8 +70,8 @@ object DumpEtsFileToDot {
         val text = etsFile.toText()
         logger.info { "Text representation of EtsFile:\n$text" }
 
-        etsFile.dumpDot(DOT_PATH)
-        render(DOT_PATH)
+        etsFile.dumpDot(DOT_DIR / DOT_PATH)
+        render(DOT_DIR, DOT_PATH)
     }
 }
 
@@ -76,29 +80,26 @@ object DumpEtsFileToDot {
  */
 @OptIn(ExperimentalPathApi::class)
 object DumpEtsFilesToDot {
-    private const val ETSIR_DIR = "/etsir/samples"
-    private const val DOT_DIR = "dot/samples"
+    private const val ETSIR_BASE = "/etsir"
+    private const val ETSIR_DIR = "samples" // relative to BASE
+    private val DOT_DIR = Path("generated/dot")
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val baseDir = object {}::class.java.getResource(ETSIR_DIR)?.toURI()?.toPath()
-            ?: error("Resource not found: '$ETSIR_DIR'")
-        logger.info { "baseDir = $baseDir" }
+        val resPath = "$ETSIR_BASE/$ETSIR_DIR"
+        val etsirDir = object {}::class.java.getResource(resPath)?.toURI()?.toPath()
+            ?: error("Resource not found: '$resPath'")
+        logger.info { "baseDir = $etsirDir" }
 
-        val dotDir = Path(DOT_DIR)
-        dotDir.createDirectories()
-        logger.info { "dotDir = $dotDir" }
-
-        baseDir.walk()
+        etsirDir.walk()
             .filter { it.name.endsWith(".json") }
             .forEach { path ->
-                val relative = path.relativeTo(baseDir)
-                val name = path.nameWithoutExtension
+                val relative = path.relativeTo(etsirDir)
 
-                process(relative, name, dotDir, "_DTO") {
+                process(relative, ".dto") {
                     loadEtsFileDtoFromResource(it)
                 }
-                process(relative, name, dotDir, "") {
+                process(relative, "") {
                     loadEtsFileFromResource(it)
                 }
 
@@ -107,19 +108,19 @@ object DumpEtsFilesToDot {
     }
 
     private fun <T> process(
-        path: Path,
-        name: String,
-        dotDir: Path,
+        relative: Path,
         suffix: String,
         load: (String) -> T,
     ) {
-        val resourcePath = "$ETSIR_DIR/$path"
-        val dotPath = dotDir.resolve("${name}${suffix}.dot")
+        val resourcePath = "$ETSIR_BASE/$ETSIR_DIR/$relative"
+        val relativeDot = (Path(ETSIR_DIR) / relative)
+            .resolveSibling("${relative.nameWithoutExtension}$suffix.dot")
+        val dotPath = DOT_DIR / relativeDot
         when (val f = load(resourcePath)) {
             is EtsFileDto -> f.dumpDot(dotPath)
             is EtsFile -> f.dumpDot(dotPath)
             else -> error("Unknown type: $f")
         }
-        render(dotPath)
+        render(DOT_DIR, relativeDot)
     }
 }

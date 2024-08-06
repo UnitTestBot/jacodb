@@ -18,20 +18,25 @@ package org.jacodb.ets.utils
 
 import mu.KotlinLogging
 import java.nio.file.Path
-import kotlin.io.path.Path
 import kotlin.io.path.absolute
+import kotlin.io.path.createDirectories
+import kotlin.io.path.div
 import kotlin.io.path.nameWithoutExtension
 import kotlin.time.Duration.Companion.seconds
 
 private val logger = KotlinLogging.logger {}
 
 fun render(
-    dotPath: Path,
+    dotDir: Path,
+    relative: Path,
     formats: List<String> = listOf("pdf"), // See: https://graphviz.org/docs/outputs/
 ) {
+    val dotPath = dotDir / relative
     for (format in formats) {
         logger.info { "Rendering DOT to ${format.uppercase()}..." }
-        val formatFile = dotPath.resolveSibling(dotPath.nameWithoutExtension + ".$format")
+        val formatFile = (dotDir.resolveSibling(format) / relative)
+            .resolveSibling("${relative.nameWithoutExtension}.$format")
+        formatFile.parent?.createDirectories()
         val cmd: List<String> = listOf(
             "dot",
             "-T$format",
@@ -39,11 +44,7 @@ fun render(
             "-o",
             "$formatFile"
         )
-        runProcess(cmd, 60.seconds)
+        runProcess(cmd, 10.seconds)
         logger.info { "Generated ${format.uppercase()} file: ${formatFile.absolute()}" }
     }
-}
-
-fun render(dotPath: String) {
-    render(Path(dotPath))
 }

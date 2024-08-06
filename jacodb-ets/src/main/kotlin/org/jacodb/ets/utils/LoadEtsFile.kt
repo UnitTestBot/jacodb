@@ -28,6 +28,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.pathString
+import kotlin.io.path.relativeTo
 import kotlin.time.Duration.Companion.seconds
 
 private const val ENV_VAR_ARK_ANALYZER_DIR = "ARKANALYZER_DIR"
@@ -89,12 +90,12 @@ fun loadEtsFileAutoConvertWithDot(tsPath: Path): EtsFile {
     }
     val etsFileDtoDotPath = dotDir / (tsPath.nameWithoutExtension + "_DTO.dot")
     etsFileDto.dumpDot(etsFileDtoDotPath)
-    render(etsFileDtoDotPath)
+    render(dotDir, etsFileDtoDotPath.relativeTo(dotDir))
 
     val etsFile = convertToEtsFile(etsFileDto)
     val etsFileDotPath = dotDir / (tsPath.nameWithoutExtension + ".dot")
     etsFile.dumpDot(etsFileDotPath)
-    render(etsFileDotPath)
+    render(dotDir, etsFileDotPath.relativeTo(dotDir))
 
     return etsFile
 }
