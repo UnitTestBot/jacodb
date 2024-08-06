@@ -24,8 +24,10 @@ import org.jacodb.ets.dto.MethodDto
 import org.jacodb.ets.dto.NopStmtDto
 import org.jacodb.ets.dto.StmtDto
 import org.jacodb.ets.dto.SwitchStmtDto
+import java.io.BufferedWriter
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.createDirectories
 import kotlin.io.path.writeText
 
 fun EtsFileDto.toDot(useLR: Boolean = false): String {
@@ -182,12 +184,13 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
     return lines.joinToString("\n")
 }
 
-fun EtsFileDto.dumpDot(file: File) {
-    file.writeText(toDot())
+fun EtsFileDto.dumpDot(path: Path) {
+    path.parent?.createDirectories()
+    path.writeText(toDot())
 }
 
-fun EtsFileDto.dumpDot(path: Path) {
-    path.writeText(toDot())
+fun EtsFileDto.dumpDot(file: File) {
+    dumpDot(file.toPath())
 }
 
 fun EtsFileDto.dumpDot(path: String) {

@@ -21,6 +21,7 @@ import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.model.EtsFile
 
 fun loadEtsFileDtoFromResource(jsonPath: String): EtsFileDto {
+    require(jsonPath.startsWith("/")) { "Resource path must start with '/': $jsonPath" }
     val sampleFilePath = object {}::class.java.getResourceAsStream(jsonPath)
         ?: error("Resource not found: $jsonPath")
     return EtsFileDto.loadFromJson(sampleFilePath)
