@@ -55,64 +55,69 @@ internal fun BufferedWriter.writeln(s: String) {
     newLine()
 }
 
-fun EtsFileDto.dumpContentTo(output: BufferedWriter): Unit = with(output) {
-    writeln("EtsFileDto '${name}':")
-    classes.forEach { clazz ->
-        writeln("= CLASS '${clazz.signature}':")
-        writeln("  superClass = '${clazz.superClassName}'")
-        writeln("  typeParameters = ${clazz.typeParameters}")
-        writeln("  modifiers = ${clazz.modifiers}")
-        writeln("  fields: ${clazz.fields.size}")
-        clazz.fields.forEach { field ->
-            writeln("  - FIELD '${field.signature}'")
-            writeln("    typeParameters = ${field.typeParameters}")
-            writeln("    modifiers = ${field.modifiers}")
-            writeln("    isOptional = ${field.isOptional}")
-            writeln("    isDefinitelyAssigned = ${field.isDefinitelyAssigned}")
-        }
-        writeln("  methods: ${clazz.methods.size}")
-        clazz.methods.forEach { method ->
-            writeln("  - METHOD '${method.signature}'")
-            writeln("    locals = ${method.body.locals}")
-            writeln("    typeParameters = ${method.typeParameters}")
-            writeln("    blocks: ${method.body.cfg.blocks.size}")
-            method.body.cfg.blocks.forEach { block ->
-                writeln("    - BLOCK ${block.id}")
-                writeln("      successors = ${block.successors}")
-                writeln("      predecessors = ${block.predecessors}")
-                writeln("      statements: ${block.stmts.size}")
-                block.stmts.forEachIndexed { i, inst ->
-                    writeln("      ${i + 1}. $inst")
-                }
-                }
-            }
-        }
-}
 
-fun EtsFile.dumpContentTo(output: BufferedWriter): Unit = with(output) {
-    writeln("EtsFile '${name}':")
+fun EtsFileDto.toText(): String {
+    val lines: MutableList<String> = mutableListOf()
+    lines += "EtsFileDto '${name}':"
     classes.forEach { clazz ->
-        writeln("= CLASS '${clazz.signature}':")
-        writeln("  superClass = '${clazz.superClass}'")
-        writeln("  fields: ${clazz.fields.size}")
+        lines += "= CLASS '${clazz.signature}':"
+        lines += "  superClass = '${clazz.superClassName}'"
+        lines += "  typeParameters = ${clazz.typeParameters}"
+        lines += "  modifiers = ${clazz.modifiers}"
+        lines += "  fields: ${clazz.fields.size}"
         clazz.fields.forEach { field ->
-            writeln("  - FIELD '${field.signature}'")
+            lines += "  - FIELD '${field.signature}'"
+            lines += "    typeParameters = ${field.typeParameters}"
+            lines += "    modifiers = ${field.modifiers}"
+            lines += "    isOptional = ${field.isOptional}"
+            lines += "    isDefinitelyAssigned = ${field.isDefinitelyAssigned}"
         }
-        writeln("  constructor = '${clazz.ctor.signature}'")
-        writeln("    stmts: ${clazz.ctor.cfg.stmts.size}")
-        clazz.ctor.cfg.stmts.forEachIndexed { i, stmt ->
-            writeln("    ${i + 1}. $stmt")
-        }
-        writeln("  methods: ${clazz.methods.size}")
+        lines += "  methods: ${clazz.methods.size}"
         clazz.methods.forEach { method ->
-            writeln("  - METHOD '${method.signature}':")
-            writeln("    locals = ${method.localsCount}")
-            writeln("    stmts: ${method.cfg.stmts.size}")
-            method.cfg.stmts.forEachIndexed { i, stmt ->
-                writeln("    ${i + 1}. $stmt")
-                val pad = " ".repeat(2 + "${i + 1}".length) // number + dot + space
-                writeln("    ${pad}successors = ${method.cfg.successors(stmt)}")
+            lines += "  - METHOD '${method.signature}'"
+            lines += "    locals = ${method.body.locals}"
+            lines += "    typeParameters = ${method.typeParameters}"
+            lines += "    blocks: ${method.body.cfg.blocks.size}"
+            method.body.cfg.blocks.forEach { block ->
+                lines += "    - BLOCK ${block.id}"
+                lines += "      successors = ${block.successors}"
+                lines += "      predecessors = ${block.predecessors}"
+                lines += "      statements: ${block.stmts.size}"
+                block.stmts.forEachIndexed { i, inst ->
+                    lines += "      ${i + 1}. $inst"
+                }
             }
         }
     }
+    return lines.joinToString("\n")
+}
+
+fun EtsFile.toText(): String {
+    val lines: MutableList<String> = mutableListOf()
+    lines += "EtsFile '${name}':"
+    classes.forEach { clazz ->
+        lines += "= CLASS '${clazz.signature}':"
+        lines += "  superClass = '${clazz.superClass}'"
+        lines += "  fields: ${clazz.fields.size}"
+        clazz.fields.forEach { field ->
+            lines += "  - FIELD '${field.signature}'"
+        }
+        lines += "  constructor = '${clazz.ctor.signature}'"
+        lines += "    stmts: ${clazz.ctor.cfg.stmts.size}"
+        clazz.ctor.cfg.stmts.forEachIndexed { i, stmt ->
+            lines += "    ${i + 1}. $stmt"
+        }
+        lines += "  methods: ${clazz.methods.size}"
+        clazz.methods.forEach { method ->
+            lines += "  - METHOD '${method.signature}':"
+            lines += "    locals = ${method.localsCount}"
+            lines += "    stmts: ${method.cfg.stmts.size}"
+            method.cfg.stmts.forEachIndexed { i, stmt ->
+                lines += "    ${i + 1}. $stmt"
+                val pad = " ".repeat(2 + "${i + 1}".length) // number + dot + space
+                lines += "    ${pad}successors = ${method.cfg.successors(stmt)}"
+            }
+        }
+    }
+    return lines.joinToString("\n")
 }

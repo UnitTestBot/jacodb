@@ -18,9 +18,9 @@ package org.jacodb.ets.test.utils
 
 import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.model.EtsFile
-import org.jacodb.ets.utils.dumpContentTo
 import org.jacodb.ets.utils.dumpDot
 import org.jacodb.ets.utils.render
+import org.jacodb.ets.utils.toText
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.Path
@@ -44,8 +44,8 @@ object DumpEtsFileDtoToDot {
     fun main(args: Array<String>) {
         val etsFileDto: EtsFileDto = loadEtsFileDtoFromResource(PATH)
 
-        val output = System.out.bufferedWriter()
-        etsFileDto.dumpContentTo(output)
+        val text = etsFileDto.toText()
+        logger.info { "Text representation of EtsFileDto:\n$text" }
 
         etsFileDto.dumpDot(DOT_PATH)
         render(DOT_PATH)
@@ -63,8 +63,8 @@ object DumpEtsFileToDot {
     fun main(args: Array<String>) {
         val etsFile = loadEtsFileFromResource(PATH)
 
-        val output = System.out.bufferedWriter()
-        etsFile.dumpContentTo(output)
+        val text = etsFile.toText()
+        logger.info { "Text representation of EtsFile:\n$text" }
 
         etsFile.dumpDot(DOT_PATH)
         render(DOT_PATH)
