@@ -19,7 +19,6 @@ package org.jacodb.ets.utils
 import mu.KotlinLogging
 import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.model.EtsFile
-import java.io.BufferedWriter
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 
