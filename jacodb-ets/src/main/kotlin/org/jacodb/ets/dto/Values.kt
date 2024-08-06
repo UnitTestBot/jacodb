@@ -386,7 +386,7 @@ sealed interface FieldRefDto : RefDto {
 @Serializable
 @SerialName("InstanceFieldRef")
 data class InstanceFieldRefDto(
-    val instance: ValueDto,
+    val instance: LocalDto,
     override val field: FieldSignatureDto,
 ) : FieldRefDto {
     override fun toString(): String {
