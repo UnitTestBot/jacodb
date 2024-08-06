@@ -55,7 +55,6 @@ internal fun BufferedWriter.writeln(s: String) {
     newLine()
 }
 
-
 fun EtsFileDto.toText(): String {
     val lines: MutableList<String> = mutableListOf()
     lines += "EtsFileDto '${name}':"
@@ -83,8 +82,8 @@ fun EtsFileDto.toText(): String {
                 lines += "      successors = ${block.successors}"
                 lines += "      predecessors = ${block.predecessors}"
                 lines += "      statements: ${block.stmts.size}"
-                block.stmts.forEachIndexed { i, inst ->
-                    lines += "      ${i + 1}. $inst"
+                block.stmts.forEachIndexed { i, stmt ->
+                    lines += "      ${i + 1}. $stmt"
                 }
             }
         }
@@ -104,18 +103,20 @@ fun EtsFile.toText(): String {
         }
         lines += "  constructor = '${clazz.ctor.signature}'"
         lines += "    stmts: ${clazz.ctor.cfg.stmts.size}"
-        clazz.ctor.cfg.stmts.forEachIndexed { i, stmt ->
-            lines += "    ${i + 1}. $stmt"
+        clazz.ctor.cfg.stmts.forEach { stmt ->
+            lines += "    ${stmt.location.index}. $stmt"
+            val pad = " ".repeat("${stmt.location.index}".length + 2) // number + dot + space
+            lines += "    ${pad}successors = ${clazz.ctor.cfg.successors(stmt).map { it.location.index }}"
         }
         lines += "  methods: ${clazz.methods.size}"
         clazz.methods.forEach { method ->
             lines += "  - METHOD '${method.signature}':"
             lines += "    locals = ${method.localsCount}"
             lines += "    stmts: ${method.cfg.stmts.size}"
-            method.cfg.stmts.forEachIndexed { i, stmt ->
-                lines += "    ${i + 1}. $stmt"
-                val pad = " ".repeat(2 + "${i + 1}".length) // number + dot + space
-                lines += "    ${pad}successors = ${method.cfg.successors(stmt)}"
+            method.cfg.stmts.forEach { stmt ->
+                lines += "    ${stmt.location.index}. $stmt"
+                val pad = " ".repeat("${stmt.location.index}".length + 2) // number + dot + space
+                lines += "    ${pad}successors = ${method.cfg.successors(stmt).map { it.location.index }}"
             }
         }
     }
