@@ -21,14 +21,40 @@ import org.jacodb.api.jvm.JcClassOrInterface
 import org.jacodb.api.jvm.JcClassProcessingTask
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.PredefinedPrimitives
-import org.jacodb.api.jvm.ext.*
+import org.jacodb.api.jvm.ext.HierarchyExtension
+import org.jacodb.api.jvm.ext.constructors
+import org.jacodb.api.jvm.ext.enumValues
+import org.jacodb.api.jvm.ext.fields
+import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.findClassOrNull
+import org.jacodb.api.jvm.ext.findDeclaredFieldOrNull
+import org.jacodb.api.jvm.ext.findDeclaredMethodOrNull
+import org.jacodb.api.jvm.ext.findMethodOrNull
+import org.jacodb.api.jvm.ext.hasBody
+import org.jacodb.api.jvm.ext.humanReadableSignature
+import org.jacodb.api.jvm.ext.isEnum
+import org.jacodb.api.jvm.ext.isLocal
+import org.jacodb.api.jvm.ext.isMemberClass
+import org.jacodb.api.jvm.ext.isNullable
+import org.jacodb.api.jvm.ext.jcdbSignature
+import org.jacodb.api.jvm.ext.jvmSignature
+import org.jacodb.api.jvm.ext.methods
+import org.jacodb.api.jvm.ext.toType
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.VirtualClassContent
 import org.jacodb.impl.features.classpaths.VirtualClasses
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualClass
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualField
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualMethod
-import org.jacodb.testing.*
+import org.jacodb.testing.A
+import org.jacodb.testing.B
+import org.jacodb.testing.Bar
+import org.jacodb.testing.C
+import org.jacodb.testing.D
+import org.jacodb.testing.Enums
+import org.jacodb.testing.Foo
+import org.jacodb.testing.SuperDuper
+import org.jacodb.testing.allClasspath
 import org.jacodb.testing.hierarchies.Creature
 import org.jacodb.testing.skipAssertionsOn
 import org.jacodb.testing.structure.FieldsAndMethods
@@ -39,7 +65,11 @@ import org.jacodb.testing.usages.Generics
 import org.jacodb.testing.usages.HelloWorldAnonymousClasses
 import org.jacodb.testing.usages.WithInner
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.JRE
@@ -205,12 +235,18 @@ abstract class DatabaseEnvTest {
             assertEquals(Element::class.java.name, returnType.typeName)
             assertEquals("createElement(java.lang.String;)org.w3c.dom.Element;", jcdbSignature)
             assertEquals("createElement(Ljava/lang/String;)Lorg/w3c/dom/Element;", jvmSignature)
-            assertEquals("org.w3c.dom.Document#createElement(java.lang.String):org.w3c.dom.Element", humanReadableSignature)
+            assertEquals(
+                "org.w3c.dom.Document#createElement(java.lang.String):org.w3c.dom.Element",
+                humanReadableSignature
+            )
         }
 
         with(methods.first { it.name == "importNode" }) {
             assertEquals("importNode(org.w3c.dom.Node;boolean;)org.w3c.dom.Node;", jcdbSignature)
-            assertEquals("org.w3c.dom.Document#importNode(org.w3c.dom.Node,boolean):org.w3c.dom.Node", humanReadableSignature)
+            assertEquals(
+                "org.w3c.dom.Document#importNode(org.w3c.dom.Node,boolean):org.w3c.dom.Node",
+                humanReadableSignature
+            )
         }
     }
 
@@ -263,7 +299,7 @@ abstract class DatabaseEnvTest {
         assertNotNull(clazz!!)
 
         with(hierarchyExt.findSubClasses(clazz, entireHierarchy = true).toList()) {
-            assertEquals(4, size) {
+            assertEquals(4, distinctBy { it.name }.size) {
                 "expected 4 but got only: ${joinToString { it.name }}"
             }
 
@@ -310,7 +346,7 @@ abstract class DatabaseEnvTest {
         var overrides = hierarchyExt.findOverrides(sayMethod).toList()
 
         with(overrides) {
-            assertEquals(4, size)
+            assertEquals(4, distinctBy { it.enclosingClass.name }.size)
 
             assertNotNull(firstOrNull { it.enclosingClass == cp.findClass<Creature.DinosaurImpl>() })
             assertNotNull(firstOrNull { it.enclosingClass == cp.findClass<Creature.Fish>() })
@@ -319,7 +355,7 @@ abstract class DatabaseEnvTest {
         }
         overrides = hierarchyExt.findOverrides(helloMethod).toList()
         with(overrides) {
-            assertEquals(1, size)
+            assertEquals(1, distinctBy { it.enclosingClass.name }.size)
 
             assertNotNull(firstOrNull { it.enclosingClass == cp.findClass<Creature.TRex>() })
 

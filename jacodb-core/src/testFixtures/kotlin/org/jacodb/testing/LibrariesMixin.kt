@@ -76,7 +76,6 @@ private val classpath: List<String>
         val classpath = System.getProperty("java.class.path")
         return classpath.split(File.pathSeparatorChar)
             .filter { !it.contains("sootup") }
-            .toList()
     }
 
 

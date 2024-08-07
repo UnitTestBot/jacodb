@@ -25,7 +25,6 @@ import org.jacodb.api.jvm.ext.packageName
 import org.jacodb.impl.bytecode.JcDatabaseClassWriter
 import org.jacodb.impl.cfg.MethodNodeBuilder
 import org.jacodb.impl.features.hierarchyExt
-import org.jacodb.impl.fs.className
 import org.jacodb.testing.BaseTest
 import org.jacodb.testing.WithGlobalDB
 import org.junit.jupiter.api.Assertions
@@ -79,9 +78,10 @@ abstract class BaseInstructionsTest : BaseTest() {
                 .filter { it.enclosingClass == klass }
                 .map { method ->
                     if (method.isAbstract ||
-                        method.name.contains("$\$forInline")||
+                        method.name.contains("$\$forInline") ||
                         method.name.contains("lambda$") ||
-                        method.name.contains("stringConcat$")) {
+                        method.name.contains("stringConcat$")
+                    ) {
                         method.withAsmNode { it } // fixme: safe only in single-thread environment
                     } else {
                         try {
