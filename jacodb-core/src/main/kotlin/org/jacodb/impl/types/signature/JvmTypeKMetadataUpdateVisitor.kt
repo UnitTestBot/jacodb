@@ -18,9 +18,9 @@ package org.jacodb.impl.types.signature
 
 import kotlinx.metadata.KmType
 import kotlinx.metadata.KmTypeParameter
+import kotlinx.metadata.isNullable
 import org.jacodb.api.jvm.JvmType
 import org.jacodb.api.jvm.JvmTypeParameterDeclaration
-import org.jacodb.impl.bytecode.isNullable
 
 /**
  * Recursively visits type and take all info about nullability from given kmType

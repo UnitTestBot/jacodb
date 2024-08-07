@@ -16,7 +16,6 @@
 
 package org.jacodb.impl.bytecode
 
-import kotlinx.metadata.Flag
 import kotlinx.metadata.KmConstructor
 import kotlinx.metadata.KmFunction
 import kotlinx.metadata.KmType
@@ -40,11 +39,11 @@ val JcClassOrInterface.kMetadata: KotlinMetadataHolder?
 
 val JcMethod.kmFunction: KmFunction?
     get() =
-        enclosingClass.kMetadata?.functions?.firstOrNull { it.signature?.name == name && it.signature?.desc == description }
+        enclosingClass.kMetadata?.functions?.firstOrNull { it.signature?.name == name && it.signature?.descriptor == description }
 
 val JcMethod.kmConstructor: KmConstructor?
     get() =
-        enclosingClass.kMetadata?.constructors?.firstOrNull { it.signature?.name == name && it.signature?.desc == description }
+        enclosingClass.kMetadata?.constructors?.firstOrNull { it.signature?.name == name && it.signature?.descriptor == description }
 
 val JcParameter.kmParameter: KmValueParameter?
     get() {
@@ -84,6 +83,3 @@ val JcField.kmType: KmType?
 val JcMethod.kmReturnType: KmType?
     get() =
         kmFunction?.returnType
-
-val KmType.isNullable: Boolean
-    get() = Flag.Type.IS_NULLABLE(flags)

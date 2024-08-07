@@ -23,7 +23,7 @@ import org.jacodb.impl.features.classpaths.KotlinMetadata
 import org.jacodb.impl.features.classpaths.MethodInstructionsFeature
 import org.jacodb.impl.fs.JavaRuntime
 import org.jacodb.impl.fs.asByteCodeLocation
-import org.jacodb.impl.fs.filterExisted
+import org.jacodb.impl.fs.filterExisting
 import org.jacodb.impl.fs.lazySources
 import org.jacodb.impl.fs.sources
 import org.jacodb.impl.storage.SQLITE_DATABASE_PERSISTENCE_SPI
@@ -88,8 +88,8 @@ class JcDatabaseImpl(
 
     override suspend fun classpath(dirOrJars: List<File>, features: List<JcClasspathFeature>?): JcClasspath {
         assertNotClosed()
-        val existedLocations = dirOrJars.filterExisted().map { it.asByteCodeLocation(javaRuntime.version) }
-        val processed = locationsRegistry.registerIfNeeded(existedLocations.toList())
+        val existingLocations = dirOrJars.filterExisting().map { it.asByteCodeLocation(javaRuntime.version) }
+        val processed = locationsRegistry.registerIfNeeded(existingLocations)
             .also { it.new.process(true) }.registered + locationsRegistry.runtimeLocations
         return classpathOf(processed, features)
     }
@@ -123,7 +123,7 @@ class JcDatabaseImpl(
 
     override suspend fun load(dirOrJars: List<File>) = apply {
         assertNotClosed()
-        loadLocations(dirOrJars.filterExisted().map { it.asByteCodeLocation(javaRuntime.version) })
+        loadLocations(dirOrJars.filterExisting().map { it.asByteCodeLocation(javaRuntime.version) })
     }
 
     override suspend fun loadLocations(locations: List<JcByteCodeLocation>) = apply {
