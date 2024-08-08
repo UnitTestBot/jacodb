@@ -72,8 +72,8 @@ class EtsFileTest {
     }
 
     @Test
-    fun `test sample initializers`() {
-        val etsFile = load("etsir/samples/initializers")
+    fun `test sample FieldInitializers`() {
+        val etsFile = load("etsir/samples/classes/FieldInitializers")
 
         val cls = etsFile.classes.single { it.name == "Foo" }
 
