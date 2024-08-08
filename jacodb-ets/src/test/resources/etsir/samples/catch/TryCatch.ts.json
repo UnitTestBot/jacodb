@@ -168,6 +168,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp0",
                           "type": {
                             "_": "ClassType",
@@ -215,15 +216,14 @@
                 {
                   "id": 1,
                   "successors": [],
-                  "predecessors": [
-                    0
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "CallStmt",
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"

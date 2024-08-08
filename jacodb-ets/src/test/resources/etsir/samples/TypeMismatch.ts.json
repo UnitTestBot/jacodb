@@ -212,7 +212,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": "==",
+                        "op": "!=",
                         "left": {
                           "_": "TypeOfExpr",
                           "arg": {
@@ -243,10 +243,7 @@
                 {
                   "id": 1,
                   "successors": [],
-                  "predecessors": [
-                    0,
-                    2
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -293,9 +290,7 @@
                   "successors": [
                     1
                   ],
-                  "predecessors": [
-                    0
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -324,6 +319,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp0",
                           "type": {
                             "_": "ClassType",
@@ -488,6 +484,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"

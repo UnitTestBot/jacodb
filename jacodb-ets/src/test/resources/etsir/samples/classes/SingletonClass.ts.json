@@ -90,6 +90,7 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "Logger",
                           "type": {
                             "_": "UnknownType"
@@ -113,6 +114,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "logger",
                           "type": {
                             "_": "UnknownType"
@@ -341,6 +343,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "UnknownType"
@@ -466,6 +469,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"
@@ -607,6 +611,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "Logger",
                           "type": {
                             "_": "UnknownType"
@@ -648,7 +653,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": "==",
+                        "op": "!=",
                         "left": {
                           "_": "Local",
                           "name": "$temp1",
@@ -673,10 +678,7 @@
                 {
                   "id": 1,
                   "successors": [],
-                  "predecessors": [
-                    0,
-                    2
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -690,6 +692,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "Logger",
                           "type": {
                             "_": "UnknownType"
@@ -723,9 +726,7 @@
                   "successors": [
                     1
                   ],
-                  "predecessors": [
-                    0
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -754,6 +755,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp2",
                           "type": {
                             "_": "ClassType",
@@ -780,6 +782,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "Logger",
                           "type": {
                             "_": "UnknownType"

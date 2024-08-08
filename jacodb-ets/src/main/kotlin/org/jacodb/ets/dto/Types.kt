@@ -162,8 +162,8 @@ data class ClassTypeDto(
 }
 
 @Serializable
-@SerialName("CallableType")
-data class CallableTypeDto(
+@SerialName("FunctionType")
+data class FunctionTypeDto(
     val signature: MethodSignatureDto,
 ) : TypeDto {
     override fun toString(): String {

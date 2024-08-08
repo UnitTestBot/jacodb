@@ -426,7 +426,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": "!=",
+                        "op": "==",
                         "left": {
                           "_": "Local",
                           "name": "data",
@@ -459,10 +459,7 @@
                 {
                   "id": 1,
                   "successors": [],
-                  "predecessors": [
-                    0,
-                    2
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "ReturnStmt",
@@ -489,9 +486,7 @@
                   "successors": [
                     1
                   ],
-                  "predecessors": [
-                    0
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "ReturnStmt",
@@ -642,7 +637,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": "!=",
+                        "op": "==",
                         "left": {
                           "_": "Local",
                           "name": "data",
@@ -675,10 +670,7 @@
                 {
                   "id": 1,
                   "successors": [],
-                  "predecessors": [
-                    0,
-                    2
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "ReturnVoidStmt"
@@ -690,9 +682,7 @@
                   "successors": [
                     1
                   ],
-                  "predecessors": [
-                    0
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -721,6 +711,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp0",
                           "type": {
                             "_": "ClassType",

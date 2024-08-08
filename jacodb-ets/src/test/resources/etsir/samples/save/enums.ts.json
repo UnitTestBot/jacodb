@@ -246,6 +246,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "SceneBuildStage",
                           "type": {
                             "_": "UnknownType"
@@ -274,6 +275,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "SceneBuildStage",
                           "type": {
                             "_": "UnknownType"
@@ -302,6 +304,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "SceneBuildStage",
                           "type": {
                             "_": "UnknownType"
@@ -484,6 +487,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "ViewTreeNodeType",
                           "type": {
                             "_": "UnknownType"
@@ -512,6 +516,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "ViewTreeNodeType",
                           "type": {
                             "_": "UnknownType"
@@ -555,6 +560,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp4",
                           "type": {
                             "_": "ClassType",
@@ -609,6 +615,7 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "Object",
                           "type": {
                             "_": "UnknownType"
@@ -650,6 +657,7 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp5",
                           "type": {
                             "_": "UnknownType"
@@ -679,10 +687,7 @@
                     2,
                     5
                   ],
-                  "predecessors": [
-                    0,
-                    5
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -699,6 +704,7 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp6",
                           "type": {
                             "_": "ClassType",
@@ -735,6 +741,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp7",
                           "type": {
                             "_": "ClassType",
@@ -786,9 +793,7 @@
                     3,
                     4
                   ],
-                  "predecessors": [
-                    1
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -802,6 +807,7 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "obj",
                           "type": {
                             "_": "UnclearReferenceType",
@@ -854,7 +860,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": "==",
+                        "op": "!=",
                         "left": {
                           "_": "Local",
                           "name": "$temp12",
@@ -879,10 +885,7 @@
                 {
                   "id": 3,
                   "successors": [],
-                  "predecessors": [
-                    2,
-                    4
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -898,6 +901,7 @@
                         "arg": {
                           "_": "InstanceFieldRef",
                           "instance": {
+                            "_": "Local",
                             "name": "obj",
                             "type": {
                               "_": "UnclearReferenceType",
@@ -926,15 +930,14 @@
                   "successors": [
                     3
                   ],
-                  "predecessors": [
-                    2
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "CallStmt",
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"
@@ -968,9 +971,7 @@
                   "successors": [
                     1
                   ],
-                  "predecessors": [
-                    1
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -984,6 +985,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp7",
                           "type": {
                             "_": "ClassType",
@@ -1103,6 +1105,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "obj",
                           "type": {
                             "_": "UnclearReferenceType",
@@ -1267,6 +1270,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -1309,6 +1313,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -1351,6 +1356,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -1410,6 +1416,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -1431,6 +1438,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp0",
                           "type": {
                             "_": "StringType"
@@ -1684,6 +1692,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -1715,6 +1724,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -1746,6 +1756,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -1777,6 +1788,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -1808,6 +1820,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -2050,6 +2063,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -2131,6 +2145,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "UnknownType"

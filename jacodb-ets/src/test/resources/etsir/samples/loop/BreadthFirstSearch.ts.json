@@ -127,6 +127,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp0",
                           "type": {
                             "_": "ClassType",
@@ -214,6 +215,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"
@@ -644,9 +646,7 @@
                   "successors": [
                     2
                   ],
-                  "predecessors": [
-                    0
-                  ],
+                  "predecessors": [],
                   "stmts": []
                 },
                 {
@@ -655,11 +655,7 @@
                     3,
                     4
                   ],
-                  "predecessors": [
-                    1,
-                    4,
-                    6
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -673,6 +669,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "queue",
                           "type": {
                             "_": "ArrayType",
@@ -697,7 +694,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": "<=",
+                        "op": ">",
                         "left": {
                           "_": "Local",
                           "name": "$temp2",
@@ -722,9 +719,7 @@
                 {
                   "id": 3,
                   "successors": [],
-                  "predecessors": [
-                    2
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "ReturnStmt",
@@ -748,9 +743,7 @@
                     2,
                     5
                   ],
-                  "predecessors": [
-                    2
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -764,6 +757,7 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "queue",
                           "type": {
                             "_": "ArrayType",
@@ -798,6 +792,7 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "visited",
                           "type": {
                             "_": "ArrayType",
@@ -853,7 +848,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": "==",
+                        "op": "!=",
                         "left": {
                           "_": "Local",
                           "name": "$temp4",
@@ -880,15 +875,14 @@
                   "successors": [
                     6
                   ],
-                  "predecessors": [
-                    4
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "CallStmt",
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "visited",
                           "type": {
                             "_": "ArrayType",
@@ -931,6 +925,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "graph",
                           "type": {
                             "_": "UnclearReferenceType",
@@ -963,6 +958,7 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "neighbours",
                           "type": {
                             "_": "UnknownType"
@@ -992,11 +988,7 @@
                     2,
                     7
                   ],
-                  "predecessors": [
-                    5,
-                    7,
-                    8
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -1013,6 +1005,7 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp5",
                           "type": {
                             "_": "ClassType",
@@ -1049,6 +1042,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp6",
                           "type": {
                             "_": "ClassType",
@@ -1100,9 +1094,7 @@
                     6,
                     8
                   ],
-                  "predecessors": [
-                    6
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -1116,6 +1108,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp6",
                           "type": {
                             "_": "ClassType",
@@ -1170,6 +1163,7 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "visited",
                           "type": {
                             "_": "ArrayType",
@@ -1225,7 +1219,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": "==",
+                        "op": "!=",
                         "left": {
                           "_": "Local",
                           "name": "$temp10",
@@ -1252,15 +1246,14 @@
                   "successors": [
                     6
                   ],
-                  "predecessors": [
-                    7
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "CallStmt",
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "queue",
                           "type": {
                             "_": "ArrayType",
@@ -1633,6 +1626,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -1729,6 +1723,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -1825,6 +1820,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -1921,6 +1917,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -1983,6 +1980,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -2045,6 +2043,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -2130,6 +2129,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "UnknownType"

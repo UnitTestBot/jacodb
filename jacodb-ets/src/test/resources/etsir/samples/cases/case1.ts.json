@@ -382,16 +382,13 @@
                     2,
                     3
                   ],
-                  "predecessors": [
-                    0,
-                    3
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": ">=",
+                        "op": "<",
                         "left": {
                           "_": "Local",
                           "name": "i",
@@ -416,9 +413,7 @@
                 {
                   "id": 2,
                   "successors": [],
-                  "predecessors": [
-                    1
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "ReturnStmt",
@@ -437,15 +432,14 @@
                   "successors": [
                     1
                   ],
-                  "predecessors": [
-                    1
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "CallStmt",
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"

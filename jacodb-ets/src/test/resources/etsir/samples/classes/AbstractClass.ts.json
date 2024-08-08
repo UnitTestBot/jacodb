@@ -123,6 +123,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp0",
                           "type": {
                             "_": "ClassType",
@@ -194,6 +195,7 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "rectangle",
                           "type": {
                             "_": "ClassType",
@@ -220,6 +222,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"
@@ -432,6 +435,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "UnknownType"
@@ -666,6 +670,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "UnknownType"
@@ -762,6 +767,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -793,6 +799,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -912,6 +919,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -943,6 +951,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",

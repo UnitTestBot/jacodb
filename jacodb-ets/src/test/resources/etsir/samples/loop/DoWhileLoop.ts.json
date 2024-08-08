@@ -117,10 +117,7 @@
                     1,
                     2
                   ],
-                  "predecessors": [
-                    0,
-                    1
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -183,6 +180,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"
@@ -241,7 +239,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": ">=",
+                        "op": "<",
                         "left": {
                           "_": "Local",
                           "name": "count",
@@ -266,9 +264,7 @@
                 {
                   "id": 2,
                   "successors": [],
-                  "predecessors": [
-                    1
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "ReturnVoidStmt"

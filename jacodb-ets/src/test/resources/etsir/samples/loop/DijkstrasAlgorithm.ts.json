@@ -1498,6 +1498,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"
@@ -1952,6 +1953,7 @@
                         "size": {
                           "_": "InstanceFieldRef",
                           "instance": {
+                            "_": "Local",
                             "name": "graph",
                             "type": {
                               "_": "ArrayType",
@@ -1993,6 +1995,7 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp0",
                           "type": {
                             "_": "ArrayType",
@@ -2078,6 +2081,7 @@
                         "size": {
                           "_": "InstanceFieldRef",
                           "instance": {
+                            "_": "Local",
                             "name": "graph",
                             "type": {
                               "_": "ArrayType",
@@ -2119,6 +2123,7 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp1",
                           "type": {
                             "_": "ArrayType",
@@ -2156,9 +2161,7 @@
                   "successors": [
                     2
                   ],
-                  "predecessors": [
-                    0
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -2185,10 +2188,7 @@
                     3,
                     4
                   ],
-                  "predecessors": [
-                    1,
-                    7
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -2202,6 +2202,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "graph",
                           "type": {
                             "_": "ArrayType",
@@ -2258,7 +2259,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": ">=",
+                        "op": "<",
                         "left": {
                           "_": "Local",
                           "name": "i",
@@ -2283,9 +2284,7 @@
                 {
                   "id": 3,
                   "successors": [],
-                  "predecessors": [
-                    2
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "ReturnStmt",
@@ -2308,9 +2307,7 @@
                   "successors": [
                     5
                   ],
-                  "predecessors": [
-                    2
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -2375,10 +2372,7 @@
                     6,
                     11
                   ],
-                  "predecessors": [
-                    4,
-                    12
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -2392,6 +2386,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "graph",
                           "type": {
                             "_": "ArrayType",
@@ -2420,7 +2415,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": ">=",
+                        "op": "<",
                         "left": {
                           "_": "Local",
                           "name": "v",
@@ -2447,9 +2442,7 @@
                   "successors": [
                     7
                   ],
-                  "predecessors": [
-                    5
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -2510,10 +2503,7 @@
                     2,
                     8
                   ],
-                  "predecessors": [
-                    6,
-                    9
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -2527,6 +2517,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "graph",
                           "type": {
                             "_": "ArrayType",
@@ -2555,7 +2546,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": ">=",
+                        "op": "<",
                         "left": {
                           "_": "Local",
                           "name": "v",
@@ -2583,9 +2574,7 @@
                     9,
                     10
                   ],
-                  "predecessors": [
-                    7
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -2732,7 +2721,7 @@
                         }
                       },
                       "right": {
-                        "_": "BinopExpr",
+                        "_": "ConditionExpr",
                         "op": "!==",
                         "left": {
                           "_": "Local",
@@ -2747,6 +2736,9 @@
                           "type": {
                             "_": "NumberType"
                           }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     },
@@ -2964,7 +2956,7 @@
                         }
                       },
                       "right": {
-                        "_": "BinopExpr",
+                        "_": "ConditionExpr",
                         "op": "<",
                         "left": {
                           "_": "Local",
@@ -2979,6 +2971,9 @@
                           "type": {
                             "_": "NumberType"
                           }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     },
@@ -3014,7 +3009,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": "==",
+                        "op": "!=",
                         "left": {
                           "_": "Local",
                           "name": "$temp23",
@@ -3041,10 +3036,7 @@
                   "successors": [
                     7
                   ],
-                  "predecessors": [
-                    8,
-                    10
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -3109,9 +3101,7 @@
                   "successors": [
                     9
                   ],
-                  "predecessors": [
-                    8
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -3297,9 +3287,7 @@
                     12,
                     13
                   ],
-                  "predecessors": [
-                    5
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -3400,7 +3388,7 @@
                         }
                       },
                       "right": {
-                        "_": "BinopExpr",
+                        "_": "ConditionExpr",
                         "op": "<=",
                         "left": {
                           "_": "Local",
@@ -3415,6 +3403,9 @@
                           "type": {
                             "_": "NumberType"
                           }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     },
@@ -3450,7 +3441,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": "==",
+                        "op": "!=",
                         "left": {
                           "_": "Local",
                           "name": "$temp9",
@@ -3477,10 +3468,7 @@
                   "successors": [
                     5
                   ],
-                  "predecessors": [
-                    11,
-                    13
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -3517,9 +3505,7 @@
                   "successors": [
                     12
                   ],
-                  "predecessors": [
-                    11
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",

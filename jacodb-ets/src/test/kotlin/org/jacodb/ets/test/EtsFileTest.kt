@@ -60,7 +60,7 @@ class EtsFileTest {
             cls.methods.forEach { method ->
                 when (method.name) {
                     "add" -> {
-                        assertEquals(11, method.cfg.instructions.size)
+                        assertEquals(10, method.cfg.instructions.size)
                     }
 
                     "main" -> {

@@ -1,5 +1,5 @@
 {
-  "name": "samples/DataFlowSecurity.ts",
+  "name": "samples/TaintAnalysis",
   "namespaces": [],
   "classes": [
     {

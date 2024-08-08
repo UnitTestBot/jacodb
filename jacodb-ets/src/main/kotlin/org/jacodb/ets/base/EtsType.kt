@@ -41,7 +41,7 @@ interface EtsType : CommonType, CommonTypeName {
         fun visit(type: EtsNeverType): R
         fun visit(type: EtsLiteralType): R
         fun visit(type: EtsClassType): R
-        fun visit(type: EtsCallableType): R
+        fun visit(type: EtsFunctionType): R
         fun visit(type: EtsArrayType): R
         fun visit(type: EtsArrayObjectType): R
         fun visit(type: EtsUnclearRefType): R
@@ -60,7 +60,7 @@ interface EtsType : CommonType, CommonTypeName {
             override fun visit(type: EtsNeverType): R = defaultVisit(type)
             override fun visit(type: EtsLiteralType): R = defaultVisit(type)
             override fun visit(type: EtsClassType): R = defaultVisit(type)
-            override fun visit(type: EtsCallableType): R = defaultVisit(type)
+            override fun visit(type: EtsFunctionType): R = defaultVisit(type)
             override fun visit(type: EtsArrayType): R = defaultVisit(type)
             override fun visit(type: EtsArrayObjectType): R = defaultVisit(type)
             override fun visit(type: EtsUnclearRefType): R = defaultVisit(type)
@@ -227,7 +227,7 @@ data class EtsClassType(
     }
 }
 
-data class EtsCallableType(
+data class EtsFunctionType(
     val method: EtsMethodSignature,
 ) : EtsRefType {
     override val typeName: String

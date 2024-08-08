@@ -1204,6 +1204,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "console",
                           "type": {
                             "_": "UnknownType"
@@ -1399,7 +1400,7 @@
               {
                 "name": "AnonymousMethod-multiplyMatrices-0",
                 "type": {
-                  "_": "CallableType",
+                  "_": "FunctionType",
                   "signature": {
                     "enclosingClass": {
                       "name": "_DEFAULT_ARK_CLASS"
@@ -1600,6 +1601,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "A",
                           "type": {
                             "_": "ArrayType",
@@ -1682,6 +1684,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp0",
                           "type": {
                             "_": "ArrayType",
@@ -1714,6 +1717,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "B",
                           "type": {
                             "_": "ArrayType",
@@ -1796,6 +1800,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp1",
                           "type": {
                             "_": "ArrayType",
@@ -1843,6 +1848,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp2",
                           "type": {
                             "_": "ClassType",
@@ -1876,6 +1882,7 @@
                       "right": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "Array",
                           "type": {
                             "_": "UnknownType"
@@ -1906,7 +1913,7 @@
                             "_": "Local",
                             "name": "AnonymousMethod-multiplyMatrices-0",
                             "type": {
-                              "_": "CallableType",
+                              "_": "FunctionType",
                               "signature": {
                                 "enclosingClass": {
                                   "name": "_DEFAULT_ARK_CLASS"
@@ -1926,7 +1933,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": "===",
+                        "op": "!==",
                         "left": {
                           "_": "Local",
                           "name": "colsA",
@@ -1953,10 +1960,7 @@
                   "successors": [
                     2
                   ],
-                  "predecessors": [
-                    0,
-                    9
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -1983,16 +1987,13 @@
                     3,
                     4
                   ],
-                  "predecessors": [
-                    1,
-                    5
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": ">=",
+                        "op": "<",
                         "left": {
                           "_": "Local",
                           "name": "i",
@@ -2017,9 +2018,7 @@
                 {
                   "id": 3,
                   "successors": [],
-                  "predecessors": [
-                    2
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "ReturnStmt",
@@ -2038,9 +2037,7 @@
                   "successors": [
                     5
                   ],
-                  "predecessors": [
-                    2
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -2067,16 +2064,13 @@
                     2,
                     6
                   ],
-                  "predecessors": [
-                    4,
-                    7
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": ">=",
+                        "op": "<",
                         "left": {
                           "_": "Local",
                           "name": "j",
@@ -2103,9 +2097,7 @@
                   "successors": [
                     7
                   ],
-                  "predecessors": [
-                    5
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -2132,16 +2124,13 @@
                     5,
                     8
                   ],
-                  "predecessors": [
-                    6,
-                    8
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": ">=",
+                        "op": "<",
                         "left": {
                           "_": "Local",
                           "name": "k",
@@ -2168,9 +2157,7 @@
                   "successors": [
                     7
                   ],
-                  "predecessors": [
-                    7
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -2184,6 +2171,7 @@
                       "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "result",
                           "type": {
                             "_": "UnknownType"
@@ -2393,6 +2381,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp4",
                           "type": {
                             "_": "UnknownType"
@@ -2414,6 +2403,7 @@
                         "left": {
                           "_": "InstanceFieldRef",
                           "instance": {
+                            "_": "Local",
                             "name": "$temp4",
                             "type": {
                               "_": "UnknownType"
@@ -2529,9 +2519,7 @@
                   "successors": [
                     1
                   ],
-                  "predecessors": [
-                    0
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -2560,6 +2548,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "$temp3",
                           "type": {
                             "_": "ClassType",
@@ -2745,6 +2734,7 @@
                       "left": {
                         "_": "InstanceFieldRef",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "ClassType",
@@ -2826,6 +2816,7 @@
                       "expr": {
                         "_": "InstanceCallExpr",
                         "instance": {
+                          "_": "Local",
                           "name": "this",
                           "type": {
                             "_": "UnknownType"
