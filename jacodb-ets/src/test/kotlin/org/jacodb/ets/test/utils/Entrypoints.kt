@@ -80,20 +80,21 @@ object DumpEtsFileToDot {
  */
 @OptIn(ExperimentalPathApi::class)
 object DumpEtsFilesToDot {
-    private const val ETSIR_BASE = "/etsir"
-    private const val ETSIR_DIR = "source" // relative to BASE
+    private const val BASE = "/samples"
+    private const val ETSIR_DIR = "etsir/ast" // relative to BASE
     private val DOT_DIR = Path("generated/dot")
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val resPath = "$ETSIR_BASE/$ETSIR_DIR"
-        val etsirDir = object {}::class.java.getResource(resPath)?.toURI()?.toPath()
-            ?: error("Resource not found: '$resPath'")
-        logger.info { "baseDir = $etsirDir" }
+        val res = "$BASE/$ETSIR_DIR"
+        val etsirDir = object {}::class.java.getResource(res)?.toURI()?.toPath()
+            ?: error("Resource not found: '$res'")
+        logger.info { "etsirDir = $etsirDir" }
 
         etsirDir.walk()
             .filter { it.name.endsWith(".json") }
             .forEach { path ->
+                logger.info { "Processing: $path" }
                 val relative = path.relativeTo(etsirDir)
 
                 process(relative, ".dto") {
@@ -102,8 +103,6 @@ object DumpEtsFilesToDot {
                 process(relative, "") {
                     loadEtsFileFromResource(it)
                 }
-
-                logger.info { "Processed: $path" }
             }
     }
 
@@ -112,7 +111,7 @@ object DumpEtsFilesToDot {
         suffix: String,
         load: (String) -> T,
     ) {
-        val resourcePath = "$ETSIR_BASE/$ETSIR_DIR/$relative"
+        val resourcePath = "$BASE/$ETSIR_DIR/$relative"
         val relativeDot = (Path(ETSIR_DIR) / relative)
             .resolveSibling("${relative.nameWithoutExtension}$suffix.dot")
         val dotPath = DOT_DIR / relativeDot

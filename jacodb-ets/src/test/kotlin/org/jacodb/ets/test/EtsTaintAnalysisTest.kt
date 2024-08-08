@@ -48,7 +48,7 @@ private val logger = mu.KotlinLogging.logger {}
 class EtsTaintAnalysisTest {
 
     companion object : EtsTraits {
-        private const val BASE_PATH = "/etsir/samples"
+        private const val BASE_PATH = "/samples/etsir/ast"
 
         private const val DECOMPILED_PATH = "/decompiled"
 
@@ -63,7 +63,7 @@ class EtsTaintAnalysisTest {
         val getConfigForMethod: ForwardTaintFlowFunctions<EtsMethod, EtsStmt>.(EtsMethod) -> List<TaintConfigurationItem>? =
             { method ->
                 val rules = buildList {
-                    if (method.name == "source") add(
+                    if (method.name == "samples/source") add(
                         TaintMethodSource(
                             method = method,
                             condition = ConstantTrue,

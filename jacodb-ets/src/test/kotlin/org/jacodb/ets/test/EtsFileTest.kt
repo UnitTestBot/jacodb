@@ -33,14 +33,16 @@ private val logger = mu.KotlinLogging.logger {}
 class EtsFileTest {
 
     companion object {
+        private const val BASE = "/samples/etsir/ast"
+
         private fun load(name: String): EtsFile {
-            return loadEtsFileFromResource("/$name.ts.json")
+            return loadEtsFileFromResource("$BASE/$name.ts.json")
         }
     }
 
     @Test
     fun printEtsInstructions() {
-        val etsFile = load("etsir/samples/classes/SimpleClass")
+        val etsFile = load("classes/SimpleClass")
         etsFile.classes.forEach { cls ->
             cls.methods.forEach { method ->
                 logger.info {
@@ -55,7 +57,7 @@ class EtsFileTest {
 
     @Test
     fun `test sample TypeMismatch`() {
-        val etsFile = load("etsir/samples/TypeMismatch")
+        val etsFile = load("TypeMismatch")
         etsFile.classes.forEach { cls ->
             cls.methods.forEach { method ->
                 when (method.name) {
@@ -73,7 +75,7 @@ class EtsFileTest {
 
     @Test
     fun `test sample FieldInitializers`() {
-        val etsFile = load("etsir/samples/classes/FieldInitializers")
+        val etsFile = load("classes/FieldInitializers")
 
         val cls = etsFile.classes.single { it.name == "Foo" }
 

@@ -59,8 +59,8 @@ tasks.register("generateTestResources") {
         println("Using script: '${script.relativeTo(arkAnalyzerDir)}'")
 
         val resources = projectDir.resolve("src/test/resources")
-        val inputDir = resources.resolve("source")
-        val outputDir = resources.resolve("etsir/samples")
+        val inputDir = resources.resolve("samples/source")
+        val outputDir = resources.resolve("samples/etsir/ast")
         println("Generating test resources in '${outputDir.relativeTo(projectDir)}'...")
 
         val cmd: List<String> = listOf(
