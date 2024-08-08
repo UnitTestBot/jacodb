@@ -17,9 +17,11 @@
 package org.jacodb.ets.test.utils
 
 import org.jacodb.ets.dto.EtsFileDto
+import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.utils.dumpDot
 import org.jacodb.ets.utils.render
+import org.jacodb.ets.utils.resolveSibling
 import org.jacodb.ets.utils.toText
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -81,45 +83,39 @@ object DumpEtsFileToDot {
 @OptIn(ExperimentalPathApi::class)
 object DumpEtsFilesToDot {
     private const val BASE = "/samples"
-    private const val ETSIR_DIR = "etsir/ast" // relative to BASE
+    private const val ETSIR = "etsir/ast" // relative to BASE
     private val DOT_DIR = Path("generated/samples/dot")
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val res = "$BASE/$ETSIR_DIR"
+        val res = "$BASE/$ETSIR"
         val etsirDir = object {}::class.java.getResource(res)?.toURI()?.toPath()
             ?: error("Resource not found: '$res'")
         logger.info { "etsirDir = $etsirDir" }
 
         etsirDir.walk()
             .filter { it.name.endsWith(".json") }
+            .map { it.relativeTo(etsirDir) }
             .forEach { path ->
                 logger.info { "Processing: $path" }
-                val relative = path.relativeTo(etsirDir)
 
-                process(relative, ".dto") {
-                    loadEtsFileDtoFromResource(it)
+                val etsFileDto = loadEtsFileDtoFromResource("$BASE/$ETSIR/$path")
+                run {
+                    val dotPath = DOT_DIR / path.resolveSibling {
+                        it.nameWithoutExtension + ".dto.dot"
+                    }
+                    etsFileDto.dumpDot(dotPath)
+                    render(DOT_DIR, dotPath.relativeTo(DOT_DIR))
                 }
-                process(relative, "") {
-                    loadEtsFileFromResource(it)
+
+                val etsFile = convertToEtsFile(etsFileDto)
+                run {
+                    val dotPath = DOT_DIR / path.resolveSibling {
+                        it.nameWithoutExtension + ".dot"
+                    }
+                    etsFile.dumpDot(dotPath)
+                    render(DOT_DIR, dotPath.relativeTo(DOT_DIR))
                 }
             }
-    }
-
-    private fun <T> process(
-        relative: Path,
-        suffix: String,
-        load: (String) -> T,
-    ) {
-        val resourcePath = "$BASE/$ETSIR_DIR/$relative"
-        val relativeDot = (Path(ETSIR_DIR) / relative)
-            .resolveSibling("${relative.nameWithoutExtension}$suffix.dot")
-        val dotPath = DOT_DIR / relativeDot
-        when (val f = load(resourcePath)) {
-            is EtsFileDto -> f.dumpDot(dotPath)
-            is EtsFile -> f.dumpDot(dotPath)
-            else -> error("Unknown type: $f")
-        }
-        render(DOT_DIR, relativeDot)
     }
 }
