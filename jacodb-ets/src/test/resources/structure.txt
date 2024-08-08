@@ -1,14 +1,16 @@
 resources/                   #
-├── source/                  # Sample sources (TS)
-│   └── *.ts                 #
-├── abc/                     # Compiled samples (ABC)
-│   └── *.abc                #
-├── etsir/                   # EtsIR (JSON dump of ArkIR) for samples
-│   ├── ast/                 # EtsIR-AST for samples from `source/`
-│   │   └── *.ts.json        #
-│   └── abc/                 # EtsIR-ABC for samples from `abc/`
-│       └── *.abc.json       #
-│                            #
+├── samples                  #
+│   ├── source/              # Sample sources (TS)
+│   │   └── *.ts             #
+│   ├── abc/                 # Compiled samples (ABC)
+│   │   └── *.abc            #
+│   ├── etsir/               # EtsIR (JSON dump of ArkIR) for samples
+│   │   ├── ast/             # EtsIR-AST for samples from `source/`
+│   │   │   └── *.ts.json    #
+│   │   └── abc/             # EtsIR-ABC for samples from `abc/`
+│   │       └── *.abc.json   #
+│   ...                      #
+│
 └── projects/                # Directory for individual projects
     ├── <project>/           # Some individual project
     │   └── ...              #
@@ -16,11 +18,13 @@ resources/                   #
     ...
 
 <root>/generated/
-├── dot/                     # DOT files for visualizing IRs
-│   ├── *.ts.json.dot        #
-│   └── *.abc.json.dot       #
-├── pdf/                     # Rendered PDFs from DOT files
-│   ├── *.ts.json.pdf        #
-│   └── *.abc.json.pdf       #
+├── samples
+│   ├── dot/                     # DOT files for visualizing IRs
+│   │   ├── *.ts.json.dot        #
+│   │   └── *.abc.json.dot       #
+│   ├── pdf/                     # Rendered PDFs from DOT files
+│   │   ├── *.ts.json.pdf        #
+│   │   └── *.abc.json.pdf       #
+│   ...
+│   TODO: text representation
 ...
-TODO: text representation
