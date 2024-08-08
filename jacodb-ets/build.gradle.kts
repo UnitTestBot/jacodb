@@ -29,15 +29,18 @@ tasks.register("generateTestResources") {
     description = "Generates test resources from TypeScript files using ArkAnalyzer."
     doLast {
         val envVarName = "ARKANALYZER_DIR"
+        val defaultArkAnalyzerDir = "arkanalyzer"
 
-        val arkAnalyzerDir = rootDir.resolve(
-            System.getenv(envVarName)
-                ?: error("Please, set $envVarName environment variable.")
-        )
+        val arkAnalyzerDir = rootDir.resolve(System.getenv(envVarName) ?: run {
+            println("Please, set $envVarName environment variable. Using default value: '$defaultArkAnalyzerDir'")
+            defaultArkAnalyzerDir
+        })
         if (!arkAnalyzerDir.exists()) {
             throw FileNotFoundException(
-                "ArkAnalyzer directory does not exist: '$arkAnalyzerDir'. " +
-                    "Did you forget to set the '$envVarName' environment variable?"
+                "ArkAnalyzer directory does not exist: '${arkAnalyzerDir.absolutePath}'. " +
+                    "Did you forget to set the '$envVarName' environment variable? " +
+                    "Current value is '${System.getenv(envVarName)}', " +
+                    "current dir is '${File("").absolutePath}'."
             )
         }
 
@@ -63,7 +66,7 @@ tasks.register("generateTestResources") {
             outputDir.relativeTo(resources).path,
         )
         println("Running: '${cmd.joinToString(" ")}'")
-        val process = ProcessBuilder(cmd).directory(resources).start();
+        val process = ProcessBuilder(cmd).directory(resources).start()
         val ok = process.waitFor(10, TimeUnit.MINUTES)
 
         val stdout = process.inputStream.bufferedReader().readText().trim()
