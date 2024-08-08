@@ -29,12 +29,11 @@ tasks.register("generateTestResources") {
     description = "Generates test resources from TypeScript files using ArkAnalyzer."
     doLast {
         val envVarName = "ARKANALYZER_DIR"
-        val defaultArkAnalyzerDir = "../arkanalyzer"
 
-        val arkAnalyzerDir = rootDir.resolve(System.getenv(envVarName) ?: run {
-            println("Please, set $envVarName environment variable. Using default value: '$defaultArkAnalyzerDir'")
-            defaultArkAnalyzerDir
-        })
+        val arkAnalyzerDir = rootDir.resolve(
+            System.getenv(envVarName)
+                ?: error("Please, set $envVarName environment variable.")
+        )
         if (!arkAnalyzerDir.exists()) {
             throw FileNotFoundException(
                 "ArkAnalyzer directory does not exist: '$arkAnalyzerDir'. " +
