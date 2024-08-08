@@ -63,7 +63,7 @@ class EtsTaintAnalysisTest {
         val getConfigForMethod: ForwardTaintFlowFunctions<EtsMethod, EtsStmt>.(EtsMethod) -> List<TaintConfigurationItem>? =
             { method ->
                 val rules = buildList {
-                    if (method.name == "samples/source") add(
+                    if (method.name == "source") add(
                         TaintMethodSource(
                             method = method,
                             condition = ConstantTrue,
