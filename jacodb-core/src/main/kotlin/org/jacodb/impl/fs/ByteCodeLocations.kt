@@ -35,7 +35,7 @@ fun File.asByteCodeLocation(runtimeVersion: JavaVersion, isRuntime: Boolean = fa
     throw IllegalArgumentException("file $absolutePath is not jar-file nor build dir folder")
 }
 
-fun List<File>.filterExisted(): List<File> = filter { file ->
+fun List<File>.filterExisting(): List<File> = filter { file ->
     file.exists().also {
         if (!it) {
             logger.warn("${file.absolutePath} doesn't exists. make sure there is no mistake")

@@ -41,10 +41,14 @@ class BuildersExtension(private val classpath: JcClasspath, private val hierarch
         }
         val syncQuery = Builders.syncQuery(classpath, names)
         return syncQuery.mapNotNull { response ->
-            val foundClass = classpath.toJcClass(response.source)
+            val responseSource = response.source
+            val foundClass = classpath.toJcClass(responseSource)
             val type = foundClass.toType()
             foundClass.declaredMethods[response.methodOffset].takeIf { method ->
-                type.declaredMethods.first { it.method == method }.parameters.all { param ->
+                val typedMethod = type.declaredMethods.firstOrNull {
+                    it.method == method
+                }
+                typedMethod != null && typedMethod.parameters.all { param ->
                     !param.type.hasReferences(hierarchy)
                 }
             }
