@@ -28,6 +28,9 @@ tasks.register("generateTestResources") {
     group = "build"
     description = "Generates test resources from TypeScript files using ArkAnalyzer."
     doLast {
+        println("Generating test resources using ArkAnalyzer...")
+        val startTime = System.currentTimeMillis()
+
         val envVarName = "ARKANALYZER_DIR"
         val defaultArkAnalyzerDir = "arkanalyzer"
 
@@ -43,6 +46,7 @@ tasks.register("generateTestResources") {
                     "current dir is '${File("").absolutePath}'."
             )
         }
+        println("Using ArkAnalyzer directory: '${arkAnalyzerDir.relativeTo(rootDir)}'")
 
         val scriptSubPath = "src/save/serializeArkIR"
         val script = arkAnalyzerDir.resolve("out").resolve("$scriptSubPath.js")
@@ -52,6 +56,7 @@ tasks.register("generateTestResources") {
                     "Did you forget to execute 'npm run build' in the arkanalyzer project?"
             )
         }
+        println("Using script: '${script.relativeTo(arkAnalyzerDir)}'")
 
         val resources = projectDir.resolve("src/test/resources")
         val inputDir = resources.resolve("source")
@@ -83,6 +88,6 @@ tasks.register("generateTestResources") {
             process.destroy()
         }
 
-        println("Done generating test resources!")
+        println("Done generating test resources in %.1fs".format((System.currentTimeMillis() - startTime) / 1000.0))
     }
 }
