@@ -61,7 +61,7 @@ class EtsIfds {
     }
 
     private fun projectAvailable(): Boolean {
-        val resource = object {}::class.java.getResource("/samples/project1")?.toURI()
+        val resource = object {}::class.java.getResource("/source/project1")?.toURI()
         return resource != null && resource.toPath().exists()
     }
 

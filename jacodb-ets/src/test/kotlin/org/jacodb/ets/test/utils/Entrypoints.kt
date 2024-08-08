@@ -81,7 +81,7 @@ object DumpEtsFileToDot {
 @OptIn(ExperimentalPathApi::class)
 object DumpEtsFilesToDot {
     private const val ETSIR_BASE = "/etsir"
-    private const val ETSIR_DIR = "samples" // relative to BASE
+    private const val ETSIR_DIR = "source" // relative to BASE
     private val DOT_DIR = Path("generated/dot")
 
     @JvmStatic

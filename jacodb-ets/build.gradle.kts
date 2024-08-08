@@ -55,7 +55,7 @@ tasks.register("generateTestResources") {
 
         val resources = projectDir.resolve("src/test/resources")
         val inputDir = resources.resolve("source")
-        val outputDir = resources.resolve("etsir/generated")
+        val outputDir = resources.resolve("etsir/ast")
         println("Generating test resources in '${outputDir.relativeTo(projectDir)}'...")
 
         val cmd: List<String> = listOf(

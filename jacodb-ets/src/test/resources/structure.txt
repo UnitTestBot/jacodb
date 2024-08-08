@@ -1,5 +1,5 @@
 resources/                   #
-├── source/                  # Sample source (TS/ETS) files
+├── source/                  # Sample sources (TS)
 │   └── *.ts                 #
 ├── abc/                     # Compiled samples (ABC)
 │   └── *.abc                #
