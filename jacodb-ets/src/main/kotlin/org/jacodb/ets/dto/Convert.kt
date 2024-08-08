@@ -32,7 +32,6 @@ import org.jacodb.ets.base.EtsBooleanConstant
 import org.jacodb.ets.base.EtsBooleanType
 import org.jacodb.ets.base.EtsCallExpr
 import org.jacodb.ets.base.EtsCallStmt
-import org.jacodb.ets.base.EtsFunctionType
 import org.jacodb.ets.base.EtsCastExpr
 import org.jacodb.ets.base.EtsClassType
 import org.jacodb.ets.base.EtsCommaExpr
@@ -44,6 +43,7 @@ import org.jacodb.ets.base.EtsEqExpr
 import org.jacodb.ets.base.EtsExpExpr
 import org.jacodb.ets.base.EtsExpr
 import org.jacodb.ets.base.EtsFieldRef
+import org.jacodb.ets.base.EtsFunctionType
 import org.jacodb.ets.base.EtsGotoStmt
 import org.jacodb.ets.base.EtsGtEqExpr
 import org.jacodb.ets.base.EtsGtExpr
@@ -294,7 +294,7 @@ class EtsMethodBuilder(
             )
 
             is AwaitExprDto -> EtsAwaitExpr(
-              arg = convertToEtsEntity(value.arg)
+                arg = convertToEtsEntity(value.arg)
             )
 
             is YieldExprDto -> EtsYieldExpr(

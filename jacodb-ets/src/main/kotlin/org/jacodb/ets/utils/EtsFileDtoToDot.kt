@@ -24,7 +24,6 @@ import org.jacodb.ets.dto.MethodDto
 import org.jacodb.ets.dto.NopStmtDto
 import org.jacodb.ets.dto.StmtDto
 import org.jacodb.ets.dto.SwitchStmtDto
-import java.io.BufferedWriter
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
