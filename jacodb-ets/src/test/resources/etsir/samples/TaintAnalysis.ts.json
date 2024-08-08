@@ -1,5 +1,5 @@
 {
-  "name": "DataFlowSecurity.ts",
+  "name": "TaintAnalysis.ts",
   "namespaces": [],
   "classes": [
     {
@@ -83,7 +83,15 @@
             "name": "source",
             "parameters": [],
             "returnType": {
-              "_": "NumberType"
+              "_": "UnionType",
+              "types": [
+                {
+                  "_": "NumberType"
+                },
+                {
+                  "_": "NullType"
+                }
+              ]
             }
           },
           "modifiers": [],
@@ -155,13 +163,29 @@
               {
                 "name": "data",
                 "type": {
-                  "_": "BooleanType"
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
                 },
                 "isOptional": false
               }
             ],
             "returnType": {
-              "_": "UnknownType"
+              "_": "UnionType",
+              "types": [
+                {
+                  "_": "NumberType"
+                },
+                {
+                  "_": "NullType"
+                }
+              ]
             }
           },
           "modifiers": [],
@@ -180,7 +204,15 @@
               {
                 "name": "data",
                 "type": {
-                  "_": "BooleanType"
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
                 }
               }
             ],
@@ -197,14 +229,30 @@
                         "_": "Local",
                         "name": "data",
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
                         }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
                         }
                       }
                     },
@@ -236,7 +284,15 @@
                         "_": "Local",
                         "name": "data",
                         "type": {
-                          "_": "BooleanType"
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
                         }
                       }
                     }
@@ -256,13 +312,21 @@
               {
                 "name": "data",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
                 },
                 "isOptional": false
               }
             ],
             "returnType": {
-              "_": "UnknownType"
+              "_": "NumberType"
             }
           },
           "modifiers": [],
@@ -281,7 +345,15 @@
               {
                 "name": "data",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
                 }
               }
             ],
@@ -301,14 +373,30 @@
                         "_": "Local",
                         "name": "data",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
                         }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
                         "type": {
-                          "_": "UnknownType"
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
                         }
                       }
                     },
@@ -343,7 +431,15 @@
                           "_": "Local",
                           "name": "data",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "UnionType",
+                            "types": [
+                              {
+                                "_": "NumberType"
+                              },
+                              {
+                                "_": "NullType"
+                              }
+                            ]
                           }
                         },
                         "right": {
@@ -371,7 +467,15 @@
                         "_": "Local",
                         "name": "data",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
                         }
                       }
                     }
@@ -388,9 +492,9 @@
                       "_": "ReturnStmt",
                       "arg": {
                         "_": "Constant",
-                        "value": "OK",
+                        "value": "0",
                         "type": {
-                          "_": "StringType"
+                          "_": "NumberType"
                         }
                       }
                     }
@@ -410,7 +514,15 @@
               {
                 "name": "data",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
                 },
                 "isOptional": false
               }
@@ -435,7 +547,15 @@
               {
                 "name": "data",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "UnionType",
+                  "types": [
+                    {
+                      "_": "NumberType"
+                    },
+                    {
+                      "_": "NullType"
+                    }
+                  ]
                 }
               },
               {
@@ -464,14 +584,30 @@
                         "_": "Local",
                         "name": "data",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
                         }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
                         "type": {
-                          "_": "UnknownType"
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "NumberType"
+                            },
+                            {
+                              "_": "NullType"
+                            }
+                          ]
                         }
                       }
                     },
@@ -506,7 +642,15 @@
                           "_": "Local",
                           "name": "data",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "UnionType",
+                            "types": [
+                              {
+                                "_": "NumberType"
+                              },
+                              {
+                                "_": "NullType"
+                              }
+                            ]
                           }
                         },
                         "right": {
