@@ -82,7 +82,7 @@ object DumpEtsFileToDot {
 object DumpEtsFilesToDot {
     private const val BASE = "/samples"
     private const val ETSIR_DIR = "etsir/ast" // relative to BASE
-    private val DOT_DIR = Path("generated/dot")
+    private val DOT_DIR = Path("generated/samples/dot")
 
     @JvmStatic
     fun main(args: Array<String>) {
