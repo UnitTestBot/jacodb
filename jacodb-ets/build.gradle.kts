@@ -21,7 +21,8 @@ dependencies {
 
 // Example usage:
 // ```
-// ARKANALYZER_DIR=~/dev/arkanalyzer ./gradlew generateTestResources
+// export ARKANALYZER_DIR=~/dev/arkanalyzer
+// ./gradlew generateTestResources
 // ```
 tasks.register("generateTestResources") {
     group = "build"
@@ -35,13 +36,19 @@ tasks.register("generateTestResources") {
             defaultArkAnalyzerDir
         })
         if (!arkAnalyzerDir.exists()) {
-            throw FileNotFoundException("ArkAnalyzer directory does not exist: '$arkAnalyzerDir'. Did you forget to set the '$envVarName' environment variable?")
+            throw FileNotFoundException(
+                "ArkAnalyzer directory does not exist: '$arkAnalyzerDir'. " +
+                    "Did you forget to set the '$envVarName' environment variable?"
+            )
         }
 
         val scriptSubPath = "src/save/serializeArkIR"
         val script = arkAnalyzerDir.resolve("out").resolve("$scriptSubPath.js")
         if (!script.exists()) {
-            throw FileNotFoundException("Script file not found: '$script'. Did you forget to execute 'npm run build' in the arkanalyzer project?")
+            throw FileNotFoundException(
+                "Script file not found: '$script'. " +
+                    "Did you forget to execute 'npm run build' in the arkanalyzer project?"
+            )
         }
 
         val resources = projectDir.resolve("src/test/resources")
