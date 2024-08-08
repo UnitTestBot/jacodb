@@ -10,24 +10,7 @@
       "typeParameters": [],
       "superClassName": "",
       "implementedInterfaceNames": [],
-      "fields": [
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "RESULT",
-            "type": {
-              "_": "NumberType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        }
-      ],
+      "fields": [],
       "methods": [
         {
           "signature": {
@@ -373,20 +356,7 @@
                           }
                         ]
                       }
-                    }
-                  ]
-                },
-                {
-                  "id": 1,
-                  "successors": [
-                    2,
-                    3
-                  ],
-                  "predecessors": [
-                    0,
-                    3
-                  ],
-                  "stmts": [
+                    },
                     {
                       "_": "AssignStmt",
                       "left": {
@@ -403,12 +373,22 @@
                           "_": "NumberType"
                         }
                       }
-                    },
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2,
+                    3
+                  ],
+                  "predecessors": [],
+                  "stmts": [
                     {
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": ">=",
+                        "op": "<",
                         "left": {
                           "_": "Local",
                           "name": "i",
@@ -424,35 +404,7 @@
                           }
                         },
                         "type": {
-                          "_": "UnknownType"
-                        }
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "i",
-                        "type": {
-                          "_": "NumberType"
-                        }
-                      },
-                      "right": {
-                        "_": "BinopExpr",
-                        "op": "+",
-                        "left": {
-                          "_": "Local",
-                          "name": "i",
-                          "type": {
-                            "_": "NumberType"
-                          }
-                        },
-                        "right": {
-                          "_": "Constant",
-                          "value": "1",
-                          "type": {
-                            "_": "NumberType"
-                          }
+                          "_": "BooleanType"
                         }
                       }
                     }
@@ -461,9 +413,7 @@
                 {
                   "id": 2,
                   "successors": [],
-                  "predecessors": [
-                    1
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "ReturnStmt",
@@ -482,9 +432,7 @@
                   "successors": [
                     1
                   ],
-                  "predecessors": [
-                    1
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "CallStmt",
@@ -516,6 +464,34 @@
                             }
                           }
                         ]
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "i",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "i",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
                       }
                     }
                   ]

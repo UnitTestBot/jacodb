@@ -116,7 +116,7 @@
               {
                 "name": "$temp0",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "NumberType"
                 }
               }
             ],
@@ -172,7 +172,7 @@
                         "_": "Local",
                         "name": "$temp0",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       },
                       "right": {
@@ -200,7 +200,7 @@
                         "_": "Local",
                         "name": "$temp0",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       }
                     }
@@ -251,7 +251,7 @@
               {
                 "name": "$temp0",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "NumberType"
                 }
               }
             ],
@@ -307,7 +307,7 @@
                         "_": "Local",
                         "name": "$temp0",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       },
                       "right": {
@@ -335,7 +335,7 @@
                         "_": "Local",
                         "name": "$temp0",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       }
                     }
@@ -399,7 +399,7 @@
               {
                 "name": "$temp0",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "NumberType"
                 }
               }
             ],
@@ -472,7 +472,7 @@
                         "_": "Local",
                         "name": "$temp0",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       },
                       "right": {
@@ -500,7 +500,7 @@
                         "_": "Local",
                         "name": "$temp0",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       }
                     }
@@ -564,7 +564,7 @@
               {
                 "name": "$temp0",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "NumberType"
                 }
               }
             ],
@@ -637,7 +637,7 @@
                         "_": "Local",
                         "name": "$temp0",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       },
                       "right": {
@@ -665,7 +665,7 @@
                         "_": "Local",
                         "name": "$temp0",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       }
                     }
@@ -716,7 +716,7 @@
               {
                 "name": "$temp0",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "NumberType"
                 }
               }
             ],
@@ -772,7 +772,7 @@
                         "_": "Local",
                         "name": "$temp0",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       },
                       "right": {
@@ -800,7 +800,7 @@
                         "_": "Local",
                         "name": "$temp0",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       }
                     }
@@ -851,7 +851,7 @@
               {
                 "name": "$temp0",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "NumberType"
                 }
               }
             ],
@@ -907,7 +907,7 @@
                         "_": "Local",
                         "name": "$temp0",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       },
                       "right": {
@@ -935,7 +935,7 @@
                         "_": "Local",
                         "name": "$temp0",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       }
                     }
@@ -1005,7 +1005,7 @@
               {
                 "name": "$temp1",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "NumberType"
                 }
               }
             ],
@@ -1099,7 +1099,7 @@
                         "_": "Local",
                         "name": "$temp1",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       },
                       "right": {
@@ -1127,7 +1127,7 @@
                         "_": "Local",
                         "name": "$temp1",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       }
                     }

@@ -21,6 +21,7 @@ import org.jacodb.ets.base.EtsAndExpr
 import org.jacodb.ets.base.EtsArrayAccess
 import org.jacodb.ets.base.EtsArrayLiteral
 import org.jacodb.ets.base.EtsAssignStmt
+import org.jacodb.ets.base.EtsAwaitExpr
 import org.jacodb.ets.base.EtsBitAndExpr
 import org.jacodb.ets.base.EtsBitNotExpr
 import org.jacodb.ets.base.EtsBitOrExpr
@@ -83,6 +84,7 @@ import org.jacodb.ets.base.EtsUnaryPlusExpr
 import org.jacodb.ets.base.EtsUndefinedConstant
 import org.jacodb.ets.base.EtsUnsignedRightShiftExpr
 import org.jacodb.ets.base.EtsVoidExpr
+import org.jacodb.ets.base.EtsYieldExpr
 
 fun EtsStmt.getOperands(): Sequence<EtsEntity> {
     return accept(StmtGetOperands)
@@ -177,6 +179,12 @@ private object EntityGetOperands : EtsEntity.Visitor<Sequence<EtsEntity>> {
         sequenceOf(expr.arg)
 
     override fun visit(expr: EtsDeleteExpr): Sequence<EtsEntity> =
+        sequenceOf(expr.arg)
+
+    override fun visit(expr: EtsAwaitExpr): Sequence<EtsEntity> =
+        sequenceOf(expr.arg)
+
+    override fun visit(expr: EtsYieldExpr): Sequence<EtsEntity> =
         sequenceOf(expr.arg)
 
     override fun visit(expr: EtsTypeOfExpr): Sequence<EtsEntity> =

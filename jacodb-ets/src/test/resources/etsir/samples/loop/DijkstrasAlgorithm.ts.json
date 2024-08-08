@@ -10,90 +10,7 @@
       "typeParameters": [],
       "superClassName": "",
       "implementedInterfaceNames": [],
-      "fields": [
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "graph",
-            "type": {
-              "_": "ArrayType",
-              "elementType": {
-                "_": "UnionType",
-                "types": [
-                  {
-                    "_": "ArrayType",
-                    "elementType": {
-                      "_": "NumberType"
-                    },
-                    "dimensions": 1
-                  },
-                  {
-                    "_": "ArrayType",
-                    "elementType": {
-                      "_": "NumberType"
-                    },
-                    "dimensions": 1
-                  },
-                  {
-                    "_": "ArrayType",
-                    "elementType": {
-                      "_": "NumberType"
-                    },
-                    "dimensions": 1
-                  },
-                  {
-                    "_": "ArrayType",
-                    "elementType": {
-                      "_": "NumberType"
-                    },
-                    "dimensions": 1
-                  }
-                ]
-              },
-              "dimensions": 1
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        },
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "dijkstra",
-            "type": {
-              "_": "UnknownType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        },
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "console",
-            "type": {
-              "_": "UnknownType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        }
-      ],
+      "fields": [],
       "methods": [
         {
           "signature": {
@@ -985,7 +902,37 @@
                       "right": {
                         "_": "NewArrayExpr",
                         "elementType": {
-                          "_": "AnyType"
+                          "_": "UnionType",
+                          "types": [
+                            {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            },
+                            {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            },
+                            {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            },
+                            {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            }
+                          ]
                         },
                         "size": {
                           "_": "Constant",
@@ -1486,29 +1433,12 @@
                         "_": "StaticCallExpr",
                         "method": {
                           "enclosingClass": {
-                            "name": "_DEFAULT_ARK_CLASS"
+                            "name": ""
                           },
                           "name": "dijkstra",
-                          "parameters": [
-                            {
-                              "name": "graph",
-                              "type": {
-                                "_": "UnclearReferenceType",
-                                "name": "ArrayType"
-                              },
-                              "isOptional": false
-                            },
-                            {
-                              "name": "startVertex",
-                              "type": {
-                                "_": "NumberType"
-                              },
-                              "isOptional": false
-                            }
-                          ],
+                          "parameters": [],
                           "returnType": {
-                            "_": "UnclearReferenceType",
-                            "name": "ArrayType"
+                            "_": "UnknownType"
                           }
                         },
                         "args": [
@@ -1621,8 +1551,15 @@
               {
                 "name": "graph",
                 "type": {
-                  "_": "UnclearReferenceType",
-                  "name": "ArrayType"
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "ArrayType",
+                    "elementType": {
+                      "_": "NumberType"
+                    },
+                    "dimensions": 1
+                  },
+                  "dimensions": 1
                 },
                 "isOptional": false
               },
@@ -1635,8 +1572,11 @@
               }
             ],
             "returnType": {
-              "_": "UnclearReferenceType",
-              "name": "ArrayType"
+              "_": "ArrayType",
+              "elementType": {
+                "_": "NumberType"
+              },
+              "dimensions": 1
             }
           },
           "modifiers": [],
@@ -1655,8 +1595,15 @@
               {
                 "name": "graph",
                 "type": {
-                  "_": "UnclearReferenceType",
-                  "name": "ArrayType"
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "ArrayType",
+                    "elementType": {
+                      "_": "NumberType"
+                    },
+                    "dimensions": 1
+                  },
+                  "dimensions": 1
                 }
               },
               {
@@ -1774,13 +1721,13 @@
               {
                 "name": "$temp8",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "BooleanType"
                 }
               },
               {
                 "name": "$temp9",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "BooleanType"
                 }
               },
               {
@@ -1804,25 +1751,29 @@
               {
                 "name": "$temp13",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "NumberType"
+                  },
+                  "dimensions": 1
                 }
               },
               {
                 "name": "$temp14",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "NumberType"
                 }
               },
               {
                 "name": "$temp15",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "BooleanType"
                 }
               },
               {
                 "name": "$temp16",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "BooleanType"
                 }
               },
               {
@@ -1834,19 +1785,23 @@
               {
                 "name": "$temp18",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "NumberType"
+                  },
+                  "dimensions": 1
                 }
               },
               {
                 "name": "$temp19",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "NumberType"
                 }
               },
               {
                 "name": "$temp20",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "NumberType"
                 }
               },
               {
@@ -1858,13 +1813,13 @@
               {
                 "name": "$temp22",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "BooleanType"
                 }
               },
               {
                 "name": "$temp23",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "BooleanType"
                 }
               },
               {
@@ -1876,19 +1831,23 @@
               {
                 "name": "$temp25",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "ArrayType",
+                  "elementType": {
+                    "_": "NumberType"
+                  },
+                  "dimensions": 1
                 }
               },
               {
                 "name": "$temp26",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "NumberType"
                 }
               },
               {
                 "name": "$temp27",
                 "type": {
-                  "_": "UnknownType"
+                  "_": "NumberType"
                 }
               }
             ],
@@ -1907,16 +1866,30 @@
                         "_": "Local",
                         "name": "graph",
                         "type": {
-                          "_": "UnclearReferenceType",
-                          "name": "ArrayType"
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "ArrayType",
+                            "elementType": {
+                              "_": "NumberType"
+                            },
+                            "dimensions": 1
+                          },
+                          "dimensions": 1
                         }
                       },
                       "right": {
                         "_": "ParameterRef",
                         "index": 0,
                         "type": {
-                          "_": "UnclearReferenceType",
-                          "name": "ArrayType"
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "ArrayType",
+                            "elementType": {
+                              "_": "NumberType"
+                            },
+                            "dimensions": 1
+                          },
+                          "dimensions": 1
                         }
                       }
                     },
@@ -1983,8 +1956,15 @@
                             "_": "Local",
                             "name": "graph",
                             "type": {
-                              "_": "UnclearReferenceType",
-                              "name": "ArrayType"
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "ArrayType",
+                                "elementType": {
+                                  "_": "NumberType"
+                                },
+                                "dimensions": 1
+                              },
+                              "dimensions": 1
                             }
                           },
                           "field": {
@@ -2104,8 +2084,15 @@
                             "_": "Local",
                             "name": "graph",
                             "type": {
-                              "_": "UnclearReferenceType",
-                              "name": "ArrayType"
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "ArrayType",
+                                "elementType": {
+                                  "_": "NumberType"
+                                },
+                                "dimensions": 1
+                              },
+                              "dimensions": 1
                             }
                           },
                           "field": {
@@ -2172,13 +2159,9 @@
                 {
                   "id": 1,
                   "successors": [
-                    2,
-                    3
+                    2
                   ],
-                  "predecessors": [
-                    0,
-                    6
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -2196,7 +2179,17 @@
                           "_": "NumberType"
                         }
                       }
-                    },
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [
+                    3,
+                    4
+                  ],
+                  "predecessors": [],
+                  "stmts": [
                     {
                       "_": "AssignStmt",
                       "left": {
@@ -2212,8 +2205,15 @@
                           "_": "Local",
                           "name": "graph",
                           "type": {
-                            "_": "UnclearReferenceType",
-                            "name": "ArrayType"
+                            "_": "ArrayType",
+                            "elementType": {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            },
+                            "dimensions": 1
                           }
                         },
                         "field": {
@@ -2259,7 +2259,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": ">=",
+                        "op": "<",
                         "left": {
                           "_": "Local",
                           "name": "i",
@@ -2275,46 +2275,16 @@
                           }
                         },
                         "type": {
-                          "_": "UnknownType"
-                        }
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "i",
-                        "type": {
-                          "_": "NumberType"
-                        }
-                      },
-                      "right": {
-                        "_": "BinopExpr",
-                        "op": "+",
-                        "left": {
-                          "_": "Local",
-                          "name": "i",
-                          "type": {
-                            "_": "NumberType"
-                          }
-                        },
-                        "right": {
-                          "_": "Constant",
-                          "value": "1",
-                          "type": {
-                            "_": "NumberType"
-                          }
+                          "_": "BooleanType"
                         }
                       }
                     }
                   ]
                 },
                 {
-                  "id": 2,
+                  "id": 3,
                   "successors": [],
-                  "predecessors": [
-                    1
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "ReturnStmt",
@@ -2333,13 +2303,11 @@
                   ]
                 },
                 {
-                  "id": 3,
+                  "id": 4,
                   "successors": [
-                    4
+                    5
                   ],
-                  "predecessors": [
-                    1
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -2378,21 +2346,7 @@
                           }
                         }
                       }
-                    }
-                  ]
-                },
-                {
-                  "id": 4,
-                  "successors": [
-                    5,
-                    9
-                  ],
-                  "predecessors": [
-                    3,
-                    9,
-                    10
-                  ],
-                  "stmts": [
+                    },
                     {
                       "_": "AssignStmt",
                       "left": {
@@ -2409,7 +2363,17 @@
                           "_": "NumberType"
                         }
                       }
-                    },
+                    }
+                  ]
+                },
+                {
+                  "id": 5,
+                  "successors": [
+                    6,
+                    11
+                  ],
+                  "predecessors": [],
+                  "stmts": [
                     {
                       "_": "AssignStmt",
                       "left": {
@@ -2425,8 +2389,15 @@
                           "_": "Local",
                           "name": "graph",
                           "type": {
-                            "_": "UnclearReferenceType",
-                            "name": "ArrayType"
+                            "_": "ArrayType",
+                            "elementType": {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            },
+                            "dimensions": 1
                           }
                         },
                         "field": {
@@ -2444,7 +2415,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": ">=",
+                        "op": "<",
                         "left": {
                           "_": "Local",
                           "name": "v",
@@ -2460,48 +2431,18 @@
                           }
                         },
                         "type": {
-                          "_": "UnknownType"
-                        }
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "v",
-                        "type": {
-                          "_": "NumberType"
-                        }
-                      },
-                      "right": {
-                        "_": "BinopExpr",
-                        "op": "+",
-                        "left": {
-                          "_": "Local",
-                          "name": "v",
-                          "type": {
-                            "_": "NumberType"
-                          }
-                        },
-                        "right": {
-                          "_": "Constant",
-                          "value": "1",
-                          "type": {
-                            "_": "NumberType"
-                          }
+                          "_": "BooleanType"
                         }
                       }
                     }
                   ]
                 },
                 {
-                  "id": 5,
+                  "id": 6,
                   "successors": [
-                    6
+                    7
                   ],
-                  "predecessors": [
-                    4
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -2536,21 +2477,7 @@
                           "_": "BooleanType"
                         }
                       }
-                    }
-                  ]
-                },
-                {
-                  "id": 6,
-                  "successors": [
-                    1,
-                    7
-                  ],
-                  "predecessors": [
-                    5,
-                    7,
-                    8
-                  ],
-                  "stmts": [
+                    },
                     {
                       "_": "AssignStmt",
                       "left": {
@@ -2567,7 +2494,17 @@
                           "_": "NumberType"
                         }
                       }
-                    },
+                    }
+                  ]
+                },
+                {
+                  "id": 7,
+                  "successors": [
+                    2,
+                    8
+                  ],
+                  "predecessors": [],
+                  "stmts": [
                     {
                       "_": "AssignStmt",
                       "left": {
@@ -2583,8 +2520,15 @@
                           "_": "Local",
                           "name": "graph",
                           "type": {
-                            "_": "UnclearReferenceType",
-                            "name": "ArrayType"
+                            "_": "ArrayType",
+                            "elementType": {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            },
+                            "dimensions": 1
                           }
                         },
                         "field": {
@@ -2602,7 +2546,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": ">=",
+                        "op": "<",
                         "left": {
                           "_": "Local",
                           "name": "v",
@@ -2618,49 +2562,19 @@
                           }
                         },
                         "type": {
-                          "_": "UnknownType"
-                        }
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "v",
-                        "type": {
-                          "_": "NumberType"
-                        }
-                      },
-                      "right": {
-                        "_": "BinopExpr",
-                        "op": "+",
-                        "left": {
-                          "_": "Local",
-                          "name": "v",
-                          "type": {
-                            "_": "NumberType"
-                          }
-                        },
-                        "right": {
-                          "_": "Constant",
-                          "value": "1",
-                          "type": {
-                            "_": "NumberType"
-                          }
+                          "_": "BooleanType"
                         }
                       }
                     }
                   ]
                 },
                 {
-                  "id": 7,
+                  "id": 8,
                   "successors": [
-                    6,
-                    8
+                    9,
+                    10
                   ],
-                  "predecessors": [
-                    6
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -2723,27 +2637,43 @@
                         "_": "Local",
                         "name": "$temp13",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "NumberType"
+                          },
+                          "dimensions": 1
                         }
                       },
                       "right": {
-                        "_": "InstanceFieldRef",
-                        "instance": {
+                        "_": "ArrayRef",
+                        "array": {
                           "_": "Local",
                           "name": "graph",
                           "type": {
-                            "_": "UnclearReferenceType",
-                            "name": "ArrayType"
+                            "_": "ArrayType",
+                            "elementType": {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            },
+                            "dimensions": 1
                           }
                         },
-                        "field": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
+                        "index": {
+                          "_": "Local",
                           "name": "minIndex",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "NumberType"
                           }
+                        },
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "NumberType"
+                          },
+                          "dimensions": 1
                         }
                       }
                     },
@@ -2753,26 +2683,31 @@
                         "_": "Local",
                         "name": "$temp14",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       },
                       "right": {
-                        "_": "InstanceFieldRef",
-                        "instance": {
+                        "_": "ArrayRef",
+                        "array": {
                           "_": "Local",
                           "name": "$temp13",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "ArrayType",
+                            "elementType": {
+                              "_": "NumberType"
+                            },
+                            "dimensions": 1
                           }
                         },
-                        "field": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
+                        "index": {
+                          "_": "Local",
                           "name": "v",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "NumberType"
                           }
+                        },
+                        "type": {
+                          "_": "NumberType"
                         }
                       }
                     },
@@ -2782,17 +2717,17 @@
                         "_": "Local",
                         "name": "$temp15",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "BooleanType"
                         }
                       },
                       "right": {
-                        "_": "BinopExpr",
+                        "_": "ConditionExpr",
                         "op": "!==",
                         "left": {
                           "_": "Local",
                           "name": "$temp14",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "NumberType"
                           }
                         },
                         "right": {
@@ -2801,6 +2736,9 @@
                           "type": {
                             "_": "NumberType"
                           }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     },
@@ -2810,7 +2748,7 @@
                         "_": "Local",
                         "name": "$temp16",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "BooleanType"
                         }
                       },
                       "right": {
@@ -2827,7 +2765,7 @@
                           "_": "Local",
                           "name": "$temp15",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "BooleanType"
                           }
                         }
                       }
@@ -2872,27 +2810,43 @@
                         "_": "Local",
                         "name": "$temp18",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "NumberType"
+                          },
+                          "dimensions": 1
                         }
                       },
                       "right": {
-                        "_": "InstanceFieldRef",
-                        "instance": {
+                        "_": "ArrayRef",
+                        "array": {
                           "_": "Local",
                           "name": "graph",
                           "type": {
-                            "_": "UnclearReferenceType",
-                            "name": "ArrayType"
+                            "_": "ArrayType",
+                            "elementType": {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            },
+                            "dimensions": 1
                           }
                         },
-                        "field": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
+                        "index": {
+                          "_": "Local",
                           "name": "minIndex",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "NumberType"
                           }
+                        },
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "NumberType"
+                          },
+                          "dimensions": 1
                         }
                       }
                     },
@@ -2902,26 +2856,31 @@
                         "_": "Local",
                         "name": "$temp19",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       },
                       "right": {
-                        "_": "InstanceFieldRef",
-                        "instance": {
+                        "_": "ArrayRef",
+                        "array": {
                           "_": "Local",
                           "name": "$temp18",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "ArrayType",
+                            "elementType": {
+                              "_": "NumberType"
+                            },
+                            "dimensions": 1
                           }
                         },
-                        "field": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
+                        "index": {
+                          "_": "Local",
                           "name": "v",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "NumberType"
                           }
+                        },
+                        "type": {
+                          "_": "NumberType"
                         }
                       }
                     },
@@ -2931,7 +2890,7 @@
                         "_": "Local",
                         "name": "$temp20",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       },
                       "right": {
@@ -2948,7 +2907,7 @@
                           "_": "Local",
                           "name": "$temp19",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "NumberType"
                           }
                         }
                       }
@@ -2993,17 +2952,17 @@
                         "_": "Local",
                         "name": "$temp22",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "BooleanType"
                         }
                       },
                       "right": {
-                        "_": "BinopExpr",
+                        "_": "ConditionExpr",
                         "op": "<",
                         "left": {
                           "_": "Local",
                           "name": "$temp20",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "NumberType"
                           }
                         },
                         "right": {
@@ -3012,6 +2971,9 @@
                           "type": {
                             "_": "NumberType"
                           }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     },
@@ -3021,7 +2983,7 @@
                         "_": "Local",
                         "name": "$temp23",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "BooleanType"
                         }
                       },
                       "right": {
@@ -3031,14 +2993,14 @@
                           "_": "Local",
                           "name": "$temp16",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "BooleanType"
                           }
                         },
                         "right": {
                           "_": "Local",
                           "name": "$temp22",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "BooleanType"
                           }
                         }
                       }
@@ -3047,12 +3009,12 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": "==",
+                        "op": "!=",
                         "left": {
                           "_": "Local",
                           "name": "$temp23",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "BooleanType"
                           }
                         },
                         "right": {
@@ -3063,20 +3025,83 @@
                           }
                         },
                         "type": {
-                          "_": "UnknownType"
+                          "_": "BooleanType"
                         }
                       }
                     }
                   ]
                 },
                 {
-                  "id": 8,
+                  "id": 9,
                   "successors": [
-                    6
-                  ],
-                  "predecessors": [
                     7
                   ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "v",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "v",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "i",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "i",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 10,
+                  "successors": [
+                    9
+                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -3118,27 +3143,43 @@
                         "_": "Local",
                         "name": "$temp25",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "NumberType"
+                          },
+                          "dimensions": 1
                         }
                       },
                       "right": {
-                        "_": "InstanceFieldRef",
-                        "instance": {
+                        "_": "ArrayRef",
+                        "array": {
                           "_": "Local",
                           "name": "graph",
                           "type": {
-                            "_": "UnclearReferenceType",
-                            "name": "ArrayType"
+                            "_": "ArrayType",
+                            "elementType": {
+                              "_": "ArrayType",
+                              "elementType": {
+                                "_": "NumberType"
+                              },
+                              "dimensions": 1
+                            },
+                            "dimensions": 1
                           }
                         },
-                        "field": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
+                        "index": {
+                          "_": "Local",
                           "name": "minIndex",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "NumberType"
                           }
+                        },
+                        "type": {
+                          "_": "ArrayType",
+                          "elementType": {
+                            "_": "NumberType"
+                          },
+                          "dimensions": 1
                         }
                       }
                     },
@@ -3148,26 +3189,31 @@
                         "_": "Local",
                         "name": "$temp26",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       },
                       "right": {
-                        "_": "InstanceFieldRef",
-                        "instance": {
+                        "_": "ArrayRef",
+                        "array": {
                           "_": "Local",
                           "name": "$temp25",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "ArrayType",
+                            "elementType": {
+                              "_": "NumberType"
+                            },
+                            "dimensions": 1
                           }
                         },
-                        "field": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
+                        "index": {
+                          "_": "Local",
                           "name": "v",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "NumberType"
                           }
+                        },
+                        "type": {
+                          "_": "NumberType"
                         }
                       }
                     },
@@ -3177,7 +3223,7 @@
                         "_": "Local",
                         "name": "$temp27",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       },
                       "right": {
@@ -3194,7 +3240,7 @@
                           "_": "Local",
                           "name": "$temp26",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "NumberType"
                           }
                         }
                       }
@@ -3229,21 +3275,19 @@
                         "_": "Local",
                         "name": "$temp27",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "NumberType"
                         }
                       }
                     }
                   ]
                 },
                 {
-                  "id": 9,
+                  "id": 11,
                   "successors": [
-                    4,
-                    10
+                    12,
+                    13
                   ],
-                  "predecessors": [
-                    4
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -3340,11 +3384,11 @@
                         "_": "Local",
                         "name": "$temp8",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "BooleanType"
                         }
                       },
                       "right": {
-                        "_": "BinopExpr",
+                        "_": "ConditionExpr",
                         "op": "<=",
                         "left": {
                           "_": "Local",
@@ -3359,6 +3403,9 @@
                           "type": {
                             "_": "NumberType"
                           }
+                        },
+                        "type": {
+                          "_": "BooleanType"
                         }
                       }
                     },
@@ -3368,7 +3415,7 @@
                         "_": "Local",
                         "name": "$temp9",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "BooleanType"
                         }
                       },
                       "right": {
@@ -3385,7 +3432,7 @@
                           "_": "Local",
                           "name": "$temp8",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "BooleanType"
                           }
                         }
                       }
@@ -3394,12 +3441,12 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": "==",
+                        "op": "!=",
                         "left": {
                           "_": "Local",
                           "name": "$temp9",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "BooleanType"
                           }
                         },
                         "right": {
@@ -3410,20 +3457,55 @@
                           }
                         },
                         "type": {
-                          "_": "UnknownType"
+                          "_": "BooleanType"
                         }
                       }
                     }
                   ]
                 },
                 {
-                  "id": 10,
+                  "id": 12,
                   "successors": [
-                    4
+                    5
                   ],
-                  "predecessors": [
-                    9
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "v",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      },
+                      "right": {
+                        "_": "BinopExpr",
+                        "op": "+",
+                        "left": {
+                          "_": "Local",
+                          "name": "v",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "1",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 13,
+                  "successors": [
+                    12
                   ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",

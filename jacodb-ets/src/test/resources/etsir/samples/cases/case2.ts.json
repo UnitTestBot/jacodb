@@ -301,18 +301,50 @@
           },
           "modifiers": [],
           "typeParameters": [],
+          "body": null
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Message"
+            },
+            "name": "readBoolean",
+            "parameters": [],
+            "returnType": {
+              "_": "BooleanType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": null
+        }
+      ]
+    },
+    {
+      "signature": {
+        "name": "PixelMap"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "PixelMap"
+            },
+            "name": "@instance_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
           "body": {
-            "locals": [
-              {
-                "name": "this",
-                "type": {
-                  "_": "ClassType",
-                  "signature": {
-                    "name": "Message"
-                  }
-                }
-              }
-            ],
+            "locals": [],
             "cfg": {
               "blocks": [
                 {
@@ -326,10 +358,7 @@
                         "_": "Local",
                         "name": "this",
                         "type": {
-                          "_": "ClassType",
-                          "signature": {
-                            "name": "Message"
-                          }
+                          "_": "UnknownType"
                         }
                       },
                       "right": {
@@ -337,7 +366,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "Message"
+                            "name": "PixelMap"
                           }
                         }
                       }
@@ -354,28 +383,18 @@
         {
           "signature": {
             "enclosingClass": {
-              "name": "Message"
+              "name": "PixelMap"
             },
-            "name": "readBoolean",
+            "name": "@static_init",
             "parameters": [],
             "returnType": {
-              "_": "BooleanType"
+              "_": "UnknownType"
             }
           },
           "modifiers": [],
           "typeParameters": [],
           "body": {
-            "locals": [
-              {
-                "name": "this",
-                "type": {
-                  "_": "ClassType",
-                  "signature": {
-                    "name": "Message"
-                  }
-                }
-              }
-            ],
+            "locals": [],
             "cfg": {
               "blocks": [
                 {
@@ -389,10 +408,7 @@
                         "_": "Local",
                         "name": "this",
                         "type": {
-                          "_": "ClassType",
-                          "signature": {
-                            "name": "Message"
-                          }
+                          "_": "UnknownType"
                         }
                       },
                       "right": {
@@ -400,7 +416,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "Message"
+                            "name": "PixelMap"
                           }
                         }
                       }
@@ -413,19 +429,82 @@
               ]
             }
           }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "PixelMap"
+            },
+            "name": "constructor",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "PixelMap"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "PixelMap"
+                          },
+                          "name": "@instance_init",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
         }
       ]
-    },
-    {
-      "signature": {
-        "name": "PixelMap"
-      },
-      "modifiers": [],
-      "typeParameters": [],
-      "superClassName": "",
-      "implementedInterfaceNames": [],
-      "fields": [],
-      "methods": []
     },
     {
       "signature": {
@@ -449,8 +528,7 @@
           "modifiers": [],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
+          "exclamationToken": false
         },
         {
           "signature": {
@@ -465,11 +543,185 @@
           "modifiers": [],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
+          "exclamationToken": false
         }
       ],
-      "methods": []
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Size"
+            },
+            "name": "@instance_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Size"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Size"
+            },
+            "name": "@static_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Size"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Size"
+            },
+            "name": "constructor",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Size"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "Size"
+                          },
+                          "name": "@instance_init",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
     },
     {
       "signature": {
@@ -481,6 +733,106 @@
       "implementedInterfaceNames": [],
       "fields": [],
       "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Request"
+            },
+            "name": "@instance_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Request"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Request"
+            },
+            "name": "@static_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Request"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
         {
           "signature": {
             "enclosingClass": {
@@ -561,7 +913,28 @@
                 }
               },
               {
+                "name": "$temp2",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
+                  }
+                }
+              },
+              {
                 "name": "createPixelMap",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "e",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "console",
                 "type": {
                   "_": "UnknownType"
                 }
@@ -572,7 +945,8 @@
                 {
                   "id": 0,
                   "successors": [
-                    1
+                    1,
+                    3
                   ],
                   "predecessors": [],
                   "stmts": [
@@ -616,15 +990,88 @@
                           }
                         }
                       }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "data",
+                          "type": {
+                            "_": "UnclearReferenceType",
+                            "name": "Message"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "readBoolean",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "IfStmt",
+                      "condition": {
+                        "_": "ConditionExpr",
+                        "op": "!=",
+                        "left": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "right": {
+                          "_": "Constant",
+                          "value": "0",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        },
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      }
                     }
                   ]
                 },
                 {
                   "id": 1,
-                  "successors": [],
-                  "predecessors": [
-                    0
+                  "successors": [
+                    2
                   ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Constant",
+                        "value": "true",
+                        "type": {
+                          "_": "BooleanType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "ReturnStmt",
@@ -637,6 +1084,336 @@
                       }
                     }
                   ]
+                },
+                {
+                  "id": 3,
+                  "successors": [
+                    1
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "height",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "data",
+                          "type": {
+                            "_": "UnclearReferenceType",
+                            "name": "Message"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "readInt",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "width",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "data",
+                          "type": {
+                            "_": "UnclearReferenceType",
+                            "name": "Message"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "readInt",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "bytesNumber",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "data",
+                          "type": {
+                            "_": "UnclearReferenceType",
+                            "name": "Message"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "readInt",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "ArrayBuffer"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "NewExpr",
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "ArrayBuffer"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp1",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "ArrayBuffer"
+                            }
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "ArrayBuffer"
+                          },
+                          "name": "constructor",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "bytesNumber",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "NewExpr",
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp2",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
+                            }
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
+                          },
+                          "name": "constructor",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "pixelMap",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "StaticCallExpr",
+                        "method": {
+                          "enclosingClass": {
+                            "name": ""
+                          },
+                          "name": "createPixelMap",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp1",
+                            "type": {
+                              "_": "ClassType",
+                              "signature": {
+                                "name": "ArrayBuffer"
+                              }
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "$temp2",
+                            "type": {
+                              "_": "ClassType",
+                              "signature": {
+                                "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Request"
+            },
+            "name": "constructor",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Request"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "Request"
+                          },
+                          "name": "@instance_init",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
                 }
               ]
             }
@@ -646,7 +1423,7 @@
     },
     {
       "signature": {
-        "name": "AnonymousClass-onRemoteMessageRequest-0"
+        "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
       },
       "modifiers": [],
       "typeParameters": [],
@@ -656,7 +1433,7 @@
         {
           "signature": {
             "enclosingClass": {
-              "name": "AnonymousClass-onRemoteMessageRequest-0"
+              "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
             },
             "name": "height",
             "type": {
@@ -666,39 +1443,214 @@
           "modifiers": [],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": {
-            "_": "Local",
-            "name": "height",
+          "exclamationToken": false
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
+            },
+            "name": "width",
             "type": {
               "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false
+        }
+      ],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
+            },
+            "name": "@instance_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
+                            }
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
+                          },
+                          "name": "height",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "height",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
+                            }
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
+                          },
+                          "name": "width",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "width",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
             }
           }
         },
         {
           "signature": {
             "enclosingClass": {
-              "name": "AnonymousClass-onRemoteMessageRequest-0"
+              "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
             },
-            "name": "width",
-            "type": {
+            "name": "constructor",
+            "parameters": [],
+            "returnType": {
               "_": "UnknownType"
             }
           },
           "modifiers": [],
           "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": {
-            "_": "Local",
-            "name": "width",
-            "type": {
-              "_": "UnknownType"
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "AnonymousClass-Request-onRemoteMessageRequest-0"
+                          },
+                          "name": "@instance_init",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
             }
           }
         }
-      ],
-      "methods": []
+      ]
     }
   ],
   "importInfos": [],

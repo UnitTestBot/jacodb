@@ -18,11 +18,15 @@ package org.jacodb.ets.test
 
 import org.jacodb.ets.base.EtsAssignStmt
 import org.jacodb.ets.base.EtsInstanceFieldRef
+import org.jacodb.ets.base.EtsLocal
+import org.jacodb.ets.base.EtsNumberConstant
+import org.jacodb.ets.base.EtsReturnStmt
 import org.jacodb.ets.base.EtsThis
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.test.utils.loadEtsFileFromResource
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -50,17 +54,17 @@ class EtsFileTest {
     }
 
     @Test
-    fun `test etsFile on TypeMismatch`() {
+    fun `test sample TypeMismatch`() {
         val etsFile = load("etsir/samples/TypeMismatch")
         etsFile.classes.forEach { cls ->
             cls.methods.forEach { method ->
                 when (method.name) {
                     "add" -> {
-                        Assertions.assertEquals(11, method.cfg.instructions.size)
+                        assertEquals(10, method.cfg.instructions.size)
                     }
 
                     "main" -> {
-                        Assertions.assertEquals(5, method.cfg.instructions.size)
+                        assertEquals(5, method.cfg.instructions.size)
                     }
                 }
             }
@@ -68,31 +72,103 @@ class EtsFileTest {
     }
 
     @Test
-    fun `test initializers prepended to class constructor`() {
-        val etsFile = load("etsir/samples/PrependInitializer")
-        val cls = etsFile.classes.single { it.name == "Foo" }
-        val ctorBegin = cls.ctor.cfg.instructions.first() as EtsAssignStmt
-        val fieldRef = ctorBegin.lhv as EtsInstanceFieldRef
-        Assertions.assertTrue(fieldRef.instance is EtsThis)
-        Assertions.assertEquals("x", fieldRef.field.name)
-    }
+    fun `test sample FieldInitializers`() {
+        val etsFile = load("etsir/samples/classes/FieldInitializers")
 
-    @Test
-    fun `test static field should not be initialized in constructor`() {
-        val etsFile = load("etsir/samples/StaticField")
         val cls = etsFile.classes.single { it.name == "Foo" }
-        Assertions.assertFalse(cls.ctor.cfg.stmts.any {
-            it is EtsAssignStmt && it.lhv is EtsInstanceFieldRef
-        })
-    }
 
-    @Test
-    fun `test default constructor should be synthesized`() {
-        val etsFile = load("etsir/samples/DefaultConstructor")
-        val cls = etsFile.classes.single { it.name == "Foo" }
-        val fieldInit = cls.ctor.cfg.instructions.first() as EtsAssignStmt
-        val fieldRef = fieldInit.lhv as EtsInstanceFieldRef
-        Assertions.assertTrue(fieldRef.instance is EtsThis)
-        Assertions.assertEquals("x", fieldRef.field.name)
+        // instance initializer
+        run {
+            val method = cls.methods.single { it.name == "@instance_init" }
+            assertEquals(3, method.cfg.instructions.size)
+
+            // Local("this") := ThisRef
+            run {
+                val stmt = method.cfg.instructions[0]
+                assertIs<EtsAssignStmt>(stmt)
+
+                val lhv = stmt.lhv
+                assertIs<EtsLocal>(lhv)
+                assertEquals("this", lhv.name)
+
+                val rhv = stmt.rhv
+                assertIs<EtsThis>(rhv)
+                assertEquals("Foo", rhv.type.typeName)
+            }
+
+            // Local("this").x := 99
+            run {
+                val stmt = method.cfg.instructions[1]
+                assertIs<EtsAssignStmt>(stmt)
+
+                val lhv = stmt.lhv
+                assertIs<EtsInstanceFieldRef>(lhv)
+
+                val instance = lhv.instance
+                assertIs<EtsLocal>(instance)
+                assertEquals("this", instance.name)
+
+                val field = lhv.field
+                assertEquals("x", field.name)
+
+                val rhv = stmt.rhv
+                assertIs<EtsNumberConstant>(rhv)
+                assertEquals(99.0, rhv.value)
+            }
+
+            // return
+            run {
+                val stmt = method.cfg.instructions[2]
+                assertIs<EtsReturnStmt>(stmt)
+                assertEquals(null, stmt.returnValue)
+            }
+        }
+
+        // static initializer
+        run {
+            val method = cls.methods.single { it.name == "@static_init" }
+            assertEquals(3, method.cfg.instructions.size)
+
+            // Local("this") := ThisRef
+            run {
+                val stmt = method.cfg.instructions[0]
+                assertIs<EtsAssignStmt>(stmt)
+
+                val lhv = stmt.lhv
+                assertIs<EtsLocal>(lhv)
+                assertEquals("this", lhv.name)
+
+                val rhv = stmt.rhv
+                assertIs<EtsThis>(rhv)
+                assertEquals("Foo", rhv.type.typeName)
+            }
+
+            // Local("this").y := 111
+            run {
+                val stmt = method.cfg.instructions[1]
+                assertIs<EtsAssignStmt>(stmt)
+
+                val lhv = stmt.lhv
+                assertIs<EtsInstanceFieldRef>(lhv)
+
+                val instance = lhv.instance
+                assertIs<EtsLocal>(instance)
+                assertEquals("this", instance.name)
+
+                val field = lhv.field
+                assertEquals("y", field.name)
+
+                val rhv = stmt.rhv
+                assertIs<EtsNumberConstant>(rhv)
+                assertEquals(111.0, rhv.value)
+            }
+
+            // return
+            run {
+                val stmt = method.cfg.instructions[2]
+                assertIs<EtsReturnStmt>(stmt)
+                assertEquals(null, stmt.returnValue)
+            }
+        }
     }
 }

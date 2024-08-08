@@ -20,7 +20,6 @@ import org.jacodb.ets.base.EtsStmt
 import org.jacodb.ets.model.EtsClass
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsMethod
-import java.io.BufferedWriter
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.createDirectories

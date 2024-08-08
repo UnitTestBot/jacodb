@@ -10,56 +10,7 @@
       "typeParameters": [],
       "superClassName": "",
       "implementedInterfaceNames": [],
-      "fields": [
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "result",
-            "type": {
-              "_": "StringType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        },
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "message",
-            "type": {
-              "_": "StringType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        },
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "console",
-            "type": {
-              "_": "UnknownType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        }
-      ],
+      "fields": [],
       "methods": [
         {
           "signature": {
@@ -108,6 +59,18 @@
               },
               {
                 "name": "console",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "error",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp1",
                 "type": {
                   "_": "UnknownType"
                 }
@@ -160,15 +123,100 @@
                           "_": "StringType"
                         }
                       }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "message",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "An error occurred!",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "NewExpr",
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Error"
+                            }
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "Error"
+                          },
+                          "name": "constructor",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "message",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ThrowStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
+                      }
                     }
                   ]
                 },
                 {
                   "id": 1,
                   "successors": [],
-                  "predecessors": [
-                    0
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "CallStmt",

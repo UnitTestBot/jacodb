@@ -72,7 +72,6 @@ data class FieldDto(
     val modifiers: List<ModifierDto>? = null,
     @SerialName("questionToken") val isOptional: Boolean = false, // '?'
     @SerialName("exclamationToken") val isDefinitelyAssigned: Boolean = false, // '!'
-    val initializer: ValueDto? = null,
 )
 
 @Serializable(with = ModifierSerializer::class)
@@ -93,7 +92,7 @@ data class MethodDto(
     val signature: MethodSignatureDto,
     val modifiers: List<ModifierDto>,
     val typeParameters: List<TypeDto>,
-    val body: BodyDto,
+    val body: BodyDto? = null,
 )
 
 @Serializable

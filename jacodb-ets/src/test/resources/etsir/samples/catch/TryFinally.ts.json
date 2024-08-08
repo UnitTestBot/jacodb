@@ -10,56 +10,7 @@
       "typeParameters": [],
       "superClassName": "",
       "implementedInterfaceNames": [],
-      "fields": [
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "result",
-            "type": {
-              "_": "StringType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        },
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "message",
-            "type": {
-              "_": "StringType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        },
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "console",
-            "type": {
-              "_": "UnknownType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        }
-      ],
+      "fields": [],
       "methods": [
         {
           "signature": {
@@ -160,15 +111,134 @@
                           "_": "StringType"
                         }
                       }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "message",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "An error occurred!",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "NewExpr",
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Error"
+                            }
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "Error"
+                          },
+                          "name": "constructor",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "message",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ThrowStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Error"
+                          }
+                        }
+                      }
                     }
                   ]
                 },
                 {
                   "id": 1,
-                  "successors": [],
-                  "predecessors": [
-                    0
+                  "successors": [
+                    2
                   ],
+                  "predecessors": [],
+                  "stmts": []
+                },
+                {
+                  "id": 2,
+                  "successors": [
+                    3
+                  ],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "result",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "Finally block executed.",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 3,
+                  "successors": [],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "CallStmt",

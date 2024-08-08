@@ -1,5 +1,5 @@
 {
-  "name": "classes/ConstructorClass.ts",
+  "name": "lang/in.ts",
   "namespaces": [],
   "classes": [
     {
@@ -37,11 +37,11 @@
                 }
               },
               {
-                "name": "constructorObj",
+                "name": "cat",
                 "type": {
                   "_": "ClassType",
                   "signature": {
-                    "name": "ConstructorClass"
+                    "name": "Cat"
                   }
                 }
               },
@@ -50,18 +50,18 @@
                 "type": {
                   "_": "ClassType",
                   "signature": {
-                    "name": "ConstructorClass"
+                    "name": "Cat"
                   }
                 }
               },
               {
-                "name": "$temp1",
+                "name": "catHasName",
                 "type": {
                   "_": "UnknownType"
                 }
               },
               {
-                "name": "console",
+                "name": "catHasMeow",
                 "type": {
                   "_": "UnknownType"
                 }
@@ -104,7 +104,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "ConstructorClass"
+                            "name": "Cat"
                           }
                         }
                       },
@@ -113,7 +113,7 @@
                         "classType": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "ConstructorClass"
+                            "name": "Cat"
                           }
                         }
                       }
@@ -128,13 +128,13 @@
                           "type": {
                             "_": "ClassType",
                             "signature": {
-                              "name": "ConstructorClass"
+                              "name": "Cat"
                             }
                           }
                         },
                         "method": {
                           "enclosingClass": {
-                            "name": "ConstructorClass"
+                            "name": "Cat"
                           },
                           "name": "constructor",
                           "parameters": [],
@@ -145,7 +145,7 @@
                         "args": [
                           {
                             "_": "Constant",
-                            "value": "Constructor Example",
+                            "value": "Barsik",
                             "type": {
                               "_": "StringType"
                             }
@@ -157,11 +157,11 @@
                       "_": "AssignStmt",
                       "left": {
                         "_": "Local",
-                        "name": "constructorObj",
+                        "name": "cat",
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "ConstructorClass"
+                            "name": "Cat"
                           }
                         }
                       },
@@ -171,7 +171,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "ConstructorClass"
+                            "name": "Cat"
                           }
                         }
                       }
@@ -180,66 +180,34 @@
                       "_": "AssignStmt",
                       "left": {
                         "_": "Local",
-                        "name": "$temp1",
+                        "name": "catHasName",
                         "type": {
                           "_": "UnknownType"
                         }
                       },
                       "right": {
-                        "_": "InstanceCallExpr",
-                        "instance": {
-                          "_": "Local",
-                          "name": "constructorObj",
-                          "type": {
-                            "_": "ClassType",
-                            "signature": {
-                              "name": "ConstructorClass"
-                            }
-                          }
-                        },
-                        "method": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
-                          "name": "getName",
-                          "parameters": [],
-                          "returnType": {
-                            "_": "UnknownType"
-                          }
-                        },
-                        "args": []
+                        "_": "Constant",
+                        "value": "undefined",
+                        "type": {
+                          "_": "UndefinedType"
+                        }
                       }
                     },
                     {
-                      "_": "CallStmt",
-                      "expr": {
-                        "_": "InstanceCallExpr",
-                        "instance": {
-                          "_": "Local",
-                          "name": "console",
-                          "type": {
-                            "_": "UnknownType"
-                          }
-                        },
-                        "method": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
-                          "name": "log",
-                          "parameters": [],
-                          "returnType": {
-                            "_": "UnknownType"
-                          }
-                        },
-                        "args": [
-                          {
-                            "_": "Local",
-                            "name": "$temp1",
-                            "type": {
-                              "_": "UnknownType"
-                            }
-                          }
-                        ]
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "catHasMeow",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "undefined",
+                        "type": {
+                          "_": "UndefinedType"
+                        }
                       }
                     },
                     {
@@ -255,37 +223,18 @@
     },
     {
       "signature": {
-        "name": "ConstructorClass"
+        "name": "Cat"
       },
       "modifiers": [],
       "typeParameters": [],
       "superClassName": "",
       "implementedInterfaceNames": [],
-      "fields": [
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "ConstructorClass"
-            },
-            "name": "name",
-            "type": {
-              "_": "StringType"
-            }
-          },
-          "modifiers": [
-            "PrivateKeyword",
-            "ReadonlyKeyword"
-          ],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false
-        }
-      ],
+      "fields": [],
       "methods": [
         {
           "signature": {
             "enclosingClass": {
-              "name": "ConstructorClass"
+              "name": "Cat"
             },
             "name": "@instance_init",
             "parameters": [],
@@ -318,7 +267,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "ConstructorClass"
+                            "name": "Cat"
                           }
                         }
                       }
@@ -335,7 +284,7 @@
         {
           "signature": {
             "enclosingClass": {
-              "name": "ConstructorClass"
+              "name": "Cat"
             },
             "name": "@static_init",
             "parameters": [],
@@ -368,7 +317,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "ConstructorClass"
+                            "name": "Cat"
                           }
                         }
                       }
@@ -385,7 +334,7 @@
         {
           "signature": {
             "enclosingClass": {
-              "name": "ConstructorClass"
+              "name": "Cat"
             },
             "name": "constructor",
             "parameters": [
@@ -410,7 +359,7 @@
                 "type": {
                   "_": "ClassType",
                   "signature": {
-                    "name": "ConstructorClass"
+                    "name": "Cat"
                   }
                 }
               },
@@ -441,7 +390,7 @@
                         },
                         "method": {
                           "enclosingClass": {
-                            "name": "ConstructorClass"
+                            "name": "Cat"
                           },
                           "name": "@instance_init",
                           "parameters": [],
@@ -477,7 +426,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "ConstructorClass"
+                            "name": "Cat"
                           }
                         }
                       },
@@ -486,153 +435,13 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "ConstructorClass"
+                            "name": "Cat"
                           }
-                        }
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "InstanceFieldRef",
-                        "instance": {
-                          "_": "Local",
-                          "name": "this",
-                          "type": {
-                            "_": "ClassType",
-                            "signature": {
-                              "name": "ConstructorClass"
-                            }
-                          }
-                        },
-                        "field": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
-                          "name": "name",
-                          "type": {
-                            "_": "UnknownType"
-                          }
-                        }
-                      },
-                      "right": {
-                        "_": "Local",
-                        "name": "name",
-                        "type": {
-                          "_": "StringType"
                         }
                       }
                     },
                     {
                       "_": "ReturnVoidStmt"
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        },
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "ConstructorClass"
-            },
-            "name": "getName",
-            "parameters": [],
-            "returnType": {
-              "_": "StringType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "body": {
-            "locals": [
-              {
-                "name": "this",
-                "type": {
-                  "_": "ClassType",
-                  "signature": {
-                    "name": "ConstructorClass"
-                  }
-                }
-              },
-              {
-                "name": "$temp0",
-                "type": {
-                  "_": "UnknownType"
-                }
-              }
-            ],
-            "cfg": {
-              "blocks": [
-                {
-                  "id": 0,
-                  "successors": [],
-                  "predecessors": [],
-                  "stmts": [
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "this",
-                        "type": {
-                          "_": "ClassType",
-                          "signature": {
-                            "name": "ConstructorClass"
-                          }
-                        }
-                      },
-                      "right": {
-                        "_": "ThisRef",
-                        "type": {
-                          "_": "ClassType",
-                          "signature": {
-                            "name": "ConstructorClass"
-                          }
-                        }
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "$temp0",
-                        "type": {
-                          "_": "UnknownType"
-                        }
-                      },
-                      "right": {
-                        "_": "InstanceFieldRef",
-                        "instance": {
-                          "_": "Local",
-                          "name": "this",
-                          "type": {
-                            "_": "ClassType",
-                            "signature": {
-                              "name": "ConstructorClass"
-                            }
-                          }
-                        },
-                        "field": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
-                          "name": "name",
-                          "type": {
-                            "_": "UnknownType"
-                          }
-                        }
-                      }
-                    },
-                    {
-                      "_": "ReturnStmt",
-                      "arg": {
-                        "_": "Local",
-                        "name": "$temp0",
-                        "type": {
-                          "_": "UnknownType"
-                        }
-                      }
                     }
                   ]
                 }

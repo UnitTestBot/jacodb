@@ -10,62 +10,7 @@
       "typeParameters": [],
       "superClassName": "",
       "implementedInterfaceNames": [],
-      "fields": [
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "stringObj",
-            "type": {
-              "_": "ClassType",
-              "signature": {
-                "name": "GenericClass"
-              }
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        },
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "console",
-            "type": {
-              "_": "UnknownType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        },
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "numberObj",
-            "type": {
-              "_": "ClassType",
-              "signature": {
-                "name": "GenericClass"
-              }
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        }
-      ],
+      "fields": [],
       "methods": [
         {
           "signature": {
@@ -218,10 +163,7 @@
                           "name": "constructor",
                           "parameters": [],
                           "returnType": {
-                            "_": "ClassType",
-                            "signature": {
-                              "name": "GenericClass"
-                            }
+                            "_": "UnknownType"
                           }
                         },
                         "args": [
@@ -281,13 +223,12 @@
                         },
                         "method": {
                           "enclosingClass": {
-                            "name": "GenericClass"
+                            "name": ""
                           },
                           "name": "getData",
                           "parameters": [],
                           "returnType": {
-                            "_": "UnclearReferenceType",
-                            "name": "T"
+                            "_": "UnknownType"
                           }
                         },
                         "args": []
@@ -368,10 +309,7 @@
                           "name": "constructor",
                           "parameters": [],
                           "returnType": {
-                            "_": "ClassType",
-                            "signature": {
-                              "name": "GenericClass"
-                            }
+                            "_": "UnknownType"
                           }
                         },
                         "args": [
@@ -431,13 +369,12 @@
                         },
                         "method": {
                           "enclosingClass": {
-                            "name": "GenericClass"
+                            "name": ""
                           },
                           "name": "getData",
                           "parameters": [],
                           "returnType": {
-                            "_": "UnclearReferenceType",
-                            "name": "T"
+                            "_": "UnknownType"
                           }
                         },
                         "args": []
@@ -517,11 +454,110 @@
           ],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
+          "exclamationToken": false
         }
       ],
       "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "GenericClass"
+            },
+            "name": "@instance_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "GenericClass"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "GenericClass"
+            },
+            "name": "@static_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "GenericClass"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
         {
           "signature": {
             "enclosingClass": {
@@ -570,6 +606,30 @@
                   "successors": [],
                   "predecessors": [],
                   "stmts": [
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "GenericClass"
+                          },
+                          "name": "@instance_init",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
                     {
                       "_": "AssignStmt",
                       "left": {

@@ -68,16 +68,18 @@ fun EtsFileDto.toText(): String {
         lines += "  methods: ${clazz.methods.size}"
         clazz.methods.forEach { method ->
             lines += "  - METHOD '${method.signature}'"
-            lines += "    locals = ${method.body.locals}"
             lines += "    typeParameters = ${method.typeParameters}"
-            lines += "    blocks: ${method.body.cfg.blocks.size}"
-            method.body.cfg.blocks.forEach { block ->
-                lines += "    - BLOCK ${block.id}"
-                lines += "      successors = ${block.successors}"
-                lines += "      predecessors = ${block.predecessors}"
-                lines += "      statements: ${block.stmts.size}"
-                block.stmts.forEachIndexed { i, stmt ->
-                    lines += "      ${i + 1}. $stmt"
+            if (method.body != null) {
+                lines += "    locals = ${method.body.locals}"
+                lines += "    blocks: ${method.body.cfg.blocks.size}"
+                method.body.cfg.blocks.forEach { block ->
+                    lines += "    - BLOCK ${block.id}"
+                    lines += "      successors = ${block.successors}"
+                    lines += "      predecessors = ${block.predecessors}"
+                    lines += "      statements: ${block.stmts.size}"
+                    block.stmts.forEachIndexed { i, stmt ->
+                        lines += "      ${i + 1}. $stmt"
+                    }
                 }
             }
         }

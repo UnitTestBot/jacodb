@@ -20,6 +20,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
@@ -30,12 +31,14 @@ sealed interface ValueDto {
 
 @Serializable
 @SerialName("UNKNOWN_VALUE")
-object UnknownValueDto : ValueDto {
+data class UnknownValueDto(
+    val value: JsonElement,
+) : ValueDto {
     override val type: TypeDto
         get() = UnknownTypeDto
 
     override fun toString(): String {
-        return "UNKNOWN"
+        return "UNKNOWN($value)"
     }
 }
 
@@ -135,7 +138,7 @@ sealed interface ExprDto : ValueDto
 @Serializable
 @SerialName("NewExpr")
 data class NewExprDto(
-    val classType: TypeDto, // ClassTypeDto
+    val classType: TypeDto, // ClassType
 ) : ExprDto {
     override val type: TypeDto
         get() = classType as ClassTypeDto // safe cast
@@ -173,6 +176,32 @@ data class DeleteExprDto(
 }
 
 @Serializable
+@SerialName("AwaitExpr")
+data class AwaitExprDto(
+    val arg: ValueDto,
+) : ExprDto {
+    override val type: TypeDto
+        get() = arg.type
+
+    override fun toString(): String {
+        return "await $arg"
+    }
+}
+
+@Serializable
+@SerialName("YieldExpr")
+data class YieldExprDto(
+    val arg: ValueDto,
+) : ExprDto {
+    override val type: TypeDto
+        get() = arg.type
+
+    override fun toString(): String {
+        return "yield $arg"
+    }
+}
+
+@Serializable
 @SerialName("TypeOfExpr")
 data class TypeOfExprDto(
     val arg: ValueDto,
@@ -189,7 +218,7 @@ data class TypeOfExprDto(
 @SerialName("InstanceOfExpr")
 data class InstanceOfExprDto(
     val arg: ValueDto,
-    val checkType: String,
+    val checkType: TypeDto,
 ) : ExprDto {
     override val type: TypeDto
         get() = BooleanTypeDto
@@ -386,7 +415,7 @@ sealed interface FieldRefDto : RefDto {
 @Serializable
 @SerialName("InstanceFieldRef")
 data class InstanceFieldRefDto(
-    val instance: ValueDto,
+    val instance: ValueDto, // Local
     override val field: FieldSignatureDto,
 ) : FieldRefDto {
     override fun toString(): String {

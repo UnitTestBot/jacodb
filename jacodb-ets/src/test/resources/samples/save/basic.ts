@@ -151,6 +151,7 @@ export function listParameters(u: number, v: number, w: string): { x: number, y:
 export class SecurityDoor extends Door implements Alarm, Alarm2 {
     x: number = 0;
     y: string = '';
+    z: Person = new Person(10);
     alert(): void {
         logger.info("SecurityDoor alert");
     }

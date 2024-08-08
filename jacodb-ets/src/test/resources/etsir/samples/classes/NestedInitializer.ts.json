@@ -1,5 +1,5 @@
 {
-  "name": "classes/InterfaceImplementation.ts",
+  "name": "classes/NestedInitializer.ts",
   "namespaces": [],
   "classes": [
     {
@@ -37,11 +37,11 @@
                 }
               },
               {
-                "name": "circle",
+                "name": "foo",
                 "type": {
                   "_": "ClassType",
                   "signature": {
-                    "name": "Circle"
+                    "name": "Foo"
                   }
                 }
               },
@@ -50,20 +50,8 @@
                 "type": {
                   "_": "ClassType",
                   "signature": {
-                    "name": "Circle"
+                    "name": "Foo"
                   }
-                }
-              },
-              {
-                "name": "$temp1",
-                "type": {
-                  "_": "UnknownType"
-                }
-              },
-              {
-                "name": "console",
-                "type": {
-                  "_": "UnknownType"
                 }
               }
             ],
@@ -104,7 +92,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "Circle"
+                            "name": "Foo"
                           }
                         }
                       },
@@ -113,7 +101,7 @@
                         "classType": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "Circle"
+                            "name": "Foo"
                           }
                         }
                       }
@@ -128,80 +116,15 @@
                           "type": {
                             "_": "ClassType",
                             "signature": {
-                              "name": "Circle"
+                              "name": "Foo"
                             }
                           }
                         },
                         "method": {
                           "enclosingClass": {
-                            "name": "Circle"
+                            "name": "Foo"
                           },
                           "name": "constructor",
-                          "parameters": [],
-                          "returnType": {
-                            "_": "UnknownType"
-                          }
-                        },
-                        "args": [
-                          {
-                            "_": "Constant",
-                            "value": "5",
-                            "type": {
-                              "_": "NumberType"
-                            }
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "circle",
-                        "type": {
-                          "_": "ClassType",
-                          "signature": {
-                            "name": "Circle"
-                          }
-                        }
-                      },
-                      "right": {
-                        "_": "Local",
-                        "name": "$temp0",
-                        "type": {
-                          "_": "ClassType",
-                          "signature": {
-                            "name": "Circle"
-                          }
-                        }
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "$temp1",
-                        "type": {
-                          "_": "UnknownType"
-                        }
-                      },
-                      "right": {
-                        "_": "InstanceCallExpr",
-                        "instance": {
-                          "_": "Local",
-                          "name": "circle",
-                          "type": {
-                            "_": "ClassType",
-                            "signature": {
-                              "name": "Circle"
-                            }
-                          }
-                        },
-                        "method": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
-                          "name": "getArea",
                           "parameters": [],
                           "returnType": {
                             "_": "UnknownType"
@@ -211,42 +134,26 @@
                       }
                     },
                     {
-                      "_": "CallStmt",
-                      "expr": {
-                        "_": "InstanceCallExpr",
-                        "instance": {
-                          "_": "Local",
-                          "name": "console",
-                          "type": {
-                            "_": "UnknownType"
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "foo",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Foo"
                           }
-                        },
-                        "method": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
-                          "name": "log",
-                          "parameters": [],
-                          "returnType": {
-                            "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Foo"
                           }
-                        },
-                        "args": [
-                          {
-                            "_": "Constant",
-                            "value": "Circle area:",
-                            "type": {
-                              "_": "StringType"
-                            }
-                          },
-                          {
-                            "_": "Local",
-                            "name": "$temp1",
-                            "type": {
-                              "_": "UnknownType"
-                            }
-                          }
-                        ]
+                        }
                       }
                     },
                     {
@@ -262,7 +169,7 @@
     },
     {
       "signature": {
-        "name": "Shape"
+        "name": "Bar"
       },
       "modifiers": [],
       "typeParameters": [],
@@ -273,55 +180,7 @@
         {
           "signature": {
             "enclosingClass": {
-              "name": "Shape"
-            },
-            "name": "getArea",
-            "parameters": [],
-            "returnType": {
-              "_": "NumberType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "body": null
-        }
-      ]
-    },
-    {
-      "signature": {
-        "name": "Circle"
-      },
-      "modifiers": [],
-      "typeParameters": [],
-      "superClassName": "",
-      "implementedInterfaceNames": [
-        "Shape"
-      ],
-      "fields": [
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "Circle"
-            },
-            "name": "radius",
-            "type": {
-              "_": "NumberType"
-            }
-          },
-          "modifiers": [
-            "PrivateKeyword",
-            "ReadonlyKeyword"
-          ],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false
-        }
-      ],
-      "methods": [
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "Circle"
+              "name": "Bar"
             },
             "name": "@instance_init",
             "parameters": [],
@@ -354,7 +213,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "Circle"
+                            "name": "Bar"
                           }
                         }
                       }
@@ -371,7 +230,7 @@
         {
           "signature": {
             "enclosingClass": {
-              "name": "Circle"
+              "name": "Bar"
             },
             "name": "@static_init",
             "parameters": [],
@@ -404,7 +263,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "Circle"
+                            "name": "Bar"
                           }
                         }
                       }
@@ -421,18 +280,10 @@
         {
           "signature": {
             "enclosingClass": {
-              "name": "Circle"
+              "name": "Bar"
             },
             "name": "constructor",
-            "parameters": [
-              {
-                "name": "radius",
-                "type": {
-                  "_": "NumberType"
-                },
-                "isOptional": false
-              }
-            ],
+            "parameters": [],
             "returnType": {
               "_": "UnknownType"
             }
@@ -440,23 +291,7 @@
           "modifiers": [],
           "typeParameters": [],
           "body": {
-            "locals": [
-              {
-                "name": "this",
-                "type": {
-                  "_": "ClassType",
-                  "signature": {
-                    "name": "Circle"
-                  }
-                }
-              },
-              {
-                "name": "radius",
-                "type": {
-                  "_": "NumberType"
-                }
-              }
-            ],
+            "locals": [],
             "cfg": {
               "blocks": [
                 {
@@ -464,6 +299,25 @@
                   "successors": [],
                   "predecessors": [],
                   "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Bar"
+                          }
+                        }
+                      }
+                    },
                     {
                       "_": "CallStmt",
                       "expr": {
@@ -477,7 +331,7 @@
                         },
                         "method": {
                           "enclosingClass": {
-                            "name": "Circle"
+                            "name": "Bar"
                           },
                           "name": "@instance_init",
                           "parameters": [],
@@ -489,77 +343,6 @@
                       }
                     },
                     {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "radius",
-                        "type": {
-                          "_": "NumberType"
-                        }
-                      },
-                      "right": {
-                        "_": "ParameterRef",
-                        "index": 0,
-                        "type": {
-                          "_": "NumberType"
-                        }
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "Local",
-                        "name": "this",
-                        "type": {
-                          "_": "ClassType",
-                          "signature": {
-                            "name": "Circle"
-                          }
-                        }
-                      },
-                      "right": {
-                        "_": "ThisRef",
-                        "type": {
-                          "_": "ClassType",
-                          "signature": {
-                            "name": "Circle"
-                          }
-                        }
-                      }
-                    },
-                    {
-                      "_": "AssignStmt",
-                      "left": {
-                        "_": "InstanceFieldRef",
-                        "instance": {
-                          "_": "Local",
-                          "name": "this",
-                          "type": {
-                            "_": "ClassType",
-                            "signature": {
-                              "name": "Circle"
-                            }
-                          }
-                        },
-                        "field": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
-                          "name": "radius",
-                          "type": {
-                            "_": "UnknownType"
-                          }
-                        }
-                      },
-                      "right": {
-                        "_": "Local",
-                        "name": "radius",
-                        "type": {
-                          "_": "NumberType"
-                        }
-                      }
-                    },
-                    {
                       "_": "ReturnVoidStmt"
                     }
                   ]
@@ -567,16 +350,45 @@
               ]
             }
           }
-        },
+        }
+      ]
+    },
+    {
+      "signature": {
+        "name": "Foo"
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
         {
           "signature": {
             "enclosingClass": {
-              "name": "Circle"
+              "name": "Foo"
             },
-            "name": "getArea",
+            "name": "bar",
+            "type": {
+              "_": "UnclearReferenceType",
+              "name": "Bar"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false
+        }
+      ],
+      "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Foo"
+            },
+            "name": "@instance_init",
             "parameters": [],
             "returnType": {
-              "_": "NumberType"
+              "_": "UnknownType"
             }
           },
           "modifiers": [],
@@ -584,42 +396,12 @@
           "body": {
             "locals": [
               {
-                "name": "this",
+                "name": "$temp0",
                 "type": {
                   "_": "ClassType",
                   "signature": {
-                    "name": "Circle"
+                    "name": "Bar"
                   }
-                }
-              },
-              {
-                "name": "Math",
-                "type": {
-                  "_": "UnknownType"
-                }
-              },
-              {
-                "name": "$temp0",
-                "type": {
-                  "_": "UnknownType"
-                }
-              },
-              {
-                "name": "$temp1",
-                "type": {
-                  "_": "UnknownType"
-                }
-              },
-              {
-                "name": "$temp2",
-                "type": {
-                  "_": "UnknownType"
-                }
-              },
-              {
-                "name": "$temp3",
-                "type": {
-                  "_": "UnknownType"
                 }
               }
             ],
@@ -636,10 +418,7 @@
                         "_": "Local",
                         "name": "this",
                         "type": {
-                          "_": "ClassType",
-                          "signature": {
-                            "name": "Circle"
-                          }
+                          "_": "UnknownType"
                         }
                       },
                       "right": {
@@ -647,7 +426,7 @@
                         "type": {
                           "_": "ClassType",
                           "signature": {
-                            "name": "Circle"
+                            "name": "Foo"
                           }
                         }
                       }
@@ -658,39 +437,52 @@
                         "_": "Local",
                         "name": "$temp0",
                         "type": {
-                          "_": "UnknownType"
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Bar"
+                          }
                         }
                       },
                       "right": {
-                        "_": "InstanceFieldRef",
-                        "instance": {
-                          "_": "Local",
-                          "name": "Math",
-                          "type": {
-                            "_": "UnknownType"
-                          }
-                        },
-                        "field": {
-                          "enclosingClass": {
-                            "name": ""
-                          },
-                          "name": "PI",
-                          "type": {
-                            "_": "UnknownType"
+                        "_": "NewExpr",
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Bar"
                           }
                         }
                       }
                     },
                     {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp0",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Bar"
+                            }
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "Bar"
+                          },
+                          "name": "constructor",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
                       "_": "AssignStmt",
                       "left": {
-                        "_": "Local",
-                        "name": "$temp1",
-                        "type": {
-                          "_": "UnknownType"
-                        }
-                      },
-                      "right": {
                         "_": "InstanceFieldRef",
                         "instance": {
                           "_": "Local",
@@ -698,86 +490,158 @@
                           "type": {
                             "_": "ClassType",
                             "signature": {
-                              "name": "Circle"
+                              "name": "Foo"
                             }
                           }
                         },
                         "field": {
                           "enclosingClass": {
-                            "name": ""
+                            "name": "Foo"
                           },
-                          "name": "radius",
+                          "name": "bar",
                           "type": {
-                            "_": "UnknownType"
+                            "_": "UnclearReferenceType",
+                            "name": "Bar"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Bar"
                           }
                         }
                       }
                     },
                     {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Foo"
+            },
+            "name": "@static_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
                       "_": "AssignStmt",
                       "left": {
                         "_": "Local",
-                        "name": "$temp2",
+                        "name": "this",
                         "type": {
                           "_": "UnknownType"
                         }
                       },
                       "right": {
-                        "_": "BinopExpr",
-                        "op": "**",
-                        "left": {
-                          "_": "Local",
-                          "name": "$temp1",
-                          "type": {
-                            "_": "UnknownType"
-                          }
-                        },
-                        "right": {
-                          "_": "Constant",
-                          "value": "2",
-                          "type": {
-                            "_": "NumberType"
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Foo"
                           }
                         }
                       }
                     },
                     {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "Foo"
+            },
+            "name": "constructor",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
                       "_": "AssignStmt",
                       "left": {
                         "_": "Local",
-                        "name": "$temp3",
+                        "name": "this",
                         "type": {
                           "_": "UnknownType"
                         }
                       },
                       "right": {
-                        "_": "BinopExpr",
-                        "op": "*",
-                        "left": {
-                          "_": "Local",
-                          "name": "$temp0",
-                          "type": {
-                            "_": "UnknownType"
-                          }
-                        },
-                        "right": {
-                          "_": "Local",
-                          "name": "$temp2",
-                          "type": {
-                            "_": "UnknownType"
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Foo"
                           }
                         }
                       }
                     },
                     {
-                      "_": "ReturnStmt",
-                      "arg": {
-                        "_": "Local",
-                        "name": "$temp3",
-                        "type": {
-                          "_": "UnknownType"
-                        }
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "Foo"
+                          },
+                          "name": "@instance_init",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
                       }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
                     }
                   ]
                 }

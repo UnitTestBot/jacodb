@@ -60,13 +60,14 @@ jobs:
 
       - name: Set up ArkAnalyzer
         run: |
-          REPO_URL="https://gitee.com/openharmony-sig/arkanalyzer.git"
+          REPO_URL="https://gitee.com/Lipenx/arkanalyzer.git"
           DEST_DIR="arkanalyzer"
           MAX_RETRIES=10
           RETRY_DELAY=3  # Delay between retries in seconds  
+          BRANCH="neo/2024-08-07"
           
           for ((i=1; i<=MAX_RETRIES; i++)); do
-              git clone --depth=1 $REPO_URL $DEST_DIR && break
+              git clone --depth=1 --branch $BRANCH $REPO_URL $DEST_DIR && break
               echo "Clone failed, retrying in $RETRY_DELAY seconds..."
               sleep "$RETRY_DELAY"
           done
@@ -80,17 +81,6 @@ jobs:
           
           echo "ARKANALYZER_DIR=$(realpath $DEST_DIR)" >> $GITHUB_ENV
           cd $DEST_DIR
-          
-          # checkout master on 2024-07-17
-          rev=a9d9fd6070fce5896d8e760ed7fd175b62b16605
-          
-          for ((i=1; i<=MAX_RETRIES; i++)); do
-              git fetch --depth=1 origin $rev && break
-              echo "Fetch failed, retrying in $RETRY_DELAY seconds..."
-              sleep "$RETRY_DELAY"
-          done
-          
-          git switch --detach $rev
           
           npm install
           npm run build

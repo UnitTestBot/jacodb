@@ -1,5 +1,5 @@
 {
-  "name": "taint.ts",
+  "name": "TaintAnalysis.ts",
   "namespaces": [],
   "classes": [
     {
@@ -426,7 +426,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": "!=",
+                        "op": "==",
                         "left": {
                           "_": "Local",
                           "name": "data",
@@ -450,7 +450,7 @@
                           }
                         },
                         "type": {
-                          "_": "UnknownType"
+                          "_": "BooleanType"
                         }
                       }
                     }
@@ -459,10 +459,7 @@
                 {
                   "id": 1,
                   "successors": [],
-                  "predecessors": [
-                    0,
-                    2
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "ReturnStmt",
@@ -489,9 +486,7 @@
                   "successors": [
                     1
                   ],
-                  "predecessors": [
-                    0
-                  ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "ReturnStmt",
@@ -578,7 +573,8 @@
                 {
                   "id": 0,
                   "successors": [
-                    1
+                    1,
+                    2
                   ],
                   "predecessors": [],
                   "stmts": [
@@ -641,7 +637,7 @@
                       "_": "IfStmt",
                       "condition": {
                         "_": "ConditionExpr",
-                        "op": "!=",
+                        "op": "==",
                         "left": {
                           "_": "Local",
                           "name": "data",
@@ -665,7 +661,7 @@
                           }
                         },
                         "type": {
-                          "_": "UnknownType"
+                          "_": "BooleanType"
                         }
                       }
                     }
@@ -674,9 +670,19 @@
                 {
                   "id": 1,
                   "successors": [],
-                  "predecessors": [
-                    0
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [
+                    1
                   ],
+                  "predecessors": [],
                   "stmts": [
                     {
                       "_": "AssignStmt",
@@ -747,9 +753,6 @@
                           }
                         }
                       }
-                    },
-                    {
-                      "_": "ReturnVoidStmt"
                     }
                   ]
                 }

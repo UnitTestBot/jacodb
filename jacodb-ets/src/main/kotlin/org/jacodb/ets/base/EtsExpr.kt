@@ -29,6 +29,8 @@ interface EtsExpr : EtsEntity {
 
         // Unary
         fun visit(expr: EtsDeleteExpr): R
+        fun visit(expr: EtsAwaitExpr): R
+        fun visit(expr: EtsYieldExpr): R
         fun visit(expr: EtsTypeOfExpr): R
         fun visit(expr: EtsVoidExpr): R
         fun visit(expr: EtsNotExpr): R
@@ -88,6 +90,8 @@ interface EtsExpr : EtsEntity {
             override fun visit(expr: EtsInstanceOfExpr): R = defaultVisit(expr)
 
             override fun visit(expr: EtsDeleteExpr): R = defaultVisit(expr)
+            override fun visit(expr: EtsAwaitExpr): R = defaultVisit(expr)
+            override fun visit(expr: EtsYieldExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsTypeOfExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsVoidExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsNotExpr): R = defaultVisit(expr)
@@ -202,7 +206,7 @@ data class EtsCastExpr(
 
 data class EtsInstanceOfExpr(
     val arg: EtsEntity,
-    val checkType: String, // TODO: what should it be?
+    val checkType: EtsType,
 ) : EtsExpr {
     override val type: EtsType
         get() = EtsBooleanType
@@ -228,6 +232,36 @@ data class EtsDeleteExpr(
 
     override fun toString(): String {
         return "delete $arg"
+    }
+
+    override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class EtsAwaitExpr(
+    override val arg: EtsEntity,
+) : EtsUnaryExpr {
+    override val type: EtsType
+        get() = arg.type
+
+    override fun toString(): String {
+        return "await $arg"
+    }
+
+    override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class EtsYieldExpr(
+    override val arg: EtsEntity,
+) : EtsUnaryExpr {
+    override val type: EtsType
+        get() = arg.type
+
+    override fun toString(): String {
+        return "yield $arg"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
@@ -730,7 +764,7 @@ interface EtsCallExpr : EtsExpr, CommonCallExpr {
 }
 
 data class EtsInstanceCallExpr(
-    val instance: EtsEntity,
+    val instance: EtsLocal,
     override val method: EtsMethodSignature,
     override val args: List<EtsValue>,
 ) : EtsCallExpr {

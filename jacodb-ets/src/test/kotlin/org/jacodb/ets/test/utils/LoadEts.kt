@@ -16,15 +16,19 @@
 
 package org.jacodb.ets.test.utils
 
+import mu.KotlinLogging
 import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.model.EtsFile
 
+private val logger = KotlinLogging.logger {}
+
 fun loadEtsFileDtoFromResource(jsonPath: String): EtsFileDto {
     require(jsonPath.startsWith("/")) { "Resource path must start with '/': $jsonPath" }
-    val sampleFilePath = object {}::class.java.getResourceAsStream(jsonPath)
+    logger.debug { "Loading EtsIR from resource: '$jsonPath'" }
+    val stream = object {}::class.java.getResourceAsStream(jsonPath)
         ?: error("Resource not found: $jsonPath")
-    return EtsFileDto.loadFromJson(sampleFilePath)
+    return EtsFileDto.loadFromJson(stream)
 }
 
 fun loadEtsFileFromResource(jsonPath: String): EtsFile {

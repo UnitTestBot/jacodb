@@ -10,43 +10,7 @@
       "typeParameters": [],
       "superClassName": "",
       "implementedInterfaceNames": [],
-      "fields": [
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "StaticClass",
-            "type": {
-              "_": "ClassType",
-              "signature": {
-                "name": "StaticClass"
-              }
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        },
-        {
-          "signature": {
-            "enclosingClass": {
-              "name": "_DEFAULT_ARK_CLASS"
-            },
-            "name": "console",
-            "type": {
-              "_": "UnknownType"
-            }
-          },
-          "modifiers": [],
-          "typeParameters": [],
-          "questionToken": false,
-          "exclamationToken": false,
-          "initializer": null
-        }
-      ],
+      "fields": [],
       "methods": [
         {
           "signature": {
@@ -75,16 +39,13 @@
               {
                 "name": "StaticClass",
                 "type": {
-                  "_": "ClassType",
-                  "signature": {
-                    "name": "StaticClass"
-                  }
+                  "_": "UnknownType"
                 }
               },
               {
                 "name": "$temp0",
                 "type": {
-                  "_": "NumberType"
+                  "_": "UnknownType"
                 }
               },
               {
@@ -126,15 +87,22 @@
                     {
                       "_": "CallStmt",
                       "expr": {
-                        "_": "StaticCallExpr",
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "StaticClass",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
                         "method": {
                           "enclosingClass": {
-                            "name": "StaticClass"
+                            "name": ""
                           },
                           "name": "incrementCount",
                           "parameters": [],
                           "returnType": {
-                            "_": "VoidType"
+                            "_": "UnknownType"
                           }
                         },
                         "args": []
@@ -146,19 +114,26 @@
                         "_": "Local",
                         "name": "$temp0",
                         "type": {
-                          "_": "NumberType"
+                          "_": "UnknownType"
                         }
                       },
                       "right": {
-                        "_": "StaticCallExpr",
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "StaticClass",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
                         "method": {
                           "enclosingClass": {
-                            "name": "StaticClass"
+                            "name": ""
                           },
                           "name": "getCount",
                           "parameters": [],
                           "returnType": {
-                            "_": "NumberType"
+                            "_": "UnknownType"
                           }
                         },
                         "args": []
@@ -190,7 +165,7 @@
                             "_": "Local",
                             "name": "$temp0",
                             "type": {
-                              "_": "NumberType"
+                              "_": "UnknownType"
                             }
                           }
                         ]
@@ -231,17 +206,216 @@
           ],
           "typeParameters": [],
           "questionToken": false,
-          "exclamationToken": false,
-          "initializer": {
-            "_": "Constant",
-            "value": "0",
-            "type": {
-              "_": "NumberType"
-            }
-          }
+          "exclamationToken": false
         }
       ],
       "methods": [
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "StaticClass"
+            },
+            "name": "@instance_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "StaticClass"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "StaticClass"
+            },
+            "name": "@static_init",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "StaticClass"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "StaticClass"
+                            }
+                          }
+                        },
+                        "field": {
+                          "enclosingClass": {
+                            "name": "StaticClass"
+                          },
+                          "name": "count",
+                          "type": {
+                            "_": "NumberType"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "0",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "enclosingClass": {
+              "name": "StaticClass"
+            },
+            "name": "constructor",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [],
+                  "predecessors": [],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "StaticClass"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "enclosingClass": {
+                            "name": "StaticClass"
+                          },
+                          "name": "@instance_init",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": []
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
         {
           "signature": {
             "enclosingClass": {

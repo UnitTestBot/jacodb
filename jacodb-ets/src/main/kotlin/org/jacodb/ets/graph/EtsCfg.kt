@@ -59,6 +59,12 @@ class EtsCfg(
     override fun predecessors(node: EtsStmt): Set<EtsStmt> {
         return predecessorMap[node]!!
     }
+
+    companion object {
+        fun empty(): EtsCfg {
+            return EtsCfg(emptyList(), emptyMap())
+        }
+    }
 }
 
 fun EtsCfg.findDominators(): GraphDominators<EtsStmt> {

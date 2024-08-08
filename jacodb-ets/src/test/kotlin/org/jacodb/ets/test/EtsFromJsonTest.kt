@@ -26,7 +26,6 @@ import org.jacodb.ets.base.EtsReturnStmt
 import org.jacodb.ets.base.EtsUnknownType
 import org.jacodb.ets.dto.AnyTypeDto
 import org.jacodb.ets.dto.ClassSignatureDto
-import org.jacodb.ets.dto.ConstantDto
 import org.jacodb.ets.dto.EtsMethodBuilder
 import org.jacodb.ets.dto.FieldDto
 import org.jacodb.ets.dto.FieldSignatureDto
@@ -63,7 +62,8 @@ class EtsFromJsonTest {
 
     @Test
     fun testLoadEtsFileFromJson() {
-        val etsDto = loadEtsFileDtoFromResource("/etsir/samples/basic.ts.json")
+        val path = "/etsir/samples/save/basic.ts.json"
+        val etsDto = loadEtsFileDtoFromResource("$path")
         println("etsDto = $etsDto")
         val ets = convertToEtsFile(etsDto)
         println("ets = $ets")
@@ -120,7 +120,6 @@ class EtsFromJsonTest {
             typeParameters = emptyList(),
             isOptional = true,
             isDefinitelyAssigned = false,
-            initializer = ConstantDto("0", NumberTypeDto),
         )
         println("field = $field")
 
