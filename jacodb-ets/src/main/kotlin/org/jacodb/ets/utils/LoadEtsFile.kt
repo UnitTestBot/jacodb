@@ -22,6 +22,7 @@ import org.jacodb.ets.model.EtsFile
 import java.io.FileNotFoundException
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.absolute
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.div
 import kotlin.io.path.exists
@@ -44,7 +45,7 @@ fun generateEtsFileIR(tsPath: Path): Path {
     val arkAnalyzerDir = Path(System.getenv(ENV_VAR_ARK_ANALYZER_DIR) ?: DEFAULT_ARK_ANALYZER_DIR)
     if (!arkAnalyzerDir.exists()) {
         throw FileNotFoundException(
-            "ArkAnalyzer directory does not exist: '$arkAnalyzerDir'. " +
+            "ArkAnalyzer directory does not exist: '${arkAnalyzerDir.absolute()}'. " +
                 "Did you forget to set the '$ENV_VAR_ARK_ANALYZER_DIR' environment variable? " +
                 "Current value is '${System.getenv(ENV_VAR_ARK_ANALYZER_DIR)}', " +
                 "current dir is '${Path("").toAbsolutePath()}'."
