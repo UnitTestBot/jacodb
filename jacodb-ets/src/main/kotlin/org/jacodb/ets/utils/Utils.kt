@@ -19,6 +19,7 @@ package org.jacodb.ets.utils
 import mu.KotlinLogging
 import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.model.EtsFile
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 
@@ -47,6 +48,20 @@ internal fun runProcess(cmd: List<String>, timeout: Duration? = null) {
         logger.info { "Timeout!" }
         process.destroy()
     }
+}
+
+/**
+ * Returns the path to the sibling of this path with the given name.
+ *
+ * Usage:
+ * ```
+ * val path = Path("foo/bar.jpeg")
+ * val sibling = path.resolveSibling { it.nameWithoutExtension + ".png" }
+ * println(sibling) // foo/bar.png
+ * ```
+ */
+internal fun Path.resolveSibling(name: (Path) -> String): Path {
+    return resolveSibling(name(this))
 }
 
 fun EtsFileDto.toText(): String {
