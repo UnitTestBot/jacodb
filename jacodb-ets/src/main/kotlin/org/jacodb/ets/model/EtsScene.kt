@@ -16,8 +16,11 @@
 
 package org.jacodb.ets.model
 
-class EtsFile(
-    val name: String,
-    val path: String? = null,
-    val classes: List<EtsClass>,
-)
+import org.jacodb.api.common.CommonProject
+
+class EtsScene (
+    val files: List<EtsFile>,
+): CommonProject {
+    val classes: List<EtsClass>
+        get() = files.flatMap { it.classes }
+}

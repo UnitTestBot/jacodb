@@ -18,16 +18,16 @@ package org.jacodb.ets.graph
 
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.ets.base.EtsStmt
-import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsMethod
+import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.utils.callExpr
 
 interface EtsApplicationGraph : ApplicationGraph<EtsMethod, EtsStmt> {
-    val cp: EtsFile
+    val cp: EtsScene
 }
 
 class EtsApplicationGraphImpl(
-    override val cp: EtsFile,
+    override val cp: EtsScene,
 ) : EtsApplicationGraph {
 
     override fun predecessors(node: EtsStmt): Sequence<EtsStmt> {
