@@ -66,7 +66,7 @@ class EtsFileTest {
                     }
 
                     "main" -> {
-                        assertEquals(5, method.cfg.instructions.size)
+                        assertEquals(4, method.cfg.instructions.size)
                     }
                 }
             }
