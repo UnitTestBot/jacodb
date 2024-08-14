@@ -63,7 +63,7 @@ suspend fun JcClasspath.hierarchyExt(): HierarchyExtension {
 fun JcClasspath.asyncHierarchyExt(): Future<HierarchyExtension> = GlobalScope.future { hierarchyExt() }
 
 internal fun JcClasspath.allClassesExceptObject(context: JCDBContext, direct: Boolean): Sequence<ClassSource> {
-    val locationIds = registeredLocations.mapTo(mutableSetOf()) { it.id }
+    val locationIds = registeredLocationIds
     return context.execute(
         sqlAction = { jooq ->
             if (direct) {
@@ -162,7 +162,7 @@ private class HierarchyExtensionERS(cp: JcClasspath) : HierarchyExtensionBase(cp
                 if (name == JAVA_OBJECT) {
                     cp.allClassesExceptObject(context, !entireHierarchy)
                 } else {
-                    val locationIds = cp.registeredLocations.mapTo(mutableSetOf()) { it.id }
+                    val locationIds = cp.registeredLocationIds
                     val nameId = name.asSymbolId(persistence.symbolInterner)
                     if (entireHierarchy) {
                         entireHierarchy(txn, nameId, mutableSetOf())
@@ -251,7 +251,7 @@ private fun JcClasspath.subClasses(name: String, entireHierarchy: Boolean): Sequ
         if (name == JAVA_OBJECT) {
             allClassesExceptObject(context, !entireHierarchy)
         } else {
-            val locationIds = registeredLocations.joinToString(", ") { it.id.toString() }
+            val locationIds = registeredLocationIds.joinToString(", ") { it.toString() }
             val dslContext = context.dslContext
             BatchedSequence(defaultBatchSize) { offset, batchSize ->
                 val query = when {

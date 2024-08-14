@@ -16,11 +16,31 @@
 
 package org.jacodb.impl
 
-import kotlinx.coroutines.*
-import org.jacodb.api.jvm.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import org.jacodb.api.jvm.JavaVersion
+import org.jacodb.api.jvm.JcByteCodeLocation
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcClasspathFeature
+import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.JcDatabasePersistence
+import org.jacodb.api.jvm.JcFeature
+import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.KotlinMetadata
 import org.jacodb.impl.features.classpaths.MethodInstructionsFeature
+import org.jacodb.impl.features.classpaths.UnknownClassMethodsAndFields
+import org.jacodb.impl.features.classpaths.UnknownClasses
 import org.jacodb.impl.fs.JavaRuntime
 import org.jacodb.impl.fs.asByteCodeLocation
 import org.jacodb.impl.fs.filterExisting
@@ -76,14 +96,17 @@ class JcDatabaseImpl(
     }
 
     private fun List<JcClasspathFeature>?.appendBuiltInFeatures(): List<JcClasspathFeature> {
-        if (this != null && any { it is ClasspathCache }) {
-            return this + listOf(KotlinMetadata, MethodInstructionsFeature(settings.keepLocalVariableNames))
+        return mutableListOf<JcClasspathFeature>().also { result ->
+            result += orEmpty()
+            if (!result.any { it is ClasspathCache }) {
+                result += ClasspathCache(settings.cacheSettings)
+            }
+            result += KotlinMetadata
+            result += MethodInstructionsFeature(settings.keepLocalVariableNames)
+            if (result.any { it is UnknownClasses } && !result.any { it is UnknownClassMethodsAndFields }) {
+                result += UnknownClassMethodsAndFields
+            }
         }
-        return listOf(
-            ClasspathCache(settings.cacheSettings),
-            KotlinMetadata,
-            MethodInstructionsFeature(settings.keepLocalVariableNames)
-        ) + orEmpty()
     }
 
     override suspend fun classpath(dirOrJars: List<File>, features: List<JcClasspathFeature>?): JcClasspath {

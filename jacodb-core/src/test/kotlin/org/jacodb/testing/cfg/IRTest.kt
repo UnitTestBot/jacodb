@@ -16,13 +16,6 @@
 
 package org.jacodb.testing.cfg
 
-import org.jacodb.api.common.cfg.CommonAssignInst
-import org.jacodb.api.common.cfg.CommonCallInst
-import org.jacodb.api.common.cfg.CommonExpr
-import org.jacodb.api.common.cfg.CommonGotoInst
-import org.jacodb.api.common.cfg.CommonIfInst
-import org.jacodb.api.common.cfg.CommonInst
-import org.jacodb.api.common.cfg.CommonReturnInst
 import org.jacodb.api.jvm.JavaVersion
 import org.jacodb.api.jvm.JcClassType
 import org.jacodb.api.jvm.JcMethod
@@ -61,10 +54,12 @@ import org.jacodb.impl.cfg.Simplifier
 import org.jacodb.impl.cfg.util.ExprMapper
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.StringConcatSimplifier
+import org.jacodb.impl.features.classpaths.UnknownClasses
 import org.jacodb.impl.fs.JarLocation
 import org.jacodb.testing.WithDB
 import org.jacodb.testing.WithRAMDB
 import org.jacodb.testing.asmLib
+import org.jacodb.testing.commonsCompressLib
 import org.jacodb.testing.guavaLib
 import org.jacodb.testing.jgitLib
 import org.jacodb.testing.kotlinStdLib
@@ -73,7 +68,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import java.io.File
@@ -95,8 +89,8 @@ class OverridesResolver(
         return methods.firstOrNull { typedMethod ->
             val jcMethod = typedMethod.method
             jcMethod.name == name &&
-                jcMethod.returnType.typeName == returnType.typeName &&
-                jcMethod.parameters.map { param -> param.type.typeName } == argTypes.map { it.typeName }
+                    jcMethod.returnType.typeName == returnType.typeName &&
+                    jcMethod.parameters.map { param -> param.type.typeName } == argTypes.map { it.typeName }
         } ?: error("Could not find a method with correct signature")
     }
 
@@ -351,6 +345,11 @@ abstract class IRTest : BaseInstructionsTest() {
     }
 
     @Test
+    fun `get ir of commons compress`() {
+        runAlongLib(commonsCompressLib)
+    }
+
+    @Test
     fun `get ir of asm`() {
         runAlongLib(asmLib, muteGraphChecker = true)
     }
@@ -392,10 +391,10 @@ abstract class IRTest : BaseInstructionsTest() {
 
 class IRSqlTest : IRTest() {
 
-    companion object : WithDB(StringConcatSimplifier)
+    companion object : WithDB(StringConcatSimplifier, UnknownClasses)
 }
 
 class IRRAMTest : IRTest() {
 
-    companion object : WithRAMDB(StringConcatSimplifier)
+    companion object : WithRAMDB(StringConcatSimplifier, UnknownClasses)
 }
