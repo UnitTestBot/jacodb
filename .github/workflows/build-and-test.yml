@@ -85,6 +85,9 @@ jobs:
           npm install
           npm run build
 
+      - name: Generate test resources
+        run: ./gradlew :jacodb-ets:generateTestResources --scan
+
       - name: Run ETS tests first
         run: ./gradlew :jacodb-ets:test --scan
 

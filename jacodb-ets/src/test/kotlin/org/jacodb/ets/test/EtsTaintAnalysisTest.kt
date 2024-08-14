@@ -49,7 +49,7 @@ private val logger = mu.KotlinLogging.logger {}
 class EtsTaintAnalysisTest {
 
     companion object : EtsTraits {
-        private const val BASE_PATH = "/etsir/samples"
+        private const val BASE_PATH = "/samples/etsir/ast"
 
         private const val DECOMPILED_PATH = "/decompiled"
 

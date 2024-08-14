@@ -63,7 +63,7 @@ class EtsFromJsonTest {
 
     @Test
     fun testLoadEtsFileFromJson() {
-        val path = "/etsir/samples/save/basic.ts.json"
+        val path = "/samples/etsir/ast/save/basic.ts.json"
         val etsDto = loadEtsFileDtoFromResource("$path")
         println("etsDto = $etsDto")
         val ets = convertToEtsFile(etsDto)
@@ -72,7 +72,7 @@ class EtsFromJsonTest {
 
     @Test
     fun testLoadEtsFileAutoConvert() {
-        val path = "/source/example.ts"
+        val path = "/samples/source/example.ts"
         val res = this::class.java.getResource(path)?.toURI()?.toPath()
             ?: error("Resource not found: $path")
         val etsFile = loadEtsFileAutoConvert(res)
@@ -81,7 +81,7 @@ class EtsFromJsonTest {
 
     @Test
     fun testLoadEtsFileAutoConvertWithDot() {
-        val path = "/source/example.ts"
+        val path = "/samples/source/example.ts"
         val res = this::class.java.getResource(path)?.toURI()?.toPath()
             ?: error("Resource not found: $path")
         val etsFile = loadEtsFileAutoConvertWithDot(res)
