@@ -47,7 +47,7 @@ class EtsCfg(
         get() = stmts
 
     override val entries: List<EtsStmt>
-        get() = listOf(stmts.first())
+        get() = listOfNotNull(stmts.firstOrNull())
 
     override val exits: List<EtsTerminatingStmt>
         get() = instructions.filterIsInstance<EtsTerminatingStmt>()

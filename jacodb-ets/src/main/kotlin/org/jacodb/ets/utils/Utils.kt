@@ -51,7 +51,7 @@ internal fun runProcess(cmd: List<String>, timeout: Duration? = null) {
 
 fun EtsFileDto.toText(): String {
     val lines: MutableList<String> = mutableListOf()
-    lines += "EtsFileDto '${name}':"
+    lines += "EtsFileDto '${signature}':"
     classes.forEach { clazz ->
         lines += "= CLASS '${clazz.signature}':"
         lines += "  superClass = '${clazz.superClassName}'"
@@ -89,7 +89,7 @@ fun EtsFileDto.toText(): String {
 
 fun EtsFile.toText(): String {
     val lines: MutableList<String> = mutableListOf()
-    lines += "EtsFile '${name}':"
+    lines += "EtsFile '${signature}':"
     classes.forEach { clazz ->
         lines += "= CLASS '${clazz.signature}':"
         lines += "  superClass = '${clazz.superClass}'"

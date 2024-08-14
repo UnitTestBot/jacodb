@@ -26,10 +26,9 @@ import java.io.InputStream
 
 @Serializable
 data class EtsFileDto(
-    val name: String,
+    val signature: FileSignatureDto,
     val absoluteFilePath: String? = null,
     val projectDir: String? = null,
-    val projectName: String? = null,
     val namespaces: List<NamespaceDto>,
     val classes: List<ClassDto>,
     val importInfos: List<ImportInfoDto>,
@@ -49,9 +48,10 @@ data class EtsFileDto(
 
 @Serializable
 data class NamespaceDto(
+    // TODO: replace 'name' with 'signature: NamespaceSignatureDto'
     val name: String,
-    val namespaces: List<NamespaceDto> = emptyList(),
     val classes: List<ClassDto> = emptyList(),
+    val namespaces: List<NamespaceDto> = emptyList(),
 )
 
 @Serializable

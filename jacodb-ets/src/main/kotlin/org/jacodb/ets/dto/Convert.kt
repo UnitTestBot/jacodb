@@ -114,11 +114,14 @@ import org.jacodb.ets.model.EtsFieldImpl
 import org.jacodb.ets.model.EtsFieldSignature
 import org.jacodb.ets.model.EtsFieldSubSignature
 import org.jacodb.ets.model.EtsFile
+import org.jacodb.ets.model.EtsFileSignature
 import org.jacodb.ets.model.EtsMethod
 import org.jacodb.ets.model.EtsMethodImpl
 import org.jacodb.ets.model.EtsMethodParameter
 import org.jacodb.ets.model.EtsMethodSignature
 import org.jacodb.ets.model.EtsMethodSubSignature
+import org.jacodb.ets.model.EtsNamespace
+import org.jacodb.ets.model.EtsNamespaceSignature
 
 class EtsMethodBuilder(
     signature: EtsMethodSignature,
@@ -187,8 +190,13 @@ class EtsMethodBuilder(
 
             is AssignStmtDto -> {
                 val lhv = convertToEtsEntity(stmt.left) as EtsValue // safe cast
+                check(lhv is EtsLocal || lhv is EtsFieldRef || lhv is EtsArrayAccess) {
+                    "LHV of AssignStmt should be EtsLocal, EtsFieldRef, or EtsArrayAccess, but got $lhv"
+                }
                 val rhv = convertToEtsEntity(stmt.right).let {
-                    if (it is EtsCastExpr || it is EtsNewExpr) {
+                    if (lhv is EtsLocal) {
+                        it
+                    } else if (it is EtsCastExpr || it is EtsNewExpr) {
                         it
                     } else {
                         ensureOneAddress(it)
@@ -516,7 +524,7 @@ fun convertToEtsClass(classDto: ClassDto): EtsClass {
         val cfg = CfgDto(blocks = listOf(zeroBlock))
         val body = BodyDto(locals = emptyList(), cfg = cfg)
         val signature = MethodSignatureDto(
-            enclosingClass = classSignatureDto,
+            declaringClass = classSignatureDto,
             name = "constructor",
             parameters = emptyList(),
             returnType = ClassTypeDto(classSignatureDto),
@@ -529,16 +537,12 @@ fun convertToEtsClass(classDto: ClassDto): EtsClass {
         )
     }
 
-    val signature = EtsClassSignature(
-        name = classDto.signature.name,
-        namespace = null, // TODO
-        file = null, // TODO
-    )
+    val signature = convertToEtsClassSignature(classDto.signature)
     val superClassSignature = classDto.superClassName?.takeIf { it != "" }?.let { name ->
         EtsClassSignature(
             name = name,
-            namespace = null, // TODO
             file = null, // TODO
+            namespace = null, // TODO
         )
     }
 
@@ -658,17 +662,32 @@ fun convertToEtsConstant(value: ConstantDto): EtsConstant {
     }
 }
 
+fun convertToEtsFileSignature(file: FileSignatureDto): EtsFileSignature {
+    return EtsFileSignature(
+        projectName = file.projectName,
+        fileName = file.fileName,
+    )
+}
+
+fun convertToEtsNamespaceSignature(namespace: NamespaceSignatureDto): EtsNamespaceSignature {
+    return EtsNamespaceSignature(
+        name = namespace.name,
+        file = namespace.declaringFile?.let { convertToEtsFileSignature(it) },
+        namespace = namespace.declaringNamespace?.let { convertToEtsNamespaceSignature(it) },
+    )
+}
+
 fun convertToEtsClassSignature(clazz: ClassSignatureDto): EtsClassSignature {
     return EtsClassSignature(
         name = clazz.name,
-        namespace = null, // TODO
-        file = null, // TODO
+        file = convertToEtsFileSignature(clazz.declaringFile),
+        namespace = clazz.declaringNamespace?.let { convertToEtsNamespaceSignature(it) },
     )
 }
 
 fun convertToEtsFieldSignature(field: FieldSignatureDto): EtsFieldSignature {
     return EtsFieldSignature(
-        enclosingClass = convertToEtsClassSignature(field.enclosingClass),
+        enclosingClass = convertToEtsClassSignature(field.declaringClass),
         sub = EtsFieldSubSignature(
             name = field.name,
             type = convertToEtsType(field.type),
@@ -678,7 +697,7 @@ fun convertToEtsFieldSignature(field: FieldSignatureDto): EtsFieldSignature {
 
 fun convertToEtsMethodSignature(method: MethodSignatureDto): EtsMethodSignature {
     return EtsMethodSignature(
-        enclosingClass = convertToEtsClassSignature(method.enclosingClass),
+        enclosingClass = convertToEtsClassSignature(method.declaringClass),
         sub = EtsMethodSubSignature(
             name = method.name,
             parameters = method.parameters.mapIndexed { index, param ->
@@ -715,7 +734,7 @@ fun convertToEtsMethod(method: MethodDto): EtsMethod {
 fun convertToEtsField(field: FieldDto): EtsField {
     return EtsFieldImpl(
         signature = EtsFieldSignature(
-            enclosingClass = convertToEtsClassSignature(field.signature.enclosingClass),
+            enclosingClass = convertToEtsClassSignature(field.signature.declaringClass),
             sub = EtsFieldSubSignature(
                 name = field.signature.name,
                 type = convertToEtsType(field.signature.type),
@@ -730,13 +749,25 @@ fun convertToEtsField(field: FieldDto): EtsField {
     )
 }
 
+fun convertToEtsNamespace(namespace: NamespaceDto): EtsNamespace {
+    // val signature = convertToEtsNamespaceSignature(namespace.signature)
+    val classes = namespace.classes.map { convertToEtsClass(it) }
+    val namespaces = namespace.namespaces.map { convertToEtsNamespace(it) }
+    return EtsNamespace(
+        // signature = signature,
+        name = namespace.name,
+        classes = classes,
+        namespaces = namespaces,
+    )
+}
+
 fun convertToEtsFile(file: EtsFileDto): EtsFile {
-    val classesFromNamespaces = file.namespaces.flatMap { it.classes }
-    val allClasses = file.classes + classesFromNamespaces
-    val convertedClasses = allClasses.map { convertToEtsClass(it) }
+    val signature = convertToEtsFileSignature(file.signature)
+    val classes = file.classes.map { convertToEtsClass(it) }
+    val namespaces = file.namespaces.map { convertToEtsNamespace(it) }
     return EtsFile(
-        name = file.name,
-        path = file.absoluteFilePath,
-        classes = convertedClasses,
+        signature = signature,
+        classes = classes,
+        namespaces = namespaces,
     )
 }

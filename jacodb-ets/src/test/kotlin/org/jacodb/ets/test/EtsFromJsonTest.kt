@@ -29,6 +29,7 @@ import org.jacodb.ets.dto.ClassSignatureDto
 import org.jacodb.ets.dto.EtsMethodBuilder
 import org.jacodb.ets.dto.FieldDto
 import org.jacodb.ets.dto.FieldSignatureDto
+import org.jacodb.ets.dto.FileSignatureDto
 import org.jacodb.ets.dto.LocalDto
 import org.jacodb.ets.dto.MethodDto
 import org.jacodb.ets.dto.ModifierDto
@@ -110,8 +111,12 @@ class EtsFromJsonTest {
     fun testLoadFieldFromJson() {
         val field = FieldDto(
             signature = FieldSignatureDto(
-                enclosingClass = ClassSignatureDto(
-                    name = "Test"
+                declaringClass = ClassSignatureDto(
+                    name = "TestClass",
+                    declaringFile = FileSignatureDto(
+                        projectName = "TestProject",
+                        fileName = "test.ts",
+                    )
                 ),
                 name = "x",
                 type = NumberTypeDto,
