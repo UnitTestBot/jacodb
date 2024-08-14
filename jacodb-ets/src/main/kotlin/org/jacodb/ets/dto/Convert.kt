@@ -680,7 +680,7 @@ fun convertToEtsNamespaceSignature(namespace: NamespaceSignatureDto): EtsNamespa
 fun convertToEtsClassSignature(clazz: ClassSignatureDto): EtsClassSignature {
     return EtsClassSignature(
         name = clazz.name,
-        file = convertToEtsFileSignature(clazz.declaringFile),
+        file = clazz.declaringFile?.let { convertToEtsFileSignature(it) },
         namespace = clazz.declaringNamespace?.let { convertToEtsNamespaceSignature(it) },
     )
 }

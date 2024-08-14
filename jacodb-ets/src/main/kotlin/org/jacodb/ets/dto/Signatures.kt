@@ -54,7 +54,7 @@ data class NamespaceSignatureDto(
 @Serializable
 data class ClassSignatureDto(
     val name: String,
-    val declaringFile: FileSignatureDto,
+    val declaringFile: FileSignatureDto? = null,
     val declaringNamespace: NamespaceSignatureDto? = null,
 ) {
     override fun toString(): String {
