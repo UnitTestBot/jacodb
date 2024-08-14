@@ -31,11 +31,12 @@ data class EtsFileSignature(
     override fun toString(): String {
         // Remove ".d.ts" and ".ts" file ext:
         val tmp = fileName.replace(REGEX_TS_SUFFIX, "")
-        return if (projectName.isNotBlank()) {
-            "@$projectName/$tmp"
-        } else {
-            tmp
-        }
+        // return if (projectName.isNotBlank()) {
+        //     "@$projectName/$tmp"
+        // } else {
+        //     tmp
+        // }
+        return tmp
     }
 
     override fun equals(other: Any?): Boolean {
@@ -61,8 +62,6 @@ data class EtsNamespaceSignature(
     override fun toString(): String {
         return if (namespace != null) {
             "$namespace::$name"
-        } else if (file != null) {
-            "$file: $name"
         } else {
             name
         }
@@ -84,7 +83,7 @@ data class EtsClassSignature(
         return if (namespace != null) {
             "$namespace::$name"
         } else if (file != null) {
-            "$file: $name"
+            "$name in $file"
         } else {
             name
         }
