@@ -55,7 +55,7 @@ open class LocationsRegistrySnapshot(
     val locations: List<RegisteredLocation>
 ) : Closeable {
 
-    val ids = locations.map { it.id }.toHashSet()
+    val ids = locations.mapTo(mutableSetOf()) { it.id }
 
     override fun close() = registry.close(this)
 

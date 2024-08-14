@@ -40,6 +40,7 @@ interface JcClasspath : Closeable, CommonProject {
     /** locations of this classpath */
     val locations: List<JcByteCodeLocation>
     val registeredLocations: List<RegisteredLocation>
+    val registeredLocationIds: Set<Long>
     val features: List<JcClasspathFeature>?
 
     /**
