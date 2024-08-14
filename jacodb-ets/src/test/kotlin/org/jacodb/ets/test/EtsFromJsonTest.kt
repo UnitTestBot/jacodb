@@ -153,7 +153,7 @@ class EtsFromJsonTest {
         val jsonString = """
              {
                "signature": {
-                 "enclosingClass": {
+                 "declaringClass": {
                    "name": "_DEFAULT_ARK_CLASS"
                  },
                  "name": "_DEFAULT_ARK_METHOD",
