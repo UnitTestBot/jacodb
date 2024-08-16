@@ -45,10 +45,29 @@ class EtsApplicationGraphImpl(
     override fun callees(node: EtsStmt): Sequence<EtsMethod> {
         val expr = node.callExpr ?: return emptySequence()
         val callee = expr.method
-        return cp.classes
+        val allMethods = cp.classes
             .asSequence()
-            .flatMap { it.methods }
-            .filter { it.signature == callee }
+            .flatMap { it.methods + it.ctor }
+            .toList()
+
+        val methodsWithSameName = allMethods.filter {
+            it.name == callee.name
+        }
+        if (methodsWithSameName.size == 1) {
+            return sequenceOf(methodsWithSameName.first())
+        }
+
+        val methodsWithSameClassName = methodsWithSameName.filter {
+            it.enclosingClass.name == callee.enclosingClass.name
+        }
+        if (methodsWithSameClassName.size == 1) {
+            return sequenceOf(methodsWithSameClassName.first())
+        }
+
+        // Else, return all methods with the same signature.
+        return allMethods.asSequence().filter {
+            it.signature == callee
+        }
     }
 
     override fun callers(method: EtsMethod): Sequence<EtsStmt> {
