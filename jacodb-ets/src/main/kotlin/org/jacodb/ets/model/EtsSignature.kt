@@ -31,6 +31,7 @@ data class EtsFileSignature(
     override fun toString(): String {
         // Remove ".d.ts" and ".ts" file ext:
         val tmp = fileName.replace(REGEX_TS_SUFFIX, "")
+        // TODO: projectName was omitted for now in toString(), since it disturbs the debugging output.
         // return if (projectName.isNotBlank()) {
         //     "@$projectName/$tmp"
         // } else {
