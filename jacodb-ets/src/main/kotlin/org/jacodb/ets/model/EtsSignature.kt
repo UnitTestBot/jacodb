@@ -73,6 +73,9 @@ data class EtsClassSignature(
     val file: EtsFileSignature? = null,
     val namespace: EtsNamespaceSignature? = null,
 ) {
+    // TODO: more manual testing is required in order to understand whether
+    //  the class can have both "declaring file" and "declaring namespace".
+    //  Until then, the following check is commented out:
     // init {
     //     require(!(file != null && namespace != null)) {
     //         "Class cannot have both declaring file and declaring namespace"
