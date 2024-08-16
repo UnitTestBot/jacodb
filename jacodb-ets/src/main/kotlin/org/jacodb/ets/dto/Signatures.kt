@@ -81,7 +81,8 @@ data class MethodSignatureDto(
     val returnType: TypeDto,
 ) {
     override fun toString(): String {
-        return "$name(${parameters.joinToString { it.toString() }}): $returnType"
+        val params = parameters.joinToString()
+        return "$name($params): $returnType"
     }
 }
 
