@@ -50,6 +50,20 @@ internal fun runProcess(cmd: List<String>, timeout: Duration? = null) {
     }
 }
 
+/**
+ * Returns the path to the sibling of this path with the given name.
+ *
+ * Usage:
+ * ```
+ * val path = Path("foo/bar.jpeg")
+ * val sibling = path.resolveSibling { it.nameWithoutExtension + ".png" }
+ * println(sibling) // foo/bar.png
+ * ```
+ */
+internal fun Path.resolveSibling(name: (Path) -> String): Path {
+    return resolveSibling(name(this))
+}
+
 fun EtsFileDto.toText(): String {
     val lines: MutableList<String> = mutableListOf()
     lines += "EtsFileDto '${signature}':"

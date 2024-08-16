@@ -21,6 +21,7 @@ import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.utils.dumpDot
 import org.jacodb.ets.utils.render
+import org.jacodb.ets.utils.resolveSibling
 import org.jacodb.ets.utils.toText
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.Path
@@ -83,11 +84,11 @@ object DumpEtsFilesToDot {
     // private const val ETSIR = "/projects/applications_app_samples/etsir/ast/ArkTSDistributedCalc"
     // private val DOT_DIR = Path("generated/projects/applications_app_samples/Calc/dot")
 
-    private const val ETSIR = "/projects/applications_settings_data/etsir/ast"
-    private val DOT_DIR = Path("generated/projects/applications_settings_data/dot")
+    // private const val ETSIR = "/projects/applications_settings_data/etsir/ast"
+    // private val DOT_DIR = Path("generated/projects/applications_settings_data/dot")
 
-    // private const val ETSIR = "/samples/etsir/ast"
-    // private val DOT_DIR = Path("generated/samples/dot")
+    private const val ETSIR = "/samples/etsir/ast"
+    private val DOT_DIR = Path("generated/samples/dot")
 
     @JvmStatic
     fun main(args: Array<String>) {

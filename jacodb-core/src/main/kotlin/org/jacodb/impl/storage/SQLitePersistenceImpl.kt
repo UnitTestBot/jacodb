@@ -113,8 +113,7 @@ class SQLitePersistenceImpl(
 
     private val JcClasspath.clause: Condition
         get() {
-            val ids = registeredLocations.map { it.id }
-            return CLASSES.LOCATION_ID.`in`(ids)
+            return CLASSES.LOCATION_ID.`in`(registeredLocationIds)
         }
 
     private fun JcDatabase.classSources(clause: Condition, single: Boolean = false): List<ClassSource> = read { context ->

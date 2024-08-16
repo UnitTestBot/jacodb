@@ -200,7 +200,7 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
     }
 
     fun syncQuery(classpath: JcClasspath, req: UsageFeatureRequest): Sequence<UsageFeatureResponse> {
-        val locationIds = classpath.registeredLocations.mapTo(mutableSetOf()) { it.id }
+        val locationIds = classpath.registeredLocationIds
         val persistence = classpath.db.persistence
         val symbolInterner = persistence.symbolInterner
         val name = req.methodName ?: req.field ?: throw IllegalArgumentException("Callee name should be specified")
