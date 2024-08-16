@@ -61,6 +61,8 @@ data class EtsNamespaceSignature(
     val namespace: EtsNamespaceSignature? = null,
 ) {
     override fun toString(): String {
+        // TODO: 'file' is not included in the toString() output,
+        //  because it only disturbs the debugging output.
         return if (namespace != null) {
             "$namespace::$name"
         } else {
