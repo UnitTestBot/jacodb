@@ -750,12 +750,11 @@ fun convertToEtsField(field: FieldDto): EtsField {
 }
 
 fun convertToEtsNamespace(namespace: NamespaceDto): EtsNamespace {
-    // val signature = convertToEtsNamespaceSignature(namespace.signature)
+    val signature = convertToEtsNamespaceSignature(namespace.signature)
     val classes = namespace.classes.map { convertToEtsClass(it) }
     val namespaces = namespace.namespaces.map { convertToEtsNamespace(it) }
     return EtsNamespace(
-        // signature = signature,
-        name = namespace.name,
+        signature = signature,
         classes = classes,
         namespaces = namespaces,
     )

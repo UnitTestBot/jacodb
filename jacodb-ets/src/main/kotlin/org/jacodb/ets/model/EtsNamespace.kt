@@ -17,8 +17,7 @@
 package org.jacodb.ets.model
 
 class EtsNamespace(
-    // TODO: replace 'name' with 'signature: EtsNamespaceSignature'
-    val name: String,
+    val signature: EtsNamespaceSignature,
     val classes: List<EtsClass>,
     val namespaces: List<EtsNamespace>,
 )
