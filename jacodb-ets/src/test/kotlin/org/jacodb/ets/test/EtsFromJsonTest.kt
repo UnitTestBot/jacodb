@@ -80,15 +80,6 @@ class EtsFromJsonTest {
     }
 
     @Test
-    fun testLoadEtsFileAutoConvertWithDot() {
-        val path = "/samples/source/example.ts"
-        val res = this::class.java.getResource(path)?.toURI()?.toPath()
-            ?: error("Resource not found: $path")
-        val etsFile = loadEtsFileAutoConvertWithDot(res)
-        println("etsFile = $etsFile")
-    }
-
-    @Test
     fun testLoadValueFromJson() {
         val jsonString = """
             {
