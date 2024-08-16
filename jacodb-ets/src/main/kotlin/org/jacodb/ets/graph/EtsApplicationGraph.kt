@@ -18,16 +18,16 @@ package org.jacodb.ets.graph
 
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.ets.base.EtsStmt
-import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsMethod
+import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.utils.callExpr
 
 interface EtsApplicationGraph : ApplicationGraph<EtsMethod, EtsStmt> {
-    val cp: EtsFile
+    val cp: EtsScene
 }
 
 class EtsApplicationGraphImpl(
-    override val cp: EtsFile,
+    override val cp: EtsScene,
 ) : EtsApplicationGraph {
 
     override fun predecessors(node: EtsStmt): Sequence<EtsStmt> {
@@ -45,9 +45,10 @@ class EtsApplicationGraphImpl(
     override fun callees(node: EtsStmt): Sequence<EtsMethod> {
         val expr = node.callExpr ?: return emptySequence()
         val callee = expr.method
-        return cp.classes.asSequence()
+        return cp.classes
+            .asSequence()
             .flatMap { it.methods }
-            .filter { it.name == callee.name }
+            .filter { it.signature == callee }
     }
 
     override fun callers(method: EtsMethod): Sequence<EtsStmt> {

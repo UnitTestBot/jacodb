@@ -23,7 +23,6 @@ import org.jacodb.ets.utils.dumpDot
 import org.jacodb.ets.utils.render
 import org.jacodb.ets.utils.resolveSibling
 import org.jacodb.ets.utils.toText
-import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.Path
 import kotlin.io.path.div
@@ -82,13 +81,18 @@ object DumpEtsFileToDot {
  */
 @OptIn(ExperimentalPathApi::class)
 object DumpEtsFilesToDot {
-    private const val BASE = "/samples"
-    private const val ETSIR = "etsir/ast" // relative to BASE
+    // private const val ETSIR = "/projects/applications_app_samples/etsir/ast/ArkTSDistributedCalc"
+    // private val DOT_DIR = Path("generated/projects/applications_app_samples/Calc/dot")
+
+    // private const val ETSIR = "/projects/applications_settings_data/etsir/ast"
+    // private val DOT_DIR = Path("generated/projects/applications_settings_data/dot")
+
+    private const val ETSIR = "/samples/etsir/ast"
     private val DOT_DIR = Path("generated/samples/dot")
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val res = "$BASE/$ETSIR"
+        val res = ETSIR
         val etsirDir = object {}::class.java.getResource(res)?.toURI()?.toPath()
             ?: error("Resource not found: '$res'")
         logger.info { "etsirDir = $etsirDir" }
@@ -99,20 +103,16 @@ object DumpEtsFilesToDot {
             .forEach { path ->
                 logger.info { "Processing: $path" }
 
-                val etsFileDto = loadEtsFileDtoFromResource("$BASE/$ETSIR/$path")
+                val etsFileDto = loadEtsFileDtoFromResource("$ETSIR/$path")
                 run {
-                    val dotPath = DOT_DIR / path.resolveSibling {
-                        it.nameWithoutExtension + ".dto.dot"
-                    }
+                    val dotPath = DOT_DIR / path.resolveSibling(path.nameWithoutExtension + ".dto.dot")
                     etsFileDto.dumpDot(dotPath)
                     render(DOT_DIR, dotPath.relativeTo(DOT_DIR))
                 }
 
                 val etsFile = convertToEtsFile(etsFileDto)
                 run {
-                    val dotPath = DOT_DIR / path.resolveSibling {
-                        it.nameWithoutExtension + ".dot"
-                    }
+                    val dotPath = DOT_DIR / path.resolveSibling(path.nameWithoutExtension + ".dot")
                     etsFile.dumpDot(dotPath)
                     render(DOT_DIR, dotPath.relativeTo(DOT_DIR))
                 }

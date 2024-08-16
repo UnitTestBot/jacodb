@@ -16,7 +16,6 @@
 
 package org.jacodb.ets.test
 
-import org.jacodb.ets.test.utils.loadEtsFileFromResource
 import org.jacodb.analysis.ifds.SingletonUnit
 import org.jacodb.analysis.ifds.UnitResolver
 import org.jacodb.analysis.taint.ForwardTaintFlowFunctions
@@ -26,6 +25,8 @@ import org.jacodb.ets.base.EtsStmt
 import org.jacodb.ets.graph.EtsApplicationGraphImpl
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsMethod
+import org.jacodb.ets.model.EtsScene
+import org.jacodb.ets.test.utils.loadEtsFileFromResource
 import org.jacodb.taint.configuration.Argument
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.ConstantTrue
@@ -103,8 +104,8 @@ class EtsTaintAnalysisTest {
             }
     }
 
-    fun runTaintAnalysis(etsFile: EtsFile) {
-        val graph = EtsApplicationGraphImpl(etsFile)
+    fun runTaintAnalysis(project: EtsScene) {
+        val graph = EtsApplicationGraphImpl(project)
         val unitResolver = UnitResolver<EtsMethod> { SingletonUnit }
 
         val manager = TaintManager(
@@ -113,7 +114,7 @@ class EtsTaintAnalysisTest {
             getConfigForMethod = getConfigForMethod,
         )
 
-        val methods = etsFile.classes.flatMap { it.methods }.filter { it.name == "bad" }
+        val methods = project.classes.flatMap { it.methods }.filter { it.name == "bad" }
         logger.info { "Methods: ${methods.size}" }
         for (method in methods) {
             logger.info { "  ${method.name}" }
@@ -125,14 +126,16 @@ class EtsTaintAnalysisTest {
 
     @Test
     fun `test taint analysis`() {
-        val etsFile = loadFromProject("TaintAnalysis")
-        runTaintAnalysis(etsFile)
+        val file = loadFromProject("TaintAnalysis")
+        val project = EtsScene(files = listOf(file))
+        runTaintAnalysis(project)
     }
 
     @Disabled("Need to update the EtsIR-ABC json file")
     @Test
     fun `test taint analysis on decompiled file`() {
-        val etsFile = loadDecompiled("TaintAnalysis")
-        runTaintAnalysis(etsFile)
+        val file = loadDecompiled("TaintAnalysis")
+        val project = EtsScene(files = listOf(file))
+        runTaintAnalysis(project)
     }
 }

@@ -29,6 +29,7 @@ import org.jacodb.ets.dto.ClassSignatureDto
 import org.jacodb.ets.dto.EtsMethodBuilder
 import org.jacodb.ets.dto.FieldDto
 import org.jacodb.ets.dto.FieldSignatureDto
+import org.jacodb.ets.dto.FileSignatureDto
 import org.jacodb.ets.dto.LocalDto
 import org.jacodb.ets.dto.MethodDto
 import org.jacodb.ets.dto.ModifierDto
@@ -41,7 +42,6 @@ import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsMethodSignature
 import org.jacodb.ets.test.utils.loadEtsFileDtoFromResource
 import org.jacodb.ets.utils.loadEtsFileAutoConvert
-import org.jacodb.ets.utils.loadEtsFileAutoConvertWithDot
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import kotlin.io.path.toPath
@@ -63,7 +63,7 @@ class EtsFromJsonTest {
     @Test
     fun testLoadEtsFileFromJson() {
         val path = "/samples/etsir/ast/save/basic.ts.json"
-        val etsDto = loadEtsFileDtoFromResource("$path")
+        val etsDto = loadEtsFileDtoFromResource(path)
         println("etsDto = $etsDto")
         val ets = convertToEtsFile(etsDto)
         println("ets = $ets")
@@ -75,15 +75,6 @@ class EtsFromJsonTest {
         val res = this::class.java.getResource(path)?.toURI()?.toPath()
             ?: error("Resource not found: $path")
         val etsFile = loadEtsFileAutoConvert(res)
-        println("etsFile = $etsFile")
-    }
-
-    @Test
-    fun testLoadEtsFileAutoConvertWithDot() {
-        val path = "/samples/source/example.ts"
-        val res = this::class.java.getResource(path)?.toURI()?.toPath()
-            ?: error("Resource not found: $path")
-        val etsFile = loadEtsFileAutoConvertWithDot(res)
         println("etsFile = $etsFile")
     }
 
@@ -110,8 +101,12 @@ class EtsFromJsonTest {
     fun testLoadFieldFromJson() {
         val field = FieldDto(
             signature = FieldSignatureDto(
-                enclosingClass = ClassSignatureDto(
-                    name = "Test"
+                declaringClass = ClassSignatureDto(
+                    name = "TestClass",
+                    declaringFile = FileSignatureDto(
+                        projectName = "TestProject",
+                        fileName = "test.ts",
+                    )
                 ),
                 name = "x",
                 type = NumberTypeDto,
@@ -148,7 +143,7 @@ class EtsFromJsonTest {
         val jsonString = """
              {
                "signature": {
-                 "enclosingClass": {
+                 "declaringClass": {
                    "name": "_DEFAULT_ARK_CLASS"
                  },
                  "name": "_DEFAULT_ARK_METHOD",

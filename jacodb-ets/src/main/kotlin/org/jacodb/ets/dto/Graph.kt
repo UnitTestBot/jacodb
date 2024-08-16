@@ -27,6 +27,6 @@ data class CfgDto(
 data class BasicBlockDto(
     val id: Int,
     val successors: List<Int>,
-    val predecessors: List<Int>,
+    val predecessors: List<Int>? = null,
     val stmts: List<StmtDto>,
 )

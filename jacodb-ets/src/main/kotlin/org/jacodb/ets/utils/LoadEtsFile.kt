@@ -81,22 +81,3 @@ fun loadEtsFileAutoConvert(tsPath: Path): EtsFile {
         return etsFile
     }
 }
-
-fun loadEtsFileAutoConvertWithDot(tsPath: Path): EtsFile {
-    val irPath = generateEtsFileIR(tsPath)
-    val dotDir = createTempDirectory(prefix = "dot_" + tsPath.nameWithoutExtension)
-
-    val etsFileDto = irPath.inputStream().use { stream ->
-        EtsFileDto.loadFromJson(stream)
-    }
-    val etsFileDtoDotPath = dotDir / (tsPath.nameWithoutExtension + "_DTO.dot")
-    etsFileDto.dumpDot(etsFileDtoDotPath)
-    render(dotDir, etsFileDtoDotPath.relativeTo(dotDir))
-
-    val etsFile = convertToEtsFile(etsFileDto)
-    val etsFileDotPath = dotDir / (tsPath.nameWithoutExtension + ".dot")
-    etsFile.dumpDot(etsFileDotPath)
-    render(dotDir, etsFileDotPath.relativeTo(dotDir))
-
-    return etsFile
-}

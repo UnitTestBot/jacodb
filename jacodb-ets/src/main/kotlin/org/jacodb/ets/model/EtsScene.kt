@@ -16,17 +16,11 @@
 
 package org.jacodb.ets.model
 
-class EtsFile(
-    val signature: EtsFileSignature,
-    val classes: List<EtsClass>,
-    val namespaces: List<EtsNamespace>,
-) {
-    val name: String
-        get() = signature.fileName
-    val projectName: String
-        get() = signature.projectName
+import org.jacodb.api.common.CommonProject
 
-    override fun toString(): String {
-        return name
-    }
+class EtsScene (
+    val files: List<EtsFile>,
+): CommonProject {
+    val classes: List<EtsClass>
+        get() = files.flatMap { it.classes }
 }

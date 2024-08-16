@@ -19,17 +19,52 @@ package org.jacodb.ets.dto
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ClassSignatureDto(
-    val name: String,
+data class FileSignatureDto(
+    val projectName: String,
+    val fileName: String,
 ) {
     override fun toString(): String {
-        return name
+        return "@$projectName/$fileName"
+    }
+}
+
+@Serializable
+data class NamespaceSignatureDto(
+    val name: String,
+    val declaringFile: FileSignatureDto? = null,
+    val declaringNamespace: NamespaceSignatureDto? = null,
+) {
+    override fun toString(): String {
+        return if (declaringNamespace != null) {
+            "$declaringNamespace::$name"
+        } else if (declaringFile != null) {
+            "$name in $declaringFile"
+        } else {
+            name
+        }
+    }
+}
+
+@Serializable
+data class ClassSignatureDto(
+    val name: String,
+    val declaringFile: FileSignatureDto? = null,
+    val declaringNamespace: NamespaceSignatureDto? = null,
+) {
+    override fun toString(): String {
+        return if (declaringNamespace != null) {
+            "$declaringNamespace::$name"
+        } else if (declaringFile != null) {
+            "$name in $declaringFile"
+        } else {
+            name
+        }
     }
 }
 
 @Serializable
 data class FieldSignatureDto(
-    val enclosingClass: ClassSignatureDto,
+    val declaringClass: ClassSignatureDto,
     val name: String,
     val type: TypeDto,
 ) {
@@ -40,13 +75,14 @@ data class FieldSignatureDto(
 
 @Serializable
 data class MethodSignatureDto(
-    val enclosingClass: ClassSignatureDto,
+    val declaringClass: ClassSignatureDto,
     val name: String,
     val parameters: List<MethodParameterDto>,
     val returnType: TypeDto,
 ) {
     override fun toString(): String {
-        return "$name(${parameters.joinToString { it.toString() }}): $returnType"
+        val params = parameters.joinToString()
+        return "$name($params): $returnType"
     }
 }
 

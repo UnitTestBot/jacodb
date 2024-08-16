@@ -29,6 +29,7 @@ import org.jacodb.ets.base.EtsStmt
 import org.jacodb.ets.graph.EtsApplicationGraphImpl
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsMethod
+import org.jacodb.ets.model.EtsScene
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIf
 import java.nio.file.Files
@@ -122,7 +123,8 @@ class EtsProjectAnalysis {
         val fileLines = countFileLines("$SOURCE_BASE_PATH/$filename")
         try {
             logger.info { "Processing '$filename'" }
-            val project = loadFromProject(filename)
+            val file = loadFromProject(filename)
+            val project = EtsScene(listOf(file))
             val startTime = System.currentTimeMillis()
             runAnalysis(project)
             val endTime = System.currentTimeMillis()
@@ -135,7 +137,7 @@ class EtsProjectAnalysis {
         }
     }
 
-    private fun runAnalysis(project: EtsFile) {
+    private fun runAnalysis(project: EtsScene) {
         val graph = EtsApplicationGraphImpl(project)
         val unitResolver = UnitResolver<EtsMethod> { SingletonUnit }
         val manager = TaintManager(

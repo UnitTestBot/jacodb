@@ -31,20 +31,26 @@ data class EtsFileSignature(
     override fun toString(): String {
         // Remove ".d.ts" and ".ts" file ext:
         val tmp = fileName.replace(REGEX_TS_SUFFIX, "")
-        return "@$projectName/$tmp"
+        // TODO: projectName was omitted for now in toString(), since it disturbs the debugging output.
+        // return if (projectName.isNotBlank()) {
+        //     "@$projectName/$tmp"
+        // } else {
+        //     tmp
+        // }
+        return tmp
     }
 }
 
 data class EtsNamespaceSignature(
     val name: String,
-    val namespace: EtsNamespaceSignature? = null,
     val file: EtsFileSignature? = null,
+    val namespace: EtsNamespaceSignature? = null,
 ) {
     override fun toString(): String {
+        // TODO: 'file' is not included in the toString() output,
+        //  because it only disturbs the debugging output.
         return if (namespace != null) {
-            "$namespace.$name"
-        } else if (file != null) {
-            "$file: $name"
+            "$namespace::$name"
         } else {
             name
         }
@@ -53,30 +59,27 @@ data class EtsNamespaceSignature(
 
 data class EtsClassSignature(
     val name: String,
-    val namespace: EtsNamespaceSignature? = null,
     val file: EtsFileSignature? = null,
+    val namespace: EtsNamespaceSignature? = null,
 ) {
+    // TODO: more manual testing is required in order to understand whether
+    //  the class can have both "declaring file" and "declaring namespace".
+    //  Until then, the following check is commented out:
+    // init {
+    //     require(!(file != null && namespace != null)) {
+    //         "Class cannot have both declaring file and declaring namespace"
+    //     }
+    // }
+
     override fun toString(): String {
         return if (namespace != null) {
             "$namespace::$name"
         } else if (file != null) {
-            "$file: $name"
+            "$name in $file"
         } else {
             name
         }
     }
-
-    // Since namespaces are currently irrelevant to the final IR
-    // they are removed from comparison for stability reasons
-    override fun equals(other: Any?): Boolean {
-        if (other !is EtsClassSignature) return false
-        return this.name == other.name && this.file == other.file
-    }
-
-    override fun hashCode(): Int {
-        return name.hashCode()
-    }
-
 }
 
 data class EtsFieldSignature(
