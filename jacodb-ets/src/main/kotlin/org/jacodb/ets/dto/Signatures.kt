@@ -44,7 +44,7 @@ data class NamespaceSignatureDto(
         return if (declaringNamespace != null) {
             "$declaringNamespace::$name"
         } else if (declaringFile != null) {
-            "$declaringFile: $name"
+            "$name in $declaringFile"
         } else {
             name
         }
