@@ -42,7 +42,6 @@ import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsMethodSignature
 import org.jacodb.ets.test.utils.loadEtsFileDtoFromResource
 import org.jacodb.ets.utils.loadEtsFileAutoConvert
-import org.jacodb.ets.utils.loadEtsFileAutoConvertWithDot
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import kotlin.io.path.toPath
@@ -64,7 +63,7 @@ class EtsFromJsonTest {
     @Test
     fun testLoadEtsFileFromJson() {
         val path = "/samples/etsir/ast/save/basic.ts.json"
-        val etsDto = loadEtsFileDtoFromResource("$path")
+        val etsDto = loadEtsFileDtoFromResource(path)
         println("etsDto = $etsDto")
         val ets = convertToEtsFile(etsDto)
         println("ets = $ets")
