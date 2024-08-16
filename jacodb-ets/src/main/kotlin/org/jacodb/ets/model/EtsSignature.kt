@@ -39,20 +39,6 @@ data class EtsFileSignature(
         // }
         return tmp
     }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as EtsFileSignature
-        if (fileName != other.fileName) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return fileName.hashCode()
-    }
 }
 
 data class EtsNamespaceSignature(
@@ -93,23 +79,6 @@ data class EtsClassSignature(
         } else {
             name
         }
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as EtsClassSignature
-
-        if (name != other.name) return false
-        if (file != other.file) return false
-        if (namespace != other.namespace) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return name.hashCode()
     }
 }
 
