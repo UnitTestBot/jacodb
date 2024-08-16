@@ -34,12 +34,6 @@ data class NamespaceSignatureDto(
     val declaringFile: FileSignatureDto? = null,
     val declaringNamespace: NamespaceSignatureDto? = null,
 ) {
-    init {
-        require(!(declaringFile != null && declaringNamespace != null)) {
-            "Namespace cannot have both declaring file and declaring namespace"
-        }
-    }
-
     override fun toString(): String {
         return if (declaringNamespace != null) {
             "$declaringNamespace::$name"
