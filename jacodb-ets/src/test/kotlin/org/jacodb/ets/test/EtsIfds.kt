@@ -61,7 +61,7 @@ class EtsIfds {
     }
 
     private fun projectAvailable(): Boolean {
-        val resource = object {}::class.java.getResource("/samples/project1")?.toURI()
+        val resource = object {}::class.java.getResource("/samples/source/project1")?.toURI()
         return resource != null && resource.toPath().exists()
     }
 
@@ -162,7 +162,7 @@ class EtsIfds {
         val getConfigForMethod: ForwardTaintFlowFunctions<EtsMethod, EtsStmt>.(EtsMethod) -> List<TaintConfigurationItem>? =
             { method ->
                 val rules = buildList {
-                    if (method.name == "source") add(
+                    if (method.name == "samples/source") add(
                         TaintMethodSource(
                             method = method,
                             condition = ConstantTrue,
