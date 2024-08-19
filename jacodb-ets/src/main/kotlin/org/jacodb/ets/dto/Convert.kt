@@ -153,15 +153,22 @@ class EtsMethodBuilder(
         return etsMethod
     }
 
+    private fun ensureLocal(entity: EtsEntity): EtsLocal {
+        if (entity is EtsLocal) {
+            return entity
+        }
+        val newLocal = newTempLocal(entity.type)
+        currentStmts += EtsAssignStmt(
+            location = loc(),
+            lhv = newLocal,
+            rhv = entity,
+        )
+        return newLocal
+    }
+
     private fun ensureOneAddress(entity: EtsEntity): EtsValue {
         if (entity is EtsExpr || entity is EtsFieldRef || entity is EtsArrayAccess) {
-            val newLocal = newTempLocal(entity.type)
-            currentStmts += EtsAssignStmt(
-                location = loc(),
-                lhv = newLocal,
-                rhv = entity,
-            )
-            return newLocal
+            return ensureLocal(entity)
         } else {
             check(entity is EtsValue) {
                 "Expected EtsValue, but got $entity"
@@ -193,13 +200,17 @@ class EtsMethodBuilder(
                 check(lhv is EtsLocal || lhv is EtsFieldRef || lhv is EtsArrayAccess) {
                     "LHV of AssignStmt should be EtsLocal, EtsFieldRef, or EtsArrayAccess, but got $lhv"
                 }
-                val rhv = convertToEtsEntity(stmt.right).let {
+                val rhv = convertToEtsEntity(stmt.right).let { rhv ->
                     if (lhv is EtsLocal) {
-                        it
-                    } else if (it is EtsCastExpr || it is EtsNewExpr) {
-                        it
+                        if (rhv is EtsCastExpr && rhv.arg is EtsExpr) {
+                            EtsCastExpr(ensureLocal(rhv.arg), rhv.type)
+                        } else {
+                            rhv
+                        }
+                    } else if (rhv is EtsCastExpr || rhv is EtsNewExpr) {
+                        rhv
                     } else {
-                        ensureOneAddress(it)
+                        ensureOneAddress(rhv)
                     }
                 }
                 EtsAssignStmt(
@@ -413,14 +424,14 @@ class EtsMethodBuilder(
                 instance = convertToEtsEntity(value.instance as LocalDto) as EtsLocal, // safe cast
                 method = convertToEtsMethodSignature(value.method),
                 args = value.args.map {
-                    ensureOneAddress(convertToEtsEntity(it))
+                    ensureLocal(convertToEtsEntity(it))
                 },
             )
 
             is StaticCallExprDto -> EtsStaticCallExpr(
                 method = convertToEtsMethodSignature(value.method),
                 args = value.args.map {
-                    ensureOneAddress(convertToEtsEntity(it))
+                    ensureLocal(convertToEtsEntity(it))
                 },
             )
 
