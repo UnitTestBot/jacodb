@@ -30,11 +30,13 @@ import org.jacodb.ets.graph.EtsApplicationGraphImpl
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsMethod
 import org.jacodb.ets.model.EtsScene
+import org.jacodb.ets.test.utils.getResourcePath
+import org.jacodb.ets.test.utils.getResourceStream
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIf
 import java.nio.file.Files
-import java.nio.file.Paths
 import kotlin.io.path.exists
+import kotlin.io.path.toPath
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -60,10 +62,8 @@ class EtsProjectAnalysis {
         }
 
         private fun countFileLines(path: String): Long {
-            val stream = object {}::class.java.getResourceAsStream(path)
-                ?: error("Resource not found: $path")
-            stream.bufferedReader().use { reader ->
-                return reader.lines().count()
+            return getResourceStream(path).bufferedReader().use { reader ->
+                reader.lines().count()
             }
         }
 
@@ -71,15 +71,14 @@ class EtsProjectAnalysis {
     }
 
     private fun projectAvailable(): Boolean {
-        val resource = object {}::class.java.getResource(PROJECT_PATH)?.toURI()
-        return resource != null && Paths.get(resource).exists()
+        val path = object {}::class.java.getResource(PROJECT_PATH)?.toURI()?.toPath()
+        return path != null && path.exists()
     }
 
     @EnabledIf("projectAvailable")
     @Test
     fun processAllFiles() {
-        val baseDirUrl = object {}::class.java.getResource(BASE_PATH)
-        val baseDir = Paths.get(baseDirUrl?.toURI() ?: error("Resource not found"))
+        val baseDir = getResourcePath(BASE_PATH)
         Files.walk(baseDir)
             .filter { it.toString().endsWith(".json") }
             .map { baseDir.relativize(it).toString().replace("\\", "/").substringBeforeLast('.') }

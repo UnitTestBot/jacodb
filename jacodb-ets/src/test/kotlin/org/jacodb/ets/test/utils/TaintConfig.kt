@@ -46,9 +46,7 @@ private val json = Json {
 }
 
 fun loadRules(configFileName: String): List<SerializedTaintConfigurationItem> {
-    val configResource = object {}::class.java.getResourceAsStream("/$configFileName")
-        ?: error("Could not load config from '$configFileName'")
-    val configJson = configResource.bufferedReader().readText()
+    val configJson = getResourceStream("/$configFileName").bufferedReader().readText()
     val rules: List<SerializedTaintConfigurationItem> = json.decodeFromString(configJson)
     // println("Loaded ${rules.size} rules from '$configFileName'")
     // for (rule in rules) {
