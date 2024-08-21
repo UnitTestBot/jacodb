@@ -47,25 +47,24 @@ class EtsApplicationGraphImpl(
         val callee = expr.method
         val allMethods = cp.classes
             .asSequence()
-            .flatMap { it.methods + it.ctor }
-            .toList()
+            .flatMap { it.methods.asSequence() + it.ctor }
 
         val methodsWithSameName = allMethods.filter {
             it.name == callee.name
         }
-        if (methodsWithSameName.size == 1) {
+        if (methodsWithSameName.count() == 1) {
             return sequenceOf(methodsWithSameName.first())
         }
 
         val methodsWithSameClassName = methodsWithSameName.filter {
             it.enclosingClass.name == callee.enclosingClass.name
         }
-        if (methodsWithSameClassName.size == 1) {
+        if (methodsWithSameClassName.count() == 1) {
             return sequenceOf(methodsWithSameClassName.first())
         }
 
         // Else, return all methods with the same signature.
-        return allMethods.asSequence().filter {
+        return allMethods.filter {
             it.signature == callee
         }
     }
