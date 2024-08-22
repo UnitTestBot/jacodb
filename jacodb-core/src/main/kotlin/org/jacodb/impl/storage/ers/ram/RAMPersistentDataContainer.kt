@@ -105,6 +105,12 @@ internal class RAMPersistentDataContainer(
         } to id
     }
 
+    fun getPropertyNames(type: String): Set<String> = getAttributeNames(type, properties)
+
+    fun getBlobNames(type: String): Set<String> = getAttributeNames(type, blobs)
+
+    fun getLinkNames(type: String): Set<String> = getAttributeNames(type, links)
+
     fun all(txn: RAMTransaction, type: String): EntityIterable {
         val typeId = types[type] ?: return EntityIterable.EMPTY
         val entities = instances[typeId] ?: return EntityIterable.EMPTY
@@ -140,7 +146,6 @@ internal class RAMPersistentDataContainer(
 
     fun getRawProperty(id: EntityId, propertyName: String): ByteArray? {
         val typeId = id.typeId
-
         return properties[typeId withField propertyName]?.let { it.props[id.instanceId] }
     }
 
@@ -165,7 +170,7 @@ internal class RAMPersistentDataContainer(
         propertyName: String,
         value: ByteArray
     ): Pair<RAMPersistentDataContainer?, EntityIterable> {
-        return getEntitiesWithPropertyFunction(txn, type, propertyName) { typeId ->
+        return getEntitiesWithPropertyFunction(type, propertyName) { typeId ->
             getEntitiesWithValue(txn, typeId, value)
         }
     }
@@ -176,7 +181,7 @@ internal class RAMPersistentDataContainer(
         propertyName: String,
         value: ByteArray
     ): Pair<RAMPersistentDataContainer?, EntityIterable> {
-        return getEntitiesWithPropertyFunction(txn, type, propertyName) { typeId ->
+        return getEntitiesWithPropertyFunction(type, propertyName) { typeId ->
             getEntitiesLtValue(txn, typeId, value)
         }
     }
@@ -187,7 +192,7 @@ internal class RAMPersistentDataContainer(
         propertyName: String,
         value: ByteArray
     ): Pair<RAMPersistentDataContainer?, EntityIterable> {
-        return getEntitiesWithPropertyFunction(txn, type, propertyName) { typeId ->
+        return getEntitiesWithPropertyFunction(type, propertyName) { typeId ->
             getEntitiesEqOrLtValue(txn, typeId, value)
         }
     }
@@ -198,7 +203,7 @@ internal class RAMPersistentDataContainer(
         propertyName: String,
         value: ByteArray
     ): Pair<RAMPersistentDataContainer?, EntityIterable> {
-        return getEntitiesWithPropertyFunction(txn, type, propertyName) { typeId ->
+        return getEntitiesWithPropertyFunction(type, propertyName) { typeId ->
             getEntitiesGtValue(txn, typeId, value)
         }
     }
@@ -209,7 +214,7 @@ internal class RAMPersistentDataContainer(
         propertyName: String,
         value: ByteArray
     ): Pair<RAMPersistentDataContainer?, EntityIterable> {
-        return getEntitiesWithPropertyFunction(txn, type, propertyName) { typeId ->
+        return getEntitiesWithPropertyFunction(type, propertyName) { typeId ->
             getEntitiesEqOrGtValue(txn, typeId, value)
         }
     }
@@ -270,7 +275,6 @@ internal class RAMPersistentDataContainer(
     }
 
     private fun getEntitiesWithPropertyFunction(
-        txn: RAMTransaction,
         type: String,
         propertyName: String,
         f: Properties.(Int) -> Pair<Properties?, EntityIterable>
@@ -335,6 +339,12 @@ internal class RAMPersistentDataContainer(
             }
         }
     }
+
+    private fun getAttributeNames(type: String, map: TransactionalPersistentMap<AttributeKey, *>): Set<String> =
+        types[type]?.let { typeId ->
+            map.getClone().entries()
+                .mapNotNullTo(sortedSetOf()) { if (it.key.typeId == typeId) it.key.name else null }
+        } ?: emptySet()
 }
 
 internal data class AttributeKey(val typeId: Int, val name: String) : Comparable<AttributeKey> {

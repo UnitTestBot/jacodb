@@ -29,6 +29,7 @@ import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.ext.HierarchyExtension
 import org.jacodb.api.jvm.ext.JAVA_OBJECT
 import org.jacodb.api.jvm.ext.findDeclaredMethodOrNull
+import org.jacodb.api.jvm.storage.ers.CollectionEntityIterable
 import org.jacodb.api.jvm.storage.ers.Entity
 import org.jacodb.api.jvm.storage.ers.EntityIterable
 import org.jacodb.api.jvm.storage.ers.Transaction
@@ -96,7 +97,7 @@ internal fun JcClasspath.allClassesExceptObject(context: JCDBContext, direct: Bo
         },
         noSqlAction = { txn ->
             val objectNameId = db.persistence.findSymbolId(JAVA_OBJECT)
-            txn.all("Class").asSequence().filter { clazz ->
+            txn.all("Class").filter { clazz ->
                 (!direct || clazz.getCompressed<Long>("inherits") == null) &&
                         clazz.getCompressed<Long>("locationId") in locationIds &&
                         clazz.getCompressed<Long>("nameId") != objectNameId
@@ -168,14 +169,14 @@ private class HierarchyExtensionERS(cp: JcClasspath) : HierarchyExtensionBase(cp
                         entireHierarchy(txn, nameId, mutableSetOf())
                     } else {
                         directSubClasses(txn, nameId)
-                    }.asSequence().filter { clazz -> clazz.getCompressed<Long>("locationId") in locationIds }
+                    }.filter { clazz -> clazz.getCompressed<Long>("locationId") in locationIds }
                         .toClassSourceSequence(db)
                 }.mapTo(mutableListOf()) { cp.toJcClass(it) }
             }
         }
     }
 
-    private fun entireHierarchy(txn: Transaction, nameId: Long, result: MutableSet<Entity>): Iterable<Entity> {
+    private fun entireHierarchy(txn: Transaction, nameId: Long, result: MutableSet<Entity>): EntityIterable {
         val subClasses = directSubClasses(txn, nameId)
         if (subClasses.isNotEmpty) {
             result += subClasses
@@ -183,7 +184,7 @@ private class HierarchyExtensionERS(cp: JcClasspath) : HierarchyExtensionBase(cp
                 entireHierarchy(txn, clazz.getCompressed<Long>("nameId")!!, result)
             }
         }
-        return result
+        return CollectionEntityIterable(result)
     }
 
     private fun directSubClasses(txn: Transaction, nameId: Long): EntityIterable {

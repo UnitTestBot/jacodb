@@ -58,6 +58,15 @@ class JcUnknownType(
 
     override val access: Int
         get() = Opcodes.ACC_PUBLIC
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) {
+            return true
+        }
+        return other is JcUnknownType && other.name == name
+    }
+
+    override fun hashCode(): Int = name.hashCode()
 }
 
 open class JcUnknownClassLookup(val clazz: JcClassOrInterface) : JcLookup<JcField, JcMethod> {

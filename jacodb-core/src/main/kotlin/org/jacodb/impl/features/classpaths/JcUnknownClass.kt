@@ -16,7 +16,17 @@
 
 package org.jacodb.impl.features.classpaths
 
-import org.jacodb.api.jvm.*
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcClassType
+import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcClasspathExtFeature
+import org.jacodb.api.jvm.JcField
+import org.jacodb.api.jvm.JcLookup
+import org.jacodb.api.jvm.JcLookupExtFeature
+import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.JcTypedField
+import org.jacodb.api.jvm.JcTypedMethod
+import org.jacodb.api.jvm.TypeName
 import org.jacodb.api.jvm.ext.jcdbName
 import org.jacodb.impl.features.classpaths.AbstractJcResolvedResult.JcResolvedClassResultImpl
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualClassImpl
@@ -35,6 +45,15 @@ class JcUnknownClass(override var classpath: JcClasspath, name: String) : JcVirt
     initialMethods = emptyList()
 ) {
     override val lookup: JcLookup<JcField, JcMethod> = JcUnknownClassLookup(this)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) {
+            return true
+        }
+        return other is JcUnknownClass && other.name == name
+    }
+
+    override fun hashCode(): Int = name.hashCode()
 }
 
 class JcUnknownMethod(
@@ -53,6 +72,7 @@ class JcUnknownMethod(
 ) {
 
     companion object {
+
         fun method(type: JcClassOrInterface, name: String, access: Int, description: String): JcMethod {
             val methodType = Type.getMethodType(description)
             val returnType = TypeNameImpl(methodType.returnType.className.jcdbName())
@@ -72,6 +92,15 @@ class JcUnknownMethod(
     init {
         bind(enclosingClass)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) {
+            return true
+        }
+        return other is JcUnknownMethod && description == other.description
+    }
+
+    override fun hashCode(): Int = description.hashCode()
 }
 
 class JcUnknownField(enclosingClass: JcClassOrInterface, name: String, access: Int, type: TypeName) :
@@ -92,6 +121,17 @@ class JcUnknownField(enclosingClass: JcClassOrInterface, name: String, access: I
     init {
         bind(enclosingClass)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) {
+            return true
+        }
+        return other is JcUnknownField && enclosingClass == other.enclosingClass && name == other.name
+    }
+
+    override fun hashCode(): Int = enclosingClass.hashCode() * 31 + name.hashCode()
+
+
 }
 
 /**
@@ -179,6 +219,9 @@ object UnknownClasses : JcClasspathExtFeature {
 object UnknownClassMethodsAndFields : JcLookupExtFeature {
 
     override fun lookup(clazz: JcClassOrInterface): JcLookup<JcField, JcMethod> {
+        if (clazz !is JcUnknownClass) {
+            return TrivialLookup
+        }
         return JcUnknownClassLookup(clazz)
     }
 
@@ -189,3 +232,15 @@ object UnknownClassMethodsAndFields : JcLookupExtFeature {
 
 
 val JcClasspath.isResolveAllToUnknown: Boolean get() = isInstalled(UnknownClasses)
+
+private object TrivialLookup : JcLookup<JcField, JcMethod> {
+
+    override fun field(name: String, typeName: TypeName?, fieldKind: JcLookup.FieldKind): JcField? = null
+
+    override fun method(name: String, description: String): JcMethod? = null
+
+    override fun staticMethod(name: String, description: String): JcMethod? = null
+
+    override fun specialMethod(name: String, description: String): JcMethod? = null
+}
+
