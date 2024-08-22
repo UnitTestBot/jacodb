@@ -25,6 +25,7 @@ import org.jacodb.api.jvm.JcPersistenceImplSettings
 import org.jacodb.api.jvm.JcPersistenceSettings
 import org.jacodb.api.jvm.storage.ers.EmptyErsSettings
 import org.jacodb.api.jvm.storage.ers.ErsSettings
+import org.jacodb.impl.caches.guava.GUAVA_CACHE_PROVIDER_ID
 import org.jacodb.impl.storage.SQLITE_DATABASE_PERSISTENCE_SPI
 import org.jacodb.impl.storage.ers.ERS_DATABASE_PERSISTENCE_SPI
 import org.jacodb.impl.storage.ers.kv.KV_ERS_SPI
@@ -187,8 +188,8 @@ data class JcCacheSegmentSettings(
 
 enum class ValueStoreType { WEAK, SOFT, STRONG }
 
-
 class JcCacheSettings {
+    var cacheSpiId: String = GUAVA_CACHE_PROVIDER_ID
     var classes: JcCacheSegmentSettings = JcCacheSegmentSettings()
     var types: JcCacheSegmentSettings = JcCacheSegmentSettings()
     var rawInstLists: JcCacheSegmentSettings = JcCacheSegmentSettings()
@@ -223,7 +224,6 @@ class JcCacheSettings {
             flowGraphs =
                 JcCacheSegmentSettings(maxSize = maxSize, expiration = expiration, valueStoreType = valueStoreType)
         }
-
 }
 
 object JcSQLitePersistenceSettings : JcPersistenceImplSettings {

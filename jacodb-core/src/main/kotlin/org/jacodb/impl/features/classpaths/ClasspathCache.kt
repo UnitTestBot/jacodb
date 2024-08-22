@@ -38,34 +38,17 @@ import org.jacodb.impl.JcCacheSettings
 import org.jacodb.impl.caches.PluggableCache
 import org.jacodb.impl.caches.PluggableCacheProvider
 import org.jacodb.impl.caches.PluggableCacheStats
-import org.jacodb.impl.caches.guava.GUAVA_CACHE_PROVIDER_ID
 import org.jacodb.impl.features.classpaths.AbstractJcInstResult.JcFlowGraphResultImpl
 import org.jacodb.impl.features.classpaths.AbstractJcInstResult.JcInstListResultImpl
 import org.jacodb.impl.features.classpaths.AbstractJcInstResult.JcRawInstListResultImpl
 import java.text.NumberFormat
 
-private val PLUGGABLE_CACHE_PROVIDER_ID: String
-    get() = System.getProperty("org.jacodb.impl.features.classpaths.cacheProviderId", GUAVA_CACHE_PROVIDER_ID)
-
 /**
  * any class cache should extend this class
  */
-open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, JcMethodExtFeature {
+open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, JcMethodExtFeature, KLogging() {
 
-    private companion object : KLogging() {
-
-        private val cacheProvider = PluggableCacheProvider.getProvider(PLUGGABLE_CACHE_PROVIDER_ID)
-
-        fun <K : Any, V : Any> newSegment(settings: JcCacheSegmentSettings): PluggableCache<K, V> {
-            with(settings) {
-                return cacheProvider.newCache {
-                    maximumSize = maxSize.toInt()
-                    expirationDuration = expiration
-                    valueRefType = valueStoreType
-                }
-            }
-        }
-    }
+    private val cacheProvider = PluggableCacheProvider.getProvider(settings.cacheSpiId)
 
     private val classesCache = newSegment<String, JcResolvedClassResult>(settings.classes)
 
@@ -161,6 +144,16 @@ open class ClasspathCache(settings: JcCacheSettings) : JcClasspathExtFeature, Jc
                     }, total count ${stat.requestCount}"
                 )
             }
+    }
+
+    private fun <K : Any, V : Any> newSegment(settings: JcCacheSegmentSettings): PluggableCache<K, V> {
+        with(settings) {
+            return cacheProvider.newCache {
+                maximumSize = maxSize.toInt()
+                expirationDuration = expiration
+                valueRefType = valueStoreType
+            }
+        }
     }
 
     private fun Double.forPercentages(): String {
