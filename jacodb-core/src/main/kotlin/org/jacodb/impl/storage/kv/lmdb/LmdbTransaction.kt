@@ -17,8 +17,6 @@
 package org.jacodb.impl.storage.kv.lmdb
 
 import org.jacodb.api.jvm.storage.kv.Cursor
-import org.jacodb.api.jvm.storage.kv.DummyCursor
-import org.jacodb.api.jvm.storage.kv.EmptyNamedMap
 import org.jacodb.api.jvm.storage.kv.NamedMap
 import org.jacodb.api.jvm.storage.kv.Transaction
 import org.jacodb.api.jvm.storage.kv.withFirstMoveSkipped
@@ -35,23 +33,19 @@ internal class LmdbTransaction(
 
     override val isFinished: Boolean get() = lmdbTxn.id < 0
 
-    override fun getNamedMap(name: String): NamedMap {
-        val (db, duplicates) = storage.getMap(lmdbTxn, name) ?: return EmptyNamedMap
+    override fun getNamedMap(name: String, create: Boolean): NamedMap? {
+        val (db, duplicates) = storage.getMap(lmdbTxn, name, create) ?: return null
         return LmdbNamedMap(db, duplicates, name)
     }
 
+    override fun getMapNames(): Set<String> = storage.getMapNames()
+
     override fun get(map: NamedMap, key: ByteArray): ByteArray? {
-        if (map === EmptyNamedMap) {
-            return null
-        }
         map as LmdbNamedMap
         return map.db.get(lmdbTxn, key.asByteBuffer)?.asArray
     }
 
     override fun put(map: NamedMap, key: ByteArray, value: ByteArray): Boolean {
-        if (map === EmptyNamedMap) {
-            return false
-        }
         map as LmdbNamedMap
         map.db.openCursor(lmdbTxn).use { cursor ->
             val keyBuffer = key.asByteBuffer
@@ -72,9 +66,6 @@ internal class LmdbTransaction(
     }
 
     override fun delete(map: NamedMap, key: ByteArray): Boolean {
-        if (map === EmptyNamedMap) {
-            return false
-        }
         map as LmdbNamedMap
         map.db.openCursor(lmdbTxn).use { cursor ->
             if (cursor[key.asByteBuffer, GetOp.MDB_SET]) {
@@ -86,9 +77,6 @@ internal class LmdbTransaction(
     }
 
     override fun delete(map: NamedMap, key: ByteArray, value: ByteArray): Boolean {
-        if (map === EmptyNamedMap) {
-            return false
-        }
         map as LmdbNamedMap
         map.db.openCursor(lmdbTxn).use { cursor ->
             if (cursor[key.asByteBuffer, value.asByteBuffer, SeekOp.MDB_GET_BOTH]) {
@@ -100,9 +88,6 @@ internal class LmdbTransaction(
     }
 
     override fun navigateTo(map: NamedMap, key: ByteArray?): Cursor {
-        if (map === EmptyNamedMap) {
-            return DummyCursor
-        }
         map as LmdbNamedMap
         val cursor = map.db.openCursor(lmdbTxn)
         val result = LmdbCursor(this, cursor)

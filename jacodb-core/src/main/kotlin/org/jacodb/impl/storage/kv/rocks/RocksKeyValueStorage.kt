@@ -35,6 +35,7 @@ internal abstract class RocksKeyValueStorage : PluggableKeyValueStorage() {
 
     abstract fun getNamedMapOrNull(name: String): RocksNamedMap?
     abstract fun getOrCreateNamedMap(name: String): RocksNamedMap
+    abstract fun getMapNames(): Set<String>
 }
 
 internal class RocksKeyValueStorageImpl(location: String) : RocksKeyValueStorage() {
@@ -78,7 +79,7 @@ internal class RocksKeyValueStorageImpl(location: String) : RocksKeyValueStorage
                         sizesColumnFamily = getOrCreateColumnFamily(
                             "org.jacodb.impl.storage.kv.rocks.RocksKeyValueStorage.##column##family##sizes##"
                         )
-                    } catch(e: Throwable) {
+                    } catch (e: Throwable) {
                         columnFamilies.forEach { it.close() }
                         rocksDB.close()
                         throw e
@@ -152,6 +153,13 @@ internal class RocksKeyValueStorageImpl(location: String) : RocksKeyValueStorage
         return when {
             isMapWithKeyDuplicates?.invoke(name) == true -> DuplicateRocksNamedMap(columnFamilyHandle)
             else -> NoDuplicateRocksNamedMap(columnFamilyHandle)
+        }
+    }
+
+    override fun getMapNames(): Set<String> {
+        val stringBinding = BuiltInBindingProvider.getBinding(String::class.java)
+        return columnFamiliesMap.mapTo(sortedSetOf()) {
+            stringBinding.getObject(it.key.toByteArray())
         }
     }
 

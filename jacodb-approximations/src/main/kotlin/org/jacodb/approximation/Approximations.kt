@@ -93,11 +93,11 @@ object Approximations : JcFeature<Any?, Any?>, JcClassExtFeature, JcInstExtFeatu
                     },
                     noSqlAction = { txn ->
                         val valueId = persistence.findSymbolId("value")
-                        txn.find("Annotation", "nameId", approxSymbol.compressed).asSequence()
+                        txn.find("Annotation", "nameId", approxSymbol.compressed)
                             .filter { it.getCompressedBlob<Int>("refKind") == RefKind.CLASS.ordinal }
                             .flatMap { annotation ->
                                 annotation.getLink("ref").let { clazz ->
-                                    annotation.getLinks("values").asSequence().map { clazz to it }
+                                    annotation.getLinks("values").map { clazz to it }
                                 }
                             }.filter { (_, annotationValue) ->
                                 valueId == annotationValue["nameId"]

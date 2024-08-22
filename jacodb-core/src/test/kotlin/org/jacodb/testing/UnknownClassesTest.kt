@@ -20,16 +20,21 @@ import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.ext.cfg.callExpr
 import org.jacodb.api.jvm.ext.cfg.fieldRef
 import org.jacodb.api.jvm.ext.findClass
+import org.jacodb.api.jvm.ext.findDeclaredMethodOrNull
+import org.jacodb.api.jvm.ext.findFieldOrNull
+import org.jacodb.api.jvm.ext.findMethodOrNull
+import org.jacodb.api.jvm.ext.objectClass
 import org.jacodb.impl.features.classpaths.JcUnknownClass
 import org.jacodb.impl.features.classpaths.UnknownClassMethodsAndFields
 import org.jacodb.impl.features.classpaths.UnknownClasses
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class UnknownClassesTest : BaseTest() {
 
-    companion object : WithGlobalDB(UnknownClasses, UnknownClassMethodsAndFields)
+    companion object : WithGlobalDB(UnknownClasses)
 
     @Test
     fun `unknown class is resolved`() {
@@ -74,6 +79,18 @@ class UnknownClassesTest : BaseTest() {
         )
         clazz.forEach {
             it.declaredMethods.forEach { it.assertCfg() }
+        }
+    }
+
+    @Test
+    fun `object doesn't have unknown methods and fields`() {
+        cp.objectClass.let { clazz ->
+            assertTrue(clazz !is JcUnknownClass)
+            assertTrue(clazz.declaredFields.isEmpty())
+            val xxxField = clazz.findFieldOrNull("xxx")
+            assertNull(xxxField)
+            val xxxMethod = clazz.findMethodOrNull("xxx", "(JILjava/lang/Exception;)V")
+            assertNull(xxxMethod)
         }
     }
 

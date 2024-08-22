@@ -70,7 +70,7 @@ abstract class AbstractJcDbPersistence(
                     noSqlAction = { txn ->
                         txn.all(BytecodeLocationEntity.BYTECODE_LOCATION_ENTITY_TYPE).map {
                             PersistentByteCodeLocationData.fromErsEntity(it)
-                        }
+                        }.toList()
                     }
                 ).mapNotNull {
                     try {
