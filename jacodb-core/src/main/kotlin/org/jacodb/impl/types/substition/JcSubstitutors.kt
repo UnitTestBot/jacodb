@@ -16,8 +16,13 @@
 
 package org.jacodb.impl.types.substition
 
-import org.jacodb.api.jvm.*
+import org.jacodb.api.jvm.JcClassOrInterface
+import org.jacodb.api.jvm.JcGenericsSubstitutionFeature
+import org.jacodb.api.jvm.JcSubstitutor
+import org.jacodb.api.jvm.JvmType
+import org.jacodb.api.jvm.JvmTypeParameterDeclaration
 import org.jacodb.impl.cfg.util.OBJECT_CLASS
+import org.jacodb.impl.features.classpaths.JcUnknownClass
 import org.jacodb.impl.types.signature.JvmClassRefType
 import org.jacodb.impl.types.typeParameters
 
@@ -40,16 +45,18 @@ object SafeSubstitution : JcGenericsSubstitutionFeature {
         outer: JcSubstitutor?
     ): JcSubstitutor {
         val params = clazz.typeParameters
-        require(params.size == parameters.size) {
-            "Incorrect parameters specified for class ${clazz.name}: expected ${params.size} found ${parameters.size}"
+        return if (clazz is JcUnknownClass) {
+            ignoreProblemsAndSubstitute(params, parameters, outer)
+        } else {
+            require(params.size == parameters.size) {
+                "Incorrect parameters specified for class ${clazz.name}: expected ${params.size} found ${parameters.size}"
+            }
+            params.substitute(parameters, outer)
         }
-        return params.substitute(parameters, outer)
     }
 }
 
 object IgnoreSubstitutionProblems : JcGenericsSubstitutionFeature {
-
-    private val jvmObjectType = JvmClassRefType(OBJECT_CLASS, true, emptyList())
 
     override fun substitute(
         clazz: JcClassOrInterface,
@@ -57,10 +64,20 @@ object IgnoreSubstitutionProblems : JcGenericsSubstitutionFeature {
         outer: JcSubstitutor?
     ): JcSubstitutor {
         val params = clazz.typeParameters
-        if (params.size == parameters.size) {
-            return params.substitute(parameters, outer)
-        }
-        val substitution = params.associateWith { it.bounds?.first() ?: jvmObjectType }
-        return (outer ?: JcSubstitutorImpl.empty).newScope(substitution)
+        return ignoreProblemsAndSubstitute(params, parameters, outer)
     }
+}
+
+private val jvmObjectType = JvmClassRefType(OBJECT_CLASS, true, emptyList())
+
+private fun ignoreProblemsAndSubstitute(
+    params: List<JvmTypeParameterDeclaration>,
+    parameters: List<JvmType>,
+    outer: JcSubstitutor?
+): JcSubstitutor {
+    if (params.size == parameters.size) {
+        return params.substitute(parameters, outer)
+    }
+    val substitution = params.associateWith { it.bounds?.first() ?: jvmObjectType }
+    return (outer ?: JcSubstitutorImpl.empty).newScope(substitution)
 }

@@ -19,6 +19,7 @@ package org.jacodb.testing.cfg
 import org.jacodb.api.jvm.ext.findClass
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class IincTest : BaseInstructionsTest() {
@@ -112,5 +113,8 @@ class IincTest : BaseInstructionsTest() {
 
     @Test
     fun `kotlin iinc4`() = runTest(Iinc4::class.java.name)
+
+    @Test
+    fun `kotlin iinc5`() = runTest(Iinc5::class.java.name)
 
 }
