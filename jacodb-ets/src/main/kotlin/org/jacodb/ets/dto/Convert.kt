@@ -304,7 +304,7 @@ class EtsMethodBuilder(
             )
 
             is NewArrayExprDto -> EtsNewArrayExpr(
-                elementType = convertToEtsType(value.type),
+                elementType = convertToEtsType(value.elementType),
                 size = convertToEtsEntity(value.size),
             )
 
