@@ -46,6 +46,9 @@ data class EtsNamespaceSignature(
     val file: EtsFileSignature? = null,
     val namespace: EtsNamespaceSignature? = null,
 ) {
+    val enclosingFile: EtsFileSignature?
+        get() = file ?: namespace?.enclosingFile
+
     override fun toString(): String {
         // TODO: 'file' is not included in the toString() output,
         //  because it only disturbs the debugging output.
@@ -70,6 +73,9 @@ data class EtsClassSignature(
     //         "Class cannot have both declaring file and declaring namespace"
     //     }
     // }
+
+    val enclosingFile: EtsFileSignature?
+        get() = file ?: namespace?.enclosingFile
 
     override fun toString(): String {
         return if (namespace != null) {
