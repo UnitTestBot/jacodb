@@ -63,17 +63,13 @@ class ChanType(
 ) : GoType, AbstractGoType() {
     override val typeName: String
         get(): String {
-            var res = elementType.typeName
-            if (direction == 0L) {
-                res = "chan $res"
+            val res = elementType.typeName
+            return when (direction) {
+                0L -> "chan $res"
+                1L -> "<-chan $res"
+                2L -> "chan <-$res"
+                else -> ""
             }
-            else if (direction == 1L) {
-                res = "<-chan $res"
-            }
-            else if (direction == 2L) {
-                res = "chan <-$res"
-            }
-            return res
         }
 }
 
