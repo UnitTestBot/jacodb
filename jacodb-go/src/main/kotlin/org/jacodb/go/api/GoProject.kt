@@ -16,8 +16,7 @@
 
 package org.jacodb.go.api
 
-import org.jacodb.api.common.CommonType
-import org.jacodb.api.common.Project
+import org.jacodb.api.common.CommonProject
 
 class File(
     val name: String,
@@ -32,23 +31,4 @@ class FileSet(
 
 class GoProject(
     val methods: List<GoMethod>,
-    val fileSet: FileSet,
-) : Project {
-    override fun close() {}
-
-    override fun findTypeOrNull(name: String): CommonType? {
-        // return class or interface or null if there is no such class found in locations
-        methods.forEach {
-            it.blocks.forEach { block ->
-                block.instructions.forEach { inst ->
-                    inst.operands.forEach { expr ->
-                        if (expr.toString() == name) {
-                            return expr.type
-                        }
-                    }
-                }
-            }
-        }
-        return null
-    }
-}
+) : CommonProject
