@@ -18,10 +18,17 @@ package org.jacodb.go.api
 
 import org.jacodb.api.common.cfg.CommonInstLocation
 
-interface GoInstLocation : CommonInstLocation<GoMethod, GoInst>
+interface GoInstLocation : CommonInstLocation {
+    override val method: GoMethod
+    val index: Int
+    val lineNumber: Int
+}
 
-class GoInstLocationImpl(override val index: Int, override val lineNumber: Int, override val method: GoMethod) :
-    GoInstLocation {
+class GoInstLocationImpl(
+    override val method: GoMethod,
+    override val index: Int,
+    override val lineNumber: Int,
+) : GoInstLocation {
     override fun toString(): String {
         var file: File? = null
         for (f in method.fileSet.files) {

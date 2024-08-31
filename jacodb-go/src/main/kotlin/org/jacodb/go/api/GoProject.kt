@@ -40,7 +40,7 @@ class GoProject(
         // return class or interface or null if there is no such class found in locations
         methods.forEach {
             it.blocks.forEach { block ->
-                block.insts.forEach { inst ->
+                block.instructions.forEach { inst ->
                     inst.operands.forEach { expr ->
                         if (expr.toString() == name) {
                             return expr.type

@@ -16,19 +16,13 @@
 
 package org.jacodb.go.api
 
-import org.jacodb.api.common.cfg.ControlFlowGraph
 import org.jacodb.api.common.analysis.ApplicationGraph
-
-interface GoBytecodeGraph<out Statement> : ControlFlowGraph<@UnsafeVariance Statement> {
-    fun throwers(node: @UnsafeVariance Statement): Set<Statement>
-    fun catchers(node: @UnsafeVariance Statement): Set<Statement>
-}
+import org.jacodb.api.common.cfg.BytecodeGraph
 
 class GoGraph(
     override val instructions: List<GoInst>,
-    val blocksNum: List<Int>,
-) : GoBytecodeGraph<GoInst> {
-
+    private val blocksNum: List<Int>,
+) : BytecodeGraph<GoInst> {
     private val predecessorMap: MutableMap<GoInst, MutableSet<GoInst>> = hashMapOf()
     private val successorMap: MutableMap<GoInst, Set<GoInst>> = hashMapOf()
 
@@ -36,7 +30,7 @@ class GoGraph(
         for (inst in instructions) {
             val successors = when (inst) {
                 is GoTerminatingInst -> emptySet()
-                is GoBranchingInst -> inst.successors.map{ instructions[blocksNum.indexOf(it.index)] }.toSet()
+                is GoBranchingInst -> inst.successors.map { instructions[blocksNum.indexOf(it.index)] }.toSet()
                 else -> setOf(next(inst))
             }
             successorMap[inst] = successors
@@ -77,14 +71,14 @@ data class GoBasicBlock(
     val id: Int,
     val successors: List<Int>,
     val predecessors: List<Int>,
-    var insts: List<GoInst> = emptyList(),
+    var instructions: List<GoInst> = emptyList(),
 )
 
 class GoBlockGraph(
     override val instructions: List<GoBasicBlock>,
     instList: List<GoInst>,
     blocksNum: List<Int>,
-) : GoBytecodeGraph<GoBasicBlock> {
+) : BytecodeGraph<GoBasicBlock> {
     val graph: GoGraph = GoGraph(instList, blocksNum)
 
     override val entries: List<GoBasicBlock>
@@ -102,7 +96,7 @@ class GoBlockGraph(
     }
 
     override fun throwers(node: GoBasicBlock): Set<GoBasicBlock> {
-        return exits.filter { it.insts.last() is GoPanicInst }.toSet()
+        return exits.filter { it.instructions.last() is GoPanicInst }.toSet()
     }
 
     // TODO: catchers? Is there any?
@@ -111,12 +105,10 @@ class GoBlockGraph(
     override fun iterator(): Iterator<GoBasicBlock> = instructions.iterator()
 }
 
-interface GoApplicationGraph : ApplicationGraph<GoMethod, GoInst> {
-    override val project: GoProject
-}
+interface GoApplicationGraph : ApplicationGraph<GoMethod, GoInst>
 
 class GoApplicationGraphImpl(
-    override val project: GoProject,
+    val project: GoProject,
 ) : GoApplicationGraph {
 
     override fun predecessors(node: GoInst): Sequence<GoInst> {
@@ -143,16 +135,12 @@ class GoApplicationGraphImpl(
     override fun callers(method: GoMethod): Sequence<GoInst> {
         var res = listOf<GoInst>()
         for (block in method.blocks) {
-            res = listOf(res, block.insts).flatten()
+            res = listOf(res, block.instructions).flatten()
         }
         return res.asSequence()
     }
 
     override fun entryPoints(method: GoMethod): Sequence<GoInst> {
-        return entryPoint(method)
-    }
-
-    fun entryPoint(method: GoMethod): Sequence<GoInst> {
         return method.flowGraph().entries.asSequence()
     }
 

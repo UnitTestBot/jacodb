@@ -18,7 +18,7 @@ package org.jacodb.go.api
 
 import org.jacodb.api.common.CommonMethod
 
-interface GoMethod : CommonMethod<GoMethod, GoInst>, GoValue {
+interface GoMethod : CommonMethod, GoValue {
     val metName: String
     val packageName: String
     val blocks: List<GoBasicBlock>
