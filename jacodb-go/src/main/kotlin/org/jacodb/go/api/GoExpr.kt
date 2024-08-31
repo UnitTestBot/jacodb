@@ -1370,16 +1370,16 @@ data class GoBuiltin(val index: Int, override val name: String, override val typ
 
 data class GoFunction(
     override val type: GoType,
-    var operands: List<GoValue>,
+    override val parameters: List<GoParameter>,
     override val metName: String,
     override var blocks: List<GoBasicBlock>,
-    val returnTypes: List<GoType>,
     override val packageName: String,
+    val returnTypes: List<GoType>,
 ) : GoMethod {
     private var flowGraph: GoGraph? = null
 
     override fun toString(): String = "${packageName}::${metName}${
-        operands.joinToString(
+        parameters.joinToString(
             prefix = "(",
             postfix = ")",
             separator = ", "
@@ -1413,8 +1413,6 @@ data class GoFunction(
 
     override val name: String
         get() = metName
-    override val parameters: List<CommonMethodParameter>
-        get() = emptyList()
     override val returnType: GoType
         get() = TupleType(
             returnTypes.map { it.typeName }
@@ -1429,7 +1427,7 @@ data class GoFunction(
     }
 }
 
-data class GoParameter(val index: Int, override val name: String, override val type: GoType) : GoLocal {
+data class GoParameter(val index: Int, override val name: String, override val type: GoType) : GoLocal, CommonMethodParameter {
     companion object {
         @JvmStatic
         fun of(index: Int, name: String?, type: GoType): GoParameter {
