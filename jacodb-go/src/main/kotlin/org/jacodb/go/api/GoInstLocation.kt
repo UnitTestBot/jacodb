@@ -30,24 +30,7 @@ class GoInstLocationImpl(
     override val lineNumber: Int,
 ) : GoInstLocation {
     override fun toString(): String {
-        var file: File? = null
-        for (f in method.fileSet.files) {
-            if (f.base <= lineNumber && f.base + f.size >= lineNumber) {
-                file = f
-                break
-            }
-        }
-        if (file == null) {
-            return method.name
-        }
-        var line = 0
-        for (l in file.lines) {
-            if (l + file.base >= lineNumber) {
-                break
-            }
-            line++
-        }
-        return "${file.name}:$line"
+        return "${method.name}:$lineNumber"
     }
 
     override fun equals(other: Any?): Boolean {

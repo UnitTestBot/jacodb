@@ -107,10 +107,7 @@ class GoBlockGraph(
 
 interface GoApplicationGraph : ApplicationGraph<GoMethod, GoInst>
 
-class GoApplicationGraphImpl(
-    val project: GoProject,
-) : GoApplicationGraph {
-
+class GoApplicationGraphImpl : GoApplicationGraph {
     override fun predecessors(node: GoInst): Sequence<GoInst> {
         val graph = node.location.method.flowGraph()
         val predecessors = graph.predecessors(node)
