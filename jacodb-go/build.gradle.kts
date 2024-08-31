@@ -1,10 +1,6 @@
 plugins {
-    id("java")
-    kotlin("plugin.serialization") version "1.7.21"
+    kotlin("plugin.serialization")
 }
-
-group = "org.jacodb"
-version = "1.4-SNAPSHOT"
 
 repositories {
     mavenCentral()
