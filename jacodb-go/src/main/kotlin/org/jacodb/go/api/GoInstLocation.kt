@@ -20,11 +20,13 @@ import org.jacodb.api.common.cfg.CommonInstLocation
 
 interface GoInstLocation : CommonInstLocation {
     override val method: GoMethod
+    val index: Int
     val lineNumber: Int
 }
 
 class GoInstLocationImpl(
     override val method: GoMethod,
+    override val index: Int,
     override val lineNumber: Int,
 ) : GoInstLocation {
     override fun toString(): String {
@@ -37,12 +39,13 @@ class GoInstLocationImpl(
 
         other as GoInstLocationImpl
 
+        if (index != other.index) return false
         if (lineNumber != other.lineNumber) return false
         return method == other.method
     }
 
     override fun hashCode(): Int {
-        var result = lineNumber
+        var result = index
         result = 31 * result + method.hashCode()
         return result
     }

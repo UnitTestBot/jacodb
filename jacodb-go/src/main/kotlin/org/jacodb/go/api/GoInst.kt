@@ -233,7 +233,7 @@ class GoAssignInst(
     }
 }
 
-class GoNullInst(val parent: GoMethod) : AbstractGoInst(GoInstLocationImpl(parent,-1)) {
+class GoNullInst(val parent: GoMethod) : AbstractGoInst(GoInstLocationImpl(parent,-1, -1)) {
     override fun toString(): String = "null"
 
     override fun <T> accept(visitor: GoInstVisitor<T>): T {
