@@ -775,7 +775,7 @@ data class GoSliceExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv =GoVar(name, type),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -1306,7 +1306,6 @@ interface GoNumericConstant : GoConstant {
 
 }
 
-
 data class GoBool(val value: Boolean, override val type: GoType) : GoConstant, GoConditionExpr {
     override fun toString(): String = "$value"
 
@@ -1315,159 +1314,31 @@ data class GoBool(val value: Boolean, override val type: GoType) : GoConstant, G
     }
 }
 
-data class GoByte(override val value: Byte, override val type: GoType) : GoNumericConstant {
+data class GoInt(override val value: Long, override val type: GoType) : GoNumericConstant {
     override fun toString(): String = "$value"
 
     override fun plus(c: GoNumericConstant): GoNumericConstant {
-        return GoInt(value + c.value.toByte(), type)
+        return GoInt(value + c.value.toLong(), type)
     }
 
     override fun minus(c: GoNumericConstant): GoNumericConstant {
-        return GoInt(value - c.value.toByte(), type)
+        return GoInt(value - c.value.toLong(), type)
     }
 
     override fun times(c: GoNumericConstant): GoNumericConstant {
-        return GoInt(value * c.value.toByte(), type)
+        return GoInt(value * c.value.toLong(), type)
     }
 
     override fun div(c: GoNumericConstant): GoNumericConstant {
-        return GoInt(value / c.value.toByte(), type)
+        return GoInt(value / c.value.toLong(), type)
     }
 
     override fun rem(c: GoNumericConstant): GoNumericConstant {
-        return GoInt(value % c.value.toByte(), type)
+        return GoInt(value % c.value.toLong(), type)
     }
 
     override fun unaryMinus(): GoNumericConstant {
         return GoInt(-value, type)
-    }
-
-    override fun isLessThan(c: GoNumericConstant): Boolean {
-        return value < c.value.toByte()
-    }
-
-    override fun isGreaterThan(c: GoNumericConstant): Boolean {
-        return value > c.value.toByte()
-    }
-
-    override fun <T> accept(visitor: GoExprVisitor<T>): T {
-        return visitor.visitGoByte(this)
-    }
-}
-
-data class GoChar(val value: Char, override val type: GoType) : GoConstant {
-    override fun toString(): String = "$value"
-
-    override fun <T> accept(visitor: GoExprVisitor<T>): T {
-        return visitor.visitGoChar(this)
-    }
-}
-
-data class GoShort(override val value: Short, override val type: GoType) : GoNumericConstant {
-    override fun toString(): String = "$value"
-
-    override fun plus(c: GoNumericConstant): GoNumericConstant {
-        return GoInt(value + c.value.toShort(), type)
-    }
-
-    override fun minus(c: GoNumericConstant): GoNumericConstant {
-        return GoInt(value - c.value.toShort(), type)
-    }
-
-    override fun times(c: GoNumericConstant): GoNumericConstant {
-        return GoInt(value * c.value.toInt(), type)
-    }
-
-    override fun div(c: GoNumericConstant): GoNumericConstant {
-        return GoInt(value / c.value.toShort(), type)
-    }
-
-    override fun rem(c: GoNumericConstant): GoNumericConstant {
-        return GoInt(value % c.value.toShort(), type)
-    }
-
-    override fun unaryMinus(): GoNumericConstant {
-        return GoInt(-value, type)
-    }
-
-    override fun isLessThan(c: GoNumericConstant): Boolean {
-        return value < c.value.toShort()
-    }
-
-    override fun isGreaterThan(c: GoNumericConstant): Boolean {
-        return value > c.value.toShort()
-    }
-
-    override fun <T> accept(visitor: GoExprVisitor<T>): T {
-        return visitor.visitGoShort(this)
-    }
-}
-
-data class GoInt(override val value: Int, override val type: GoType) : GoNumericConstant {
-    override fun toString(): String = "$value"
-
-    override fun plus(c: GoNumericConstant): GoNumericConstant {
-        return GoInt(value + c.value.toInt(), type)
-    }
-
-    override fun minus(c: GoNumericConstant): GoNumericConstant {
-        return GoInt(value - c.value.toInt(), type)
-    }
-
-    override fun times(c: GoNumericConstant): GoNumericConstant {
-        return GoInt(value * c.value.toInt(), type)
-    }
-
-    override fun div(c: GoNumericConstant): GoNumericConstant {
-        return GoInt(value / c.value.toInt(), type)
-    }
-
-    override fun rem(c: GoNumericConstant): GoNumericConstant {
-        return GoInt(value % c.value.toInt(), type)
-    }
-
-    override fun unaryMinus(): GoNumericConstant {
-        return GoInt(-value, type)
-    }
-
-    override fun isLessThan(c: GoNumericConstant): Boolean {
-        return value < c.value.toInt()
-    }
-
-    override fun isGreaterThan(c: GoNumericConstant): Boolean {
-        return value > c.value.toInt()
-    }
-
-    override fun <T> accept(visitor: GoExprVisitor<T>): T {
-        return visitor.visitGoInt(this)
-    }
-}
-
-data class GoLong(override val value: Long, override val type: GoType) : GoNumericConstant {
-    override fun toString(): String = "$value"
-
-    override fun plus(c: GoNumericConstant): GoNumericConstant {
-        return GoLong(value + c.value.toLong(), type)
-    }
-
-    override fun minus(c: GoNumericConstant): GoNumericConstant {
-        return GoLong(value - c.value.toLong(), type)
-    }
-
-    override fun times(c: GoNumericConstant): GoNumericConstant {
-        return GoLong(value * c.value.toLong(), type)
-    }
-
-    override fun div(c: GoNumericConstant): GoNumericConstant {
-        return GoLong(value / c.value.toLong(), type)
-    }
-
-    override fun rem(c: GoNumericConstant): GoNumericConstant {
-        return GoLong(value % c.value.toLong(), type)
-    }
-
-    override fun unaryMinus(): GoNumericConstant {
-        return GoLong(-value, type)
     }
 
     override fun isLessThan(c: GoNumericConstant): Boolean {
@@ -1479,35 +1350,235 @@ data class GoLong(override val value: Long, override val type: GoType) : GoNumer
     }
 
     override fun <T> accept(visitor: GoExprVisitor<T>): T {
-        return visitor.visitGoLong(this)
+        return visitor.visitGoInt(this)
     }
 }
 
-data class GoFloat(override val value: Float, override val type: GoType) : GoNumericConstant {
+data class GoInt8(override val value: Byte, override val type: GoType) : GoNumericConstant {
     override fun toString(): String = "$value"
 
     override fun plus(c: GoNumericConstant): GoNumericConstant {
-        return GoFloat(value + c.value.toFloat(), type)
+        return GoInt32(value + c.value.toByte(), type)
     }
 
     override fun minus(c: GoNumericConstant): GoNumericConstant {
-        return GoFloat(value - c.value.toFloat(), type)
+        return GoInt32(value - c.value.toByte(), type)
     }
 
     override fun times(c: GoNumericConstant): GoNumericConstant {
-        return GoFloat(value * c.value.toFloat(), type)
+        return GoInt32(value * c.value.toByte(), type)
     }
 
     override fun div(c: GoNumericConstant): GoNumericConstant {
-        return GoFloat(value / c.value.toFloat(), type)
+        return GoInt32(value / c.value.toByte(), type)
     }
 
     override fun rem(c: GoNumericConstant): GoNumericConstant {
-        return GoFloat(value % c.value.toFloat(), type)
+        return GoInt32(value % c.value.toByte(), type)
     }
 
     override fun unaryMinus(): GoNumericConstant {
-        return GoFloat(-value, type)
+        return GoInt32(-value, type)
+    }
+
+    override fun isLessThan(c: GoNumericConstant): Boolean {
+        return value < c.value.toByte()
+    }
+
+    override fun isGreaterThan(c: GoNumericConstant): Boolean {
+        return value > c.value.toByte()
+    }
+
+    override fun <T> accept(visitor: GoExprVisitor<T>): T {
+        return visitor.visitGoInt8(this)
+    }
+}
+
+data class GoInt16(override val value: Short, override val type: GoType) : GoNumericConstant {
+    override fun toString(): String = "$value"
+
+    override fun plus(c: GoNumericConstant): GoNumericConstant {
+        return GoInt32(value + c.value.toShort(), type)
+    }
+
+    override fun minus(c: GoNumericConstant): GoNumericConstant {
+        return GoInt32(value - c.value.toShort(), type)
+    }
+
+    override fun times(c: GoNumericConstant): GoNumericConstant {
+        return GoInt32(value * c.value.toShort(), type)
+    }
+
+    override fun div(c: GoNumericConstant): GoNumericConstant {
+        return GoInt32(value / c.value.toShort(), type)
+    }
+
+    override fun rem(c: GoNumericConstant): GoNumericConstant {
+        return GoInt32(value % c.value.toShort(), type)
+    }
+
+    override fun unaryMinus(): GoNumericConstant {
+        return GoInt32(-value, type)
+    }
+
+    override fun isLessThan(c: GoNumericConstant): Boolean {
+        return value < c.value.toShort()
+    }
+
+    override fun isGreaterThan(c: GoNumericConstant): Boolean {
+        return value > c.value.toShort()
+    }
+
+    override fun <T> accept(visitor: GoExprVisitor<T>): T {
+        return visitor.visitGoInt16(this)
+    }
+}
+
+data class GoInt32(override val value: Int, override val type: GoType) : GoNumericConstant {
+    override fun toString(): String = "$value"
+
+    override fun plus(c: GoNumericConstant): GoNumericConstant {
+        return GoInt32(value + c.value.toInt(), type)
+    }
+
+    override fun minus(c: GoNumericConstant): GoNumericConstant {
+        return GoInt32(value - c.value.toInt(), type)
+    }
+
+    override fun times(c: GoNumericConstant): GoNumericConstant {
+        return GoInt32(value * c.value.toInt(), type)
+    }
+
+    override fun div(c: GoNumericConstant): GoNumericConstant {
+        return GoInt32(value / c.value.toInt(), type)
+    }
+
+    override fun rem(c: GoNumericConstant): GoNumericConstant {
+        return GoInt32(value % c.value.toInt(), type)
+    }
+
+    override fun unaryMinus(): GoNumericConstant {
+        return GoInt32(-value, type)
+    }
+
+    override fun isLessThan(c: GoNumericConstant): Boolean {
+        return value < c.value.toInt()
+    }
+
+    override fun isGreaterThan(c: GoNumericConstant): Boolean {
+        return value > c.value.toInt()
+    }
+
+    override fun <T> accept(visitor: GoExprVisitor<T>): T {
+        return visitor.visitGoInt32(this)
+    }
+}
+
+data class GoInt64(override val value: Long, override val type: GoType) : GoNumericConstant {
+    override fun toString(): String = "$value"
+
+    override fun plus(c: GoNumericConstant): GoNumericConstant {
+        return GoInt64(value + c.value.toLong(), type)
+    }
+
+    override fun minus(c: GoNumericConstant): GoNumericConstant {
+        return GoInt64(value - c.value.toLong(), type)
+    }
+
+    override fun times(c: GoNumericConstant): GoNumericConstant {
+        return GoInt64(value * c.value.toLong(), type)
+    }
+
+    override fun div(c: GoNumericConstant): GoNumericConstant {
+        return GoInt64(value / c.value.toLong(), type)
+    }
+
+    override fun rem(c: GoNumericConstant): GoNumericConstant {
+        return GoInt64(value % c.value.toLong(), type)
+    }
+
+    override fun unaryMinus(): GoNumericConstant {
+        return GoInt64(-value, type)
+    }
+
+    override fun isLessThan(c: GoNumericConstant): Boolean {
+        return value < c.value.toLong()
+    }
+
+    override fun isGreaterThan(c: GoNumericConstant): Boolean {
+        return value > c.value.toLong()
+    }
+
+    override fun <T> accept(visitor: GoExprVisitor<T>): T {
+        return visitor.visitGoInt64(this)
+    }
+}
+
+data class GoUInt(val value: ULong, override val type: GoType) : GoConstant {
+    override fun toString(): String = "$value"
+
+    override fun <T> accept(visitor: GoExprVisitor<T>): T {
+        return visitor.visitGoUInt(this)
+    }
+}
+
+data class GoUInt8(val value: UByte, override val type: GoType) : GoConstant {
+    override fun toString(): String = "$value"
+
+    override fun <T> accept(visitor: GoExprVisitor<T>): T {
+        return visitor.visitGoUInt8(this)
+    }
+}
+
+data class GoUInt16(val value: UShort, override val type: GoType) : GoConstant {
+    override fun toString(): String = "$value"
+
+    override fun <T> accept(visitor: GoExprVisitor<T>): T {
+        return visitor.visitGoUInt16(this)
+    }
+}
+
+data class GoUInt32(val value: UInt, override val type: GoType) : GoConstant {
+    override fun toString(): String = "$value"
+
+    override fun <T> accept(visitor: GoExprVisitor<T>): T {
+        return visitor.visitGoUInt32(this)
+    }
+}
+
+data class GoUInt64(val value: ULong, override val type: GoType) : GoConstant {
+    override fun toString(): String = "$value"
+
+    override fun <T> accept(visitor: GoExprVisitor<T>): T {
+        return visitor.visitGoUInt64(this)
+    }
+}
+
+data class GoFloat32(override val value: Float, override val type: GoType) : GoNumericConstant {
+    override fun toString(): String = "$value"
+
+    override fun plus(c: GoNumericConstant): GoNumericConstant {
+        return GoFloat32(value + c.value.toFloat(), type)
+    }
+
+    override fun minus(c: GoNumericConstant): GoNumericConstant {
+        return GoFloat32(value - c.value.toFloat(), type)
+    }
+
+    override fun times(c: GoNumericConstant): GoNumericConstant {
+        return GoFloat32(value * c.value.toFloat(), type)
+    }
+
+    override fun div(c: GoNumericConstant): GoNumericConstant {
+        return GoFloat32(value / c.value.toFloat(), type)
+    }
+
+    override fun rem(c: GoNumericConstant): GoNumericConstant {
+        return GoFloat32(value % c.value.toFloat(), type)
+    }
+
+    override fun unaryMinus(): GoNumericConstant {
+        return GoFloat32(-value, type)
     }
 
     override fun isLessThan(c: GoNumericConstant): Boolean {
@@ -1519,35 +1590,35 @@ data class GoFloat(override val value: Float, override val type: GoType) : GoNum
     }
 
     override fun <T> accept(visitor: GoExprVisitor<T>): T {
-        return visitor.visitGoFloat(this)
+        return visitor.visitGoFloat32(this)
     }
 }
 
-data class GoDouble(override val value: Double, override val type: GoType) : GoNumericConstant {
+data class GoFloat64(override val value: Double, override val type: GoType) : GoNumericConstant {
     override fun toString(): String = "$value"
 
     override fun plus(c: GoNumericConstant): GoNumericConstant {
-        return GoDouble(value + c.value.toDouble(), type)
+        return GoFloat64(value + c.value.toDouble(), type)
     }
 
     override fun minus(c: GoNumericConstant): GoNumericConstant {
-        return GoDouble(value.div(c.value.toDouble()), type)
+        return GoFloat64(value.div(c.value.toDouble()), type)
     }
 
     override fun times(c: GoNumericConstant): GoNumericConstant {
-        return GoDouble(value * c.value.toDouble(), type)
+        return GoFloat64(value * c.value.toDouble(), type)
     }
 
     override fun div(c: GoNumericConstant): GoNumericConstant {
-        return GoDouble(value.div(c.value.toDouble()), type)
+        return GoFloat64(value.div(c.value.toDouble()), type)
     }
 
     override fun rem(c: GoNumericConstant): GoNumericConstant {
-        return GoDouble(value.rem(c.value.toDouble()), type)
+        return GoFloat64(value.rem(c.value.toDouble()), type)
     }
 
     override fun unaryMinus(): GoNumericConstant {
-        return GoDouble(-value, type)
+        return GoFloat64(-value, type)
     }
 
     override fun isLessThan(c: GoNumericConstant): Boolean {
@@ -1559,11 +1630,11 @@ data class GoDouble(override val value: Double, override val type: GoType) : GoN
     }
 
     override fun <T> accept(visitor: GoExprVisitor<T>): T {
-        return visitor.visitGoDouble(this)
+        return visitor.visitGoFloat64(this)
     }
 }
 
-class GoNullConstant() : GoConstant {
+class GoNullConstant : GoConstant {
     override val type: GoType = NullType()
 
     override fun toString(): String = "null"

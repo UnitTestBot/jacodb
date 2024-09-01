@@ -76,15 +76,18 @@ interface GoExprVisitor<T> {
     fun visitGoFunction(expr: GoFunction): T
 
     fun visitGoBool(value: GoBool): T
-    fun visitGoByte(value: GoByte): T
-    fun visitGoChar(value: GoChar): T
-    fun visitGoShort(value: GoShort): T
     fun visitGoInt(value: GoInt): T
-    fun visitGoLong(value: GoLong): T
-    fun visitGoFloat(value: GoFloat): T
-    fun visitGoDouble(value: GoDouble): T
+    fun visitGoInt8(value: GoInt8): T
+    fun visitGoInt16(value: GoInt16): T
+    fun visitGoInt32(value: GoInt32): T
+    fun visitGoInt64(value: GoInt64): T
+    fun visitGoUInt(value: GoUInt): T
+    fun visitGoUInt8(value: GoUInt8): T
+    fun visitGoUInt16(value: GoUInt16): T
+    fun visitGoUInt32(value: GoUInt32): T
+    fun visitGoUInt64(value: GoUInt64): T
+    fun visitGoFloat32(value: GoFloat32): T
+    fun visitGoFloat64(value: GoFloat64): T
     fun visitGoNullConstant(value: GoNullConstant): T
     fun visitGoStringConstant(value: GoStringConstant): T
-
-    fun visitExternalGoExpr(expr: GoExpr): T
 }
