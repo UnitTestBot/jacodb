@@ -111,11 +111,7 @@ class GoCallInst(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = callExpr
         )
     }

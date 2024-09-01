@@ -31,7 +31,7 @@ interface GoBinaryExpr : GoExpr, GoValue, GoAssignableInst {
     val rhv: GoValue
 }
 
-interface GoConditionExpr: GoExpr
+interface GoConditionExpr : GoExpr
 
 data class GoAllocExpr(
     override val location: GoInstLocation,
@@ -41,11 +41,7 @@ data class GoAllocExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -67,11 +63,7 @@ data class GoAddExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -93,11 +85,7 @@ data class GoSubExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -119,11 +107,7 @@ data class GoMulExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -145,11 +129,7 @@ data class GoDivExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -171,11 +151,7 @@ data class GoModExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -197,11 +173,7 @@ data class GoAndExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -223,11 +195,7 @@ data class GoOrExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -249,11 +217,7 @@ data class GoXorExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -275,11 +239,7 @@ data class GoShlExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -301,11 +261,7 @@ data class GoShrExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -327,11 +283,7 @@ data class GoAndNotExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -353,11 +305,7 @@ data class GoEqlExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -379,11 +327,7 @@ data class GoNeqExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -405,11 +349,7 @@ data class GoLssExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -431,11 +371,7 @@ data class GoLeqExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -457,11 +393,7 @@ data class GoGtrExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -483,11 +415,7 @@ data class GoGeqExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -512,11 +440,7 @@ data class GoUnNotExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -537,11 +461,7 @@ data class GoUnSubExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -563,11 +483,7 @@ data class GoUnArrowExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -588,11 +504,7 @@ data class GoUnMulExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -613,11 +525,7 @@ data class GoUnXorExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -644,11 +552,7 @@ data class GoCallExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -663,11 +567,7 @@ data class GoPhiExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -702,11 +602,7 @@ data class GoChangeTypeExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -727,11 +623,7 @@ data class GoConvertExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -752,11 +644,7 @@ data class GoMultiConvertExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -777,11 +665,7 @@ data class GoChangeInterfaceExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -802,11 +686,7 @@ data class GoSliceToArrayPointerExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -827,11 +707,7 @@ data class GoMakeInterfaceExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -853,11 +729,7 @@ data class GoMakeClosureExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -879,11 +751,7 @@ data class GoMakeSliceExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -907,11 +775,7 @@ data class GoSliceExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv =GoVar(name, type),
             rhv = this
         )
     }
@@ -932,11 +796,7 @@ data class GoMakeMapExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -957,11 +817,7 @@ data class GoMakeChanExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -983,11 +839,7 @@ data class GoFieldAddrExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -1009,11 +861,7 @@ data class GoFieldExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -1035,11 +883,7 @@ data class GoIndexAddrExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -1061,11 +905,7 @@ data class GoIndexExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -1087,11 +927,7 @@ data class GoLookupExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -1114,11 +950,7 @@ data class GoSelectExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -1139,11 +971,7 @@ data class GoRangeExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -1164,11 +992,7 @@ data class GoNextExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -1190,11 +1014,7 @@ data class GoTypeAssertExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -1216,11 +1036,7 @@ data class GoExtractExpr(
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
-            lhv = GoVar(
-                index = location.index,
-                name = name,
-                type = type
-            ),
+            lhv = GoVar(name, type),
             rhv = this
         )
     }
@@ -1238,7 +1054,7 @@ interface GoLocal : GoSimpleValue {
     val name: String
 }
 
-data class GoVar(val index: Int, override val name: String, override val type: GoType) : GoLocal, GoConditionExpr {
+data class GoVar(override val name: String, override val type: GoType) : GoLocal, GoConditionExpr {
     override fun toString(): String = name
 
     override fun <T> accept(visitor: GoExprVisitor<T>): T {
@@ -1251,14 +1067,11 @@ data class GoVar(val index: Int, override val name: String, override val type: G
 
         other as GoVar
 
-        if (index != other.index) return false
-        if (type != other.type) return false
-
-        return true
+        return type == other.type
     }
 
     override fun hashCode(): Int {
-        var result = index
+        var result = name.hashCode()
         result = 31 * result + type.hashCode()
         return result
     }
@@ -1384,11 +1197,13 @@ data class GoFunction(
             postfix = ")",
             separator = ", "
         )
-    }:${returnTypes.joinToString(
-        prefix = "(",
-        postfix = ")",
-        separator = ", "
-    )}"
+    }:${
+        returnTypes.joinToString(
+            prefix = "(",
+            postfix = ")",
+            separator = ", "
+        )
+    }"
 
     override fun flowGraph(): GoGraph {
         if (flowGraph == null) {
