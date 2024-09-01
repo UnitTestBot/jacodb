@@ -31,7 +31,7 @@ interface GoBinaryExpr : GoExpr, GoValue, GoAssignableInst {
     val rhv: GoValue
 }
 
-interface GoConditionExpr : GoBinaryExpr
+interface GoConditionExpr: GoExpr
 
 data class GoAllocExpr(
     override val location: GoInstLocation,
@@ -349,7 +349,7 @@ data class GoEqlExpr(
     override val lhv: GoValue,
     override val rhv: GoValue,
     override val name: String,
-) : GoConditionExpr {
+) : GoBinaryExpr {
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
@@ -375,7 +375,7 @@ data class GoNeqExpr(
     override val lhv: GoValue,
     override val rhv: GoValue,
     override val name: String,
-) : GoConditionExpr {
+) : GoBinaryExpr {
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
@@ -401,7 +401,7 @@ data class GoLssExpr(
     override val lhv: GoValue,
     override val rhv: GoValue,
     override val name: String,
-) : GoConditionExpr {
+) : GoBinaryExpr {
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
@@ -427,7 +427,7 @@ data class GoLeqExpr(
     override val lhv: GoValue,
     override val rhv: GoValue,
     override val name: String,
-) : GoConditionExpr {
+) : GoBinaryExpr {
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
@@ -453,7 +453,7 @@ data class GoGtrExpr(
     override val lhv: GoValue,
     override val rhv: GoValue,
     override val name: String,
-) : GoConditionExpr {
+) : GoBinaryExpr {
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
@@ -479,7 +479,7 @@ data class GoGeqExpr(
     override val lhv: GoValue,
     override val rhv: GoValue,
     override val name: String,
-) : GoConditionExpr {
+) : GoBinaryExpr {
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
             location = location,
@@ -1238,7 +1238,7 @@ interface GoLocal : GoSimpleValue {
     val name: String
 }
 
-data class GoVar(val index: Int, override val name: String, override val type: GoType) : GoLocal {
+data class GoVar(val index: Int, override val name: String, override val type: GoType) : GoLocal, GoConditionExpr {
     override fun toString(): String = name
 
     override fun <T> accept(visitor: GoExprVisitor<T>): T {
@@ -1264,7 +1264,7 @@ data class GoVar(val index: Int, override val name: String, override val type: G
     }
 }
 
-data class GoFreeVar(val index: Int, override val name: String, override val type: GoType) : GoLocal {
+data class GoFreeVar(val index: Int, override val name: String, override val type: GoType) : GoLocal, GoConditionExpr {
     override fun toString(): String = name
 
     override fun <T> accept(visitor: GoExprVisitor<T>): T {
@@ -1316,7 +1316,7 @@ data class GoConst(val index: Int, override val name: String, override val type:
     }
 }
 
-data class GoGlobal(val index: Int, override val name: String, override val type: GoType) : GoLocal {
+data class GoGlobal(val index: Int, override val name: String, override val type: GoType) : GoLocal, GoConditionExpr {
     override fun toString(): String = "global $name"
 
     override fun <T> accept(visitor: GoExprVisitor<T>): T {
@@ -1427,7 +1427,7 @@ data class GoFunction(
     }
 }
 
-data class GoParameter(val index: Int, override val name: String, override val type: GoType) : GoLocal, CommonMethodParameter {
+data class GoParameter(val index: Int, override val name: String, override val type: GoType) : GoLocal, CommonMethodParameter, GoConditionExpr {
     companion object {
         @JvmStatic
         fun of(index: Int, name: String?, type: GoType): GoParameter {
@@ -1492,7 +1492,7 @@ interface GoNumericConstant : GoConstant {
 }
 
 
-data class GoBool(val value: Boolean, override val type: GoType) : GoConstant {
+data class GoBool(val value: Boolean, override val type: GoType) : GoConstant, GoConditionExpr {
     override fun toString(): String = "$value"
 
     override fun <T> accept(visitor: GoExprVisitor<T>): T {
