@@ -556,6 +556,14 @@ data class GoCallExpr(
             rhv = this
         )
     }
+
+    override fun toString(): String {
+        var receiver = ""
+        if (callee != null) {
+            receiver = "${callee.metName}."
+        }
+        return "$receiver${value}(${args.joinToString { it.toString() }})"
+    }
 }
 
 data class GoPhiExpr(
