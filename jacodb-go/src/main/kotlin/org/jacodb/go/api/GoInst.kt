@@ -127,25 +127,39 @@ interface GoTerminatingInst : GoInst
 
 class GoReturnInst(
     location: GoInstLocation,
-    val retValue: List<GoValue>
+    val returnValues: List<GoValue>
 ) : AbstractGoInst(location), GoTerminatingInst, CommonReturnInst {
     override val returnValue: GoValue? =
-        if (retValue.isEmpty()) {
+        if (returnValues.isEmpty()) {
             null
         } else {
-            GoFreeVar(
-                location.index,
-                this.toString(),
-                TupleType(
-                    names = retValue.map { it.typeName }
-                )
-            )
+            GoVar(this.toString(), TupleType(returnValues.map { it.typeName }))
         }
 
-    override fun toString(): String = "return" + (retValue.let { " $it" })
+    override fun toString(): String = "return" + (returnValues.let { " $it" })
 
     override fun <T> accept(visitor: GoInstVisitor<T>): T {
         return visitor.visitGoReturnInst(this)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        if (!super.equals(other)) return false
+
+        other as GoReturnInst
+
+        if (returnValues != other.returnValues) return false
+        if (returnValue != other.returnValue) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = super.hashCode()
+        result = 31 * result + returnValues.hashCode()
+        result = 31 * result + (returnValue?.hashCode() ?: 0)
+        return result
     }
 }
 
