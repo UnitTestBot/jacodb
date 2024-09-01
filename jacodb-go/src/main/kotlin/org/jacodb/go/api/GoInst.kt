@@ -141,26 +141,6 @@ class GoReturnInst(
     override fun <T> accept(visitor: GoInstVisitor<T>): T {
         return visitor.visitGoReturnInst(this)
     }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        if (!super.equals(other)) return false
-
-        other as GoReturnInst
-
-        if (returnValues != other.returnValues) return false
-        if (returnValue != other.returnValue) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = super.hashCode()
-        result = 31 * result + returnValues.hashCode()
-        result = 31 * result + (returnValue?.hashCode() ?: 0)
-        return result
-    }
 }
 
 class GoPanicInst(
@@ -253,7 +233,7 @@ class GoAssignInst(
     }
 }
 
-class GoNullInst(val parent: GoMethod) : AbstractGoInst(GoInstLocationImpl(parent,-1, -1)) {
+class GoNullInst(val parent: GoMethod) : AbstractGoInst(GoInstLocationImpl(parent,-1)) {
     override fun toString(): String = "null"
 
     override fun <T> accept(visitor: GoInstVisitor<T>): T {
