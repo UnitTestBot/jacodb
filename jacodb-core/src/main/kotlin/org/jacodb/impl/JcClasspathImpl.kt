@@ -46,6 +46,7 @@ import org.jacodb.impl.features.classpaths.AbstractJcResolvedResult.JcResolvedCl
 import org.jacodb.impl.features.classpaths.AbstractJcResolvedResult.JcResolvedTypeResultImpl
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.features.classpaths.JcUnknownClass
+import org.jacodb.impl.features.classpaths.UnknownClassMethodsAndFields
 import org.jacodb.impl.features.classpaths.UnknownClasses
 import org.jacodb.impl.features.classpaths.isResolveAllToUnknown
 import org.jacodb.impl.fs.ClassSourceImpl
@@ -71,7 +72,9 @@ class JcClasspathImpl(
         if (!features.any { it is UnknownClasses }) {
             features + JcClasspathFeatureImpl()
         } else {
-            features.filter { it !is UnknownClasses } + JcClasspathFeatureImpl() + UnknownClasses
+            (features.filter { it !is UnknownClasses } + JcClasspathFeatureImpl() + UnknownClasses).let {
+                it.filter { it !is UnknownClassMethodsAndFields } + UnknownClassMethodsAndFields
+            }
         })
 
     override suspend fun refreshed(closeOld: Boolean): JcClasspath {
