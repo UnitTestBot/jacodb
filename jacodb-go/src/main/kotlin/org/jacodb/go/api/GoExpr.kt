@@ -1195,6 +1195,7 @@ data class GoFunction(
     override val metName: String,
     override var blocks: List<GoBasicBlock>,
     override val packageName: String,
+    val freeVars: List<GoFreeVar>,
     val returnTypes: List<GoType>,
 ) : GoMethod {
     private var flowGraph: GoGraph? = null
