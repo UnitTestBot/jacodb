@@ -22,6 +22,7 @@ internal class CompactPersistentLongSet(private val value: Any? = null) : Collec
         get() = when (value) {
             null -> 0
             is Long -> 1
+            is LongPair -> 2
             is PackedPersistentLongSet -> value.size
             else -> throw illegalStateException()
         }
@@ -32,6 +33,7 @@ internal class CompactPersistentLongSet(private val value: Any? = null) : Collec
         return when (value) {
             null -> emptyList()
             is Long -> listOf(value)
+            is LongPair -> listOf(value.one, value.two)
             is PackedPersistentLongSet -> value
             else -> throw illegalStateException()
         }.iterator()
@@ -48,6 +50,7 @@ internal class CompactPersistentLongSet(private val value: Any? = null) : Collec
         return when (value) {
             null -> false
             is Long -> value == element
+            is LongPair -> value.one == element || value.two == element
             is PackedPersistentLongSet -> element in value
             else -> throw illegalStateException()
         }
@@ -60,8 +63,22 @@ internal class CompactPersistentLongSet(private val value: Any? = null) : Collec
                 if (value == element) {
                     this
                 } else {
-                    CompactPersistentLongSet(PackedPersistentLongSet().addAll(listOf(value, element.interned)))
+                    CompactPersistentLongSet(
+                        if (value < element) LongPair(value, element) else LongPair(element, value)
+                    )
                 }
+
+            is LongPair ->
+                if (value.one == element || value.two == element) {
+                    this
+                } else {
+                    CompactPersistentLongSet(
+                        PackedPersistentLongSet().addAll(
+                            listOf(value.one.interned, value.two.interned, element.interned)
+                        )
+                    )
+                }
+
             is PackedPersistentLongSet -> {
                 val newValue = value.add(element.interned)
                 if (newValue === value) {
@@ -70,6 +87,7 @@ internal class CompactPersistentLongSet(private val value: Any? = null) : Collec
                     CompactPersistentLongSet(newValue)
                 }
             }
+
             else -> throw illegalStateException()
         }
     }
@@ -78,14 +96,26 @@ internal class CompactPersistentLongSet(private val value: Any? = null) : Collec
         return when (value) {
             null -> this
             is Long -> if (value == element) CompactPersistentLongSet() else this
+            is LongPair ->
+                if (value.one == element) {
+                    CompactPersistentLongSet(value.two.interned)
+                } else if (value.two == element) {
+                    CompactPersistentLongSet(value.one.interned)
+                } else {
+                    this
+                }
+
             is PackedPersistentLongSet -> {
                 val newValue = value.remove(element)
                 if (newValue === value) {
                     this
                 } else {
-                    CompactPersistentLongSet(if (newValue.size == 1) newValue.first() else newValue)
+                    CompactPersistentLongSet(
+                        if (newValue.size == 2) newValue.iterator().let { LongPair(it.next(), it.next()) } else newValue
+                    )
                 }
             }
+
             else -> throw illegalStateException()
         }
     }
@@ -104,3 +134,5 @@ object LongInterner {
 
     val boxedLongs = Array(200000) { it.toLong() }
 }
+
+private data class LongPair(val one: Long, val two: Long)

@@ -22,10 +22,11 @@ import org.jacodb.api.jvm.JcLookupExtFeature
 
 class JcFeaturesChain(val features: List<JcClasspathFeature>) {
 
+    val featuresArray = features.toTypedArray()
     val classLookups = features.filterIsInstance<JcLookupExtFeature>()
 
     inline fun <reified T : JcClasspathFeature> run(call: (T) -> Unit) {
-        for (feature in features) {
+        for (feature in featuresArray) {
             if (feature is T) {
                 call(feature)
             }
@@ -33,13 +34,21 @@ class JcFeaturesChain(val features: List<JcClasspathFeature>) {
     }
 
     inline fun <reified T : JcClasspathFeature, W> call(call: (T) -> W?): W? {
-        val (result: W?, event: JcFeatureEvent?) = features.firstNotNullOfOrNull { feature ->
-            (feature as? T)?.let(call)?.let { result -> result to feature.event(result) }
-        } ?: return null
-        event?.let {
-            features.forEach { feature -> feature.on(event) }
+        for (feature in featuresArray) {
+            if (feature is T) {
+                val result = call(feature)
+                if (result != null) {
+                    val event = feature.event(result)
+                    if (event != null) {
+                        for (anyFeature in featuresArray) {
+                            anyFeature.on(event)
+                        }
+                    }
+                    return result
+                }
+            }
         }
-        return result
+        return null
     }
 }
 
