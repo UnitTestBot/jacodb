@@ -133,7 +133,7 @@ class GoReturnInst(
         if (returnValues.isEmpty()) {
             null
         } else {
-            GoVar(this.toString(), TupleType(returnValues.map { it.typeName }))
+            GoVar(this.toString(), TupleType(returnValues.map { it.type }))
         }
 
     override fun toString(): String = "return" + (returnValues.let { " $it" })

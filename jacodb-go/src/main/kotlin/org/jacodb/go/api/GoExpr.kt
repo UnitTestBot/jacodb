@@ -1239,9 +1239,7 @@ data class GoFunction(
     override val name: String
         get() = metName
     override val returnType: GoType
-        get() = TupleType(
-            returnTypes.map { it.typeName }
-        )
+        get() = TupleType(returnTypes)
 
     override fun equals(other: Any?): Boolean {
         return super.equals(other)

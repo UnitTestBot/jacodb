@@ -136,11 +136,11 @@ class StructType(
 }
 
 class TupleType(
-    val names: List<String>
+    val types: List<GoType>
 ) : GoType, AbstractGoType() {
     override val typeName: String
         get(): String {
-            return "(" + names.joinToString(", ") + ")"
+            return "(" + types.joinToString(", ") + ")"
         }
 }
 
