@@ -931,6 +931,7 @@ data class GoLookupExpr(
     val instance: GoValue,
     val index: GoValue,
     override val name: String,
+    val commaOk: Boolean,
 ) : GoValue, GoAssignableInst {
     override fun toAssignInst(): GoAssignInst {
         return GoAssignInst(
@@ -940,7 +941,7 @@ data class GoLookupExpr(
         )
     }
 
-    override fun toString(): String = "lookup ${instance}[${index}]"
+    override fun toString(): String = "lookup ${instance}[${index}]${if (commaOk) ",ok" else ""}"
 
     override fun <T> accept(visitor: GoExprVisitor<T>): T {
         return visitor.visitGoLookupExpr(this)
