@@ -18,12 +18,46 @@ package org.jacodb.ets.graph
 
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.ets.base.EtsStmt
+import org.jacodb.ets.model.EtsClassSignature
+import org.jacodb.ets.model.EtsFileSignature
 import org.jacodb.ets.model.EtsMethod
 import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.utils.callExpr
 
 interface EtsApplicationGraph : ApplicationGraph<EtsMethod, EtsStmt> {
     val cp: EtsScene
+}
+
+private fun EtsFileSignature?.isUnknown(): Boolean =
+    this == null || fileName.isBlank() || fileName == "_UnknownFileName"
+
+private fun EtsClassSignature.isUnknown(): Boolean =
+    name.isBlank()
+
+enum class ComparisonResult {
+    Equal,
+    NotEqual,
+    Unknown,
+}
+
+fun compareFileSignatures(
+    sig1: EtsFileSignature?,
+    sig2: EtsFileSignature?,
+): ComparisonResult = when {
+    sig1.isUnknown() -> ComparisonResult.Unknown
+    sig2.isUnknown() -> ComparisonResult.Unknown
+    sig1?.fileName == sig2?.fileName -> ComparisonResult.Equal
+    else -> ComparisonResult.NotEqual
+}
+
+fun compareClassSignatures(
+    sig1: EtsClassSignature,
+    sig2: EtsClassSignature,
+): ComparisonResult = when {
+    sig1.isUnknown() -> ComparisonResult.Unknown
+    sig2.isUnknown() -> ComparisonResult.Unknown
+    sig1.name == sig2.name -> compareFileSignatures(sig1.file, sig2.file)
+    else -> ComparisonResult.NotEqual
 }
 
 class EtsApplicationGraphImpl(
@@ -46,36 +80,17 @@ class EtsApplicationGraphImpl(
         val expr = node.callExpr ?: return emptySequence()
         val callee = expr.method
 
-        // TODO: Fix later
+        // TODO: hack
         if (callee.enclosingClass.name.isBlank()) {
             val clazz = cp.classes.single { it.signature == node.method.enclosingClass }
-            return clazz.methods.asSequence().filter { it.name == callee.name }
-        } else {
-            check(callee.name == "@instance_init" || callee.name == "constructor")
+            return (clazz.methods.asSequence() + clazz.ctor).filter { it.name == callee.name }
         }
 
-        val allMethods = cp.classes
+        return cp.classes
             .asSequence()
+            .filter { compareClassSignatures(it.signature, callee.enclosingClass) != ComparisonResult.NotEqual }
             .flatMap { it.methods.asSequence() + it.ctor }
-
-        val methodsWithSameName = allMethods.filter {
-            it.name == callee.name
-        }
-        if (methodsWithSameName.count() == 1) {
-            return sequenceOf(methodsWithSameName.first())
-        }
-
-        val methodsWithSameClassName = methodsWithSameName.filter {
-            it.enclosingClass.name == callee.enclosingClass.name
-        }
-        if (methodsWithSameClassName.count() == 1) {
-            return sequenceOf(methodsWithSameClassName.first())
-        }
-
-        // Else, return all methods with the same signature.
-        return allMethods.filter {
-            it.signature == callee
-        }
+            .filter { it.signature.name == callee.name }
     }
 
     override fun callers(method: EtsMethod): Sequence<EtsStmt> {
