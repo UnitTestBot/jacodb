@@ -1,0 +1,505 @@
+{
+  "signature": {
+    "projectName": "ohos.samples.etsclock",
+    "fileName": "entry/ets/Application/AbilityStage"
+  },
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS",
+        "declaringFile": {
+          "projectName": "ohos.samples.etsclock",
+          "fileName": "entry/ets/Application/AbilityStage"
+        },
+        "declaringNamespace": null
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "declaringClass": {
+              "name": "_DEFAULT_ARK_CLASS",
+              "declaringFile": {
+                "projectName": "ohos.samples.etsclock",
+                "fileName": "entry/ets/Application/AbilityStage"
+              },
+              "declaringNamespace": null
+            },
+            "name": "func_main_0",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/Application/AbilityStage"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "stmts": []
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "signature": {
+        "name": "MyAbilityStage",
+        "declaringFile": {
+          "projectName": "ohos.samples.etsclock",
+          "fileName": "entry/ets/Application/AbilityStage"
+        },
+        "declaringNamespace": null
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "AbilityStage",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "declaringClass": {
+              "name": "MyAbilityStage",
+              "declaringFile": {
+                "projectName": "ohos.samples.etsclock",
+                "fileName": "entry/ets/Application/AbilityStage"
+              },
+              "declaringNamespace": null
+            },
+            "name": "constructor",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "a3",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "a0",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "this",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$v0",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "a3",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 3,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "a0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 4,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "MyAbilityStage",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/Application/AbilityStage"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$v0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ArrayLiteralExpr",
+                        "elements": [
+                          {
+                            "_": "Local",
+                            "name": "",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ],
+                        "type": {
+                          "_": "AnyType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "stmts": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "declaringClass": {
+              "name": "MyAbilityStage",
+              "declaringFile": {
+                "projectName": "ohos.samples.etsclock",
+                "fileName": "entry/ets/Application/AbilityStage"
+              },
+              "declaringNamespace": null
+            },
+            "name": "onCreate",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [
+            "MethodDeclaration"
+          ],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "Logger",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "StringType"
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "StringType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "MyAbilityStage",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/Application/AbilityStage"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "\"MyAbilityStage\"",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "\"onCreate\"",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "Logger",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "info",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp0",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "$temp1",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "stmts": []
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "importInfos": [
+    {
+      "importClauseName": "AbilityStage",
+      "importType": "",
+      "importFrom": "@ohos.app.ability.AbilityStage",
+      "nameBeforeAs": "default",
+      "modifiers": [],
+      "originTsPosition": {
+        "line": -1,
+        "col": -1
+      }
+    },
+    {
+      "importClauseName": "Logger",
+      "importType": "",
+      "importFrom": "@bundle.ohos.samples.etsclock/entry/ets/model/Logger",
+      "nameBeforeAs": "default",
+      "modifiers": [],
+      "originTsPosition": {
+        "line": -1,
+        "col": -1
+      }
+    }
+  ],
+  "exportInfos": [
+    {
+      "exportClauseName": "default",
+      "exportClauseType": 9,
+      "nameBeforeAs": "MyAbilityStage",
+      "isDefault": false,
+      "modifiers": [],
+      "originTsPosition": {
+        "line": -1,
+        "col": -1
+      }
+    }
+  ]
+}

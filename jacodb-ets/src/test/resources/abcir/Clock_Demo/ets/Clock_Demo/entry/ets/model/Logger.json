@@ -1,0 +1,2515 @@
+{
+  "signature": {
+    "projectName": "ohos.samples.etsclock",
+    "fileName": "entry/ets/model/Logger"
+  },
+  "namespaces": [],
+  "classes": [
+    {
+      "signature": {
+        "name": "_DEFAULT_ARK_CLASS",
+        "declaringFile": {
+          "projectName": "ohos.samples.etsclock",
+          "fileName": "entry/ets/model/Logger"
+        },
+        "declaringNamespace": null
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [],
+      "methods": [
+        {
+          "signature": {
+            "declaringClass": {
+              "name": "_DEFAULT_ARK_CLASS",
+              "declaringFile": {
+                "projectName": "ohos.samples.etsclock",
+                "fileName": "entry/ets/model/Logger"
+              },
+              "declaringNamespace": null
+            },
+            "name": "func_main_0",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "this",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$x1",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "StringType"
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "_DEFAULT_ARK_CLASS",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "\"[Clock]\"",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "NewExpr",
+                        "classType": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "$temp1",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "declaringClass": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "constructor",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp0",
+                            "type": {
+                              "_": "StringType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$x1",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "stmts": []
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "signature": {
+        "name": "Logger",
+        "declaringFile": {
+          "projectName": "ohos.samples.etsclock",
+          "fileName": "entry/ets/model/Logger"
+        },
+        "declaringNamespace": null
+      },
+      "modifiers": [],
+      "typeParameters": [],
+      "superClassName": "",
+      "implementedInterfaceNames": [],
+      "fields": [
+        {
+          "signature": {
+            "declaringClass": {
+              "name": "Logger",
+              "declaringFile": {
+                "projectName": "ohos.samples.etsclock",
+                "fileName": "entry/ets/model/Logger"
+              },
+              "declaringNamespace": null
+            },
+            "name": "domain",
+            "type": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [
+            ""
+          ],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false
+        },
+        {
+          "signature": {
+            "declaringClass": {
+              "name": "Logger",
+              "declaringFile": {
+                "projectName": "ohos.samples.etsclock",
+                "fileName": "entry/ets/model/Logger"
+              },
+              "declaringNamespace": null
+            },
+            "name": "format",
+            "type": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [
+            ""
+          ],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false
+        },
+        {
+          "signature": {
+            "declaringClass": {
+              "name": "Logger",
+              "declaringFile": {
+                "projectName": "ohos.samples.etsclock",
+                "fileName": "entry/ets/model/Logger"
+              },
+              "declaringNamespace": null
+            },
+            "name": "prefix",
+            "type": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [
+            ""
+          ],
+          "typeParameters": [],
+          "questionToken": false,
+          "exclamationToken": false
+        }
+      ],
+      "methods": [
+        {
+          "signature": {
+            "declaringClass": {
+              "name": "Logger",
+              "declaringFile": {
+                "projectName": "ohos.samples.etsclock",
+                "fileName": "entry/ets/model/Logger"
+              },
+              "declaringNamespace": null
+            },
+            "name": "constructor",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "a3",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Logger",
+                    "declaringFile": {
+                      "projectName": "ohos.samples.etsclock",
+                      "fileName": "entry/ets/model/Logger"
+                    },
+                    "declaringNamespace": null
+                  }
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "a3",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 3,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Logger",
+                              "declaringFile": {
+                                "projectName": "ohos.samples.etsclock",
+                                "fileName": "entry/ets/model/Logger"
+                              },
+                              "declaringNamespace": null
+                            }
+                          }
+                        },
+                        "field": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "format",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "\"%{public}s, %{public}s\"",
+                        "type": {
+                          "_": "StringType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Logger",
+                              "declaringFile": {
+                                "projectName": "ohos.samples.etsclock",
+                                "fileName": "entry/ets/model/Logger"
+                              },
+                              "declaringNamespace": null
+                            }
+                          }
+                        },
+                        "field": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "prefix",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "Local",
+                        "name": "a3",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Logger",
+                              "declaringFile": {
+                                "projectName": "ohos.samples.etsclock",
+                                "fileName": "entry/ets/model/Logger"
+                              },
+                              "declaringNamespace": null
+                            }
+                          }
+                        },
+                        "field": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "domain",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "Constant",
+                        "value": "65280",
+                        "type": {
+                          "_": "NumberType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "ReturnStmt",
+                      "arg": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "stmts": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "declaringClass": {
+              "name": "Logger",
+              "declaringFile": {
+                "projectName": "ohos.samples.etsclock",
+                "fileName": "entry/ets/model/Logger"
+              },
+              "declaringNamespace": null
+            },
+            "name": "debug",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [
+            "MethodDeclaration"
+          ],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "a3",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "args",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Logger",
+                    "declaringFile": {
+                      "projectName": "ohos.samples.etsclock",
+                      "fileName": "entry/ets/model/Logger"
+                    },
+                    "declaringNamespace": null
+                  }
+                }
+              },
+              {
+                "name": "hilog",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp2",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "a3",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 3,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "args",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 4,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Logger",
+                              "declaringFile": {
+                                "projectName": "ohos.samples.etsclock",
+                                "fileName": "entry/ets/model/Logger"
+                              },
+                              "declaringNamespace": null
+                            }
+                          }
+                        },
+                        "field": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "domain",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Logger",
+                              "declaringFile": {
+                                "projectName": "ohos.samples.etsclock",
+                                "fileName": "entry/ets/model/Logger"
+                              },
+                              "declaringNamespace": null
+                            }
+                          }
+                        },
+                        "field": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "prefix",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Logger",
+                              "declaringFile": {
+                                "projectName": "ohos.samples.etsclock",
+                                "fileName": "entry/ets/model/Logger"
+                              },
+                              "declaringNamespace": null
+                            }
+                          }
+                        },
+                        "field": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "format",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "hilog",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "debug",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp0",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "$temp1",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "$temp2",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "args",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "stmts": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "declaringClass": {
+              "name": "Logger",
+              "declaringFile": {
+                "projectName": "ohos.samples.etsclock",
+                "fileName": "entry/ets/model/Logger"
+              },
+              "declaringNamespace": null
+            },
+            "name": "info",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [
+            "MethodDeclaration"
+          ],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "a3",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "args",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Logger",
+                    "declaringFile": {
+                      "projectName": "ohos.samples.etsclock",
+                      "fileName": "entry/ets/model/Logger"
+                    },
+                    "declaringNamespace": null
+                  }
+                }
+              },
+              {
+                "name": "hilog",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp2",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "a3",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 3,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "args",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 4,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Logger",
+                              "declaringFile": {
+                                "projectName": "ohos.samples.etsclock",
+                                "fileName": "entry/ets/model/Logger"
+                              },
+                              "declaringNamespace": null
+                            }
+                          }
+                        },
+                        "field": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "domain",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Logger",
+                              "declaringFile": {
+                                "projectName": "ohos.samples.etsclock",
+                                "fileName": "entry/ets/model/Logger"
+                              },
+                              "declaringNamespace": null
+                            }
+                          }
+                        },
+                        "field": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "prefix",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Logger",
+                              "declaringFile": {
+                                "projectName": "ohos.samples.etsclock",
+                                "fileName": "entry/ets/model/Logger"
+                              },
+                              "declaringNamespace": null
+                            }
+                          }
+                        },
+                        "field": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "format",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "hilog",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "info",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp0",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "$temp1",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "$temp2",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "args",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "stmts": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "declaringClass": {
+              "name": "Logger",
+              "declaringFile": {
+                "projectName": "ohos.samples.etsclock",
+                "fileName": "entry/ets/model/Logger"
+              },
+              "declaringNamespace": null
+            },
+            "name": "warn",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [
+            "MethodDeclaration"
+          ],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "a3",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "args",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Logger",
+                    "declaringFile": {
+                      "projectName": "ohos.samples.etsclock",
+                      "fileName": "entry/ets/model/Logger"
+                    },
+                    "declaringNamespace": null
+                  }
+                }
+              },
+              {
+                "name": "hilog",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp2",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "a3",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 3,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "args",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 4,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Logger",
+                              "declaringFile": {
+                                "projectName": "ohos.samples.etsclock",
+                                "fileName": "entry/ets/model/Logger"
+                              },
+                              "declaringNamespace": null
+                            }
+                          }
+                        },
+                        "field": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "domain",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Logger",
+                              "declaringFile": {
+                                "projectName": "ohos.samples.etsclock",
+                                "fileName": "entry/ets/model/Logger"
+                              },
+                              "declaringNamespace": null
+                            }
+                          }
+                        },
+                        "field": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "prefix",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Logger",
+                              "declaringFile": {
+                                "projectName": "ohos.samples.etsclock",
+                                "fileName": "entry/ets/model/Logger"
+                              },
+                              "declaringNamespace": null
+                            }
+                          }
+                        },
+                        "field": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "format",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "hilog",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "warn",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp0",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "$temp1",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "$temp2",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "args",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "stmts": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "signature": {
+            "declaringClass": {
+              "name": "Logger",
+              "declaringFile": {
+                "projectName": "ohos.samples.etsclock",
+                "fileName": "entry/ets/model/Logger"
+              },
+              "declaringNamespace": null
+            },
+            "name": "error",
+            "parameters": [],
+            "returnType": {
+              "_": "UnknownType"
+            }
+          },
+          "modifiers": [
+            "MethodDeclaration"
+          ],
+          "typeParameters": [],
+          "body": {
+            "locals": [
+              {
+                "name": "a3",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "args",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "this",
+                "type": {
+                  "_": "ClassType",
+                  "signature": {
+                    "name": "Logger",
+                    "declaringFile": {
+                      "projectName": "ohos.samples.etsclock",
+                      "fileName": "entry/ets/model/Logger"
+                    },
+                    "declaringNamespace": null
+                  }
+                }
+              },
+              {
+                "name": "hilog",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp0",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp1",
+                "type": {
+                  "_": "UnknownType"
+                }
+              },
+              {
+                "name": "$temp2",
+                "type": {
+                  "_": "UnknownType"
+                }
+              }
+            ],
+            "cfg": {
+              "blocks": [
+                {
+                  "id": 0,
+                  "successors": [
+                    1
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "a3",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 3,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "args",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "ParameterRef",
+                        "index": 4,
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 1,
+                  "successors": [
+                    2
+                  ],
+                  "stmts": [
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp0",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Logger",
+                              "declaringFile": {
+                                "projectName": "ohos.samples.etsclock",
+                                "fileName": "entry/ets/model/Logger"
+                              },
+                              "declaringNamespace": null
+                            }
+                          }
+                        },
+                        "field": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "domain",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp1",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Logger",
+                              "declaringFile": {
+                                "projectName": "ohos.samples.etsclock",
+                                "fileName": "entry/ets/model/Logger"
+                              },
+                              "declaringNamespace": null
+                            }
+                          }
+                        },
+                        "field": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "prefix",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "this",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      },
+                      "right": {
+                        "_": "ThisRef",
+                        "type": {
+                          "_": "ClassType",
+                          "signature": {
+                            "name": "Logger",
+                            "declaringFile": {
+                              "projectName": "ohos.samples.etsclock",
+                              "fileName": "entry/ets/model/Logger"
+                            },
+                            "declaringNamespace": null
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "AssignStmt",
+                      "left": {
+                        "_": "Local",
+                        "name": "$temp2",
+                        "type": {
+                          "_": "UnknownType"
+                        }
+                      },
+                      "right": {
+                        "_": "InstanceFieldRef",
+                        "instance": {
+                          "_": "Local",
+                          "name": "this",
+                          "type": {
+                            "_": "ClassType",
+                            "signature": {
+                              "name": "Logger",
+                              "declaringFile": {
+                                "projectName": "ohos.samples.etsclock",
+                                "fileName": "entry/ets/model/Logger"
+                              },
+                              "declaringNamespace": null
+                            }
+                          }
+                        },
+                        "field": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "format",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "_": "CallStmt",
+                      "expr": {
+                        "_": "InstanceCallExpr",
+                        "instance": {
+                          "_": "Local",
+                          "name": "hilog",
+                          "type": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "method": {
+                          "declaringClass": {
+                            "name": "",
+                            "declaringFile": {
+                              "projectName": "_UnknownProjectName",
+                              "fileName": "_UnknownFileName"
+                            },
+                            "declaringNamespace": null
+                          },
+                          "name": "error",
+                          "parameters": [],
+                          "returnType": {
+                            "_": "UnknownType"
+                          }
+                        },
+                        "args": [
+                          {
+                            "_": "Local",
+                            "name": "$temp0",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "$temp1",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "$temp2",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          },
+                          {
+                            "_": "Local",
+                            "name": "args",
+                            "type": {
+                              "_": "UnknownType"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "_": "ReturnVoidStmt"
+                    }
+                  ]
+                },
+                {
+                  "id": 2,
+                  "successors": [],
+                  "stmts": []
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "importInfos": [
+    {
+      "importClauseName": "hilog",
+      "importType": "",
+      "importFrom": "@ohos.hilog",
+      "nameBeforeAs": "default",
+      "modifiers": [],
+      "originTsPosition": {
+        "line": -1,
+        "col": -1
+      }
+    }
+  ],
+  "exportInfos": [
+    {
+      "exportClauseName": "default",
+      "exportClauseType": 9,
+      "nameBeforeAs": "*default*",
+      "isDefault": false,
+      "modifiers": [],
+      "originTsPosition": {
+        "line": -1,
+        "col": -1
+      }
+    }
+  ]
+}
