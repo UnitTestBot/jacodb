@@ -475,7 +475,7 @@ class EtsMethodBuilder(
             "Method body should contain at least return stmt"
         }
 
-        val visited: MutableSet<Int> = hashSetOf()
+        val visited: MutableSet<Int> = hashSetOf(0)
         val queue: ArrayDeque<Int> = ArrayDeque()
         queue.add(0)
 
