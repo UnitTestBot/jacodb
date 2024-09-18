@@ -83,7 +83,7 @@ class EtsApplicationGraphImpl(
         // TODO: hack
         if (callee.enclosingClass.name.isBlank()) {
             val clazz = cp.classes.single { it.signature == node.method.enclosingClass }
-            return (clazz.methods.asSequence() + clazz.ctor).filter { it.name == callee.name }
+            return clazz.methods.asSequence().filter { it.name == callee.name }.filterNot { it.name == node.method.name }
         }
 
         return cp.classes
