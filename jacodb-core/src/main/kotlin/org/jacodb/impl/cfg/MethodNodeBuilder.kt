@@ -24,7 +24,6 @@ import org.jacodb.api.jvm.cfg.*
 import org.jacodb.impl.cfg.util.*
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.Opcodes.H_GETSTATIC
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
 
@@ -62,6 +61,19 @@ private val TypeName.typeInt
         PredefinedPrimitives.Long -> Opcodes.T_LONG
         PredefinedPrimitives.Short -> Opcodes.T_SHORT
         else -> error("$typeName is not primitive type")
+    }
+
+private val BsmHandleTag.tagInt: Int
+    get() = when (this) {
+        BsmHandleTag.FieldHandle.GET_FIELD -> Opcodes.H_GETFIELD
+        BsmHandleTag.FieldHandle.GET_STATIC -> Opcodes.H_GETSTATIC
+        BsmHandleTag.FieldHandle.PUT_FIELD -> Opcodes.H_PUTFIELD
+        BsmHandleTag.FieldHandle.PUT_STATIC -> Opcodes.H_PUTSTATIC
+        BsmHandleTag.MethodHandle.INVOKE_VIRTUAL -> Opcodes.H_INVOKEVIRTUAL
+        BsmHandleTag.MethodHandle.INVOKE_STATIC -> Opcodes.H_INVOKESTATIC
+        BsmHandleTag.MethodHandle.INVOKE_SPECIAL -> Opcodes.H_INVOKESPECIAL
+        BsmHandleTag.MethodHandle.NEW_INVOKE_SPECIAL -> Opcodes.H_NEWINVOKESPECIAL
+        BsmHandleTag.MethodHandle.INVOKE_INTERFACE -> Opcodes.H_INVOKEINTERFACE
     }
 
 class MethodNodeBuilder(
@@ -597,12 +609,15 @@ class MethodNodeBuilder(
     }
 
 
+    private val BsmHandleTag.isGetFieldOrStaticTag
+        get() = this == BsmHandleTag.FieldHandle.GET_FIELD || this == BsmHandleTag.FieldHandle.GET_STATIC
+
     private val BsmHandle.asAsmHandle: Handle
         get() = Handle(
-            tag,
+            tag.tagInt,
             declaringClass.jvmClassName,
             name,
-            if (argTypes.isEmpty() && tag <= H_GETSTATIC) {
+            if (argTypes.isEmpty() && tag.isGetFieldOrStaticTag) {
                 returnType.jvmTypeName
             } else {
                 "(${argTypes.joinToString("") { it.jvmTypeName }})${returnType.jvmTypeName}"

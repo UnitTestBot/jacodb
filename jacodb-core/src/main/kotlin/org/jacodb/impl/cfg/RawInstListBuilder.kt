@@ -27,6 +27,7 @@ import org.jacodb.api.jvm.cfg.BsmArg
 import org.jacodb.api.jvm.cfg.BsmDoubleArg
 import org.jacodb.api.jvm.cfg.BsmFloatArg
 import org.jacodb.api.jvm.cfg.BsmHandle
+import org.jacodb.api.jvm.cfg.BsmHandleTag
 import org.jacodb.api.jvm.cfg.BsmIntArg
 import org.jacodb.api.jvm.cfg.BsmLongArg
 import org.jacodb.api.jvm.cfg.BsmMethodTypeArg
@@ -157,6 +158,21 @@ private fun parsePrimitiveType(opcode: Int) = when (opcode) {
     5 -> NULL
     6 -> UNINIT_THIS
     else -> error("Unknown opcode in primitive type parsing: $opcode")
+}
+
+private fun parseBsmHandleTag(tag: Int): BsmHandleTag = when (tag) {
+    Opcodes.H_GETFIELD -> BsmHandleTag.FieldHandle.GET_FIELD
+    Opcodes.H_GETSTATIC -> BsmHandleTag.FieldHandle.GET_STATIC
+    Opcodes.H_PUTFIELD -> BsmHandleTag.FieldHandle.PUT_FIELD
+    Opcodes.H_PUTSTATIC -> BsmHandleTag.FieldHandle.PUT_STATIC
+
+    Opcodes.H_INVOKEVIRTUAL -> BsmHandleTag.MethodHandle.INVOKE_VIRTUAL
+    Opcodes.H_INVOKESTATIC -> BsmHandleTag.MethodHandle.INVOKE_STATIC
+    Opcodes.H_INVOKESPECIAL -> BsmHandleTag.MethodHandle.INVOKE_SPECIAL
+    Opcodes.H_NEWINVOKESPECIAL -> BsmHandleTag.MethodHandle.NEW_INVOKE_SPECIAL
+    Opcodes.H_INVOKEINTERFACE -> BsmHandleTag.MethodHandle.INVOKE_INTERFACE
+
+    else -> error("Unknown tag in BSM handle: $tag")
 }
 
 private fun parseType(any: Any): TypeName = when (any) {
@@ -1357,7 +1373,7 @@ class RawInstListBuilder(
 
     private val Handle.bsmHandleArg
         get() = BsmHandle(
-            tag,
+            parseBsmHandleTag(tag),
             owner.typeName(),
             name,
             if (desc.contains("(")) {

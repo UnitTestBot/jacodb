@@ -287,21 +287,26 @@ class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>
 
         val argTypes: List<TypeName>
         val tag = implementation.tag
-        var isNewInvokeSpecial = false
-        if (tag == 6) {
-            // Invoke static case
-            argTypes = implementation.argTypes
-        } else if (tag == 8) {
-            isNewInvokeSpecial = true
-            argTypes = implementation.argTypes
-        } else {
-            // Invoke non-static case
-            check(tag == 5 || tag == 7 || tag == 9) {
-                "Unexpected tag for invoke dynamic $tag"
+
+        check(tag is BsmHandleTag.MethodHandle) {
+            "Unexpected tag for invoke dynamic $tag"
+        }
+
+        when (tag) {
+            BsmHandleTag.MethodHandle.INVOKE_STATIC,
+            BsmHandleTag.MethodHandle.NEW_INVOKE_SPECIAL -> {
+                // Invoke static or invoke constructor case
+                argTypes = implementation.argTypes
             }
-            argTypes = implementation.argTypes.toMutableList()
-            // Adding 'this' type as first argument type
-            argTypes.add(0, implementation.declaringClass)
+
+            BsmHandleTag.MethodHandle.INVOKE_VIRTUAL,
+            BsmHandleTag.MethodHandle.INVOKE_SPECIAL,
+            BsmHandleTag.MethodHandle.INVOKE_INTERFACE -> {
+                // Invoke non-static case
+                argTypes = implementation.argTypes.toMutableList()
+                // Adding 'this' type as first argument type
+                argTypes.add(0, implementation.declaringClass)
+            }
         }
 
         // Check implementation signature match (starts with) call site arguments
@@ -323,7 +328,7 @@ class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>
             expr.callSiteArgTypes.map { it.asType() },
             expr.callSiteReturnType.asType(),
             expr.callSiteArgs.map { it.accept(this) as JcValue },
-            isNewInvokeSpecial
+            tag
         )
     }
 
