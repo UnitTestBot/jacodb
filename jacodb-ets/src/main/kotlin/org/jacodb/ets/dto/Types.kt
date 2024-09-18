@@ -20,6 +20,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
@@ -141,13 +142,13 @@ object UndefinedTypeDto : PrimitiveTypeDto {
 @Serializable
 @SerialName("LiteralType")
 data class LiteralTypeDto(
-    val literal: String,
+    val literal: JsonElement,
 ) : PrimitiveTypeDto {
     override val name: String
-        get() = "literal"
+        get() = literal.toString()
 
     override fun toString(): String {
-        return literal
+        return name
     }
 }
 
