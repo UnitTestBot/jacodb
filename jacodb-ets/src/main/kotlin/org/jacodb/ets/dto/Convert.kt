@@ -610,7 +610,7 @@ fun convertToEtsType(type: TypeDto): EtsType {
         BooleanTypeDto -> EtsBooleanType
 
         is LiteralTypeDto -> EtsLiteralType(
-            literalTypeName = type.literal
+            literalTypeName = type.literal.toString()
         )
 
         NullTypeDto -> EtsNullType
