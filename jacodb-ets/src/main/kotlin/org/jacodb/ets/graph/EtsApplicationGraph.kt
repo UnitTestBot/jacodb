@@ -96,9 +96,10 @@ class EtsApplicationGraphImpl(
         val resolvedNeighbour = cp.classes
             .single { it.signature == node.method.enclosingClass }
             .methods
+            .asSequence()
             .filter { it.name == callee.name }
             .filterNot { it.name == node.method.name }
-        if (resolvedNeighbour.isNotEmpty()) return resolvedNeighbour.asSequence()
+        if (resolvedNeighbour.any()) return resolvedNeighbour
 
         // If the neighbour match failed,
         // try to *uniquely* resolve the callee via a partial signature match:
