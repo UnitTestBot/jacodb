@@ -32,7 +32,7 @@ sealed interface ValueDto {
 @Serializable
 @SerialName("UNKNOWN_VALUE")
 data class UnknownValueDto(
-    val value: JsonElement,
+    val value: String,
 ) : ValueDto {
     override val type: TypeDto
         get() = UnknownTypeDto
