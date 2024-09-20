@@ -85,6 +85,23 @@ class EtsApplicationGraphImpl(
             "Unknown class signature in method: ${node.method}"
         }
 
+        // Note: specific resolve for constructor:
+        if (callee.name == "constructor") {
+            val resolvedCompletely = cp.classes
+                .asSequence()
+                .filter { it.signature == callee.enclosingClass }
+                .map { it.ctor }
+            if (resolvedCompletely.any()) return resolvedCompletely
+
+            val resolvedPartially = cp.classes
+                .asSequence()
+                .filter { it.signature.name == callee.enclosingClass.name }
+                .map { it.ctor }
+                .toList()
+            if (resolvedPartially.size == 1) return resolvedPartially.asSequence()
+            return emptySequence()
+        }
+
         // First, try to resolve the callee via a complete signature match:
         val resolvedCompletely = cp.classes
             .asSequence()
