@@ -87,9 +87,7 @@ class EtsApplicationGraphImpl(
             // Note: include constructors!
             .flatMap { it.methods.asSequence() + it.ctor }
             .filter { it.name == callee.name }
-        if (resolvedCompletely.any()) {
-            return resolvedCompletely
-        }
+        if (resolvedCompletely.any()) return resolvedCompletely
 
         // If the complete signature match failed,
         // try to find the unique neighbour (non-recursive) method in the same class:
