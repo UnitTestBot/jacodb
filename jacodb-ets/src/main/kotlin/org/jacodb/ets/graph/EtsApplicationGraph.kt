@@ -80,6 +80,11 @@ class EtsApplicationGraphImpl(
         val expr = node.callExpr ?: return emptySequence()
         val callee = expr.method
 
+        // Note: the resolving code below expects that at least the current method signature is known.
+        check(!node.method.enclosingClass.isUnknown()) {
+            "Unknown class signature in method: ${node.method}"
+        }
+
         // First, try to resolve the callee via a complete signature match:
         val resolvedCompletely = cp.classes
             .asSequence()
