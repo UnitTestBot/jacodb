@@ -80,17 +80,40 @@ class EtsApplicationGraphImpl(
         val expr = node.callExpr ?: return emptySequence()
         val callee = expr.method
 
-        // TODO: hack
-        if (callee.enclosingClass.name.isBlank()) {
-            val clazz = cp.classes.single { it.signature == node.method.enclosingClass }
-            return clazz.methods.asSequence().filter { it.name == callee.name }.filterNot { it.name == node.method.name }
+        // First, try to resolve the callee via a complete signature match:
+        val resolvedCompletely = cp.classes
+            .asSequence()
+            .filter { compareClassSignatures(it.signature, callee.enclosingClass) == ComparisonResult.Equal }
+            // Note: include constructors!
+            .flatMap { it.methods.asSequence() + it.ctor }
+            .filter { it.name == callee.name }
+        if (resolvedCompletely.any()) {
+            return resolvedCompletely
         }
 
-        return cp.classes
+        // If the complete signature match failed,
+        // try to find the unique neighbour (non-recursive) method in the same class:
+        val resolvedNeighbour = cp.classes
+            .single { it.signature == node.method.enclosingClass }
+            .methods
+            .filter { it.name == callee.name }
+        if (resolvedNeighbour.isNotEmpty()) return resolvedNeighbour.asSequence()
+
+        // If the neighbour match failed,
+        // try to *uniquely* resolve the callee via a partial signature match:
+        val resolvedPartially = cp.classes
             .asSequence()
             .filter { compareClassSignatures(it.signature, callee.enclosingClass) != ComparisonResult.NotEqual }
-            .flatMap { it.methods.asSequence() + it.ctor }
-            .filter { it.signature.name == callee.name }
+            // Note: omit constructors!
+            .flatMap { it.methods.asSequence() }
+            .filter { it.name == callee.name }
+            // Note: exclude recursive calls:
+            .filterNot { it.name == node.method.name }
+
+        if (resolvedPartially.none()) return emptySequence()
+        val resolved = resolvedPartially.toList()
+        if (resolved.size == 1) return resolved.asSequence()
+        return emptySequence()
     }
 
     override fun callers(method: EtsMethod): Sequence<EtsStmt> {
