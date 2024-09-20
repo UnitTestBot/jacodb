@@ -97,6 +97,7 @@ class EtsApplicationGraphImpl(
             .single { it.signature == node.method.enclosingClass }
             .methods
             .filter { it.name == callee.name }
+            .filterNot { it.name == node.method.name }
         if (resolvedNeighbour.isNotEmpty()) return resolvedNeighbour.asSequence()
 
         // If the neighbour match failed,
