@@ -40,25 +40,33 @@ import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.dto.convertToEtsMethod
 import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsMethodSignature
+import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.test.utils.loadEtsFileDtoFromResource
+import org.jacodb.ets.test.utils.loadMultipleEtsFilesFromResourceDirectory
 import org.jacodb.ets.utils.loadEtsFileAutoConvert
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.EnabledIf
+import kotlin.io.path.exists
 import kotlin.io.path.toPath
 
 class EtsFromJsonTest {
 
-    private val json = Json {
-        // classDiscriminator = "_"
-        prettyPrint = true
-    }
+    companion object {
+        private val json = Json {
+            // classDiscriminator = "_"
+            prettyPrint = true
+        }
 
-    private val defaultSignature = EtsMethodSignature(
-        enclosingClass = EtsClassSignature(name = "_DEFAULT_ARK_CLASS"),
-        name = "_DEFAULT_ARK_METHOD",
-        parameters = emptyList(),
-        returnType = EtsAnyType,
-    )
+        private val defaultSignature = EtsMethodSignature(
+            enclosingClass = EtsClassSignature(name = "_DEFAULT_ARK_CLASS"),
+            name = "_DEFAULT_ARK_METHOD",
+            parameters = emptyList(),
+            returnType = EtsAnyType,
+        )
+
+        private const val PROJECT_PATH = "/projects/AppSamples/ArkTSDistributedCalc"
+    }
 
     @Test
     fun testLoadEtsFileFromJson() {
@@ -76,6 +84,28 @@ class EtsFromJsonTest {
             ?: error("Resource not found: $path")
         val etsFile = loadEtsFileAutoConvert(res)
         println("etsFile = $etsFile")
+    }
+
+    private fun projectAvailable(): Boolean {
+        val path = this::class.java.getResource(PROJECT_PATH)?.toURI()?.toPath()
+        return path != null && path.exists()
+    }
+
+    @EnabledIf("projectAvailable")
+    @Test
+    fun testLoadEtsProject() {
+        val path = "/projects/AppSamples/ArkTSDistributedCalc"
+        val files = loadMultipleEtsFilesFromResourceDirectory("$path/etsir").toList()
+        println("Loaded ${files.size} files")
+        val project = EtsScene(files)
+        println("project = $project")
+        println("Classes: ${project.classes.size}")
+        for (cls in project.classes) {
+            println("= ${cls.signature} with ${cls.methods.size} methods:")
+            for (method in cls.methods) {
+                println("  - ${method.signature}")
+            }
+        }
     }
 
     @Test
