@@ -51,10 +51,10 @@ class EtsProjectAnalysis {
     private var totalSinks: MutableList<TaintVulnerability<EtsStmt>> = mutableListOf()
 
     companion object : EtsTraits {
-        private const val SOURCE_PROJECT_PATH = "/project1"
-        private const val PROJECT_PATH = "/etsir/project1"
+        private const val SOURCE_PROJECT_PATH = "/projects/applications_app_samples/source/applications_app_samples/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc"
+        private const val PROJECT_PATH = "/projects/applications_app_samples/etsir/ast/ArkTSDistributedCalc"
         private const val START_PATH = "/entry/src/main/ets"
-        private const val BASE_PATH = PROJECT_PATH + START_PATH
+        private const val BASE_PATH = PROJECT_PATH
         private const val SOURCE_BASE_PATH = SOURCE_PROJECT_PATH + START_PATH
 
         private fun loadFromProject(filename: String): EtsFile {
