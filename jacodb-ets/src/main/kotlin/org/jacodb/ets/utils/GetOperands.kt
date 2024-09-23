@@ -65,6 +65,7 @@ import org.jacodb.ets.base.EtsPostDecExpr
 import org.jacodb.ets.base.EtsPostIncExpr
 import org.jacodb.ets.base.EtsPreDecExpr
 import org.jacodb.ets.base.EtsPreIncExpr
+import org.jacodb.ets.base.EtsPtrCallExpr
 import org.jacodb.ets.base.EtsRemExpr
 import org.jacodb.ets.base.EtsReturnStmt
 import org.jacodb.ets.base.EtsRightShiftExpr
@@ -294,6 +295,9 @@ private object EntityGetOperands : EtsEntity.Visitor<Sequence<EtsEntity>> {
 
     override fun visit(expr: EtsStaticCallExpr): Sequence<EtsEntity> =
         expr.args.asSequence()
+
+    override fun visit(expr: EtsPtrCallExpr): Sequence<EtsEntity> =
+        sequenceOf(expr.ptr) + expr.args.asSequence()
 
     override fun visit(expr: EtsCommaExpr): Sequence<EtsEntity> =
         sequenceOf(expr.left, expr.right)

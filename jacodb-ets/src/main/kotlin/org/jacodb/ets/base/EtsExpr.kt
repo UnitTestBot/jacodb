@@ -77,6 +77,7 @@ interface EtsExpr : EtsEntity {
         // Call
         fun visit(expr: EtsInstanceCallExpr): R
         fun visit(expr: EtsStaticCallExpr): R
+        fun visit(expr: EtsPtrCallExpr): R
 
         // Other
         fun visit(expr: EtsCommaExpr): R
@@ -133,6 +134,7 @@ interface EtsExpr : EtsEntity {
 
             override fun visit(expr: EtsInstanceCallExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsStaticCallExpr): R = defaultVisit(expr)
+            override fun visit(expr: EtsPtrCallExpr): R = defaultVisit(expr)
 
             override fun visit(expr: EtsCommaExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsTernaryExpr): R = defaultVisit(expr)
@@ -783,6 +785,20 @@ data class EtsStaticCallExpr(
 ) : EtsCallExpr {
     override fun toString(): String {
         return "${method.enclosingClass.name}.${method.name}(${args.joinToString()})"
+    }
+
+    override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class EtsPtrCallExpr(
+    val ptr: EtsLocal,
+    override val method: EtsMethodSignature,
+    override val args: List<EtsValue>,
+) : EtsCallExpr {
+    override fun toString(): String {
+        return "${ptr}.${method.name}(${args.joinToString()})"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {

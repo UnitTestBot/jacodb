@@ -77,6 +77,7 @@ import org.jacodb.ets.base.EtsOrExpr
 import org.jacodb.ets.base.EtsParameterRef
 import org.jacodb.ets.base.EtsPreDecExpr
 import org.jacodb.ets.base.EtsPreIncExpr
+import org.jacodb.ets.base.EtsPtrCallExpr
 import org.jacodb.ets.base.EtsRemExpr
 import org.jacodb.ets.base.EtsReturnStmt
 import org.jacodb.ets.base.EtsRightShiftExpr
@@ -182,7 +183,7 @@ class EtsMethodBuilder(
             is UnknownStmtDto -> object : EtsStmt {
                 override val location: EtsInstLocation = loc()
 
-                override fun toString(): String = "Unknown(${stmt.stmt})"
+                override fun toString(): String = "UnknownStmt(${stmt.stmt})"
 
                 // TODO: equals/hashCode ???
 
@@ -221,17 +222,6 @@ class EtsMethodBuilder(
             }
 
             is CallStmtDto -> {
-                if (stmt.expr is UnknownValueDto) {
-                    return object : EtsStmt {
-                        override val location: EtsInstLocation = loc()
-
-                        override fun toString(): String = "UnknownCall(${stmt.expr})"
-
-                        override fun <R> accept(visitor: EtsStmt.Visitor<R>): R {
-                            error("UnknownCall is not supported")
-                        }
-                    }
-                }
                 val expr = convertToEtsEntity(stmt.expr) as EtsCallExpr
                 EtsCallStmt(
                     location = loc(),
@@ -440,6 +430,14 @@ class EtsMethodBuilder(
             )
 
             is StaticCallExprDto -> EtsStaticCallExpr(
+                method = convertToEtsMethodSignature(value.method),
+                args = value.args.map {
+                    ensureLocal(convertToEtsEntity(it))
+                },
+            )
+
+            is PtrCallExprDto -> EtsPtrCallExpr(
+                ptr = convertToEtsEntity(value.ptr as LocalDto) as EtsLocal, // safe cast
                 method = convertToEtsMethodSignature(value.method),
                 args = value.args.map {
                     ensureLocal(convertToEtsEntity(it))

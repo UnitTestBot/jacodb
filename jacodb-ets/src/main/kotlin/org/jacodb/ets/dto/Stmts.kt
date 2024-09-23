@@ -20,7 +20,6 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
-import kotlinx.serialization.json.JsonElement
 
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
@@ -30,8 +29,12 @@ sealed interface StmtDto
 @Serializable
 @SerialName("UNKNOWN_STMT")
 data class UnknownStmtDto(
-    val stmt: JsonElement,
-) : StmtDto
+    val stmt: String,
+) : StmtDto {
+    override fun toString(): String {
+        return "UNKNOWN($stmt)"
+    }
+}
 
 @Serializable
 @SerialName("NopStmt")

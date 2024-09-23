@@ -32,18 +32,12 @@ sealed interface ValueDto {
 @SerialName("UNKNOWN_VALUE")
 data class UnknownValueDto(
     val value: String,
-) : ValueDto, CallExprDto {
+) : ValueDto {
     override val type: TypeDto
         get() = UnknownTypeDto
 
-    override val args: List<ValueDto>?
-        get() = null
-
-    override val method: MethodSignatureDto?
-        get() = null
-
     override fun toString(): String {
-        return value
+        return "UNKNOWN($value)"
     }
 }
 
@@ -343,11 +337,11 @@ data class RelationOperationDto(
 
 @Serializable
 sealed interface CallExprDto : ExprDto {
-    val method: MethodSignatureDto?
-    val args: List<ValueDto>?
+    val method: MethodSignatureDto
+    val args: List<ValueDto>
 
     override val type: TypeDto
-        get() = method?.returnType ?: UnknownTypeDto
+        get() = method.returnType
 }
 
 @Serializable
@@ -370,6 +364,18 @@ data class StaticCallExprDto(
 ) : CallExprDto {
     override fun toString(): String {
         return "${method.name}(${args.joinToString()})"
+    }
+}
+
+@Serializable
+@SerialName("PtrCallExpr")
+data class PtrCallExprDto(
+    val ptr: ValueDto, // Local
+    override val method: MethodSignatureDto,
+    override val args: List<ValueDto>,
+) : CallExprDto {
+    override fun toString(): String {
+        return "$ptr@${method.declaringClass.name}::${method.name}(${args.joinToString()})"
     }
 }
 
