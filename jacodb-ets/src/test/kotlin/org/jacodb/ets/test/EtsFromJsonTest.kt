@@ -112,7 +112,6 @@ class EtsFromJsonTest {
                 type = NumberTypeDto,
             ),
             modifiers = emptyList(),
-            typeParameters = emptyList(),
             isOptional = true,
             isDefinitelyAssigned = false,
         )

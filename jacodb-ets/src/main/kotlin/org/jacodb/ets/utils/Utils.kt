@@ -75,7 +75,6 @@ fun EtsFileDto.toText(): String {
         lines += "  fields: ${clazz.fields.size}"
         clazz.fields.forEach { field ->
             lines += "  - FIELD '${field.signature}'"
-            lines += "    typeParameters = ${field.typeParameters}"
             lines += "    modifiers = ${field.modifiers}"
             lines += "    isOptional = ${field.isOptional}"
             lines += "    isDefinitelyAssigned = ${field.isDefinitelyAssigned}"
