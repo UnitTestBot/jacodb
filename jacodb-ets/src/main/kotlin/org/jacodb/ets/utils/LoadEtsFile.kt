@@ -23,13 +23,10 @@ import java.io.FileNotFoundException
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.absolute
-import kotlin.io.path.createTempDirectory
-import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.pathString
-import kotlin.io.path.relativeTo
 import kotlin.time.Duration.Companion.seconds
 
 private const val ENV_VAR_ARK_ANALYZER_DIR = "ARKANALYZER_DIR"
