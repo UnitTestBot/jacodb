@@ -221,6 +221,17 @@ class EtsMethodBuilder(
             }
 
             is CallStmtDto -> {
+                if (stmt.expr is UnknownValueDto) {
+                    return object : EtsStmt {
+                        override val location: EtsInstLocation = loc()
+
+                        override fun toString(): String = "UnknownCall(${stmt.expr})"
+
+                        override fun <R> accept(visitor: EtsStmt.Visitor<R>): R {
+                            error("UnknownCall is not supported")
+                        }
+                    }
+                }
                 val expr = convertToEtsEntity(stmt.expr) as EtsCallExpr
                 EtsCallStmt(
                     location = loc(),
@@ -282,7 +293,7 @@ class EtsMethodBuilder(
             is UnknownValueDto -> object : EtsEntity {
                 override val type: EtsType = EtsUnknownType
 
-                override fun toString(): String = "Unknown(${value.value})"
+                override fun toString(): String = "UnknownValue(${value.value})"
 
                 override fun <R> accept(visitor: EtsEntity.Visitor<R>): R {
                     if (visitor is EtsEntity.Visitor.Default<R>) {
