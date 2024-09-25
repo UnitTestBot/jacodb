@@ -142,7 +142,7 @@ object UndefinedTypeDto : PrimitiveTypeDto {
 @Serializable
 @SerialName("LiteralType")
 data class LiteralTypeDto(
-    val literal: JsonElement,
+    val literal: JsonElement, // string | boolean | number
 ) : PrimitiveTypeDto {
     override val name: String
         get() = literal.toString()
