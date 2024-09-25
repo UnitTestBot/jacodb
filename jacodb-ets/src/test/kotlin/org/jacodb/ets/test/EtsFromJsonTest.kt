@@ -40,9 +40,8 @@ import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.dto.convertToEtsMethod
 import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsMethodSignature
-import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.test.utils.loadEtsFileDtoFromResource
-import org.jacodb.ets.test.utils.loadMultipleEtsFilesFromResourceDirectory
+import org.jacodb.ets.test.utils.loadEtsProjectFromResources
 import org.jacodb.ets.utils.loadEtsFileAutoConvert
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -65,7 +64,7 @@ class EtsFromJsonTest {
             returnType = EtsAnyType,
         )
 
-        private const val PROJECT_PATH = "/projects/AppSamples/ArkTSDistributedCalc"
+        private const val PROJECT_PATH = "/projects/ArkTSDistributedCalc"
     }
 
     @Test
@@ -94,11 +93,11 @@ class EtsFromJsonTest {
     @EnabledIf("projectAvailable")
     @Test
     fun testLoadEtsProject() {
-        val path = "/projects/AppSamples/ArkTSDistributedCalc"
-        val files = loadMultipleEtsFilesFromResourceDirectory("$path/etsir").toList()
-        println("Loaded ${files.size} files")
-        val project = EtsScene(files)
-        println("project = $project")
+        val modules = listOf(
+            "entry",
+        )
+        val prefix = "$PROJECT_PATH/etsir"
+        val project = loadEtsProjectFromResources(modules, prefix)
         println("Classes: ${project.classes.size}")
         for (cls in project.classes) {
             println("= ${cls.signature} with ${cls.methods.size} methods:")

@@ -14,65 +14,86 @@ mkdir -p projects
 pushd projects
 
 function check_repo() {
+  if [[ $# -ne 1 ]]; then
+    echo "Usage: check_repo <repo>"
+    exit 1
+  fi
   if [[ ! -d $1 ]]; then
     echo "Repository not found: $1"
     exit 1
   fi
 }
 
-function prepare_app_samples() {
-  NAME="AppSamples"
-  echo
-  echo "=== Preparing $NAME..."
-  echo
-  if [ -d $NAME ]; then
-    echo "Directory already exists: $NAME"
-    return
+function prepare_module() {
+  if [[ $# -ne 2 ]]; then
+    echo "Usage: prepare_module <module> <root>"
+    exit 1
   fi
-  mkdir -p $NAME
-  pushd $NAME >/dev/null
-
-  REPO="../../repos/applications_app_samples"
-  check_repo $REPO
-
-  function prepare_calc() {
-    NAME="ArkTSDistributedCalc"
-    echo "= Preparing subproject: $NAME"
-    mkdir -p $NAME
-    SRC="$NAME/source"
-    ETSIR="$NAME/etsir"
-    echo "Linking sources..."
-    ln -srfT "$REPO/code/SuperFeature/DistributedAppDev/$NAME/entry/src/main/ets" $SRC
-    echo "Serializing..."
-    npx ts-node $SCRIPT -p $SRC $ETSIR -v
-  }
-
-  prepare_calc
-}
-
-prepare_app_samples
-
-function prepare_audiopicker() {
-  NAME="AudioPicker"
-  echo
-  echo "=== Preparing $NAME..."
-  echo
-  if [ -d $NAME ]; then
-    echo "Directory already exists: $NAME"
-    return
-  fi
-  mkdir -p $NAME
-  pushd $NAME >/dev/null
-
-  REPO="../../repos/applications_filepicker"
-  check_repo $REPO
-
-  SRC="source"
-  ETSIR="etsir"
+  local MODULE=$1
+  local ROOT=$2
+  echo "= Preparing module: $MODULE"
+  local SRC="source/$MODULE"
+  local ETSIR="etsir/$MODULE"
+  mkdir -p $(dirname $SRC)
   echo "Linking sources..."
-  ln -srfT "$REPO/audiopicker/src/main/ets" $SRC
+  echo "pwd = $(pwd)"
+  ln -srfT "$ROOT/src/main/ets" $SRC
   echo "Serializing..."
   npx ts-node $SCRIPT -p $SRC $ETSIR -v
 }
 
-prepare_audiopicker
+(
+  NAME="ArkTSDistributedCalc"
+  echo
+  echo "=== Preparing $NAME..."
+  echo
+  if [ -d $NAME ]; then
+    echo "Directory already exists: $NAME"
+    exit
+  fi
+  mkdir -p $NAME
+  pushd $NAME
+
+  REPO="../../repos/applications_app_samples"
+  check_repo $REPO
+
+  prepare_module "entry" "$REPO/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc/entry"
+)
+
+(
+  NAME="AudioPicker"
+  echo
+  echo "=== Preparing $NAME..."
+  echo
+  if [[ -d $NAME ]]; then
+    echo "Directory already exists: $NAME"
+    exit
+  fi
+  mkdir -p $NAME
+  pushd $NAME
+
+  REPO="../../repos/applications_filepicker"
+  check_repo $REPO
+
+  prepare_module "entry" "$REPO/entry"
+  prepare_module "audiopicker" "$REPO/audiopicker"
+)
+
+(
+  NAME="Launcher"
+  echo
+  echo "=== Preparing $NAME..."
+  echo
+  if [[ -d $NAME ]]; then
+    echo "Directory already exists: $NAME"
+    exit
+  fi
+  mkdir -p $NAME
+  pushd $NAME
+
+  REPO="../../repos/applications_launcher"
+  check_repo $REPO
+
+  prepare_module "common" "$REPO/common"
+  prepare_module "phone_launcher" "$REPO/product/phone"
+)
