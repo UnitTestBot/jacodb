@@ -22,6 +22,7 @@ import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.model.EtsFile
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.extension
 import kotlin.io.path.inputStream
 import kotlin.io.path.relativeTo
 import kotlin.io.path.walk
@@ -38,6 +39,7 @@ private val logger = KotlinLogging.logger {}
  */
 fun loadEtsFileDtoFromResource(jsonPath: String): EtsFileDto {
     logger.debug { "Loading EtsIR from resource: '$jsonPath'" }
+    require(jsonPath.endsWith(".json")) { "File must have a '.json' extension: '$jsonPath'" }
     getResourceStream(jsonPath).use { stream ->
         return EtsFileDto.loadFromJson(stream)
     }
@@ -67,7 +69,7 @@ fun loadEtsFileFromResource(jsonPath: String): EtsFile {
 @OptIn(ExperimentalPathApi::class)
 fun loadMultipleEtsFilesFromResourceDirectory(dirPath: String): Sequence<EtsFile> {
     val rootPath = getResourcePath(dirPath)
-    return rootPath.walk().map { path ->
+    return rootPath.walk().filter { it.extension == "json" }.map { path ->
         loadEtsFileFromResource("$dirPath/${path.relativeTo(rootPath)}")
     }
 }
@@ -85,10 +87,11 @@ fun loadMultipleEtsFilesFromMultipleResourceDirectories(
  *
  * For example, `data/sample.json` can be loaded with:
  * ```
- * val dto: EtsFileDto = loadEtsFileDto("data/sample.json".toPath())
+ * val dto: EtsFileDto = loadEtsFileDto(Path("data/sample.json"))
  * ```
  */
 fun loadEtsFileDto(path: Path): EtsFileDto {
+    require(path.extension == "json") { "File must have a '.json' extension: $path" }
     path.inputStream().use { stream ->
         return EtsFileDto.loadFromJson(stream)
     }
@@ -99,7 +102,7 @@ fun loadEtsFileDto(path: Path): EtsFileDto {
  *
  * For example, `data/sample.json` can be loaded with:
  * ```
- * val file: EtsFile = loadEtsFile("data/sample.json".toPath())
+ * val file: EtsFile = loadEtsFile(Path("data/sample.json"))
  * ```
  */
 fun loadEtsFile(path: Path): EtsFile {
@@ -112,10 +115,10 @@ fun loadEtsFile(path: Path): EtsFile {
  *
  * For example, all files in `data` can be loaded with:
  * ```
- * val files: Sequence<EtsFile> = loadMultipleEtsFilesFromDirectory("data".toPath())
+ * val files: Sequence<EtsFile> = loadMultipleEtsFilesFromDirectory(Path("data"))
  * ```
  */
 @OptIn(ExperimentalPathApi::class)
 fun loadMultipleEtsFilesFromDirectory(dirPath: Path): Sequence<EtsFile> {
-    return dirPath.walk().map { loadEtsFile(it) }
+    return dirPath.walk().filter { it.extension == "json" }.map { loadEtsFile(it) }
 }
