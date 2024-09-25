@@ -45,9 +45,9 @@ import org.jacodb.ets.test.utils.getResourcePath
 import org.jacodb.ets.test.utils.getResourcePathOrNull
 import org.jacodb.ets.test.utils.loadEtsFileDtoFromResource
 import org.jacodb.ets.test.utils.loadEtsProjectFromResources
+import org.jacodb.ets.test.utils.testFactory
 import org.jacodb.ets.utils.loadEtsFileAutoConvert
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.condition.EnabledIf
@@ -116,10 +116,10 @@ class EtsFromJsonTest {
     }
 
     @TestFactory
-    fun testLoadAllAvailableEtsProjects(): Collection<DynamicTest> {
+    fun testLoadAllAvailableEtsProjects() = testFactory {
         val p = getResourcePathOrNull("/projects") ?: run {
-            logger.warn { "No projects found" }
-            return emptyList()
+            logger.warn { "No projects directory found in resources" }
+            return@testFactory
         }
         val availableProjectNames = p.toFile().listFiles { f -> f.isDirectory }!!.map { it.name }
         logger.info {
@@ -130,9 +130,15 @@ class EtsFromJsonTest {
                 }
             }
         }
-        return availableProjectNames.map { projectName ->
-            DynamicTest.dynamicTest("load $projectName") {
-                dynamicLoadEtsProject(projectName)
+        if (availableProjectNames.isEmpty()) {
+            logger.warn { "No projects found" }
+            return@testFactory
+        }
+        container("load ${availableProjectNames.size} projects") {
+            for (projectName in availableProjectNames) {
+                test("load $projectName") {
+                    dynamicLoadEtsProject(projectName)
+                }
             }
         }
     }
