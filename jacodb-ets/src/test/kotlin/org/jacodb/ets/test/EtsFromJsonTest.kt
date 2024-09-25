@@ -19,6 +19,7 @@ package org.jacodb.ets.test
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import mu.KotlinLogging
 import org.jacodb.ets.base.EtsAnyType
 import org.jacodb.ets.base.EtsInstLocation
 import org.jacodb.ets.base.EtsLocal
@@ -40,14 +41,21 @@ import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.dto.convertToEtsMethod
 import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsMethodSignature
+import org.jacodb.ets.test.utils.getResourcePath
+import org.jacodb.ets.test.utils.getResourcePathOrNull
 import org.jacodb.ets.test.utils.loadEtsFileDtoFromResource
 import org.jacodb.ets.test.utils.loadEtsProjectFromResources
 import org.jacodb.ets.utils.loadEtsFileAutoConvert
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.condition.EnabledIf
+import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.toPath
+
+private val logger = KotlinLogging.logger {}
 
 class EtsFromJsonTest {
 
@@ -103,6 +111,56 @@ class EtsFromJsonTest {
             println("= ${cls.signature} with ${cls.methods.size} methods:")
             for (method in cls.methods) {
                 println("  - ${method.signature}")
+            }
+        }
+    }
+
+    @TestFactory
+    fun testLoadAllAvailableEtsProjects(): Collection<DynamicTest> {
+        val p = getResourcePathOrNull("/projects") ?: run {
+            logger.warn { "No projects found" }
+            return emptyList()
+        }
+        val availableProjectNames = p.toFile().listFiles { f -> f.isDirectory }!!.map { it.name }
+        logger.info {
+            buildString {
+                appendLine("Found projects: ${availableProjectNames.size}")
+                for (name in availableProjectNames) {
+                    appendLine("  - $name")
+                }
+            }
+        }
+        return availableProjectNames.map { projectName ->
+            DynamicTest.dynamicTest("load $projectName") {
+                dynamicLoadEtsProject(projectName)
+            }
+        }
+    }
+
+    private fun dynamicLoadEtsProject(projectName: String) {
+        val projectPath = getResourcePath("/projects/$projectName")
+        logger.info { "Loading project: $projectName" }
+        val etsirPath = projectPath / "etsir"
+        if (!etsirPath.exists()) {
+            logger.warn { "No etsir directory found for project $projectName" }
+            return
+        }
+        val modules = etsirPath.toFile().listFiles { f -> f.isDirectory }!!.map { it.name }
+        logger.info { "Found ${modules.size} modules: $modules" }
+        if (modules.isEmpty()) {
+            logger.warn { "No modules found for project $projectName" }
+            return
+        }
+        val project = loadEtsProjectFromResources(modules, "/projects/$projectName/etsir")
+        logger.info {
+            buildString {
+                appendLine("Loaded project with ${project.classes.size} classes and ${project.classes.sumOf { it.methods.size }} methods")
+                for (cls in project.classes) {
+                    appendLine("= ${cls.signature} with ${cls.methods.size} methods:")
+                    for (method in cls.methods) {
+                        appendLine("  - ${method.signature}")
+                    }
+                }
             }
         }
     }
