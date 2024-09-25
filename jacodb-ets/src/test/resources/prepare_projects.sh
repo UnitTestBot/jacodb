@@ -24,6 +24,23 @@ function check_repo() {
   fi
 }
 
+function prepare_project_dir() {
+  if [[ $# -ne 1 ]]; then
+    echo "Usage: prepare_project <name>"
+    exit 1
+  fi
+  NAME=$1
+  echo
+  echo "=== Preparing $NAME..."
+  echo
+  if [[ -d $NAME ]]; then
+    echo "Directory already exists: $NAME"
+    exit
+  fi
+  mkdir -p $NAME
+  pushd $NAME
+}
+
 function prepare_module() {
   if [[ $# -ne 2 ]]; then
     echo "Usage: prepare_module <module> <root>"
@@ -43,16 +60,7 @@ function prepare_module() {
 }
 
 (
-  NAME="ArkTSDistributedCalc"
-  echo
-  echo "=== Preparing $NAME..."
-  echo
-  if [ -d $NAME ]; then
-    echo "Directory already exists: $NAME"
-    exit
-  fi
-  mkdir -p $NAME
-  pushd $NAME
+  prepare_project_dir "ArkTSDistributedCalc"
 
   REPO="../../repos/applications_app_samples"
   check_repo $REPO
@@ -61,16 +69,7 @@ function prepare_module() {
 )
 
 (
-  NAME="AudioPicker"
-  echo
-  echo "=== Preparing $NAME..."
-  echo
-  if [[ -d $NAME ]]; then
-    echo "Directory already exists: $NAME"
-    exit
-  fi
-  mkdir -p $NAME
-  pushd $NAME
+  prepare_project_dir "AudioPicker"
 
   REPO="../../repos/applications_filepicker"
   check_repo $REPO
@@ -80,16 +79,7 @@ function prepare_module() {
 )
 
 (
-  NAME="Launcher"
-  echo
-  echo "=== Preparing $NAME..."
-  echo
-  if [[ -d $NAME ]]; then
-    echo "Directory already exists: $NAME"
-    exit
-  fi
-  mkdir -p $NAME
-  pushd $NAME
+  prepare_project_dir "Launcher"
 
   REPO="../../repos/applications_launcher"
   check_repo $REPO
