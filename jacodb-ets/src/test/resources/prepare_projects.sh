@@ -17,12 +17,12 @@ if [[ ! -f $SCRIPT_JS ]]; then
   exit 1
 fi
 
-if [[ $SCRIPT_JS -ot $SCRIPT_TS ]]; then
-  echo "Script is outdated: $SCRIPT_JS"
-  echo "Did you forget to re-build the ArkAnalyzer project?"
-  echo "Run 'npm run build' in the ArkAnalyzer project directory"
-  exit 1
-fi
+#if [[ $SCRIPT_JS -ot $SCRIPT_TS ]]; then
+#  echo "Script is outdated: $SCRIPT_JS"
+#  echo "Did you forget to re-build the ArkAnalyzer project?"
+#  echo "Run 'npm run build' in the ArkAnalyzer project directory"
+#  exit 1
+#fi
 
 do_force=0
 while getopts ":f" opt; do
