@@ -25,6 +25,7 @@ fi
 #fi
 
 do_force=0
+
 while getopts ":f" opt; do
   case $opt in
    f) do_force=1
