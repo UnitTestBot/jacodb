@@ -7,7 +7,22 @@ if [[ -z "${ARKANALYZER_DIR}" ]]; then
 fi
 
 echo "ARKANALYZER_DIR=${ARKANALYZER_DIR}"
-SCRIPT=$ARKANALYZER_DIR/src/save/serializeArkIR.ts
+SCRIPT_TS=$ARKANALYZER_DIR/src/save/serializeArkIR.ts
+SCRIPT_JS=$ARKANALYZER_DIR/out/src/save/serializeArkIR.js
+
+if [[ ! -f $SCRIPT_JS ]]; then
+  echo "Script not found: $SCRIPT_JS"
+  echo "Did you forget to build the ArkAnalyzer project?"
+  echo "Run 'npm run build' in the ArkAnalyzer project directory"
+  exit 1
+fi
+
+if [[ $SCRIPT_JS -ot $SCRIPT_TS ]]; then
+  echo "Script is outdated: $SCRIPT_JS"
+  echo "Did you forget to re-build the ArkAnalyzer project?"
+  echo "Run 'npm run build' in the ArkAnalyzer project directory"
+  exit 1
+fi
 
 pushd "$(dirname $0)" >/dev/null
 mkdir -p projects
@@ -56,7 +71,9 @@ function prepare_module() {
   echo "pwd = $(pwd)"
   ln -srfT "$ROOT/src/main/ets" $SRC
   echo "Serializing..."
-  npx ts-node $SCRIPT -p $SRC $ETSIR -v
+  # TODO: add switch for using npx/node
+  # npx ts-node $SCRIPT_TS -p $SRC $ETSIR -v
+  node $SCRIPT_JS -p $SRC $ETSIR -v
 }
 
 (
