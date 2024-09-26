@@ -2,6 +2,7 @@ import java.io.FileNotFoundException
 
 plugins {
     kotlin("plugin.serialization")
+    `java-test-fixtures`
 }
 
 dependencies {
@@ -17,6 +18,8 @@ dependencies {
     testImplementation(project(":jacodb-analysis"))
     testImplementation(testFixtures(project(":jacodb-core")))
     testImplementation(Libs.mockk)
+
+    testFixturesImplementation(Libs.junit_jupiter_api)
 }
 
 // Example usage:
