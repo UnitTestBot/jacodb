@@ -143,3 +143,12 @@ function prepare_module() {
   ### prepare_module "settingsBase" "$REPO/common/settingsBase"
   prepare_module "utils" "$REPO/common/utils"
 )
+
+(
+  prepare_project_dir "SettingsData"
+
+  REPO="../../repos/applications_settings_data"
+  check_repo $REPO
+
+  prepare_module "entry" "$REPO/entry"
+)
