@@ -84,6 +84,30 @@ function prepare_module() {
   REPO="../../repos/applications_launcher"
   check_repo $REPO
 
-  prepare_module "common" "$REPO/common"
+  prepare_module "launcher_common" "$REPO/common"
+  prepare_module "launcher_appcenter" "$REPO/feature/appcenter"
+  prepare_module "launcher_bigfolder" "$REPO/feature/bigfolder"
+  prepare_module "launcher_form" "$REPO/feature/form"
+  prepare_module "launcher_gesturenavigation" "$REPO/feature/gesturenavigation"
+  prepare_module "launcher_numbadge" "$REPO/feature/numbadge"
+  prepare_module "launcher_pagedesktop" "$REPO/feature/pagedesktop"
+  prepare_module "launcher_recents" "$REPO/feature/recents"
+  prepare_module "launcher_smartDock" "$REPO/feature/smartdock"
   prepare_module "phone_launcher" "$REPO/product/phone"
+  prepare_module "pad_launcher" "$REPO/product/pad"
+  prepare_module "launcher_settings" "$REPO/feature/settings"
+)
+
+(
+  prepare_project_dir "Settings"
+
+  REPO="../../repos/applications_settings"
+  check_repo $REPO
+
+  prepare_module "phone" "$REPO/product/phone"
+  # prepare_module "wearable" "$REPO/product/wearable"
+  prepare_module "component" "$REPO/common/component"
+  prepare_module "search" "$REPO/common/search"
+  ### prepare_module "settingsBase" "$REPO/common/settingsBase"
+  prepare_module "utils" "$REPO/common/utils"
 )
