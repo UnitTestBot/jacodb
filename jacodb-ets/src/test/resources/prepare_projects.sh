@@ -24,6 +24,17 @@ if [[ $SCRIPT_JS -ot $SCRIPT_TS ]]; then
   exit 1
 fi
 
+do_force=0
+while getopts ":f" opt; do
+  case $opt in
+   f) do_force=1
+      echo "Force mode enabled"
+      ;;
+   *) printf "Illegal option '-%s'\n" "$opt" && exit 1
+      ;;
+  esac
+done
+
 pushd "$(dirname $0)" >/dev/null
 mkdir -p projects
 pushd projects
@@ -51,7 +62,7 @@ function prepare_project_dir() {
   if [[ -d $NAME ]]; then
     echo "Directory already exists: $NAME"
     # If `-f` (force mode) is not provided, exit the preparation for this project:
-    if [[ "$1" != "-f" ]]; then
+    if [[ $do_force -eq 0 ]]; then
       exit
     fi
   fi
