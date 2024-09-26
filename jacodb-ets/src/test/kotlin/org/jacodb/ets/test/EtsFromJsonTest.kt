@@ -144,8 +144,8 @@ class EtsFromJsonTest {
     }
 
     private fun dynamicLoadEtsProject(projectName: String) {
-        val projectPath = getResourcePath("/projects/$projectName")
         logger.info { "Loading project: $projectName" }
+        val projectPath = getResourcePath("/projects/$projectName")
         val etsirPath = projectPath / "etsir"
         if (!etsirPath.exists()) {
             logger.warn { "No etsir directory found for project $projectName" }
