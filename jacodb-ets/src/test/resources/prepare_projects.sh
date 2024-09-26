@@ -86,7 +86,7 @@ function prepare_module() {
   ln -srfT "$ROOT/src/main/ets" $SRC
   echo "Serializing..."
   # TODO: add switch for using npx/node
-  # npx ts-node $SCRIPT_TS -p $SRC $ETSIR -v
+  # npx ts-node --files --transpileOnly $SCRIPT_TS -p $SRC $ETSIR -v
   node $SCRIPT_JS -p $SRC $ETSIR -v
 }
 
