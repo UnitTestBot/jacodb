@@ -52,7 +52,7 @@ function prepare_project_dir() {
     echo "Directory already exists: $NAME"
     # If `-f` (force mode) is not provided, exit the preparation for this project:
     if [[ "$1" != "-f" ]]; then
-      exit 1
+      exit
     fi
   fi
   mkdir -p $NAME
