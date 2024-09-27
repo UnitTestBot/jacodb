@@ -36,9 +36,9 @@ while getopts ":f" opt; do
   esac
 done
 
-pushd "$(dirname $0)" >/dev/null
+cd "$(dirname $0)"
 mkdir -p projects
-pushd projects
+cd projects
 
 function check_repo() {
   if [[ $# -ne 1 ]]; then
@@ -68,7 +68,7 @@ function prepare_project_dir() {
     fi
   fi
   mkdir -p $NAME
-  pushd $NAME
+  cd $NAME
 }
 
 function prepare_module() {
