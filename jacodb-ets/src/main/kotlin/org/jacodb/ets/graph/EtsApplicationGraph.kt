@@ -16,13 +16,19 @@
 
 package org.jacodb.ets.graph
 
+import mu.KotlinLogging
 import org.jacodb.api.common.analysis.ApplicationGraph
 import org.jacodb.ets.base.EtsStmt
+import org.jacodb.ets.model.EtsClass
 import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsFileSignature
 import org.jacodb.ets.model.EtsMethod
+import org.jacodb.ets.model.EtsMethodSignature
 import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.utils.callExpr
+import org.jacodb.impl.util.Maybe
+
+private val logger = KotlinLogging.logger {}
 
 interface EtsApplicationGraph : ApplicationGraph<EtsMethod, EtsStmt> {
     val cp: EtsScene
@@ -33,6 +39,9 @@ private fun EtsFileSignature?.isUnknown(): Boolean =
 
 private fun EtsClassSignature.isUnknown(): Boolean =
     name.isBlank()
+
+private fun EtsClassSignature.isIdeal(): Boolean =
+    !isUnknown() && !file.isUnknown()
 
 enum class ComparisonResult {
     Equal,
@@ -76,66 +85,137 @@ class EtsApplicationGraphImpl(
         return successors.asSequence()
     }
 
+    private val cacheClassWithIdealSignature: MutableMap<EtsClassSignature, Maybe<EtsClass>> = hashMapOf()
+    private val cacheMethodWithIdealSignature: MutableMap<EtsMethodSignature, Maybe<EtsMethod>> = hashMapOf()
+    private val cachePartiallyMatchedCallees: MutableMap<EtsMethodSignature, List<EtsMethod>> = hashMapOf()
+
+    private fun lookupClassWithIdealSignature(signature: EtsClassSignature): Maybe<EtsClass> {
+        require(signature.isIdeal())
+
+        if (signature in cacheClassWithIdealSignature) {
+            return cacheClassWithIdealSignature.getValue(signature)
+        }
+
+        val matched = cp.classes
+            .asSequence()
+            .filter { it.signature == signature && it.signature.file == signature.file }
+        if (matched.none()) {
+            cacheClassWithIdealSignature[signature] = Maybe.none()
+            return Maybe.none()
+        } else {
+            val s = matched.singleOrNull()
+                ?: error("Multiple classes with the same signature: ${matched.toList()}")
+            cacheClassWithIdealSignature[signature] = Maybe.some(s)
+            return Maybe.some(s)
+        }
+    }
+
     override fun callees(node: EtsStmt): Sequence<EtsMethod> {
         val expr = node.callExpr ?: return emptySequence()
         val callee = expr.method
 
         // Note: the resolving code below expects that at least the current method signature is known.
-        check(!node.method.enclosingClass.isUnknown()) {
-            "Unknown class signature in method: ${node.method}"
+        check(node.method.enclosingClass.isIdeal()) {
+            "Incomplete signature in method: ${node.method}"
         }
 
         // Note: specific resolve for constructor:
         if (callee.name == "constructor") {
-            val resolvedCompletely = cp.classes
-                .asSequence()
-                .filter { it.signature == callee.enclosingClass }
-                .map { it.ctor }
-            if (resolvedCompletely.any()) return resolvedCompletely
+            if (!callee.enclosingClass.isIdeal()) {
+                // Constructor signature is garbage. Sorry, can't do anything in such case.
+                return emptySequence()
+            }
 
-            val resolvedPartially = cp.classes
-                .asSequence()
-                .filter { it.signature.name == callee.enclosingClass.name }
-                .map { it.ctor }
-                .toList()
-            if (resolvedPartially.size == 1) return resolvedPartially.asSequence()
-            return emptySequence()
+            // Here, we assume that the constructor signature is ideal.
+            check(callee.enclosingClass.isIdeal())
+
+            val cls = lookupClassWithIdealSignature(callee.enclosingClass)
+            if (cls.isSome) {
+                return sequenceOf(cls.getOrThrow().ctor)
+            } else {
+                return emptySequence()
+            }
         }
 
-        // First, try to resolve the callee via a complete signature match:
-        val resolvedCompletely = cp.classes
-            .asSequence()
-            .filter { compareClassSignatures(it.signature, callee.enclosingClass) == ComparisonResult.Equal }
-            // Note: include constructors!
-            .flatMap { it.methods.asSequence() + it.ctor }
-            .filter { it.name == callee.name }
-        if (resolvedCompletely.any()) return resolvedCompletely
+        // If the callee signature is ideal, resolve it directly:
+        if (callee.enclosingClass.isIdeal()) {
+            if (callee in cacheMethodWithIdealSignature) {
+                val resolved = cacheMethodWithIdealSignature.getValue(callee)
+                if (resolved.isSome) {
+                    return sequenceOf(resolved.getOrThrow())
+                } else {
+                    return emptySequence()
+                }
+            }
+
+            val cls = lookupClassWithIdealSignature(callee.enclosingClass)
+
+            val resolved = run {
+                if (cls.isNone) {
+                    emptySequence()
+                } else {
+                    cls.getOrThrow().methods.asSequence().filter { it.name == callee.name }
+                }
+            }
+            if (resolved.none()) {
+                cacheMethodWithIdealSignature[callee] = Maybe.none()
+                return emptySequence()
+            }
+            val r = resolved.singleOrNull()
+                ?: error("Multiple methods with the same signature: ${resolved.toList()}")
+            cacheMethodWithIdealSignature[callee] = Maybe.some(r)
+            return sequenceOf(r)
+        }
+
+        // If the callee signature is not ideal, resolve it via a partial match...
+        check(!callee.enclosingClass.isIdeal())
+
+        val cls = lookupClassWithIdealSignature(node.method.enclosingClass).let {
+            if (it.isNone) {
+                error("Could not find the enclosing class: ${node.method.enclosingClass}")
+            }
+            it.getOrThrow()
+        }
 
         // If the complete signature match failed,
-        // try to find the unique neighbour (non-recursive) method in the same class:
-        val resolvedNeighbour = cp.classes
-            .single { it.signature == node.method.enclosingClass }
-            .methods
+        // try to find the unique not-the-same neighbour method in the same class:
+        val neighbors = cls.methods
             .asSequence()
             .filter { it.name == callee.name }
             .filterNot { it.name == node.method.name }
-        if (resolvedNeighbour.any()) return resolvedNeighbour
+        if (neighbors.any()) {
+            val s = neighbors.singleOrNull()
+                ?: error("Multiple methods with the same name: ${neighbors.toList()}")
+            cachePartiallyMatchedCallees[callee] = listOf(s)
+            return sequenceOf(s)
+        }
+
+        // NOTE: cache lookup MUST be performed AFTER trying to match the neighbour!
+        if (callee in cachePartiallyMatchedCallees) {
+            return cachePartiallyMatchedCallees.getValue(callee).asSequence()
+        }
 
         // If the neighbour match failed,
         // try to *uniquely* resolve the callee via a partial signature match:
-        val resolvedPartially = cp.classes
+        val resolved = cp.classes
             .asSequence()
             .filter { compareClassSignatures(it.signature, callee.enclosingClass) != ComparisonResult.NotEqual }
+            // Note: exclude current class:
+            .filterNot { compareClassSignatures(it.signature, node.method.enclosingClass) != ComparisonResult.NotEqual }
             // Note: omit constructors!
             .flatMap { it.methods.asSequence() }
             .filter { it.name == callee.name }
-            // Note: exclude recursive calls:
-            .filterNot { it.name == node.method.name }
-
-        if (resolvedPartially.none()) return emptySequence()
-        val resolved = resolvedPartially.toList()
-        if (resolved.size == 1) return resolved.asSequence()
-        return emptySequence()
+        if (resolved.none()) {
+            cachePartiallyMatchedCallees[callee] = emptyList()
+            return emptySequence()
+        }
+        val r = resolved.singleOrNull() ?: run {
+            logger.warn { "Multiple methods with the same signature: ${resolved.toList()}" }
+            cachePartiallyMatchedCallees[callee] = emptyList()
+            return emptySequence()
+        }
+        cachePartiallyMatchedCallees[callee] = listOf(r)
+        return sequenceOf(r)
     }
 
     override fun callers(method: EtsMethod): Sequence<EtsStmt> {
