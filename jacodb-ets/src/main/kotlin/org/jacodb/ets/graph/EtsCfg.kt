@@ -49,8 +49,8 @@ class EtsCfg(
     override val entries: List<EtsStmt>
         get() = listOfNotNull(stmts.firstOrNull())
 
-    override val exits: List<EtsTerminatingStmt>
-        get() = instructions.filterIsInstance<EtsTerminatingStmt>()
+    override val exits: List<EtsTerminatingStmt> =
+        instructions.filterIsInstance<EtsTerminatingStmt>()
 
     override fun successors(node: EtsStmt): Set<EtsStmt> {
         return successorMap[node]!!.toSet()
