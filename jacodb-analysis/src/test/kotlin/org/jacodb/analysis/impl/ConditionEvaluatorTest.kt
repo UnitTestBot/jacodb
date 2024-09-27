@@ -20,8 +20,6 @@ import io.mockk.every
 import io.mockk.mockk
 import org.jacodb.analysis.config.BasicConditionEvaluator
 import org.jacodb.analysis.config.FactAwareConditionEvaluator
-import org.jacodb.analysis.ifds.Maybe
-import org.jacodb.analysis.ifds.toMaybe
 import org.jacodb.analysis.taint.Tainted
 import org.jacodb.analysis.util.JcTraits
 import org.jacodb.api.jvm.JcClasspath
@@ -34,6 +32,8 @@ import org.jacodb.api.jvm.cfg.JcInt
 import org.jacodb.api.jvm.cfg.JcStringConstant
 import org.jacodb.api.jvm.cfg.JcThis
 import org.jacodb.api.jvm.cfg.JcValue
+import org.jacodb.impl.util.Maybe
+import org.jacodb.impl.util.toMaybe
 import org.jacodb.taint.configuration.And
 import org.jacodb.taint.configuration.AnnotationType
 import org.jacodb.taint.configuration.Argument

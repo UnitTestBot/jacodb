@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.analysis.ifds
+package org.jacodb.impl.util
 
 @JvmInline
 value class Maybe<out T> private constructor(
@@ -65,3 +65,5 @@ inline fun <T> Maybe<T>.onNone(body: () -> Unit): Maybe<T> {
 }
 
 fun <T : Any> T?.toMaybe(): Maybe<T> = Maybe.from(this)
+
+fun <T : Any> Maybe<T>.getOrNull(): T? = if (isSome) getOrThrow() else null

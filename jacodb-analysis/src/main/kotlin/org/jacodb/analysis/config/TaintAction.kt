@@ -17,10 +17,10 @@
 package org.jacodb.analysis.config
 
 import org.jacodb.analysis.ifds.AccessPath
-import org.jacodb.analysis.ifds.Maybe
-import org.jacodb.analysis.ifds.fmap
-import org.jacodb.analysis.ifds.map
 import org.jacodb.analysis.taint.Tainted
+import org.jacodb.impl.util.Maybe
+import org.jacodb.impl.util.fmap
+import org.jacodb.impl.util.map
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.CopyAllMarks
 import org.jacodb.taint.configuration.CopyMark

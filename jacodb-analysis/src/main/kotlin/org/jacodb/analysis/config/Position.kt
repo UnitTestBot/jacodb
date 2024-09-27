@@ -18,16 +18,15 @@ package org.jacodb.analysis.config
 
 import org.jacodb.analysis.ifds.AccessPath
 import org.jacodb.analysis.ifds.ElementAccessor
-import org.jacodb.analysis.ifds.Maybe
-import org.jacodb.analysis.ifds.fmap
-import org.jacodb.analysis.ifds.toMaybe
 import org.jacodb.analysis.util.Traits
 import org.jacodb.api.common.CommonMethod
-import org.jacodb.api.common.CommonProject
 import org.jacodb.api.common.cfg.CommonAssignInst
 import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonInstanceCallExpr
 import org.jacodb.api.common.cfg.CommonValue
+import org.jacodb.impl.util.Maybe
+import org.jacodb.impl.util.fmap
+import org.jacodb.impl.util.toMaybe
 import org.jacodb.taint.configuration.AnyArgument
 import org.jacodb.taint.configuration.Argument
 import org.jacodb.taint.configuration.Position

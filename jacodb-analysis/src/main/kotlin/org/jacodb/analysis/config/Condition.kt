@@ -16,8 +16,6 @@
 
 package org.jacodb.analysis.config
 
-import org.jacodb.analysis.ifds.Maybe
-import org.jacodb.analysis.ifds.onSome
 import org.jacodb.analysis.taint.Tainted
 import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.removeTrailingElementAccessors
@@ -26,6 +24,8 @@ import org.jacodb.api.common.cfg.CommonInst
 import org.jacodb.api.common.cfg.CommonValue
 import org.jacodb.api.jvm.cfg.JcValue
 import org.jacodb.api.jvm.ext.isAssignable
+import org.jacodb.impl.util.Maybe
+import org.jacodb.impl.util.onSome
 import org.jacodb.taint.configuration.And
 import org.jacodb.taint.configuration.AnnotationType
 import org.jacodb.taint.configuration.ConditionVisitor
