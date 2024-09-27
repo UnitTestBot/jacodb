@@ -30,7 +30,6 @@ import org.jacodb.analysis.ifds.FlowFunctions
 import org.jacodb.analysis.ifds.isOnHeap
 import org.jacodb.analysis.ifds.isStatic
 import org.jacodb.analysis.ifds.minus
-import org.jacodb.analysis.ifds.onSome
 import org.jacodb.analysis.taint.TaintDomainFact
 import org.jacodb.analysis.taint.TaintZeroFact
 import org.jacodb.analysis.taint.Tainted
@@ -60,6 +59,7 @@ import org.jacodb.api.jvm.cfg.JcNullConstant
 import org.jacodb.api.jvm.cfg.JcReturnInst
 import org.jacodb.api.jvm.ext.findType
 import org.jacodb.api.jvm.ext.isNullable
+import org.jacodb.impl.util.onSome
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.CopyAllMarks
 import org.jacodb.taint.configuration.CopyMark

@@ -29,7 +29,6 @@ import org.jacodb.analysis.ifds.FlowFunctions
 import org.jacodb.analysis.ifds.isOnHeap
 import org.jacodb.analysis.ifds.isStatic
 import org.jacodb.analysis.ifds.minus
-import org.jacodb.analysis.ifds.onSome
 import org.jacodb.analysis.util.Traits
 import org.jacodb.analysis.util.startsWith
 import org.jacodb.api.common.CommonMethod
@@ -52,6 +51,7 @@ import org.jacodb.ets.base.EtsBinaryExpr
 import org.jacodb.ets.base.EtsCastExpr
 import org.jacodb.ets.base.EtsUnaryExpr
 import org.jacodb.ets.utils.getOperands
+import org.jacodb.impl.util.onSome
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.CopyAllMarks
 import org.jacodb.taint.configuration.CopyMark
