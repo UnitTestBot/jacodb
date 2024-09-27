@@ -58,7 +58,7 @@ function prepare_project_dir() {
   fi
   NAME=$1
   echo
-  echo "=== Preparing $NAME..."
+  echo "=== Preparing project: $NAME"
   echo
   if [[ -d $NAME ]]; then
     echo "Directory already exists: $NAME"
