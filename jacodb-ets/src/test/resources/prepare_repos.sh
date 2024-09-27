@@ -12,11 +12,12 @@ function prepare_repo() {
   fi
   REPO=$1
   DIR=$(basename -s .git $(git ls-remote --get-url $REPO))
+  echo "Preparing repository: $REPO"
   if [[ ! -d $DIR ]]; then
-    echo "Cloning repository: $REPO"
+    echo "Cloning..."
     git clone $REPO
   else
-    echo "Pulling latest changes: $REPO"
+    echo "Directory '$DIR' already exists. Pulling latest changes..."
     git -C $DIR pull
   fi
 }
