@@ -67,19 +67,22 @@ fun EtsCfg.toFile(
         when (inst) {
             is EtsIfStmt -> {
                 val successors = successors(inst).toList()
-                check(successors.size == 2)
+                // check(successors.size == 2)
+                check(successors.size <= 2)
                 graph.addEdge(
                     Edge(node.name, nodes[successors[0]]!!.name)
                         .also {
                             it.setLabel("false")
                         }
                 )
-                graph.addEdge(
-                    Edge(node.name, nodes[successors[1]]!!.name)
-                        .also {
-                            it.setLabel("true")
-                        }
-                )
+                if (successors.size == 2) {
+                    graph.addEdge(
+                        Edge(node.name, nodes[successors[1]]!!.name)
+                            .also {
+                                it.setLabel("true")
+                            }
+                    )
+                }
             }
 
             else -> for (successor in successors(inst)) {
