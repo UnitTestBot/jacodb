@@ -58,20 +58,32 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 
-fun JcGraph.view(dotCmd: String, viewerCmd: String, viewCatchConnections: Boolean = false) {
-    Util.sh(arrayOf(viewerCmd, "file://${toFile(dotCmd, viewCatchConnections)}"))
+private const val DEFAULT_DOT_CMD = "dot"
+
+fun JcGraph.view(
+    viewerCmd: String = if (System.getProperty("os.name").lowercase().contains("windows")) "start" else "xdg-open",
+    dotCmd: String = DEFAULT_DOT_CMD,
+    viewCatchConnections: Boolean = false,
+) {
+    val path = toFile(null, dotCmd, viewCatchConnections)
+    Util.sh(arrayOf(viewerCmd, "file://$path"))
 }
 
-fun JcGraph.toFile(dotCmd: String, viewCatchConnections: Boolean = false, file: File? = null): Path {
+fun JcGraph.toFile(
+    file: File? = null,
+    dotCmd: String = DEFAULT_DOT_CMD,
+    viewCatchConnections: Boolean = false,
+): Path {
     Graph.setDefaultCmd(dotCmd)
 
     val graph = Graph("jcGraph")
 
     val nodes = mutableMapOf<JcInst, Node>()
     for ((index, inst) in instructions.withIndex()) {
+        val label = inst.toString().replace("\"", "\\\"")
         val node = Node("$index")
             .setShape(Shape.box)
-            .setLabel(inst.toString().replace("\"", "\\\""))
+            .setLabel(label)
             .setFontSize(12.0)
         nodes[inst] = node
         graph.addNode(node)
@@ -140,20 +152,31 @@ fun JcGraph.toFile(dotCmd: String, viewCatchConnections: Boolean = false, file: 
     return resultingFile
 }
 
-fun JcBlockGraph.view(dotCmd: String, viewerCmd: String) {
-    Util.sh(arrayOf(viewerCmd, "file://${toFile(dotCmd)}"))
+fun JcBlockGraph.view(
+    viewerCmd: String,
+    dotCmd: String = DEFAULT_DOT_CMD,
+) {
+    val path = toFile(null, dotCmd = dotCmd)
+    Util.sh(arrayOf(viewerCmd, "file://$path"))
 }
 
-fun JcBlockGraph.toFile(dotCmd: String, file: File? = null): Path {
+fun JcBlockGraph.toFile(
+    file: File? = null,
+    dotCmd: String = DEFAULT_DOT_CMD,
+): Path {
     Graph.setDefaultCmd(dotCmd)
 
     val graph = Graph("jcGraph")
 
     val nodes = mutableMapOf<JcBasicBlock, Node>()
     for ((index, block) in instructions.withIndex()) {
+        val label = instructions(block)
+            .joinToString("") { "$it\\l" }
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
         val node = Node("$index")
             .setShape(Shape.box)
-            .setLabel(instructions(block).joinToString("") { "$it\\l" }.replace("\"", "\\\"").replace("\n", "\\n"))
+            .setLabel(label)
             .setFontSize(12.0)
         nodes[block] = node
         graph.addNode(node)
