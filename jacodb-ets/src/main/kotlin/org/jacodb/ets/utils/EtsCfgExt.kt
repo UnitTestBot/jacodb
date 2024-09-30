@@ -48,6 +48,9 @@ fun EtsCfg.toFile(
     Graph.setDefaultCmd(dotCmd)
 
     val graph = Graph("etsCfg")
+        .setBgColor(Color.X11.transparent)
+        .setFontSize(12.0)
+        .setFontName("Fira Mono")
 
     val nodes = mutableMapOf<EtsStmt, Node>()
     for ((index, inst) in instructions.withIndex()) {
@@ -59,10 +62,6 @@ fun EtsCfg.toFile(
         nodes[inst] = node
         graph.addNode(node)
     }
-
-    graph.setBgColor(Color.X11.transparent)
-    graph.setFontSize(12.0)
-    graph.setFontName("Fira Mono")
 
     for ((inst, node) in nodes) {
         when (inst) {
