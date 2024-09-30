@@ -29,20 +29,32 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 
-fun EtsCfg.view(dotCmd: String, viewerCmd: String, viewCatchConnections: Boolean = false) {
-    Util.sh(arrayOf(viewerCmd, "file://${toFile(dotCmd, viewCatchConnections)}"))
+private const val DEFAULT_DOT_CMD = "dot"
+
+fun EtsCfg.view(
+    viewerCmd: String = if (System.getProperty("os.name").startsWith("Windows")) "start" else "xdg-open",
+    dotCmd: String = DEFAULT_DOT_CMD,
+    viewCatchConnections: Boolean = false,
+) {
+    val path = toFile(null, dotCmd, viewCatchConnections)
+    Util.sh(arrayOf(viewerCmd, "file://$path"))
 }
 
-fun EtsCfg.toFile(dotCmd: String, viewCatchConnections: Boolean = false, file: File? = null): Path {
+fun EtsCfg.toFile(
+    file: File? = null,
+    dotCmd: String = DEFAULT_DOT_CMD,
+    viewCatchConnections: Boolean = false,
+): Path {
     Graph.setDefaultCmd(dotCmd)
 
     val graph = Graph("etsCfg")
 
     val nodes = mutableMapOf<EtsStmt, Node>()
     for ((index, inst) in instructions.withIndex()) {
+        val label = inst.toString().replace("\"", "\\\"")
         val node = Node("$index")
             .setShape(Shape.box)
-            .setLabel(inst.toString().replace("\"", "\\\""))
+            .setLabel(label)
             .setFontSize(12.0)
         nodes[inst] = node
         graph.addNode(node)
