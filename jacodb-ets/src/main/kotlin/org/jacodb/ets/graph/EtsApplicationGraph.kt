@@ -162,7 +162,7 @@ class EtsApplicationGraphImpl(
                 return emptySequence()
             }
             val r = resolved.singleOrNull()
-                ?: error("Multiple methods with the same signature: ${resolved.toList()}")
+                ?: error("Multiple methods with the same complete signature: ${resolved.toList()}")
             cacheMethodWithIdealSignature[callee] = Maybe.some(r)
             return sequenceOf(r)
         }
@@ -210,7 +210,7 @@ class EtsApplicationGraphImpl(
             return emptySequence()
         }
         val r = resolved.singleOrNull() ?: run {
-            logger.warn { "Multiple methods with the same signature: ${resolved.toList()}" }
+            logger.warn { "Multiple methods with the same partial signature '${callee}': ${resolved.toList()}" }
             cachePartiallyMatchedCallees[callee] = emptyList()
             return emptySequence()
         }
