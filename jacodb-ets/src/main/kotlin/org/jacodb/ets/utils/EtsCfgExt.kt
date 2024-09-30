@@ -34,7 +34,7 @@ private const val DEFAULT_DOT_CMD = "dot"
 fun EtsCfg.view(
     viewerCmd: String = if (System.getProperty("os.name").startsWith("Windows")) "start" else "xdg-open",
     dotCmd: String = DEFAULT_DOT_CMD,
-    viewCatchConnections: Boolean = false,
+    viewCatchConnections: Boolean = true,
 ) {
     val path = toFile(null, dotCmd, viewCatchConnections)
     Util.sh(arrayOf(viewerCmd, "file://$path"))
@@ -43,7 +43,7 @@ fun EtsCfg.view(
 fun EtsCfg.toFile(
     file: File? = null,
     dotCmd: String = DEFAULT_DOT_CMD,
-    viewCatchConnections: Boolean = false,
+    viewCatchConnections: Boolean = true,
 ): Path {
     Graph.setDefaultCmd(dotCmd)
 
