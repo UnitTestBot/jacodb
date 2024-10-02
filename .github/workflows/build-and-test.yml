@@ -64,7 +64,7 @@ jobs:
           DEST_DIR="arkanalyzer"
           MAX_RETRIES=10
           RETRY_DELAY=3  # Delay between retries in seconds  
-          BRANCH="neo/2024-09-23"
+          BRANCH="neo/2024-10-02"
           
           for ((i=1; i<=MAX_RETRIES; i++)); do
               git clone --depth=1 --branch $BRANCH $REPO_URL $DEST_DIR && break
