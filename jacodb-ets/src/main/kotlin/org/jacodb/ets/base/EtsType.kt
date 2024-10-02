@@ -45,6 +45,7 @@ interface EtsType : CommonType, CommonTypeName {
         fun visit(type: EtsArrayType): R
         fun visit(type: EtsArrayObjectType): R
         fun visit(type: EtsUnclearRefType): R
+        fun visit(type: EtsGenericType): R
 
         interface Default<R> : Visitor<R> {
             override fun visit(type: EtsAnyType): R = defaultVisit(type)
@@ -64,6 +65,7 @@ interface EtsType : CommonType, CommonTypeName {
             override fun visit(type: EtsArrayType): R = defaultVisit(type)
             override fun visit(type: EtsArrayObjectType): R = defaultVisit(type)
             override fun visit(type: EtsUnclearRefType): R = defaultVisit(type)
+            override fun visit(type: EtsGenericType): R = defaultVisit(type)
 
             fun defaultVisit(type: EtsType): R
         }
@@ -271,6 +273,23 @@ data class EtsUnclearRefType(
     override val typeName: String,
 ) : EtsRefType {
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: EtsType.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class EtsGenericType(
+    val name: String,
+    val defaultType: EtsType? = null,
+    val constraint: EtsType? = null,
+) : EtsRefType {
+    override val typeName: String
+        get() = name
+
+    override fun toString(): String {
+        return name + (constraint?.let { " extends $it" } ?: "") + (defaultType?.let { " = $it" } ?: "")
+    }
 
     override fun <R> accept(visitor: EtsType.Visitor<R>): R {
         return visitor.visit(this)

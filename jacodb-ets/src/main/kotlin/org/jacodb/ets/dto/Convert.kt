@@ -44,6 +44,7 @@ import org.jacodb.ets.base.EtsExpExpr
 import org.jacodb.ets.base.EtsExpr
 import org.jacodb.ets.base.EtsFieldRef
 import org.jacodb.ets.base.EtsFunctionType
+import org.jacodb.ets.base.EtsGenericType
 import org.jacodb.ets.base.EtsGotoStmt
 import org.jacodb.ets.base.EtsGtEqExpr
 import org.jacodb.ets.base.EtsGtExpr
@@ -606,29 +607,37 @@ fun convertToEtsType(type: TypeDto): EtsType {
             dimensions = type.dimensions,
         )
 
-        is FunctionTypeDto -> EtsFunctionType(
-            method = convertToEtsMethodSignature(type.signature)
-        )
+        BooleanTypeDto -> EtsBooleanType
 
         is ClassTypeDto -> EtsClassType(
             classSignature = convertToEtsClassSignature(type.signature)
         )
 
-        NeverTypeDto -> EtsNeverType
+        is FunctionTypeDto -> EtsFunctionType(
+            method = convertToEtsMethodSignature(type.signature)
+        )
 
-        BooleanTypeDto -> EtsBooleanType
+        is GenericTypeDto -> {
+            val defaultType = type.defaultType?.let { convertToEtsType(it) }
+            val constraint = type.constraint?.let { convertToEtsType(it) }
+            EtsGenericType(
+                name = type.name,
+                defaultType = defaultType,
+                constraint = constraint,
+            )
+        }
 
         is LiteralTypeDto -> EtsLiteralType(
             literalTypeName = type.literal.toString()
         )
+
+        NeverTypeDto -> EtsNeverType
 
         NullTypeDto -> EtsNullType
 
         NumberTypeDto -> EtsNumberType
 
         StringTypeDto -> EtsStringType
-
-        UndefinedTypeDto -> EtsUndefinedType
 
         is TupleTypeDto -> EtsTupleType(
             types = type.types.map { convertToEtsType(it) }
@@ -637,6 +646,8 @@ fun convertToEtsType(type: TypeDto): EtsType {
         is UnclearReferenceTypeDto -> EtsUnclearRefType(
             typeName = type.name
         )
+
+        UndefinedTypeDto -> EtsUndefinedType
 
         is UnionTypeDto -> EtsUnionType(
             types = type.types.map { convertToEtsType(it) }
