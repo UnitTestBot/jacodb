@@ -194,6 +194,18 @@ data class UnclearReferenceTypeDto(
 }
 
 @Serializable
+@SerialName("GenericType")
+data class GenericTypeDto(
+    val name: String,
+    val defaultType: TypeDto? = null,
+    val constraint: TypeDto? = null,
+) : TypeDto {
+    override fun toString(): String {
+        return name + (constraint?.let { " extends $it" } ?: "") + (defaultType?.let { " = $it" } ?: "")
+    }
+}
+
+@Serializable
 @SerialName("UNKNOWN_TYPE")
 data class AbsolutelyUnknownTypeDto(
     val type: String? = null,
