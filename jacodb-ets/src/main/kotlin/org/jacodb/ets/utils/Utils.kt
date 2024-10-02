@@ -112,6 +112,7 @@ fun EtsFile.toText(): String {
             lines += "  - FIELD '${field.signature}'"
         }
         lines += "  constructor = '${clazz.ctor.signature}'"
+        lines += "    locals: ${clazz.ctor.locals.size}"
         lines += "    stmts: ${clazz.ctor.cfg.stmts.size}"
         clazz.ctor.cfg.stmts.forEach { stmt ->
             lines += "    ${stmt.location.index}. $stmt"
@@ -121,7 +122,7 @@ fun EtsFile.toText(): String {
         lines += "  methods: ${clazz.methods.size}"
         clazz.methods.forEach { method ->
             lines += "  - METHOD '${method.signature}':"
-            lines += "    locals = ${method.localsCount}"
+            lines += "    locals: ${method.locals.size}"
             lines += "    stmts: ${method.cfg.stmts.size}"
             method.cfg.stmts.forEach { stmt ->
                 lines += "    ${stmt.location.index}. $stmt"

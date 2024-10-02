@@ -17,6 +17,7 @@
 package org.jacodb.ets.model
 
 import org.jacodb.api.common.CommonMethod
+import org.jacodb.ets.base.EtsLocal
 import org.jacodb.ets.base.EtsType
 import org.jacodb.ets.graph.EtsCfg
 
@@ -24,8 +25,8 @@ import org.jacodb.ets.graph.EtsCfg
 // TODO: typeParameters
 interface EtsMethod : CommonMethod {
     val signature: EtsMethodSignature
-    val localsCount: Int
     val cfg: EtsCfg
+    val locals: List<EtsLocal>
     val modifiers: List<String>
 
     val enclosingClass: EtsClassSignature
@@ -60,8 +61,7 @@ interface EtsMethod : CommonMethod {
 
 class EtsMethodImpl(
     override val signature: EtsMethodSignature,
-    // Default locals count is args + this
-    override val localsCount: Int = signature.parameters.size + 1,
+    override val locals: List<EtsLocal> = emptyList(),
     override val modifiers: List<String> = emptyList(),
 ) : EtsMethod {
     internal var _cfg: EtsCfg? = null

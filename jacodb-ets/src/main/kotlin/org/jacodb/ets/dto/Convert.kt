@@ -127,11 +127,10 @@ import org.jacodb.ets.model.EtsNamespaceSignature
 
 class EtsMethodBuilder(
     signature: EtsMethodSignature,
-    // Default locals count is args + this
-    localsCount: Int = signature.parameters.size + 1,
+    locals: List<EtsLocal> = emptyList(),
     modifiers: List<String> = emptyList(),
 ) {
-    val etsMethod = EtsMethodImpl(signature, localsCount, modifiers)
+    val etsMethod = EtsMethodImpl(signature, locals, modifiers = modifiers)
 
     private val currentStmts: MutableList<EtsStmt> = mutableListOf()
 
@@ -294,10 +293,7 @@ class EtsMethodBuilder(
                 }
             }
 
-            is LocalDto -> EtsLocal(
-                name = value.name,
-                type = convertToEtsType(value.type),
-            )
+            is LocalDto -> convertToEtsLocal(value)
 
             is ConstantDto -> convertToEtsConstant(value)
 
@@ -750,15 +746,13 @@ fun convertToEtsMethod(method: MethodDto): EtsMethod {
         .filterIsInstance<ModifierDto.StringItem>()
         .map { it.modifier }
     if (method.body != null) {
-        // Note: locals are not used in the current implementation
-        // val locals = method.body.locals.map {
-        //     convertToEtsEntity(it) as EtsLocal  // safe cast
-        // }
-        val localsCount = method.body.locals.size
-        val builder = EtsMethodBuilder(signature, localsCount, modifiers)
+        val locals = method.body.locals.map {
+            convertToEtsLocal(it)
+        }
+        val builder = EtsMethodBuilder(signature, locals, modifiers)
         return builder.build(method.body.cfg)
     } else {
-        return EtsMethodImpl(signature, modifiers = modifiers)
+        return EtsMethodImpl(signature, locals = emptyList(), modifiers = modifiers)
     }
 }
 
@@ -799,5 +793,12 @@ fun convertToEtsFile(file: EtsFileDto): EtsFile {
         signature = signature,
         classes = classes,
         namespaces = namespaces,
+    )
+}
+
+fun convertToEtsLocal(local: LocalDto): EtsLocal {
+    return EtsLocal(
+        name = local.name,
+        type = convertToEtsType(local.type),
     )
 }

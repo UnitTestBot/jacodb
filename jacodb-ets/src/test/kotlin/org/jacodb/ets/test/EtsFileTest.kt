@@ -47,7 +47,7 @@ class EtsFileTest {
         etsFile.classes.forEach { cls ->
             cls.methods.forEach { method ->
                 logger.info {
-                    "Method '$method', locals: ${method.localsCount}, instructions: ${method.cfg.instructions.size}"
+                    "Method '$method', locals: ${method.locals.size}, instructions: ${method.cfg.instructions.size}"
                 }
                 method.cfg.instructions.forEach { inst ->
                     logger.info { "${inst.location.index}. $inst" }

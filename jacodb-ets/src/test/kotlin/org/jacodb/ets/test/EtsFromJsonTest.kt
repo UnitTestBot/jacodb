@@ -280,7 +280,7 @@ class EtsFromJsonTest {
             ),
             method.signature
         )
-        Assertions.assertEquals(0, method.localsCount)
+        Assertions.assertEquals(0, method.locals.size)
         Assertions.assertEquals(1, method.cfg.stmts.size)
         Assertions.assertEquals(
             listOf(
