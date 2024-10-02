@@ -179,7 +179,7 @@ data class ArrayTypeDto(
     val dimensions: Int,
 ) : TypeDto {
     override fun toString(): String {
-        return "$elementType[]".repeat(dimensions)
+        return "$elementType" + "[]".repeat(dimensions)
     }
 }
 
