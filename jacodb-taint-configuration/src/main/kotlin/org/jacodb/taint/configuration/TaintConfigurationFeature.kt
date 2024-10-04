@@ -45,6 +45,7 @@ class TaintConfigurationFeature private constructor(
     private val rulesByClass: MutableMap<JcClassOrInterface, List<SerializedTaintConfigurationItem>> = hashMapOf()
     private val rulesForMethod: MutableMap<JcMethod, List<TaintConfigurationItem>> = hashMapOf()
     private val compiledRegex: MutableMap<String, Regex> = hashMapOf()
+    private val taintMarks: MutableSet<TaintMark> = hashSetOf()
 
     private val configurationTrie: ConfigurationTrie by lazy {
         val serializers = SerializersModule {
@@ -63,23 +64,27 @@ class TaintConfigurationFeature private constructor(
             .map {
                 when (it) {
                     is SerializedTaintEntryPointSource -> it.copy(
-                        condition = it.condition.accept(conditionSimplifier)
+                        condition = it.condition.simplify(),
+                        actionsAfter = it.actionsAfter.simplify()
                     )
 
                     is SerializedTaintMethodSource -> it.copy(
-                        condition = it.condition.accept(conditionSimplifier)
+                        condition = it.condition.simplify(),
+                        actionsAfter = it.actionsAfter.simplify()
                     )
 
                     is SerializedTaintMethodSink -> it.copy(
-                        condition = it.condition.accept(conditionSimplifier)
+                        condition = it.condition.simplify(),
                     )
 
                     is SerializedTaintPassThrough -> it.copy(
-                        condition = it.condition.accept(conditionSimplifier)
+                        condition = it.condition.simplify(),
+                        actionsAfter = it.actionsAfter.simplify()
                     )
 
                     is SerializedTaintCleaner -> it.copy(
-                        condition = it.condition.accept(conditionSimplifier)
+                        condition = it.condition.simplify(),
+                        actionsAfter = it.actionsAfter.simplify()
                     )
                 }
             }
@@ -90,6 +95,12 @@ class TaintConfigurationFeature private constructor(
     @Synchronized
     fun getConfigForMethod(method: JcMethod): List<TaintConfigurationItem> =
         resolveConfigForMethod(method)
+
+    @Synchronized
+    fun getAllTaintMarks(): Set<TaintMark> {
+        // force trie initialization (rule parsing)
+        return configurationTrie.let { taintMarks }
+    }
 
     private var primitiveTypesSet: Set<JcPrimitiveType>? = null
 
@@ -248,7 +259,7 @@ class TaintConfigurationFeature private constructor(
 
     private fun Condition.resolve(method: JcMethod): Condition = this
         .accept(ConditionSpecializer(method))
-        .accept(conditionSimplifier)
+        .simplify()
 
     private fun List<Action>.resolve(method: JcMethod): List<Action> =
         flatMap { it.accept(ActionSpecializer(method)) }
@@ -501,10 +512,75 @@ class TaintConfigurationFeature private constructor(
         override fun visit(condition: ConstantGt): Condition = condition
         override fun visit(condition: ConstantMatches): Condition = condition
         override fun visit(condition: SourceFunctionMatches): Condition = condition
-        override fun visit(condition: ContainsMark): Condition = condition
+        override fun visit(condition: ContainsMark): Condition = condition.also { taintMarks.add(it.mark) }
         override fun visit(condition: ConstantTrue): Condition = condition
         override fun visit(condition: TypeMatches): Condition = condition
     }
+
+    private fun Condition.simplify(): Condition =
+        accept(conditionSimplifier).toNnf(negated = false)
+
+
+    private fun Condition.toNnf(negated: Boolean): Condition = when (this) {
+        is Not -> arg.toNnf(!negated)
+
+        is And -> if (!negated) {
+            mkAndCondition(args) { it.toNnf(negated = false) }
+        } else {
+            mkOrCondition(args) { it.toNnf(negated = true) }
+        }
+
+        is Or -> if (!negated) {
+            mkOrCondition(args) { it.toNnf(negated = false) }
+        } else {
+            mkAndCondition(args) { it.toNnf(negated = true) }
+        }
+
+        else -> if (negated) Not(this) else this
+    }
+
+    private inline fun mkOrCondition(
+        args: List<Condition>,
+        op: (Condition) -> Condition
+    ): Or {
+        val result = mutableListOf<Condition>()
+        for (arg in args) {
+            val mappedArg = op(arg)
+            if (mappedArg is Or) {
+                result.addAll(mappedArg.args)
+            } else {
+                result.add(mappedArg)
+            }
+        }
+        return Or(result)
+    }
+
+
+    private inline fun mkAndCondition(
+        args: List<Condition>,
+        op: (Condition) -> Condition
+    ): And {
+        val result = mutableListOf<Condition>()
+        for (arg in args) {
+            val mappedArg = op(arg)
+            if (mappedArg is And) {
+                result.addAll(mappedArg.args)
+            } else {
+                result.add(mappedArg)
+            }
+        }
+        return And(result)
+    }
+
+    private val actionSimplifier = object : TaintActionVisitor<Action> {
+        override fun visit(action: CopyAllMarks): Action = action
+        override fun visit(action: CopyMark): Action = action.also { taintMarks.add(it.mark) }
+        override fun visit(action: AssignMark): Action = action.also { taintMarks.add(it.mark) }
+        override fun visit(action: RemoveAllMarks): Action = action
+        override fun visit(action: RemoveMark): Action = action.also { taintMarks.add(it.mark) }
+    }
+
+    private fun List<Action>.simplify() = map { it.accept(actionSimplifier) }
 
     companion object {
         fun fromJson(
