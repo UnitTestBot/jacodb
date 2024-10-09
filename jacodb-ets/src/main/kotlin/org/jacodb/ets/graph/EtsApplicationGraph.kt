@@ -99,12 +99,13 @@ class EtsApplicationGraphImpl(
         val matched = cp.classes
             .asSequence()
             .filter { it.signature == signature && it.signature.file == signature.file }
-        if (matched.none()) {
+            .toList()
+        if (matched.isEmpty()) {
             cacheClassWithIdealSignature[signature] = Maybe.none()
             return Maybe.none()
         } else {
             val s = matched.singleOrNull()
-                ?: error("Multiple classes with the same signature: ${matched.toList()}")
+                ?: error("Multiple classes with the same signature: $matched")
             cacheClassWithIdealSignature[signature] = Maybe.some(s)
             return Maybe.some(s)
         }
@@ -183,9 +184,10 @@ class EtsApplicationGraphImpl(
             .asSequence()
             .filter { it.name == callee.name }
             .filterNot { it.name == node.method.name }
-        if (neighbors.any()) {
+            .toList()
+        if (neighbors.isNotEmpty()) {
             val s = neighbors.singleOrNull()
-                ?: error("Multiple methods with the same name: ${neighbors.toList()}")
+                ?: error("Multiple methods with the same name: $neighbors")
             cachePartiallyMatchedCallees[callee] = listOf(s)
             return sequenceOf(s)
         }
@@ -205,12 +207,13 @@ class EtsApplicationGraphImpl(
             // Note: omit constructors!
             .flatMap { it.methods.asSequence() }
             .filter { it.name == callee.name }
-        if (resolved.none()) {
+            .toList()
+        if (resolved.isEmpty()) {
             cachePartiallyMatchedCallees[callee] = emptyList()
             return emptySequence()
         }
         val r = resolved.singleOrNull() ?: run {
-            logger.warn { "Multiple methods with the same partial signature '${callee}': ${resolved.toList()}" }
+            logger.warn { "Multiple methods with the same partial signature '${callee}': $resolved" }
             cachePartiallyMatchedCallees[callee] = emptyList()
             return emptySequence()
         }
