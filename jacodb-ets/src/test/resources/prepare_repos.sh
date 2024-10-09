@@ -18,14 +18,23 @@ function prepare_repo() {
     git clone $REPO
   else
     echo "Directory '$DIR' already exists. Pulling latest changes..."
-    git -C $DIR pull
+    git -C $DIR pull &
   fi
 }
 
 prepare_repo https://gitee.com/openharmony/applications_app_samples
+prepare_repo https://gitee.com/openharmony/applications_calendar_data
+prepare_repo https://gitee.com/openharmony/applications_call
+prepare_repo https://gitee.com/openharmony/applications_contacts
 prepare_repo https://gitee.com/openharmony/applications_filepicker
 prepare_repo https://gitee.com/openharmony/applications_hap
 prepare_repo https://gitee.com/openharmony/applications_launcher
+prepare_repo https://gitee.com/openharmony/applications_mms
+prepare_repo https://gitee.com/openharmony/applications_notes
+prepare_repo https://gitee.com/openharmony/applications_print_spooler
+prepare_repo https://gitee.com/openharmony/applications_screenlock
 prepare_repo https://gitee.com/openharmony/applications_settings
 prepare_repo https://gitee.com/openharmony/applications_settings_data
 prepare_repo https://gitee.com/openharmony/applications_systemui
+
+wait

@@ -92,16 +92,144 @@ function prepare_module() {
 }
 
 (
-  prepare_project_dir "ArkTSDistributedCalc"
+  prepare_project_dir "Demo_Calc"
 
   REPO="../../repos/applications_app_samples"
   check_repo $REPO
 
-  prepare_module "entry" "$REPO/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc/entry"
+  BASE="$REPO/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc"
+  prepare_module "entry" "$BASE/entry"
+)
+(
+  prepare_project_dir "Demo_Camera"
+
+  REPO="../../repos/applications_app_samples"
+  check_repo $REPO
+
+  BASE="$REPO/code/BasicFeature/Media/Camera"
+  prepare_module "entry" "$BASE/entry"
+)
+(
+  prepare_project_dir "Demo_CertificateManager"
+
+  REPO="../../repos/applications_app_samples"
+  check_repo $REPO
+
+  BASE="$REPO/code/BasicFeature/Security/CertManager"
+  prepare_module "entry" "$BASE/entry"
+)
+(
+  prepare_project_dir "Demo_Clock"
+
+  REPO="../../repos/applications_app_samples"
+  check_repo $REPO
+
+  BASE="$REPO/code/Solutions/Tools/ArkTSClock"
+  prepare_module "entry" "$BASE/entry"
+)
+(
+  prepare_project_dir "Demo_KikaInput"
+
+  REPO="../../repos/applications_app_samples"
+  check_repo $REPO
+
+  BASE="$REPO/code/Solutions/InputMethod/KikaInput"
+  prepare_module "entry" "$BASE/entry"
+)
+(
+  prepare_project_dir "Demo_Launcher"
+
+  REPO="../../repos/applications_app_samples"
+  check_repo $REPO
+
+  BASE="$REPO/code/SystemFeature/ApplicationModels/Launcher"
+  prepare_module "entry" "$BASE/entry"
+  prepare_module "desktop" "$BASE/desktop"
+  prepare_module "base" "$BASE/base"
+  prepare_module "recents" "$BASE/recents"
+)
+(
+  prepare_project_dir "Demo_Music"
+
+  REPO="../../repos/applications_app_samples"
+  check_repo $REPO
+
+  BASE="$REPO/code/SuperFeature/DistributedAppDev/ArkTSDistributedMusicPlayer"
+  prepare_module "entry" "$BASE/entry"
+)
+(
+  prepare_project_dir "Demo_Photos"
+
+  REPO="../../repos/applications_app_samples"
+  check_repo $REPO
+
+  BASE="$REPO/code/SystemFeature/FileManagement/Photos"
+  prepare_module "entry" "$BASE/entry"
+)
+(
+  prepare_project_dir "Demo_ScreenShot"
+
+  REPO="../../repos/applications_app_samples"
+  check_repo $REPO
+
+  BASE="$REPO/code/SystemFeature/Media/Screenshot"
+  prepare_module "entry" "$BASE/entry"
+  prepare_module "Feature" "$BASE/Feature"
+)
+(
+  prepare_project_dir "Demo_Settings"
+
+  REPO="../../repos/applications_app_samples"
+  check_repo $REPO
+
+  BASE="$REPO/code/SuperFeature/MultiDeviceAppDev/Settings"
+  prepare_module "default" "$BASE/products/default"
+  prepare_module "common" "$BASE/common"
+  prepare_module "settingItems" "$BASE/features/settingitems"
 )
 
 (
-  prepare_project_dir "AudioPicker"
+  prepare_project_dir "CalendarData"
+
+  REPO="../../repos/applications_calendar_data"
+  check_repo $REPO
+
+  prepare_module "entry" "$REPO/entry"
+  prepare_module "common" "$REPO/common"
+  prepare_module "datastructure" "$REPO/datastructure"
+  prepare_module "datamanager" "$REPO/datamanager"
+  prepare_module "rrule" "$REPO/rrule"
+  prepare_module "dataprovider" "$REPO/dataprovider"
+)
+
+(
+  prepare_project_dir "CallUI"
+
+  REPO="../../repos/applications_call"
+  check_repo $REPO
+
+  prepare_module "callui" "$REPO/entry"
+  prepare_module "common" "$REPO/common"
+  prepare_module "mobiledatasettings" "$REPO/mobiledatasettings"
+)
+
+(
+  prepare_project_dir "Contacts"
+
+  REPO="../../repos/applications_contacts"
+  check_repo $REPO
+
+  prepare_module "entry" "$REPO/entry"
+  prepare_module "common" "$REPO/common"
+  prepare_module "phonenumber" "$REPO/feature/phonenumber"
+  prepare_module "contact" "$REPO/feature/contact"
+  prepare_module "account" "$REPO/feature/account"
+  prepare_module "call" "$REPO/feature/call"
+  prepare_module "dialpad" "$REPO/feature/dialpad"
+)
+
+(
+  prepare_project_dir "FilePicker"
 
   REPO="../../repos/applications_filepicker"
   check_repo $REPO
@@ -131,6 +259,59 @@ function prepare_module() {
 )
 
 (
+  prepare_project_dir "Mms"
+
+  REPO="../../repos/applications_mms"
+  check_repo $REPO
+
+  prepare_module "entry" "$REPO/entry"
+)
+
+(
+  prepare_project_dir "Note"
+
+  REPO="../../repos/applications_notes"
+  check_repo $REPO
+
+  prepare_module "default" "$REPO/product/default"
+  prepare_module "utils" "$REPO/common/utils"
+  # prepare_module "resources" "$REPO/common/resources"
+  prepare_module "component" "$REPO/features"
+)
+
+(
+  prepare_project_dir "PrintSpooler"
+
+  REPO="../../repos/applications_print_spooler"
+  check_repo $REPO
+
+  prepare_module "entry" "$REPO/entry"
+  prepare_module "common" "$REPO/common"
+  prepare_module "ippPrint" "$REPO/feature/ippPrint"
+)
+
+(
+  prepare_project_dir "ScreenLock"
+
+  REPO="../../repos/applications_screenlock"
+  check_repo $REPO
+
+  prepare_module "entry" "$REPO/entry"
+  prepare_module "pc" "$REPO/product/pc"
+  prepare_module "phone" "$REPO/product/phone"
+  prepare_module "batterycomponent" "$REPO/features/batterycomponent"
+  prepare_module "clockcomponent" "$REPO/features/clockcomponent"
+  prepare_module "datetimecomponent" "$REPO/features/datetimecomponent"
+  prepare_module "noticeitem" "$REPO/features/noticeitem"
+  prepare_module "screenlock" "$REPO/features/screenlock"
+  prepare_module "shortcutcomponent" "$REPO/features/shortcutcomponent"
+  prepare_module "signalcomponent" "$REPO/features/signalcomponent"
+  prepare_module "wallpapercomponent" "$REPO/features/wallpapercomponent"
+  prepare_module "wificomponent" "$REPO/features/wificomponent"
+  prepare_module "common" "$REPO/common"
+)
+
+(
   prepare_project_dir "Settings"
 
   REPO="../../repos/applications_settings"
@@ -151,4 +332,43 @@ function prepare_module() {
   check_repo $REPO
 
   prepare_module "entry" "$REPO/entry"
+)
+
+(
+  prepare_project_dir "SystemUI"
+
+  REPO="../../repos/applications_systemui"
+  check_repo $REPO
+
+  prepare_module "phone_entry" "$REPO/entry/phone"
+  prepare_module "pc_entry" "$REPO/entry/pc"
+  prepare_module "default_navigationBar" "$REPO/product/default/navigationBar"
+  prepare_module "default_notificationmanagement" "$REPO/product/default/notificationmanagement"
+  prepare_module "default_volumepanel" "$REPO/product/default/volumepanel"
+  prepare_module "default_dialog" "$REPO/product/default/dialog"
+  prepare_module "pc_controlpanel" "$REPO/product/pc/controlpanel"
+  prepare_module "pc_notificationpanel" "$REPO/product/pc/notificationpanel"
+  prepare_module "pc_statusbar" "$REPO/product/pc/statusbar"
+  prepare_module "phone_dropdownpanel" "$REPO/product/phone/dropdownpanel"
+  prepare_module "phone_statusbar" "$REPO/product/phone/statusbar"
+  prepare_module "common" "$REPO/common"
+  prepare_module "airplanecomponent" "$REPO/features/airplanecomponent"
+  prepare_module "autorotatecomponent" "$REPO/features/autorotatecomponent"
+  prepare_module "batterycomponent" "$REPO/features/batterycomponent"
+  prepare_module "bluetoothcomponent" "$REPO/features/bluetoothcomponent"
+  prepare_module "brightnesscomponent" "$REPO/features/brightnesscomponent"
+  prepare_module "capsulecomponent" "$REPO/features/capsulecomponent"
+  prepare_module "clockcomponent" "$REPO/features/clockcomponent"
+  prepare_module "controlcentercomponent" "$REPO/features/controlcentercomponent"
+  prepare_module "locationcomponent" "$REPO/features/locationcomponent"
+  prepare_module "managementcomponent" "$REPO/features/managementcomponent"
+  prepare_module "navigationservice" "$REPO/features/navigationservice"
+  prepare_module "nfccomponent" "$REPO/features/nfccomponent"
+  prepare_module "noticeitem" "$REPO/features/noticeitem"
+  prepare_module "ringmodecomponent" "$REPO/features/ringmodecomponent"
+  prepare_module "signalcomponent" "$REPO/features/signalcomponent"
+  prepare_module "statusbarcomponent" "$REPO/features/statusbarcomponent"
+  prepare_module "volumecomponent" "$REPO/features/volumecomponent"
+  prepare_module "volumepanelcomponent" "$REPO/features/volumepanelcomponent"
+  prepare_module "wificomponent" "$REPO/features/wificomponent"
 )
