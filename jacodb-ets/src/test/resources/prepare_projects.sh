@@ -88,7 +88,7 @@ function prepare_module() {
   echo "Serializing..."
   # TODO: add switch for using npx/node
   # npx ts-node --files --transpileOnly $SCRIPT_TS -p $SRC $ETSIR -v
-  node $SCRIPT_JS -p $SRC $ETSIR -v
+  node $SCRIPT_JS -p $SRC $ETSIR -v -t 2
 }
 
 (
