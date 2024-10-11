@@ -31,12 +31,15 @@ import org.jacodb.ets.dto.EtsMethodBuilder
 import org.jacodb.ets.dto.FieldDto
 import org.jacodb.ets.dto.FieldSignatureDto
 import org.jacodb.ets.dto.FileSignatureDto
+import org.jacodb.ets.dto.LiteralTypeDto
 import org.jacodb.ets.dto.LocalDto
 import org.jacodb.ets.dto.MethodDto
 import org.jacodb.ets.dto.ModifierDto
 import org.jacodb.ets.dto.NumberTypeDto
+import org.jacodb.ets.dto.PrimitiveLiteralDto
 import org.jacodb.ets.dto.ReturnVoidStmtDto
 import org.jacodb.ets.dto.StmtDto
+import org.jacodb.ets.dto.TypeDto
 import org.jacodb.ets.dto.convertToEtsFile
 import org.jacodb.ets.dto.convertToEtsMethod
 import org.jacodb.ets.model.EtsClassSignature
@@ -54,6 +57,8 @@ import org.junit.jupiter.api.condition.EnabledIf
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.toPath
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 private val logger = KotlinLogging.logger {}
 
@@ -327,5 +332,20 @@ class EtsFromJsonTest {
             ),
             modifiers
         )
+    }
+
+    @Test
+    fun testLoadLiteralTypeFromJson() {
+        // TS: `let x: "hello" = "hello";`
+        val jsonString = """
+            {
+              "_": "LiteralType",
+              "literal": "hello"
+            }
+        """.trimIndent()
+        val typeDto = Json.decodeFromString<TypeDto>(jsonString)
+        println("typeDto = $typeDto")
+        assertIs<LiteralTypeDto>(typeDto)
+        assertEquals(PrimitiveLiteralDto.StringLiteral("hello"), typeDto.literal)
     }
 }

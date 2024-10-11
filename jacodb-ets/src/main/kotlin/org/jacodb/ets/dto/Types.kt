@@ -20,7 +20,6 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
-import kotlinx.serialization.json.JsonElement
 
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
@@ -142,13 +141,28 @@ object UndefinedTypeDto : PrimitiveTypeDto {
 @Serializable
 @SerialName("LiteralType")
 data class LiteralTypeDto(
-    val literal: JsonElement, // string | boolean | number
+    val literal: PrimitiveLiteralDto,
 ) : PrimitiveTypeDto {
     override val name: String
         get() = literal.toString()
 
     override fun toString(): String {
         return name
+    }
+}
+
+@Serializable(with = PrimitiveLiteralSerializer::class)
+sealed class PrimitiveLiteralDto {
+    data class StringLiteral(val value: String) : PrimitiveLiteralDto() {
+        override fun toString(): String = value
+    }
+
+    data class NumberLiteral(val value: Double) : PrimitiveLiteralDto() {
+        override fun toString(): String = value.toString()
+    }
+
+    data class BooleanLiteral(val value: Boolean) : PrimitiveLiteralDto() {
+        override fun toString(): String = value.toString()
     }
 }
 
