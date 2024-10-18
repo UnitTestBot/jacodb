@@ -169,7 +169,9 @@ if (!repoUrl.isNullOrEmpty()) {
         listOf(
             project(":jacodb-api-common"),
             project(":jacodb-api-jvm"),
+            project(":jacodb-api-storage"),
             project(":jacodb-core"),
+            project(":jacodb-storage"),
             project(":jacodb-analysis"),
             project(":jacodb-approximations"),
             project(":jacodb-taint-configuration"),
