@@ -16,12 +16,12 @@
 
 package org.jacodb.impl.bytecode
 
-import kotlinx.metadata.KmConstructor
-import kotlinx.metadata.KmFunction
-import kotlinx.metadata.KmType
-import kotlinx.metadata.KmValueParameter
-import kotlinx.metadata.jvm.fieldSignature
-import kotlinx.metadata.jvm.signature
+import kotlin.metadata.KmConstructor
+import kotlin.metadata.KmFunction
+import kotlin.metadata.KmType
+import kotlin.metadata.KmValueParameter
+import kotlin.metadata.jvm.fieldSignature
+import kotlin.metadata.jvm.signature
 import mu.KLogging
 import org.jacodb.api.jvm.JcClassOrInterface
 import org.jacodb.api.jvm.JcField

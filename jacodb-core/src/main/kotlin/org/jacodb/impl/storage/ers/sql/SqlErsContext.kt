@@ -16,7 +16,7 @@
 
 package org.jacodb.impl.storage.ers.sql
 
-import org.jacodb.api.jvm.storage.ers.EntityRelationshipStorage
+import org.jacodb.api.storage.ers.EntityRelationshipStorage
 import org.jacodb.impl.storage.ers.jooq.tables.references.TYPES
 import org.jacodb.impl.storage.ers.sql.SqlErsNames.BLOB_VALUE_FIELD
 import org.jacodb.impl.storage.ers.sql.SqlErsNames.ENTITY_ID_FIELD

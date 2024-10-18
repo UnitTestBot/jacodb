@@ -19,9 +19,9 @@ package org.jacodb.impl
 import org.jacodb.api.jvm.JCDBContext
 import org.jacodb.api.jvm.JCDBSymbolsInterner
 import org.jacodb.api.jvm.JcDatabasePersistence
-import org.jacodb.api.jvm.storage.ers.compressed
-import org.jacodb.api.jvm.storage.ers.nonSearchable
-import org.jacodb.api.jvm.storage.kv.forEach
+import org.jacodb.api.storage.ers.compressed
+import org.jacodb.api.storage.ers.nonSearchable
+import org.jacodb.api.storage.kv.forEach
 import org.jacodb.impl.storage.connection
 import org.jacodb.impl.storage.ers.BuiltInBindingProvider
 import org.jacodb.impl.storage.ers.decorators.unwrap

@@ -18,7 +18,7 @@ package org.jacodb.impl.storage.ers
 
 import org.jacodb.api.jvm.JcDatabase
 import org.jacodb.api.jvm.JcDatabasePersistence
-import org.jacodb.api.jvm.storage.ers.EntityRelationshipStorageSPI
+import org.jacodb.api.storage.ers.EntityRelationshipStorageSPI
 import org.jacodb.impl.JcDatabaseImpl
 import org.jacodb.impl.JcDatabasePersistenceSPI
 import org.jacodb.impl.JcErsSettings

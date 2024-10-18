@@ -20,7 +20,7 @@ import org.jacodb.api.jvm.JCDBContext
 import org.jacodb.api.jvm.JcByteCodeLocation
 import org.jacodb.api.jvm.LocationType
 import org.jacodb.api.jvm.RegisteredLocation
-import org.jacodb.api.jvm.storage.ers.getEntityOrNull
+import org.jacodb.api.storage.ers.getEntityOrNull
 import org.jacodb.impl.CleanupResult
 import org.jacodb.impl.JcDatabaseImpl
 import org.jacodb.impl.JcInternalSignal

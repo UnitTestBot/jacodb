@@ -21,7 +21,9 @@ gitHooks {
 
 include("jacodb-api-common")
 include("jacodb-api-jvm")
+include("jacodb-api-storage")
 include("jacodb-core")
+include("jacodb-storage")
 include("jacodb-analysis")
 include("jacodb-examples")
 include("jacodb-benchmarks")

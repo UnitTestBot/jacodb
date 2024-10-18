@@ -22,7 +22,7 @@ import kotlinx.collections.immutable.toPersistentMap
 import org.jacodb.api.jvm.JcSubstitutor
 import org.jacodb.api.jvm.JvmType
 import org.jacodb.api.jvm.JvmTypeParameterDeclaration
-import org.jacodb.api.jvm.ext.isNotNullAnnotation
+import org.jacodb.impl.bytecode.isNotNullAnnotation
 import org.jacodb.impl.types.signature.JvmTypeParameterDeclarationImpl
 import org.jacodb.impl.types.signature.JvmTypeVariable
 import org.jacodb.impl.types.signature.copyWith
@@ -165,6 +165,4 @@ class JcSubstitutorImpl(
     override fun hashCode(): Int {
         return substitutions.hashCode()
     }
-
-
 }

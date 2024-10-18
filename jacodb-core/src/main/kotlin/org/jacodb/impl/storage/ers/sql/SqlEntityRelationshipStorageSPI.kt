@@ -16,9 +16,9 @@
 
 package org.jacodb.impl.storage.ers.sql
 
-import org.jacodb.api.jvm.storage.ers.ErsSettings
-import org.jacodb.api.jvm.storage.ers.EntityRelationshipStorage
-import org.jacodb.api.jvm.storage.ers.EntityRelationshipStorageSPI
+import org.jacodb.api.storage.ers.ErsSettings
+import org.jacodb.api.storage.ers.EntityRelationshipStorage
+import org.jacodb.api.storage.ers.EntityRelationshipStorageSPI
 import org.jacodb.impl.storage.configuredSQLiteDataSource
 import org.jacodb.impl.storage.ers.BuiltInBindingProvider
 

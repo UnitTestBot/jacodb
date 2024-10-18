@@ -21,8 +21,8 @@ import org.jacodb.api.jvm.JcByteCodeLocation
 import org.jacodb.api.jvm.JcDatabase
 import org.jacodb.api.jvm.JcDatabasePersistence
 import org.jacodb.api.jvm.RegisteredLocation
-import org.jacodb.api.jvm.storage.ers.Entity
-import org.jacodb.api.jvm.storage.ers.getEntityOrNull
+import org.jacodb.api.storage.ers.Entity
+import org.jacodb.api.storage.ers.getEntityOrNull
 import org.jacodb.impl.fs.asByteCodeLocation
 import org.jacodb.impl.storage.jooq.tables.records.BytecodelocationsRecord
 import org.jacodb.impl.storage.jooq.tables.references.BYTECODELOCATIONS
@@ -117,8 +117,8 @@ class PersistentByteCodeLocation(
 
     private fun PersistentByteCodeLocationData.toJcLocation(): JcByteCodeLocation? {
         try {
-            val newOne = File(path).asByteCodeLocation(runtimeVersion, isRuntime = runtime)
-            if (newOne.fileSystemId != fileSystemId) {
+            val newOne = File(path).asByteCodeLocation(runtimeVersion, isRuntime = runtime).singleOrNull()
+            if (newOne?.fileSystemId != fileSystemId) {
                 return null
             }
             return newOne

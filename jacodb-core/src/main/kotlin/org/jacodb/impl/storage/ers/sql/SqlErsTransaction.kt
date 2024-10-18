@@ -16,11 +16,11 @@
 
 package org.jacodb.impl.storage.ers.sql
 
-import org.jacodb.api.jvm.storage.ers.Entity
-import org.jacodb.api.jvm.storage.ers.EntityId
-import org.jacodb.api.jvm.storage.ers.EntityIterable
-import org.jacodb.api.jvm.storage.ers.Transaction
-import org.jacodb.api.jvm.storage.ers.probablyCompressed
+import org.jacodb.api.storage.ers.Entity
+import org.jacodb.api.storage.ers.EntityId
+import org.jacodb.api.storage.ers.EntityIterable
+import org.jacodb.api.storage.ers.Transaction
+import org.jacodb.api.storage.ers.probablyCompressed
 import org.jacodb.impl.storage.ers.sql.SqlErsNames.ENTITY_ID_FIELD
 import org.jacodb.impl.storage.ers.sql.SqlErsNames.PROPERTY_VALUE_FIELD
 import org.jacodb.impl.storage.executeQueriesFrom
@@ -63,6 +63,8 @@ class SqlErsTransactionImpl(
             .fetchOne()
             ?.let { SqlErsEntity(id, txn = this) }
     }
+
+    override fun getEntityUnsafe(id: EntityId): Entity = SqlErsEntity(id, txn = this)
 
     override fun deleteEntity(id: EntityId) {
         val entityTable = getEntityTableByTypeIdOrNull(id.typeId) ?: return

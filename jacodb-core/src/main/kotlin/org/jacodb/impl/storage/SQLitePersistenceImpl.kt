@@ -22,7 +22,7 @@ import org.jacodb.api.jvm.JCDBContext
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcDatabase
 import org.jacodb.api.jvm.RegisteredLocation
-import org.jacodb.api.jvm.storage.ers.EntityRelationshipStorage
+import org.jacodb.api.storage.ers.EntityRelationshipStorage
 import org.jacodb.impl.JCDBSymbolsInternerImpl
 import org.jacodb.impl.fs.JavaRuntime
 import org.jacodb.impl.fs.PersistenceClassSource
@@ -51,7 +51,12 @@ class SQLitePersistenceImpl(
     internal val jooq = DSL.using(connection, SQLDialect.SQLITE, Settings().withExecuteLogging(false))
     private val lock = ReentrantLock()
     private val persistenceService = SQLitePersistenceService(this)
-    override val ers: EntityRelationshipStorage = SqlEntityRelationshipStorage(dataSource, BuiltInBindingProvider)
+    override val ers: EntityRelationshipStorage by lazy {
+        SqlEntityRelationshipStorage(
+            dataSource,
+            BuiltInBindingProvider
+        )
+    }
 
     companion object {
         private val logger = KotlinLogging.logger {}
@@ -116,21 +121,26 @@ class SQLitePersistenceImpl(
             return CLASSES.LOCATION_ID.`in`(registeredLocationIds)
         }
 
-    private fun JcDatabase.classSources(clause: Condition, single: Boolean = false): List<ClassSource> = read { context ->
-        val jooq = context.dslContext
-        val classesQuery =
-            jooq.select(CLASSES.LOCATION_ID, CLASSES.ID, CLASSES.BYTECODE, SYMBOLS.NAME).from(CLASSES).join(SYMBOLS)
-                .on(CLASSES.NAME.eq(SYMBOLS.ID)).where(clause)
-        val classes = when {
-            single -> listOfNotNull(classesQuery.fetchAny())
-            else -> classesQuery.fetch()
+    private fun JcDatabase.classSources(clause: Condition, single: Boolean = false): List<ClassSource> =
+        read { context ->
+            val jooq = context.dslContext
+            val classesQuery =
+                jooq.select(CLASSES.LOCATION_ID, CLASSES.ID, CLASSES.BYTECODE, SYMBOLS.NAME).from(CLASSES).join(SYMBOLS)
+                    .on(CLASSES.NAME.eq(SYMBOLS.ID)).where(clause)
+            val classes = when {
+                single -> listOfNotNull(classesQuery.fetchAny())
+                else -> classesQuery.fetch()
+            }
+            classes.map { (locationId, classId, bytecode, name) ->
+                PersistenceClassSource(
+                    db = this,
+                    className = name!!,
+                    classId = classId!!,
+                    locationId = locationId!!,
+                    cachedByteCode = bytecode
+                )
+            }
         }
-        classes.map { (locationId, classId, bytecode, name) ->
-            PersistenceClassSource(
-                db = this, className = name!!, classId = classId!!, locationId = locationId!!, cachedByteCode = bytecode
-            )
-        }
-    }
 }
 
 fun String.sqlScript(): String {

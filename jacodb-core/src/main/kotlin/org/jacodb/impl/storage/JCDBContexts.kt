@@ -19,7 +19,7 @@ package org.jacodb.impl.storage
 import org.jacodb.api.jvm.ContextProperty
 import org.jacodb.api.jvm.JCDBContext
 import org.jacodb.api.jvm.invoke
-import org.jacodb.api.jvm.storage.ers.Transaction
+import org.jacodb.api.storage.ers.Transaction
 import org.jooq.DSLContext
 import java.sql.Connection
 

@@ -18,8 +18,8 @@ package org.jacodb.api.jvm
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
-import org.jacodb.api.jvm.storage.ers.EntityRelationshipStorage
-import org.jacodb.api.jvm.storage.ers.Transaction
+import org.jacodb.api.storage.ers.EntityRelationshipStorage
+import org.jacodb.api.storage.ers.Transaction
 import org.jooq.DSLContext
 import java.io.Closeable
 import java.io.File
@@ -79,8 +79,6 @@ interface JcDatabase : Closeable {
     fun asyncClasspath(dirOrJars: List<File>, features: List<JcClasspathFeature>?) =
         GlobalScope.future { classpath(dirOrJars, features) }
 
-    fun classpathOf(locations: List<RegisteredLocation>, features: List<JcClasspathFeature>?): JcClasspath
-
     /**
      * process and index single byte-code resource
      * @param dirOrJar build folder or jar file
@@ -135,6 +133,17 @@ interface JcDatabase : Closeable {
     suspend fun awaitBackgroundJobs()
     fun asyncAwaitBackgroundJobs() = GlobalScope.future { awaitBackgroundJobs() }
 
+    /**
+     * Sets this database's internal state to immutable if corresponding backend supports this operation.
+     * If it does, any write operation is no longer possible.
+     * The method can be used in order to "fix" current snapshot of the model.
+     * Generally, there is no way to switch the database back to mutable.
+     */
+    suspend fun setImmutable() {
+        awaitBackgroundJobs()
+        persistence.setImmutable()
+    }
+
     fun isInstalled(feature: JcFeature<*, *>): Boolean = features.contains(feature)
 
     val features: List<JcFeature<*, *>>
@@ -165,6 +174,14 @@ interface JcDatabasePersistence : Closeable {
     fun findClassSources(cp: JcClasspath, fullName: String): List<ClassSource>
 
     fun createIndexes() {}
+
+    /**
+     * Sets this persistence's internal state to immutable if corresponding backend supports this operation.
+     * If it does, any write operation is no longer possible.
+     * The method can be used in order to "fix" current snapshot of the model.
+     * Generally, there is no way to switch the persistence back to mutable.
+     */
+    fun setImmutable() {}
 }
 
 /**

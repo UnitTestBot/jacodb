@@ -8,7 +8,6 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":jacodb-api-jvm"))
     implementation(project(":jacodb-core"))
     implementation(testFixtures(project(":jacodb-core")))
 
@@ -20,6 +19,9 @@ dependencies {
     implementation(Libs.sootup_java_bytecode)
 
     testImplementation(Libs.kotlinx_benchmark_runtime)
+    testImplementation(Libs.xodusEnvironment)
+    testImplementation(Libs.lmdb_java)
+    testImplementation(Libs.rocks_db)
 }
 
 benchmark {

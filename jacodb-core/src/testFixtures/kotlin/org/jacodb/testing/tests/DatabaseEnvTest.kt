@@ -35,7 +35,7 @@ import org.jacodb.api.jvm.ext.humanReadableSignature
 import org.jacodb.api.jvm.ext.isEnum
 import org.jacodb.api.jvm.ext.isLocal
 import org.jacodb.api.jvm.ext.isMemberClass
-import org.jacodb.api.jvm.ext.isNullable
+import org.jacodb.impl.bytecode.isNullable
 import org.jacodb.api.jvm.ext.jcdbSignature
 import org.jacodb.api.jvm.ext.jvmSignature
 import org.jacodb.api.jvm.ext.methods
