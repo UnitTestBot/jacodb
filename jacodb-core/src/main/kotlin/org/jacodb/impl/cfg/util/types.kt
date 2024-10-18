@@ -60,7 +60,7 @@ val TypeName.isClass get() = !isPrimitive && !isArray
 internal val TypeName.isDWord get() = typeName == PredefinedPrimitives.Long || typeName == PredefinedPrimitives.Double
 
 internal fun String.typeName(): TypeName = TypeNameImpl(this.jcdbName())
-internal fun TypeName.asArray(dimensions: Int = 1) = "$typeName${"[]".repeat(dimensions)}".typeName()
+fun TypeName.asArray(dimensions: Int = 1) = "$typeName${"[]".repeat(dimensions)}".typeName()
 internal fun TypeName.elementType() = elementTypeOrNull() ?: this
 
 internal fun TypeName.elementTypeOrNull() = when {
@@ -69,14 +69,17 @@ internal fun TypeName.elementTypeOrNull() = when {
     else -> null
 }
 
-internal fun TypeName.baseElementType(): TypeName {
+fun TypeName.baseElementType(): Pair<TypeName, Int> {
     var current: TypeName? = this
+    var dim = -1
     var next: TypeName? = current
     do {
         current = next
         next = current!!.elementTypeOrNull()
+        dim++
     } while (next != null)
-    return current!!
+    check(dim >= 0)
+    return Pair(current!!, dim)
 }
 
 val lambdaMetaFactory: TypeName  = LAMBDA_METAFACTORY_CLASS.typeName()
