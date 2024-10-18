@@ -91,7 +91,7 @@ class JcDatabaseImpl(
         locationsRegistry.setup(runtime).new.process(false)
         locationsRegistry.registerIfNeeded(
             settings.predefinedDirOrJars.filter { it.exists() }
-                .map { it.asByteCodeLocation(javaRuntime.version, isRuntime = false) }
+                .flatMap { it.asByteCodeLocation(javaRuntime.version, isRuntime = false) }.distinct()
         ).new.process(true)
     }
 
@@ -111,15 +111,12 @@ class JcDatabaseImpl(
 
     override suspend fun classpath(dirOrJars: List<File>, features: List<JcClasspathFeature>?): JcClasspath {
         assertNotClosed()
-        val existingLocations = dirOrJars.filterExisting().map { it.asByteCodeLocation(javaRuntime.version) }
+        val existingLocations =
+            dirOrJars.filterExisting().flatMap { it.asByteCodeLocation(javaRuntime.version) }.distinct()
         val processed = locationsRegistry.registerIfNeeded(existingLocations)
             .also { it.new.process(true) }.registered + locationsRegistry.runtimeLocations
-        return classpathOf(processed, features)
-    }
-
-    override fun classpathOf(locations: List<RegisteredLocation>, features: List<JcClasspathFeature>?): JcClasspath {
         return JcClasspathImpl(
-            locationsRegistry.newSnapshot(locations),
+            locationsRegistry.newSnapshot(processed),
             this,
             features.appendBuiltInFeatures(),
             classesVfs
@@ -146,7 +143,7 @@ class JcDatabaseImpl(
 
     override suspend fun load(dirOrJars: List<File>) = apply {
         assertNotClosed()
-        loadLocations(dirOrJars.filterExisting().map { it.asByteCodeLocation(javaRuntime.version) })
+        loadLocations(dirOrJars.filterExisting().flatMap { it.asByteCodeLocation(javaRuntime.version) }.distinct())
     }
 
     override suspend fun loadLocations(locations: List<JcByteCodeLocation>) = apply {

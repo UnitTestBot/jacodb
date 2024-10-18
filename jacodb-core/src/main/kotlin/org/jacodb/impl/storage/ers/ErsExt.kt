@@ -18,7 +18,7 @@ package org.jacodb.impl.storage.ers
 
 import org.jacodb.api.jvm.ClassSource
 import org.jacodb.api.jvm.JcDatabase
-import org.jacodb.api.jvm.storage.ers.Entity
+import org.jacodb.api.storage.ers.Entity
 import org.jacodb.impl.fs.PersistenceClassSource
 
 fun Sequence<Entity>.toClassSourceSequence(db: JcDatabase): Sequence<ClassSource> {

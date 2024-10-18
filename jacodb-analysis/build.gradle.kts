@@ -18,6 +18,7 @@ dependencies {
 
     testImplementation(project(":jacodb-api-jvm"))
     testImplementation(testFixtures(project(":jacodb-core")))
+    testImplementation(testFixtures(project(":jacodb-storage")))
     testImplementation(kotlin("test"))
     testImplementation(Libs.mockk)
 

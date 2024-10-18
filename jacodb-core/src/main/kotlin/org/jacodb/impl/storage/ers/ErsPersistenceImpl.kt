@@ -23,13 +23,13 @@ import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcDatabase
 import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.api.jvm.ext.JAVA_OBJECT
-import org.jacodb.api.jvm.storage.ers.Entity
-import org.jacodb.api.jvm.storage.ers.EntityRelationshipStorage
-import org.jacodb.api.jvm.storage.ers.Transaction
-import org.jacodb.api.jvm.storage.ers.compressed
-import org.jacodb.api.jvm.storage.ers.findOrNew
-import org.jacodb.api.jvm.storage.ers.links
-import org.jacodb.api.jvm.storage.ers.nonSearchable
+import org.jacodb.api.storage.ers.Entity
+import org.jacodb.api.storage.ers.EntityRelationshipStorage
+import org.jacodb.api.storage.ers.Transaction
+import org.jacodb.api.storage.ers.compressed
+import org.jacodb.api.storage.ers.findOrNew
+import org.jacodb.api.storage.ers.links
+import org.jacodb.api.storage.ers.nonSearchable
 import org.jacodb.impl.JCDBSymbolsInternerImpl
 import org.jacodb.impl.asSymbolId
 import org.jacodb.impl.fs.JavaRuntime
@@ -37,7 +37,6 @@ import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.fs.info
 import org.jacodb.impl.storage.AbstractJcDbPersistence
 import org.jacodb.impl.storage.AnnotationValueKind
-import org.jacodb.impl.storage.ers.ram.RAMEntityRelationshipStorage
 import org.jacodb.impl.storage.toJCDBContext
 import org.jacodb.impl.storage.txn
 import org.jacodb.impl.types.AnnotationInfo
@@ -53,7 +52,7 @@ import kotlin.concurrent.withLock
 class ErsPersistenceImpl(
     javaRuntime: JavaRuntime,
     clearOnStart: Boolean,
-    override val ers: EntityRelationshipStorage,
+    override var ers: EntityRelationshipStorage,
 ) : AbstractJcDbPersistence(javaRuntime) {
     companion object {
         private val logger = KotlinLogging.logger {}
@@ -76,7 +75,7 @@ class ErsPersistenceImpl(
     }
 
     override fun <T> read(action: (JCDBContext) -> T): T {
-        return if (ers is RAMEntityRelationshipStorage) { // RAMEntityRelationshipStorage doesn't support readonly transactions
+        return if (ers.isInRam) { // RAM storage doesn't support explicit readonly transactions
             ers.transactionalOptimistic(attempts = 10) { txn ->
                 action(toJCDBContext(txn))
             }
@@ -232,6 +231,10 @@ class ErsPersistenceImpl(
         return read { context ->
             findClassSourcesImpl(context, cp, fullName).toList()
         }
+    }
+
+    override fun setImmutable() {
+        ers = ers.asReadonly
     }
 
     override fun close() {

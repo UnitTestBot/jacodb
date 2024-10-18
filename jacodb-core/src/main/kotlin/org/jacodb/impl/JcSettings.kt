@@ -23,15 +23,14 @@ import org.jacodb.api.jvm.JcDatabase
 import org.jacodb.api.jvm.JcFeature
 import org.jacodb.api.jvm.JcPersistenceImplSettings
 import org.jacodb.api.jvm.JcPersistenceSettings
-import org.jacodb.api.jvm.storage.ers.EmptyErsSettings
-import org.jacodb.api.jvm.storage.ers.ErsSettings
+import org.jacodb.api.storage.ers.EmptyErsSettings
+import org.jacodb.api.storage.ers.ErsSettings
 import org.jacodb.impl.caches.guava.GUAVA_CACHE_PROVIDER_ID
 import org.jacodb.impl.storage.SQLITE_DATABASE_PERSISTENCE_SPI
 import org.jacodb.impl.storage.ers.ERS_DATABASE_PERSISTENCE_SPI
 import org.jacodb.impl.storage.ers.kv.KV_ERS_SPI
 import org.jacodb.impl.storage.ers.ram.RAM_ERS_SPI
 import org.jacodb.impl.storage.ers.sql.SQL_ERS_SPI
-import org.jacodb.impl.storage.kv.lmdb.LMDB_KEY_VALUE_STORAGE_SPI
 import org.jacodb.impl.storage.kv.rocks.ROCKS_KEY_VALUE_STORAGE_SPI
 import org.jacodb.impl.storage.kv.xodus.XODUS_KEY_VALUE_STORAGE_SPI
 import java.io.File
@@ -244,17 +243,9 @@ object JcRamErsSettings : JcErsSettings(RAM_ERS_SPI)
 
 object JcSqlErsSettings : JcErsSettings(SQL_ERS_SPI)
 
-/**
- * Id of pluggable K/V storage being passed for [org.jacodb.impl.storage.ers.kv.KVEntityRelationshipStorageSPI].
- */
-open class JcKvErsSettings(val kvId: String) : ErsSettings
-
 object JcXodusKvErsSettings : JcErsSettings(KV_ERS_SPI, JcKvErsSettings(XODUS_KEY_VALUE_STORAGE_SPI))
 
 object JcRocksKvErsSettings : JcErsSettings(KV_ERS_SPI, JcKvErsSettings(ROCKS_KEY_VALUE_STORAGE_SPI))
-
-// by default, mapSize is 1Gb
-class JcLmdbErsSettings(val mapSize: Long = 0x40_00_00_00) : JcKvErsSettings(LMDB_KEY_VALUE_STORAGE_SPI)
 
 object JcLmdbKvErsSettings : JcErsSettings(KV_ERS_SPI, JcLmdbErsSettings()) {
 

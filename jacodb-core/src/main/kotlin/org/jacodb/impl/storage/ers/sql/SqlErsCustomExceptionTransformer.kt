@@ -16,7 +16,7 @@
 
 package org.jacodb.impl.storage.ers.sql
 
-import org.jacodb.api.jvm.storage.ers.ERSConflictingTransactionException
+import org.jacodb.api.storage.ers.ERSConflictingTransactionException
 import org.jooq.ExecuteContext
 import org.jooq.exception.DataAccessException
 import org.jooq.impl.DefaultExecuteListener

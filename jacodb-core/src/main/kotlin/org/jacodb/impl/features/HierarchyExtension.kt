@@ -29,11 +29,11 @@ import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.ext.HierarchyExtension
 import org.jacodb.api.jvm.ext.JAVA_OBJECT
 import org.jacodb.api.jvm.ext.findDeclaredMethodOrNull
-import org.jacodb.api.jvm.storage.ers.CollectionEntityIterable
-import org.jacodb.api.jvm.storage.ers.Entity
-import org.jacodb.api.jvm.storage.ers.EntityIterable
-import org.jacodb.api.jvm.storage.ers.Transaction
-import org.jacodb.api.jvm.storage.ers.compressed
+import org.jacodb.api.storage.ers.CollectionEntityIterable
+import org.jacodb.api.storage.ers.Entity
+import org.jacodb.api.storage.ers.EntityIterable
+import org.jacodb.api.storage.ers.Transaction
+import org.jacodb.api.storage.ers.compressed
 import org.jacodb.impl.asSymbolId
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.storage.BatchedSequence

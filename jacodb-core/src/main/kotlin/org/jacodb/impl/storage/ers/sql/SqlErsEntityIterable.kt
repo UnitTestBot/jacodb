@@ -16,9 +16,9 @@
 
 package org.jacodb.impl.storage.ers.sql
 
-import org.jacodb.api.jvm.storage.ers.Entity
-import org.jacodb.api.jvm.storage.ers.EntityId
-import org.jacodb.api.jvm.storage.ers.EntityIterable
+import org.jacodb.api.storage.ers.Entity
+import org.jacodb.api.storage.ers.EntityId
+import org.jacodb.api.storage.ers.EntityIterable
 import org.jooq.Condition
 import org.jooq.Field
 import org.jooq.Table

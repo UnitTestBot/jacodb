@@ -1,5 +1,6 @@
 dependencies {
     api(project(":jacodb-api-common"))
+    api(project(":jacodb-api-storage"))
 
     api(Libs.asm)
     api(Libs.asm_tree)

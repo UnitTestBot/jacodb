@@ -19,7 +19,7 @@ package org.jacodb.impl.storage
 import org.jacodb.api.jvm.JcByteCodeLocation
 import org.jacodb.api.jvm.JcDatabasePersistence
 import org.jacodb.api.jvm.RegisteredLocation
-import org.jacodb.api.jvm.storage.ers.getEntityOrNull
+import org.jacodb.api.storage.ers.getEntityOrNull
 import org.jacodb.impl.JCDBSymbolsInternerImpl
 import org.jacodb.impl.asSymbolId
 import org.jacodb.impl.caches.PluggableCache
@@ -78,7 +78,7 @@ abstract class AbstractJcDbPersistence(
                     } catch (e: Exception) {
                         null
                     }
-                }
+                }.flatten().distinct()
             }
         }
 
@@ -145,7 +145,8 @@ abstract class AbstractJcDbPersistence(
                 return read { context ->
                     context.execute(
                         sqlAction = { jooq ->
-                            val hasBytecodeLocations = jooq.meta().tables.any { it.name.equals(BYTECODELOCATIONS.name, true) }
+                            val hasBytecodeLocations =
+                                jooq.meta().tables.any { it.name.equals(BYTECODELOCATIONS.name, true) }
                             if (!hasBytecodeLocations) {
                                 return@execute false
                             }

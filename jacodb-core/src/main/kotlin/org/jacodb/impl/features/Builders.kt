@@ -26,7 +26,7 @@ import org.jacodb.api.jvm.JcFeature
 import org.jacodb.api.jvm.JcSignal
 import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.api.jvm.ext.jvmPrimitiveNames
-import org.jacodb.api.jvm.storage.ers.compressed
+import org.jacodb.api.storage.ers.compressed
 import org.jacodb.impl.fs.PersistenceClassSource
 import org.jacodb.impl.fs.className
 import org.jacodb.impl.storage.execute

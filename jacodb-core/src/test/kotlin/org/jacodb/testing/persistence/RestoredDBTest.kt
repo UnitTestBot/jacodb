@@ -20,7 +20,6 @@ import kotlinx.coroutines.runBlocking
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcPersistenceImplSettings
 import org.jacodb.api.jvm.ext.HierarchyExtension
-import org.jacodb.impl.JcRamErsSettings
 import org.jacodb.impl.JcXodusKvErsSettings
 import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.testing.LifecycleTest

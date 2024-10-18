@@ -18,10 +18,10 @@ package org.jacodb.impl.storage.ers.sql
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import org.jacodb.api.jvm.storage.ers.BindingProvider
-import org.jacodb.api.jvm.storage.ers.ERSConflictingTransactionException
-import org.jacodb.api.jvm.storage.ers.EntityRelationshipStorage
-import org.jacodb.api.jvm.storage.ers.Transaction
+import org.jacodb.api.storage.ers.BindingProvider
+import org.jacodb.api.storage.ers.ERSConflictingTransactionException
+import org.jacodb.api.storage.ers.EntityRelationshipStorage
+import org.jacodb.api.storage.ers.Transaction
 import org.jacodb.impl.storage.ers.decorators.withAllDecorators
 import org.jacodb.impl.storage.ers.jooq.tables.references.TYPES
 import org.jacodb.impl.storage.ers.sql.SqlErsNames.ENTITY_ID_FIELD

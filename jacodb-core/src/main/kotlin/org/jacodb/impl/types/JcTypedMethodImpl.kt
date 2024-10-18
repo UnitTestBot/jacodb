@@ -19,7 +19,7 @@ package org.jacodb.impl.types
 import org.jacodb.api.jvm.*
 import org.jacodb.api.jvm.ext.findTypeOrNull
 import org.jacodb.api.jvm.ext.isEnum
-import org.jacodb.api.jvm.ext.isNullable
+import org.jacodb.impl.bytecode.isNullable
 import org.jacodb.impl.bytecode.JcAnnotationImpl
 import org.jacodb.impl.bytecode.JcMethodImpl
 import org.jacodb.impl.types.signature.FieldResolutionImpl

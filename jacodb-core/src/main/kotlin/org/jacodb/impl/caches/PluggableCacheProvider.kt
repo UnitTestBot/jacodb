@@ -16,8 +16,8 @@
 
 package org.jacodb.impl.caches
 
-import org.jacodb.api.jvm.spi.CommonSPI
-import org.jacodb.api.jvm.spi.SPILoader
+import org.jacodb.api.spi.CommonSPI
+import org.jacodb.api.spi.SPILoader
 
 /**
  * Service Provider Interface to load pluggable implementation of [PluggableCacheBuilder] and [PluggableCache]

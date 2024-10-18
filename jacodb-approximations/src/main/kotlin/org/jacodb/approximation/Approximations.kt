@@ -30,7 +30,7 @@ import org.jacodb.api.jvm.JcSignal
 import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.api.jvm.cfg.JcInstList
 import org.jacodb.api.jvm.cfg.JcRawInst
-import org.jacodb.api.jvm.storage.ers.compressed
+import org.jacodb.api.storage.ers.compressed
 import org.jacodb.approximation.TransformerIntoVirtual.transformMethodIntoVirtual
 import org.jacodb.approximation.annotation.Approximate
 import org.jacodb.impl.cfg.JcInstListImpl

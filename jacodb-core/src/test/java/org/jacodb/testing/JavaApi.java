@@ -17,14 +17,10 @@
 package org.jacodb.testing;
 
 import org.jacodb.api.jvm.JcDatabase;
-import org.jacodb.api.jvm.cfg.JcArgument;
-import org.jacodb.api.jvm.cfg.JcExpr;
-import org.jacodb.api.jvm.cfg.TypedExprResolver;
 import org.jacodb.impl.JacoDB;
 import org.jacodb.impl.JcCacheSettings;
 import org.jacodb.impl.JcSettings;
 import org.jacodb.impl.features.Usages;
-import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
