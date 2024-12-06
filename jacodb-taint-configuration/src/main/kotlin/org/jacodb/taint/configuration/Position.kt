@@ -63,6 +63,12 @@ sealed interface PositionAccessor {
     }
 
     @Serializable
+    @SerialName("AllPositions")
+    object AllPositions : PositionAccessor {
+        override fun toString(): String = javaClass.simpleName
+    }
+
+    @Serializable
     data class FieldAccessor(
         val className: String,
         val fieldName: String,
