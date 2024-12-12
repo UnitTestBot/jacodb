@@ -34,20 +34,8 @@ interface Action {
     fun <R> accept(visitor: TaintActionVisitor<R>): R
 }
 
-val actionModule = SerializersModule {
-    polymorphic(Action::class) {
-        subclass(CopyAllMarks::class)
-        subclass(CopyMark::class)
-        subclass(AssignMark::class)
-        subclass(RemoveAllMarks::class)
-        subclass(RemoveMark::class)
-    }
-}
-
 // TODO add marks for aliases (if you pass an object and return it from the function)
 
-@Serializable
-@SerialName("CopyAllMarks")
 data class CopyAllMarks(
     val from: Position,
     val to: Position,
@@ -55,8 +43,6 @@ data class CopyAllMarks(
     override fun <R> accept(visitor: TaintActionVisitor<R>): R = visitor.visit(this)
 }
 
-@Serializable
-@SerialName("CopyMark")
 data class CopyMark(
     val mark: TaintMark,
     val from: Position,
@@ -65,8 +51,6 @@ data class CopyMark(
     override fun <R> accept(visitor: TaintActionVisitor<R>): R = visitor.visit(this)
 }
 
-@Serializable
-@SerialName("AssignMark")
 data class AssignMark(
     val mark: TaintMark,
     val position: Position,
@@ -74,19 +58,63 @@ data class AssignMark(
     override fun <R> accept(visitor: TaintActionVisitor<R>): R = visitor.visit(this)
 }
 
-@Serializable
-@SerialName("RemoveAllMarks")
 data class RemoveAllMarks(
     val position: Position,
 ) : Action {
     override fun <R> accept(visitor: TaintActionVisitor<R>): R = visitor.visit(this)
 }
 
-@Serializable
-@SerialName("RemoveMark")
 data class RemoveMark(
     val mark: TaintMark,
     val position: Position,
 ) : Action {
     override fun <R> accept(visitor: TaintActionVisitor<R>): R = visitor.visit(this)
 }
+
+@Serializable
+sealed interface SerializedAction
+
+val actionModule = SerializersModule {
+    polymorphic(SerializedAction::class) {
+        subclass(SerializedCopyAllMarks::class)
+        subclass(SerializedCopyMark::class)
+        subclass(SerializedAssignMark::class)
+        subclass(SerializedRemoveAllMarks::class)
+        subclass(SerializedRemoveMark::class)
+    }
+}
+
+@Serializable
+@SerialName("CopyAllMarks")
+data class SerializedCopyAllMarks(
+    val from: SerializedPosition,
+    val to: SerializedPosition,
+) : SerializedAction
+
+@Serializable
+@SerialName("CopyMark")
+data class SerializedCopyMark(
+    val mark: TaintMark,
+    val from: SerializedPosition,
+    val to: SerializedPosition,
+) : SerializedAction
+
+@Serializable
+@SerialName("AssignMark")
+data class SerializedAssignMark(
+    val mark: TaintMark,
+    val position: SerializedPosition,
+) : SerializedAction
+
+@Serializable
+@SerialName("RemoveAllMarks")
+data class SerializedRemoveAllMarks(
+    val position: SerializedPosition,
+) : SerializedAction
+
+@Serializable
+@SerialName("RemoveMark")
+data class SerializedRemoveMark(
+    val mark: TaintMark,
+    val position: SerializedPosition,
+) : SerializedAction

@@ -24,33 +24,42 @@ fun interface PositionResolver<out R> {
 }
 
 @Serializable
+sealed interface SerializedPosition
+
+@Serializable
 sealed interface Position
 
 @Serializable
 @SerialName("Argument")
-data class Argument(@SerialName("number") val index: Int) : Position
+data class Argument(@SerialName("number") val index: Int) : Position, SerializedPosition
+
+@Serializable
+@SerialName("AllAnnotatedArguments")
+data class AllAnnotatedArguments(
+    @SerialName("type") val typeMatcher: TypeMatcher
+) : SerializedPosition
 
 @Serializable
 @SerialName("AnyArgument")
-object AnyArgument : Position {
+object AnyArgument : SerializedPosition {
     override fun toString(): String = javaClass.simpleName
 }
 
 @Serializable
 @SerialName("This")
-object This : Position {
+object This : Position, SerializedPosition {
     override fun toString(): String = javaClass.simpleName
 }
 
 @Serializable
 @SerialName("Result")
-object Result : Position {
+object Result : Position, SerializedPosition {
     override fun toString(): String = javaClass.simpleName
 }
 
 @Serializable
 @SerialName("ResultAnyElement")
-object ResultAnyElement : Position {
+object ResultAnyElement : Position, SerializedPosition {
     override fun toString(): String = javaClass.simpleName
 }
 
@@ -77,6 +86,11 @@ sealed interface PositionAccessor {
 }
 
 @Serializable
+data class SerializedPositionWithAccess(
+    val base: SerializedPosition,
+    val access: PositionAccessor
+): SerializedPosition
+
 data class PositionWithAccess(
     val base: Position,
     val access: PositionAccessor

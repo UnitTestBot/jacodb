@@ -37,16 +37,16 @@ sealed interface SerializedTaintConfigurationItem {
 @SerialName("EntryPointSource")
 data class SerializedTaintEntryPointSource(
     override val methodInfo: FunctionMatcher,
-    val condition: Condition,
-    val actionsAfter: List<Action>,
+    val condition: SerializedCondition,
+    val actionsAfter: List<SerializedAction>,
 ) : SerializedTaintConfigurationItem
 
 @Serializable
 @SerialName("MethodSource")
 data class SerializedTaintMethodSource(
     override val methodInfo: FunctionMatcher,
-    val condition: Condition,
-    val actionsAfter: List<Action>,
+    val condition: SerializedCondition,
+    val actionsAfter: List<SerializedAction>,
 ) : SerializedTaintConfigurationItem
 
 @Serializable
@@ -55,21 +55,21 @@ data class SerializedTaintMethodSink(
     val ruleNote: String,
     val cwe: List<Int>,
     override val methodInfo: FunctionMatcher,
-    val condition: Condition,
+    val condition: SerializedCondition,
 ) : SerializedTaintConfigurationItem
 
 @Serializable
 @SerialName("PassThrough")
 data class SerializedTaintPassThrough(
     override val methodInfo: FunctionMatcher,
-    val condition: Condition,
-    val actionsAfter: List<Action>,
+    val condition: SerializedCondition,
+    val actionsAfter: List<SerializedAction>,
 ) : SerializedTaintConfigurationItem
 
 @Serializable
 @SerialName("Cleaner")
 data class SerializedTaintCleaner(
     override val methodInfo: FunctionMatcher,
-    val condition: Condition,
-    val actionsAfter: List<Action>,
+    val condition: SerializedCondition,
+    val actionsAfter: List<SerializedAction>,
 ) : SerializedTaintConfigurationItem
