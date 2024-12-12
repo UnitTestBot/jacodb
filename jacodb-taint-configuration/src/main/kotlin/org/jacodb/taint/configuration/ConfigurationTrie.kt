@@ -19,35 +19,40 @@ package org.jacodb.taint.configuration
 import org.jacodb.api.jvm.JcClassOrInterface
 import org.jacodb.api.jvm.ext.packageName
 
-class ConfigurationTrie(
-    configuration: List<SerializedTaintConfigurationItem>,
-    private val nameMatcher: (NameMatcher, String) -> Boolean,
-) {
-    private val unprocessedRules: MutableList<SerializedTaintConfigurationItem> = configuration.toMutableList()
-    private val rootNode: RootNode = RootNode()
+abstract class ConfigurationTrie<T> {
+    private val unprocessedRules = mutableListOf<T>()
+    private val rootNode: RootNode<T> = RootNode()
+
+    abstract fun nameMatches(matcher: NameMatcher, name: String): Boolean
+
+    abstract fun ruleClassNameMatcher(rule: T): ClassMatcher
+
+    abstract fun updateRuleClassNameMatcher(rule: T, matcher: ClassMatcher): T
+
+    fun addRules(rules: List<T>) {
+        unprocessedRules.addAll(rules)
+    }
 
     private fun initializeIfRequired() {
         if (unprocessedRules.isEmpty()) return
 
         while (unprocessedRules.isNotEmpty()) {
             var configurationRule = unprocessedRules.removeLast()
-            val classMatcher = configurationRule.methodInfo.cls
+            val classMatcher = ruleClassNameMatcher(configurationRule)
 
             val alternativeClassMatchers = classMatcher.extractAlternatives()
             if (alternativeClassMatchers.size != 1) {
                 alternativeClassMatchers.forEach {
-                    val updatedMethodInfo = configurationRule.methodInfo.copy(cls = it)
-                    unprocessedRules += configurationRule.updateMethodInfo(updatedMethodInfo)
+                    unprocessedRules += updateRuleClassNameMatcher(configurationRule, it)
                 }
 
                 continue
             }
 
             val simplifiedClassMatcher = alternativeClassMatchers.single()
-            val updatedMethodInfo = configurationRule.methodInfo.copy(cls = simplifiedClassMatcher)
-            configurationRule = configurationRule.updateMethodInfo(updatedMethodInfo)
+            configurationRule = updateRuleClassNameMatcher(configurationRule, simplifiedClassMatcher)
 
-            var currentNode: Node = rootNode
+            var currentNode: Node<T> = rootNode
 
             val (simplifiedPkgMatcher, simplifiedClassNameMatcher) = simplifiedClassMatcher
 
@@ -69,7 +74,7 @@ class ConfigurationTrie(
             }
 
             for (part in matchedPackageNameParts) {
-                currentNode = currentNode.children[part] ?: NodeImpl(part).also { currentNode.children += part to it }
+                currentNode = currentNode.children[part] ?: NodeImpl<T>(part).also { currentNode.children += part to it }
             }
 
             if (unmatchedPackageNamePart != null && unmatchedPackageNamePart != ALL_MATCH) {
@@ -82,7 +87,7 @@ class ConfigurationTrie(
 
                 is NameExactMatcher -> if (unmatchedPackageNamePart == null) {
                     val name = simplifiedClassNameMatcher.name
-                    currentNode = currentNode.children[name] ?: Leaf(name).also { currentNode.children += name to it }
+                    currentNode = currentNode.children[name] ?: Leaf<T>(name).also { currentNode.children += name to it }
                     currentNode.rules += configurationRule
                 } else {
                     // case for patterns like ".*\.Request"
@@ -103,21 +108,21 @@ class ConfigurationTrie(
         }
     }
 
-    fun getRulesForClass(clazz: JcClassOrInterface): List<SerializedTaintConfigurationItem> {
+    fun getRulesForClass(clazz: JcClassOrInterface): List<T> {
         initializeIfRequired()
 
-        val results = mutableListOf<SerializedTaintConfigurationItem>()
+        val results = mutableListOf<T>()
 
         val className = clazz.simpleName
         val packageName = clazz.packageName
         val nameParts = clazz.name.split(DOT_DELIMITER)
 
-        var currentNode: Node = rootNode
+        var currentNode: Node<T> = rootNode
 
         for (i in 0..nameParts.size) {
             results += currentNode.unmatchedRules.filter {
-                val classMatcher = it.methodInfo.cls
-                nameMatcher(classMatcher.pkg, packageName) && nameMatcher(classMatcher.classNameMatcher, className)
+                val classMatcher = ruleClassNameMatcher(it)
+                nameMatches(classMatcher.pkg, packageName) && nameMatches(classMatcher.classNameMatcher, className)
             }
 
             results += currentNode.rules
@@ -129,37 +134,37 @@ class ConfigurationTrie(
         return results
     }
 
-    private sealed class Node {
+    private sealed class Node<T> {
         abstract val value: String
-        abstract val children: MutableMap<String, Node>
-        abstract val rules: MutableList<SerializedTaintConfigurationItem>
-        abstract val unmatchedRules: MutableList<SerializedTaintConfigurationItem>
+        abstract val children: MutableMap<String, Node<T>>
+        abstract val rules: MutableList<T>
+        abstract val unmatchedRules: MutableList<T>
     }
 
-    private class RootNode : Node() {
-        override val children: MutableMap<String, Node> = mutableMapOf()
+    private class RootNode<T> : Node<T>() {
+        override val children: MutableMap<String, Node<T>> = mutableMapOf()
         override val value: String
             get() = error("Must not be called for the root")
-        override val rules: MutableList<SerializedTaintConfigurationItem> = mutableListOf()
-        override val unmatchedRules: MutableList<SerializedTaintConfigurationItem> = mutableListOf()
+        override val rules: MutableList<T> = mutableListOf()
+        override val unmatchedRules: MutableList<T> = mutableListOf()
     }
 
-    private data class NodeImpl(
+    private data class NodeImpl<T>(
         override val value: String,
-    ) : Node() {
-        override val children: MutableMap<String, Node> = mutableMapOf()
-        override val rules: MutableList<SerializedTaintConfigurationItem> = mutableListOf()
-        override val unmatchedRules: MutableList<SerializedTaintConfigurationItem> = mutableListOf()
+    ) : Node<T>() {
+        override val children: MutableMap<String, Node<T>> = mutableMapOf()
+        override val rules: MutableList<T> = mutableListOf()
+        override val unmatchedRules: MutableList<T> = mutableListOf()
     }
 
-    private data class Leaf(
+    private data class Leaf<T>(
         override val value: String,
-    ) : Node() {
-        override val children: MutableMap<String, Node>
+    ) : Node<T>() {
+        override val children: MutableMap<String, Node<T>>
             get() = error("Leaf nodes do not have children")
-        override val unmatchedRules: MutableList<SerializedTaintConfigurationItem>
+        override val unmatchedRules: MutableList<T>
             get() = mutableListOf()
 
-        override val rules: MutableList<SerializedTaintConfigurationItem> = mutableListOf()
+        override val rules: MutableList<T> = mutableListOf()
     }
 }

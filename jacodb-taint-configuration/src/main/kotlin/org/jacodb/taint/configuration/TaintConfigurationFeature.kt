@@ -47,7 +47,7 @@ class TaintConfigurationFeature private constructor(
     private val compiledRegex: MutableMap<String, Regex> = hashMapOf()
     private val taintMarks: MutableSet<TaintMark> = hashSetOf()
 
-    private val configurationTrie: ConfigurationTrie by lazy {
+    private val configurationTrie: JcConfigurationTrie by lazy {
         val serializers = SerializersModule {
             include(defaultSerializationModule)
             additionalSerializersModule?.let { include(it) }
@@ -89,7 +89,22 @@ class TaintConfigurationFeature private constructor(
                 }
             }
 
-        ConfigurationTrie(configuration, ::matches)
+        JcConfigurationTrie().apply { addRules(configuration) }
+    }
+
+    inner class JcConfigurationTrie : ConfigurationTrie<SerializedTaintConfigurationItem>() {
+        override fun nameMatches(matcher: NameMatcher, name: String): Boolean = matches(matcher, name)
+
+        override fun ruleClassNameMatcher(rule: SerializedTaintConfigurationItem): ClassMatcher =
+            rule.methodInfo.cls
+
+        override fun updateRuleClassNameMatcher(
+            rule: SerializedTaintConfigurationItem,
+            matcher: ClassMatcher
+        ): SerializedTaintConfigurationItem {
+            val updatedMethodInfo = rule.methodInfo.copy(cls = matcher)
+            return rule.updateMethodInfo(updatedMethodInfo)
+        }
     }
 
     @Synchronized
