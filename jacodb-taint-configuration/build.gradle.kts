@@ -13,6 +13,7 @@ dependencies {
 
     implementation(Libs.kotlinx_serialization_core)
     implementation(Libs.kotlinx_serialization_json) // for local tests only
+    implementation("com.charleskorn.kaml:kaml:0.66.0")
 
     testImplementation(testFixtures(project(":jacodb-storage")))
     testImplementation(Libs.kotlin_logging)
