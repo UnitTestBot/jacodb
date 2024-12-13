@@ -152,13 +152,13 @@ class TaintConfiguration {
     }
 
     private fun SerializedNameMatcher.nameMatcher(): NameMatcher = when (this) {
-        is SerializedNameMatcher.Simple -> NameExactMatcher(value)
+        is SerializedNameMatcher.Simple -> if (value == "*") AnyNameMatcher else NameExactMatcher(value)
         is SerializedNameMatcher.Pattern -> NamePatternMatcher(pattern)
         is SerializedNameMatcher.ClassPattern -> error("Unexpected serialized name: $this")
     }
 
     private fun SerializedNameMatcher.typeNameMatcher(): TypeMatcher = when (this) {
-        is SerializedNameMatcher.Simple -> JcTypeNameMatcher(value)
+        is SerializedNameMatcher.Simple -> if (value == "*") AnyTypeMatcher else JcTypeNameMatcher(value)
 
         is SerializedNameMatcher.Pattern -> if (pattern == ".*") {
             AnyTypeMatcher
@@ -180,7 +180,7 @@ class TaintConfiguration {
     private val compiledMatchers = hashMapOf<SerializedNameMatcher.Pattern, Regex>()
 
     private fun SerializedNameMatcher.match(name: String): Boolean = when (this) {
-        is SerializedNameMatcher.Simple -> value == name
+        is SerializedNameMatcher.Simple -> if (value == "*") true else value == name
         is SerializedNameMatcher.Pattern -> compiledMatchers.getOrPut(this) { pattern.toRegex() }.matches(name)
         is SerializedNameMatcher.ClassPattern -> {
             `package`.match(name.substringBeforeLast('.', missingDelimiterValue = ""))

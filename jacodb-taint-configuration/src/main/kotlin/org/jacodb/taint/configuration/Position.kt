@@ -86,6 +86,7 @@ sealed interface PositionAccessor {
 }
 
 @Serializable
+@SerialName("PositionWithAccess")
 data class SerializedPositionWithAccess(
     val base: SerializedPosition,
     val access: PositionAccessor

@@ -48,7 +48,7 @@ object SimpleSignatureSerializer : KSerializer<SerializedSignatureMatcher.Simple
             ?: error("Unexpected signature: $signatureStr")
 
         val (paramsStr, returnTypeStr) = matchedSignature.destructured
-        val paramsStrSplit = paramsStr.split(',')
+        val paramsStrSplit = if (paramsStr.trim().isBlank()) emptyList() else paramsStr.split(',')
 
         return SerializedSignatureMatcher.Simple(
             paramsStrSplit.map { SerializedNameMatcher.Simple(it.trim()) },
