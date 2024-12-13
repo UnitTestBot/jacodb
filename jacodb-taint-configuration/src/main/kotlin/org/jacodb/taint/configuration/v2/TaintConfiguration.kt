@@ -79,6 +79,12 @@ class TaintConfiguration {
         cleanerConfig.addRules(config.cleaner)
     }
 
+    fun entryPointForMethod(method: JcMethod): List<TaintEntryPointSource> = entryPointConfig.getConfigForMethod(method)
+    fun sourceForMethod(method: JcMethod): List<TaintMethodSource> = sourceConfig.getConfigForMethod(method)
+    fun sinkForMethod(method: JcMethod): List<TaintMethodSink> = sinkConfig.getConfigForMethod(method)
+    fun passThroughForMethod(method: JcMethod): List<TaintPassThrough> = passThroughConfig.getConfigForMethod(method)
+    fun cleanerForMethod(method: JcMethod): List<TaintCleaner> = cleanerConfig.getConfigForMethod(method)
+
     private inner class TaintRulesStorage<S : SerializedRule, T : TaintConfigurationItem> {
         private val rulesTrie = TaintConfigurationTrie<S>()
         private val classRules = hashMapOf<JcClassOrInterface, List<S>>()
