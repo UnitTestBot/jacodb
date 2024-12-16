@@ -124,12 +124,12 @@ class WithModifiersSerializer: KSerializer<PositionBaseWithModifiers.WithModifie
 
 sealed interface PositionModifier {
     data object ArrayElement : PositionModifier
-    data object AllFields : PositionModifier
+    data object AnyField : PositionModifier
     data class Field(val className: String, val fieldName: String, val fieldType: String) : PositionModifier
 
     fun serializedStr(): String = when (this) {
         ArrayElement -> "[*]"
-        AllFields -> ".*"
+        AnyField -> ".*"
         is Field -> ".${className}#${fieldName}#${fieldType}"
     }
 
@@ -138,7 +138,7 @@ sealed interface PositionModifier {
 
         fun deserialize(str: String): PositionModifier = when (str) {
             "[*]" -> ArrayElement
-            ".*" -> AllFields
+            ".*" -> AnyField
             else -> {
                 val fieldMatch = fieldMatcher.matchEntire(str)
                     ?: error("Unexpected position modifier: $str")

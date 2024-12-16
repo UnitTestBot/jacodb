@@ -320,7 +320,7 @@ class TaintConfiguration {
                 resolvedBase.map { b ->
                     modifiers.fold(b) { basePos, modifier ->
                         val accessor = when (modifier) {
-                            PositionModifier.AllFields -> PositionAccessor.AllPositions
+                            PositionModifier.AnyField -> PositionAccessor.AnyFieldAccessor
                             PositionModifier.ArrayElement -> PositionAccessor.ElementAccessor
                             is PositionModifier.Field -> {
                                 PositionAccessor.FieldAccessor(

@@ -72,8 +72,8 @@ sealed interface PositionAccessor {
     }
 
     @Serializable
-    @SerialName("AllPositions")
-    object AllPositions : PositionAccessor {
+    @SerialName("AnyField")
+    object AnyFieldAccessor : PositionAccessor {
         override fun toString(): String = javaClass.simpleName
     }
 
