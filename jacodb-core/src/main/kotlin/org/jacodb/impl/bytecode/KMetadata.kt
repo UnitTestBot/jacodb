@@ -16,12 +16,12 @@
 
 package org.jacodb.impl.bytecode
 
-import kotlin.metadata.KmConstructor
-import kotlin.metadata.KmFunction
-import kotlin.metadata.KmType
-import kotlin.metadata.KmValueParameter
-import kotlin.metadata.jvm.fieldSignature
-import kotlin.metadata.jvm.signature
+import kotlinx.metadata.KmConstructor
+import kotlinx.metadata.KmFunction
+import kotlinx.metadata.KmType
+import kotlinx.metadata.KmValueParameter
+import kotlinx.metadata.jvm.fieldSignature
+import kotlinx.metadata.jvm.signature
 import mu.KLogging
 import org.jacodb.api.jvm.JcClassOrInterface
 import org.jacodb.api.jvm.JcField
@@ -39,11 +39,11 @@ val JcClassOrInterface.kMetadata: KotlinMetadataHolder?
 
 val JcMethod.kmFunction: KmFunction?
     get() =
-        enclosingClass.kMetadata?.functions?.firstOrNull { it.signature?.name == name && it.signature?.descriptor == description }
+        enclosingClass.kMetadata?.functions?.firstOrNull { it?.signature?.name == name && it.signature?.descriptor == description }
 
 val JcMethod.kmConstructor: KmConstructor?
     get() =
-        enclosingClass.kMetadata?.constructors?.firstOrNull { it.signature?.name == name && it.signature?.descriptor == description }
+        enclosingClass.kMetadata?.constructors?.firstOrNull { it?.signature?.name == name && it.signature?.descriptor == description }
 
 val JcParameter.kmParameter: KmValueParameter?
     get() {

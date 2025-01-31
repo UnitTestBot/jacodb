@@ -22,6 +22,7 @@ import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.utils.dumpDot
 import org.jacodb.ets.utils.render
 import org.jacodb.ets.utils.toText
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.Path
 import kotlin.io.path.div
 import kotlin.io.path.name
@@ -86,6 +87,7 @@ object DumpEtsFilesToDot {
     private const val ETSIR = "/samples/etsir/ast"
     private val DOT_DIR = Path("generated/samples/dot")
 
+    @OptIn(ExperimentalPathApi::class)
     @JvmStatic
     fun main(args: Array<String>) {
         TODO()

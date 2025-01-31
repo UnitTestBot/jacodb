@@ -16,9 +16,9 @@
 
 package org.jacodb.impl.types.signature
 
-import kotlin.metadata.KmType
-import kotlin.metadata.KmTypeParameter
-import kotlin.metadata.isNullable
+import kotlinx.metadata.KmType
+import kotlinx.metadata.KmTypeParameter
+import kotlinx.metadata.isNullable
 import org.jacodb.api.jvm.JvmType
 import org.jacodb.api.jvm.JvmTypeParameterDeclaration
 

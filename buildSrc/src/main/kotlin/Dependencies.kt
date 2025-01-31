@@ -22,14 +22,14 @@ object Versions {
     const val jooq = "3.14.16"
     const val juliet = "1.3.2"
     const val junit = "5.9.2"
-    const val kotlin = "2.0.0"
+    const val kotlin = "1.9.25"
     const val kotlin_logging = "1.8.3"
     const val kotlinx_benchmark = "0.4.6"
     const val kotlinx_cli = "0.3.5"
     const val kotlinx_collections_immutable = "0.3.5"
     const val kotlinx_coroutines = "1.6.4"
-    const val kotlin_metadata = kotlin
-    const val kotlinx_serialization = "1.8.0"
+    const val kotlin_metadata = "0.9.0"
+    const val kotlinx_serialization = "1.4.1"
     const val licenser = "0.6.1"
     const val mockk = "1.13.3"
     const val sarif4k = "0.5.0"
@@ -115,8 +115,8 @@ object Libs {
     )
 
     val kotlin_metadata_jvm = dep(
-        group = "org.jetbrains.kotlin",
-        name = "kotlin-metadata-jvm",
+        group = "org.jetbrains.kotlinx",
+        name = "kotlinx-metadata-jvm",
         version = Versions.kotlin_metadata
     )
 

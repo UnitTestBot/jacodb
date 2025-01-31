@@ -16,6 +16,8 @@
 
 package org.jacodb.ets.test
 
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonPrimitive
 import mu.KotlinLogging
@@ -62,6 +64,7 @@ import org.jacodb.ets.utils.loadEtsFileAutoConvert
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.PathWalkOption
 import kotlin.io.path.div
 import kotlin.io.path.exists
@@ -143,6 +146,7 @@ class EtsFromJsonTest {
         printFile(file, showStmts = true)
     }
 
+    @OptIn(ExperimentalPathApi::class)
     @TestFactory
     fun testLoadAllAvailableEtsFilesFromJson() = testFactory {
         TODO()
@@ -176,6 +180,7 @@ class EtsFromJsonTest {
 //        }
     }
 
+    @OptIn(ExperimentalPathApi::class)
     @TestFactory
     fun testLoadAllAvailableEtsFilesAutoConvert() = testFactory {
         TODO()

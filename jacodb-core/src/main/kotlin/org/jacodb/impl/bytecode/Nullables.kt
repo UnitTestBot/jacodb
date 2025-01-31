@@ -25,7 +25,7 @@ import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.JcParameter
 import org.jacodb.api.jvm.PredefinedPrimitives
 import org.jacodb.api.jvm.TypeName
-import kotlin.metadata.isNullable
+import kotlinx.metadata.isNullable
 
 val JcAnnotation.isNotNullAnnotation: Boolean
     get() = NullabilityAnnotations.notNullAnnotations.any { matches(it) }

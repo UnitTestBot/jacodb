@@ -17,7 +17,6 @@
 package org.jacodb.ets.dto
 
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.KeepGeneratedSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
@@ -31,7 +30,6 @@ sealed interface TypeDto
 @Serializable(with = RawTypeSerializer::class)
 @SerialName("RawType")
 @OptIn(ExperimentalSerializationApi::class)
-@KeepGeneratedSerializer
 data class RawTypeDto(
     val kind: String, // constructor name
     val extra: JsonObject,

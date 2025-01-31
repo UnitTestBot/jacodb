@@ -65,6 +65,7 @@ import org.jacodb.ets.model.EtsInstanceCallExpr
 import org.jacodb.ets.model.EtsInstanceFieldRef
 import org.jacodb.ets.model.EtsInstanceOfExpr
 import org.jacodb.ets.model.EtsIntersectionType
+import org.jacodb.ets.model.EtsLValue
 import org.jacodb.ets.model.EtsLeftShiftExpr
 import org.jacodb.ets.model.EtsLiteralType
 import org.jacodb.ets.model.EtsLocal
@@ -206,7 +207,7 @@ class EtsMethodBuilder(
             }
             EtsAssignStmt(
                 location = loc(),
-                lhv = lhv,
+                lhv = lhv as EtsLValue,
                 rhv = rhv,
             )
         }

@@ -162,6 +162,7 @@ fun loadEtsProjectFromMultipleIR(input: List<Path>, sdkPaths: List<Path>): EtsSc
     return EtsScene(projectFiles, sdkFiles)
 }
 
+@OptIn(ExperimentalPathApi::class)
 private val walker = { dir: Path ->
     dir.walk(PathWalkOption.BREADTH_FIRST)
         .filter { it.extension == "json" }

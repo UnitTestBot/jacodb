@@ -16,7 +16,7 @@
 
 package org.jacodb.impl.types.signature
 
-import kotlin.metadata.KmTypeParameter
+import kotlinx.metadata.KmTypeParameter
 import org.jacodb.api.jvm.JcAccessible
 import org.jacodb.api.jvm.JvmType
 import org.jacodb.api.jvm.JvmTypeParameterDeclaration
