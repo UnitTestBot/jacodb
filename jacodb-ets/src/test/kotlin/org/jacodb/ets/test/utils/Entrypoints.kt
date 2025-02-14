@@ -88,28 +88,29 @@ object DumpEtsFilesToDot {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val etsirDir = getResourcePath(ETSIR)
-        logger.info { "etsirDir = $etsirDir" }
-
-        etsirDir.walk()
-            .filter { it.name.endsWith(".json") }
-            .map { it.relativeTo(etsirDir) }
-            .forEach { path ->
-                logger.info { "Processing: $path" }
-
-                val etsFileDto = loadEtsFileDtoFromResource("$ETSIR/$path")
-                run {
-                    val dotPath = DOT_DIR / path.resolveSibling(path.nameWithoutExtension + ".dto.dot")
-                    etsFileDto.dumpDot(dotPath)
-                    render(DOT_DIR, dotPath.relativeTo(DOT_DIR))
-                }
-
-                val etsFile = etsFileDto.toEtsFile()
-                run {
-                    val dotPath = DOT_DIR / path.resolveSibling(path.nameWithoutExtension + ".dot")
-                    etsFile.dumpDot(dotPath)
-                    render(DOT_DIR, dotPath.relativeTo(DOT_DIR))
-                }
-            }
+        TODO()
+//        val etsirDir = getResourcePath(ETSIR)
+//        logger.info { "etsirDir = $etsirDir" }
+//
+//        etsirDir.walk()
+//            .filter { it.name.endsWith(".json") }
+//            .map { it.relativeTo(etsirDir) }
+//            .forEach { path ->
+//                logger.info { "Processing: $path" }
+//
+//                val etsFileDto = loadEtsFileDtoFromResource("$ETSIR/$path")
+//                run {
+//                    val dotPath = DOT_DIR / path.resolveSibling(path.nameWithoutExtension + ".dto.dot")
+//                    etsFileDto.dumpDot(dotPath)
+//                    render(DOT_DIR, dotPath.relativeTo(DOT_DIR))
+//                }
+//
+//                val etsFile = etsFileDto.toEtsFile()
+//                run {
+//                    val dotPath = DOT_DIR / path.resolveSibling(path.nameWithoutExtension + ".dot")
+//                    etsFile.dumpDot(dotPath)
+//                    render(DOT_DIR, dotPath.relativeTo(DOT_DIR))
+//                }
+//            }
     }
 }

@@ -14,6 +14,8 @@
  *  limitations under the License.
  */
 
+@file:OptIn(ExperimentalPathApi::class)
+
 package org.jacodb.ets.test.utils
 
 import mu.KotlinLogging
@@ -22,6 +24,7 @@ import org.jacodb.ets.dto.toEtsFile
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsScene
 import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.extension
 import kotlin.io.path.inputStream
 import kotlin.io.path.relativeTo

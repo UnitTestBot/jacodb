@@ -84,7 +84,7 @@ object PrimitiveLiteralSerializer : KSerializer<PrimitiveLiteralDto> {
 }
 
 object RawStmtSerializer : KSerializer<RawStmtDto> {
-    private val serializer = RawStmtDto.generatedSerializer()
+    private val serializer = RawStmtDto.serializer()
 
     override val descriptor: SerialDescriptor = serializer.descriptor
 
@@ -103,7 +103,7 @@ object RawStmtSerializer : KSerializer<RawStmtDto> {
 }
 
 object RawValueSerializer : KSerializer<RawValueDto> {
-    private val serializer = RawValueDto.generatedSerializer()
+    private val serializer = RawValueDto.serializer()
 
     override val descriptor: SerialDescriptor = serializer.descriptor
 
@@ -124,7 +124,7 @@ object RawValueSerializer : KSerializer<RawValueDto> {
 }
 
 object RawTypeSerializer : KSerializer<RawTypeDto> {
-    private val serializer = RawTypeDto.generatedSerializer()
+    private val serializer = RawTypeDto.serializer()
 
     override val descriptor: SerialDescriptor = serializer.descriptor
 
