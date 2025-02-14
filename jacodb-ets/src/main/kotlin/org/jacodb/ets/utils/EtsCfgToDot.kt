@@ -26,7 +26,7 @@ import org.jacodb.ets.graph.EtsCfg
 private fun EtsStmt.toDotLabel(): String = when (this) {
     is EtsNopStmt -> "nop"
     is EtsAssignStmt -> "$lhv := $rhv"
-    is EtsReturnStmt -> "return $returnValue"
+    is EtsReturnStmt -> returnValue?.let { "return $it" } ?: "return"
     is EtsIfStmt -> "if ($condition)"
     else -> this.toString() // TODO: support more statement types
 }
@@ -38,8 +38,9 @@ fun EtsCfg.toDot(): String {
 
     // Nodes
     stmts.forEach { stmt ->
-        val id= stmt.location.index
-        lines += "  $id [label=\"$id: ${stmt.toDotLabel()}\"]"
+        val id = stmt.location.index
+        val label = stmt.toDotLabel().replace("\"", "\\\"")
+        lines += "  $id [label=\"$id: $label\"]"
     }
 
     // Edges
