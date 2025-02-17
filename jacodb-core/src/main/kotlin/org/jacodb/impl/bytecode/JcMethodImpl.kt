@@ -45,11 +45,11 @@ class JcMethodImpl(
     override val name: String get() = methodInfo.name
     override val access: Int get() = methodInfo.access
     override val signature: String? get() = methodInfo.signature
-    override val returnType: TypeName = TypeNameImpl(methodInfo.returnClass)
+    override val returnType: TypeName = TypeNameImpl.fromTypeName(methodInfo.returnClass)
 
     override val exceptions: List<TypeName>
         get() {
-            return methodInfo.exceptions.map { TypeNameImpl(it) }
+            return methodInfo.exceptions.map { TypeNameImpl.fromTypeName(it) }
         }
 
     override val declaration = JcDeclarationImpl.of(location = enclosingClass.declaration.location, this)

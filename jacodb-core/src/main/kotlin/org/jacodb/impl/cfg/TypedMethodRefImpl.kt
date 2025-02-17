@@ -20,7 +20,7 @@ import org.jacodb.api.jvm.*
 import org.jacodb.api.jvm.cfg.*
 import org.jacodb.api.jvm.ext.findType
 import org.jacodb.api.jvm.ext.jvmName
-import org.jacodb.impl.cfg.util.typeName
+import org.jacodb.impl.cfg.util.typeNameFromJvmName
 import org.jacodb.impl.softLazy
 import org.jacodb.impl.weakLazy
 import org.objectweb.asm.Type
@@ -64,7 +64,7 @@ abstract class MethodSignatureRef(
 
     protected val JcType.methodNotFoundMessage: String
         get() {
-            val argumentTypes = Type.getArgumentTypes(description).map { it.descriptor.typeName() }
+            val argumentTypes = Type.getArgumentTypes(description).map { it.descriptor.typeNameFromJvmName() }
             return buildString {
                 append("Can't find method '")
                 append(typeName)

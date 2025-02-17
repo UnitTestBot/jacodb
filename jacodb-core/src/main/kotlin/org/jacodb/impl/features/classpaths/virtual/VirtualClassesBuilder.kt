@@ -70,7 +70,7 @@ open class VirtualClassesBuilder {
 
     open class VirtualFieldBuilder(private var _name: String = "_virtual_") {
         companion object {
-            private val defType = TypeNameImpl("java.lang.Object")
+            private val defType = TypeNameImpl.fromTypeName("java.lang.Object")
         }
 
         val name: String get() = _name
@@ -85,7 +85,7 @@ open class VirtualClassesBuilder {
         }
 
         fun type(name: String) = apply {
-            type = TypeNameImpl(name)
+            type = TypeNameImpl.fromTypeName(name)
         }
 
         fun name(name: String) = apply {
@@ -103,7 +103,7 @@ open class VirtualClassesBuilder {
 
         var access = Opcodes.ACC_PUBLIC
             private set
-        var returnType: TypeName = TypeNameImpl(PredefinedPrimitives.Void)
+        var returnType: TypeName = TypeNameImpl.fromTypeName(PredefinedPrimitives.Void)
             private set
         var parameters: List<TypeName> = emptyList()
             private set
@@ -113,7 +113,7 @@ open class VirtualClassesBuilder {
         }
 
         fun params(vararg p: String) = apply {
-            parameters = p.map { TypeNameImpl(it) }.toList()
+            parameters = p.map { TypeNameImpl.fromTypeName(it) }.toList()
         }
 
         fun name(name: String) = apply {
@@ -121,7 +121,7 @@ open class VirtualClassesBuilder {
         }
 
         fun returnType(name: String) = apply {
-            returnType = TypeNameImpl(name)
+            returnType = TypeNameImpl.fromTypeName(name)
         }
 
         open val description: String

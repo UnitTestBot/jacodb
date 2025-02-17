@@ -40,7 +40,7 @@ class JcFieldImpl(
     override val access: Int
         get() = info.access
 
-    override val type: TypeName = TypeNameImpl(info.type)
+    override val type: TypeName = TypeNameImpl.fromTypeName(info.type)
 
     override val signature: String?
         get() = info.signature

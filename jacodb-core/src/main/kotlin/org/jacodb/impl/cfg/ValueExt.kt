@@ -48,6 +48,7 @@ import org.jacodb.api.jvm.ext.short
 import org.jacodb.impl.cfg.util.NULL
 import org.jacodb.impl.cfg.util.STRING_CLASS
 import org.jacodb.impl.cfg.util.typeName
+import org.jacodb.impl.cfg.util.typeNameFromJvmName
 
 @JvmName("rawNull")
 fun JcRawNull() = JcRawNullConstant(NULL)
@@ -108,7 +109,7 @@ fun JcRawNumber(number: Number) = when (number) {
 
 @JvmName("rawString")
 fun JcRawString(value: String) =
-    JcRawStringConstant(value, STRING_CLASS.typeName())
+    JcRawStringConstant(value, STRING_CLASS.typeNameFromJvmName())
 
 fun JcClasspath.int(value: Int): JcInt = JcInt(value, int)
 fun JcClasspath.byte(value: Byte): JcByte = JcByte(value, byte)

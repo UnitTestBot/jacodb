@@ -27,7 +27,6 @@ import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.JcTypedField
 import org.jacodb.api.jvm.JcTypedMethod
 import org.jacodb.api.jvm.TypeName
-import org.jacodb.api.jvm.ext.jcdbName
 import org.jacodb.impl.features.classpaths.AbstractJcResolvedResult.JcResolvedClassResultImpl
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualClassImpl
 import org.jacodb.impl.features.classpaths.virtual.JcVirtualFieldImpl
@@ -75,8 +74,8 @@ class JcUnknownMethod(
 
         fun method(type: JcClassOrInterface, name: String, access: Int, description: String): JcMethod {
             val methodType = Type.getMethodType(description)
-            val returnType = TypeNameImpl(methodType.returnType.className.jcdbName())
-            val paramsType = methodType.argumentTypes.map { TypeNameImpl(it.className.jcdbName()) }
+            val returnType = TypeNameImpl.fromTypeName(methodType.returnType.className)
+            val paramsType = methodType.argumentTypes.map { TypeNameImpl.fromTypeName(it.className) }
             return JcUnknownMethod(type, name, access, description, returnType, paramsType)
         }
 

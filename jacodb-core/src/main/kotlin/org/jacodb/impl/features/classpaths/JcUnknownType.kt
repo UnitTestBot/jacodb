@@ -19,7 +19,7 @@ package org.jacodb.impl.features.classpaths
 import org.jacodb.api.jvm.*
 import org.jacodb.api.jvm.ext.objectType
 import org.jacodb.impl.cfg.util.OBJECT_CLASS
-import org.jacodb.impl.types.TypeNameImpl
+import org.jacodb.impl.cfg.util.typeNameFromJvmName
 import org.objectweb.asm.Opcodes
 
 
@@ -79,7 +79,7 @@ open class JcUnknownClassLookup(val clazz: JcClassOrInterface) : JcLookup<JcFiel
 
     override fun field(name: String, typeName: TypeName?, fieldKind: JcLookup.FieldKind): JcField {
         val staticModifier = if (fieldKind == JcLookup.FieldKind.STATIC) Opcodes.ACC_STATIC else 0
-        val fieldType = typeName ?: TypeNameImpl(OBJECT_CLASS)
+        val fieldType = typeName ?: OBJECT_CLASS.typeNameFromJvmName()
         return JcUnknownField(clazz, name, access = Opcodes.ACC_PUBLIC or staticModifier, fieldType)
     }
 
@@ -99,7 +99,7 @@ open class JcUnknownTypeLookup(val type: JcClassType) : JcLookup<JcTypedField, J
 
     override fun field(name: String, typeName: TypeName?, fieldKind: JcLookup.FieldKind): JcTypedField {
         val staticModifier = if (fieldKind == JcLookup.FieldKind.STATIC) Opcodes.ACC_STATIC else 0
-        val fieldType = typeName ?: TypeNameImpl(OBJECT_CLASS)
+        val fieldType = typeName ?: OBJECT_CLASS.typeNameFromJvmName()
         return JcUnknownField.typedField(type, name, access = Opcodes.ACC_PUBLIC or staticModifier, fieldType)
     }
 
