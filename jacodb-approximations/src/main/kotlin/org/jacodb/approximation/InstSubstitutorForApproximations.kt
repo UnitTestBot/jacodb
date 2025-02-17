@@ -398,7 +398,7 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
     private fun <T : JcRawExpr> T.eliminateApproximations(typeName: TypeName, constructor: (TypeName) -> T): T {
         val className = typeName.typeName.toApproximationName()
         val originalClassName = findOriginalByApproximationOrNull(className) ?: return this
-        return constructor(TypeNameImpl(originalClassName))
+        return constructor(TypeNameImpl.fromTypeName(originalClassName))
     }
 
     override fun visitJcRawLocalVar(value: JcRawLocalVar): JcRawExpr {

@@ -33,5 +33,5 @@ fun TypeName.eliminateApproximation(): TypeName {
         return resultElemType.asArray(dim)
     }
     val originalClassName = findOriginalByApproximationOrNull(typeName.toApproximationName()) ?: return this
-    return TypeNameImpl(originalClassName)
+    return TypeNameImpl.fromTypeName(originalClassName)
 }

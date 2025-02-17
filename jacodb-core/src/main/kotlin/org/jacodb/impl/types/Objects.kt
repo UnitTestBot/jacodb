@@ -19,6 +19,7 @@ package org.jacodb.impl.types
 import kotlinx.serialization.Serializable
 import org.jacodb.api.jvm.ext.jcdbName
 import org.jacodb.api.jvm.TypeName
+import org.jacodb.api.jvm.ext.jvmName
 import org.jacodb.impl.storage.AnnotationValueKind
 import org.jacodb.impl.util.adjustEmptyList
 import org.jacodb.impl.util.interned
@@ -109,8 +110,13 @@ class ClassRef(val className: String) : AnnotationValue()
 class EnumRef(val className: String, val enumName: String) : AnnotationValue()
 
 @Serializable
-data class TypeNameImpl(private val jvmName: String) : TypeName {
+data class TypeNameImpl private constructor(private val jvmName: String) : TypeName {
     override val typeName: String = jvmName.jcdbName().interned
 
     override fun toString(): String = typeName
+
+    companion object {
+        fun fromJvmName(jvmName: String): TypeNameImpl = TypeNameImpl(jvmName)
+        fun fromTypeName(typeName: String): TypeNameImpl = fromJvmName(typeName.jvmName())
+    }
 }

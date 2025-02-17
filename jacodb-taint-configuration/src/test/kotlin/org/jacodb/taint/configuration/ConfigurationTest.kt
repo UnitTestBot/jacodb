@@ -54,11 +54,11 @@ open class ConfigurationTest : BaseTest() {
 
     @Test
     fun testVirtualMethod() {
-        val virtualParameter = JcVirtualParameter(0, TypeNameImpl(cp.objectType.typeName))
+        val virtualParameter = JcVirtualParameter(0, TypeNameImpl.fromTypeName(cp.objectType.typeName))
 
         val method = JcVirtualMethodImpl(
             name = "setValue",
-            returnType = TypeNameImpl(cp.objectType.typeName),
+            returnType = TypeNameImpl.fromTypeName(cp.objectType.typeName),
             parameters = listOf(virtualParameter),
             description = ""
         )

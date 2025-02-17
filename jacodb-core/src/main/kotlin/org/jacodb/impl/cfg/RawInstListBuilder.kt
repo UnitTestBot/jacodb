@@ -114,6 +114,8 @@ import org.jacodb.impl.cfg.util.isArray
 import org.jacodb.impl.cfg.util.isDWord
 import org.jacodb.impl.cfg.util.isPrimitive
 import org.jacodb.impl.cfg.util.typeName
+import org.jacodb.impl.cfg.util.typeNameFromAsmInternalName
+import org.jacodb.impl.cfg.util.typeNameFromJvmName
 import org.jacodb.impl.types.TypeNameImpl
 import org.objectweb.asm.*
 import org.objectweb.asm.tree.AbstractInsnNode
@@ -179,7 +181,7 @@ private fun parseBsmHandleTag(tag: Int): BsmHandleTag = when (tag) {
 }
 
 private fun parseType(any: Any): TypeName = when (any) {
-    is String -> any.typeName()
+    is String -> any.typeNameFromAsmInternalName()
     is Int -> parsePrimitiveType(any)
     is LabelNode -> {
         val newNode: TypeInsnNode = any.run {
@@ -191,7 +193,7 @@ private fun parseType(any: Any): TypeName = when (any) {
             } while (typeInsnNode == null)
             typeInsnNode
         }
-        newNode.desc.typeName()
+        newNode.desc.typeNameFromAsmInternalName()
     }
 
     else -> error("Unexpected local type $any")
@@ -210,7 +212,7 @@ private infix fun TypeName.isCompatibleWith(type: TypeName): Boolean {
     return isDWord == type.isDWord
 }
 
-private val OBJECT_TYPE_NAME = OBJECT_CLASS.typeName()
+private val OBJECT_TYPE_NAME = OBJECT_CLASS.typeNameFromJvmName()
 
 private fun typeLub(first: TypeName, second: TypeName): TypeName {
     if (first == second) return first
@@ -330,13 +332,15 @@ private val AbstractInsnNode.isBranchingInst
 private val AbstractInsnNode.isTerminateInst
     get() = this is InsnNode && (this.opcode == Opcodes.ATHROW || this.opcode in Opcodes.IRETURN..Opcodes.RETURN)
 
-private val TryCatchBlockNode.typeOrDefault get() = this.type ?: THROWABLE_CLASS
+private val TryCatchBlockNode.typeOrDefault: TypeName
+    get() = this.type?.typeNameFromAsmInternalName()
+        ?: THROWABLE_CLASS.typeNameFromJvmName()
 
-private val Collection<TryCatchBlockNode>.commonTypeOrDefault
-    get() = map { it.type }
+private val Collection<TryCatchBlockNode>.commonTypeOrDefault: TypeName
+    get() = map { it.type?.typeNameFromAsmInternalName() }
         .distinct()
         .singleOrNull()
-        ?: THROWABLE_CLASS
+        ?: THROWABLE_CLASS.typeNameFromJvmName()
 
 internal fun <K, V> identityMap(): MutableMap<K, V> = IdentityHashMap()
 
@@ -806,9 +810,9 @@ class RawInstListBuilder(
             val typeOfNewAssigment =
                 if (expr.typeName.typeName == PredefinedPrimitives.Null) {
                     findLocalVariableWithInstruction(variable, insn)
-                        ?.desc?.typeName()
+                        ?.desc?.typeNameFromJvmName()
                         ?: currentFrame.findLocal(variable)?.typeName
-                        ?: "java.lang.Object".typeName()
+                        ?: OBJECT_TYPE_NAME
                 } else {
                     expr.typeName
                 }
@@ -880,7 +884,7 @@ class RawInstListBuilder(
             nextVar = nextVar.copy(name = lvName)
         }
 
-        val declaredTypeName = lvNode?.desc?.typeName()
+        val declaredTypeName = lvNode?.desc?.typeNameFromJvmName()
         if (declaredTypeName != null && !declaredTypeName.isPrimitive && !typeName.isArray) {
             nextVar = nextVar.copy(typeName = declaredTypeName)
         }
@@ -1003,7 +1007,7 @@ class RawInstListBuilder(
         return Frame(locals.copyOf(localsRealSize), persistentListOf())
     }
 
-    private fun thisRef() = JcRawThis(method.enclosingClass.name.typeName())
+    private fun thisRef() = JcRawThis(TypeNameImpl.fromTypeName(method.enclosingClass.name))
 
     private fun buildInsnNode(insn: InsnNode, frame: FrameBuilder) = with(frame) {
         when (insn.opcode) {
@@ -1211,8 +1215,8 @@ class RawInstListBuilder(
             val rightName = right.typeName
             val max = maxOfPrimitiveTypes(leftName, rightName)
             return when {
-                max.lessThen(PredefinedPrimitives.Int) -> TypeNameImpl(PredefinedPrimitives.Int)
-                else -> TypeNameImpl(max)
+                max.lessThen(PredefinedPrimitives.Int) -> TypeNameImpl.fromTypeName(PredefinedPrimitives.Int)
+                else -> TypeNameImpl.fromTypeName(max)
             }
         }
         return left
@@ -1223,7 +1227,7 @@ class RawInstListBuilder(
         val expr = when (val opcode = insn.opcode) {
             in Opcodes.INEG..Opcodes.DNEG -> {
                 val resolvedType = maxOfPrimitiveTypes(operand.typeName.typeName, PredefinedPrimitives.Int)
-                JcRawNegExpr(TypeNameImpl(resolvedType), operand)
+                JcRawNegExpr(TypeNameImpl.fromTypeName(resolvedType), operand)
             }
 
             Opcodes.ARRAYLENGTH -> JcRawLengthExpr(PredefinedPrimitives.Int.typeName(), operand)
@@ -1296,8 +1300,8 @@ class RawInstListBuilder(
 
     private fun buildFieldInsnNode(insnNode: FieldInsnNode, frame: FrameBuilder) {
         val fieldName = insnNode.name
-        val fieldType = insnNode.desc.typeName()
-        val declaringClass = insnNode.owner.typeName()
+        val fieldType = insnNode.desc.typeNameFromJvmName()
+        val declaringClass = insnNode.owner.typeNameFromAsmInternalName()
         when (insnNode.opcode) {
             Opcodes.GETFIELD -> {
                 val assignment = nextRegister(fieldType)
@@ -1391,17 +1395,17 @@ class RawInstListBuilder(
     private val Handle.bsmHandleArg
         get() = BsmHandle(
             parseBsmHandleTag(tag),
-            owner.typeName(),
+            owner.typeNameFromAsmInternalName(),
             name,
             if (desc.contains("(")) {
-                Type.getArgumentTypes(desc).map { it.descriptor.typeName() }
+                Type.getArgumentTypes(desc).map { it.descriptor.typeNameFromJvmName() }
             } else {
                 listOf()
             },
             if (desc.contains("(")) {
-                Type.getReturnType(desc).descriptor.typeName()
+                Type.getReturnType(desc).descriptor.typeNameFromJvmName()
             } else {
-                Type.getReturnType("(;)$desc").descriptor.typeName()
+                Type.getReturnType("(;)$desc").descriptor.typeNameFromJvmName()
             },
             isInterface
         )
@@ -1431,14 +1435,14 @@ class RawInstListBuilder(
             bsmMethod,
             bsmArgs,
             insnNode.name,
-            Type.getArgumentTypes(desc).map { it.descriptor.typeName() },
-            Type.getReturnType(desc).descriptor.typeName(),
+            Type.getArgumentTypes(desc).map { it.descriptor.typeNameFromJvmName() },
+            Type.getReturnType(desc).descriptor.typeNameFromJvmName(),
             args,
         )
         if (Type.getReturnType(desc) == Type.VOID_TYPE) {
             addInstruction(insnNode, JcRawCallInst(method, expr))
         } else {
-            val result = nextRegister(Type.getReturnType(desc).descriptor.typeName())
+            val result = nextRegister(Type.getReturnType(desc).descriptor.typeNameFromJvmName())
             addInstruction(insnNode, JcRawAssignInst(method, result, expr))
             push(result)
         }
@@ -1618,7 +1622,7 @@ class RawInstListBuilder(
         // If we have several variables types for one register we have to search right type in debug info otherwise we cannot guarantee anything
         val debugType = findLocalVariableWithInstruction(variable, curLabel)
                 ?.let { Type.getType(it.desc) }
-                ?.descriptor?.typeName()
+                ?.descriptor?.typeNameFromJvmName()
 
         if (debugType != null) return debugType
 
@@ -1658,7 +1662,7 @@ class RawInstListBuilder(
 
         val catchEntries = tryCatchHandlers[insnNode].orEmpty()
         if (catchEntries.isNotEmpty()) {
-            throwable = nextRegister(catchEntries.commonTypeOrDefault.typeName())
+            throwable = nextRegister(catchEntries.commonTypeOrDefault)
 
             val entries = catchEntries.mapIndexed { index, node ->
                 buildCatchEntry(node)
@@ -1701,7 +1705,7 @@ class RawInstListBuilder(
             instructionList(node.end).add(endLabel)
         }
 
-        return JcRawCatchEntry(node.typeOrDefault.typeName(), startLabel.ref, endLabel.ref)
+        return JcRawCatchEntry(node.typeOrDefault, startLabel.ref, endLabel.ref)
     }
 
     private fun buildLineNumberNode(insnNode: LineNumberNode) =
@@ -1713,15 +1717,15 @@ class RawInstListBuilder(
             is Float -> JcRawFloat(cst)
             is Double -> JcRawDouble(cst)
             is Long -> JcRawLong(cst)
-            is String -> JcRawStringConstant(cst, STRING_CLASS.typeName())
-            is Type -> JcRawClassConstant(cst.descriptor.typeName(), CLASS_CLASS.typeName())
+            is String -> JcRawStringConstant(cst, STRING_CLASS.typeNameFromJvmName())
+            is Type -> JcRawClassConstant(cst.descriptor.typeNameFromJvmName(), CLASS_CLASS.typeNameFromJvmName())
             is Handle -> {
                 JcRawMethodConstant(
-                    cst.owner.typeName(),
+                    cst.owner.typeNameFromAsmInternalName(),
                     cst.name,
-                    Type.getArgumentTypes(cst.desc).map { it.descriptor.typeName() },
-                    Type.getReturnType(cst.desc).descriptor.typeName(),
-                    METHOD_HANDLE_CLASS.typeName()
+                    Type.getArgumentTypes(cst.desc).map { it.descriptor.typeNameFromJvmName() },
+                    Type.getReturnType(cst.desc).descriptor.typeNameFromJvmName(),
+                    METHOD_HANDLE_CLASS.typeNameFromJvmName()
                 )
             }
 
@@ -1735,18 +1739,18 @@ class RawInstListBuilder(
             is Float -> push(ldcValue(cst))
             is Double -> push(ldcValue(cst))
             is Long -> push(ldcValue(cst))
-            is String -> push(JcRawStringConstant(cst, STRING_CLASS.typeName()))
+            is String -> push(JcRawStringConstant(cst, STRING_CLASS.typeNameFromJvmName()))
             is Type -> {
-                val assignment = nextRegister(CLASS_CLASS.typeName())
+                val assignment = nextRegister(CLASS_CLASS.typeNameFromJvmName())
                 addInstruction(
                     insnNode, JcRawAssignInst(
                         method,
                         assignment,
                         when (cst.sort) {
                             Type.METHOD -> JcRawMethodType(
-                                cst.argumentTypes.map { it.descriptor.typeName() },
-                                cst.returnType.descriptor.typeName(),
-                                METHOD_TYPE_CLASS.typeName()
+                                cst.argumentTypes.map { it.descriptor.typeNameFromJvmName() },
+                                cst.returnType.descriptor.typeNameFromJvmName(),
+                                METHOD_TYPE_CLASS.typeNameFromJvmName()
                             )
 
                             else -> ldcValue(cst)
@@ -1757,7 +1761,7 @@ class RawInstListBuilder(
             }
 
             is Handle -> {
-                val assignment = nextRegister(CLASS_CLASS.typeName())
+                val assignment = nextRegister(CLASS_CLASS.typeNameFromJvmName())
                 addInstruction(
                     insnNode, JcRawAssignInst(
                         method,
@@ -1770,7 +1774,7 @@ class RawInstListBuilder(
 
             is ConstantDynamic -> {
                 val methodHande = cst.bootstrapMethod
-                val assignment = nextRegister(CLASS_CLASS.typeName())
+                val assignment = nextRegister(CLASS_CLASS.typeNameFromJvmName())
                 val exprs = arrayListOf<JcRawValue>()
                 repeat(cst.bootstrapMethodArgumentCount) {
                     exprs.add(
@@ -1779,38 +1783,38 @@ class RawInstListBuilder(
                 }
                 val methodCall: JcRawCallExpr = when (cst.bootstrapMethod.tag) {
                     Opcodes.INVOKESPECIAL -> JcRawSpecialCallExpr(
-                        methodHande.owner.typeName(),
+                        methodHande.owner.typeNameFromAsmInternalName(),
                         cst.name,
-                        Type.getArgumentTypes(methodHande.desc).map { it.descriptor.typeName() },
-                        Type.getReturnType(methodHande.desc).descriptor.typeName(),
+                        Type.getArgumentTypes(methodHande.desc).map { it.descriptor.typeNameFromJvmName() },
+                        Type.getReturnType(methodHande.desc).descriptor.typeNameFromJvmName(),
                         thisRef(),
                         exprs
                     )
 
                     else -> {
-                        val lookupAssignment = nextRegister(METHOD_HANDLES_LOOKUP_CLASS.typeName())
+                        val lookupAssignment = nextRegister(METHOD_HANDLES_LOOKUP_CLASS.typeNameFromJvmName())
                         addInstruction(
                             insnNode, JcRawAssignInst(
                                 method,
                                 lookupAssignment,
                                 JcRawStaticCallExpr(
-                                    METHOD_HANDLES_CLASS.typeName(),
+                                    METHOD_HANDLES_CLASS.typeNameFromJvmName(),
                                     "lookup",
                                     emptyList(),
-                                    METHOD_HANDLES_LOOKUP_CLASS.typeName(),
+                                    METHOD_HANDLES_LOOKUP_CLASS.typeNameFromJvmName(),
                                     emptyList()
                                 )
                             )
                         )
                         JcRawStaticCallExpr(
-                            methodHande.owner.typeName(),
+                            methodHande.owner.typeNameFromAsmInternalName(),
                             methodHande.name,
-                            Type.getArgumentTypes(methodHande.desc).map { it.descriptor.typeName() },
-                            Type.getReturnType(methodHande.desc).descriptor.typeName(),
+                            Type.getArgumentTypes(methodHande.desc).map { it.descriptor.typeNameFromJvmName() },
+                            Type.getReturnType(methodHande.desc).descriptor.typeNameFromJvmName(),
                             listOf(
                                 lookupAssignment,
-                                JcRawStringConstant(cst.name, STRING_CLASS.typeName()),
-                                JcRawClassConstant(cst.descriptor.typeName(), CLASS_CLASS.typeName())
+                                JcRawStringConstant(cst.name, STRING_CLASS.typeNameFromJvmName()),
+                                JcRawClassConstant(cst.descriptor.typeNameFromJvmName(), CLASS_CLASS.typeNameFromJvmName())
                             ) + exprs,
                             methodHande.isInterface
                         )
@@ -1834,13 +1838,14 @@ class RawInstListBuilder(
     }
 
     private fun buildMethodInsnNode(insnNode: MethodInsnNode, frame: FrameBuilder) = with(frame) {
+        val ownerTypeName = insnNode.owner.typeNameFromAsmInternalName()
         val owner = when {
-            insnNode.owner.typeName().isArray -> OBJECT_TYPE_NAME
-            else -> insnNode.owner.typeName()
+            ownerTypeName.isArray -> OBJECT_TYPE_NAME
+            else -> ownerTypeName
         }
         val methodName = insnNode.name
-        val argTypes = Type.getArgumentTypes(insnNode.desc).map { it.descriptor.typeName() }
-        val returnType = Type.getReturnType(insnNode.desc).descriptor.typeName()
+        val argTypes = Type.getArgumentTypes(insnNode.desc).map { it.descriptor.typeNameFromJvmName() }
+        val returnType = Type.getReturnType(insnNode.desc).descriptor.typeNameFromJvmName()
 
         val args = Type.getArgumentTypes(insnNode.desc).map { pop() }.reversed()
 
@@ -1891,7 +1896,7 @@ class RawInstListBuilder(
         if (Type.getReturnType(insnNode.desc) == Type.VOID_TYPE) {
             addInstruction(insnNode, JcRawCallInst(method, expr))
         } else {
-            val result = nextRegister(Type.getReturnType(insnNode.desc).descriptor.typeName())
+            val result = nextRegister(Type.getReturnType(insnNode.desc).descriptor.typeNameFromJvmName())
             addInstruction(insnNode, JcRawAssignInst(method, result, expr))
             push(result)
         }
@@ -1902,7 +1907,7 @@ class RawInstListBuilder(
         repeat(insnNode.dims) {
             dimensions += pop()
         }
-        val expr = JcRawNewArrayExpr(insnNode.desc.typeName(), dimensions.reversed())
+        val expr = JcRawNewArrayExpr(insnNode.desc.typeNameFromJvmName(), dimensions.reversed())
         val assignment = nextRegister(expr.typeName)
         addInstruction(insnNode, JcRawAssignInst(method, assignment, expr))
         push(assignment)
@@ -1918,7 +1923,7 @@ class RawInstListBuilder(
     }
 
     private fun buildTypeInsnNode(insnNode: TypeInsnNode, frame: FrameBuilder) = with(frame) {
-        val type = insnNode.desc.typeName()
+        val type = insnNode.desc.typeNameFromAsmInternalName()
         when (insnNode.opcode) {
             Opcodes.NEW -> {
                 val assignment = nextRegister(type)
