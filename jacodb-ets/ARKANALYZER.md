@@ -6,7 +6,7 @@ Clone and install the ArkAnalyzer via NPM:
 
 ```shell
 cd ~/dev
-git clone https://gitee.com/openharmony-sig/arkanalyzer
+git clone https://gitcode.com/openharmony-sig/arkanalyzer
 cd arkanalyzer
 npm install
 npm run build
@@ -16,10 +16,10 @@ The `npm run build` command will generate the `out` directory, which contains th
 
 ### Usage of forked ArkAnalyzer
 
-Most probably, you will have to use our fork of ArkAnalyzer (https://gitee.com/Lipenx/arkanalyzer) and checkout a specific branch that is consistent with the current state of jacodb.
+Most probably, you will have to use our fork of ArkAnalyzer (https://gitcode.com/Lipen/arkanalyzer) and checkout a specific branch that is consistent with the current state of jacodb.
 For this, replace the repo url in the commands above and use `git switch <branch>` to checkout the desired branch.
 
-> Latest supported AA branch is `neo/2025-02-13`.
+> Latest supported AA branch is `neo/2025-02-24`.
 
 ## Serialize TS to JSON
 
