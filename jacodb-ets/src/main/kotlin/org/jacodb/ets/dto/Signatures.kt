@@ -59,6 +59,7 @@ data class MethodParameterDto(
     val name: String,
     val type: TypeDto,
     val isOptional: Boolean = false,
+    val isRest: Boolean = false,
 )
 
 @Serializable

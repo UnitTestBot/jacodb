@@ -120,6 +120,7 @@ data class EtsMethodParameter(
     val name: String,
     override val type: EtsType,
     val isOptional: Boolean = false,
+    val isRest: Boolean = false,
 ) : CommonMethodParameter {
     override fun toString(): String {
         return "$name${if (isOptional) "?" else ""}: $type"
