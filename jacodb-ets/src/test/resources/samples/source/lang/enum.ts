@@ -1,0 +1,4 @@
+enum Animal {
+    Cat,
+    Dog,
+}
