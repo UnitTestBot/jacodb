@@ -472,4 +472,14 @@ class EtsFromJsonTest {
         assertEquals("DummyStmt", stmtDto.kind)
         assertEquals(42, stmtDto.extra.getValue("value").jsonPrimitive.content.toInt())
     }
+
+    @Test
+    fun testVararg() {
+        val path = "/samples/etsir/ast/lang/vararg.ts.json"
+        val file = loadEtsFileFromResource(path)
+        val method = file.classes.flatMap { it.methods }.first { it.name == "f" }
+        assertEquals(method.parameters.size, 2)
+        assertEquals(method.parameters[0].isRest, false)
+        assertEquals(method.parameters[1].isRest, true)
+    }
 }

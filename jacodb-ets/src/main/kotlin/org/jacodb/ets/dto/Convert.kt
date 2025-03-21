@@ -695,6 +695,7 @@ fun MethodSignatureDto.toEtsMethodSignature(): EtsMethodSignature {
                 name = param.name,
                 type = param.type.toEtsType(),
                 isOptional = param.isOptional,
+                isRest = param.isRest,
             )
         },
         returnType = returnType.toEtsType(),
