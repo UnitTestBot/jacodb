@@ -47,6 +47,7 @@ import org.jacodb.ets.dto.ValueDto
 import org.jacodb.ets.dto.dtoModule
 import org.jacodb.ets.dto.toEtsLocal
 import org.jacodb.ets.dto.toEtsMethod
+import org.jacodb.ets.model.EtsClassCategory
 import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsFileSignature
@@ -478,8 +479,19 @@ class EtsFromJsonTest {
         val path = "/samples/etsir/ast/lang/vararg.ts.json"
         val file = loadEtsFileFromResource(path)
         val method = file.classes.flatMap { it.methods }.first { it.name == "f" }
-        assertEquals(method.parameters.size, 2)
-        assertEquals(method.parameters[0].isRest, false)
-        assertEquals(method.parameters[1].isRest, true)
+        assertEquals(2, method.parameters.size)
+        assertEquals(false, method.parameters[0].isRest)
+        assertEquals(true, method.parameters[1].isRest)
+    }
+
+    @Test
+    fun testClassCategory() {
+        val path = "/samples/etsir/ast/lang/enum.ts.json"
+        val file = loadEtsFileFromResource(path)
+        val cls = file.classes.first { it.name == "Animal" }
+        assertEquals(EtsClassCategory.ENUM, cls.category)
+        assertEquals(2, cls.fields.size)
+        assertEquals("Cat", cls.fields[0].name)
+        assertEquals("Dog", cls.fields[1].name)
     }
 }

@@ -24,6 +24,7 @@ interface EtsClass : EtsBaseModel {
     val fields: List<EtsField>
     val methods: List<EtsMethod>
     val ctor: EtsMethod
+    val category: EtsClassCategory
     val superClass: EtsClassSignature?
     val implementedInterfaces: List<EtsClassSignature>
 
@@ -36,6 +37,7 @@ class EtsClassImpl(
     override val fields: List<EtsField>,
     override val methods: List<EtsMethod>,
     override val ctor: EtsMethod,
+    override val category: EtsClassCategory = EtsClassCategory.CLASS,
     override val superClass: EtsClassSignature? = null,
     override val implementedInterfaces: List<EtsClassSignature> = emptyList(),
     override val typeParameters: List<EtsType> = emptyList(),

@@ -111,6 +111,7 @@ import org.jacodb.ets.base.EtsVoidType
 import org.jacodb.ets.base.EtsYieldExpr
 import org.jacodb.ets.graph.EtsCfg
 import org.jacodb.ets.model.EtsClass
+import org.jacodb.ets.model.EtsClassCategory
 import org.jacodb.ets.model.EtsClassImpl
 import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsDecorator
@@ -534,6 +535,7 @@ fun ClassDto.toEtsClass(): EtsClass {
     val methods = methodDtos.map { it.toEtsMethod() }
     val ctor = ctorDto.toEtsMethod()
 
+    val category = category.toEtsClassCategory()
     val typeParameters = typeParameters?.map { it.toEtsType() } ?: emptyList()
 
     val modifiers = EtsModifiers(modifiers)
@@ -544,6 +546,7 @@ fun ClassDto.toEtsClass(): EtsClass {
         fields = fields,
         methods = methods,
         ctor = ctor,
+        category = category,
         superClass = superClassSignature,
         implementedInterfaces = implementedInterfaces,
         typeParameters = typeParameters,
@@ -787,4 +790,16 @@ fun LocalDto.toEtsLocal(): EtsLocal {
         name = name,
         type = type.toEtsType(),
     )
+}
+
+private fun Int.toEtsClassCategory() : EtsClassCategory {
+    return when (this) {
+        0 -> EtsClassCategory.CLASS
+        1 -> EtsClassCategory.STRUCT
+        2 -> EtsClassCategory.INTERFACE
+        3 -> EtsClassCategory.ENUM
+        4 -> EtsClassCategory.TYPE_LITERAL
+        5 -> EtsClassCategory.OBJECT
+        else -> error("Unknown class category: $this")
+    }
 }
