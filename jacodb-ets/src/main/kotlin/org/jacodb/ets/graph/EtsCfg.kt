@@ -57,7 +57,7 @@ class EtsCfg(
     }
 
     override fun predecessors(node: EtsStmt): Set<EtsStmt> {
-        return predecessorMap[node]!!
+        return predecessorMap[node].orEmpty()
     }
 
     companion object {

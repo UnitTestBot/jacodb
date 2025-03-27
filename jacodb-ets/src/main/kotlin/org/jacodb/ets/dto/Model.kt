@@ -59,6 +59,7 @@ data class ClassDto(
     val signature: ClassSignatureDto,
     val modifiers: Int,
     val decorators: List<DecoratorDto>,
+    val category: Int = 0,
     val typeParameters: List<TypeDto>? = null,
     val superClassName: String?,
     val implementedInterfaceNames: List<String>,
