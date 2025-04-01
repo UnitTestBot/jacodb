@@ -20,7 +20,7 @@ import org.jacodb.api.jvm.JcAccessible
 import org.jacodb.api.jvm.JvmType
 import org.jacodb.api.jvm.JvmTypeParameterDeclaration
 
-internal class JvmTypeParameterDeclarationImpl(
+class JvmTypeParameterDeclarationImpl(
     override val symbol: String,
     override val owner: JcAccessible,
     override val bounds: List<JvmType>? = null
