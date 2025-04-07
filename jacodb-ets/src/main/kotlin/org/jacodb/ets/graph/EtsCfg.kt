@@ -22,7 +22,7 @@ import org.jacodb.impl.cfg.graphs.GraphDominators
 
 class EtsCfg(
     val stmts: List<EtsStmt>,
-    private val successorMap: Map<EtsStmt, List<EtsStmt>>, // Note: EtsIfStmt successors are (false, true) branches
+    successorMap: Map<EtsStmt, List<EtsStmt>>, // Note: EtsIfStmt successors are (false, true) branches
 ) : EtsBytecodeGraph<EtsStmt> {
 
     private val predecessorMap: Map<EtsStmt, Set<EtsStmt>> by lazy {
@@ -33,6 +33,14 @@ class EtsCfg(
             }
         }
         map
+    }
+
+    private val successorsLists = stmts.map {
+        successorMap[it].orEmpty().toSet()
+    }
+
+    private val predecessorLists = stmts.map {
+        predecessorMap[it].orEmpty().toSet()
     }
 
     override fun throwers(node: EtsStmt): Set<EtsStmt> {
@@ -53,11 +61,11 @@ class EtsCfg(
         instructions.filterIsInstance<EtsTerminatingStmt>()
 
     override fun successors(node: EtsStmt): Set<EtsStmt> {
-        return successorMap[node]!!.toSet()
+        return successorsLists[node.location.index]
     }
 
     override fun predecessors(node: EtsStmt): Set<EtsStmt> {
-        return predecessorMap[node].orEmpty()
+        return predecessorLists[node.location.index]
     }
 
     companion object {
