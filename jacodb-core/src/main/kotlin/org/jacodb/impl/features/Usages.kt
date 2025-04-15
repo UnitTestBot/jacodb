@@ -34,6 +34,7 @@ import org.jacodb.impl.storage.defaultBatchSize
 import org.jacodb.impl.storage.dslContext
 import org.jacodb.impl.storage.eqOrNull
 import org.jacodb.impl.storage.ers.filterDeleted
+import org.jacodb.impl.storage.ers.filterLocations
 import org.jacodb.impl.storage.ers.toClassSource
 import org.jacodb.impl.storage.execute
 import org.jacodb.impl.storage.executeQueries
@@ -279,11 +280,12 @@ object Usages : JcFeature<UsageFeatureRequest, UsageFeatureResponse> {
                             val locationId = callee.getCompressed<Long>("locationId")!!
                             callee.getLinks("calls").map { it to locationId }
                         }
-                        .map { (call, _) ->
+                        .map { (call, callerLocationId) ->
                             val callerId = call.getCompressedBlob<Long>("callerId")!!
                             val caller = symbolInterner.findSymbolName(callerId)!!
                             val clazz = txn.find("Class", "nameId", callerId.compressed)
                                 .filterDeleted()
+                                .filterLocations(callerLocationId)
                                 .first()
                             val classId = clazz.id.instanceId
                             UsageFeatureResponse(
