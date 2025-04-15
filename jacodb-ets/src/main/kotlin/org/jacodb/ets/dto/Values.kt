@@ -275,7 +275,7 @@ data class StaticCallExprDto(
 @Serializable
 @SerialName("PtrCallExpr")
 data class PtrCallExprDto(
-    val ptr: ValueDto, // Local
+    val ptr: ValueDto, // Local or FieldRef
     override val method: MethodSignatureDto,
     override val args: List<ValueDto>,
 ) : CallExprDto
