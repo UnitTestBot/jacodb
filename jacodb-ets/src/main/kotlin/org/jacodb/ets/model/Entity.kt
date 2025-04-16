@@ -20,8 +20,11 @@ import org.jacodb.api.common.cfg.CommonExpr
 
 interface EtsEntity : CommonExpr {
 
+    @Deprecated("Do not rely on it!")
+    val type: EtsType
+
     override val typeName: String
-        get() = error("Not supported")
+        get() = type.typeName
 
     interface Visitor<out R> :
         EtsValue.Visitor<R>,
@@ -52,8 +55,8 @@ data class EtsRawEntity(
     val kind: String,
     val extra: Map<String, Any> = emptyMap(),
 ) : EtsEntity {
-    // override val type: EtsType
-    //     get() = EtsUnknownType
+    override val type: EtsType
+        get() = EtsUnknownType
 
     override fun toString(): String {
         return "$kind $extra"

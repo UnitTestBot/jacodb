@@ -16,9 +16,10 @@
 
 package org.jacodb.ets.model
 
+@Suppress("OVERRIDE_DEPRECATION")
 data class EtsLocal(
     val name: String,
-    var type: EtsType = EtsUnknownType,
+    override val type: EtsType = EtsUnknownType,
 ) : EtsImmediate, EtsLValue {
     override fun toString(): String {
         return name

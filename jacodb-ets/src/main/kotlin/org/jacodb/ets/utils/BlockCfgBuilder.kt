@@ -159,36 +159,42 @@ class EtsBlockCfgBuilder(
     private fun Expr.toEtsEntity(): EtsEntity = when (this) {
         is Local -> EtsLocal(
             name = name,
-            type = EtsUnknownType,
+            type = EtsUnknownType, // TODO
         )
 
         is Parameter -> EtsParameterRef(
             index = index,
+            type = EtsUnknownType, // TODO
         )
 
-        ThisRef -> EtsThis
+        ThisRef -> EtsThis(
+            type = EtsUnknownType, // TODO
+        )
 
         is Constant -> EtsNumberConstant(value = value)
 
         is UnaryExpr -> when (operator) {
-            UnaryOperator.NOT -> {
-                EtsNotExpr(arg = expr.toEtsEntity())
-            }
+            UnaryOperator.NOT -> EtsNotExpr(
+                arg = expr.toEtsEntity(),
+            )
 
-            UnaryOperator.NEG -> {
-                EtsNegExpr(arg = expr.toEtsEntity())
-            }
+            UnaryOperator.NEG -> EtsNegExpr(
+                arg = expr.toEtsEntity(),
+                type = EtsUnknownType, // TODO
+            )
         }
 
         is BinaryExpr -> when (operator) {
             BinaryOperator.AND -> EtsAndExpr(
                 left = left.toEtsEntity(),
                 right = right.toEtsEntity(),
+                type = EtsUnknownType, // TODO
             )
 
             BinaryOperator.OR -> EtsOrExpr(
                 left = left.toEtsEntity(),
                 right = right.toEtsEntity(),
+                type = EtsUnknownType, // TODO
             )
 
             BinaryOperator.EQ -> EtsEqExpr(
@@ -224,21 +230,25 @@ class EtsBlockCfgBuilder(
             BinaryOperator.ADD -> EtsAddExpr(
                 left = left.toEtsEntity(),
                 right = right.toEtsEntity(),
+                type = EtsUnknownType, // TODO
             )
 
             BinaryOperator.SUB -> EtsSubExpr(
                 left = left.toEtsEntity(),
                 right = right.toEtsEntity(),
+                type = EtsUnknownType, // TODO
             )
 
             BinaryOperator.MUL -> EtsMulExpr(
                 left = left.toEtsEntity(),
                 right = right.toEtsEntity(),
+                type = EtsUnknownType, // TODO
             )
 
             BinaryOperator.DIV -> EtsDivExpr(
                 left = left.toEtsEntity(),
                 right = right.toEtsEntity(),
+                type = EtsUnknownType, // TODO
             )
         }
     }

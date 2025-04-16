@@ -23,6 +23,7 @@ interface EtsValue : EtsEntity, CommonValue {
         fun visit(value: EtsLocal): R
 
         // Constant
+        fun visit(value: EtsConstant): R
         fun visit(value: EtsStringConstant): R
         fun visit(value: EtsBooleanConstant): R
         fun visit(value: EtsNumberConstant): R
@@ -39,6 +40,7 @@ interface EtsValue : EtsEntity, CommonValue {
         interface Default<out R> : Visitor<R> {
             override fun visit(value: EtsLocal): R = defaultVisit(value)
 
+            override fun visit(value: EtsConstant): R = defaultVisit(value)
             override fun visit(value: EtsStringConstant): R = defaultVisit(value)
             override fun visit(value: EtsBooleanConstant): R = defaultVisit(value)
             override fun visit(value: EtsNumberConstant): R = defaultVisit(value)

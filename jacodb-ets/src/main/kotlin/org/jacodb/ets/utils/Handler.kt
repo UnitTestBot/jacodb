@@ -28,6 +28,7 @@ import org.jacodb.ets.model.EtsBitXorExpr
 import org.jacodb.ets.model.EtsBooleanConstant
 import org.jacodb.ets.model.EtsCallStmt
 import org.jacodb.ets.model.EtsCastExpr
+import org.jacodb.ets.model.EtsConstant
 import org.jacodb.ets.model.EtsDeleteExpr
 import org.jacodb.ets.model.EtsDivExpr
 import org.jacodb.ets.model.EtsEntity
@@ -134,6 +135,10 @@ abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> 
     }
 
     final override fun visit(value: EtsLocal) {
+        handle(value)
+    }
+
+    final override fun visit(value: EtsConstant) {
         handle(value)
     }
 

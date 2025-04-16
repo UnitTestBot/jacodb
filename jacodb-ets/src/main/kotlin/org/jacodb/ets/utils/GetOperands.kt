@@ -28,6 +28,7 @@ import org.jacodb.ets.model.EtsBitXorExpr
 import org.jacodb.ets.model.EtsBooleanConstant
 import org.jacodb.ets.model.EtsCallStmt
 import org.jacodb.ets.model.EtsCastExpr
+import org.jacodb.ets.model.EtsConstant
 import org.jacodb.ets.model.EtsDeleteExpr
 import org.jacodb.ets.model.EtsDivExpr
 import org.jacodb.ets.model.EtsEntity
@@ -117,6 +118,9 @@ private object StmtGetOperands : EtsStmt.Visitor<Sequence<EtsEntity>> {
 private object EntityGetOperands : EtsEntity.Visitor<Sequence<EtsEntity>> {
 
     override fun visit(value: EtsLocal): Sequence<EtsEntity> =
+        emptySequence()
+
+    override fun visit(value: EtsConstant): Sequence<EtsEntity> =
         emptySequence()
 
     override fun visit(value: EtsStringConstant): Sequence<EtsEntity> =

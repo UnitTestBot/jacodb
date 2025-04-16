@@ -25,6 +25,7 @@ import org.jacodb.ets.model.EtsMethod
 import org.jacodb.ets.model.EtsNumberConstant
 import org.jacodb.ets.model.EtsStmt
 import org.jacodb.ets.model.EtsStmtLocation
+import org.jacodb.ets.model.EtsUnknownType
 import org.jacodb.ets.utils.AbstractHandler
 import org.jacodb.ets.utils.EntityCollector
 import kotlin.test.Test
@@ -37,7 +38,7 @@ class CollectorTest {
         val a = EtsLocal("a")
         val b = EtsLocal("b")
         val n = EtsNumberConstant(42.0)
-        val rhv = EtsAddExpr(b, n)
+        val rhv = EtsAddExpr(b, n, type = EtsUnknownType)
         val loc = EtsStmtLocation.stub(method)
         val stmt = EtsAssignStmt(loc, a, rhv)
         return stmt

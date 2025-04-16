@@ -14,6 +14,8 @@
  *  limitations under the License.
  */
 
+@file:Suppress("OVERRIDE_DEPRECATION")
+
 package org.jacodb.ets.model
 
 interface EtsConstant : EtsImmediate
@@ -21,6 +23,9 @@ interface EtsConstant : EtsImmediate
 data class EtsStringConstant(
     val value: String,
 ) : EtsConstant {
+    override val type: EtsType
+        get() = EtsStringType
+
     override fun toString(): String {
         return "\"$value\""
     }
@@ -33,6 +38,9 @@ data class EtsStringConstant(
 data class EtsBooleanConstant(
     val value: Boolean,
 ) : EtsConstant {
+    override val type: EtsType
+        get() = EtsBooleanType
+
     override fun toString(): String {
         return if (value) "true" else "false"
     }
@@ -50,6 +58,9 @@ data class EtsBooleanConstant(
 data class EtsNumberConstant(
     val value: Double,
 ) : EtsConstant {
+    override val type: EtsType
+        get() = EtsNumberType
+
     override fun toString(): String {
         return value.toString()
     }
@@ -60,6 +71,9 @@ data class EtsNumberConstant(
 }
 
 object EtsNullConstant : EtsConstant {
+    override val type: EtsType
+        get() = EtsNullType
+
     override fun toString(): String = "null"
 
     override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
@@ -68,6 +82,9 @@ object EtsNullConstant : EtsConstant {
 }
 
 object EtsUndefinedConstant : EtsConstant {
+    override val type: EtsType
+        get() = EtsUndefinedType
+
     override fun toString(): String = "undefined"
 
     override fun <R> accept(visitor: EtsValue.Visitor<R>): R {

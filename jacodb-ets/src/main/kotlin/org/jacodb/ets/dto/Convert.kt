@@ -278,10 +278,12 @@ class EtsMethodBuilder(
 
         is AwaitExprDto -> EtsAwaitExpr(
             arg = arg.toEtsEntity(),
+            type = type.toEtsType(),
         )
 
         is YieldExprDto -> EtsYieldExpr(
             arg = arg.toEtsEntity(),
+            type = type.toEtsType(),
         )
 
         is TypeOfExprDto -> EtsTypeOfExpr(
@@ -300,14 +302,14 @@ class EtsMethodBuilder(
 
         is UnaryOperationDto -> {
             val arg = arg.toEtsEntity()
-            // Note: `type` is ignored here!
+            val type = type.toEtsType()
             when (op) {
                 Ops.Unary.NOT -> EtsNotExpr(arg)
-                Ops.Unary.BIT_NOT -> EtsBitNotExpr(arg)
-                Ops.Unary.MINUS -> EtsNegExpr(arg)
-                Ops.Unary.PLUS -> EtsUnaryPlusExpr(arg)
-                Ops.Unary.INC -> EtsPreIncExpr(arg)
-                Ops.Unary.DEC -> EtsPreDecExpr(arg)
+                Ops.Unary.BIT_NOT -> EtsBitNotExpr(arg, type)
+                Ops.Unary.MINUS -> EtsNegExpr(arg, type)
+                Ops.Unary.PLUS -> EtsUnaryPlusExpr(arg, type)
+                Ops.Unary.INC -> EtsPreIncExpr(arg, type)
+                Ops.Unary.DEC -> EtsPreDecExpr(arg, type)
                 else -> error("Unknown unop: '$op'")
             }
         }
@@ -315,23 +317,23 @@ class EtsMethodBuilder(
         is BinaryOperationDto -> {
             val left = left.toEtsEntity()
             val right = right.toEtsEntity()
-            // val type = type.toEtsType()
+            val type = type.toEtsType()
             when (op) {
-                Ops.Binary.ADD -> EtsAddExpr(left, right)
-                Ops.Binary.SUB -> EtsSubExpr(left, right)
-                Ops.Binary.MUL -> EtsMulExpr(left, right)
-                Ops.Binary.DIV -> EtsDivExpr(left, right)
-                Ops.Binary.MOD -> EtsRemExpr(left, right)
-                Ops.Binary.EXP -> EtsExpExpr(left, right)
-                Ops.Binary.BIT_AND -> EtsBitAndExpr(left, right)
-                Ops.Binary.BIT_OR -> EtsBitOrExpr(left, right)
-                Ops.Binary.BIT_XOR -> EtsBitXorExpr(left, right)
-                Ops.Binary.LSH -> EtsLeftShiftExpr(left, right)
-                Ops.Binary.RSH -> EtsRightShiftExpr(left, right)
-                Ops.Binary.URSH -> EtsUnsignedRightShiftExpr(left, right)
-                Ops.Binary.AND -> EtsAndExpr(left, right)
-                Ops.Binary.OR -> EtsOrExpr(left, right)
-                Ops.Binary.NULLISH -> EtsNullishCoalescingExpr(left, right)
+                Ops.Binary.ADD -> EtsAddExpr(left, right, type)
+                Ops.Binary.SUB -> EtsSubExpr(left, right, type)
+                Ops.Binary.MUL -> EtsMulExpr(left, right, type)
+                Ops.Binary.DIV -> EtsDivExpr(left, right, type)
+                Ops.Binary.MOD -> EtsRemExpr(left, right, type)
+                Ops.Binary.EXP -> EtsExpExpr(left, right, type)
+                Ops.Binary.BIT_AND -> EtsBitAndExpr(left, right, type)
+                Ops.Binary.BIT_OR -> EtsBitOrExpr(left, right, type)
+                Ops.Binary.BIT_XOR -> EtsBitXorExpr(left, right, type)
+                Ops.Binary.LSH -> EtsLeftShiftExpr(left, right, type)
+                Ops.Binary.RSH -> EtsRightShiftExpr(left, right, type)
+                Ops.Binary.URSH -> EtsUnsignedRightShiftExpr(left, right, type)
+                Ops.Binary.AND -> EtsAndExpr(left, right, type)
+                Ops.Binary.OR -> EtsOrExpr(left, right, type)
+                Ops.Binary.NULLISH -> EtsNullishCoalescingExpr(left, right, type)
                 else -> error("Unknown binop: $op")
             }
         }
@@ -358,23 +360,29 @@ class EtsMethodBuilder(
             instance = (instance as LocalDto).toEtsLocal(), // safe cast
             callee = method.toEtsMethodSignature(),
             args = args.map { ensureLocal(it.toEtsEntity()) },
+            type = type.toEtsType(),
         )
 
         is StaticCallExprDto -> EtsStaticCallExpr(
             callee = method.toEtsMethodSignature(),
             args = args.map { ensureLocal(it.toEtsEntity()) },
+            type = type.toEtsType(),
         )
 
         is PtrCallExprDto -> EtsPtrCallExpr(
             ptr = ensureLocal(ptr.toEtsEntity() as EtsValue), // safe cast
             callee = method.toEtsMethodSignature(),
             args = args.map { ensureLocal(it.toEtsEntity()) },
+            type = type.toEtsType(),
         )
 
-        is ThisRefDto -> EtsThis
+        is ThisRefDto -> EtsThis(
+            type = type.toEtsType(),
+        )
 
         is ParameterRefDto -> EtsParameterRef(
             index = index,
+            type = type.toEtsType(),
         )
 
         is ArrayRefDto -> EtsArrayAccess(
@@ -544,7 +552,7 @@ fun ClassTypeDto.toEtsClassType(): EtsClassType {
 }
 
 fun ConstantDto.toEtsConstant(): EtsConstant {
-    return when (type.toEtsType()) {
+    return when (val type = type.toEtsType()) {
         EtsStringType -> EtsStringConstant(value = this.value)
 
         EtsBooleanType -> EtsBooleanConstant(value = value.toBoolean())
@@ -555,8 +563,19 @@ fun ConstantDto.toEtsConstant(): EtsConstant {
 
         EtsUndefinedType -> EtsUndefinedConstant
 
-        // Note: we simply use StringConstant for all other types
-        else -> EtsStringConstant(value = this.value)
+        else -> object : EtsConstant {
+            val value: String = this@toEtsConstant.value
+
+            override val type: EtsType = type
+
+            override fun toString(): String {
+                return value
+            }
+
+            override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
+                return visitor.visit(this)
+            }
+        }
     }
 }
 

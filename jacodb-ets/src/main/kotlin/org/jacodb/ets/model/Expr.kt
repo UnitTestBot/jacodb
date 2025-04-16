@@ -14,6 +14,8 @@
  *  limitations under the License.
  */
 
+@file:Suppress("OVERRIDE_DEPRECATION")
+
 package org.jacodb.ets.model
 
 import org.jacodb.api.common.cfg.CommonCallExpr
@@ -142,7 +144,7 @@ interface EtsExpr : EtsEntity {
 }
 
 data class EtsNewExpr(
-    val type: EtsType,
+    override val type: EtsType,
 ) : EtsExpr {
     override fun toString(): String {
         return "new $type"
@@ -157,6 +159,9 @@ data class EtsNewArrayExpr(
     val elementType: EtsType,
     val size: EtsEntity,
 ) : EtsExpr {
+    override val type: EtsType
+        get() = EtsArrayType(elementType, 1)
+
     override fun toString(): String {
         return "new Array<$elementType>($size)"
     }
@@ -168,7 +173,7 @@ data class EtsNewArrayExpr(
 
 data class EtsCastExpr(
     val arg: EtsEntity,
-    val type: EtsType,
+    override val type: EtsType,
 ) : EtsExpr {
     override fun toString(): String {
         return "$arg as $type"
@@ -183,6 +188,9 @@ data class EtsInstanceOfExpr(
     val arg: EtsEntity,
     val checkType: EtsType,
 ) : EtsExpr {
+    override val type: EtsType
+        get() = EtsBooleanType
+
     override fun toString(): String {
         return "$arg instanceof $checkType"
     }
@@ -199,6 +207,9 @@ interface EtsUnaryExpr : EtsExpr {
 data class EtsDeleteExpr(
     override val arg: EtsEntity,
 ) : EtsUnaryExpr {
+    override val type: EtsType
+        get() = EtsBooleanType
+
     override fun toString(): String {
         return "delete $arg"
     }
@@ -210,6 +221,7 @@ data class EtsDeleteExpr(
 
 data class EtsAwaitExpr(
     override val arg: EtsEntity,
+    override val type: EtsType,
 ) : EtsUnaryExpr {
     override fun toString(): String {
         return "await $arg"
@@ -222,6 +234,7 @@ data class EtsAwaitExpr(
 
 data class EtsYieldExpr(
     override val arg: EtsEntity,
+    override val type: EtsType,
 ) : EtsUnaryExpr {
     override fun toString(): String {
         return "yield $arg"
@@ -235,6 +248,9 @@ data class EtsYieldExpr(
 data class EtsTypeOfExpr(
     override val arg: EtsEntity,
 ) : EtsUnaryExpr {
+    override val type: EtsType
+        get() = EtsStringType
+
     override fun toString(): String {
         return "typeof $arg"
     }
@@ -247,6 +263,9 @@ data class EtsTypeOfExpr(
 data class EtsVoidExpr(
     override val arg: EtsEntity,
 ) : EtsUnaryExpr {
+    override val type: EtsType
+        get() = EtsUndefinedType
+
     override fun toString(): String {
         return "void $arg"
     }
@@ -259,6 +278,9 @@ data class EtsVoidExpr(
 data class EtsNotExpr(
     override val arg: EtsEntity,
 ) : EtsUnaryExpr {
+    override val type: EtsType
+        get() = EtsBooleanType
+
     override fun toString(): String {
         return "!$arg"
     }
@@ -270,6 +292,7 @@ data class EtsNotExpr(
 
 data class EtsBitNotExpr(
     override val arg: EtsEntity,
+    override val type: EtsType,
 ) : EtsUnaryExpr {
     override fun toString(): String {
         return "~$arg"
@@ -282,6 +305,7 @@ data class EtsBitNotExpr(
 
 data class EtsNegExpr(
     override val arg: EtsEntity,
+    override val type: EtsType,
 ) : EtsUnaryExpr {
     override fun toString(): String {
         return "-$arg"
@@ -294,6 +318,7 @@ data class EtsNegExpr(
 
 data class EtsUnaryPlusExpr(
     override val arg: EtsEntity,
+    override val type: EtsType,
 ) : EtsUnaryExpr {
     override fun toString(): String {
         return "+$arg"
@@ -306,6 +331,7 @@ data class EtsUnaryPlusExpr(
 
 data class EtsPreIncExpr(
     override val arg: EtsEntity,
+    override val type: EtsType,
 ) : EtsUnaryExpr {
     override fun toString(): String {
         return "++$arg"
@@ -318,6 +344,7 @@ data class EtsPreIncExpr(
 
 data class EtsPreDecExpr(
     override val arg: EtsEntity,
+    override val type: EtsType,
 ) : EtsUnaryExpr {
     override fun toString(): String {
         return "--$arg"
@@ -330,6 +357,7 @@ data class EtsPreDecExpr(
 
 data class EtsPostIncExpr(
     override val arg: EtsEntity,
+    override val type: EtsType,
 ) : EtsUnaryExpr {
     override fun toString(): String {
         return "$arg++"
@@ -342,6 +370,7 @@ data class EtsPostIncExpr(
 
 data class EtsPostDecExpr(
     override val arg: EtsEntity,
+    override val type: EtsType,
 ) : EtsUnaryExpr {
     override fun toString(): String {
         return "$arg--"
@@ -357,7 +386,10 @@ interface EtsBinaryExpr : EtsExpr {
     val right: EtsEntity
 }
 
-interface EtsRelationExpr : EtsBinaryExpr
+interface EtsRelationExpr : EtsBinaryExpr {
+    override val type: EtsType
+        get() = EtsBooleanType
+}
 
 data class EtsEqExpr(
     override val left: EtsEntity,
@@ -481,6 +513,7 @@ interface EtsArithmeticExpr : EtsBinaryExpr
 data class EtsAddExpr(
     override val left: EtsEntity,
     override val right: EtsEntity,
+    override val type: EtsType,
 ) : EtsArithmeticExpr {
     override fun toString(): String {
         return "$left + $right"
@@ -494,6 +527,7 @@ data class EtsAddExpr(
 data class EtsSubExpr(
     override val left: EtsEntity,
     override val right: EtsEntity,
+    override val type: EtsType,
 ) : EtsArithmeticExpr {
     override fun toString(): String {
         return "$left - $right"
@@ -507,6 +541,7 @@ data class EtsSubExpr(
 data class EtsMulExpr(
     override val left: EtsEntity,
     override val right: EtsEntity,
+    override val type: EtsType,
 ) : EtsArithmeticExpr {
     override fun toString(): String {
         return "$left * $right"
@@ -520,6 +555,7 @@ data class EtsMulExpr(
 data class EtsDivExpr(
     override val left: EtsEntity,
     override val right: EtsEntity,
+    override val type: EtsType,
 ) : EtsArithmeticExpr {
     override fun toString(): String {
         return "$left / $right"
@@ -533,6 +569,7 @@ data class EtsDivExpr(
 data class EtsRemExpr(
     override val left: EtsEntity,
     override val right: EtsEntity,
+    override val type: EtsType,
 ) : EtsArithmeticExpr {
     override fun toString(): String {
         return "$left % $right"
@@ -546,6 +583,7 @@ data class EtsRemExpr(
 data class EtsExpExpr(
     override val left: EtsEntity,
     override val right: EtsEntity,
+    override val type: EtsType,
 ) : EtsArithmeticExpr {
     override fun toString(): String {
         return "$left ** $right"
@@ -561,6 +599,7 @@ interface EtsBitwiseExpr : EtsBinaryExpr
 data class EtsBitAndExpr(
     override val left: EtsEntity,
     override val right: EtsEntity,
+    override val type: EtsType,
 ) : EtsBitwiseExpr {
     override fun toString(): String {
         return "$left & $right"
@@ -574,6 +613,7 @@ data class EtsBitAndExpr(
 data class EtsBitOrExpr(
     override val left: EtsEntity,
     override val right: EtsEntity,
+    override val type: EtsType,
 ) : EtsBitwiseExpr {
     override fun toString(): String {
         return "$left | $right"
@@ -587,6 +627,7 @@ data class EtsBitOrExpr(
 data class EtsBitXorExpr(
     override val left: EtsEntity,
     override val right: EtsEntity,
+    override val type: EtsType,
 ) : EtsBitwiseExpr {
     override fun toString(): String {
         return "$left ^ $right"
@@ -600,6 +641,7 @@ data class EtsBitXorExpr(
 data class EtsLeftShiftExpr(
     override val left: EtsEntity,
     override val right: EtsEntity,
+    override val type: EtsType,
 ) : EtsBitwiseExpr {
     override fun toString(): String {
         return "$left << $right"
@@ -614,6 +656,7 @@ data class EtsLeftShiftExpr(
 data class EtsRightShiftExpr(
     override val left: EtsEntity,
     override val right: EtsEntity,
+    override val type: EtsType,
 ) : EtsBitwiseExpr {
     override fun toString(): String {
         return "$left >> $right"
@@ -628,6 +671,7 @@ data class EtsRightShiftExpr(
 data class EtsUnsignedRightShiftExpr(
     override val left: EtsEntity,
     override val right: EtsEntity,
+    override val type: EtsType,
 ) : EtsBitwiseExpr {
     override fun toString(): String {
         return "$left >>> $right"
@@ -643,6 +687,7 @@ interface EtsLogicalExpr : EtsBinaryExpr
 data class EtsAndExpr(
     override val left: EtsEntity,
     override val right: EtsEntity,
+    override val type: EtsType,
 ) : EtsLogicalExpr {
     override fun toString(): String {
         return "$left && $right"
@@ -656,6 +701,7 @@ data class EtsAndExpr(
 data class EtsOrExpr(
     override val left: EtsEntity,
     override val right: EtsEntity,
+    override val type: EtsType,
 ) : EtsLogicalExpr {
     override fun toString(): String {
         return "$left || $right"
@@ -669,6 +715,7 @@ data class EtsOrExpr(
 data class EtsNullishCoalescingExpr(
     override val left: EtsEntity,
     override val right: EtsEntity,
+    override val type: EtsType,
 ) : EtsLogicalExpr {
     override fun toString(): String {
         return "$left ?? $right"
@@ -688,6 +735,7 @@ data class EtsInstanceCallExpr(
     override val instance: EtsLocal,
     override val callee: EtsMethodSignature,
     override val args: List<EtsLocal>,
+    override val type: EtsType,
 ) : EtsCallExpr, CommonInstanceCallExpr {
     override fun toString(): String {
         return "$instance.${callee.name}(${args.joinToString()})"
@@ -701,6 +749,7 @@ data class EtsInstanceCallExpr(
 data class EtsStaticCallExpr(
     override val callee: EtsMethodSignature,
     override val args: List<EtsLocal>,
+    override val type: EtsType,
 ) : EtsCallExpr {
     override fun toString(): String {
         return "${callee.enclosingClass.name}.${callee.name}(${args.joinToString()})"
@@ -712,9 +761,10 @@ data class EtsStaticCallExpr(
 }
 
 data class EtsPtrCallExpr(
-    val ptr: EtsValue, // Local or FieldRef
+    val ptr: EtsLocal,
     override val callee: EtsMethodSignature,
     override val args: List<EtsLocal>,
+    override val type: EtsType,
 ) : EtsCallExpr {
     override fun toString(): String {
         return "${ptr}.${callee.name}(${args.joinToString()})"

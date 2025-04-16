@@ -14,6 +14,8 @@
  *  limitations under the License.
  */
 
+@file:Suppress("OVERRIDE_DEPRECATION")
+
 package org.jacodb.ets.model
 
 import org.jacodb.api.common.cfg.CommonArgument
@@ -23,7 +25,9 @@ import org.jacodb.api.common.cfg.CommonThis
 
 interface EtsRef : EtsValue
 
-data object EtsThis : EtsRef, EtsImmediate, CommonThis {
+data class EtsThis(
+    override val type: EtsType,
+) : EtsRef, EtsImmediate, CommonThis {
     override fun toString(): String = "this"
 
     override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
@@ -33,6 +37,7 @@ data object EtsThis : EtsRef, EtsImmediate, CommonThis {
 
 data class EtsParameterRef(
     val index: Int,
+    override val type: EtsType,
 ) : EtsRef, CommonArgument {
     override fun toString(): String {
         return "arg$index"
@@ -46,7 +51,7 @@ data class EtsParameterRef(
 data class EtsArrayAccess(
     override val array: EtsLocal,
     override val index: EtsValue,
-    val type: EtsType, // = EtsUnknownType,
+    override val type: EtsType,
 ) : EtsRef, EtsLValue, CommonArrayAccess {
     override fun toString(): String {
         return "$array[$index]"
@@ -60,13 +65,13 @@ data class EtsArrayAccess(
 interface EtsFieldRef : EtsRef, EtsLValue, CommonFieldRef {
     override val instance: EtsLocal?
     val field: EtsFieldSignature
-    val type: EtsType
+    override val type: EtsType
 }
 
 data class EtsInstanceFieldRef(
     override val instance: EtsLocal,
     override val field: EtsFieldSignature,
-    override val type: EtsType, // = EtsUnknownType,
+    override val type: EtsType,
 ) : EtsFieldRef {
     override fun toString(): String {
         return "${instance}.${field.name}"
@@ -79,7 +84,7 @@ data class EtsInstanceFieldRef(
 
 data class EtsStaticFieldRef(
     override val field: EtsFieldSignature,
-    override val type: EtsType, // = EtsUnknownType,
+    override val type: EtsType,
 ) : EtsFieldRef {
     override val instance get() = null
 
