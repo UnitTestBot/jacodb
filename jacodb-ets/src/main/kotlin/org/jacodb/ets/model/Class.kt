@@ -16,9 +16,10 @@
 
 package org.jacodb.ets.model
 
-import org.jacodb.ets.base.EtsType
+import org.jacodb.ets.utils.CONSTRUCTOR_NAME
+import org.jacodb.ets.utils.createConstructor
 
-interface EtsClass : EtsBaseModel {
+interface EtsClass : Base {
     val signature: EtsClassSignature
     val typeParameters: List<EtsType>
     val fields: List<EtsField>
@@ -28,6 +29,9 @@ interface EtsClass : EtsBaseModel {
     val superClass: EtsClassSignature?
     val implementedInterfaces: List<EtsClassSignature>
 
+    val declaringFile: EtsFile?
+    val declaringNamespace: EtsNamespace?
+
     val name: String
         get() = signature.name
 }
@@ -36,17 +40,24 @@ class EtsClassImpl(
     override val signature: EtsClassSignature,
     override val fields: List<EtsField>,
     override val methods: List<EtsMethod>,
-    override val ctor: EtsMethod,
     override val category: EtsClassCategory = EtsClassCategory.CLASS,
     override val superClass: EtsClassSignature? = null,
     override val implementedInterfaces: List<EtsClassSignature> = emptyList(),
     override val typeParameters: List<EtsType> = emptyList(),
-    override val modifiers: EtsModifiers = EtsModifiers.EMPTY,
+    override val modifiers: EtsModifiers = EtsModifiers.Companion.EMPTY,
     override val decorators: List<EtsDecorator> = emptyList(),
 ) : EtsClass {
     init {
-        require(ctor !in methods)
+        fields.forEach { (it as EtsFieldImpl).declaringClass = this }
+        methods.forEach { (it as EtsMethodImpl).enclosingClass = this }
     }
+
+    override var declaringFile: EtsFile? = null
+    override var declaringNamespace: EtsNamespace? = null
+
+    override val ctor: EtsMethod =
+        methods.firstOrNull { method -> method.name == CONSTRUCTOR_NAME }
+            ?: createConstructor(signature)
 
     override fun toString(): String {
         return signature.toString()

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.base
+package org.jacodb.ets.model
 
 import org.jacodb.api.common.cfg.CommonValue
 

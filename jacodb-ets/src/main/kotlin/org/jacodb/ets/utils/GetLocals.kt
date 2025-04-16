@@ -16,11 +16,11 @@
 
 package org.jacodb.ets.utils
 
-import org.jacodb.ets.base.EtsAssignStmt
-import org.jacodb.ets.base.EtsEntity
-import org.jacodb.ets.base.EtsLocal
-import org.jacodb.ets.base.EtsStmt
+import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsEntity
+import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsMethod
+import org.jacodb.ets.model.EtsStmt
 
 fun EtsMethod.getDeclaredLocals(): Set<EtsLocal> =
     cfg.stmts.mapNotNullTo(mutableSetOf()) {

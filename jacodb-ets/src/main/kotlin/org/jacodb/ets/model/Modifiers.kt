@@ -34,12 +34,7 @@ enum class EtsModifier(val value: Int, val string: String) {
     DECLARE(1 shl 14, "declare");
 }
 
-@JvmInline
-value class EtsModifiers(val mask: Int) {
-    companion object {
-        val EMPTY = EtsModifiers(0)
-    }
-
+interface WithModifiers {
     val isPrivate: Boolean get() = hasModifier(EtsModifier.PRIVATE)
     val isProtected: Boolean get() = hasModifier(EtsModifier.PROTECTED)
     val isPublic: Boolean get() = hasModifier(EtsModifier.PUBLIC)
@@ -56,5 +51,14 @@ value class EtsModifiers(val mask: Int) {
     val isOverride: Boolean get() = hasModifier(EtsModifier.OVERRIDE)
     val isDeclare: Boolean get() = hasModifier(EtsModifier.DECLARE)
 
-    fun hasModifier(modifier: EtsModifier): Boolean = (mask and modifier.value) != 0
+    fun hasModifier(modifier: EtsModifier): Boolean
+}
+
+@JvmInline
+value class EtsModifiers(val mask: Int) : WithModifiers {
+    companion object {
+        val EMPTY = EtsModifiers(0)
+    }
+
+    override fun hasModifier(modifier: EtsModifier): Boolean = (mask and modifier.value) != 0
 }

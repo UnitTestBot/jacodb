@@ -16,21 +16,4 @@
 
 package org.jacodb.ets.model
 
-class EtsFile(
-    val signature: EtsFileSignature,
-    val classes: List<EtsClass>,
-    val namespaces: List<EtsNamespace>,
-) {
-    val name: String
-        get() = signature.fileName
-    val projectName: String
-        get() = signature.projectName
-
-    val allClasses: List<EtsClass> by lazy {
-        classes + namespaces.flatMap { it.allClasses }
-    }
-
-    override fun toString(): String {
-        return signature.toString()
-    }
-}
+interface EtsLValue : EtsValue

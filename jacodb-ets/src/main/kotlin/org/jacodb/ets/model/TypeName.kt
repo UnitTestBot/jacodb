@@ -14,6 +14,14 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.base
+package org.jacodb.ets.model
 
-interface EtsLValue : EtsValue
+import org.jacodb.api.common.CommonTypeName
+
+interface TypeName : CommonTypeName
+
+data class TypeNameImpl(
+    override val typeName: String,
+) : TypeName {
+    override fun toString(): String = typeName
+}

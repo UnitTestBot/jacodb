@@ -31,6 +31,7 @@ data class NamespaceSignatureDto(
     val declaringFile: FileSignatureDto,
     val declaringNamespace: NamespaceSignatureDto? = null,
 )
+
 @Serializable
 data class ClassSignatureDto(
     val name: String,

@@ -14,16 +14,15 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.base
+package org.jacodb.ets.model
 
 import org.jacodb.api.common.cfg.CommonCallExpr
-import org.jacodb.ets.model.EtsMethodSignature
+import org.jacodb.api.common.cfg.CommonInstanceCallExpr
 
 interface EtsExpr : EtsEntity {
     interface Visitor<out R> {
         fun visit(expr: EtsNewExpr): R
         fun visit(expr: EtsNewArrayExpr): R
-        fun visit(expr: EtsLengthExpr): R
         fun visit(expr: EtsCastExpr): R
         fun visit(expr: EtsInstanceOfExpr): R
 
@@ -79,14 +78,9 @@ interface EtsExpr : EtsEntity {
         fun visit(expr: EtsStaticCallExpr): R
         fun visit(expr: EtsPtrCallExpr): R
 
-        // Other
-        fun visit(expr: EtsCommaExpr): R
-        fun visit(expr: EtsTernaryExpr): R
-
         interface Default<out R> : Visitor<R> {
             override fun visit(expr: EtsNewExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsNewArrayExpr): R = defaultVisit(expr)
-            override fun visit(expr: EtsLengthExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsCastExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsInstanceOfExpr): R = defaultVisit(expr)
 
@@ -136,9 +130,6 @@ interface EtsExpr : EtsEntity {
             override fun visit(expr: EtsStaticCallExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsPtrCallExpr): R = defaultVisit(expr)
 
-            override fun visit(expr: EtsCommaExpr): R = defaultVisit(expr)
-            override fun visit(expr: EtsTernaryExpr): R = defaultVisit(expr)
-
             fun defaultVisit(expr: EtsExpr): R
         }
     }
@@ -151,10 +142,10 @@ interface EtsExpr : EtsEntity {
 }
 
 data class EtsNewExpr(
-    override val type: EtsType,
+    val type: EtsType,
 ) : EtsExpr {
     override fun toString(): String {
-        return "new ${type.typeName}"
+        return "new $type"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
@@ -166,26 +157,8 @@ data class EtsNewArrayExpr(
     val elementType: EtsType,
     val size: EtsEntity,
 ) : EtsExpr {
-    override val type: EtsType
-        get() = EtsArrayType(elementType, 1)
-
     override fun toString(): String {
-        return "new Array<${elementType.typeName}>($size)"
-    }
-
-    override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
-        return visitor.visit(this)
-    }
-}
-
-data class EtsLengthExpr(
-    val arg: EtsEntity,
-) : EtsExpr {
-    override val type: EtsType
-        get() = EtsNumberType
-
-    override fun toString(): String {
-        return "${arg}.length"
+        return "new Array<$elementType>($size)"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
@@ -195,7 +168,7 @@ data class EtsLengthExpr(
 
 data class EtsCastExpr(
     val arg: EtsEntity,
-    override val type: EtsType,
+    val type: EtsType,
 ) : EtsExpr {
     override fun toString(): String {
         return "$arg as $type"
@@ -210,9 +183,6 @@ data class EtsInstanceOfExpr(
     val arg: EtsEntity,
     val checkType: EtsType,
 ) : EtsExpr {
-    override val type: EtsType
-        get() = EtsBooleanType
-
     override fun toString(): String {
         return "$arg instanceof $checkType"
     }
@@ -229,9 +199,6 @@ interface EtsUnaryExpr : EtsExpr {
 data class EtsDeleteExpr(
     override val arg: EtsEntity,
 ) : EtsUnaryExpr {
-    override val type: EtsType
-        get() = EtsBooleanType
-
     override fun toString(): String {
         return "delete $arg"
     }
@@ -244,9 +211,6 @@ data class EtsDeleteExpr(
 data class EtsAwaitExpr(
     override val arg: EtsEntity,
 ) : EtsUnaryExpr {
-    override val type: EtsType
-        get() = arg.type
-
     override fun toString(): String {
         return "await $arg"
     }
@@ -259,9 +223,6 @@ data class EtsAwaitExpr(
 data class EtsYieldExpr(
     override val arg: EtsEntity,
 ) : EtsUnaryExpr {
-    override val type: EtsType
-        get() = arg.type
-
     override fun toString(): String {
         return "yield $arg"
     }
@@ -274,9 +235,6 @@ data class EtsYieldExpr(
 data class EtsTypeOfExpr(
     override val arg: EtsEntity,
 ) : EtsUnaryExpr {
-    override val type: EtsType
-        get() = EtsStringType
-
     override fun toString(): String {
         return "typeof $arg"
     }
@@ -289,9 +247,6 @@ data class EtsTypeOfExpr(
 data class EtsVoidExpr(
     override val arg: EtsEntity,
 ) : EtsUnaryExpr {
-    override val type: EtsType
-        get() = EtsUndefinedType
-
     override fun toString(): String {
         return "void $arg"
     }
@@ -304,9 +259,6 @@ data class EtsVoidExpr(
 data class EtsNotExpr(
     override val arg: EtsEntity,
 ) : EtsUnaryExpr {
-    override val type: EtsType
-        get() = EtsBooleanType
-
     override fun toString(): String {
         return "!$arg"
     }
@@ -317,7 +269,6 @@ data class EtsNotExpr(
 }
 
 data class EtsBitNotExpr(
-    override val type: EtsType,
     override val arg: EtsEntity,
 ) : EtsUnaryExpr {
     override fun toString(): String {
@@ -330,7 +281,6 @@ data class EtsBitNotExpr(
 }
 
 data class EtsNegExpr(
-    override val type: EtsType,
     override val arg: EtsEntity,
 ) : EtsUnaryExpr {
     override fun toString(): String {
@@ -345,9 +295,6 @@ data class EtsNegExpr(
 data class EtsUnaryPlusExpr(
     override val arg: EtsEntity,
 ) : EtsUnaryExpr {
-    override val type: EtsType
-        get() = EtsNumberType
-
     override fun toString(): String {
         return "+$arg"
     }
@@ -358,7 +305,6 @@ data class EtsUnaryPlusExpr(
 }
 
 data class EtsPreIncExpr(
-    override val type: EtsType,
     override val arg: EtsEntity,
 ) : EtsUnaryExpr {
     override fun toString(): String {
@@ -371,7 +317,6 @@ data class EtsPreIncExpr(
 }
 
 data class EtsPreDecExpr(
-    override val type: EtsType,
     override val arg: EtsEntity,
 ) : EtsUnaryExpr {
     override fun toString(): String {
@@ -384,7 +329,6 @@ data class EtsPreDecExpr(
 }
 
 data class EtsPostIncExpr(
-    override val type: EtsType,
     override val arg: EtsEntity,
 ) : EtsUnaryExpr {
     override fun toString(): String {
@@ -397,7 +341,6 @@ data class EtsPostIncExpr(
 }
 
 data class EtsPostDecExpr(
-    override val type: EtsType,
     override val arg: EtsEntity,
 ) : EtsUnaryExpr {
     override fun toString(): String {
@@ -414,10 +357,7 @@ interface EtsBinaryExpr : EtsExpr {
     val right: EtsEntity
 }
 
-interface EtsRelationExpr : EtsBinaryExpr {
-    override val type: EtsType
-        get() = EtsBooleanType
-}
+interface EtsRelationExpr : EtsBinaryExpr
 
 data class EtsEqExpr(
     override val left: EtsEntity,
@@ -527,9 +467,6 @@ data class EtsInExpr(
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsRelationExpr {
-    override val type: EtsType
-        get() = EtsBooleanType
-
     override fun toString(): String {
         return "$left in $right"
     }
@@ -542,7 +479,6 @@ data class EtsInExpr(
 interface EtsArithmeticExpr : EtsBinaryExpr
 
 data class EtsAddExpr(
-    override val type: EtsType,
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsArithmeticExpr {
@@ -556,7 +492,6 @@ data class EtsAddExpr(
 }
 
 data class EtsSubExpr(
-    override val type: EtsType,
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsArithmeticExpr {
@@ -570,7 +505,6 @@ data class EtsSubExpr(
 }
 
 data class EtsMulExpr(
-    override val type: EtsType,
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsArithmeticExpr {
@@ -584,7 +518,6 @@ data class EtsMulExpr(
 }
 
 data class EtsDivExpr(
-    override val type: EtsType, // EtsNumberType
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsArithmeticExpr {
@@ -598,7 +531,6 @@ data class EtsDivExpr(
 }
 
 data class EtsRemExpr(
-    override val type: EtsType,
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsArithmeticExpr {
@@ -612,7 +544,6 @@ data class EtsRemExpr(
 }
 
 data class EtsExpExpr(
-    override val type: EtsType,
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsArithmeticExpr {
@@ -628,7 +559,6 @@ data class EtsExpExpr(
 interface EtsBitwiseExpr : EtsBinaryExpr
 
 data class EtsBitAndExpr(
-    override val type: EtsType,
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsBitwiseExpr {
@@ -642,7 +572,6 @@ data class EtsBitAndExpr(
 }
 
 data class EtsBitOrExpr(
-    override val type: EtsType,
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsBitwiseExpr {
@@ -656,7 +585,6 @@ data class EtsBitOrExpr(
 }
 
 data class EtsBitXorExpr(
-    override val type: EtsType,
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsBitwiseExpr {
@@ -670,7 +598,6 @@ data class EtsBitXorExpr(
 }
 
 data class EtsLeftShiftExpr(
-    override val type: EtsType,
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsBitwiseExpr {
@@ -685,7 +612,6 @@ data class EtsLeftShiftExpr(
 
 // Sign-propagating right shift
 data class EtsRightShiftExpr(
-    override val type: EtsType,
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsBitwiseExpr {
@@ -700,7 +626,6 @@ data class EtsRightShiftExpr(
 
 // Zero-fill right shift
 data class EtsUnsignedRightShiftExpr(
-    override val type: EtsType,
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsBitwiseExpr {
@@ -716,7 +641,6 @@ data class EtsUnsignedRightShiftExpr(
 interface EtsLogicalExpr : EtsBinaryExpr
 
 data class EtsAndExpr(
-    override val type: EtsType,
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsLogicalExpr {
@@ -730,7 +654,6 @@ data class EtsAndExpr(
 }
 
 data class EtsOrExpr(
-    override val type: EtsType,
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsLogicalExpr {
@@ -744,7 +667,6 @@ data class EtsOrExpr(
 }
 
 data class EtsNullishCoalescingExpr(
-    override val type: EtsType,
     override val left: EtsEntity,
     override val right: EtsEntity,
 ) : EtsLogicalExpr {
@@ -758,20 +680,17 @@ data class EtsNullishCoalescingExpr(
 }
 
 interface EtsCallExpr : EtsExpr, CommonCallExpr {
-    val method: EtsMethodSignature
-    override val args: List<EtsValue>
-
-    override val type: EtsType
-        get() = method.returnType
+    val callee: EtsMethodSignature
+    override val args: List<EtsLocal>
 }
 
 data class EtsInstanceCallExpr(
-    val instance: EtsLocal,
-    override val method: EtsMethodSignature,
-    override val args: List<EtsValue>,
-) : EtsCallExpr {
+    override val instance: EtsLocal,
+    override val callee: EtsMethodSignature,
+    override val args: List<EtsLocal>,
+) : EtsCallExpr, CommonInstanceCallExpr {
     override fun toString(): String {
-        return "$instance.${method.name}(${args.joinToString()})"
+        return "$instance.${callee.name}(${args.joinToString()})"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
@@ -780,11 +699,11 @@ data class EtsInstanceCallExpr(
 }
 
 data class EtsStaticCallExpr(
-    override val method: EtsMethodSignature,
-    override val args: List<EtsValue>,
+    override val callee: EtsMethodSignature,
+    override val args: List<EtsLocal>,
 ) : EtsCallExpr {
     override fun toString(): String {
-        return "${method.enclosingClass.name}.${method.name}(${args.joinToString()})"
+        return "${callee.enclosingClass.name}.${callee.name}(${args.joinToString()})"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
@@ -793,43 +712,12 @@ data class EtsStaticCallExpr(
 }
 
 data class EtsPtrCallExpr(
-    val ptr: EtsLocal,
-    override val method: EtsMethodSignature,
-    override val args: List<EtsValue>,
+    val ptr: EtsValue, // Local or FieldRef
+    override val callee: EtsMethodSignature,
+    override val args: List<EtsLocal>,
 ) : EtsCallExpr {
     override fun toString(): String {
-        return "${ptr}.${method.name}(${args.joinToString()})"
-    }
-
-    override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
-        return visitor.visit(this)
-    }
-}
-
-data class EtsCommaExpr(
-    override val left: EtsEntity,
-    override val right: EtsEntity,
-) : EtsBinaryExpr {
-    override val type: EtsType
-        get() = right.type
-
-    override fun toString(): String {
-        return "$left, $right"
-    }
-
-    override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
-        return visitor.visit(this)
-    }
-}
-
-data class EtsTernaryExpr(
-    override val type: EtsType,
-    val condition: EtsEntity,
-    val thenExpr: EtsEntity,
-    val elseExpr: EtsEntity,
-) : EtsExpr {
-    override fun toString(): String {
-        return "$condition ? $thenExpr : $elseExpr"
+        return "${ptr}.${callee.name}(${args.joinToString()})"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {

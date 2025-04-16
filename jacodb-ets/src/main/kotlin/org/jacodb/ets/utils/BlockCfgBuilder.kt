@@ -14,37 +14,8 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.graph
+package org.jacodb.ets.utils
 
-import org.jacodb.ets.base.EtsAddExpr
-import org.jacodb.ets.base.EtsAndExpr
-import org.jacodb.ets.base.EtsAssignStmt
-import org.jacodb.ets.base.EtsClassType
-import org.jacodb.ets.base.EtsDivExpr
-import org.jacodb.ets.base.EtsEntity
-import org.jacodb.ets.base.EtsEqExpr
-import org.jacodb.ets.base.EtsGtEqExpr
-import org.jacodb.ets.base.EtsGtExpr
-import org.jacodb.ets.base.EtsIfStmt
-import org.jacodb.ets.base.EtsInstLocation
-import org.jacodb.ets.base.EtsLocal
-import org.jacodb.ets.base.EtsLtEqExpr
-import org.jacodb.ets.base.EtsLtExpr
-import org.jacodb.ets.base.EtsMulExpr
-import org.jacodb.ets.base.EtsNegExpr
-import org.jacodb.ets.base.EtsNopStmt
-import org.jacodb.ets.base.EtsNotEqExpr
-import org.jacodb.ets.base.EtsNotExpr
-import org.jacodb.ets.base.EtsNumberConstant
-import org.jacodb.ets.base.EtsOrExpr
-import org.jacodb.ets.base.EtsParameterRef
-import org.jacodb.ets.base.EtsReturnStmt
-import org.jacodb.ets.base.EtsStmt
-import org.jacodb.ets.base.EtsSubExpr
-import org.jacodb.ets.base.EtsThis
-import org.jacodb.ets.base.EtsType
-import org.jacodb.ets.base.EtsUnknownType
-import org.jacodb.ets.base.EtsValue
 import org.jacodb.ets.dsl.BinaryExpr
 import org.jacodb.ets.dsl.BinaryOperator
 import org.jacodb.ets.dsl.Block
@@ -67,24 +38,39 @@ import org.jacodb.ets.dsl.local
 import org.jacodb.ets.dsl.param
 import org.jacodb.ets.dsl.program
 import org.jacodb.ets.dsl.toBlockCfg
+import org.jacodb.ets.model.BasicBlock
+import org.jacodb.ets.model.EtsAddExpr
+import org.jacodb.ets.model.EtsAndExpr
+import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsBlockCfg
 import org.jacodb.ets.model.EtsClassSignature
+import org.jacodb.ets.model.EtsDivExpr
+import org.jacodb.ets.model.EtsEntity
+import org.jacodb.ets.model.EtsEqExpr
+import org.jacodb.ets.model.EtsGtEqExpr
+import org.jacodb.ets.model.EtsGtExpr
+import org.jacodb.ets.model.EtsIfStmt
+import org.jacodb.ets.model.EtsLocal
+import org.jacodb.ets.model.EtsLtEqExpr
+import org.jacodb.ets.model.EtsLtExpr
 import org.jacodb.ets.model.EtsMethod
 import org.jacodb.ets.model.EtsMethodImpl
 import org.jacodb.ets.model.EtsMethodParameter
 import org.jacodb.ets.model.EtsMethodSignature
-import org.jacodb.ets.utils.toDot
-import org.jacodb.ets.utils.view
-import java.util.IdentityHashMap
-
-data class EtsBasicBlock(
-    val id: Int,
-    val statements: List<EtsStmt>,
-)
-
-class EtsBlockCfg(
-    val blocks: List<EtsBasicBlock>,
-    val successors: Map<Int, List<Int>>, // for 'if-stmt' block, successors are (true, false) branches
-)
+import org.jacodb.ets.model.EtsMulExpr
+import org.jacodb.ets.model.EtsNegExpr
+import org.jacodb.ets.model.EtsNopStmt
+import org.jacodb.ets.model.EtsNotEqExpr
+import org.jacodb.ets.model.EtsNotExpr
+import org.jacodb.ets.model.EtsNumberConstant
+import org.jacodb.ets.model.EtsOrExpr
+import org.jacodb.ets.model.EtsParameterRef
+import org.jacodb.ets.model.EtsReturnStmt
+import org.jacodb.ets.model.EtsStmt
+import org.jacodb.ets.model.EtsStmtLocation
+import org.jacodb.ets.model.EtsSubExpr
+import org.jacodb.ets.model.EtsThis
+import org.jacodb.ets.model.EtsUnknownType
 
 fun BlockCfg.toEtsBlockCfg(method: EtsMethod): EtsBlockCfg {
     return EtsBlockCfgBuilder(method).build(this)
@@ -101,21 +87,20 @@ class EtsBlockCfgBuilder(
     }
 
     private var freeTempLocal: Int = 0
-    private fun newTempLocal(type: EtsType): EtsLocal {
+    private fun newTempLocal(): EtsLocal {
         return EtsLocal(
             name = "_tmp${freeTempLocal++}",
-            type = type,
         )
     }
 
-    private fun Block.toEtsBasicBlock(): EtsBasicBlock {
+    private fun Block.toEtsBasicBlock(): BasicBlock {
         val etsStatements: MutableList<EtsStmt> = mutableListOf()
 
-        fun ensureSingleAddress(entity: EtsEntity): EtsValue {
-            if (entity is EtsValue) {
+        fun ensureLocal(entity: EtsEntity): EtsLocal {
+            if (entity is EtsLocal) {
                 return entity
             }
-            val newLocal = newTempLocal(entity.type)
+            val newLocal = newTempLocal()
             etsStatements += EtsAssignStmt(
                 location = stub,
                 lhv = newLocal,
@@ -141,7 +126,7 @@ class EtsBlockCfgBuilder(
                 }
 
                 is BlockReturn -> {
-                    val returnValue = ensureSingleAddress(stmt.expr.toEtsEntity())
+                    val returnValue = ensureLocal(stmt.expr.toEtsEntity())
                     etsStatements += EtsReturnStmt(
                         location = stub,
                         returnValue = returnValue,
@@ -149,7 +134,7 @@ class EtsBlockCfgBuilder(
                 }
 
                 is BlockIf -> {
-                    val condition = stmt.condition.toEtsEntity()
+                    val condition = ensureLocal(stmt.condition.toEtsEntity())
                     etsStatements += EtsIfStmt(
                         location = stub,
                         condition = condition,
@@ -162,13 +147,14 @@ class EtsBlockCfgBuilder(
             etsStatements += EtsNopStmt(location = stub)
         }
 
-        return EtsBasicBlock(
+        return BasicBlock(
             id = id,
             statements = etsStatements,
         )
     }
 
-    private val stub = EtsInstLocation(method, -1)
+    private val stub
+        get() = EtsStmtLocation.stub(method)
 
     private fun Expr.toEtsEntity(): EtsEntity = when (this) {
         is Local -> EtsLocal(
@@ -178,10 +164,9 @@ class EtsBlockCfgBuilder(
 
         is Parameter -> EtsParameterRef(
             index = index,
-            type = method.parameters[index].type,
         )
 
-        ThisRef -> EtsThis(type = EtsClassType(EtsClassSignature.DEFAULT))
+        ThisRef -> EtsThis
 
         is Constant -> EtsNumberConstant(value = value)
 
@@ -191,7 +176,7 @@ class EtsBlockCfgBuilder(
             }
 
             UnaryOperator.NEG -> {
-                EtsNegExpr(arg = expr.toEtsEntity(), type = EtsUnknownType)
+                EtsNegExpr(arg = expr.toEtsEntity())
             }
         }
 
@@ -199,13 +184,11 @@ class EtsBlockCfgBuilder(
             BinaryOperator.AND -> EtsAndExpr(
                 left = left.toEtsEntity(),
                 right = right.toEtsEntity(),
-                type = EtsUnknownType,
             )
 
             BinaryOperator.OR -> EtsOrExpr(
                 left = left.toEtsEntity(),
                 right = right.toEtsEntity(),
-                type = EtsUnknownType,
             )
 
             BinaryOperator.EQ -> EtsEqExpr(
@@ -241,147 +224,30 @@ class EtsBlockCfgBuilder(
             BinaryOperator.ADD -> EtsAddExpr(
                 left = left.toEtsEntity(),
                 right = right.toEtsEntity(),
-                type = EtsUnknownType,
             )
 
             BinaryOperator.SUB -> EtsSubExpr(
                 left = left.toEtsEntity(),
                 right = right.toEtsEntity(),
-                type = EtsUnknownType,
             )
 
             BinaryOperator.MUL -> EtsMulExpr(
                 left = left.toEtsEntity(),
                 right = right.toEtsEntity(),
-                type = EtsUnknownType,
             )
 
             BinaryOperator.DIV -> EtsDivExpr(
                 left = left.toEtsEntity(),
                 right = right.toEtsEntity(),
-                type = EtsUnknownType,
             )
         }
     }
 }
 
-fun EtsBlockCfg.linearize(): EtsCfg {
-    val linearized: MutableList<EtsStmt> = mutableListOf()
-    val successorMap: MutableMap<EtsStmt, List<EtsStmt>> = hashMapOf()
-    val stmtMap: MutableMap<EtsStmt, EtsStmt> = IdentityHashMap() // original -> linearized (with location)
-
-    val queue = ArrayDeque<EtsBasicBlock>()
-    val visited: MutableSet<EtsBasicBlock> = hashSetOf()
-
-    if (blocks.isNotEmpty()) {
-        queue.add(blocks.first())
-    }
-
-    while (queue.isNotEmpty()) {
-        val block = queue.removeFirst()
-        if (!visited.add(block)) continue
-
-        for (stmt in block.statements) {
-            val newStmt = when (stmt) {
-                is EtsNopStmt -> stmt.copy(location = stmt.location.copy(index = linearized.size))
-                is EtsAssignStmt -> stmt.copy(location = stmt.location.copy(index = linearized.size))
-                is EtsReturnStmt -> stmt.copy(location = stmt.location.copy(index = linearized.size))
-                is EtsIfStmt -> stmt.copy(location = stmt.location.copy(index = linearized.size))
-                else -> error("Unsupported statement type: $stmt")
-            }
-            stmtMap[stmt] = newStmt
-            linearized += newStmt
-        }
-
-        val successors = successors[block.id] ?: error("No successors for block ${block.id}")
-        for (succId in successors.asReversed()) {
-            val succ = blocks[succId]
-            queue.addFirst(succ)
-        }
-    }
-
-    for (block in blocks) {
-        check(block.statements.isNotEmpty()) {
-            "Block ${block.id} is empty"
-        }
-
-        for ((stmt, next) in block.statements.zipWithNext()) {
-            successorMap[stmtMap.getValue(stmt)] = listOf(stmtMap.getValue(next))
-        }
-
-        val successors = successors[block.id] ?: error("No successors for block ${block.id}")
-        val last = stmtMap.getValue(block.statements.last())
-        // Note: reverse the order of successors, because in all CFGs, except EtsCfg,
-        //       the successors for the if-stmt are (true, false) branches,
-        //       and only the EtsCfg (which we are building here) has the (false, true) order.
-        successorMap[last] = successors.asReversed().map {
-            stmtMap.getValue(blocks[it].statements.first())
-        }
-    }
-
-    return EtsCfg(linearized, successorMap)
-}
-
-private fun EtsStmt.toDotLabel(): String = when (this) {
-    is EtsNopStmt -> "nop"
-    is EtsAssignStmt -> "$lhv := $rhv"
-    is EtsReturnStmt -> "return $returnValue"
-    is EtsIfStmt -> "if ($condition)"
-    else -> this.toString()
-}
-
-private fun String.htmlEncode(): String = this
-    .replace("&", "&amp;")
-    .replace("<", "&lt;")
-    .replace(">", "&gt;")
-    .replace("\"", "&quot;")
-
-fun EtsBlockCfg.toDot(useHtml: Boolean = true): String {
-    val lines = mutableListOf<String>()
-    lines += "digraph cfg {"
-    lines += "  node [shape=${if (useHtml) "none" else "rect"} fontname=\"monospace\"]"
-
-    // Nodes
-    blocks.forEach { block ->
-        if (useHtml) {
-            val s = block.statements.joinToString("") {
-                it.toDotLabel().htmlEncode() + "<br/>"
-            }
-            val h = "<table border=\"0\" cellborder=\"1\" cellspacing=\"0\">" +
-                "<tr><td>" + "<b>Block #${block.id}</b>" + "</td></tr>" +
-                "<tr><td balign=\"left\">" + s + "</td></tr>" +
-                "</table>"
-            lines += "  ${block.id} [label=<${h}>]"
-        } else {
-            val s = block.statements.joinToString("") { it.toDotLabel() + "\\l" }
-            lines += "  ${block.id} [label=\"Block #${block.id}\\n$s\"]"
-        }
-    }
-
-    // Edges
-    blocks.forEach { block ->
-        val succs = successors[block.id]
-        if (succs != null) {
-            if (succs.isEmpty()) return@forEach
-            if (succs.size == 1) {
-                lines += "  ${block.id} -> ${succs.single()}"
-            } else {
-                check(succs.size == 2)
-                val (trueBranch, falseBranch) = succs
-                lines += "  ${block.id} -> $trueBranch [label=\"true\"]"
-                lines += "  ${block.id} -> $falseBranch [label=\"false\"]"
-            }
-        }
-    }
-
-    lines += "}"
-    return lines.joinToString("\n")
-}
-
 private fun main() {
     val method = EtsMethodImpl(
         EtsMethodSignature(
-            enclosingClass = EtsClassSignature.DEFAULT,
+            enclosingClass = EtsClassSignature.Companion.UNKNOWN,
             name = "foo",
             parameters = listOf(
                 EtsMethodParameter(

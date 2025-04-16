@@ -16,20 +16,15 @@
 
 package org.jacodb.ets.test
 
-import org.jacodb.ets.base.EtsAddExpr
-import org.jacodb.ets.base.EtsAssignStmt
-import org.jacodb.ets.base.EtsEntity
-import org.jacodb.ets.base.EtsInstLocation
-import org.jacodb.ets.base.EtsLocal
-import org.jacodb.ets.base.EtsNumberConstant
-import org.jacodb.ets.base.EtsStmt
-import org.jacodb.ets.base.EtsType
-import org.jacodb.ets.base.EtsUnknownType
-import org.jacodb.ets.graph.EtsCfg
-import org.jacodb.ets.model.EtsDecorator
+import io.mockk.mockk
+import org.jacodb.ets.model.EtsAddExpr
+import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsEntity
+import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsMethod
-import org.jacodb.ets.model.EtsMethodSignature
-import org.jacodb.ets.model.EtsModifiers
+import org.jacodb.ets.model.EtsNumberConstant
+import org.jacodb.ets.model.EtsStmt
+import org.jacodb.ets.model.EtsStmtLocation
 import org.jacodb.ets.utils.AbstractHandler
 import org.jacodb.ets.utils.EntityCollector
 import kotlin.test.Test
@@ -38,28 +33,13 @@ import kotlin.test.assertEquals
 class CollectorTest {
 
     private fun createStmt(): EtsStmt {
-        val method = object : EtsMethod {
-            override val signature: EtsMethodSignature
-                get() = TODO("Not yet implemented")
-            override val typeParameters: List<EtsType>
-                get() = TODO("Not yet implemented")
-            override val locals: List<EtsLocal>
-                get() = TODO("Not yet implemented")
-            override val cfg: EtsCfg
-                get() = TODO("Not yet implemented")
-            override val modifiers: EtsModifiers
-                get() = TODO("Not yet implemented")
-            override val decorators: List<EtsDecorator>
-                get() = TODO("Not yet implemented")
-        }
-
-        val loc = EtsInstLocation(method, -1)
-        val a = EtsLocal("a", EtsUnknownType)
-        val b = EtsLocal("b", EtsUnknownType)
+        val method = mockk<EtsMethod>()
+        val a = EtsLocal("a")
+        val b = EtsLocal("b")
         val n = EtsNumberConstant(42.0)
-        val rhv = EtsAddExpr(EtsUnknownType, b, n)
+        val rhv = EtsAddExpr(b, n)
+        val loc = EtsStmtLocation.stub(method)
         val stmt = EtsAssignStmt(loc, a, rhv)
-
         return stmt
     }
 

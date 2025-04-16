@@ -14,17 +14,16 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.base
+package org.jacodb.ets.model
 
 import org.jacodb.api.common.cfg.CommonArgument
+import org.jacodb.api.common.cfg.CommonArrayAccess
+import org.jacodb.api.common.cfg.CommonFieldRef
 import org.jacodb.api.common.cfg.CommonThis
-import org.jacodb.ets.model.EtsFieldSignature
 
 interface EtsRef : EtsValue
 
-data class EtsThis(
-    override val type: EtsClassType,
-) : EtsRef, CommonThis {
+data object EtsThis : EtsRef, EtsImmediate, CommonThis {
     override fun toString(): String = "this"
 
     override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
@@ -34,7 +33,6 @@ data class EtsThis(
 
 data class EtsParameterRef(
     val index: Int,
-    override val type: EtsType,
 ) : EtsRef, CommonArgument {
     override fun toString(): String {
         return "arg$index"
@@ -45,53 +43,11 @@ data class EtsParameterRef(
     }
 }
 
-// data class EtsCaughtExceptionRef(
-//     override val type: EtsType,
-// ) : EtsValue {
-//     override fun toString(): String {
-//         return "catch($type)"
-//     }
-//
-//     override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
-//         return visitor.visit(this)
-//     }
-// }
-//
-// data class EtsGlobalRef(
-//     val name: String,
-//     val ref: EtsValue?, // TODO: check whether it could be EtsEntity at best
-// ) : EtsValue {
-//     override val type: EtsType
-//         get() = ref?.type ?: EtsUnknownType
-//
-//     override fun toString(): String {
-//         return "global $name"
-//     }
-//
-//     override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
-//         return visitor.visit(this)
-//     }
-// }
-//
-// data class EtsClosureFieldRef(
-//     val base: EtsLocal,
-//     val fieldName: String,
-//     override val type: EtsType,
-// ) : EtsValue {
-//     override fun toString(): String {
-//         return "$base.$fieldName"
-//     }
-//
-//     override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
-//         return visitor.visit(this)
-//     }
-// }
-
 data class EtsArrayAccess(
-    val array: EtsValue,
-    val index: EtsValue,
-    override val type: EtsType,
-) : EtsRef, EtsLValue {
+    override val array: EtsLocal,
+    override val index: EtsValue,
+    val type: EtsType, // = EtsUnknownType,
+) : EtsRef, EtsLValue, CommonArrayAccess {
     override fun toString(): String {
         return "$array[$index]"
     }
@@ -101,19 +57,19 @@ data class EtsArrayAccess(
     }
 }
 
-interface EtsFieldRef : EtsRef, EtsLValue {
+interface EtsFieldRef : EtsRef, EtsLValue, CommonFieldRef {
+    override val instance: EtsLocal?
     val field: EtsFieldSignature
-
-    override val type: EtsType
-        get() = this.field.type
+    val type: EtsType
 }
 
 data class EtsInstanceFieldRef(
-    val instance: EtsLocal,
+    override val instance: EtsLocal,
     override val field: EtsFieldSignature,
+    override val type: EtsType, // = EtsUnknownType,
 ) : EtsFieldRef {
     override fun toString(): String {
-        return "$instance.${field.name}"
+        return "${instance}.${field.name}"
     }
 
     override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
@@ -123,7 +79,10 @@ data class EtsInstanceFieldRef(
 
 data class EtsStaticFieldRef(
     override val field: EtsFieldSignature,
+    override val type: EtsType, // = EtsUnknownType,
 ) : EtsFieldRef {
+    override val instance get() = null
+
     override fun toString(): String {
         return "${field.enclosingClass.name}.${field.name}"
     }

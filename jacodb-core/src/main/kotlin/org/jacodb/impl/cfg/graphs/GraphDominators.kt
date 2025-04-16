@@ -17,13 +17,8 @@
 package org.jacodb.impl.cfg.graphs
 
 import org.jacodb.api.common.cfg.BytecodeGraph
-import org.jacodb.api.jvm.cfg.JcBasicBlock
-import org.jacodb.api.jvm.cfg.JcBlockGraph
 import org.jacodb.api.jvm.cfg.JcCatchInst
-import org.jacodb.api.jvm.cfg.JcGraph
-import org.jacodb.api.jvm.cfg.JcInst
-import java.util.*
-
+import java.util.BitSet
 
 /**
  * Calculate dominators for basic blocks.
@@ -159,14 +154,6 @@ open class GraphDominators<NODE>(val graph: BytecodeGraph<NODE>) {
     }
 }
 
-fun JcGraph.findDominators(): GraphDominators<JcInst> {
-    return GraphDominators(this).also {
-        it.find()
-    }
-}
-
-fun JcBlockGraph.findDominators(): GraphDominators<JcBasicBlock> {
-    return GraphDominators(this).also {
-        it.find()
-    }
+fun <NODE> BytecodeGraph<NODE>.findDominators(): GraphDominators<NODE> {
+    return GraphDominators(this).also { it.find() }
 }

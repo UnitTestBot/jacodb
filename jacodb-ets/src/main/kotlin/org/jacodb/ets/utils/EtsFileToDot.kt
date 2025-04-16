@@ -16,10 +16,10 @@
 
 package org.jacodb.ets.utils
 
-import org.jacodb.ets.base.EtsStmt
 import org.jacodb.ets.model.EtsClass
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsMethod
+import org.jacodb.ets.model.EtsStmt
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
@@ -55,13 +55,11 @@ fun EtsFile.toDot(useLR: Boolean = false): String {
             val name = method.signature.name
             val params = method.signature.parameters.joinToString()
             val returnType = method.signature.returnType
-            // TODO: uncomment generics when `EtsMethod` have `typeParameters` property
-            // val generics = if (method.typeParameters.isNotEmpty()) {
-            //     "<${method.typeParameters.joinToString()}>"
-            // } else {
-            //     ""
-            // }
-            val generics = ""
+            val generics = if (method.typeParameters.isNotEmpty()) {
+                "<${method.typeParameters.joinToString()}>"
+            } else {
+                ""
+            }
             labelLines += "  $name$generics($params): $returnType"
         }
         return labelLines.joinToString("") { "$it\\l" }
@@ -91,7 +89,7 @@ fun EtsFile.toDot(useLR: Boolean = false): String {
         lines += """  "$c" [shape=box,label="$clabel"]"""
 
         // Methods inside class:
-        (clazz.methods + clazz.ctor).forEach { method ->
+        clazz.methods.forEach { method ->
             // METHOD
             val m = methodId(clazz, method)
             val mlabel = methodLabel(clazz, method)
@@ -100,9 +98,9 @@ fun EtsFile.toDot(useLR: Boolean = false): String {
             // Link class to method:
             lines += """  "$c" -> "$m" [dir=none];"""
 
-            // Link method to the first statement:
-            method.cfg.stmts.firstOrNull()?.let { first ->
-                val f = stmtId(clazz, method, first)
+            // Link method to the entry point:
+            method.cfg.entries.forEach { entry ->
+                val f = stmtId(clazz, method, entry)
                 lines += """  "$m" -> "$f";"""
             }
 

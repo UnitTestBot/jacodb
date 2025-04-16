@@ -14,6 +14,17 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.base
+package org.jacodb.ets.model
 
-interface EtsImmediate : EtsValue
+data class EtsLocal(
+    val name: String,
+    var type: EtsType = EtsUnknownType,
+) : EtsImmediate, EtsLValue {
+    override fun toString(): String {
+        return name
+    }
+
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}

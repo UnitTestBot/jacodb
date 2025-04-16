@@ -14,15 +14,14 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.base
+package org.jacodb.ets.model
 
 import org.jacodb.api.common.cfg.CommonExpr
 
 interface EtsEntity : CommonExpr {
-    val type: EtsType
 
     override val typeName: String
-        get() = type.typeName
+        get() = error("Not supported")
 
     interface Visitor<out R> :
         EtsValue.Visitor<R>,
@@ -52,10 +51,12 @@ interface EtsEntity : CommonExpr {
 data class EtsRawEntity(
     val kind: String,
     val extra: Map<String, Any> = emptyMap(),
-    override val type: EtsType,
 ) : EtsEntity {
+    // override val type: EtsType
+    //     get() = EtsUnknownType
+
     override fun toString(): String {
-        return "$kind $extra: $type"
+        return "$kind $extra"
     }
 
     override fun <R> accept(visitor: EtsEntity.Visitor<R>): R {

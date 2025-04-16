@@ -14,10 +14,21 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.utils
+package org.jacodb.ets.model
 
-import org.jacodb.ets.model.EtsCallExpr
-import org.jacodb.ets.model.EtsStmt
+class EtsNamespace(
+    val signature: EtsNamespaceSignature,
+    val classes: List<EtsClass>,
+    val namespaces: List<EtsNamespace>,
+) {
+    init {
+        classes.forEach { (it as EtsClassImpl).declaringNamespace = this }
+        namespaces.forEach { it.declaringNamespace = this }
+    }
 
-val EtsStmt.callExpr: EtsCallExpr?
-    get() = getOperands().filterIsInstance<EtsCallExpr>().firstOrNull()
+    var declaringFile: EtsFile? = null
+    var declaringNamespace: EtsNamespace? = null
+
+    val allClasses: List<EtsClass>
+        get() = classes + namespaces.flatMap { it.allClasses }
+}

@@ -18,8 +18,8 @@ package org.jacodb.ets.utils
 
 import java.util.IdentityHashMap
 
-class IdentityHashSet <T>(
-    private val map: IdentityHashMap<T, Unit> = IdentityHashMap()
+class IdentityHashSet<T>(
+    private val map: IdentityHashMap<T, Unit> = IdentityHashMap(),
 ) : AbstractMutableSet<T>() {
 
     override val size: Int

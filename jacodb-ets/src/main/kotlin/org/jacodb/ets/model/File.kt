@@ -16,29 +16,26 @@
 
 package org.jacodb.ets.model
 
-import org.jacodb.ets.base.EtsType
+class EtsFile(
+    val signature: EtsFileSignature,
+    val classes: List<EtsClass>,
+    val namespaces: List<EtsNamespace>,
+) {
+    init {
+        classes.forEach { (it as EtsClassImpl).declaringFile = this }
+        namespaces.forEach { it.declaringFile = this }
+    }
 
-// for '!' field marker ("definitely assigned field"), see https://www.typescriptlang.org/docs/handbook/2/classes.html#--strictpropertyinitialization
-
-interface EtsField {
-    val enclosingClass: EtsClass?
-    val signature: EtsFieldSignature
+    var scene: EtsScene? = null
 
     val name: String
-        get() = signature.name
+        get() = signature.fileName
+    val projectName: String
+        get() = signature.projectName
 
-    val type: EtsType
-        get() = signature.type
-}
-
-class EtsFieldImpl(
-    override val signature: EtsFieldSignature,
-    val modifiers: EtsModifiers = EtsModifiers.EMPTY,
-    val isOptional: Boolean = false,  // '?'
-    val isDefinitelyAssigned: Boolean = false, // '!'
-) : EtsField {
-
-    override var enclosingClass: EtsClass? = null
+    val allClasses: List<EtsClass> by lazy {
+        classes + namespaces.flatMap { it.allClasses }
+    }
 
     override fun toString(): String {
         return signature.toString()

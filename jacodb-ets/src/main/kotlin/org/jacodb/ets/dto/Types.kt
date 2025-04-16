@@ -46,6 +46,22 @@ data object AnyTypeDto : TypeDto
 data object UnknownTypeDto : TypeDto
 
 @Serializable
+@SerialName("GenericType")
+data class GenericTypeDto(
+    val name: String,
+    val constraint: TypeDto? = null,
+    val defaultType: TypeDto? = null,
+) : TypeDto
+
+@Serializable
+@SerialName("AliasType")
+data class AliasTypeDto(
+    val name: String,
+    val originalType: TypeDto,
+    val signature: LocalSignatureDto,
+) : TypeDto
+
+@Serializable
 @SerialName("VoidType")
 data object VoidTypeDto : TypeDto
 
@@ -60,8 +76,8 @@ data class UnionTypeDto(
 ) : TypeDto
 
 @Serializable
-@SerialName("TupleType")
-data class TupleTypeDto(
+@SerialName("IntersectionType")
+data class IntersectionTypeDto(
     val types: List<TypeDto>,
 ) : TypeDto
 
@@ -131,9 +147,9 @@ data class ClassTypeDto(
 ) : TypeDto
 
 @Serializable
-@SerialName("FunctionType")
-data class FunctionTypeDto(
-    val signature: MethodSignatureDto,
+@SerialName("UnclearReferenceType")
+data class UnclearReferenceTypeDto(
+    val name: String,
     val typeParameters: List<TypeDto> = emptyList(),
 ) : TypeDto
 
@@ -145,24 +161,14 @@ data class ArrayTypeDto(
 ) : TypeDto
 
 @Serializable
-@SerialName("UnclearReferenceType")
-data class UnclearReferenceTypeDto(
-    val name: String,
+@SerialName("TupleType")
+data class TupleTypeDto(
+    val types: List<TypeDto>,
+) : TypeDto
+
+@Serializable
+@SerialName("FunctionType")
+data class FunctionTypeDto(
+    val signature: MethodSignatureDto,
     val typeParameters: List<TypeDto> = emptyList(),
-) : TypeDto
-
-@Serializable
-@SerialName("GenericType")
-data class GenericTypeDto(
-    val name: String,
-    val defaultType: TypeDto? = null,
-    val constraint: TypeDto? = null,
-) : TypeDto
-
-@Serializable
-@SerialName("AliasType")
-data class AliasTypeDto(
-    val name: String,
-    val originalType: TypeDto,
-    val signature: LocalSignatureDto,
 ) : TypeDto

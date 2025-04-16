@@ -16,9 +16,9 @@
 
 package org.jacodb.ets.utils
 
-import org.jacodb.ets.base.EtsEntity
-import org.jacodb.ets.base.EtsStmt
-import org.jacodb.ets.base.EtsValue
+import org.jacodb.ets.model.EtsEntity
+import org.jacodb.ets.model.EtsStmt
+import org.jacodb.ets.model.EtsValue
 
 fun EtsStmt.getValues(): Set<EtsValue> {
     return collectEntitiesTo(mutableSetOf()) { it as? EtsValue }

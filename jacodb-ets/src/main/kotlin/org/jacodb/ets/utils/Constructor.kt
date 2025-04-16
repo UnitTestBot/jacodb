@@ -14,8 +14,23 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.graph
+package org.jacodb.ets.utils
 
-import org.jacodb.api.common.cfg.BytecodeGraph
+import org.jacodb.ets.model.EtsClassSignature
+import org.jacodb.ets.model.EtsClassType
+import org.jacodb.ets.model.EtsMethod
+import org.jacodb.ets.model.EtsMethodImpl
+import org.jacodb.ets.model.EtsMethodSignature
 
-interface EtsBytecodeGraph<out Statement> : BytecodeGraph<Statement>
+fun createConstructor(
+    cls: EtsClassSignature,
+): EtsMethod {
+    return EtsMethodImpl(
+        signature = EtsMethodSignature(
+            enclosingClass = cls,
+            name = CONSTRUCTOR_NAME,
+            parameters = emptyList(),
+            returnType = EtsClassType(cls),
+        )
+    )
+}
