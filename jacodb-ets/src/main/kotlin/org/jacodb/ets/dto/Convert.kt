@@ -390,7 +390,7 @@ class EtsMethodBuilder(
         )
 
         is PtrCallExprDto -> EtsPtrCallExpr(
-            ptr = (ptr as LocalDto).toEtsLocal(), // safe cast
+            ptr = ensureLocal(ptr.toEtsEntity() as EtsValue), // safe cast
             method = method.toEtsMethodSignature(),
             args = args.map { ensureLocal(it.toEtsEntity()) },
         )
@@ -792,7 +792,7 @@ fun LocalDto.toEtsLocal(): EtsLocal {
     )
 }
 
-private fun Int.toEtsClassCategory() : EtsClassCategory {
+private fun Int.toEtsClassCategory(): EtsClassCategory {
     return when (this) {
         0 -> EtsClassCategory.CLASS
         1 -> EtsClassCategory.STRUCT
