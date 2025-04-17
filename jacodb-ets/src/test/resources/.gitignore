@@ -1,4 +1,5 @@
 /samples
-!/samples/source
+!/samples/
+!/samples/source/
 /projects
 /repos

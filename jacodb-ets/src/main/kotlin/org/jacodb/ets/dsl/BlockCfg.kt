@@ -26,7 +26,7 @@ data class Block(
 
 data class BlockCfg(
     val blocks: List<Block>,
-    val successors: Map<Int, List<Int>>,
+    val successors: Map<Int, List<Int>>, // for IF stmt, successors are (true, false) branches
 )
 
 fun Program.toBlockCfg(): BlockCfg {

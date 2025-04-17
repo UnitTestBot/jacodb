@@ -191,15 +191,6 @@ data class InstanceOfExprDto(
 }
 
 @Serializable
-@SerialName("LengthExpr")
-data class LengthExprDto(
-    val arg: ValueDto,
-) : ExprDto {
-    override val type: TypeDto
-        get() = NumberTypeDto
-}
-
-@Serializable
 @SerialName("CastExpr")
 data class CastExprDto(
     val arg: ValueDto,

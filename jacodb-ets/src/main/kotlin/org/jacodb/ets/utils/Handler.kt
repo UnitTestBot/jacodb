@@ -16,85 +16,79 @@
 
 package org.jacodb.ets.utils
 
-import org.jacodb.ets.base.EtsAddExpr
-import org.jacodb.ets.base.EtsAndExpr
-import org.jacodb.ets.base.EtsArrayAccess
-import org.jacodb.ets.base.EtsAssignStmt
-import org.jacodb.ets.base.EtsAwaitExpr
-import org.jacodb.ets.base.EtsBitAndExpr
-import org.jacodb.ets.base.EtsBitNotExpr
-import org.jacodb.ets.base.EtsBitOrExpr
-import org.jacodb.ets.base.EtsBitXorExpr
-import org.jacodb.ets.base.EtsBooleanConstant
-import org.jacodb.ets.base.EtsCallStmt
-import org.jacodb.ets.base.EtsCastExpr
-import org.jacodb.ets.base.EtsCommaExpr
-import org.jacodb.ets.base.EtsDeleteExpr
-import org.jacodb.ets.base.EtsDivExpr
-import org.jacodb.ets.base.EtsEntity
-import org.jacodb.ets.base.EtsEqExpr
-import org.jacodb.ets.base.EtsExpExpr
-import org.jacodb.ets.base.EtsGotoStmt
-import org.jacodb.ets.base.EtsGtEqExpr
-import org.jacodb.ets.base.EtsGtExpr
-import org.jacodb.ets.base.EtsIfStmt
-import org.jacodb.ets.base.EtsInExpr
-import org.jacodb.ets.base.EtsInstanceCallExpr
-import org.jacodb.ets.base.EtsInstanceFieldRef
-import org.jacodb.ets.base.EtsInstanceOfExpr
-import org.jacodb.ets.base.EtsLeftShiftExpr
-import org.jacodb.ets.base.EtsLengthExpr
-import org.jacodb.ets.base.EtsLocal
-import org.jacodb.ets.base.EtsLtEqExpr
-import org.jacodb.ets.base.EtsLtExpr
-import org.jacodb.ets.base.EtsMulExpr
-import org.jacodb.ets.base.EtsNegExpr
-import org.jacodb.ets.base.EtsNewArrayExpr
-import org.jacodb.ets.base.EtsNewExpr
-import org.jacodb.ets.base.EtsNopStmt
-import org.jacodb.ets.base.EtsNotEqExpr
-import org.jacodb.ets.base.EtsNotExpr
-import org.jacodb.ets.base.EtsNullConstant
-import org.jacodb.ets.base.EtsNullishCoalescingExpr
-import org.jacodb.ets.base.EtsNumberConstant
-import org.jacodb.ets.base.EtsOrExpr
-import org.jacodb.ets.base.EtsParameterRef
-import org.jacodb.ets.base.EtsPostDecExpr
-import org.jacodb.ets.base.EtsPostIncExpr
-import org.jacodb.ets.base.EtsPreDecExpr
-import org.jacodb.ets.base.EtsPreIncExpr
-import org.jacodb.ets.base.EtsPtrCallExpr
-import org.jacodb.ets.base.EtsRemExpr
-import org.jacodb.ets.base.EtsReturnStmt
-import org.jacodb.ets.base.EtsRightShiftExpr
-import org.jacodb.ets.base.EtsStaticCallExpr
-import org.jacodb.ets.base.EtsStaticFieldRef
-import org.jacodb.ets.base.EtsStmt
-import org.jacodb.ets.base.EtsStrictEqExpr
-import org.jacodb.ets.base.EtsStrictNotEqExpr
-import org.jacodb.ets.base.EtsStringConstant
-import org.jacodb.ets.base.EtsSubExpr
-import org.jacodb.ets.base.EtsSwitchStmt
-import org.jacodb.ets.base.EtsTernaryExpr
-import org.jacodb.ets.base.EtsThis
-import org.jacodb.ets.base.EtsThrowStmt
-import org.jacodb.ets.base.EtsTypeOfExpr
-import org.jacodb.ets.base.EtsUnaryPlusExpr
-import org.jacodb.ets.base.EtsUndefinedConstant
-import org.jacodb.ets.base.EtsUnsignedRightShiftExpr
-import org.jacodb.ets.base.EtsVoidExpr
-import org.jacodb.ets.base.EtsYieldExpr
+import org.jacodb.ets.model.EtsAddExpr
+import org.jacodb.ets.model.EtsAndExpr
+import org.jacodb.ets.model.EtsArrayAccess
+import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsAwaitExpr
+import org.jacodb.ets.model.EtsBitAndExpr
+import org.jacodb.ets.model.EtsBitNotExpr
+import org.jacodb.ets.model.EtsBitOrExpr
+import org.jacodb.ets.model.EtsBitXorExpr
+import org.jacodb.ets.model.EtsBooleanConstant
+import org.jacodb.ets.model.EtsCallStmt
+import org.jacodb.ets.model.EtsCastExpr
+import org.jacodb.ets.model.EtsConstant
+import org.jacodb.ets.model.EtsDeleteExpr
+import org.jacodb.ets.model.EtsDivExpr
+import org.jacodb.ets.model.EtsEntity
+import org.jacodb.ets.model.EtsEqExpr
+import org.jacodb.ets.model.EtsExpExpr
+import org.jacodb.ets.model.EtsGtEqExpr
+import org.jacodb.ets.model.EtsGtExpr
+import org.jacodb.ets.model.EtsIfStmt
+import org.jacodb.ets.model.EtsInExpr
+import org.jacodb.ets.model.EtsInstanceCallExpr
+import org.jacodb.ets.model.EtsInstanceFieldRef
+import org.jacodb.ets.model.EtsInstanceOfExpr
+import org.jacodb.ets.model.EtsLeftShiftExpr
+import org.jacodb.ets.model.EtsLocal
+import org.jacodb.ets.model.EtsLtEqExpr
+import org.jacodb.ets.model.EtsLtExpr
+import org.jacodb.ets.model.EtsMulExpr
+import org.jacodb.ets.model.EtsNegExpr
+import org.jacodb.ets.model.EtsNewArrayExpr
+import org.jacodb.ets.model.EtsNewExpr
+import org.jacodb.ets.model.EtsNopStmt
+import org.jacodb.ets.model.EtsNotEqExpr
+import org.jacodb.ets.model.EtsNotExpr
+import org.jacodb.ets.model.EtsNullConstant
+import org.jacodb.ets.model.EtsNullishCoalescingExpr
+import org.jacodb.ets.model.EtsNumberConstant
+import org.jacodb.ets.model.EtsOrExpr
+import org.jacodb.ets.model.EtsParameterRef
+import org.jacodb.ets.model.EtsPostDecExpr
+import org.jacodb.ets.model.EtsPostIncExpr
+import org.jacodb.ets.model.EtsPreDecExpr
+import org.jacodb.ets.model.EtsPreIncExpr
+import org.jacodb.ets.model.EtsPtrCallExpr
+import org.jacodb.ets.model.EtsRawEntity
+import org.jacodb.ets.model.EtsRawStmt
+import org.jacodb.ets.model.EtsRemExpr
+import org.jacodb.ets.model.EtsReturnStmt
+import org.jacodb.ets.model.EtsRightShiftExpr
+import org.jacodb.ets.model.EtsStaticCallExpr
+import org.jacodb.ets.model.EtsStaticFieldRef
+import org.jacodb.ets.model.EtsStmt
+import org.jacodb.ets.model.EtsStrictEqExpr
+import org.jacodb.ets.model.EtsStrictNotEqExpr
+import org.jacodb.ets.model.EtsStringConstant
+import org.jacodb.ets.model.EtsSubExpr
+import org.jacodb.ets.model.EtsThis
+import org.jacodb.ets.model.EtsThrowStmt
+import org.jacodb.ets.model.EtsTypeOfExpr
+import org.jacodb.ets.model.EtsUnaryPlusExpr
+import org.jacodb.ets.model.EtsUndefinedConstant
+import org.jacodb.ets.model.EtsUnsignedRightShiftExpr
+import org.jacodb.ets.model.EtsVoidExpr
+import org.jacodb.ets.model.EtsYieldExpr
 
-abstract class AbstractHandler : EtsEntity.Visitor.Default<Unit>, EtsStmt.Visitor.Default<Unit> {
+abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> {
 
     abstract fun handle(value: EtsEntity)
     abstract fun handle(stmt: EtsStmt)
 
-    final override fun defaultVisit(value: EtsEntity) {
-        handle(value)
-    }
-
-    final override fun defaultVisit(stmt: EtsStmt) {
+    final override fun visit(stmt: EtsRawStmt) {
         handle(stmt)
     }
 
@@ -120,11 +114,7 @@ abstract class AbstractHandler : EtsEntity.Visitor.Default<Unit>, EtsStmt.Visito
 
     final override fun visit(stmt: EtsThrowStmt) {
         handle(stmt)
-        stmt.arg.accept(this)
-    }
-
-    final override fun visit(stmt: EtsGotoStmt) {
-        handle(stmt)
+        stmt.exception.accept(this)
     }
 
     final override fun visit(stmt: EtsIfStmt) {
@@ -132,11 +122,15 @@ abstract class AbstractHandler : EtsEntity.Visitor.Default<Unit>, EtsStmt.Visito
         stmt.condition.accept(this)
     }
 
-    final override fun visit(stmt: EtsSwitchStmt) {
-        error("deprecated")
+    final override fun visit(value: EtsRawEntity) {
+        handle(value)
     }
 
     final override fun visit(value: EtsLocal) {
+        handle(value)
+    }
+
+    final override fun visit(value: EtsConstant) {
         handle(value)
     }
 
@@ -190,11 +184,6 @@ abstract class AbstractHandler : EtsEntity.Visitor.Default<Unit>, EtsStmt.Visito
     final override fun visit(expr: EtsNewArrayExpr) {
         handle(expr)
         expr.size.accept(this)
-    }
-
-    final override fun visit(expr: EtsLengthExpr) {
-        handle(expr)
-        expr.arg.accept(this)
     }
 
     final override fun visit(expr: EtsCastExpr) {
@@ -431,18 +420,5 @@ abstract class AbstractHandler : EtsEntity.Visitor.Default<Unit>, EtsStmt.Visito
         handle(expr)
         expr.ptr.accept(this)
         expr.args.forEach { it.accept(this) }
-    }
-
-    final override fun visit(expr: EtsCommaExpr) {
-        handle(expr)
-        expr.left.accept(this)
-        expr.right.accept(this)
-    }
-
-    final override fun visit(expr: EtsTernaryExpr) {
-        handle(expr)
-        expr.condition.accept(this)
-        expr.thenExpr.accept(this)
-        expr.elseExpr.accept(this)
     }
 }

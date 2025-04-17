@@ -18,8 +18,8 @@
 
 package org.jacodb.ets.utils
 
-import org.jacodb.ets.base.EtsEntity
-import org.jacodb.ets.base.EtsStmt
+import org.jacodb.ets.model.EtsEntity
+import org.jacodb.ets.model.EtsStmt
 
 class EntityCollector<R : Any, C : MutableCollection<R>>(
     val result: C,

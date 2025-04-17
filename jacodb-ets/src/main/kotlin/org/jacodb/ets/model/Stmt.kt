@@ -14,21 +14,16 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.base
+package org.jacodb.ets.model
 
 import org.jacodb.api.common.cfg.CommonAssignInst
+import org.jacodb.api.common.cfg.CommonCallInst
+import org.jacodb.api.common.cfg.CommonIfInst
 import org.jacodb.api.common.cfg.CommonInst
-import org.jacodb.api.common.cfg.CommonInstLocation
 import org.jacodb.api.common.cfg.CommonReturnInst
-import org.jacodb.ets.model.EtsMethod
-
-data class EtsInstLocation(
-    override val method: EtsMethod,
-    val index: Int,
-) : CommonInstLocation
 
 interface EtsStmt : CommonInst {
-    override val location: EtsInstLocation
+    override val location: EtsStmtLocation
 
     override val method: EtsMethod
         get() = location.method
@@ -36,12 +31,10 @@ interface EtsStmt : CommonInst {
     interface Visitor<out R> {
         fun visit(stmt: EtsNopStmt): R
         fun visit(stmt: EtsAssignStmt): R
-        fun visit(stmt: EtsCallStmt): R
         fun visit(stmt: EtsReturnStmt): R
         fun visit(stmt: EtsThrowStmt): R
-        fun visit(stmt: EtsGotoStmt): R
         fun visit(stmt: EtsIfStmt): R
-        fun visit(stmt: EtsSwitchStmt): R
+        fun visit(stmt: EtsCallStmt): R
 
         fun visit(stmt: EtsRawStmt): R {
             if (this is Default) {
@@ -53,12 +46,10 @@ interface EtsStmt : CommonInst {
         interface Default<out R> : Visitor<R> {
             override fun visit(stmt: EtsNopStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsAssignStmt): R = defaultVisit(stmt)
-            override fun visit(stmt: EtsCallStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsReturnStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsThrowStmt): R = defaultVisit(stmt)
-            override fun visit(stmt: EtsGotoStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsIfStmt): R = defaultVisit(stmt)
-            override fun visit(stmt: EtsSwitchStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: EtsCallStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsRawStmt): R = defaultVisit(stmt)
 
             fun defaultVisit(stmt: EtsStmt): R
@@ -69,7 +60,7 @@ interface EtsStmt : CommonInst {
 }
 
 data class EtsRawStmt(
-    override val location: EtsInstLocation,
+    override val location: EtsStmtLocation,
     val kind: String,
     val extra: Map<String, Any> = emptyMap(),
 ) : EtsStmt {
@@ -83,7 +74,7 @@ data class EtsRawStmt(
 }
 
 data class EtsNopStmt(
-    override val location: EtsInstLocation,
+    override val location: EtsStmtLocation,
 ) : EtsStmt {
     override fun toString(): String = "nop"
 
@@ -93,8 +84,8 @@ data class EtsNopStmt(
 }
 
 data class EtsAssignStmt(
-    override val location: EtsInstLocation,
-    override val lhv: EtsValue,
+    override val location: EtsStmtLocation,
+    override val lhv: EtsLValue,
     override val rhv: EtsEntity,
 ) : EtsStmt, CommonAssignInst {
     override fun toString(): String {
@@ -106,23 +97,10 @@ data class EtsAssignStmt(
     }
 }
 
-data class EtsCallStmt(
-    override val location: EtsInstLocation,
-    val expr: EtsCallExpr,
-) : EtsStmt {
-    override fun toString(): String {
-        return expr.toString()
-    }
-
-    override fun <R> accept(visitor: EtsStmt.Visitor<R>): R {
-        return visitor.visit(this)
-    }
-}
-
 interface EtsTerminatingStmt : EtsStmt
 
 data class EtsReturnStmt(
-    override val location: EtsInstLocation,
+    override val location: EtsStmtLocation,
     override val returnValue: EtsValue?,
 ) : EtsTerminatingStmt, CommonReturnInst {
     override fun toString(): String {
@@ -139,24 +117,12 @@ data class EtsReturnStmt(
 }
 
 data class EtsThrowStmt(
-    override val location: EtsInstLocation,
-    val arg: EtsEntity,
+    override val location: EtsStmtLocation,
+    val exception: EtsLocal,
 ) : EtsTerminatingStmt {
     override fun toString(): String {
-        return "throw $arg"
+        return "throw $exception"
     }
-
-    override fun <R> accept(visitor: EtsStmt.Visitor<R>): R {
-        return visitor.visit(this)
-    }
-}
-
-interface EtsBranchingStmt : EtsStmt
-
-class EtsGotoStmt(
-    override val location: EtsInstLocation,
-) : EtsBranchingStmt {
-    override fun toString(): String = "goto"
 
     override fun <R> accept(visitor: EtsStmt.Visitor<R>): R {
         return visitor.visit(this)
@@ -164,9 +130,9 @@ class EtsGotoStmt(
 }
 
 data class EtsIfStmt(
-    override val location: EtsInstLocation,
-    val condition: EtsEntity,
-) : EtsBranchingStmt {
+    override val location: EtsStmtLocation,
+    val condition: EtsLocal,
+) : EtsStmt, CommonIfInst {
     override fun toString(): String {
         return "if ($condition)"
     }
@@ -176,13 +142,12 @@ data class EtsIfStmt(
     }
 }
 
-data class EtsSwitchStmt(
-    override val location: EtsInstLocation,
-    val arg: EtsEntity,
-    val cases: List<EtsEntity>,
-) : EtsBranchingStmt {
+data class EtsCallStmt(
+    override val location: EtsStmtLocation,
+    val expr: EtsCallExpr,
+) : EtsStmt, CommonCallInst {
     override fun toString(): String {
-        return "switch ($arg)"
+        return expr.toString()
     }
 
     override fun <R> accept(visitor: EtsStmt.Visitor<R>): R {

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.base
+package org.jacodb.ets.model
 
 interface EtsConstant : EtsImmediate
 

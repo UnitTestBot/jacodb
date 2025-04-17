@@ -17,16 +17,10 @@
 package org.jacodb.ets.model
 
 import org.jacodb.api.common.CommonMethodParameter
-import org.jacodb.ets.base.EtsType
-import org.jacodb.ets.base.UNKNOWN_CLASS_NAME
-import org.jacodb.ets.base.UNKNOWN_FILE_NAME
-import org.jacodb.ets.base.UNKNOWN_NAMESPACE_NAME
-import org.jacodb.ets.base.UNKNOWN_PROJECT_NAME
-
-/**
- * Precompiled [Regex] for `.d.ts` and `.ts` file extensions.
- */
-private val REGEX_TS_SUFFIX: Regex = """(\.d\.ts|\.ts)$""".toRegex()
+import org.jacodb.ets.utils.UNKNOWN_CLASS_NAME
+import org.jacodb.ets.utils.UNKNOWN_FILE_NAME
+import org.jacodb.ets.utils.UNKNOWN_NAMESPACE_NAME
+import org.jacodb.ets.utils.UNKNOWN_PROJECT_NAME
 
 data class EtsFileSignature(
     val projectName: String,
@@ -39,7 +33,15 @@ data class EtsFileSignature(
     }
 
     companion object {
-        val DEFAULT = EtsFileSignature(projectName = UNKNOWN_PROJECT_NAME, fileName = UNKNOWN_FILE_NAME)
+        /**
+         * Precompiled [Regex] for `.d.ts` and `.ts` file extensions.
+         */
+        private val REGEX_TS_SUFFIX = """(\.d\.ts|\.ts)$""".toRegex()
+
+        val UNKNOWN = EtsFileSignature(
+            projectName = UNKNOWN_PROJECT_NAME,
+            fileName = UNKNOWN_FILE_NAME,
+        )
     }
 }
 
@@ -57,14 +59,17 @@ data class EtsNamespaceSignature(
     }
 
     companion object {
-        val DEFAULT = EtsNamespaceSignature(name = UNKNOWN_NAMESPACE_NAME, file = EtsFileSignature.DEFAULT)
+        val DEFAULT = EtsNamespaceSignature(
+            name = UNKNOWN_NAMESPACE_NAME,
+            file = EtsFileSignature.UNKNOWN,
+        )
     }
 }
 
 data class EtsClassSignature(
     val name: String,
     val file: EtsFileSignature,
-    val namespace: EtsNamespaceSignature? = null,
+    val namespace: EtsNamespaceSignature? = null, // TODO: TsNamespaceSignature
 ) {
     override fun toString(): String {
         return if (namespace != null) {
@@ -75,35 +80,25 @@ data class EtsClassSignature(
     }
 
     companion object {
-        val DEFAULT = EtsClassSignature(name = UNKNOWN_CLASS_NAME, file = EtsFileSignature.DEFAULT)
+        val UNKNOWN = EtsClassSignature(
+            name = UNKNOWN_CLASS_NAME,
+            file = EtsFileSignature.UNKNOWN,
+        )
     }
 }
 
 data class EtsFieldSignature(
     val enclosingClass: EtsClassSignature,
-    val sub: EtsFieldSubSignature,
-) {
-    val name: String
-        get() = sub.name
-
-    val type: EtsType
-        get() = sub.type
-
-    override fun toString(): String {
-        return "${enclosingClass.name}::$sub"
-    }
-}
-
-data class EtsFieldSubSignature(
     val name: String,
     val type: EtsType,
 ) {
     override fun toString(): String {
-        return "$name: $type"
+        return "${enclosingClass.name}::$name: $type"
     }
 }
 
 data class EtsMethodSignature(
+    // TODO: rename to 'declaringClass' to distinguish from 'enclosingClass' in Method
     val enclosingClass: EtsClassSignature,
     val name: String,
     val parameters: List<EtsMethodParameter>,

@@ -55,40 +55,23 @@ data class CallStmtDto(
 ) : StmtDto
 
 @Serializable
-sealed interface TerminatingStmtDto : StmtDto
-
-@Serializable
 @SerialName("ReturnVoidStmt")
-data object ReturnVoidStmtDto : TerminatingStmtDto
+data object ReturnVoidStmtDto : StmtDto
 
 @Serializable
 @SerialName("ReturnStmt")
 data class ReturnStmtDto(
     val arg: ValueDto,
-) : TerminatingStmtDto
+) : StmtDto
 
 @Serializable
 @SerialName("ThrowStmt")
 data class ThrowStmtDto(
     val arg: ValueDto,
-) : TerminatingStmtDto
-
-@Serializable
-sealed interface BranchingStmtDto : StmtDto
-
-@Serializable
-@SerialName("GotoStmt")
-data object GotoStmtDto : BranchingStmtDto
+) : StmtDto
 
 @Serializable
 @SerialName("IfStmt")
 data class IfStmtDto(
     val condition: ConditionExprDto,
-) : BranchingStmtDto
-
-@Serializable
-@SerialName("SwitchStmt")
-data class SwitchStmtDto(
-    val arg: ValueDto,
-    val cases: List<ValueDto>,
-) : BranchingStmtDto
+) : StmtDto

@@ -19,13 +19,6 @@ package org.jacodb.ets.test
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonPrimitive
 import mu.KotlinLogging
-import org.jacodb.ets.base.DEFAULT_ARK_CLASS_NAME
-import org.jacodb.ets.base.DEFAULT_ARK_METHOD_NAME
-import org.jacodb.ets.base.EtsAnyType
-import org.jacodb.ets.base.EtsInstLocation
-import org.jacodb.ets.base.EtsLocal
-import org.jacodb.ets.base.EtsReturnStmt
-import org.jacodb.ets.base.EtsUnknownType
 import org.jacodb.ets.dto.AnyTypeDto
 import org.jacodb.ets.dto.ClassSignatureDto
 import org.jacodb.ets.dto.DecoratorDto
@@ -47,17 +40,24 @@ import org.jacodb.ets.dto.ValueDto
 import org.jacodb.ets.dto.dtoModule
 import org.jacodb.ets.dto.toEtsLocal
 import org.jacodb.ets.dto.toEtsMethod
+import org.jacodb.ets.model.EtsAnyType
 import org.jacodb.ets.model.EtsClassCategory
 import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsFileSignature
+import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsMethodSignature
+import org.jacodb.ets.model.EtsReturnStmt
 import org.jacodb.ets.model.EtsScene
+import org.jacodb.ets.model.EtsStmtLocation
+import org.jacodb.ets.model.EtsUnknownType
 import org.jacodb.ets.test.utils.getResourcePath
 import org.jacodb.ets.test.utils.getResourcePathOrNull
 import org.jacodb.ets.test.utils.loadEtsFileFromResource
 import org.jacodb.ets.test.utils.loadEtsProjectFromResources
 import org.jacodb.ets.test.utils.testFactory
+import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
+import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
 import org.jacodb.ets.utils.loadEtsFileAutoConvert
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
@@ -169,7 +169,7 @@ class EtsFromJsonTest {
             for (path in availableFiles) {
                 test("load $path") {
                     val file = loadEtsFileFromResource("$prefix/etsir/ast/$path.json")
-                    printFile(file)
+                    printFile(file, showStmts = true)
                 }
             }
         }
@@ -202,7 +202,7 @@ class EtsFromJsonTest {
                 test("load $path") {
                     val p = getResourcePath("$prefix/$path")
                     val file = loadEtsFileAutoConvert(p)
-                    printFile(file)
+                    printFile(file, showStmts = true)
                 }
             }
         }
@@ -388,11 +388,10 @@ class EtsFromJsonTest {
             ),
             method.signature
         )
-        assertEquals(0, method.locals.size)
         assertEquals(1, method.cfg.stmts.size)
         assertEquals(
             listOf(
-                EtsReturnStmt(EtsInstLocation(method, 0), null),
+                EtsReturnStmt(EtsStmtLocation(method, 0), null),
             ),
             method.cfg.stmts
         )

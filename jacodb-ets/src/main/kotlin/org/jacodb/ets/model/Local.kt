@@ -16,31 +16,15 @@
 
 package org.jacodb.ets.model
 
-import org.jacodb.ets.base.EtsType
-
-// for '!' field marker ("definitely assigned field"), see https://www.typescriptlang.org/docs/handbook/2/classes.html#--strictpropertyinitialization
-
-interface EtsField {
-    val enclosingClass: EtsClass?
-    val signature: EtsFieldSignature
-
-    val name: String
-        get() = signature.name
-
-    val type: EtsType
-        get() = signature.type
-}
-
-class EtsFieldImpl(
-    override val signature: EtsFieldSignature,
-    val modifiers: EtsModifiers = EtsModifiers.EMPTY,
-    val isOptional: Boolean = false,  // '?'
-    val isDefinitelyAssigned: Boolean = false, // '!'
-) : EtsField {
-
-    override var enclosingClass: EtsClass? = null
-
+data class EtsLocal(
+    val name: String,
+    override val type: EtsType = EtsUnknownType,
+) : EtsImmediate, EtsLValue {
     override fun toString(): String {
-        return signature.toString()
+        return name
+    }
+
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
+        return visitor.visit(this)
     }
 }

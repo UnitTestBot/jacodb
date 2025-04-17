@@ -14,6 +14,17 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.base
+package org.jacodb.ets.model
 
-interface EtsImmediate : EtsValue
+import org.jacodb.api.common.cfg.CommonInstLocation
+
+data class EtsStmtLocation(
+    override val method: EtsMethod,
+    var index: Int,
+) : CommonInstLocation {
+    companion object {
+        fun stub(method: EtsMethod): EtsStmtLocation {
+            return EtsStmtLocation(method, -1)
+        }
+    }
+}

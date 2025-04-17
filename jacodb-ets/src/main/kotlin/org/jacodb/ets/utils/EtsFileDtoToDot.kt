@@ -23,7 +23,6 @@ import org.jacodb.ets.dto.IfStmtDto
 import org.jacodb.ets.dto.MethodDto
 import org.jacodb.ets.dto.NopStmtDto
 import org.jacodb.ets.dto.StmtDto
-import org.jacodb.ets.dto.SwitchStmtDto
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
@@ -168,15 +167,6 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
                                 val bs = blockId(clazz, method, succ)
                                 val label = if (j == 0) "true" else "false"
                                 lines += """  "${b}.${i}" -> "${bs}.0" [lhead="$bs", label="$label"];"""
-                            }
-                        }
-
-                        is SwitchStmtDto -> {
-                            for ((j, succ) in bb.successors.withIndex()) {
-                                val b = blockId(clazz, method, bb.id)
-                                val bs = blockId(clazz, method, succ)
-                                val label = if (j == 0) "default" else "case ${j - 1}"
-                                lines += """  "${b}.${i}" -> "${bs}.0" [lhead="$b", label="$label"];"""
                             }
                         }
 

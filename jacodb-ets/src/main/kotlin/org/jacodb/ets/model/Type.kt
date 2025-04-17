@@ -14,25 +14,24 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.base
+package org.jacodb.ets.model
 
 import org.jacodb.api.common.CommonType
-import org.jacodb.api.common.CommonTypeName
-import org.jacodb.ets.model.EtsClassSignature
-import org.jacodb.ets.model.EtsLocalSignature
-import org.jacodb.ets.model.EtsMethodSignature
 
-interface EtsType : CommonType, CommonTypeName {
-    override val typeName: String
+interface EtsType : TypeName, CommonType {
 
     override val nullable: Boolean?
-        get() = false
+        get() = true
 
     interface Visitor<out R> {
         fun visit(type: EtsAnyType): R
         fun visit(type: EtsUnknownType): R
         fun visit(type: EtsUnionType): R
-        fun visit(type: EtsTupleType): R
+        fun visit(type: EtsIntersectionType): R
+        fun visit(type: EtsGenericType): R
+        fun visit(type: EtsAliasType): R
+
+        // Primitive
         fun visit(type: EtsBooleanType): R
         fun visit(type: EtsNumberType): R
         fun visit(type: EtsStringType): R
@@ -41,12 +40,13 @@ interface EtsType : CommonType, CommonTypeName {
         fun visit(type: EtsVoidType): R
         fun visit(type: EtsNeverType): R
         fun visit(type: EtsLiteralType): R
+
+        // Ref
         fun visit(type: EtsClassType): R
-        fun visit(type: EtsFunctionType): R
-        fun visit(type: EtsArrayType): R
         fun visit(type: EtsUnclearRefType): R
-        fun visit(type: EtsGenericType): R
-        fun visit(type: EtsAliasType): R
+        fun visit(type: EtsArrayType): R
+        fun visit(type: EtsTupleType): R
+        fun visit(type: EtsFunctionType): R
 
         fun visit(type: EtsRawType): R {
             if (this is Default) {
@@ -59,7 +59,10 @@ interface EtsType : CommonType, CommonTypeName {
             override fun visit(type: EtsAnyType): R = defaultVisit(type)
             override fun visit(type: EtsUnknownType): R = defaultVisit(type)
             override fun visit(type: EtsUnionType): R = defaultVisit(type)
-            override fun visit(type: EtsTupleType): R = defaultVisit(type)
+            override fun visit(type: EtsIntersectionType): R = defaultVisit(type)
+            override fun visit(type: EtsGenericType): R = defaultVisit(type)
+            override fun visit(type: EtsAliasType): R = defaultVisit(type)
+
             override fun visit(type: EtsBooleanType): R = defaultVisit(type)
             override fun visit(type: EtsNumberType): R = defaultVisit(type)
             override fun visit(type: EtsStringType): R = defaultVisit(type)
@@ -68,13 +71,12 @@ interface EtsType : CommonType, CommonTypeName {
             override fun visit(type: EtsVoidType): R = defaultVisit(type)
             override fun visit(type: EtsNeverType): R = defaultVisit(type)
             override fun visit(type: EtsLiteralType): R = defaultVisit(type)
+
             override fun visit(type: EtsClassType): R = defaultVisit(type)
-            override fun visit(type: EtsFunctionType): R = defaultVisit(type)
-            override fun visit(type: EtsArrayType): R = defaultVisit(type)
             override fun visit(type: EtsUnclearRefType): R = defaultVisit(type)
-            override fun visit(type: EtsGenericType): R = defaultVisit(type)
-            override fun visit(type: EtsAliasType): R = defaultVisit(type)
-            override fun visit(type: EtsRawType): R = defaultVisit(type)
+            override fun visit(type: EtsArrayType): R = defaultVisit(type)
+            override fun visit(type: EtsTupleType): R = defaultVisit(type)
+            override fun visit(type: EtsFunctionType): R = defaultVisit(type)
 
             fun defaultVisit(type: EtsType): R
         }
@@ -125,7 +127,13 @@ data class EtsUnionType(
     val types: List<EtsType>,
 ) : EtsType {
     override val typeName: String
-        get() = types.joinToString(separator = " | ") { it.typeName }
+        get() = types.joinToString(separator = " | ") {
+            if (it is EtsUnionType || it is EtsIntersectionType) {
+                "(${it.typeName})"
+            } else {
+                it.typeName
+            }
+        }
 
     override fun toString(): String = typeName
 
@@ -134,13 +142,52 @@ data class EtsUnionType(
     }
 }
 
-data class EtsTupleType(
+data class EtsIntersectionType(
     val types: List<EtsType>,
 ) : EtsType {
     override val typeName: String
-        get() = types.joinToString(prefix = "[", postfix = "]") { it.typeName }
+        get() = types.joinToString(separator = " & ") {
+            if (it is EtsUnionType || it is EtsIntersectionType) {
+                "(${it.typeName})"
+            } else {
+                it.typeName
+            }
+        }
 
     override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: EtsType.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class EtsGenericType(
+    override val typeName: String,
+    val constraint: EtsType? = null,
+    val defaultType: EtsType? = null,
+) : EtsType {
+    override fun toString(): String {
+        return typeName +
+            (constraint?.let { " extends $it" } ?: "") +
+            (defaultType?.let { " = $it" } ?: "")
+    }
+
+    override fun <R> accept(visitor: EtsType.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class EtsAliasType(
+    val name: String,
+    val originalType: EtsType,
+    val signature: EtsLocalSignature,
+) : EtsType {
+    override val typeName: String
+        get() = name
+
+    override fun toString(): String {
+        return "$name = $originalType"
+    }
 
     override fun <R> accept(visitor: EtsType.Visitor<R>): R {
         return visitor.visit(this)
@@ -230,7 +277,7 @@ data class EtsLiteralType(
     val literalTypeName: String,
 ) : EtsPrimitiveType {
     override val typeName: String
-        get() = "literal"
+        get() = literalTypeName
 
     override fun toString(): String = typeName
 
@@ -247,7 +294,7 @@ data class EtsClassType(
 ) : EtsRefType {
     override val typeName: String
         get() = if (typeParameters.isNotEmpty()) {
-            val generics = typeParameters.joinToString()
+            val generics = typeParameters.joinToString { it.typeName }
             "${signature.name}<$generics>"
         } else {
             signature.name
@@ -260,16 +307,16 @@ data class EtsClassType(
     }
 }
 
-data class EtsFunctionType(
-    val method: EtsMethodSignature,
-    val typeParameters: List<EtsType> = emptyList(),
+data class EtsUnclearRefType(
+    val name: String,
+    val typeParameters: List<EtsType>,
 ) : EtsRefType {
     override val typeName: String
         get() = if (typeParameters.isNotEmpty()) {
-            val generics = typeParameters.joinToString()
-            "${method.name}<$generics>"
+            val generics = typeParameters.joinToString { it.typeName }
+            "${name}<$generics>"
         } else {
-            method.name
+            name
         }
 
     override fun toString(): String = typeName
@@ -293,17 +340,11 @@ data class EtsArrayType(
     }
 }
 
-data class EtsUnclearRefType(
-    val name: String,
-    val typeParameters: List<EtsType> = emptyList(),
+data class EtsTupleType(
+    val types: List<EtsType>,
 ) : EtsRefType {
     override val typeName: String
-        get() = if (typeParameters.isNotEmpty()) {
-            val generics = typeParameters.joinToString()
-            "$name<$generics>"
-        } else {
-            name
-        }
+        get() = types.joinToString(prefix = "[", postfix = "]") { it.typeName }
 
     override fun toString(): String = typeName
 
@@ -312,34 +353,19 @@ data class EtsUnclearRefType(
     }
 }
 
-data class EtsGenericType(
-    val name: String,
-    val defaultType: EtsType? = null,
-    val constraint: EtsType? = null,
+data class EtsFunctionType(
+    val signature: EtsMethodSignature,
+    val typeParameters: List<EtsType> = emptyList(),
 ) : EtsRefType {
     override val typeName: String
-        get() = name
+        get() = if (typeParameters.isNotEmpty()) {
+            val generics = typeParameters.joinToString { it.typeName }
+            "${signature.name}<$generics>"
+        } else {
+            signature.name
+        }
 
-    override fun toString(): String {
-        return name + (constraint?.let { " extends $it" } ?: "") + (defaultType?.let { " = $it" } ?: "")
-    }
-
-    override fun <R> accept(visitor: EtsType.Visitor<R>): R {
-        return visitor.visit(this)
-    }
-}
-
-data class EtsAliasType(
-    val name: String,
-    val originalType: EtsType,
-    val signature: EtsLocalSignature,
-) : EtsType {
-    override val typeName: String
-        get() = name
-
-    override fun toString(): String {
-        return "$name = $originalType"
-    }
+    override fun toString(): String = typeName
 
     override fun <R> accept(visitor: EtsType.Visitor<R>): R {
         return visitor.visit(this)

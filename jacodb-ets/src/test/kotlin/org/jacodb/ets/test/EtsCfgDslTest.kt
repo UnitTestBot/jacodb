@@ -16,10 +16,6 @@
 
 package org.jacodb.ets.test
 
-import org.jacodb.ets.base.EtsAssignStmt
-import org.jacodb.ets.base.EtsLocal
-import org.jacodb.ets.base.EtsNumberType
-import org.jacodb.ets.base.EtsUnknownType
 import org.jacodb.ets.dsl.add
 import org.jacodb.ets.dsl.const
 import org.jacodb.ets.dsl.local
@@ -28,15 +24,16 @@ import org.jacodb.ets.dsl.param
 import org.jacodb.ets.dsl.program
 import org.jacodb.ets.dsl.toBlockCfg
 import org.jacodb.ets.dsl.toDot
-import org.jacodb.ets.graph.linearize
-import org.jacodb.ets.graph.toDot
-import org.jacodb.ets.graph.toEtsBlockCfg
 import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsFileSignature
 import org.jacodb.ets.model.EtsMethodImpl
 import org.jacodb.ets.model.EtsMethodParameter
 import org.jacodb.ets.model.EtsMethodSignature
+import org.jacodb.ets.model.EtsNumberType
+import org.jacodb.ets.model.EtsUnknownType
+import org.jacodb.ets.utils.linearize
 import org.jacodb.ets.utils.toDot
+import org.jacodb.ets.utils.toEtsBlockCfg
 import org.junit.jupiter.api.Test
 
 class EtsCfgDslTest {
@@ -60,7 +57,6 @@ class EtsCfgDslTest {
         val blockCfg = prog.toBlockCfg()
         println("blockCfg:\n${blockCfg.toDot()}")
 
-        val locals = mutableListOf<EtsLocal>()
         val method = EtsMethodImpl(
             signature = EtsMethodSignature(
                 enclosingClass = EtsClassSignature(
@@ -76,7 +72,6 @@ class EtsCfgDslTest {
                 ),
                 returnType = EtsNumberType,
             ),
-            locals = locals,
         )
 
         val etsBlockCfg = blockCfg.toEtsBlockCfg(method)
@@ -84,16 +79,6 @@ class EtsCfgDslTest {
         val etsCfg = etsBlockCfg.linearize()
         println("etsCfg:\n${etsCfg.toDot()}")
 
-        method._cfg = etsCfg
-        locals += etsCfg.stmts
-            .filterIsInstance<EtsAssignStmt>()
-            .mapNotNull {
-                val left = it.lhv
-                if (left is EtsLocal) {
-                    left
-                } else {
-                    null
-                }
-            }
+        method._cfg = etsBlockCfg
     }
 }

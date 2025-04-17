@@ -14,17 +14,8 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.base
+package org.jacodb.ets.model
 
-data class EtsLocal(
-    val name: String,
-    override val type: EtsType,
-) : EtsImmediate, EtsLValue {
-    override fun toString(): String {
-        return name
-    }
+import org.jacodb.api.common.cfg.BytecodeGraph
 
-    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
-        return visitor.visit(this)
-    }
-}
+interface EtsBytecodeGraph<out Statement> : BytecodeGraph<Statement>

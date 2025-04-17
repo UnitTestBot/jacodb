@@ -42,3 +42,7 @@ fun view(
     println("Opening rendered file '$outputFile'...")
     Runtime.getRuntime().exec("$viewerCmd $outputFile").waitFor()
 }
+
+fun <T> T.view(dot: (T) -> String) {
+    view(dot(this))
+}

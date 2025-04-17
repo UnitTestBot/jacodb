@@ -14,22 +14,30 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.utils
+package org.jacodb.ets.model
 
-import java.util.IdentityHashMap
-
-class IdentityHashSet<T>(
-    private val map: IdentityHashMap<T, Unit> = IdentityHashMap(),
-) : AbstractMutableSet<T>() {
-
-    override val size: Int
-        get() = map.size
-
-    override fun add(element: T): Boolean {
-        return map.put(element, Unit) == null
+class EtsFile(
+    val signature: EtsFileSignature,
+    val classes: List<EtsClass>,
+    val namespaces: List<EtsNamespace>,
+) {
+    init {
+        classes.forEach { (it as EtsClassImpl).declaringFile = this }
+        namespaces.forEach { it.declaringFile = this }
     }
 
-    override fun iterator(): MutableIterator<T> {
-        return map.keys.iterator()
+    var scene: EtsScene? = null
+
+    val name: String
+        get() = signature.fileName
+    val projectName: String
+        get() = signature.projectName
+
+    val allClasses: List<EtsClass> by lazy {
+        classes + namespaces.flatMap { it.allClasses }
+    }
+
+    override fun toString(): String {
+        return signature.toString()
     }
 }

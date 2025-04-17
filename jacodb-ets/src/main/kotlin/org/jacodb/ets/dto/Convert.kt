@@ -16,139 +16,134 @@
 
 package org.jacodb.ets.dto
 
-import org.jacodb.ets.base.CONSTRUCTOR_NAME
-import org.jacodb.ets.base.EtsAddExpr
-import org.jacodb.ets.base.EtsAliasType
-import org.jacodb.ets.base.EtsAndExpr
-import org.jacodb.ets.base.EtsAnyType
-import org.jacodb.ets.base.EtsArrayAccess
-import org.jacodb.ets.base.EtsArrayType
-import org.jacodb.ets.base.EtsAssignStmt
-import org.jacodb.ets.base.EtsAwaitExpr
-import org.jacodb.ets.base.EtsBitAndExpr
-import org.jacodb.ets.base.EtsBitNotExpr
-import org.jacodb.ets.base.EtsBitOrExpr
-import org.jacodb.ets.base.EtsBitXorExpr
-import org.jacodb.ets.base.EtsBooleanConstant
-import org.jacodb.ets.base.EtsBooleanType
-import org.jacodb.ets.base.EtsCallExpr
-import org.jacodb.ets.base.EtsCallStmt
-import org.jacodb.ets.base.EtsCastExpr
-import org.jacodb.ets.base.EtsClassType
-import org.jacodb.ets.base.EtsCommaExpr
-import org.jacodb.ets.base.EtsConstant
-import org.jacodb.ets.base.EtsDeleteExpr
-import org.jacodb.ets.base.EtsDivExpr
-import org.jacodb.ets.base.EtsEntity
-import org.jacodb.ets.base.EtsEqExpr
-import org.jacodb.ets.base.EtsExpExpr
-import org.jacodb.ets.base.EtsExpr
-import org.jacodb.ets.base.EtsFieldRef
-import org.jacodb.ets.base.EtsFunctionType
-import org.jacodb.ets.base.EtsGenericType
-import org.jacodb.ets.base.EtsGotoStmt
-import org.jacodb.ets.base.EtsGtEqExpr
-import org.jacodb.ets.base.EtsGtExpr
-import org.jacodb.ets.base.EtsIfStmt
-import org.jacodb.ets.base.EtsInExpr
-import org.jacodb.ets.base.EtsInstLocation
-import org.jacodb.ets.base.EtsInstanceCallExpr
-import org.jacodb.ets.base.EtsInstanceFieldRef
-import org.jacodb.ets.base.EtsInstanceOfExpr
-import org.jacodb.ets.base.EtsLeftShiftExpr
-import org.jacodb.ets.base.EtsLengthExpr
-import org.jacodb.ets.base.EtsLiteralType
-import org.jacodb.ets.base.EtsLocal
-import org.jacodb.ets.base.EtsLtEqExpr
-import org.jacodb.ets.base.EtsLtExpr
-import org.jacodb.ets.base.EtsMulExpr
-import org.jacodb.ets.base.EtsNegExpr
-import org.jacodb.ets.base.EtsNeverType
-import org.jacodb.ets.base.EtsNewArrayExpr
-import org.jacodb.ets.base.EtsNewExpr
-import org.jacodb.ets.base.EtsNopStmt
-import org.jacodb.ets.base.EtsNotEqExpr
-import org.jacodb.ets.base.EtsNotExpr
-import org.jacodb.ets.base.EtsNullConstant
-import org.jacodb.ets.base.EtsNullType
-import org.jacodb.ets.base.EtsNullishCoalescingExpr
-import org.jacodb.ets.base.EtsNumberConstant
-import org.jacodb.ets.base.EtsNumberType
-import org.jacodb.ets.base.EtsOrExpr
-import org.jacodb.ets.base.EtsParameterRef
-import org.jacodb.ets.base.EtsPreDecExpr
-import org.jacodb.ets.base.EtsPreIncExpr
-import org.jacodb.ets.base.EtsPtrCallExpr
-import org.jacodb.ets.base.EtsRawEntity
-import org.jacodb.ets.base.EtsRawStmt
-import org.jacodb.ets.base.EtsRawType
-import org.jacodb.ets.base.EtsRemExpr
-import org.jacodb.ets.base.EtsReturnStmt
-import org.jacodb.ets.base.EtsRightShiftExpr
-import org.jacodb.ets.base.EtsStaticCallExpr
-import org.jacodb.ets.base.EtsStaticFieldRef
-import org.jacodb.ets.base.EtsStmt
-import org.jacodb.ets.base.EtsStrictEqExpr
-import org.jacodb.ets.base.EtsStrictNotEqExpr
-import org.jacodb.ets.base.EtsStringConstant
-import org.jacodb.ets.base.EtsStringType
-import org.jacodb.ets.base.EtsSubExpr
-import org.jacodb.ets.base.EtsSwitchStmt
-import org.jacodb.ets.base.EtsThis
-import org.jacodb.ets.base.EtsThrowStmt
-import org.jacodb.ets.base.EtsTupleType
-import org.jacodb.ets.base.EtsType
-import org.jacodb.ets.base.EtsTypeOfExpr
-import org.jacodb.ets.base.EtsUnaryPlusExpr
-import org.jacodb.ets.base.EtsUnclearRefType
-import org.jacodb.ets.base.EtsUndefinedConstant
-import org.jacodb.ets.base.EtsUndefinedType
-import org.jacodb.ets.base.EtsUnionType
-import org.jacodb.ets.base.EtsUnknownType
-import org.jacodb.ets.base.EtsUnsignedRightShiftExpr
-import org.jacodb.ets.base.EtsValue
-import org.jacodb.ets.base.EtsVoidType
-import org.jacodb.ets.base.EtsYieldExpr
-import org.jacodb.ets.graph.EtsCfg
+import org.jacodb.ets.model.BasicBlock
+import org.jacodb.ets.model.EtsAddExpr
+import org.jacodb.ets.model.EtsAliasType
+import org.jacodb.ets.model.EtsAndExpr
+import org.jacodb.ets.model.EtsAnyType
+import org.jacodb.ets.model.EtsArrayAccess
+import org.jacodb.ets.model.EtsArrayType
+import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsAwaitExpr
+import org.jacodb.ets.model.EtsBitAndExpr
+import org.jacodb.ets.model.EtsBitNotExpr
+import org.jacodb.ets.model.EtsBitOrExpr
+import org.jacodb.ets.model.EtsBitXorExpr
+import org.jacodb.ets.model.EtsBlockCfg
+import org.jacodb.ets.model.EtsBooleanConstant
+import org.jacodb.ets.model.EtsBooleanType
+import org.jacodb.ets.model.EtsCallExpr
+import org.jacodb.ets.model.EtsCallStmt
+import org.jacodb.ets.model.EtsCastExpr
 import org.jacodb.ets.model.EtsClass
 import org.jacodb.ets.model.EtsClassCategory
 import org.jacodb.ets.model.EtsClassImpl
 import org.jacodb.ets.model.EtsClassSignature
+import org.jacodb.ets.model.EtsClassType
+import org.jacodb.ets.model.EtsConstant
 import org.jacodb.ets.model.EtsDecorator
+import org.jacodb.ets.model.EtsDeleteExpr
+import org.jacodb.ets.model.EtsDivExpr
+import org.jacodb.ets.model.EtsEntity
+import org.jacodb.ets.model.EtsEqExpr
+import org.jacodb.ets.model.EtsExpExpr
+import org.jacodb.ets.model.EtsExpr
 import org.jacodb.ets.model.EtsField
 import org.jacodb.ets.model.EtsFieldImpl
+import org.jacodb.ets.model.EtsFieldRef
 import org.jacodb.ets.model.EtsFieldSignature
-import org.jacodb.ets.model.EtsFieldSubSignature
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsFileSignature
+import org.jacodb.ets.model.EtsFunctionType
+import org.jacodb.ets.model.EtsGenericType
+import org.jacodb.ets.model.EtsGtEqExpr
+import org.jacodb.ets.model.EtsGtExpr
+import org.jacodb.ets.model.EtsIfStmt
+import org.jacodb.ets.model.EtsInExpr
+import org.jacodb.ets.model.EtsInstanceCallExpr
+import org.jacodb.ets.model.EtsInstanceFieldRef
+import org.jacodb.ets.model.EtsInstanceOfExpr
+import org.jacodb.ets.model.EtsIntersectionType
+import org.jacodb.ets.model.EtsLeftShiftExpr
+import org.jacodb.ets.model.EtsLiteralType
+import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsLocalSignature
+import org.jacodb.ets.model.EtsLtEqExpr
+import org.jacodb.ets.model.EtsLtExpr
 import org.jacodb.ets.model.EtsMethod
 import org.jacodb.ets.model.EtsMethodImpl
 import org.jacodb.ets.model.EtsMethodParameter
 import org.jacodb.ets.model.EtsMethodSignature
 import org.jacodb.ets.model.EtsModifiers
+import org.jacodb.ets.model.EtsMulExpr
 import org.jacodb.ets.model.EtsNamespace
 import org.jacodb.ets.model.EtsNamespaceSignature
+import org.jacodb.ets.model.EtsNegExpr
+import org.jacodb.ets.model.EtsNeverType
+import org.jacodb.ets.model.EtsNewArrayExpr
+import org.jacodb.ets.model.EtsNewExpr
+import org.jacodb.ets.model.EtsNopStmt
+import org.jacodb.ets.model.EtsNotEqExpr
+import org.jacodb.ets.model.EtsNotExpr
+import org.jacodb.ets.model.EtsNullConstant
+import org.jacodb.ets.model.EtsNullType
+import org.jacodb.ets.model.EtsNullishCoalescingExpr
+import org.jacodb.ets.model.EtsNumberConstant
+import org.jacodb.ets.model.EtsNumberType
+import org.jacodb.ets.model.EtsOrExpr
+import org.jacodb.ets.model.EtsParameterRef
+import org.jacodb.ets.model.EtsPreDecExpr
+import org.jacodb.ets.model.EtsPreIncExpr
+import org.jacodb.ets.model.EtsPtrCallExpr
+import org.jacodb.ets.model.EtsRawEntity
+import org.jacodb.ets.model.EtsRawStmt
+import org.jacodb.ets.model.EtsRawType
+import org.jacodb.ets.model.EtsRemExpr
+import org.jacodb.ets.model.EtsReturnStmt
+import org.jacodb.ets.model.EtsRightShiftExpr
+import org.jacodb.ets.model.EtsStaticCallExpr
+import org.jacodb.ets.model.EtsStaticFieldRef
+import org.jacodb.ets.model.EtsStmt
+import org.jacodb.ets.model.EtsStmtLocation
+import org.jacodb.ets.model.EtsStrictEqExpr
+import org.jacodb.ets.model.EtsStrictNotEqExpr
+import org.jacodb.ets.model.EtsStringConstant
+import org.jacodb.ets.model.EtsStringType
+import org.jacodb.ets.model.EtsSubExpr
+import org.jacodb.ets.model.EtsThis
+import org.jacodb.ets.model.EtsThrowStmt
+import org.jacodb.ets.model.EtsTupleType
+import org.jacodb.ets.model.EtsType
+import org.jacodb.ets.model.EtsTypeOfExpr
+import org.jacodb.ets.model.EtsUnaryPlusExpr
+import org.jacodb.ets.model.EtsUnclearRefType
+import org.jacodb.ets.model.EtsUndefinedConstant
+import org.jacodb.ets.model.EtsUndefinedType
+import org.jacodb.ets.model.EtsUnionType
+import org.jacodb.ets.model.EtsUnknownType
+import org.jacodb.ets.model.EtsUnsignedRightShiftExpr
+import org.jacodb.ets.model.EtsValue
+import org.jacodb.ets.model.EtsVoidType
+import org.jacodb.ets.model.EtsYieldExpr
 
 class EtsMethodBuilder(
     signature: EtsMethodSignature,
     typeParameters: List<EtsType> = emptyList(),
-    locals: List<EtsLocal> = emptyList(),
     modifiers: EtsModifiers = EtsModifiers.EMPTY,
     decorators: List<EtsDecorator> = emptyList(),
 ) {
-    private val etsMethod = EtsMethodImpl(signature, typeParameters, locals, modifiers, decorators)
+    private val method = EtsMethodImpl(signature, typeParameters, modifiers, decorators)
 
-    private val currentStmts: MutableList<EtsStmt> = mutableListOf()
+    private lateinit var currentStmts: MutableList<EtsStmt>
 
     private var freeTempLocal: Int = 0
 
-    private fun newTempLocal(type: EtsType): EtsLocal {
-        return EtsLocal("_tmp${freeTempLocal++}", type)
+    private fun newTempLocal(): EtsLocal {
+        return EtsLocal("_tmp${freeTempLocal++}")
     }
 
-    private fun loc(): EtsInstLocation {
-        return EtsInstLocation(etsMethod, currentStmts.size)
+    private fun loc(): EtsStmtLocation {
+        return EtsStmtLocation.stub(method)
     }
 
     private var built: Boolean = false
@@ -156,16 +151,16 @@ class EtsMethodBuilder(
     fun build(cfgDto: CfgDto): EtsMethod {
         require(!built) { "Method has already been built" }
         val cfg = cfgDto.toEtsCfg()
-        etsMethod._cfg = cfg
+        method._cfg = cfg
         built = true
-        return etsMethod
+        return method
     }
 
     private fun ensureLocal(entity: EtsEntity): EtsLocal {
         if (entity is EtsLocal) {
             return entity
         }
-        val newLocal = newTempLocal(entity.type)
+        val newLocal = newTempLocal()
         currentStmts += EtsAssignStmt(
             location = loc(),
             lhv = newLocal,
@@ -224,7 +219,7 @@ class EtsMethodBuilder(
         }
 
         is ReturnStmtDto -> {
-            val returnValue = ensureOneAddress(arg.toEtsEntity())
+            val returnValue = ensureLocal(arg.toEtsEntity())
             EtsReturnStmt(
                 location = loc(),
                 returnValue = returnValue,
@@ -239,32 +234,18 @@ class EtsMethodBuilder(
         }
 
         is ThrowStmtDto -> {
-            val arg = arg.toEtsEntity()
+            val exception = ensureLocal(arg.toEtsEntity())
             EtsThrowStmt(
                 location = loc(),
-                arg = arg,
+                exception = exception,
             )
-        }
-
-        is GotoStmtDto -> {
-            EtsGotoStmt(location = loc())
         }
 
         is IfStmtDto -> {
-            val condition = condition.toEtsEntity()
+            val condition = ensureLocal(condition.toEtsEntity())
             EtsIfStmt(
                 location = loc(),
                 condition = condition,
-            )
-        }
-
-        is SwitchStmtDto -> {
-            val arg = arg.toEtsEntity()
-            val cases = cases.map { it.toEtsEntity() }
-            EtsSwitchStmt(
-                location = loc(),
-                arg = arg,
-                cases = cases,
             )
         }
 
@@ -283,7 +264,7 @@ class EtsMethodBuilder(
         is ConstantDto -> toEtsConstant()
 
         is NewExprDto -> EtsNewExpr(
-            type = classType.toEtsType() // TODO: safe cast to ClassType
+            type = classType.toEtsType(),
         )
 
         is NewArrayExprDto -> EtsNewArrayExpr(
@@ -297,10 +278,12 @@ class EtsMethodBuilder(
 
         is AwaitExprDto -> EtsAwaitExpr(
             arg = arg.toEtsEntity(),
+            type = type.toEtsType(),
         )
 
         is YieldExprDto -> EtsYieldExpr(
             arg = arg.toEtsEntity(),
+            type = type.toEtsType(),
         )
 
         is TypeOfExprDto -> EtsTypeOfExpr(
@@ -312,10 +295,6 @@ class EtsMethodBuilder(
             checkType = checkType.toEtsType(),
         )
 
-        is LengthExprDto -> EtsLengthExpr(
-            arg = arg.toEtsEntity(),
-        )
-
         is CastExprDto -> EtsCastExpr(
             arg = arg.toEtsEntity(),
             type = type.toEtsType(),
@@ -323,14 +302,14 @@ class EtsMethodBuilder(
 
         is UnaryOperationDto -> {
             val arg = arg.toEtsEntity()
-            // Note: `type` is ignored here!
+            val type = type.toEtsType()
             when (op) {
                 Ops.Unary.NOT -> EtsNotExpr(arg)
-                Ops.Unary.BIT_NOT -> EtsBitNotExpr(arg.type, arg)
-                Ops.Unary.MINUS -> EtsNegExpr(arg.type, arg)
-                Ops.Unary.PLUS -> EtsUnaryPlusExpr(arg)
-                Ops.Unary.INC -> EtsPreIncExpr(arg.type, arg)
-                Ops.Unary.DEC -> EtsPreDecExpr(arg.type, arg)
+                Ops.Unary.BIT_NOT -> EtsBitNotExpr(arg, type)
+                Ops.Unary.MINUS -> EtsNegExpr(arg, type)
+                Ops.Unary.PLUS -> EtsUnaryPlusExpr(arg, type)
+                Ops.Unary.INC -> EtsPreIncExpr(arg, type)
+                Ops.Unary.DEC -> EtsPreDecExpr(arg, type)
                 else -> error("Unknown unop: '$op'")
             }
         }
@@ -340,22 +319,21 @@ class EtsMethodBuilder(
             val right = right.toEtsEntity()
             val type = type.toEtsType()
             when (op) {
-                Ops.Binary.ADD -> EtsAddExpr(type, left, right)
-                Ops.Binary.SUB -> EtsSubExpr(type, left, right)
-                Ops.Binary.MUL -> EtsMulExpr(type, left, right)
-                Ops.Binary.DIV -> EtsDivExpr(type, left, right)
-                Ops.Binary.MOD -> EtsRemExpr(type, left, right)
-                Ops.Binary.EXP -> EtsExpExpr(type, left, right)
-                Ops.Binary.BIT_AND -> EtsBitAndExpr(type, left, right)
-                Ops.Binary.BIT_OR -> EtsBitOrExpr(type, left, right)
-                Ops.Binary.BIT_XOR -> EtsBitXorExpr(type, left, right)
-                Ops.Binary.LSH -> EtsLeftShiftExpr(type, left, right)
-                Ops.Binary.RSH -> EtsRightShiftExpr(type, left, right)
-                Ops.Binary.URSH -> EtsUnsignedRightShiftExpr(type, left, right)
-                Ops.Binary.AND -> EtsAndExpr(type, left, right)
-                Ops.Binary.OR -> EtsOrExpr(type, left, right)
-                Ops.Binary.NULLISH -> EtsNullishCoalescingExpr(type, left, right)
-                Ops.Binary.COMMA -> EtsCommaExpr(left, right) // Note: `type` is ignored here!
+                Ops.Binary.ADD -> EtsAddExpr(left, right, type)
+                Ops.Binary.SUB -> EtsSubExpr(left, right, type)
+                Ops.Binary.MUL -> EtsMulExpr(left, right, type)
+                Ops.Binary.DIV -> EtsDivExpr(left, right, type)
+                Ops.Binary.MOD -> EtsRemExpr(left, right, type)
+                Ops.Binary.EXP -> EtsExpExpr(left, right, type)
+                Ops.Binary.BIT_AND -> EtsBitAndExpr(left, right, type)
+                Ops.Binary.BIT_OR -> EtsBitOrExpr(left, right, type)
+                Ops.Binary.BIT_XOR -> EtsBitXorExpr(left, right, type)
+                Ops.Binary.LSH -> EtsLeftShiftExpr(left, right, type)
+                Ops.Binary.RSH -> EtsRightShiftExpr(left, right, type)
+                Ops.Binary.URSH -> EtsUnsignedRightShiftExpr(left, right, type)
+                Ops.Binary.AND -> EtsAndExpr(left, right, type)
+                Ops.Binary.OR -> EtsOrExpr(left, right, type)
+                Ops.Binary.NULLISH -> EtsNullishCoalescingExpr(left, right, type)
                 else -> error("Unknown binop: $op")
             }
         }
@@ -380,23 +358,26 @@ class EtsMethodBuilder(
 
         is InstanceCallExprDto -> EtsInstanceCallExpr(
             instance = (instance as LocalDto).toEtsLocal(), // safe cast
-            method = method.toEtsMethodSignature(),
+            callee = method.toEtsMethodSignature(),
             args = args.map { ensureLocal(it.toEtsEntity()) },
+            type = type.toEtsType(),
         )
 
         is StaticCallExprDto -> EtsStaticCallExpr(
-            method = method.toEtsMethodSignature(),
+            callee = method.toEtsMethodSignature(),
             args = args.map { ensureLocal(it.toEtsEntity()) },
+            type = type.toEtsType(),
         )
 
         is PtrCallExprDto -> EtsPtrCallExpr(
             ptr = ensureLocal(ptr.toEtsEntity() as EtsValue), // safe cast
-            method = method.toEtsMethodSignature(),
+            callee = method.toEtsMethodSignature(),
             args = args.map { ensureLocal(it.toEtsEntity()) },
+            type = type.toEtsType(),
         )
 
         is ThisRefDto -> EtsThis(
-            type = (type as ClassTypeDto).toEtsClassType(), // safe cast
+            type = type.toEtsType(),
         )
 
         is ParameterRefDto -> EtsParameterRef(
@@ -405,8 +386,8 @@ class EtsMethodBuilder(
         )
 
         is ArrayRefDto -> EtsArrayAccess(
-            array = array.toEtsEntity() as EtsValue, // TODO: check whether the cast is safe
-            index = index.toEtsEntity() as EtsValue, // TODO: check whether the cast is safe
+            array = ensureLocal(array.toEtsEntity() as EtsValue), // safe cast
+            index = index.toEtsEntity() as EtsValue, // safe cast
             type = type.toEtsType(),
         )
 
@@ -415,129 +396,68 @@ class EtsMethodBuilder(
         is RawValueDto -> EtsRawEntity(
             kind = kind,
             extra = extra,
-            type = type.toEtsType(),
         )
     }
 
     private fun FieldRefDto.toEtsFieldRef(): EtsFieldRef {
-        val field = field.toEtsFieldSignature()
         return when (this) {
             is InstanceFieldRefDto -> EtsInstanceFieldRef(
                 instance = (instance as LocalDto).toEtsLocal(), // safe cast
-                field = field,
+                field = field.toEtsFieldSignature(),
+                type = type.toEtsType(),
             )
 
             is StaticFieldRefDto -> EtsStaticFieldRef(
-                field = field,
+                field = field.toEtsFieldSignature(),
+                type = type.toEtsType(),
             )
         }
     }
 
-    private fun CfgDto.toEtsCfg(): EtsCfg {
-        require(blocks.isNotEmpty()) {
-            "Method body should contain at least return stmt"
+    private fun CfgDto.toEtsCfg(): EtsBlockCfg {
+        if (blocks.isEmpty()) {
+            return EtsBlockCfg.EMPTY
         }
 
-        val visited: MutableSet<Int> = hashSetOf(0)
-        val queue: ArrayDeque<Int> = ArrayDeque()
-        queue.add(0)
-
-        val blocks = blocks.associateBy { it.id }
-        val blockStart: MutableMap<Int, Int> = hashMapOf()
-        val blockEnd: MutableMap<Int, Int> = hashMapOf()
-
-        while (queue.isNotEmpty()) {
-            val block = blocks[queue.removeFirst()]!!
-            blockStart[block.id] = currentStmts.size
-            if (block.stmts.isNotEmpty()) {
-                for (stmt in block.stmts) {
-                    currentStmts += stmt.toEtsStmt()
-                }
-            } else {
-                currentStmts += EtsNopStmt(loc())
+        val blocks = this.blocks.map { block ->
+            currentStmts = mutableListOf()
+            for (stmt in block.stmts) {
+                currentStmts += stmt.toEtsStmt()
             }
-            blockEnd[block.id] = currentStmts.lastIndex
-            check(blockStart[block.id]!! <= blockEnd[block.id]!!)
-
-            for (next in block.successors) {
-                if (visited.add(next)) {
-                    queue.addLast(next)
-                }
+            if (currentStmts.isEmpty()) {
+                currentStmts += EtsNopStmt(location = loc())
             }
+            BasicBlock(block.id, currentStmts)
         }
+        // Note: in DTO, successors for IF stmts are (false, true) branches,
+        //       however in all our CFGs we use (true, false) order.
+        val successors = this.blocks.associate { it.id to it.successors.asReversed() }
 
-        val successorMap: MutableMap<EtsStmt, List<EtsStmt>> = hashMapOf()
-        for (block in this.blocks) {
-            val startId = blockStart[block.id]!!
-            val endId = blockEnd[block.id]!!
-            for (i in startId until endId) {
-                successorMap[currentStmts[i]] = listOf(currentStmts[i + 1])
-            }
-            successorMap[currentStmts[endId]] = block.successors.mapNotNull { blockId ->
-                blockStart[blockId]?.let { currentStmts[it] }
-            }
-        }
-
-        return EtsCfg(
-            stmts = currentStmts,
-            successorMap = successorMap,
+        return EtsBlockCfg(
+            blocks = blocks,
+            successors = successors,
         )
     }
 }
 
 fun ClassDto.toEtsClass(): EtsClass {
-    fun defaultConstructorDto(classSignatureDto: ClassSignatureDto): MethodDto {
-        val zeroBlock = BasicBlockDto(
-            id = 0,
-            successors = emptyList(),
-            predecessors = emptyList(),
-            stmts = listOf(
-                ReturnVoidStmtDto,
-            ),
-        )
-        val cfg = CfgDto(blocks = listOf(zeroBlock))
-        val body = BodyDto(locals = emptyList(), cfg = cfg)
-        val signature = MethodSignatureDto(
-            declaringClass = classSignatureDto,
-            name = CONSTRUCTOR_NAME,
-            parameters = emptyList(),
-            returnType = ClassTypeDto(classSignatureDto),
-        )
-        return MethodDto(
-            signature = signature,
-            modifiers = 0,
-            decorators = emptyList(),
-            typeParameters = emptyList(),
-            body = body,
-        )
-    }
-
     val signature = signature.toEtsClassSignature()
     val superClassSignature = superClassName?.takeIf { it != "" }?.let { name ->
         EtsClassSignature(
             name = name,
-            file = EtsFileSignature.DEFAULT,
+            file = EtsFileSignature.UNKNOWN,
         )
     }
     val implementedInterfaces = implementedInterfaceNames.map { name ->
         EtsClassSignature(
             name = name,
-            file = EtsFileSignature.DEFAULT,
+            file = EtsFileSignature.UNKNOWN,
         )
     }
-
     val fields = fields.map { it.toEtsField() }
-
-    val (methodDtos, ctorDtos) = methods.partition { it.signature.name != CONSTRUCTOR_NAME }
-    check(ctorDtos.size <= 1) { "Class should not have multiple constructors" }
-    val ctorDto = ctorDtos.firstOrNull() ?: defaultConstructorDto(this.signature)
-
-    val methods = methodDtos.map { it.toEtsMethod() }
-    val ctor = ctorDto.toEtsMethod()
-
+    val methods = methods.map { it.toEtsMethod() }
     val category = category.toEtsClassCategory()
     val typeParameters = typeParameters?.map { it.toEtsType() } ?: emptyList()
-
     val modifiers = EtsModifiers(modifiers)
     val decorators = decorators.map { it.toEtsDecorator() }
 
@@ -545,7 +465,6 @@ fun ClassDto.toEtsClass(): EtsClass {
         signature = signature,
         fields = fields,
         methods = methods,
-        ctor = ctor,
         category = category,
         superClass = superClassSignature,
         implementedInterfaces = implementedInterfaces,
@@ -574,14 +493,18 @@ fun TypeDto.toEtsType(): EtsType = when (this) {
     is ClassTypeDto -> toEtsClassType()
 
     is FunctionTypeDto -> EtsFunctionType(
-        method = signature.toEtsMethodSignature(),
+        signature = signature.toEtsMethodSignature(),
         typeParameters = typeParameters.map { it.toEtsType() },
     )
 
     is GenericTypeDto -> EtsGenericType(
-        name = name,
-        defaultType = defaultType?.toEtsType(),
+        typeName = name,
         constraint = constraint?.toEtsType(),
+        defaultType = this@toEtsType.defaultType?.toEtsType(),
+    )
+
+    is IntersectionTypeDto -> EtsIntersectionType(
+        types = types.map { it.toEtsType() },
     )
 
     is LiteralTypeDto -> EtsLiteralType(
@@ -629,7 +552,7 @@ fun ClassTypeDto.toEtsClassType(): EtsClassType {
 }
 
 fun ConstantDto.toEtsConstant(): EtsConstant {
-    return when (type.toEtsType()) {
+    return when (val type = type.toEtsType()) {
         EtsStringType -> EtsStringConstant(value = this.value)
 
         EtsBooleanType -> EtsBooleanConstant(value = value.toBoolean())
@@ -641,15 +564,16 @@ fun ConstantDto.toEtsConstant(): EtsConstant {
         EtsUndefinedType -> EtsUndefinedConstant
 
         else -> object : EtsConstant {
-            override val type: EtsType = EtsUnknownType
+            val value: String = this@toEtsConstant.value
 
-            override fun toString(): String = "Unknown($value)"
+            override val type: EtsType = type
+
+            override fun toString(): String {
+                return value
+            }
 
             override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
-                if (visitor is EtsValue.Visitor.Default<R>) {
-                    return visitor.defaultVisit(this)
-                }
-                error("Cannot handle $this")
+                return visitor.visit(this)
             }
         }
     }
@@ -681,10 +605,8 @@ fun ClassSignatureDto.toEtsClassSignature(): EtsClassSignature {
 fun FieldSignatureDto.toEtsFieldSignature(): EtsFieldSignature {
     return EtsFieldSignature(
         enclosingClass = declaringClass.toEtsClassSignature(),
-        sub = EtsFieldSubSignature(
-            name = name,
-            type = type.toEtsType(),
-        ),
+        name = name,
+        type = type.toEtsType(),
     )
 }
 
@@ -718,13 +640,9 @@ fun MethodDto.toEtsMethod(): EtsMethod {
     val modifiers = EtsModifiers(modifiers)
     val decorators = decorators.map { it.toEtsDecorator() }
     if (body != null) {
-        val locals = body.locals.map {
-            it.toEtsLocal()
-        }
         val builder = EtsMethodBuilder(
             signature = signature,
             typeParameters = typeParameters,
-            locals = locals,
             modifiers = modifiers,
             decorators = decorators,
         )
@@ -733,7 +651,6 @@ fun MethodDto.toEtsMethod(): EtsMethod {
         return EtsMethodImpl(
             signature = signature,
             typeParameters = typeParameters,
-            locals = emptyList(),
             modifiers = modifiers,
             decorators = decorators,
         )
@@ -744,10 +661,8 @@ fun FieldDto.toEtsField(): EtsField {
     return EtsFieldImpl(
         signature = EtsFieldSignature(
             enclosingClass = signature.declaringClass.toEtsClassSignature(),
-            sub = EtsFieldSubSignature(
-                name = signature.name,
-                type = signature.type.toEtsType(),
-            ),
+            name = signature.name,
+            type = signature.type.toEtsType()
         ),
         modifiers = EtsModifiers(modifiers),
         isOptional = isOptional,

@@ -22,16 +22,16 @@ import info.leadinglight.jdot.Node
 import info.leadinglight.jdot.enums.Color
 import info.leadinglight.jdot.enums.Shape
 import info.leadinglight.jdot.impl.Util
-import org.jacodb.ets.base.EtsIfStmt
-import org.jacodb.ets.base.EtsStmt
-import org.jacodb.ets.graph.EtsCfg
+import org.jacodb.ets.model.EtsIfStmt
+import org.jacodb.ets.model.EtsLinearCfg
+import org.jacodb.ets.model.EtsStmt
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 
 private const val DEFAULT_DOT_CMD = "dot"
 
-fun EtsCfg.view(
+fun EtsLinearCfg.view(
     viewerCmd: String = if (System.getProperty("os.name").startsWith("Windows")) "start" else "xdg-open",
     dotCmd: String = DEFAULT_DOT_CMD,
     viewCatchConnections: Boolean = true,
@@ -40,7 +40,7 @@ fun EtsCfg.view(
     Util.sh(arrayOf(viewerCmd, "file://$path"))
 }
 
-fun EtsCfg.toFile(
+fun EtsLinearCfg.toFile(
     file: File? = null,
     dotCmd: String = DEFAULT_DOT_CMD,
     viewCatchConnections: Boolean = true,

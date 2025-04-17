@@ -19,22 +19,13 @@
 package org.jacodb.ets.model
 
 import org.jacodb.api.common.CommonMethod
-import org.jacodb.ets.base.EtsLocal
-import org.jacodb.ets.base.EtsType
-import org.jacodb.ets.graph.EtsCfg
 
-interface EtsMethod : EtsBaseModel, CommonMethod {
+interface EtsMethod : Base, CommonMethod {
     val signature: EtsMethodSignature
     val typeParameters: List<EtsType>
-    val locals: List<EtsLocal>
-    val cfg: EtsCfg
+    val cfg: EtsBlockCfg
 
-    val enclosingClass: EtsClassSignature
-        get() = signature.enclosingClass
-
-    // If not specified, entity is public if not private and not protected
-    override val isPublic: Boolean
-        get() = super.isPublic || (!isPrivate && !isProtected)
+    val enclosingClass: EtsClass?
 
     override val name: String
         get() = signature.name
@@ -45,7 +36,7 @@ interface EtsMethod : EtsBaseModel, CommonMethod {
     override val returnType: EtsType
         get() = signature.returnType
 
-    override fun flowGraph(): EtsCfg {
+    override fun flowGraph(): EtsBytecodeGraph<EtsStmt> {
         return cfg
     }
 }
@@ -53,14 +44,15 @@ interface EtsMethod : EtsBaseModel, CommonMethod {
 class EtsMethodImpl(
     override val signature: EtsMethodSignature,
     override val typeParameters: List<EtsType> = emptyList(),
-    override val locals: List<EtsLocal> = emptyList(),
-    override val modifiers: EtsModifiers = EtsModifiers.EMPTY,
+    override val modifiers: EtsModifiers = EtsModifiers.Companion.EMPTY,
     override val decorators: List<EtsDecorator> = emptyList(),
 ) : EtsMethod {
-    var _cfg: EtsCfg? = null
+    var _cfg: EtsBlockCfg? = null
 
-    override val cfg: EtsCfg
-        get() = _cfg ?: EtsCfg.EMPTY
+    override val cfg: EtsBlockCfg
+        get() = _cfg ?: EtsBlockCfg.EMPTY
+
+    override var enclosingClass: EtsClass? = null
 
     override fun toString(): String {
         return signature.toString()

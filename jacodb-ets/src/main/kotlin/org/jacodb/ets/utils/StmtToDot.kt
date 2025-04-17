@@ -16,8 +16,23 @@
 
 package org.jacodb.ets.utils
 
-import org.jacodb.ets.model.EtsCallExpr
+import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsCallStmt
+import org.jacodb.ets.model.EtsIfStmt
+import org.jacodb.ets.model.EtsNopStmt
+import org.jacodb.ets.model.EtsRawStmt
+import org.jacodb.ets.model.EtsReturnStmt
 import org.jacodb.ets.model.EtsStmt
 
-val EtsStmt.callExpr: EtsCallExpr?
-    get() = getOperands().filterIsInstance<EtsCallExpr>().firstOrNull()
+internal fun EtsStmt.toDotLabel(): String {
+    val label = when (this) {
+        is EtsNopStmt -> "nop"
+        is EtsAssignStmt -> "$lhv := $rhv"
+        is EtsReturnStmt -> returnValue?.let { "return $it" } ?: "return"
+        is EtsIfStmt -> "if ($condition)"
+        is EtsCallStmt -> "call $expr"
+        is EtsRawStmt -> "raw $kind"
+        else -> error("Unsupported statement: $this")
+    }
+    return label.replace("\"", "\\\"")
+}

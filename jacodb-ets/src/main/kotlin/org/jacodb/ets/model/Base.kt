@@ -14,10 +14,18 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.utils
+package org.jacodb.ets.model
 
-import org.jacodb.ets.model.EtsCallExpr
-import org.jacodb.ets.model.EtsStmt
+interface Base : WithModifiers {
+    val modifiers: EtsModifiers
+    val decorators: List<EtsDecorator>
 
-val EtsStmt.callExpr: EtsCallExpr?
-    get() = getOperands().filterIsInstance<EtsCallExpr>().firstOrNull()
+    // In TS, if "public" modifier is not specified,
+    // an entity considered public if it is not private and not protected.
+    override val isPublic: Boolean
+        get() = super.isPublic || (!isPrivate && !isProtected)
+
+    override fun hasModifier(modifier: EtsModifier): Boolean = modifiers.hasModifier(modifier)
+
+    fun hasDecorator(decorator: EtsDecorator): Boolean = decorators.contains(decorator)
+}

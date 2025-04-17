@@ -17,7 +17,6 @@
 package org.jacodb.ets.utils
 
 import org.jacodb.ets.dto.EtsFileDto
-import org.jacodb.ets.model.EtsFile
 
 fun EtsFileDto.toText(): String {
     val lines: MutableList<String> = mutableListOf()
@@ -54,48 +53,6 @@ fun EtsFileDto.toText(): String {
                         lines += "      ${i + 1}. $stmt"
                     }
                 }
-            }
-        }
-    }
-    return lines.joinToString("\n")
-}
-
-fun EtsFile.toText(): String {
-    val lines: MutableList<String> = mutableListOf()
-    lines += "EtsFile '${signature}':"
-    classes.forEach { clazz ->
-        lines += "= CLASS '${clazz.signature}':"
-        lines += "  typeParameters = ${clazz.typeParameters}"
-        lines += "  modifiers = ${clazz.modifiers}"
-        lines += "  decorators = ${clazz.decorators}"
-        lines += "  superClass = '${clazz.superClass}'"
-        lines += "  fields: ${clazz.fields.size}"
-        clazz.fields.forEach { field ->
-            lines += "  - FIELD '${field.signature}'"
-        }
-        lines += "  constructor = '${clazz.ctor.signature}'"
-        lines += "    typeParameters = ${clazz.ctor.typeParameters}"
-        lines += "    modifiers = ${clazz.ctor.modifiers}"
-        lines += "    decorators = ${clazz.ctor.decorators}"
-        lines += "    locals: ${clazz.ctor.locals.size}"
-        lines += "    stmts: ${clazz.ctor.cfg.stmts.size}"
-        clazz.ctor.cfg.stmts.forEach { stmt ->
-            lines += "    ${stmt.location.index}. $stmt"
-            val pad = " ".repeat("${stmt.location.index}".length + 2) // number + dot + space
-            lines += "    ${pad}successors = ${clazz.ctor.cfg.successors(stmt).map { it.location.index }}"
-        }
-        lines += "  methods: ${clazz.methods.size}"
-        clazz.methods.forEach { method ->
-            lines += "  - METHOD '${method.signature}':"
-            lines += "    typeParameters = ${method.typeParameters}"
-            lines += "    modifiers = ${method.modifiers}"
-            lines += "    decorators = ${method.decorators}"
-            lines += "    locals: ${method.locals.size}"
-            lines += "    stmts: ${method.cfg.stmts.size}"
-            method.cfg.stmts.forEach { stmt ->
-                lines += "    ${stmt.location.index}. $stmt"
-                val pad = " ".repeat("${stmt.location.index}".length + 2) // number + dot + space
-                lines += "    ${pad}successors = ${method.cfg.successors(stmt).map { it.location.index }}"
             }
         }
     }
