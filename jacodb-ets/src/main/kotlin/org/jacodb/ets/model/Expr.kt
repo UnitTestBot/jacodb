@@ -14,8 +14,6 @@
  *  limitations under the License.
  */
 
-@file:Suppress("OVERRIDE_DEPRECATION")
-
 package org.jacodb.ets.model
 
 import org.jacodb.api.common.cfg.CommonCallExpr
