@@ -14,6 +14,8 @@
  *  limitations under the License.
  */
 
+@file:Suppress("OVERRIDE_DEPRECATION")
+
 package org.jacodb.ets.model
 
 import org.jacodb.api.common.cfg.CommonExpr
@@ -23,6 +25,7 @@ interface EtsEntity : CommonExpr {
     @Deprecated("Do not rely on it!")
     val type: EtsType
 
+    @Suppress("DEPRECATION")
     override val typeName: String
         get() = type.typeName
 
