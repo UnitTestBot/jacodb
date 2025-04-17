@@ -88,14 +88,6 @@ abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> 
     abstract fun handle(value: EtsEntity)
     abstract fun handle(stmt: EtsStmt)
 
-    // final override fun defaultVisit(value: EtsEntity) {
-    //     handle(value)
-    // }
-
-    // final override fun defaultVisit(stmt: EtsStmt) {
-    //     handle(stmt)
-    // }
-
     final override fun visit(stmt: EtsRawStmt) {
         handle(stmt)
     }
