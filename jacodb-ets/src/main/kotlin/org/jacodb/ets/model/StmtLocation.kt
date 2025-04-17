@@ -22,25 +22,6 @@ data class EtsStmtLocation(
     override val method: EtsMethod,
     var index: Int,
 ) : CommonInstLocation {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as EtsStmtLocation
-
-        if (method != other.method) return false
-        // if (index == -1 || other.index == -1) return false
-        if (index != other.index) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = method.hashCode()
-        result = 31 * result + index.hashCode()
-        return result
-    }
-
     companion object {
         fun stub(method: EtsMethod): EtsStmtLocation {
             return EtsStmtLocation(method, -1)
