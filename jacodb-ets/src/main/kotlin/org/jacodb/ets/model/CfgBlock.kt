@@ -65,28 +65,6 @@ class EtsBlockCfg(
     override fun throwers(node: EtsStmt): Set<EtsStmt> = linear.throwers(node)
     override fun catchers(node: EtsStmt): Set<EtsStmt> = linear.catchers(node)
 
-    // val stmts: List<EtsStmt> by lazy {
-    //     val queue = ArrayDeque<BasicBlock>()
-    //     val visited: MutableSet<BasicBlock> = hashSetOf()
-    //     val result = mutableListOf<EtsStmt>()
-    //
-    //     if (blocks.isNotEmpty()) {
-    //         queue += blocks.first()
-    //     }
-    //
-    //     while (queue.isNotEmpty()) {
-    //         val block = queue.removeFirst()
-    //         if (visited.add(block)) {
-    //             result += block.statements
-    //             for (s in successors[block.id].orEmpty()) {
-    //                 queue += blocks[s]
-    //             }
-    //         }
-    //     }
-    //
-    //     result
-    // }
-
     companion object {
         val EMPTY: EtsBlockCfg by lazy {
             EtsBlockCfg(emptyList(), emptyMap())
