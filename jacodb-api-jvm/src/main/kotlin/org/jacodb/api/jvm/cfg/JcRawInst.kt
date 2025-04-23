@@ -618,9 +618,9 @@ data class JcRawNewArrayExpr(
     companion object {
         private val regexToProcessDimensions = Regex("\\[(.*?)]")
 
-        private fun arrayTypeToStringWithDimensions(typeName: TypeName, dimensions: List<JcRawValue>) {
+        private fun arrayTypeToStringWithDimensions(typeName: TypeName, dimensions: List<JcRawValue>): String {
             var curDim = 0
-            regexToProcessDimensions.replace("$typeName") {
+            return regexToProcessDimensions.replace("$typeName") {
                 "[${dimensions.getOrNull(curDim++) ?: ""}]"
             }
         }
