@@ -28,14 +28,16 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import kotlin.io.path.createTempDirectory
 
 abstract class PluggableKeyValueStorageTest {
 
     abstract val kvStorageId: String
 
-    private val kvStorageSpi by lazy(LazyThreadSafetyMode.NONE) {
+    protected val kvStorageSpi by lazy(LazyThreadSafetyMode.NONE) {
         PluggableKeyValueStorageSPI.getProvider(kvStorageId)
     }
+    protected lateinit var location: String
     protected lateinit var storage: PluggableKeyValueStorage
 
     @Test
@@ -145,7 +147,8 @@ abstract class PluggableKeyValueStorageTest {
 
     @BeforeEach
     fun setUp() {
-        storage = kvStorageSpi.newStorage(null).apply {
+        location = createTempDirectory(prefix = "pluggableKeyValueStorage").toString()
+        storage = kvStorageSpi.newStorage(location = location).apply {
             isMapWithKeyDuplicates = { mapName -> mapName.endsWith("withDuplicates") }
         }
     }

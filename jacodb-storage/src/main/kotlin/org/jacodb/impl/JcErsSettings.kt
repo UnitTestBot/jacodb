@@ -16,8 +16,10 @@
 
 package org.jacodb.impl
 
+import jetbrains.exodus.env.EnvironmentConfig
 import org.jacodb.api.storage.ers.ErsSettings
 import org.jacodb.impl.storage.kv.lmdb.LMDB_KEY_VALUE_STORAGE_SPI
+import org.jacodb.impl.storage.kv.xodus.XODUS_KEY_VALUE_STORAGE_SPI
 
 class RamErsSettings(
     val immutableDumpsPath: String? = null
@@ -30,4 +32,7 @@ open class JcKvErsSettings(val kvId: String) : ErsSettings
 
 // by default, mapSize is 1Gb
 class JcLmdbErsSettings(val mapSize: Long = 0x40_00_00_00) : JcKvErsSettings(LMDB_KEY_VALUE_STORAGE_SPI)
+
+class JcXodusErsSettings(val configurer: (EnvironmentConfig.() -> Unit)? = null) :
+    JcKvErsSettings(XODUS_KEY_VALUE_STORAGE_SPI)
 
