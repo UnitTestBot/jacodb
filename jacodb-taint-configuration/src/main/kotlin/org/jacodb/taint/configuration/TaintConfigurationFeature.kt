@@ -241,6 +241,7 @@ class TaintConfigurationFeature private constructor(
             This -> !method.isStatic
             Result -> method.returnType.typeName != PredefinedPrimitives.Void
             ResultAnyElement -> method.returnType.isArray
+            is ClassStatic -> true
             is PositionWithAccess ->  error("")
         }
 
@@ -333,6 +334,7 @@ class TaintConfigurationFeature private constructor(
 
             Result -> TODO("What does it mean?")
             is PositionWithAccess -> TODO("What does it mean?")
+            is ClassStatic  -> TODO("What does it mean?")
             ResultAnyElement -> error("Must not occur here")
         }
     }

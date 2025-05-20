@@ -64,6 +64,10 @@ object ResultAnyElement : Position, SerializedPosition {
 }
 
 @Serializable
+@SerialName("Class")
+data class ClassStatic(val className: String) : Position, SerializedPosition
+
+@Serializable
 sealed interface PositionAccessor {
     @Serializable
     @SerialName("ElementAccessor")

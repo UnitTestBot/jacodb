@@ -14,6 +14,7 @@ import org.jacodb.taint.configuration.AnyTypeMatcher
 import org.jacodb.taint.configuration.Argument
 import org.jacodb.taint.configuration.AssignMark
 import org.jacodb.taint.configuration.ClassMatcher
+import org.jacodb.taint.configuration.ClassStatic
 import org.jacodb.taint.configuration.Condition
 import org.jacodb.taint.configuration.ConfigurationTrie
 import org.jacodb.taint.configuration.ConstantEq
@@ -367,6 +368,8 @@ class TaintConfiguration {
 
                 return listOf(This)
             }
+
+            is PositionBase.ClassStatic -> return listOf(ClassStatic(className))
         }
     }
 

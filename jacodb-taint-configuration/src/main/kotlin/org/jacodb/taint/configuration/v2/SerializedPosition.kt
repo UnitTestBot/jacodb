@@ -21,6 +21,7 @@ import kotlinx.serialization.encoding.Encoder
 
 @Serializable(with = PositionBaseSerializer::class)
 sealed interface PositionBase {
+    data class ClassStatic(val className: String) : PositionBase
     data class Argument(val idx: Int?) : PositionBase
     data object This : PositionBase
     data object Result : PositionBase
@@ -29,6 +30,7 @@ sealed interface PositionBase {
         is Argument -> "arg(${idx ?: "*"})"
         Result -> "result"
         This -> "this"
+        is ClassStatic -> "class($className)"
     }
 
     companion object {
