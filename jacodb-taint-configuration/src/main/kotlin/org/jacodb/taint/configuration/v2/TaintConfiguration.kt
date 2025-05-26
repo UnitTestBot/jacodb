@@ -246,7 +246,7 @@ class TaintConfiguration {
         }
         
         is SerializedRule.MethodExitSink -> {
-            TaintMethodSink(method, note, cwe, condition.resolve(method).simplify())
+            TaintMethodExitSink(method, note, cwe, condition.resolve(method).simplify())
         }
 
         is SerializedRule.PassThrough -> {
