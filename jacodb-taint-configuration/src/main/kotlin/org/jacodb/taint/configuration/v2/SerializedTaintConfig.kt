@@ -4,9 +4,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SerializedTaintConfig(
-    val entryPoint: List<SerializedRule.EntryPoint>,
-    val source: List<SerializedRule.Source>,
-    val sink: List<SerializedRule.Sink>,
-    val passThrough: List<SerializedRule.PassThrough>,
-    val cleaner: List<SerializedRule.Cleaner>
+    val entryPoint: List<SerializedRule.EntryPoint>? = null,
+    val source: List<SerializedRule.Source>? = null,
+    val sink: List<SerializedRule.Sink>? = null,
+    val passThrough: List<SerializedRule.PassThrough>? = null,
+    val cleaner: List<SerializedRule.Cleaner>? = null,
+    val methodExitSink: List<SerializedRule.MethodExitSink>? = null,
 )

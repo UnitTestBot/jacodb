@@ -42,6 +42,7 @@ import org.jacodb.taint.configuration.TaintCleaner
 import org.jacodb.taint.configuration.TaintConfigurationItem
 import org.jacodb.taint.configuration.TaintEntryPointSource
 import org.jacodb.taint.configuration.TaintMark
+import org.jacodb.taint.configuration.TaintMethodExitSink
 import org.jacodb.taint.configuration.TaintMethodSink
 import org.jacodb.taint.configuration.TaintMethodSource
 import org.jacodb.taint.configuration.TaintPassThrough
@@ -69,15 +70,17 @@ class TaintConfiguration {
     private val sinkConfig = TaintRulesStorage<SerializedRule.Sink, TaintMethodSink>()
     private val passThroughConfig = TaintRulesStorage<SerializedRule.PassThrough, TaintPassThrough>()
     private val cleanerConfig = TaintRulesStorage<SerializedRule.Cleaner, TaintCleaner>()
+    private val methodExitSinkConfig = TaintRulesStorage<SerializedRule.MethodExitSink, TaintMethodExitSink>()
 
     private val taintMarks = hashMapOf<String, TaintMark>()
 
     fun loadConfig(config: SerializedTaintConfig) {
-        entryPointConfig.addRules(config.entryPoint)
-        sourceConfig.addRules(config.source)
-        sinkConfig.addRules(config.sink)
-        passThroughConfig.addRules(config.passThrough)
-        cleanerConfig.addRules(config.cleaner)
+        config.entryPoint?.let { entryPointConfig.addRules(it) }
+        config.source?.let { sourceConfig.addRules(it) }
+        config.sink?.let { sinkConfig.addRules(it) }
+        config.passThrough?.let { passThroughConfig.addRules(it) }
+        config.cleaner?.let { cleanerConfig.addRules(it) }
+        config.methodExitSink?.let { methodExitSinkConfig.addRules(it) }
     }
 
     fun entryPointForMethod(method: JcMethod): List<TaintEntryPointSource> = entryPointConfig.getConfigForMethod(method)
@@ -85,6 +88,7 @@ class TaintConfiguration {
     fun sinkForMethod(method: JcMethod): List<TaintMethodSink> = sinkConfig.getConfigForMethod(method)
     fun passThroughForMethod(method: JcMethod): List<TaintPassThrough> = passThroughConfig.getConfigForMethod(method)
     fun cleanerForMethod(method: JcMethod): List<TaintCleaner> = cleanerConfig.getConfigForMethod(method)
+    fun methodExitSinkForMethod(method: JcMethod): List<TaintMethodExitSink> = methodExitSinkConfig.getConfigForMethod(method)
 
     private inner class TaintRulesStorage<S : SerializedRule, T : TaintConfigurationItem> {
         private val rulesTrie = TaintConfigurationTrie<S>()
@@ -148,6 +152,7 @@ class TaintConfiguration {
                 is SerializedRule.PassThrough -> r.copy(function = updatedFunction)
                 is SerializedRule.Sink -> r.copy(function = updatedFunction)
                 is SerializedRule.Source -> r.copy(function = updatedFunction)
+                is SerializedRule.MethodExitSink -> r.copy(function = updatedFunction)
             } as T
         }
     }
@@ -237,6 +242,10 @@ class TaintConfiguration {
         }
 
         is SerializedRule.Sink -> {
+            TaintMethodSink(method, note, cwe, condition.resolve(method).simplify())
+        }
+        
+        is SerializedRule.MethodExitSink -> {
             TaintMethodSink(method, note, cwe, condition.resolve(method).simplify())
         }
 

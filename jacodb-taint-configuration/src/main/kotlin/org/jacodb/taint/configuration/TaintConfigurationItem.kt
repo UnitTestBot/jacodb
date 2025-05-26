@@ -39,6 +39,13 @@ data class TaintMethodSink(
     val condition: Condition,
 ) : TaintConfigurationItem
 
+data class TaintMethodExitSink(
+    val method: CommonMethod,
+    val ruleNote: String,
+    val cwe: List<Int>,
+    val condition: Condition,
+) : TaintConfigurationItem
+
 data class TaintPassThrough(
     val method: CommonMethod,
     val condition: Condition,

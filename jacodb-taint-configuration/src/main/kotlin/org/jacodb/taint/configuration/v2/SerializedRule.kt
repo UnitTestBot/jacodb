@@ -51,4 +51,14 @@ sealed interface SerializedRule {
         val cwe: List<Int>,
         val note: String
     ) : SerializedRule
+
+    @Serializable
+    data class MethodExitSink(
+        override val function: SerializedFunctionNameMatcher,
+        override val signature: SerializedSignatureMatcher? = null,
+        override val overrides: Boolean = true,
+        val condition: SerializedCondition? = null,
+        val cwe: List<Int>,
+        val note: String
+    ) : SerializedRule
 }
