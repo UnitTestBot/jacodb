@@ -45,6 +45,7 @@ import org.jacodb.ets.model.EtsDecorator
 import org.jacodb.ets.model.EtsDeleteExpr
 import org.jacodb.ets.model.EtsDivExpr
 import org.jacodb.ets.model.EtsEntity
+import org.jacodb.ets.model.EtsEnumValueType
 import org.jacodb.ets.model.EtsEqExpr
 import org.jacodb.ets.model.EtsExpExpr
 import org.jacodb.ets.model.EtsExpr
@@ -491,6 +492,11 @@ fun TypeDto.toEtsType(): EtsType = when (this) {
     BooleanTypeDto -> EtsBooleanType
 
     is ClassTypeDto -> toEtsClassType()
+
+    is EnumValueTypeDto -> EtsEnumValueType(
+        signature = signature.toEtsFieldSignature(),
+        constant = constant?.toEtsConstant(),
+    )
 
     is FunctionTypeDto -> EtsFunctionType(
         signature = signature.toEtsMethodSignature(),

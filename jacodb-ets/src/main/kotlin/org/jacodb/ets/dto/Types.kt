@@ -62,6 +62,13 @@ data class AliasTypeDto(
 ) : TypeDto
 
 @Serializable
+@SerialName("EnumValueType")
+data class EnumValueTypeDto(
+    val signature: FieldSignatureDto,
+    val constant: ConstantDto? = null,
+): TypeDto
+
+@Serializable
 @SerialName("VoidType")
 data object VoidTypeDto : TypeDto
 
