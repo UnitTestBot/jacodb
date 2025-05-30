@@ -30,6 +30,7 @@ interface EtsType : TypeName, CommonType {
         fun visit(type: EtsIntersectionType): R
         fun visit(type: EtsGenericType): R
         fun visit(type: EtsAliasType): R
+        fun visit(type: EtsEnumValueType): R
 
         // Primitive
         fun visit(type: EtsBooleanType): R
@@ -364,6 +365,20 @@ data class EtsFunctionType(
         } else {
             signature.name
         }
+
+    override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: EtsType.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class EtsEnumValueType(
+    val signature: EtsFieldSignature,
+    val constant: EtsConstant? = null,
+): EtsType {
+    override val typeName: String
+        get() = signature.name
 
     override fun toString(): String = typeName
 
