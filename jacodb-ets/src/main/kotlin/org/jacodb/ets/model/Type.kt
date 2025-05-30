@@ -63,6 +63,7 @@ interface EtsType : TypeName, CommonType {
             override fun visit(type: EtsIntersectionType): R = defaultVisit(type)
             override fun visit(type: EtsGenericType): R = defaultVisit(type)
             override fun visit(type: EtsAliasType): R = defaultVisit(type)
+            override fun visit(type: EtsEnumValueType): R = defaultVisit(type)
 
             override fun visit(type: EtsBooleanType): R = defaultVisit(type)
             override fun visit(type: EtsNumberType): R = defaultVisit(type)
