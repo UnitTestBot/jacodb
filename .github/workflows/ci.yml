@@ -1,4 +1,4 @@
-name: Build and run tests
+name: CI
 
 on:
   push:
@@ -12,30 +12,21 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
   checks: write
   pull-requests: write
 
 jobs:
-  build:
-    # Skip duplicate build when pushing to already existing PR
-    # Note: we decided NOT to skip duplicate builds,
-    #       since we upload test results via 'EnricoMi/publish-unit-test-result-action',
-    #       which requires 'pull_request' trigger for the bot to be able to add a comment to PR.
-    # if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
-
-    name: Run tests on JDK ${{ matrix.jdk }}
-
-    runs-on: ubuntu-latest
+  ci-core:
+    name: Run core tests on JDK ${{ matrix.jdk }}
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        jdk: [8, 11, 19]
-    env:
-      main_jdk: 8
+        jdk: [ 8, 11, 19 ]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -50,13 +41,81 @@ jobs:
           # Builds on other branches will only read existing entries from the cache.
           cache-read-only: ${{ github.ref != 'refs/heads/develop' && github.ref != 'ref/heads/neo' }}
 
-      - name: Set up GraphViz
-        uses: ts-graphviz/setup-graphviz@v2
+      - name: Build and run tests
+        run: ./gradlew --scan build -x :jacodb-ets:build
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: (!cancelled())
         with:
-          node-version: '22'
+          files: "**/build/test-results/**/*.xml"
+          check_name: "Test results on JDK ${{ matrix.jdk }}"
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload Gradle reports
+        if: (!cancelled())
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-reports
+          path: '**/build/reports/'
+
+  ci-lifecycle:
+    name: Run lifecycle tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 8
+          distribution: 'zulu'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          # Only write to the cache for builds on the specific branches. (Default is 'main' only.)
+          # Builds on other branches will only read existing entries from the cache.
+          cache-read-only: ${{ github.ref != 'refs/heads/develop' && github.ref != 'refs/heads/neo' }}
+
+      - name: Build and run lifecycle tests
+        run: ./gradlew --scan lifecycleTest
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: (!cancelled())
+        with:
+          files: "**/build/test-results/**/*.xml"
+          check_name: "Lifecycle test results"
+
+  ci-ets:
+    name: Run ETS tests
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 11
+          distribution: 'zulu'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          # Only write to the cache for builds on the specific branches. (Default is 'main' only.)
+          # Builds on other branches will only read existing entries from the cache.
+          cache-read-only: ${{ github.ref != 'refs/heads/develop' && github.ref != 'ref/heads/neo' }}
 
       - name: Set up ArkAnalyzer
         run: |
@@ -85,71 +144,5 @@ jobs:
           npm install
           npm run build
 
-      - name: Generate test resources
-        run: ./gradlew :jacodb-ets:generateTestResources --scan
-
-      - name: Run ETS tests first
-        run: ./gradlew :jacodb-ets:test --scan
-
-      - name: Build and run tests
-        run: ./gradlew build --scan
-
-      - name: Publish test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
-        with:
-          files: "**/build/test-results/**/*.xml"
-          check_name: "Test results on JDK ${{ matrix.jdk }}"
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
-      # - name: Upload test results
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: test-results
-      #     path: build/test-results/
-
-      - name: Upload Gradle reports
-        if: (!cancelled()) && matrix.jdk == env.main_jdk
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradle-reports
-          path: '**/build/reports/'
-          retention-days: 1
-
-  lifecycleTests:
-    name: Run lifecycle tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: 8
-          distribution: 'zulu'
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          # Only write to the cache for builds on the specific branches. (Default is 'main' only.)
-          # Builds on other branches will only read existing entries from the cache.
-          cache-read-only: ${{ github.ref != 'refs/heads/develop' && github.ref != 'refs/heads/neo' }}
-
-      - name: Build and run lifecycle tests
-        run: ./gradlew lifecycleTest --scan
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Publish test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
-        with:
-          files: "**/build/test-results/**/*.xml"
-          check_name: "Lifecycle test results"
+      - name: Run ETS tests
+        run: ./gradlew --scan :jacodb-ets:generateTestResources :jacodb-ets:test
