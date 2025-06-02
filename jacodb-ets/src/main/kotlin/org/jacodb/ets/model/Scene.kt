@@ -22,6 +22,11 @@ class EtsScene(
     val projectFiles: List<EtsFile>,
     val sdkFiles: List<EtsFile> = emptyList(),
 ) : CommonProject {
+    init {
+        projectFiles.forEach { it.scene = this }
+        sdkFiles.forEach { it.scene = this }
+    }
+
     val projectClasses: List<EtsClass>
         get() = projectFiles.flatMap { it.allClasses }
 
