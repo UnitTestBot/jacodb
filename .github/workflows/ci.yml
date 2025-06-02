@@ -93,6 +93,13 @@ jobs:
           name: gradle-test-results-lifecycle
           path: "**/build/test-results/**/*.xml"
 
+      - name: Upload Gradle reports
+        if: (!cancelled())
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-reports-lifecycle
+          path: '**/build/reports/'
+
   ci-ets:
     name: Run ETS tests
     runs-on: ubuntu-24.04
