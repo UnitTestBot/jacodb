@@ -11,10 +11,6 @@ on:
       - neo
   workflow_dispatch:
 
-permissions:
-  checks: write
-  pull-requests: write
-
 jobs:
   ci-core:
     name: Run core tests on JDK ${{ matrix.jdk }}
@@ -44,17 +40,17 @@ jobs:
       - name: Build and run tests
         run: ./gradlew --scan build -x :jacodb-ets:build
 
-      - name: Publish test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: (!cancelled())
-        with:
-          files: "**/build/test-results/**/*.xml"
-          check_name: "Test results on JDK ${{ matrix.jdk }}"
-
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload Gradle test results
+        if: (!cancelled())
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-test-results-${{ matrix.jdk }}
+          path: "**/build/test-results/**/*.xml"
 
       - name: Upload Gradle reports
         if: (!cancelled())
@@ -90,12 +86,19 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Publish test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
+      - name: Upload Gradle test results
         if: (!cancelled())
+        uses: actions/upload-artifact@v4
         with:
-          files: "**/build/test-results/**/*.xml"
-          check_name: "Lifecycle test results"
+          name: gradle-test-results-lifecycle
+          path: "**/build/test-results/**/*.xml"
+
+      - name: Upload Gradle reports
+        if: (!cancelled())
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-reports-lifecycle
+          path: '**/build/reports/'
 
   ci-ets:
     name: Run ETS tests
@@ -147,9 +150,41 @@ jobs:
       - name: Run ETS tests
         run: ./gradlew --scan :jacodb-ets:generateTestResources :jacodb-ets:test
 
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload Gradle test results
+        if: (!cancelled())
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-test-results-ets
+          path: "**/build/test-results/**/*.xml"
+
       - name: Upload Gradle reports
         if: (!cancelled())
         uses: actions/upload-artifact@v4
         with:
           name: gradle-reports-ets
           path: '**/build/reports/'
+
+  publish-test-results:
+    name: "Publish test results"
+    needs: [ ci-core, ci-lifecycle, ci-ets ]
+    if: (!cancelled())
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: "artifacts/gradle-test-results-*/**/*.xml"
