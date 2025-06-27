@@ -17,7 +17,10 @@
 package org.jacodb.ets.utils
 
 import org.jacodb.ets.model.BasicBlock
+import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsBlockCfg
+import org.jacodb.ets.model.EtsCallExpr
+import org.jacodb.ets.model.EtsCallStmt
 import org.jacodb.ets.model.EtsStmt
 import java.nio.file.Files
 import java.nio.file.Path
@@ -98,17 +101,41 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
     lines += "  compound=true"
     lines += "  node [shape=${if (useHtml) "none" else "rect"} fontname=\"monospace\"]"
 
-    // Main CFG
+    // --- 1) Main CFG with ports on call statements ---
     for (block in main.blocks) {
-        val id = "M_${block.id}"
+        val nodeId = "M_${block.id}"
+        // compute all call hashes in this block
+        val callHashes = callees.keys
+            .filter { it.second == block.id }
+            .map { sanitize(it.first.hashCode()) }
+            .toSet()
+
         if (useHtml) {
-            val table = buildHtmlTable(block, pathStmts, currentStmt)
-            lines += "  $id [label=<$table>];"
+            // build HTML table rows, adding port attribute on call lines
+            val rows = block.statements.joinToString(separator = "") { stmt ->
+                val txt = stmt.toDotLabel().htmlEncode()
+                val bg = when (stmt) {
+                    currentStmt -> "lightblue"
+                    in pathStmts -> "yellow"
+                    else -> "white"
+                }
+                val stmtHash = sanitize(stmt.hashCode())
+                val portAttr = if (stmtHash in callHashes) " port=\"p$stmtHash\"" else ""
+                "<tr><td balign=\"left\" bgcolor=\"$bg\"$portAttr>$txt</td></tr>"
+            }
+            val table = buildString {
+                append("<table border=\"0\" cellborder=\"1\" cellspacing=\"0\">")
+                append("<tr><td><b>Block #${block.id}</b></td></tr>")
+                append(rows)
+                append("</table>")
+            }
+            lines += "  $nodeId [label=<$table>];"
         } else {
             val lbl = buildPlainLabel(block, pathStmts, currentStmt)
-            lines += "  $id [label=\"$lbl\"];"
+            lines += "  $nodeId [label=\"$lbl\"];"
         }
     }
+    // Main CFG edges
     for ((bid, succs) in main.successors) {
         val from = "M_$bid"
         when (succs.size) {
@@ -121,29 +148,34 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
         }
     }
 
-    // helper to sanitize negative hash codes
-    fun sanitize(id: Int): String = if (id < 0) "N${-id}" else id.toString()
-
-    // Callee clusters
+    // --- 2) Callee clusters with call-edge from port ---
     for ((key, cfg) in callees) {
-        val (stmt, parentId) = key
+        val (stmt, parentBlock) = key
         val h = sanitize(stmt.hashCode())
-        val clusterName = "cluster_${h}_B${parentId}"
+        val clusterName = "cluster_${h}_B${parentBlock}"
+        // method signature label
+        val methodSig = when (stmt) {
+            is EtsCallStmt -> stmt.callExpr!!.callee
+            is EtsAssignStmt -> (stmt.rhv as EtsCallExpr).callee
+            else -> stmt.toDotLabel()
+        }
+        // open subgraph
         lines += "  subgraph \"$clusterName\" {"
-        lines += "    label=\"Callee of $h\";"
+        lines += "    label=\"$methodSig\";"
         lines += "    style=dashed;"
-        // nodes
+
+        // render callee nodes
         for (blk in cfg.blocks) {
-            val nid = "C_${h}_${blk.id}"
+            val calleeNode = "C_${h}_${blk.id}"
             if (useHtml) {
                 val table = buildHtmlTable(blk, pathStmts, currentStmt)
-                lines += "    $nid [label=<$table>];"
+                lines += "    $calleeNode [label=<$table>];"
             } else {
                 val lbl = buildPlainLabel(blk, pathStmts, currentStmt)
-                lines += "    $nid [label=\"$lbl\"];"
+                lines += "    $calleeNode [label=\"$lbl\"];"
             }
         }
-        // edges
+        // render callee edges
         for ((bid, succs) in cfg.successors) {
             val from = "C_${h}_$bid"
             when (succs.size) {
@@ -156,30 +188,38 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
             }
         }
         lines += "  }"
-        // call edge
-        val caller = "M_$parentId"
-        val entry = cfg.blocks.first().id
-        lines += "  $caller -> C_${h}_$entry [ltail=\"$clusterName\" lhead=\"$clusterName\" style=dotted label=\"call\"];"
+
+        // connect from the specific port on the caller block
+        // connect from the specific port on the caller block using tailport
+        val caller = "M_${parentBlock}"
+        val entryId  = cfg.blocks.first().id
+        val calleeEntry = "C_${h}_$entryId"
+        val stmtHash = sanitize(stmt.hashCode())
+        lines += "  $caller:p$stmtHash -> $calleeEntry [tailport=\"p$stmtHash\" ltail=\"$clusterName\" lhead=\"$clusterName\" style=dotted label=\"call\"];"
     }
 
     lines += "}"
     return lines.joinToString("\n")
 }
-// ======== Helpers ========
 
 private fun buildHtmlTable(
     block: BasicBlock,
     pathStmts: Set<EtsStmt>,
     currentStmt: EtsStmt?
 ): String {
+    var i = 0
     val rows = block.statements.joinToString(separator = "") { stmt ->
         val txt = stmt.toDotLabel().htmlEncode()
-        val bg = when {
-            stmt == currentStmt -> "lightblue"
-            stmt in pathStmts -> "yellow"
+        val stmtHash = sanitize(stmt.hashCode())
+        val portAttr = if (stmt.callExpr != null) " port=\"p$stmtHash\"" else ""
+
+        val bg = when (stmt) {
+            currentStmt -> "lightblue"
+            in pathStmts -> "yellow"
             else -> "white"
         }
-        "<tr><td balign=\"left\" bgcolor=\"$bg\">$txt</td></tr>"
+        i++
+        "<tr><td balign=\"left\" bgcolor=\"$bg\"$portAttr>$txt</td></tr>"
     }
     return "<table border=\"0\" cellborder=\"1\" cellspacing=\"0\">" +
         "<tr><td><b>Block #${block.id}</b></td></tr>" + rows +
@@ -193,9 +233,9 @@ private fun buildPlainLabel(
 ): String {
     val body = block.statements.joinToString(separator = "") { stmt ->
         val raw = stmt.toDotLabel()
-        val pfx = when {
-            stmt == currentStmt -> "[▶] "
-            stmt in pathStmts -> "[·] "
+        val pfx = when (stmt) {
+            currentStmt -> "[▶] "
+            in pathStmts -> "[·] "
             else -> ""
         }
         "$pfx$raw\\l"
@@ -220,3 +260,6 @@ fun renderDotOverwrite(
     Runtime.getRuntime().exec("$dotCmd -Tsvg -o $outSvg $dotFile").waitFor()
     Runtime.getRuntime().exec("$viewerCmd $outSvg").waitFor()
 }
+
+// helper to sanitize negative hash codes for Graphviz IDs
+fun sanitize(id: Int): String = id.toString().let { if (it.startsWith("-")) "N${it.substring(1)}" else it }
