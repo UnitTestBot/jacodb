@@ -79,7 +79,7 @@ fun EtsBlockCfg.toDot(
  */
 data class InterproceduralCfg(
     val main: EtsBlockCfg,
-    val callees: Map<EtsStmt, EtsBlockCfg>
+    val callees: Map<Pair<EtsStmt, Int>, EtsBlockCfg>
 )
 
 /**
@@ -99,17 +99,20 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
     lines += "  compound=true"
     lines += "  node [shape=${if (useHtml) "none" else "rect"} fontname=\"monospace\"]"
 
-    // ----- 1) Render the main CFG -----
+    // --- 1) Render main CFG ---
     for (block in main.blocks) {
         val nodeId = "M_${block.id}"
         if (useHtml) {
+            // HTML label: wrap table in angle brackets
             val table = buildHtmlTable(block, pathStmts, currentStmt)
             lines += "  $nodeId [label=<$table>];"
         } else {
+            // Plain text fallback: quote the label
             val label = buildPlainLabel(block, pathStmts, currentStmt)
             lines += "  $nodeId [label=\"$label\"];"
         }
     }
+    // Edges of main CFG
     for ((bid, succs) in main.successors) {
         val from = "M_$bid"
         when (succs.size) {
@@ -122,16 +125,17 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
         }
     }
 
-    // ----- 2) Render each discovered callee CFG as a dashed cluster -----
-    for ((stmt, cfg) in callees) {
-        val callId = stmt.hashCode().toString()
+    // --- 2) Render each discovered callee CFG as dashed cluster ---
+    for ((key, cfg) in callees) {
+        val (stmt, callerBlockId) = key
+        val callId = stmt.hashCode().toString() + "_B$callerBlockId"
         val clusterName = "cluster_C_$callId"
 
         lines += "  subgraph $clusterName {"
-        lines += "    label=\"Callee of stmt $callId\";"
+        lines += "    label=\"Callee of $callId\";"
         lines += "    style=dashed;"
 
-        // nodes in callee
+        // Nodes in callee CFG
         for (block in cfg.blocks) {
             val nodeId = "C_${callId}_${block.id}"
             if (useHtml) {
@@ -142,6 +146,7 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
                 lines += "    $nodeId [label=\"$label\"];"
             }
         }
+        // Edges in callee CFG
         for ((bid, succs) in cfg.successors) {
             val from = "C_${callId}_$bid"
             when (succs.size) {
@@ -155,18 +160,16 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
         }
         lines += "  }"
 
-        // ----- 3) Connect call-site in main to callee entry -----
-        // find which main block contains this stmt
-        val callerBlockId = main.blocks.first { it.statements.contains(stmt) }.id
-        val callerNode = "M_$callerBlockId"
-        val entryNode  = "C_${callId}_${cfg.blocks.first().id}"
-        lines += "  $callerNode -> $entryNode [ltail=$clusterName lhead=$clusterName style=dotted label=\"call\"];"
+        // --- 3) Connect call-site in main to callee entry ---
+        val callerNode  = "M_$callerBlockId"
+        val entryBlock  = cfg.blocks.first().id
+        val calleeEntry = "C_${callId}_$entryBlock"
+        lines += "  $callerNode -> $calleeEntry [ltail=$clusterName lhead=$clusterName style=dotted label=\"call\"];"
     }
 
     lines += "}"
     return lines.joinToString("\n")
 }
-
 
 /** Build an HTML table label for a block, coloring rows by path/current. */
 private fun buildHtmlTable(
