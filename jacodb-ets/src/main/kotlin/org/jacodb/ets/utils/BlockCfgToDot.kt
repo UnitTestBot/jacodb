@@ -103,14 +103,12 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
         val id = "M_${block.id}"
         if (useHtml) {
             val table = buildHtmlTable(block, pathStmts, currentStmt)
-            // embed as single-line label
             lines += "  $id [label=<$table>];"
         } else {
             val lbl = buildPlainLabel(block, pathStmts, currentStmt)
             lines += "  $id [label=\"$lbl\"];"
         }
     }
-    // Main edges
     for ((bid, succs) in main.successors) {
         val from = "M_$bid"
         when (succs.size) {
@@ -123,17 +121,20 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
         }
     }
 
+    // helper to sanitize negative hash codes
+    fun sanitize(id: Int): String = if (id < 0) "N${-id}" else id.toString()
+
     // Callee clusters
     for ((key, cfg) in callees) {
         val (stmt, parentId) = key
-        val callId = stmt.hashCode().toString() + "_B$parentId"
-        val cluster = "cluster_$callId"
-        lines += "  subgraph $cluster {"
-        lines += "    label=\"Callee of $callId\";"
+        val h = sanitize(stmt.hashCode())
+        val clusterName = "cluster_${h}_B${parentId}"
+        lines += "  subgraph \"$clusterName\" {"
+        lines += "    label=\"Callee of $h\";"
         lines += "    style=dashed;"
-
+        // nodes
         for (blk in cfg.blocks) {
-            val nid = "C_${callId}_${blk.id}"
+            val nid = "C_${h}_${blk.id}"
             if (useHtml) {
                 val table = buildHtmlTable(blk, pathStmts, currentStmt)
                 lines += "    $nid [label=<$table>];"
@@ -142,14 +143,15 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
                 lines += "    $nid [label=\"$lbl\"];"
             }
         }
+        // edges
         for ((bid, succs) in cfg.successors) {
-            val from = "C_${callId}_$bid"
+            val from = "C_${h}_$bid"
             when (succs.size) {
-                1 -> lines += "    $from -> C_${callId}_${succs[0]};"
+                1 -> lines += "    $from -> C_${h}_${succs[0]};"
                 2 -> {
                     val (t, f) = succs
-                    lines += "    $from -> C_${callId}_$t [label=\"true\"];"
-                    lines += "    $from -> C_${callId}_$f [label=\"false\"];"
+                    lines += "    $from -> C_${h}_$t [label=\"true\"];"
+                    lines += "    $from -> C_${h}_$f [label=\"false\"];"
                 }
             }
         }
@@ -157,13 +159,12 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
         // call edge
         val caller = "M_$parentId"
         val entry = cfg.blocks.first().id
-        lines += "  $caller -> C_${callId}_$entry [ltail=$cluster lhead=$cluster style=dotted label=\"call\"];"
+        lines += "  $caller -> C_${h}_$entry [ltail=\"$clusterName\" lhead=\"$clusterName\" style=dotted label=\"call\"];"
     }
 
     lines += "}"
     return lines.joinToString("\n")
 }
-
 // ======== Helpers ========
 
 private fun buildHtmlTable(
