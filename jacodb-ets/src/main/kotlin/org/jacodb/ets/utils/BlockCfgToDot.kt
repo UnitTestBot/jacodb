@@ -18,9 +18,10 @@ package org.jacodb.ets.utils
 
 import org.jacodb.ets.model.BasicBlock
 import org.jacodb.ets.model.EtsBlockCfg
-import org.jacodb.ets.model.EtsCallExpr
-import org.jacodb.ets.model.EtsCallStmt
 import org.jacodb.ets.model.EtsStmt
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 private fun String.htmlEncode(): String = this
     .replace("&", "&amp;")
@@ -75,7 +76,7 @@ fun EtsBlockCfg.toDot(
 /**
  * An interprocedural CFG that contains:
  *  - the main control-flow graph (main)
- *  - all callee CFGs discovered so far at call sites (keyed by the statement itself)
+ *  - all callee CFGs discovered so far at call sites (keyed by statement and its parent block id)
  */
 data class InterproceduralCfg(
     val main: EtsBlockCfg,
@@ -93,26 +94,23 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
     useHtml: Boolean = true
 ): String {
     val lines = mutableListOf<String>()
-
-    // Start the digraph and allow edges between clusters
     lines += "digraph world {"
     lines += "  compound=true"
     lines += "  node [shape=${if (useHtml) "none" else "rect"} fontname=\"monospace\"]"
 
-    // --- 1) Render main CFG ---
+    // Main CFG
     for (block in main.blocks) {
-        val nodeId = "M_${block.id}"
+        val id = "M_${block.id}"
         if (useHtml) {
-            // HTML label: wrap table in angle brackets
             val table = buildHtmlTable(block, pathStmts, currentStmt)
-            lines += "  $nodeId [label=<$table>];"
+            // embed as single-line label
+            lines += "  $id [label=<$table>];"
         } else {
-            // Plain text fallback: quote the label
-            val label = buildPlainLabel(block, pathStmts, currentStmt)
-            lines += "  $nodeId [label=\"$label\"];"
+            val lbl = buildPlainLabel(block, pathStmts, currentStmt)
+            lines += "  $id [label=\"$lbl\"];"
         }
     }
-    // Edges of main CFG
+    // Main edges
     for ((bid, succs) in main.successors) {
         val from = "M_$bid"
         when (succs.size) {
@@ -125,28 +123,25 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
         }
     }
 
-    // --- 2) Render each discovered callee CFG as dashed cluster ---
+    // Callee clusters
     for ((key, cfg) in callees) {
-        val (stmt, callerBlockId) = key
-        val callId = stmt.hashCode().toString() + "_B$callerBlockId"
-        val clusterName = "cluster_C_$callId"
-
-        lines += "  subgraph $clusterName {"
+        val (stmt, parentId) = key
+        val callId = stmt.hashCode().toString() + "_B$parentId"
+        val cluster = "cluster_$callId"
+        lines += "  subgraph $cluster {"
         lines += "    label=\"Callee of $callId\";"
         lines += "    style=dashed;"
 
-        // Nodes in callee CFG
-        for (block in cfg.blocks) {
-            val nodeId = "C_${callId}_${block.id}"
+        for (blk in cfg.blocks) {
+            val nid = "C_${callId}_${blk.id}"
             if (useHtml) {
-                val table = buildHtmlTable(block, pathStmts, currentStmt)
-                lines += "    $nodeId [label=<$table>];"
+                val table = buildHtmlTable(blk, pathStmts, currentStmt)
+                lines += "    $nid [label=<$table>];"
             } else {
-                val label = buildPlainLabel(block, pathStmts, currentStmt)
-                lines += "    $nodeId [label=\"$label\"];"
+                val lbl = buildPlainLabel(blk, pathStmts, currentStmt)
+                lines += "    $nid [label=\"$lbl\"];"
             }
         }
-        // Edges in callee CFG
         for ((bid, succs) in cfg.successors) {
             val from = "C_${callId}_$bid"
             when (succs.size) {
@@ -159,55 +154,68 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
             }
         }
         lines += "  }"
-
-        // --- 3) Connect call-site in main to callee entry ---
-        val callerNode  = "M_$callerBlockId"
-        val entryBlock  = cfg.blocks.first().id
-        val calleeEntry = "C_${callId}_$entryBlock"
-        lines += "  $callerNode -> $calleeEntry [ltail=$clusterName lhead=$clusterName style=dotted label=\"call\"];"
+        // call edge
+        val caller = "M_$parentId"
+        val entry = cfg.blocks.first().id
+        lines += "  $caller -> C_${callId}_$entry [ltail=$cluster lhead=$cluster style=dotted label=\"call\"];"
     }
 
     lines += "}"
     return lines.joinToString("\n")
 }
 
-/** Build an HTML table label for a block, coloring rows by path/current. */
+// ======== Helpers ========
+
 private fun buildHtmlTable(
     block: BasicBlock,
     pathStmts: Set<EtsStmt>,
     currentStmt: EtsStmt?
 ): String {
-    val rows = block.statements.joinToString("") { stmt ->
-        val text = stmt.toDotLabel().htmlEncode()
+    val rows = block.statements.joinToString(separator = "") { stmt ->
+        val txt = stmt.toDotLabel().htmlEncode()
         val bg = when {
             stmt == currentStmt -> "lightblue"
-            stmt in pathStmts   -> "yellow"
-            else                -> "white"
+            stmt in pathStmts -> "yellow"
+            else -> "white"
         }
-        "<tr><td balign=\"left\" bgcolor=\"$bg\">$text</td></tr>"
+        "<tr><td balign=\"left\" bgcolor=\"$bg\">$txt</td></tr>"
     }
-    return """
-      <table border=\"0\" cellborder=\"1\" cellspacing=\"0\">
-        <tr><td><b>Block #${block.id}</b></td></tr>
-        $rows
-      </table>
-    """.trimIndent()
+    return "<table border=\"0\" cellborder=\"1\" cellspacing=\"0\">" +
+        "<tr><td><b>Block #${block.id}</b></td></tr>" + rows +
+        "</table>"
 }
 
-/** Build a plain-text label (non-HTML) for a block, prefixing rows. */
 private fun buildPlainLabel(
     block: BasicBlock,
     pathStmts: Set<EtsStmt>,
     currentStmt: EtsStmt?
 ): String {
-    val body = block.statements.joinToString("") { stmt ->
+    val body = block.statements.joinToString(separator = "") { stmt ->
         val raw = stmt.toDotLabel()
-        val prefix = when {
+        val pfx = when {
             stmt == currentStmt -> "[▶] "
-            stmt in pathStmts   -> "[·] "
-            else                -> ""
+            stmt in pathStmts -> "[·] "
+            else -> ""
         }
-        "$prefix$raw\\l"
+        "$pfx$raw\\l"
     }
-    return "Block #${block.id}\\n$body"
+    return "Block #${block.id}\\n" + body
+}
+
+fun renderDotOverwrite(
+    dot: String,
+    outputDir: Path = Paths.get("."),
+    baseName: String = "interproc_cfg",
+    dotCmd: String = "dot",
+    viewerCmd: String = when {
+        System.getProperty("os.name").startsWith("Mac") -> "open"
+        System.getProperty("os.name").startsWith("Win") -> "cmd /c start"
+        else -> "xdg-open"
+    }
+) {
+    val dotFile = outputDir.resolve("$baseName.dot")
+    val outSvg = outputDir.resolve("$baseName.svg")
+    Files.write(dotFile, dot.toByteArray())
+    Runtime.getRuntime().exec("$dotCmd -Tsvg -o $outSvg $dotFile").waitFor()
+    Runtime.getRuntime().exec("$viewerCmd $outSvg").waitFor()
 }
