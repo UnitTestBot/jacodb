@@ -862,6 +862,12 @@ data class JcRawArgument(
     }
 }
 
+enum class LocalVarKind {
+    UNKNOWN,
+    ORIGINAL_ASSIGN,
+    NAMED_LOCAL,
+}
+
 /**
  * @param name isn't considered in `equals` and `hashcode`
  */
@@ -869,6 +875,7 @@ data class JcRawLocalVar(
     val index: Int,
     override val name: String,
     override val typeName: TypeName,
+    val kind: LocalVarKind = LocalVarKind.UNKNOWN,
 ) : JcRawLocal {
     override fun toString(): String = name
 

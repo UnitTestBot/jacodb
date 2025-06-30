@@ -294,7 +294,7 @@ internal class Simplifier {
         }
         val replacement = types.filterValues { it.size > 1 }
             .mapValues {
-                JcRawLocalVar(it.key.index, it.key.name, it.key.typeName)
+                JcRawLocalVar(it.key.index, it.key.name, it.key.typeName, it.key.kind)
             }
         return instList.map(ExprMapper(replacement.toMap()))
     }
