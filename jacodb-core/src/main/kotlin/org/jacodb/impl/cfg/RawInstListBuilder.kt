@@ -23,7 +23,80 @@ import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.JcParameter
 import org.jacodb.api.jvm.PredefinedPrimitives
 import org.jacodb.api.jvm.TypeName
-import org.jacodb.api.jvm.cfg.*
+import org.jacodb.api.jvm.cfg.BsmArg
+import org.jacodb.api.jvm.cfg.BsmDoubleArg
+import org.jacodb.api.jvm.cfg.BsmFloatArg
+import org.jacodb.api.jvm.cfg.BsmHandle
+import org.jacodb.api.jvm.cfg.BsmHandleTag
+import org.jacodb.api.jvm.cfg.BsmIntArg
+import org.jacodb.api.jvm.cfg.BsmLongArg
+import org.jacodb.api.jvm.cfg.BsmMethodTypeArg
+import org.jacodb.api.jvm.cfg.BsmStringArg
+import org.jacodb.api.jvm.cfg.BsmTypeArg
+import org.jacodb.api.jvm.cfg.JcInstList
+import org.jacodb.api.jvm.cfg.JcRawAddExpr
+import org.jacodb.api.jvm.cfg.JcRawAndExpr
+import org.jacodb.api.jvm.cfg.JcRawArgument
+import org.jacodb.api.jvm.cfg.JcRawArrayAccess
+import org.jacodb.api.jvm.cfg.JcRawAssignInst
+import org.jacodb.api.jvm.cfg.JcRawBranchingInst
+import org.jacodb.api.jvm.cfg.JcRawCallExpr
+import org.jacodb.api.jvm.cfg.JcRawCallInst
+import org.jacodb.api.jvm.cfg.JcRawCastExpr
+import org.jacodb.api.jvm.cfg.JcRawCatchEntry
+import org.jacodb.api.jvm.cfg.JcRawCatchInst
+import org.jacodb.api.jvm.cfg.JcRawClassConstant
+import org.jacodb.api.jvm.cfg.JcRawCmpExpr
+import org.jacodb.api.jvm.cfg.JcRawCmpgExpr
+import org.jacodb.api.jvm.cfg.JcRawCmplExpr
+import org.jacodb.api.jvm.cfg.JcRawConditionExpr
+import org.jacodb.api.jvm.cfg.JcRawDivExpr
+import org.jacodb.api.jvm.cfg.JcRawDynamicCallExpr
+import org.jacodb.api.jvm.cfg.JcRawEnterMonitorInst
+import org.jacodb.api.jvm.cfg.JcRawEqExpr
+import org.jacodb.api.jvm.cfg.JcRawExitMonitorInst
+import org.jacodb.api.jvm.cfg.JcRawExpr
+import org.jacodb.api.jvm.cfg.JcRawFieldRef
+import org.jacodb.api.jvm.cfg.JcRawGeExpr
+import org.jacodb.api.jvm.cfg.JcRawGotoInst
+import org.jacodb.api.jvm.cfg.JcRawGtExpr
+import org.jacodb.api.jvm.cfg.JcRawIfInst
+import org.jacodb.api.jvm.cfg.JcRawInst
+import org.jacodb.api.jvm.cfg.JcRawInstanceOfExpr
+import org.jacodb.api.jvm.cfg.JcRawInterfaceCallExpr
+import org.jacodb.api.jvm.cfg.JcRawLabelInst
+import org.jacodb.api.jvm.cfg.JcRawLabelRef
+import org.jacodb.api.jvm.cfg.JcRawLeExpr
+import org.jacodb.api.jvm.cfg.JcRawLengthExpr
+import org.jacodb.api.jvm.cfg.JcRawLineNumberInst
+import org.jacodb.api.jvm.cfg.JcRawLocalVar
+import org.jacodb.api.jvm.cfg.JcRawLtExpr
+import org.jacodb.api.jvm.cfg.JcRawMethodConstant
+import org.jacodb.api.jvm.cfg.JcRawMethodType
+import org.jacodb.api.jvm.cfg.JcRawMulExpr
+import org.jacodb.api.jvm.cfg.JcRawNegExpr
+import org.jacodb.api.jvm.cfg.JcRawNeqExpr
+import org.jacodb.api.jvm.cfg.JcRawNewArrayExpr
+import org.jacodb.api.jvm.cfg.JcRawNewExpr
+import org.jacodb.api.jvm.cfg.JcRawNullConstant
+import org.jacodb.api.jvm.cfg.JcRawOrExpr
+import org.jacodb.api.jvm.cfg.JcRawRemExpr
+import org.jacodb.api.jvm.cfg.JcRawReturnInst
+import org.jacodb.api.jvm.cfg.JcRawShlExpr
+import org.jacodb.api.jvm.cfg.JcRawShrExpr
+import org.jacodb.api.jvm.cfg.JcRawSimpleValue
+import org.jacodb.api.jvm.cfg.JcRawSpecialCallExpr
+import org.jacodb.api.jvm.cfg.JcRawStaticCallExpr
+import org.jacodb.api.jvm.cfg.JcRawStringConstant
+import org.jacodb.api.jvm.cfg.JcRawSubExpr
+import org.jacodb.api.jvm.cfg.JcRawSwitchInst
+import org.jacodb.api.jvm.cfg.JcRawThis
+import org.jacodb.api.jvm.cfg.JcRawThrowInst
+import org.jacodb.api.jvm.cfg.JcRawUshrExpr
+import org.jacodb.api.jvm.cfg.JcRawValue
+import org.jacodb.api.jvm.cfg.JcRawVirtualCallExpr
+import org.jacodb.api.jvm.cfg.JcRawXorExpr
+import org.jacodb.api.jvm.cfg.LocalVarKind
 import org.jacodb.impl.cfg.util.CLASS_CLASS
 import org.jacodb.impl.cfg.util.ExprMapper
 import org.jacodb.impl.cfg.util.METHOD_HANDLES_CLASS
@@ -400,7 +473,7 @@ class RawInstListBuilder(
         if (assignInst.lhv !is JcRawLocalVar) {
             return null
         }
-        val newLhv = (assignInst.lhv as JcRawLocalVar).copy(kind = LocalVarKind.ORIGINAL_ASSIGN)
+        val newLhv = (assignInst.lhv as JcRawLocalVar).copy(kind = LocalVarKind.ORIGINAL)
         return JcRawAssignInst(
             assignInst.owner,
             newLhv,
@@ -414,7 +487,7 @@ class RawInstListBuilder(
 
     private fun createRawAssign(owner: JcMethod, lhv: JcRawValue, rhv: JcRawExpr, insn: AbstractInsnNode): JcRawAssignInst {
         if (lhv is JcRawLocalVar && rhv is JcRawLocalVar) {
-            if (lhv.kind != LocalVarKind.ORIGINAL_ASSIGN && lhv.kind != LocalVarKind.NAMED_LOCAL)
+            if (lhv.kind != LocalVarKind.ORIGINAL && lhv.kind != LocalVarKind.NAMED_LOCAL)
                 uniteRegisters(lhv, rhv)
         }
         return JcRawAssignInst(owner, lhv, rhv)

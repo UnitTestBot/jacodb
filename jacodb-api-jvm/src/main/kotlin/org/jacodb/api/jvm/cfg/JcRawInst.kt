@@ -864,7 +864,7 @@ data class JcRawArgument(
 
 enum class LocalVarKind {
     UNKNOWN,
-    ORIGINAL_ASSIGN,
+    ORIGINAL,
     NAMED_LOCAL,
 }
 
