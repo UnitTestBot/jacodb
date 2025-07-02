@@ -485,7 +485,7 @@ class RawInstListBuilder(
         changeAssigns { markAssignAsOriginal(it) }
     }
 
-    private fun createRawAssign(owner: JcMethod, lhv: JcRawValue, rhv: JcRawExpr, insn: AbstractInsnNode): JcRawAssignInst {
+    private fun createRawAssign(owner: JcMethod, lhv: JcRawValue, rhv: JcRawExpr): JcRawAssignInst {
         if (lhv is JcRawLocalVar && rhv is JcRawLocalVar) {
             if (lhv.kind != LocalVarKind.ORIGINAL && lhv.kind != LocalVarKind.NAMED_LOCAL)
                 uniteRegisters(lhv, rhv)
@@ -635,7 +635,7 @@ class RawInstListBuilder(
         value: JcRawSimpleValue,
         expr: JcRawSimpleValue
     ) {
-        val assignment = createRawAssign(method, value, expr, insn)
+        val assignment = createRawAssign(method, value, expr)
         if (insn.isTerminateInst) {
             insnList.addInst(assignment, insnList.lastIndex)
         } else if (insn.isBranchingInst) {
@@ -650,7 +650,7 @@ class RawInstListBuilder(
                     insnList.addInst(assignment, branchInstIdx)
                     if (branchInst.key.dependsOn(value)) {
                         val freshVar = generateFreshLocalVar(branchInst.key.typeName)
-                        insnList.addInst(createRawAssign(method, freshVar, branchInst.key, insn), index = 0)
+                        insnList.addInst(createRawAssign(method, freshVar, branchInst.key), index = 0)
                         insnList[branchInstIdx + 2] = JcRawSwitchInst(
                             owner = branchInst.owner,
                             key = freshVar,
@@ -664,7 +664,7 @@ class RawInstListBuilder(
                     insnList.addInst(assignment, branchInstIdx)
                     if (branchInst.condition.dependsOn(value)) {
                         val freshVar = generateFreshLocalVar(value.typeName)
-                        insnList.addInst(createRawAssign(method, freshVar, value, insn), index = 0)
+                        insnList.addInst(createRawAssign(method, freshVar, value), index = 0)
 
                         val updatedCondition = branchInst.condition.replace(fromValue = value, toValue = freshVar)
                         insnList[branchInstIdx + 2] = JcRawIfInst(
@@ -895,7 +895,7 @@ class RawInstListBuilder(
         fun createAssignWithNextDeclared(type: TypeName): JcRawAssignInst {
             val assignment = nextRegisterDeclaredVariable(type, variable, insn)
             currentFrame = currentFrame.putLocal(variable, assignment)
-            return createRawAssign(method, assignment, expr, insn)
+            return createRawAssign(method, assignment, expr)
         }
 
         return if (oldVar != null) {
@@ -904,8 +904,10 @@ class RawInstListBuilder(
                 null
             } else if (oldVar.typeName == expr.typeName || (expr is JcRawNullConstant && !oldVar.typeName.isPrimitive)) {
                 if (!currentFrame.valueUsedInStack(oldVar) && !currentFrame.valueUsedInLocals(oldVar, variable)) {
+                    // reuse register if the same variable is used; otherwise, create a new register
+                    // it helps to track down which registers represent which variables from the original code
                     if (oldVar is JcRawLocalVar && infoFromLocalVars?.name == registerToLocalName[oldVar.index]) {
-                        JcRawAssignInst(method, oldVar, expr)
+                        createRawAssign(method, oldVar, expr)
                     }
                     else {
                         createAssignWithNextDeclared(expr.typeName)
@@ -1160,7 +1162,7 @@ class RawInstListBuilder(
         val read = JcRawArrayAccess(arrayRef, index, arrayRef.typeName.elementType())
 
         val assignment = nextRegister(read.typeName)
-        addInstruction(insn, createRawAssign(method, assignment, read, insn))
+        addInstruction(insn, createRawAssign(method, assignment, read))
         push(assignment)
     }
 
@@ -1172,8 +1174,7 @@ class RawInstListBuilder(
             insn, createRawAssign(
                 method,
                 JcRawArrayAccess(arrayRef, index, arrayRef.typeName.elementType()),
-                value,
-                insn
+                value
             )
         )
     }
@@ -1315,7 +1316,7 @@ class RawInstListBuilder(
             else -> error("Unknown binary opcode: $opcode")
         }
         val assignment = nextRegister(resolvedType)
-        addInstruction(insn, createRawAssign(method, assignment, expr, insn))
+        addInstruction(insn, createRawAssign(method, assignment, expr))
         push(assignment)
     }
 
@@ -1345,7 +1346,7 @@ class RawInstListBuilder(
             else -> error("Unknown unary opcode $opcode")
         }
         val assignment = nextRegister(expr.typeName)
-        addInstruction(insn, createRawAssign(method, assignment, expr, insn))
+        addInstruction(insn, createRawAssign(method, assignment, expr))
         push(assignment)
     }
 
@@ -1362,7 +1363,7 @@ class RawInstListBuilder(
             else -> error("Unknown cast opcode $opcode")
         }
         val assignment = nextRegister(targetType)
-        addInstruction(insn, createRawAssign(method, assignment, JcRawCastExpr(targetType, operand), insn))
+        addInstruction(insn, createRawAssign(method, assignment, JcRawCastExpr(targetType, operand)))
         push(assignment)
     }
 
@@ -1376,7 +1377,7 @@ class RawInstListBuilder(
             else -> error("Unknown cmp opcode $opcode")
         }
         val assignment = nextRegister(PredefinedPrimitives.Int.typeName())
-        addInstruction(insn, createRawAssign(method, assignment, expr, insn))
+        addInstruction(insn, createRawAssign(method, assignment, expr))
         push(assignment)
     }
 
@@ -1417,7 +1418,7 @@ class RawInstListBuilder(
             Opcodes.GETFIELD -> {
                 val assignment = nextRegister(fieldType)
                 val field = JcRawFieldRef(frame.pop(), declaringClass, fieldName, fieldType)
-                addInstruction(insnNode, createRawAssign(method, assignment, field, insnNode))
+                addInstruction(insnNode, createRawAssign(method, assignment, field))
                 frame.push(assignment)
             }
 
@@ -1425,20 +1426,20 @@ class RawInstListBuilder(
                 val value = frame.pop()
                 val instance = frame.pop()
                 val fieldRef = JcRawFieldRef(instance, declaringClass, fieldName, fieldType)
-                addInstruction(insnNode, createRawAssign(method, fieldRef, value, insnNode))
+                addInstruction(insnNode, createRawAssign(method, fieldRef, value))
             }
 
             Opcodes.GETSTATIC -> {
                 val assignment = nextRegister(fieldType)
                 val field = JcRawFieldRef(declaringClass, fieldName, fieldType)
-                addInstruction(insnNode, createRawAssign(method, assignment, field, insnNode))
+                addInstruction(insnNode, createRawAssign(method, assignment, field))
                 frame.push(assignment)
             }
 
             Opcodes.PUTSTATIC -> {
                 val value = frame.pop()
                 val fieldRef = JcRawFieldRef(declaringClass, fieldName, fieldType)
-                addInstruction(insnNode, createRawAssign(method, fieldRef, value, insnNode))
+                addInstruction(insnNode, createRawAssign(method, fieldRef, value))
             }
         }
     }
@@ -1479,7 +1480,7 @@ class RawInstListBuilder(
         val resolvedType = resolveType(local.typeName, rhv.typeName)
         val expr = JcRawAddExpr(resolvedType, local, rhv)
         val assignment = nextRegister(resolvedType)
-        addInstruction(insnNode, createRawAssign(method, assignment, expr, insnNode))
+        addInstruction(insnNode, createRawAssign(method, assignment, expr))
 
         val localAssign = local(variable, assignment, insnNode)
         if (localAssign != null) {
@@ -1495,7 +1496,7 @@ class RawInstListBuilder(
             Opcodes.NEWARRAY -> {
                 val expr = JcRawNewArrayExpr(operand.toPrimitiveType().asArray(), pop())
                 val assignment = nextRegister(expr.typeName)
-                addInstruction(insnNode, createRawAssign(method, assignment, expr, insnNode))
+                addInstruction(insnNode, createRawAssign(method, assignment, expr))
                 push(assignment)
             }
 
@@ -1554,7 +1555,7 @@ class RawInstListBuilder(
             addInstruction(insnNode, JcRawCallInst(method, expr))
         } else {
             val result = nextRegister(Type.getReturnType(desc).descriptor.typeNameFromJvmName())
-            addInstruction(insnNode, createRawAssign(method, result, expr, insnNode))
+            addInstruction(insnNode, createRawAssign(method, result, expr))
             push(result)
         }
     }
@@ -1865,8 +1866,7 @@ class RawInstListBuilder(
                             )
 
                             else -> ldcValue(cst)
-                        },
-                        insnNode
+                        }
                     )
                 )
                 push(assignment)
@@ -1878,8 +1878,7 @@ class RawInstListBuilder(
                     insnNode, createRawAssign(
                         method,
                         assignment,
-                        ldcValue(cst),
-                        insnNode
+                        ldcValue(cst)
                     )
                 )
                 push(assignment)
@@ -1916,8 +1915,7 @@ class RawInstListBuilder(
                                     emptyList(),
                                     METHOD_HANDLES_LOOKUP_CLASS.typeNameFromJvmName(),
                                     emptyList()
-                                ),
-                                insnNode
+                                )
                             )
                         )
                         JcRawStaticCallExpr(
@@ -1934,7 +1932,7 @@ class RawInstListBuilder(
                         )
                     }
                 }
-                addInstruction(insnNode, createRawAssign(method, assignment, methodCall, insnNode))
+                addInstruction(insnNode, createRawAssign(method, assignment, methodCall))
                 push(assignment)
             }
 
@@ -2011,7 +2009,7 @@ class RawInstListBuilder(
             addInstruction(insnNode, JcRawCallInst(method, expr))
         } else {
             val result = nextRegister(Type.getReturnType(insnNode.desc).descriptor.typeNameFromJvmName())
-            addInstruction(insnNode, createRawAssign(method, result, expr, insnNode))
+            addInstruction(insnNode, createRawAssign(method, result, expr))
             push(result)
         }
     }
@@ -2023,7 +2021,7 @@ class RawInstListBuilder(
         }
         val expr = JcRawNewArrayExpr(insnNode.desc.typeNameFromJvmName(), dimensions.reversed())
         val assignment = nextRegister(expr.typeName)
-        addInstruction(insnNode, createRawAssign(method, assignment, expr, insnNode))
+        addInstruction(insnNode, createRawAssign(method, assignment, expr))
         push(assignment)
     }
 
@@ -2041,7 +2039,7 @@ class RawInstListBuilder(
         when (insnNode.opcode) {
             Opcodes.NEW -> {
                 val assignment = nextRegister(type)
-                addInstruction(insnNode, createRawAssign(method, assignment, JcRawNewExpr(type), insnNode))
+                addInstruction(insnNode, createRawAssign(method, assignment, JcRawNewExpr(type)))
                 push(assignment)
             }
 
@@ -2052,8 +2050,7 @@ class RawInstListBuilder(
                     insnNode, createRawAssign(
                         method,
                         assignment,
-                        JcRawNewArrayExpr(type.asArray(), length),
-                        insnNode
+                        JcRawNewArrayExpr(type.asArray(), length)
                     )
                 )
                 push(assignment)
@@ -2061,7 +2058,7 @@ class RawInstListBuilder(
 
             Opcodes.CHECKCAST -> {
                 val assignment = nextRegister(type)
-                addInstruction(insnNode, createRawAssign(method, assignment, JcRawCastExpr(type, pop()), insnNode))
+                addInstruction(insnNode, createRawAssign(method, assignment, JcRawCastExpr(type, pop())))
                 push(assignment)
             }
 
@@ -2071,8 +2068,7 @@ class RawInstListBuilder(
                     insnNode, createRawAssign(
                         method,
                         assignment,
-                        JcRawInstanceOfExpr(PredefinedPrimitives.Boolean.typeName(), pop(), type),
-                        insnNode
+                        JcRawInstanceOfExpr(PredefinedPrimitives.Boolean.typeName(), pop(), type)
                     )
                 )
                 push(assignment)
