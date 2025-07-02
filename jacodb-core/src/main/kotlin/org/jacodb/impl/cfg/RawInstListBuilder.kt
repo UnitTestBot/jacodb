@@ -878,8 +878,8 @@ class RawInstListBuilder(
         expr: JcRawSimpleValue,
         insn: AbstractInsnNode,
     ): JcRawAssignInst? {
+        val infoFromLocalVars = findLocalVariableWithInstruction(variable, insn)
         val oldVar = currentFrame.findLocal(variable)?.let {
-            val infoFromLocalVars = findLocalVariableWithInstruction(variable, insn)
             val isArg =
                 variable < argCounter && infoFromLocalVars != null && infoFromLocalVars.start == firstLabelOrNull
             if (expr.typeName.isPrimitive.xor(it.typeName.isPrimitive)
@@ -891,21 +891,35 @@ class RawInstListBuilder(
                 it
             }
         }
+
+        fun createAssignWithNextDeclared(type: TypeName): JcRawAssignInst {
+            val assignment = nextRegisterDeclaredVariable(type, variable, insn)
+            currentFrame = currentFrame.putLocal(variable, assignment)
+            return createRawAssign(method, assignment, expr, insn)
+        }
+
         return if (oldVar != null) {
             if (oldVar is JcRawArgument) {
                 currentFrame = currentFrame.putLocal(variable, expr)
                 null
             } else if (oldVar.typeName == expr.typeName || (expr is JcRawNullConstant && !oldVar.typeName.isPrimitive)) {
-                currentFrame = currentFrame.putLocal(variable, expr)
-                null
+                if (!currentFrame.valueUsedInStack(oldVar) && !currentFrame.valueUsedInLocals(oldVar, variable)) {
+                    if (oldVar is JcRawLocalVar && infoFromLocalVars?.name == registerToLocalName[oldVar.index]) {
+                        JcRawAssignInst(method, oldVar, expr)
+                    }
+                    else {
+                        createAssignWithNextDeclared(expr.typeName)
+                    }
+                } else {
+                    currentFrame = currentFrame.putLocal(variable, expr)
+                    null
+                }
             } else {
-                val assignment = nextRegisterDeclaredVariable(expr.typeName, variable, insn)
-                currentFrame = currentFrame.putLocal(variable, assignment)
-                createRawAssign(method, assignment, expr, insn)
+                createAssignWithNextDeclared(expr.typeName)
             }
         } else {
             // We have to get type if rhv expression is NULL
-            val typeOfNewAssigment =
+            val typeOfNewAssignment =
                 if (expr.typeName.typeName == PredefinedPrimitives.Null) {
                     findLocalVariableWithInstruction(variable, insn)
                         ?.desc?.typeNameFromJvmName()
@@ -914,10 +928,7 @@ class RawInstListBuilder(
                 } else {
                     expr.typeName
                 }
-            val newLocal = nextRegisterDeclaredVariable(typeOfNewAssigment, variable, insn)
-            val result = createRawAssign(method, newLocal, expr, insn)
-            currentFrame = currentFrame.putLocal(variable, newLocal)
-            result
+            createAssignWithNextDeclared(typeOfNewAssignment)
         }
     }
 
