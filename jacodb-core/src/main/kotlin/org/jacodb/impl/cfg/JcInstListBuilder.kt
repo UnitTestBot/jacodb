@@ -75,7 +75,7 @@ class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>
             inst.lhv.let { unprocessedLhv ->
                 if (unprocessedLhv is JcRawLocalVar && unprocessedLhv.typeName == UNINIT_THIS) {
                     convertedLocalVars.getOrPut(unprocessedLhv) {
-                        JcRawLocalVar(unprocessedLhv.index, unprocessedLhv.name, inst.rhv.typeName)
+                        JcRawLocalVar(unprocessedLhv.index, unprocessedLhv.name, inst.rhv.typeName, unprocessedLhv.kind)
                     }
                 } else {
                     unprocessedLhv
