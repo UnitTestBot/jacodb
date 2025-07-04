@@ -6,12 +6,12 @@ object Versions {
     const val asm = "9.7.1"
     const val dokka = "1.9.20" // note: must be compatible with kotlin version
     const val gradle_download = "5.3.0"
+    const val gradle_node = "7.1.0"
     const val gradle_versions = "0.47.0"
-
-    // hikaricp version compatible with Java 8
-    const val hikaricp = "4.0.3"
-
+    const val grpc = "1.72.0"
+    const val grpc_kotlin = "1.4.3"
     const val guava = "31.1-jre"
+    const val hikaricp = "4.0.3" // compatible with Java 8
     const val javax_activation = "1.1"
     const val javax_mail = "1.4.7"
     const val javax_servlet_api = "2.5"
@@ -24,23 +24,26 @@ object Versions {
     const val junit = "5.9.2"
     const val kotlin = "2.1.0"
     const val kotlin_logging = "1.8.3"
+    const val kotlin_metadata = kotlin
     const val kotlinx_benchmark = "0.4.6"
     const val kotlinx_cli = "0.3.5"
     const val kotlinx_collections_immutable = "0.3.5"
     const val kotlinx_coroutines = "1.6.4"
-    const val kotlin_metadata = kotlin
     const val kotlinx_serialization = "1.8.0"
     const val licenser = "0.6.1"
+    const val lmdb_java = "0.9.0"
     const val mockk = "1.13.3"
+    const val protobuf = "4.30.2"
+    const val rocks_db = "9.1.1"
     const val sarif4k = "0.5.0"
     const val shadow = "8.1.1"
-    const val slf4j = "1.7.36"
+    const val slf4j = "2.0.17"
     const val soot_utbot_fork = "4.4.0-FORK-2"
     const val sootup = "1.0.0"
     const val sqlite = "3.41.2.2"
     const val xodus = "2.0.1"
-    const val rocks_db = "9.1.1"
-    const val lmdb_java = "0.9.0"
+    const val wire = "5.3.1"
+    const val wire_grpc_server = "1.0.0-alpha04"
 
     // libs for tests only
     const val jgit_test_only_version = "5.9.0.202009080501-r"
@@ -144,11 +147,6 @@ object Libs {
     )
 
     // https://github.com/Kotlin/kotlinx.serialization
-    val kotlinx_serialization_core = dep(
-        group = "org.jetbrains.kotlinx",
-        name = "kotlinx-serialization-core",
-        version = Versions.kotlinx_serialization
-    )
     val kotlinx_serialization_json = dep(
         group = "org.jetbrains.kotlinx",
         name = "kotlinx-serialization-json",
@@ -339,6 +337,52 @@ object Libs {
         name = "commons-compress",
         version = Versions.commons_compress_test_only_version
     )
+
+    // https://github.com/grpc/grpc-java
+    val grpc_api = dep(
+        group = "io.grpc",
+        name = "grpc-api",
+        version = Versions.grpc
+    )
+    val grpc_protobuf = dep(
+        group = "io.grpc",
+        name = "grpc-protobuf",
+        version = Versions.grpc
+    )
+    val grpc_services = dep(
+        group = "io.grpc",
+        name = "grpc-services",
+        version = Versions.grpc
+    )
+    val grpc_netty_shaded = dep(
+        group = "io.grpc",
+        name = "grpc-netty-shaded",
+        version = Versions.grpc
+    )
+
+    // https://github.com/square/wire
+    val wire_runtime = dep(
+        group = "com.squareup.wire",
+        name = "wire-runtime",
+        version = Versions.wire
+    )
+    val wire_grpc_client = dep(
+        group = "com.squareup.wire",
+        name = "wire-grpc-client",
+        version = Versions.wire
+    )
+
+    // https://github.com/square/wire-grpc-server
+    val wire_grpc_server = dep(
+        group = "com.squareup.wiregrpcserver",
+        name = "server",
+        version = Versions.wire_grpc_server
+    )
+    val wire_grpc_server_generator = dep(
+        group = "com.squareup.wiregrpcserver",
+        name = "server-generator",
+        version = Versions.wire_grpc_server
+    )
 }
 
 object Plugins {
@@ -355,6 +399,12 @@ object Plugins {
     object GradleDownload : ProjectPlugin(
         version = Versions.gradle_download,
         id = "de.undercouch.download"
+    )
+
+    // https://github.com/node-gradle/gradle-node-plugin
+    object GradleNode : ProjectPlugin(
+        version = Versions.gradle_node,
+        id = "com.github.node-gradle.node"
     )
 
     // https://github.com/ben-manes/gradle-versions-plugin
@@ -379,6 +429,12 @@ object Plugins {
     object Shadow : ProjectPlugin(
         version = Versions.shadow,
         id = "com.github.johnrengelman.shadow"
+    )
+
+    // https://github.com/square/wire
+    object Wire : ProjectPlugin(
+        version = Versions.wire,
+        id = "com.squareup.wire"
     )
 }
 

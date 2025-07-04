@@ -1,0 +1,461 @@
+syntax = "proto3";
+package model;
+
+option java_multiple_files = true;
+
+message Scene {
+  repeated File files = 1;
+  repeated File sdkFiles = 2;
+}
+
+message File {
+  FileSignature signature = 1;
+  repeated Class classes = 2;
+  repeated Namespace namespaces = 3;
+  repeated ImportInfo importInfos = 5;
+  repeated ExportInfo exportInfos = 6;
+}
+
+message Namespace {
+  NamespaceSignature signature = 1;
+  repeated Class classes = 2;
+  repeated Namespace namespaces = 3;
+}
+
+message Class {
+  ClassSignature signature = 1;
+  int32 modifiers = 2;
+  repeated Decorator decorators = 3;
+  int32 category = 4;
+  repeated Type type_parameters = 5;
+  string super_class_name = 6;
+  repeated string implemented_interface_names = 7;
+  repeated Field fields = 8;
+  repeated Method methods = 9;
+}
+
+message Field {
+  FieldSignature signature = 1;
+  int32 modifiers = 2;
+  repeated Decorator decorators = 3;
+  bool is_optional = 4;
+  bool is_definitely_assigned = 5;
+}
+
+message Method {
+  MethodSignature signature = 1;
+  repeated Type type_parameters = 2;
+  int32 modifiers = 3;
+  repeated Decorator decorators = 4;
+  BlockCfg cfg = 5;
+}
+
+message Decorator {
+  string kind = 1;
+}
+
+message ImportInfo {
+  string import_clause_name = 1;
+  string import_type = 2;
+  optional string import_from = 3;
+  int32 modifiers = 4;
+  optional string name_before_as = 5;
+}
+
+message ExportInfo {
+  string export_clause_name = 1;
+  int32 export_clause_type = 2;
+  optional string export_from = 3;
+  int32 modifiers = 4;
+  optional string name_before_as = 5;
+}
+
+message FileSignature {
+  string project_name = 1;
+  string file_name = 2;
+}
+
+message NamespaceSignature {
+  string name = 1;
+  FileSignature file = 2;
+  optional NamespaceSignature parent = 3;
+}
+
+message ClassSignature {
+  string name = 1;
+  FileSignature file = 2;
+  optional NamespaceSignature namespace = 3;
+}
+
+message FieldSignature {
+  ClassSignature enclosing_class = 1;
+  string name = 2;
+  Type type = 3;
+}
+
+message MethodSignature {
+  ClassSignature enclosing_class = 1;
+  string name = 2;
+  repeated MethodParameter parameters = 3;
+  Type returnType = 4;
+}
+
+message MethodParameter {
+  string name = 1;
+  Type type = 2;
+  bool isOptional = 3;
+  bool isRest = 4;
+}
+
+message BlockCfg {
+  repeated Block blocks = 1;
+}
+
+message Block {
+  int32 id = 1;
+  repeated Stmt statements = 2;
+  repeated int32 successors = 3;
+  repeated int32 predecessors = 4;
+}
+
+message Type {
+  oneof kind {
+    RawType raw_type = 1;
+    AnyType any_type = 2;
+    UnknownType unknown_type = 3;
+    UnionType union_type = 4;
+    IntersectionType intersection_type = 5;
+    GenericType generic_type = 6;
+    AliasType alias_type = 7;
+    BooleanType boolean_type = 8;
+    NumberType number_type = 9;
+    StringType string_type = 10;
+    NullType null_type = 11;
+    UndefinedType undefined_type = 12;
+    VoidType void_type = 13;
+    NeverType never_type = 14;
+    LiteralType literal_type = 15;
+    ClassType class_type = 16;
+    UnclearRefType unclear_ref_type = 17;
+    ArrayType array_type = 18;
+    TupleType tuple_type = 19;
+    FunctionType function_type = 20;
+  }
+}
+
+message RawType {
+  string kind = 1;
+  string text = 2;
+  // map<string, string> extra = 2;
+  // map<string, google.protobuf.Any> extra = 2;
+}
+
+message AnyType {}
+message UnknownType {}
+message BooleanType {}
+message NumberType {}
+message StringType {}
+message NullType {}
+message UndefinedType {}
+message VoidType {}
+message NeverType {}
+
+message UnionType {
+  repeated Type types = 1;
+}
+
+message IntersectionType {
+  repeated Type types = 1;
+}
+
+message GenericType {
+  string type_name = 1;
+  optional Type constraint = 2;
+  optional Type default_type = 3;
+}
+
+message AliasType {
+  string name = 1;
+  Type original_type = 2;
+  // TODO: LocalSignature signature = 3;
+}
+
+message LiteralType {
+  string literal_name = 1;
+}
+
+message ClassType {
+  ClassSignature signature = 1;
+  repeated Type type_parameters = 2;
+}
+
+message UnclearRefType {
+  string name = 1;
+  repeated Type type_parameters = 2;
+}
+
+message ArrayType {
+  Type element_type = 1;
+  int32 dimensions = 2;
+}
+
+message TupleType {
+  repeated Type types = 1;
+}
+
+message FunctionType {
+  MethodSignature signature = 1;
+  repeated Type type_parameters = 2;
+}
+
+message Stmt {
+  oneof kind {
+    RawStmt raw_stmt = 1;
+    NopStmt nop_stmt = 2;
+    AssignStmt assign_stmt = 3;
+    ReturnStmt return_stmt = 4;
+    ThrowStmt throw_stmt = 5;
+    IfStmt if_stmt = 6;
+    CallStmt call_stmt = 7;
+  }
+}
+
+message RawStmt {
+  string kind = 1;
+  string text = 2;
+}
+
+message NopStmt {}
+
+message AssignStmt {
+  Value lhv = 1;
+  Value rhv = 2;
+}
+
+message ReturnStmt {
+  optional Value return_value = 1;
+}
+
+message ThrowStmt {
+  Value exception = 1;
+}
+
+message IfStmt {
+  Value condition = 1;
+}
+
+message CallStmt {
+  CallExpr expr = 1;
+}
+
+message Value {
+  oneof kind {
+    RawValue raw_value = 1;
+    Local local = 2;
+    Constant constant = 3;
+    Expr expr = 4;
+    Ref ref = 5;
+  }
+}
+
+message RawValue {
+  string kind = 1;
+  string text = 2;
+  Type type = 3;
+}
+
+message Local {
+  string name = 1;
+  Type type = 2;
+}
+
+message Constant {
+  string value = 1;
+  Type type = 2;
+}
+
+message Expr {
+  oneof kind {
+    NewExpr new_expr = 1;
+    NewArrayExpr new_array_expr = 2;
+    DeleteExpr delete_expr = 3;
+    AwaitExpr await_expr = 4;
+    YieldExpr yield_expr = 5;
+    TypeOfExpr type_of_expr = 6;
+    InstanceOfExpr instance_of_expr = 7;
+    CastExpr cast_expr = 8;
+    UnaryExpr unary_expr = 9;
+    BinaryExpr binary_expr = 10;
+    RelationExpr relation_expr = 11;
+    CallExpr call_expr = 12;
+  }
+}
+
+message NewExpr {
+  Type type = 1;
+}
+
+message NewArrayExpr {
+  Type element_type = 1;
+  Value size = 2;
+}
+
+message DeleteExpr {
+  Value arg = 1;
+}
+
+message AwaitExpr {
+  Value arg = 1;
+  Type type = 2;
+}
+
+message YieldExpr {
+  Value arg = 1;
+  Type type = 2;
+}
+
+message TypeOfExpr {
+  Value arg = 1;
+}
+
+message CastExpr {
+  Value arg = 1;
+  Type type = 2;
+}
+
+message InstanceOfExpr {
+  Value arg = 1;
+  Type check_type = 2;
+}
+
+message UnaryExpr {
+  UnaryOperator op = 1;
+  Value arg = 2;
+  Type type = 3;
+}
+
+enum UnaryOperator {
+  UNARY_UNKNOWN = 0;
+  NEG = 1;          // -
+  BITWISE_NOT = 2;  // ~
+  LOGICAL_NOT = 3;  // !
+}
+
+message BinaryExpr {
+  BinaryOperator op = 1;
+  Value left = 2;
+  Value right = 3;
+  Type type = 4;
+}
+
+enum BinaryOperator {
+  BINARY_UNKNOWN = 0;
+
+  ADDITION = 1;        // '+'
+  SUBTRACTION = 2;     // '-'
+  MULTIPLICATION = 3;  // '*'
+  DIVISION = 4;        // '/'
+  REMAINDER = 5;       // '%'
+  EXPONENTIATION = 6;  // '**'
+
+  LEFT_SHIFT = 7;            // '<<'
+  RIGHT_SHIFT = 8;           // '>>'
+  UNSIGNED_RIGHT_SHIFT = 9;  // '>>>'
+
+  BITWISE_AND = 10;  // '&'
+  BITWISE_OR = 11;   // '|'
+  BITWISE_XOR = 12;  // '^'
+
+  LOGICAL_AND = 13;  // '&&'
+  LOGICAL_OR = 14;   // '||'
+
+  NULLISH_COALESCING = 15;  // ??
+}
+
+// Relation Expressions
+message RelationExpr {
+  RelationOperator op = 1;
+  Value left = 2;
+  Value right = 3;
+}
+
+// Relation Operators
+enum RelationOperator {
+  RELATION_UNKNOWN = 0;
+  EQ = 1;          // '=='
+  NEQ = 2;         // '!='
+  STRICT_EQ = 3;   // '==='
+  STRICT_NEQ = 4;  // '!=='
+  LT = 5;          // '<'
+  LTE = 6;         // '<='
+  GT = 7;          // '>'
+  GTE = 8;         // '>='
+  IN = 9;          // 'in'
+}
+
+// Call Expressions
+message CallExpr {
+  MethodSignature callee = 1;
+  repeated Value args = 2;
+  Type type = 3;
+
+  oneof kind {
+    InstanceCall instance_call = 4;
+    StaticCall static_call = 5;
+    PtrCall ptr_call = 6;
+  }
+}
+
+message InstanceCall {
+  Local instance = 1;
+}
+
+// Note: class name is included in the callee's signature
+message StaticCall {}
+
+message PtrCall {
+  Value ptr = 1;
+}
+
+// References
+message Ref {
+  oneof kind {
+    This this = 1;
+    ParameterRef parameter = 2;
+    ArrayAccess array_access = 3;
+    FieldRef field_ref = 4;
+  }
+}
+
+message This {
+  Type type = 1;
+}
+
+message ParameterRef {
+  int32 index = 1;
+  Type type = 2;
+}
+
+message ArrayAccess {
+  Local array = 1;
+  Value index = 2;
+  Type type = 3;
+}
+
+message FieldRef {
+  oneof kind {
+    InstanceFieldRef instance = 1;
+    StaticFieldRef static = 2;
+  }
+}
+
+message InstanceFieldRef {
+  Local instance = 1;
+  FieldSignature field = 2;
+  Type type = 3;
+}
+
+message StaticFieldRef {
+  FieldSignature field = 1;
+  Type type = 2;
+}

@@ -24,9 +24,9 @@ import org.jacodb.ets.model.EtsNumberConstant
 import org.jacodb.ets.model.EtsReturnStmt
 import org.jacodb.ets.model.EtsStaticFieldRef
 import org.jacodb.ets.model.EtsThis
-import org.jacodb.ets.test.utils.loadEtsFileFromResource
 import org.jacodb.ets.utils.INSTANCE_INIT_METHOD_NAME
 import org.jacodb.ets.utils.STATIC_INIT_METHOD_NAME
+import org.jacodb.ets.utils.loadEtsFileFromResource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs

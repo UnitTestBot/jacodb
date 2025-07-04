@@ -1,24 +1,38 @@
+import com.github.gradle.node.npm.task.NpmTask
 import java.io.FileNotFoundException
+import kotlin.time.Duration.Companion.minutes
 
 plugins {
     kotlin("plugin.serialization")
-    `java-test-fixtures`
+    id(Plugins.GradleNode)
 }
 
 dependencies {
     api(project(":jacodb-api-common"))
+    api(project(":jacodb-ets:wire-client"))
+    api(project(":jacodb-ets:wire-server"))
 
     implementation(Libs.kotlin_logging)
-    implementation(Libs.slf4j_simple)
     implementation(Libs.kotlinx_serialization_json)
     implementation(Libs.kotlinx_coroutines_core)
     implementation(Libs.jdot)
 
     testImplementation(kotlin("test"))
     testImplementation(Libs.mockk)
+    testImplementation(Libs.slf4j_simple)
 
     testFixturesImplementation(Libs.kotlin_logging)
     testFixturesImplementation(Libs.junit_jupiter_api)
+}
+
+node {
+    download = true
+    nodeProjectDir.set(file("arkanalyzer"))
+}
+
+tasks.register<NpmTask>("runArkAnalyzerServer") {
+    dependsOn(tasks.npmInstall)
+    args = listOf("run", "server")
 }
 
 // Example usage:
@@ -30,14 +44,14 @@ tasks.register("generateTestResources") {
     group = "build"
     description = "Generates test resources from TypeScript files using ArkAnalyzer."
     doLast {
-        println("Generating test resources using ArkAnalyzer...")
+        logger.lifecycle("Generating test resources using ArkAnalyzer...")
         val startTime = System.currentTimeMillis()
 
         val envVarName = "ARKANALYZER_DIR"
         val defaultArkAnalyzerDir = "arkanalyzer"
 
         val arkAnalyzerDir = rootDir.resolve(System.getenv(envVarName) ?: run {
-            println("Please, set $envVarName environment variable. Using default value: '$defaultArkAnalyzerDir'")
+            logger.lifecycle("Please, set $envVarName environment variable. Using default value: '$defaultArkAnalyzerDir'")
             defaultArkAnalyzerDir
         })
         if (!arkAnalyzerDir.exists()) {
@@ -48,7 +62,7 @@ tasks.register("generateTestResources") {
                     "current dir is '${File("").absolutePath}'."
             )
         }
-        println("Using ArkAnalyzer directory: '${arkAnalyzerDir.relativeTo(rootDir)}'")
+        logger.lifecycle("Using ArkAnalyzer directory: '${arkAnalyzerDir.relativeTo(rootDir)}'")
 
         val scriptSubPath = "src/save/serializeArkIR"
         val script = arkAnalyzerDir.resolve("out").resolve("$scriptSubPath.js")
@@ -58,12 +72,12 @@ tasks.register("generateTestResources") {
                     "Did you forget to execute 'npm run build' in the arkanalyzer project?"
             )
         }
-        println("Using script: '${script.relativeTo(arkAnalyzerDir)}'")
+        logger.lifecycle("Using script: '${script.relativeTo(arkAnalyzerDir)}'")
 
         val resources = projectDir.resolve("src/test/resources")
         val inputDir = resources.resolve("samples/source")
         val outputDir = resources.resolve("samples/etsir/ast")
-        println("Generating test resources in '${outputDir.relativeTo(projectDir)}'...")
+        logger.lifecycle("Generating test resources in '${outputDir.relativeTo(projectDir)}'...")
 
         val cmd: List<String> = listOf(
             "node",
@@ -73,24 +87,26 @@ tasks.register("generateTestResources") {
             outputDir.relativeTo(resources).path,
             "-t",
         )
-        println("Running: '${cmd.joinToString(" ")}'")
-        val process = ProcessBuilder(cmd).directory(resources).start()
-        val ok = process.waitFor(10, TimeUnit.MINUTES)
-
-        val stdout = process.inputStream.bufferedReader().readText().trim()
-        if (stdout.isNotBlank()) {
-            println("[STDOUT]:\n--------\n$stdout\n--------")
+        logger.lifecycle("Running: ${cmd.joinToString(" ")}")
+        val result = ProcessUtil.run(cmd, timeout = 1.minutes) {
+            directory(resources)
         }
-        val stderr = process.errorStream.bufferedReader().readText().trim()
-        if (stderr.isNotBlank()) {
-            println("[STDERR]:\n--------\n$stderr\n--------")
+        if (result.stdout.isNotBlank()) {
+            logger.lifecycle("[STDOUT]:\n--------\n${result.stdout}--------")
+        }
+        if (result.stderr.isNotBlank()) {
+            logger.lifecycle("[STDERR]:\n--------\n${result.stderr}--------")
+        }
+        if (result.isTimeout) {
+            logger.warn("Timeout!")
+        }
+        if (result.exitCode != 0) {
+            logger.warn("Exit code: ${result.exitCode}")
         }
 
-        if (!ok) {
-            println("Timeout!")
-            process.destroy()
-        }
-
-        println("Done generating test resources in %.1fs".format((System.currentTimeMillis() - startTime) / 1000.0))
+        logger.lifecycle(
+            "Done generating test resources in %.1fs"
+                .format((System.currentTimeMillis() - startTime) / 1000.0)
+        )
     }
 }

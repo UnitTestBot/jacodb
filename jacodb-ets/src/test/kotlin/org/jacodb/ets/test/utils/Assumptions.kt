@@ -16,21 +16,14 @@
 
 package org.jacodb.ets.test.utils
 
-import java.io.InputStream
-import java.nio.file.Path
-import kotlin.io.path.toPath
+import org.junit.jupiter.api.Assumptions
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
-fun getResourcePathOrNull(res: String): Path? {
-    require(res.startsWith("/")) { "Resource path must start with '/': '$res'" }
-    return object {}::class.java.getResource(res)?.toURI()?.toPath()
-}
-
-fun getResourcePath(res: String): Path {
-    return getResourcePathOrNull(res) ?: error("Resource not found: '$res'")
-}
-
-fun getResourceStream(res: String): InputStream {
-    require(res.startsWith("/")) { "Resource path must start with '/': '$res'" }
-    return object {}::class.java.getResourceAsStream(res)
-        ?: error("Resource not found: '$res'")
+@OptIn(ExperimentalContracts::class)
+fun assumeNotNull(value: Any?, messageSupplier: () -> String) {
+    contract {
+        returns() implies (value != null)
+    }
+    Assumptions.assumeTrue(value != null, messageSupplier)
 }

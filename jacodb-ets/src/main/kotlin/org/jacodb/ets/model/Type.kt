@@ -377,7 +377,7 @@ data class EtsFunctionType(
 data class EtsEnumValueType(
     val signature: EtsFieldSignature,
     val constant: EtsConstant? = null,
-): EtsType {
+) : EtsType {
     override val typeName: String
         get() = signature.name
 

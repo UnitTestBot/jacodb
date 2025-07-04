@@ -147,6 +147,7 @@ allprojects {
     license {
         include("**/*.kt")
         include("**/*.java")
+        exclude { it.file.startsWith(layout.buildDirectory.asFile.get()) }
         header(rootProject.file("docs/copyright/COPYRIGHT_HEADER.txt"))
     }
 }
@@ -173,7 +174,6 @@ if (!repoUrl.isNullOrEmpty()) {
             project(":jacodb-storage"),
             project(":jacodb-approximations"),
             project(":jacodb-taint-configuration"),
-            project(":jacodb-ets"),
         )
     ) {
         tasks {

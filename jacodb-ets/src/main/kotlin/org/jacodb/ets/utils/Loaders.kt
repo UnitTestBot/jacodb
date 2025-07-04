@@ -17,7 +17,7 @@
 package org.jacodb.ets.utils
 
 import mu.KotlinLogging
-import org.jacodb.ets.dto.EtsFileDto
+import org.jacodb.ets.dto.FileDto
 import org.jacodb.ets.dto.toEtsFile
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsScene
@@ -33,6 +33,7 @@ import kotlin.io.path.extension
 import kotlin.io.path.inputStream
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.pathString
+import kotlin.io.path.relativeTo
 import kotlin.io.path.walk
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -81,6 +82,7 @@ fun generateEtsIR(
         createTempFile(projectPath.nameWithoutExtension, suffix = ".json")
     }
 
+    logger.info { "Generating IR for '$projectPath'..." }
     val cmd = listOfNotNull(
         node,
         script.pathString,
@@ -121,8 +123,8 @@ fun loadEtsFileAutoConvert(
         useArkAnalyzerTypeInference = useArkAnalyzerTypeInference,
     )
     irFilePath.inputStream().use { stream ->
-        val etsFileDto = EtsFileDto.loadFromJson(stream)
-        return etsFileDto.toEtsFile()
+        val fileDto = FileDto.loadFromJson(stream)
+        return fileDto.toEtsFile()
     }
 }
 
@@ -164,9 +166,110 @@ private val walker = { dir: Path ->
         .filter { it.extension == "json" }
         .map {
             it.inputStream().use { stream ->
-                val etsFileDto = EtsFileDto.loadFromJson(stream)
-                etsFileDto.toEtsFile()
+                val fileDto = FileDto.loadFromJson(stream)
+                fileDto.toEtsFile()
             }
         }
         .toList()
+}
+
+/**
+ * Load an [FileDto] from a resource file.
+ *
+ * For example, `resources/ets/sample.json` can be loaded with:
+ * ```
+ * val dto: FileDto = loadFileDtoFromResource("/ets/sample.json")
+ * ```
+ */
+fun loadFileDtoFromResource(jsonPath: String): FileDto {
+    logger.debug { "Loading EtsIR from resource: '$jsonPath'" }
+    require(jsonPath.endsWith(".json")) { "File must have a '.json' extension: '$jsonPath'" }
+    getResourceStream(jsonPath).use { stream ->
+        return FileDto.loadFromJson(stream)
+    }
+}
+
+/**
+ * Load an [EtsFile] from a resource file.
+ *
+ * For example, `resources/ets/sample.json` can be loaded with:
+ * ```
+ * val file: EtsFile = loadEtsFileFromResource("/ets/sample.json")
+ * ```
+ */
+fun loadEtsFileFromResource(jsonPath: String): EtsFile {
+    val fileDto = loadFileDtoFromResource(jsonPath)
+    return fileDto.toEtsFile()
+}
+
+/**
+ * Load multiple [EtsFile]s from a resource directory.
+ *
+ * For example, all files in `resources/project/` can be loaded with:
+ * ```
+ * val files: Sequence<EtsFile> = loadMultipleEtsFilesFromResourceDirectory("/project")
+ * ```
+ */
+fun loadMultipleEtsFilesFromResourceDirectory(dirPath: String): Sequence<EtsFile> {
+    val rootPath = getResourcePath(dirPath)
+    return rootPath.walk().filter { it.extension == "json" }.map { path ->
+        loadEtsFileFromResource("$dirPath/${path.relativeTo(rootPath)}")
+    }
+}
+
+fun loadMultipleEtsFilesFromMultipleResourceDirectories(
+    dirPaths: List<String>,
+): Sequence<EtsFile> {
+    return dirPaths.asSequence().flatMap { loadMultipleEtsFilesFromResourceDirectory(it) }
+}
+
+fun loadEtsProjectFromResources(
+    modules: List<String>,
+    prefix: String,
+): EtsScene {
+    logger.info { "Loading project with ${modules.size} modules $modules from '$prefix/<module>'" }
+    val dirPaths = modules.map { "$prefix/$it" }
+    val files = loadMultipleEtsFilesFromMultipleResourceDirectories(dirPaths).toList()
+    logger.info { "Loaded ${files.size} files" }
+    return EtsScene(files, sdkFiles = emptyList())
+}
+
+/**
+ * Load an [FileDto] from a file.
+ *
+ * For example, `data/sample.json` can be loaded with:
+ * ```
+ * val dto: FileDto = loadFileDto(Path("data/sample.json"))
+ * ```
+ */
+fun loadFileDto(path: Path): FileDto {
+    require(path.extension == "json") { "File must have a '.json' extension: $path" }
+    path.inputStream().use { stream ->
+        return FileDto.loadFromJson(stream)
+    }
+}
+
+/**
+ * Load an [EtsFile] from a file.
+ *
+ * For example, `data/sample.json` can be loaded with:
+ * ```
+ * val file: EtsFile = loadEtsFile(Path("data/sample.json"))
+ * ```
+ */
+fun loadEtsFile(path: Path): EtsFile {
+    val fileDto = loadFileDto(path)
+    return fileDto.toEtsFile()
+}
+
+/**
+ * Load multiple [EtsFile]s from a directory.
+ *
+ * For example, all files in `data` can be loaded with:
+ * ```
+ * val files: Sequence<EtsFile> = loadMultipleEtsFilesFromDirectory(Path("data"))
+ * ```
+ */
+fun loadMultipleEtsFilesFromDirectory(dirPath: Path): Sequence<EtsFile> {
+    return dirPath.walk().filter { it.extension == "json" }.map { loadEtsFile(it) }
 }
