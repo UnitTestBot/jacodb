@@ -102,6 +102,7 @@ import org.jacodb.ets.model.EtsRawType
 import org.jacodb.ets.model.EtsRemExpr
 import org.jacodb.ets.model.EtsReturnStmt
 import org.jacodb.ets.model.EtsRightShiftExpr
+import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.model.EtsStaticCallExpr
 import org.jacodb.ets.model.EtsStaticFieldRef
 import org.jacodb.ets.model.EtsStmt
@@ -126,6 +127,23 @@ import org.jacodb.ets.model.EtsUnsignedRightShiftExpr
 import org.jacodb.ets.model.EtsValue
 import org.jacodb.ets.model.EtsVoidType
 import org.jacodb.ets.model.EtsYieldExpr
+import org.jacodb.ets.utils.CONSTRUCTOR_NAME
+
+/**
+ * Ad-hoc fix for constructor call.
+ *
+ * Replaces `x := x.constructor(...)` with `x.constructor(...)` call stmt.
+ */
+fun EtsAssignStmt.fixConstructorCall(): EtsStmt =
+    if (lhv is EtsLocal &&
+        rhv is EtsInstanceCallExpr &&
+        rhv.instance == lhv &&
+        rhv.callee.name == CONSTRUCTOR_NAME
+    ) {
+        EtsCallStmt(location, rhv)
+    } else {
+        this
+    }
 
 class EtsMethodBuilder(
     signature: EtsMethodSignature,
@@ -208,7 +226,7 @@ class EtsMethodBuilder(
                 location = loc(),
                 lhv = lhv,
                 rhv = rhv,
-            )
+            ).fixConstructorCall()
         }
 
         is CallStmtDto -> {
@@ -443,18 +461,6 @@ class EtsMethodBuilder(
 
 fun ClassDto.toEtsClass(): EtsClass {
     val signature = signature.toEtsClassSignature()
-    val superClassSignature = superClassName?.takeIf { it != "" }?.let { name ->
-        EtsClassSignature(
-            name = name,
-            file = EtsFileSignature.UNKNOWN,
-        )
-    }
-    val implementedInterfaces = implementedInterfaceNames.map { name ->
-        EtsClassSignature(
-            name = name,
-            file = EtsFileSignature.UNKNOWN,
-        )
-    }
     val fields = fields.map { it.toEtsField() }
     val methods = methods.map { it.toEtsMethod() }
     val category = category.toEtsClassCategory()
@@ -467,8 +473,8 @@ fun ClassDto.toEtsClass(): EtsClass {
         fields = fields,
         methods = methods,
         category = category,
-        superClass = superClassSignature,
-        implementedInterfaces = implementedInterfaces,
+        superClassName = superClassName,
+        implementedInterfaceNames = implementedInterfaceNames,
         typeParameters = typeParameters,
         modifiers = modifiers,
         decorators = decorators,
@@ -687,7 +693,7 @@ fun NamespaceDto.toEtsNamespace(): EtsNamespace {
     )
 }
 
-fun EtsFileDto.toEtsFile(): EtsFile {
+fun FileDto.toEtsFile(): EtsFile {
     val signature = signature.toEtsFileSignature()
     val classes = classes.map { it.toEtsClass() }
     val namespaces = namespaces.map { it.toEtsNamespace() }
@@ -695,6 +701,13 @@ fun EtsFileDto.toEtsFile(): EtsFile {
         signature = signature,
         classes = classes,
         namespaces = namespaces,
+    )
+}
+
+fun SceneDto.toEtsScene(): EtsScene {
+    return EtsScene(
+        projectFiles = files.map { it.toEtsFile() },
+        sdkFiles = sdkFiles.map { it.toEtsFile() },
     )
 }
 

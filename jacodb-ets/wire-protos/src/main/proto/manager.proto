@@ -1,0 +1,15 @@
+syntax = "proto3";
+package manager;
+
+option java_multiple_files = true;
+
+import "model.proto";
+
+service Manager {
+  rpc GetScene(GetSceneRequest) returns (model.Scene);
+}
+
+message GetSceneRequest {
+  string path = 1;
+  optional bool infer_types = 2;
+}

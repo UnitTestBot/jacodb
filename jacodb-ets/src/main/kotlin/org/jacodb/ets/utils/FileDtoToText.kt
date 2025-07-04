@@ -16,11 +16,11 @@
 
 package org.jacodb.ets.utils
 
-import org.jacodb.ets.dto.EtsFileDto
+import org.jacodb.ets.dto.FileDto
 
-fun EtsFileDto.toText(): String {
+fun FileDto.toText(): String {
     val lines: MutableList<String> = mutableListOf()
-    lines += "EtsFileDto '${signature}':"
+    lines += "FileDto '${signature}':"
     classes.forEach { clazz ->
         lines += "= CLASS '${clazz.signature}':"
         lines += "  superClass = '${clazz.superClassName}'"

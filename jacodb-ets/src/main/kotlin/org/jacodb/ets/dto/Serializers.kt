@@ -23,6 +23,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonObject
@@ -46,10 +47,14 @@ internal val typeModule = SerializersModule {
     polymorphicDefaultDeserializer(TypeDto::class) { RawTypeSerializer }
 }
 
-internal val dtoModule = SerializersModule {
+val dtoModule = SerializersModule {
     include(stmtModule)
     include(valueModule)
     include(typeModule)
+}
+
+val dtoJson = Json {
+    serializersModule = dtoModule
 }
 
 object PrimitiveLiteralSerializer : KSerializer<PrimitiveLiteralDto> {

@@ -26,8 +26,8 @@ interface EtsClass : Base {
     val methods: List<EtsMethod>
     val ctor: EtsMethod
     val category: EtsClassCategory
-    val superClass: EtsClassSignature?
-    val implementedInterfaces: List<EtsClassSignature>
+    val superClassName: String?
+    val implementedInterfaceNames: List<String>
 
     val declaringFile: EtsFile?
     val declaringNamespace: EtsNamespace?
@@ -41,8 +41,8 @@ class EtsClassImpl(
     override val fields: List<EtsField>,
     override val methods: List<EtsMethod>,
     override val category: EtsClassCategory = EtsClassCategory.CLASS,
-    override val superClass: EtsClassSignature? = null,
-    override val implementedInterfaces: List<EtsClassSignature> = emptyList(),
+    override val superClassName: String? = null,
+    override val implementedInterfaceNames: List<String> = emptyList(),
     override val typeParameters: List<EtsType> = emptyList(),
     override val modifiers: EtsModifiers = EtsModifiers.Companion.EMPTY,
     override val decorators: List<EtsDecorator> = emptyList(),

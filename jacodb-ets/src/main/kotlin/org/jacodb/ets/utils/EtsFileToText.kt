@@ -26,7 +26,8 @@ fun EtsFile.toText(): String {
         lines += "  typeParameters = ${clazz.typeParameters}"
         lines += "  modifiers = ${clazz.modifiers}"
         lines += "  decorators = ${clazz.decorators}"
-        lines += "  superClass = '${clazz.superClass}'"
+        lines += "  superClass = '${clazz.superClassName}'"
+        lines += "  interfaces = ${clazz.implementedInterfaceNames}"
         lines += "  fields: ${clazz.fields.size}"
         clazz.fields.forEach { field ->
             lines += "  - FIELD '${field.signature}'"

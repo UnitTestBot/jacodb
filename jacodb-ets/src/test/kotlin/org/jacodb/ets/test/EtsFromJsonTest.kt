@@ -51,14 +51,15 @@ import org.jacodb.ets.model.EtsReturnStmt
 import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.model.EtsStmtLocation
 import org.jacodb.ets.model.EtsUnknownType
-import org.jacodb.ets.test.utils.getResourcePath
-import org.jacodb.ets.test.utils.getResourcePathOrNull
-import org.jacodb.ets.test.utils.loadEtsFileFromResource
-import org.jacodb.ets.test.utils.loadEtsProjectFromResources
 import org.jacodb.ets.test.utils.testFactory
 import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
 import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
+import org.jacodb.ets.utils.getResourcePath
+import org.jacodb.ets.utils.getResourcePathOrNull
 import org.jacodb.ets.utils.loadEtsFileAutoConvert
+import org.jacodb.ets.utils.loadEtsFileFromResource
+import org.jacodb.ets.utils.loadEtsProjectAutoConvert
+import org.jacodb.ets.utils.loadEtsProjectFromResources
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
@@ -72,6 +73,9 @@ import kotlin.io.path.relativeTo
 import kotlin.io.path.walk
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
+import kotlin.time.DurationUnit
+import kotlin.time.measureTimedValue
 
 private val logger = KotlinLogging.logger {}
 
@@ -165,12 +169,11 @@ class EtsFromJsonTest {
             logger.warn { "No sample files found" }
             return@testFactory
         }
-        container("load ${availableFiles.size} files") {
-            for (path in availableFiles) {
-                test("load $path") {
-                    val file = loadEtsFileFromResource("$prefix/etsir/ast/$path.json")
-                    printFile(file, showStmts = true)
-                }
+        // container("load ${availableFiles.size} files") {
+        for (path in availableFiles) {
+            test("load $path") {
+                val file = loadEtsFileFromResource("$prefix/etsir/ast/$path.json")
+                printFile(file, showStmts = true)
             }
         }
     }
@@ -197,13 +200,11 @@ class EtsFromJsonTest {
             logger.warn { "No sample files found" }
             return@testFactory
         }
-        container("auto-load ${availableFiles.size} files") {
-            for (path in availableFiles) {
-                test("load $path") {
-                    val p = getResourcePath("$prefix/$path")
-                    val file = loadEtsFileAutoConvert(p)
-                    printFile(file, showStmts = true)
-                }
+        for (path in availableFiles) {
+            test("load $path") {
+                val p = getResourcePath("$prefix/$path")
+                val file = loadEtsFileAutoConvert(p)
+                printFile(file, showStmts = true)
             }
         }
     }
@@ -216,6 +217,26 @@ class EtsFromJsonTest {
         val prefix = "$res/etsir"
         val project = loadEtsProjectFromResources(modules, prefix)
         printProject(project)
+    }
+
+    @Test
+    fun testLoadEtsProjectAutoConvert() {
+        val res = "/projects/Photos/source"
+        Assumptions.assumeTrue(projectAvailable(res)) { "Project not available: $res" }
+        val path = getResourcePath(res)
+        val (scene, time) = measureTimedValue {
+            loadEtsProjectAutoConvert(path)
+        }
+        logger.info {
+            "Loaded project from '$res' with ${
+                scene.projectFiles.size
+            } files, ${
+                scene.projectAndSdkClasses.size
+            } classes, ${
+                scene.projectAndSdkClasses.sumOf { it.methods.size }
+            } methods in %.1f seconds".format(time.toDouble(DurationUnit.SECONDS))
+        }
+        // printProject(project)
     }
 
     @TestFactory
@@ -240,11 +261,10 @@ class EtsFromJsonTest {
             logger.warn { "No projects found" }
             return@testFactory
         }
-        container("load ${availableProjectNames.size} projects") {
-            for (projectName in availableProjectNames) {
-                test("load $projectName") {
-                    dynamicLoadEtsProject(projectName)
-                }
+        // container("load ${availableProjectNames.size} projects") {
+        for (projectName in availableProjectNames) {
+            test("load $projectName") {
+                dynamicLoadEtsProject(projectName)
             }
         }
     }
@@ -268,6 +288,38 @@ class EtsFromJsonTest {
         }
         val project = loadEtsProjectFromResources(modules, "/projects/$projectName/etsir")
         printProject(project)
+    }
+
+    @TestFactory
+    fun testLoadAllAvailableEtsProjectsAutoConvert() = testFactory {
+        val base = getResourcePathOrNull("/projects") ?: run {
+            logger.warn { "No projects directory found in resources" }
+            return@testFactory
+        }
+        val availableProjectNames = base.listDirectoryEntries()
+            .filter { it.isDirectory() }
+            .map { it.name }
+            .sorted()
+        logger.info {
+            buildString {
+                appendLine("Found ${availableProjectNames.size} projects")
+                for (name in availableProjectNames) {
+                    appendLine("  - $name")
+                }
+            }
+        }
+        if (availableProjectNames.isEmpty()) {
+            logger.warn { "No projects found" }
+            return@testFactory
+        }
+        // container("load ${availableProjectNames.size} projects") {
+        for (projectName in availableProjectNames) {
+            test("load $projectName") {
+                val projectPath = getResourcePath("/projects/$projectName/source")
+                val project = loadEtsProjectAutoConvert(projectPath)
+                assertTrue(project.projectClasses.isNotEmpty())
+            }
+        }
     }
 
     @Test

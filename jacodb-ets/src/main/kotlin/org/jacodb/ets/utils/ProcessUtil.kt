@@ -18,6 +18,7 @@ package org.jacodb.ets.utils
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -37,20 +38,12 @@ object ProcessUtil {
 
     fun run(
         command: List<String>,
-        input: String? = null,
+        input: Reader = "".reader(),
         timeout: Duration? = null,
-    ): Result {
-        val reader = input?.reader() ?: "".reader()
-        return run(command, reader, timeout)
-    }
-
-    fun run(
-        command: List<String>,
-        input: Reader,
-        timeout: Duration? = null,
+        builder: ProcessBuilder.() -> Unit = {},
     ): Result {
         logger.debug { "Running command: $command" }
-        val process = ProcessBuilder(command).start()
+        val process = ProcessBuilder(command).apply(builder).start()
         return communicate(process, input, timeout)
     }
 
@@ -90,10 +83,10 @@ object ProcessUtil {
             process.waitFor()
             false
         }
+
+        // Wait for all coroutines to finish
         runBlocking {
-            stdinJob.join()
-            stdoutJob.join()
-            stderrJob.join()
+            joinAll(stdinJob, stdoutJob, stderrJob)
         }
 
         return Result(

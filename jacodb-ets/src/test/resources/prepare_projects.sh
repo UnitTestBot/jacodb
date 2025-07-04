@@ -280,6 +280,20 @@ function prepare_module() {
 )
 
 (
+  prepare_project_dir "Photos"
+
+  REPO="../../repos/applications_photos"
+  check_repo $REPO
+
+  prepare_module "common" "$REPO/common"
+  prepare_module "browser" "$REPO/feature/browser"
+  prepare_module "editor" "$REPO/feature/editor"
+  prepare_module "formAbility" "$REPO/feature/formAbility"
+  prepare_module "thirdselect" "$REPO/feature/thirdselect"
+  prepare_module "timeline" "$REPO/feature/timeline"
+)
+
+(
   prepare_project_dir "PrintSpooler"
 
   REPO="../../repos/applications_print_spooler"

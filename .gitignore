@@ -1,7 +1,8 @@
 .idea/
 .gradle/
-build/
 .kotlin/
+build/
+generated/
 idea-community
 *.db
-/generated/
+/local.properties

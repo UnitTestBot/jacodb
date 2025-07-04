@@ -18,7 +18,7 @@ package org.jacodb.ets.utils
 
 import org.jacodb.ets.dto.BasicBlockDto
 import org.jacodb.ets.dto.ClassDto
-import org.jacodb.ets.dto.EtsFileDto
+import org.jacodb.ets.dto.FileDto
 import org.jacodb.ets.dto.IfStmtDto
 import org.jacodb.ets.dto.MethodDto
 import org.jacodb.ets.dto.NopStmtDto
@@ -28,7 +28,7 @@ import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeText
 
-fun EtsFileDto.toDot(useLR: Boolean = false): String {
+fun FileDto.toDot(useLR: Boolean = false): String {
     val lines: MutableList<String> = mutableListOf()
     lines += "digraph {"
     if (useLR) {
@@ -187,15 +187,15 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
     return lines.joinToString("\n")
 }
 
-fun EtsFileDto.dumpDot(path: Path) {
+fun FileDto.dumpDot(path: Path) {
     path.parent?.createDirectories()
     path.writeText(toDot())
 }
 
-fun EtsFileDto.dumpDot(file: File) {
+fun FileDto.dumpDot(file: File) {
     dumpDot(file.toPath())
 }
 
-fun EtsFileDto.dumpDot(path: String) {
+fun FileDto.dumpDot(path: String) {
     dumpDot(File(path))
 }

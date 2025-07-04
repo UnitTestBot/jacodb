@@ -19,12 +19,28 @@ package org.jacodb.ets.dto
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import java.io.InputStream
 
 @Serializable
-data class EtsFileDto(
+data class SceneDto(
+    val files: List<FileDto>,
+    val sdkFiles: List<FileDto> = emptyList(),
+) {
+    companion object {
+        fun loadFromJson(jsonString: String): FileDto {
+            return dtoJson.decodeFromString(jsonString)
+        }
+
+        @OptIn(ExperimentalSerializationApi::class)
+        fun loadFromJson(stream: InputStream): FileDto {
+            return dtoJson.decodeFromStream(stream)
+        }
+    }
+}
+
+@Serializable
+data class FileDto(
     val signature: FileSignatureDto,
     val namespaces: List<NamespaceDto>,
     val classes: List<ClassDto>,
@@ -32,17 +48,13 @@ data class EtsFileDto(
     val exportInfos: List<ExportInfoDto>,
 ) {
     companion object {
-        private val json = Json {
-            serializersModule = dtoModule
-        }
-
-        fun loadFromJson(jsonString: String): EtsFileDto {
-            return json.decodeFromString(jsonString)
+        fun loadFromJson(jsonString: String): FileDto {
+            return dtoJson.decodeFromString(jsonString)
         }
 
         @OptIn(ExperimentalSerializationApi::class)
-        fun loadFromJson(stream: InputStream): EtsFileDto {
-            return json.decodeFromStream(stream)
+        fun loadFromJson(stream: InputStream): FileDto {
+            return dtoJson.decodeFromStream(stream)
         }
     }
 }

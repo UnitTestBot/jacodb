@@ -19,7 +19,9 @@ package org.jacodb.ets.model
 class EtsFile(
     val signature: EtsFileSignature,
     val classes: List<EtsClass>,
-    val namespaces: List<EtsNamespace>,
+    val namespaces: List<EtsNamespace> = emptyList(),
+    // TODO: importInfos: List<EtsImportInfo> = emptyList(),
+    // TODO: exportInfos: List<EtsExportInfo> = emptyList(),
 ) {
     init {
         classes.forEach { (it as EtsClassImpl).declaringFile = this }

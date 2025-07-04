@@ -31,6 +31,7 @@ prepare_repo https://gitcode.com/openharmony/applications_hap
 prepare_repo https://gitcode.com/openharmony/applications_launcher
 prepare_repo https://gitcode.com/openharmony/applications_mms
 prepare_repo https://gitcode.com/openharmony/applications_notes
+prepare_repo https://gitcode.com/openharmony/applications_photos
 prepare_repo https://gitcode.com/openharmony/applications_print_spooler
 prepare_repo https://gitcode.com/openharmony/applications_screenlock
 prepare_repo https://gitcode.com/openharmony/applications_settings
