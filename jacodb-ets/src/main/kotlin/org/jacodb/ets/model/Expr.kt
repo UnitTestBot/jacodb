@@ -218,7 +218,7 @@ data class EtsDeleteExpr(
 }
 
 data class EtsAwaitExpr(
-    override val arg: EtsEntity,
+    override val arg: EtsLocal,
     override val type: EtsType,
 ) : EtsUnaryExpr {
     override fun toString(): String {

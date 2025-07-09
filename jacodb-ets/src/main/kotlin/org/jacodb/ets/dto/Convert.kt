@@ -278,7 +278,7 @@ class EtsMethodBuilder(
         )
 
         is AwaitExprDto -> EtsAwaitExpr(
-            arg = arg.toEtsEntity(),
+            arg = ensureLocal(arg.toEtsEntity()),
             type = type.toEtsType(),
         )
 
