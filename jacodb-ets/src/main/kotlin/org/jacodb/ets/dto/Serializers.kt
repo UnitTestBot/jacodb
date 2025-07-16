@@ -91,10 +91,17 @@ object RawStmtSerializer : KSerializer<RawStmtDto> {
     override fun deserialize(decoder: Decoder): RawStmtDto {
         require(decoder is JsonDecoder)
         val element = decoder.decodeJsonElement().jsonObject
-        val kind = element.getValue("_").jsonPrimitive.content
-        val details = element.toMutableMap()
-        details.remove("_")
-        return RawStmtDto(kind, JsonObject(details))
+        if ("_" in element.keys ) {
+            val kind = element.getValue("_").jsonPrimitive.content
+            val details = element.toMutableMap()
+            details.remove("_")
+            return RawStmtDto(kind, JsonObject(details))
+        } else {
+            val kind = element.getValue("kind").jsonPrimitive.content
+            val details = element.toMutableMap()
+            details.remove("kind")
+            return RawStmtDto(kind, JsonObject(details))
+        }
     }
 
     override fun serialize(encoder: Encoder, value: RawStmtDto) {
@@ -110,12 +117,21 @@ object RawValueSerializer : KSerializer<RawValueDto> {
     override fun deserialize(decoder: Decoder): RawValueDto {
         require(decoder is JsonDecoder)
         val element = decoder.decodeJsonElement().jsonObject
-        val kind = element.getValue("_").jsonPrimitive.content
-        val type = decoder.json.decodeFromJsonElement<TypeDto>(element.getValue("type"))
-        val details = element.toMutableMap()
-        details.remove("_")
-        details.remove("type")
-        return RawValueDto(kind, JsonObject(details), type)
+        if ("_" in element.keys) {
+            val kind = element.getValue("_").jsonPrimitive.content
+            val type = decoder.json.decodeFromJsonElement<TypeDto>(element.getValue("type"))
+            val details = element.toMutableMap()
+            details.remove("_")
+            details.remove("type")
+            return RawValueDto(kind, JsonObject(details), type)
+        } else {
+            val kind = element.getValue("kind").jsonPrimitive.content
+            val type = decoder.json.decodeFromJsonElement<TypeDto>(element.getValue("type"))
+            val details = element.toMutableMap()
+            details.remove("kind")
+            details.remove("type")
+            return RawValueDto(kind, JsonObject(details), type)
+        }
     }
 
     override fun serialize(encoder: Encoder, value: RawValueDto) {
@@ -131,10 +147,17 @@ object RawTypeSerializer : KSerializer<RawTypeDto> {
     override fun deserialize(decoder: Decoder): RawTypeDto {
         require(decoder is JsonDecoder)
         val element = decoder.decodeJsonElement().jsonObject
-        val kind = element.getValue("_").jsonPrimitive.content
-        val details = element.toMutableMap()
-        details.remove("_")
-        return RawTypeDto(kind, JsonObject(details))
+        if ("_" in element.keys) {
+            val kind = element.getValue("_").jsonPrimitive.content
+            val details = element.toMutableMap()
+            details.remove("_")
+            return RawTypeDto(kind, JsonObject(details))
+        } else {
+            val kind = element.getValue("kind").jsonPrimitive.content
+            val details = element.toMutableMap()
+            details.remove("kind")
+            return RawTypeDto(kind, JsonObject(details))
+        }
     }
 
     override fun serialize(encoder: Encoder, value: RawTypeDto) {
