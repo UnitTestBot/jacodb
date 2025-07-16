@@ -62,6 +62,13 @@ data class AliasTypeDto(
 ) : TypeDto
 
 @Serializable
+@SerialName("LexicalEnvType")
+data class LexicalEnvTypeDto(
+    val method: MethodSignatureDto,
+    val closures: List<LocalDto>,
+) : TypeDto
+
+@Serializable
 @SerialName("EnumValueType")
 data class EnumValueTypeDto(
     val signature: FieldSignatureDto,

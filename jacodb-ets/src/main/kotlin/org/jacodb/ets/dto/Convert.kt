@@ -66,6 +66,7 @@ import org.jacodb.ets.model.EtsInstanceFieldRef
 import org.jacodb.ets.model.EtsInstanceOfExpr
 import org.jacodb.ets.model.EtsIntersectionType
 import org.jacodb.ets.model.EtsLeftShiftExpr
+import org.jacodb.ets.model.EtsLexicalEnvType
 import org.jacodb.ets.model.EtsLiteralType
 import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsLocalSignature
@@ -511,6 +512,11 @@ fun TypeDto.toEtsType(): EtsType = when (this) {
 
     is IntersectionTypeDto -> EtsIntersectionType(
         types = types.map { it.toEtsType() },
+    )
+
+    is LexicalEnvTypeDto -> EtsLexicalEnvType(
+        nestedMethod = method.toEtsMethodSignature(),
+        closures = closures.map { it.toEtsLocal() },
     )
 
     is LiteralTypeDto -> EtsLiteralType(
