@@ -377,9 +377,11 @@ data class EtsFunctionType(
 }
 
 data class EtsLexicalEnvType(
+    @Deprecated("This signature is incomplete due to the removed cyclic reference. You probably do not want to rely on it.")
     val nestedMethod: EtsMethodSignature,
     val closures: List<EtsLocal>,
 ) : EtsType {
+    @Suppress("DEPRECATION")
     override val typeName: String
         get() = "${nestedMethod.name}(${closures.joinToString { it.name }})"
 

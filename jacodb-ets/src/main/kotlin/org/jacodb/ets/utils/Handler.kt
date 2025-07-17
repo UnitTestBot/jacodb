@@ -28,12 +28,15 @@ import org.jacodb.ets.model.EtsBitXorExpr
 import org.jacodb.ets.model.EtsBooleanConstant
 import org.jacodb.ets.model.EtsCallStmt
 import org.jacodb.ets.model.EtsCastExpr
+import org.jacodb.ets.model.EtsCaughtExceptionRef
+import org.jacodb.ets.model.EtsClosureFieldRef
 import org.jacodb.ets.model.EtsConstant
 import org.jacodb.ets.model.EtsDeleteExpr
 import org.jacodb.ets.model.EtsDivExpr
 import org.jacodb.ets.model.EtsEntity
 import org.jacodb.ets.model.EtsEqExpr
 import org.jacodb.ets.model.EtsExpExpr
+import org.jacodb.ets.model.EtsGlobalRef
 import org.jacodb.ets.model.EtsGtEqExpr
 import org.jacodb.ets.model.EtsGtExpr
 import org.jacodb.ets.model.EtsIfStmt
@@ -82,6 +85,27 @@ import org.jacodb.ets.model.EtsUndefinedConstant
 import org.jacodb.ets.model.EtsUnsignedRightShiftExpr
 import org.jacodb.ets.model.EtsVoidExpr
 import org.jacodb.ets.model.EtsYieldExpr
+
+/**
+ * An example handler for [EtsEntity] and [EtsStmt].
+ *
+ * This class is not meant to be used directly, but rather serves as a template for creating custom handlers.
+ *
+ * **Note:** this class might seem as completely useless, but it actually guards
+ * from missing any of the visit methods in the future.
+ * If this fails to compile, you might need to implement new methods in [AbstractHandler].
+ */
+class ExampleHandler : AbstractHandler() {
+    override fun handle(value: EtsEntity) {
+        // Handle the entity
+        println("entity: $value")
+    }
+
+    override fun handle(stmt: EtsStmt) {
+        // Handle the statement
+        println("statement: $stmt")
+    }
+}
 
 abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> {
 
@@ -175,6 +199,20 @@ abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> 
 
     final override fun visit(value: EtsStaticFieldRef) {
         handle(value)
+    }
+
+    final override fun visit(value: EtsCaughtExceptionRef) {
+        handle(value)
+    }
+
+    final override fun visit(value: EtsGlobalRef) {
+        handle(value)
+        value.ref?.accept(this)
+    }
+
+    final override fun visit(value: EtsClosureFieldRef) {
+        handle(value)
+        value.base.accept(this)
     }
 
     final override fun visit(expr: EtsNewExpr) {

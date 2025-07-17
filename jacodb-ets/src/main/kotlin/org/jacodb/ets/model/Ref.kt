@@ -94,3 +94,45 @@ data class EtsStaticFieldRef(
         return visitor.visit(this)
     }
 }
+
+data class EtsCaughtExceptionRef(
+    override val type: EtsType,
+) : EtsRef {
+    override fun toString(): String {
+        return "caught $type"
+    }
+
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class EtsGlobalRef(
+    val name: String,
+    val ref: EtsLocal?,
+) : EtsRef {
+    override val type: EtsType
+        get() = ref?.type ?: EtsUnknownType
+
+    override fun toString(): String {
+        return "global $name"
+    }
+
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class EtsClosureFieldRef(
+    val base: EtsLocal,
+    val fieldName: String,
+    override val type: EtsType,
+) : EtsRef {
+    override fun toString(): String {
+        return "$base.$fieldName"
+    }
+
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
