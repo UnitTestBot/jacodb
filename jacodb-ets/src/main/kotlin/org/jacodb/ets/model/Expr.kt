@@ -765,7 +765,7 @@ data class EtsPtrCallExpr(
     override val type: EtsType,
 ) : EtsCallExpr {
     override fun toString(): String {
-        return "ptr ${ptr}(${args.joinToString()})"
+        return "${ptr}<${callee.name}>(${args.joinToString()})"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
