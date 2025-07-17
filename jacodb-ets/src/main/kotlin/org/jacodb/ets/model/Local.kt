@@ -21,6 +21,9 @@ data class EtsLocal(
     override val type: EtsType = EtsUnknownType,
 ) : EtsImmediate, EtsLValue {
     override fun toString(): String {
+        if (type is EtsLexicalEnvType) {
+            return "$name<${type.closures.joinToString(",")}>"
+        }
         return name
     }
 
