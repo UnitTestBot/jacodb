@@ -736,7 +736,7 @@ data class EtsInstanceCallExpr(
     override val type: EtsType,
 ) : EtsCallExpr, CommonInstanceCallExpr {
     override fun toString(): String {
-        return "$instance.${callee.name}(${args.joinToString()})"
+        return "virtual ${instance}.${callee.name}(${args.joinToString()})"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
@@ -750,7 +750,7 @@ data class EtsStaticCallExpr(
     override val type: EtsType,
 ) : EtsCallExpr {
     override fun toString(): String {
-        return "${callee.enclosingClass.name}.${callee.name}(${args.joinToString()})"
+        return "static ${callee.enclosingClass.name}.${callee.name}(${args.joinToString()})"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
@@ -765,7 +765,7 @@ data class EtsPtrCallExpr(
     override val type: EtsType,
 ) : EtsCallExpr {
     override fun toString(): String {
-        return "${ptr}<${callee.name}>(${args.joinToString()})"
+        return "ptr ${ptr}(${args.joinToString()})"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
