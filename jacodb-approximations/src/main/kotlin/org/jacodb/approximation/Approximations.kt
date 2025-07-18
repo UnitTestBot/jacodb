@@ -31,8 +31,8 @@ import org.jacodb.api.jvm.cfg.JcInstList
 import org.jacodb.api.jvm.cfg.JcRawInst
 import org.jacodb.api.storage.StorageContext
 import org.jacodb.api.storage.ers.compressed
-import org.jacodb.approximation.TransformerIntoVirtual.transformMethodIntoVirtual
 import org.jacodb.approximation.annotation.Approximate
+import org.jacodb.approximation.annotation.Version
 import org.jacodb.impl.cfg.JcInstListImpl
 import org.jacodb.impl.fs.className
 import org.jacodb.impl.storage.dslContext
@@ -59,7 +59,12 @@ import java.util.concurrent.ConcurrentMap
  *  otherwise you might get incomplete mapping.
  *  See [JcDatabase.awaitBackgroundJobs].
  */
-object Approximations : JcFeature<Any?, Any?>, JcClassExtFeature, JcInstExtFeature {
+class Approximations(
+    private val versions: List<VersionInfo>
+) : JcFeature<Any?, Any?>, JcClassExtFeature, JcInstExtFeature {
+
+    private val instSubstitutorForApproximations = InstSubstitutorForApproximations(this)
+    private val transformerIntoVirtual = TransformerIntoVirtual(this)
 
     private val originalToApproximation: ConcurrentMap<OriginalClassName, ApproximationClassName> = ConcurrentHashMap()
     private val approximationToOriginal: ConcurrentMap<ApproximationClassName, OriginalClassName> = ConcurrentHashMap()
@@ -95,11 +100,40 @@ object Approximations : JcFeature<Any?, Any?>, JcClassExtFeature, JcInstExtFeatu
                     },
                     noSqlAction = {
                         val valueId = persistence.findSymbolId("value")
+                        val versionsId = persistence.findSymbolId("versions")
+                        val versionSymbol = persistence.findSymbolId(versionAnnotationClassName)
+                        val targetId = persistence.findSymbolId("target")
+                        val fromVersionId = persistence.findSymbolId("fromVersion")
+                        val toVersionId = persistence.findSymbolId("toVersion")
                         context.txn.find("Annotation", "nameId", approxSymbol.compressed)
                             .filter { it.getCompressedBlob<Int>("refKind") == RefKind.CLASS.ordinal }
-                            .flatMap { annotation ->
+                            .mapNotNull { annotation ->
+                                val values = annotation.getLinks("values")
+                                val versionsValue = values.filterTo(mutableListOf()) { versionsId == it["nameId"] }
+                                if (versionsValue.isEmpty())
+                                    return@mapNotNull annotation to values
+
+                                val versionMatches = versionsValue.any { versionValue ->
+                                    val versionAnnotation = versionValue.getLink("refAnnotation")
+                                    check(versionSymbol == versionAnnotation["nameId"])
+                                    val versionValues = versionAnnotation.getLinks("values")
+                                    val target = persistence.findSymbolName(
+                                        versionValues.find { targetId == it["nameId"] }!!["primitiveValue"]!!
+                                    )
+                                    val fromVersion = persistence.findSymbolName(
+                                        versionValues.find { fromVersionId == it["nameId"] }!!["primitiveValue"]!!
+                                    )
+                                    val toVersion = persistence.findSymbolName(
+                                        versionValues.find { toVersionId == it["nameId"] }!!["primitiveValue"]!!
+                                    )
+                                    versions.any { VersionsIntervalInfo(target, fromVersion, toVersion).matches(it) }
+                                }
+                                if (versionMatches)
+                                    annotation to values
+                                else null
+                            }.flatMap { (annotation, values) ->
                                 annotation.getLink("ref").let { clazz ->
-                                    annotation.getLinks("values").map { clazz to it }
+                                    values.map { clazz to it }
                                 }
                             }.filter { (_, annotationValue) ->
                                 valueId == annotationValue["nameId"]
@@ -125,13 +159,13 @@ object Approximations : JcFeature<Any?, Any?>, JcClassExtFeature, JcInstExtFeatu
         val approximationName = findApproximationByOriginOrNull(clazz.name.toOriginalName()) ?: return null
         val approximationClass = clazz.classpath.findClassOrNull(approximationName) ?: return null
 
-        return approximationClass.declaredFields.map { TransformerIntoVirtual.transformIntoVirtualField(clazz, it) }
+        return approximationClass.declaredFields.map { transformerIntoVirtual.transformIntoVirtualField(clazz, it) }
     }
 
     /**
      * Returns a list of [JcEnrichedVirtualMethod] if there is an approximation for [clazz] and null otherwise.
      */
-    override fun methodsOf(clazz: JcClassOrInterface): List<JcMethod>? {
+    override fun methodsOf(clazz: JcClassOrInterface): List<JcMethod>? = with(transformerIntoVirtual) {
         val approximationName = findApproximationByOriginOrNull(clazz.name.toOriginalName()) ?: return null
         val approximationClass = clazz.classpath.findClassOrNull(approximationName) ?: return null
 
@@ -141,7 +175,7 @@ object Approximations : JcFeature<Any?, Any?>, JcClassExtFeature, JcInstExtFeatu
     }
 
     override fun transformRawInstList(method: JcMethod, list: JcInstList<JcRawInst>): JcInstList<JcRawInst> {
-        return JcInstListImpl(list.map { it.accept(InstSubstitutorForApproximations) })
+        return JcInstListImpl(list.map { it.accept(instSubstitutorForApproximations) })
     }
 
     /**
@@ -157,6 +191,64 @@ object Approximations : JcFeature<Any?, Any?>, JcClassExtFeature, JcInstExtFeatu
     fun findOriginalByApproximationOrNull(
         className: ApproximationClassName
     ): String? = approximationToOriginal[className]?.className
+}
+
+data class VersionInfo(
+    val target: String,
+    val version: String,
+) {
+    init {
+        check(version.isVersion)
+    }
+}
+
+private data class VersionsIntervalInfo(
+    val target: String,
+    val fromVersion: String,
+    val toVersion: String,
+) {
+    init {
+        check(fromVersion.isVersion)
+        check(toVersion.isVersion)
+    }
+}
+
+/**
+ * Checks if the string is a version in the form of 3 numbers separated by dots, e.g., "1.2.3".
+ */
+private val String.isVersion: Boolean get() =
+    Regex("^(\\d+)\\.(\\d+)\\.(\\d+)$").matches(this)
+
+private val String.toNumbers: IntArray get() {
+    val numbers = this.split('.')
+    check(numbers.size == 3)
+    return IntArray(numbers.size) { i -> numbers[i].toInt() }
+}
+
+/**
+ * Checks if a version (array of 3 numbers) is within the inclusive range defined by fromVersion and toVersion (also arrays of 3 numbers).
+ */
+private fun IntArray.isVersionInRange(fromVersion: IntArray, toVersion: IntArray): Boolean {
+    require(this.size == 3 && fromVersion.size == 3 && toVersion.size == 3) { "All version arrays must have size 3" }
+    for (i in 0..2) {
+        if (this[i] < fromVersion[i]) return false
+        if (this[i] > toVersion[i]) return false
+    }
+
+    return true
+}
+
+private fun VersionsIntervalInfo.matches(versionInfo: VersionInfo): Boolean {
+    check(fromVersion.isVersion && toVersion.isVersion && versionInfo.version.isVersion)
+
+    if (versionInfo.target != this.target)
+        return false
+
+    val fromVersionNumbers = fromVersion.toNumbers
+    val toVersionNumbers = toVersion.toNumbers
+    val versionNumbers = versionInfo.version.toNumbers
+
+    return versionNumbers.isVersionInRange(fromVersionNumbers, toVersionNumbers)
 }
 
 private class ApproximationIndexer(
@@ -201,6 +293,7 @@ private class ApproximationIndexer(
 }
 
 private val approximationAnnotationClassName = Approximate::class.qualifiedName!!
+private val versionAnnotationClassName = Version::class.qualifiedName!!
 
 @JvmInline
 value class ApproximationClassName(val className: String) {

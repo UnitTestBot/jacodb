@@ -22,7 +22,9 @@ import org.jacodb.api.jvm.JcField
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.impl.features.JcFeaturesChain
 
-object TransformerIntoVirtual {
+class TransformerIntoVirtual(
+    private val approximations: Approximations
+) {
     fun JcClasspath.transformMethodIntoVirtual(
         to: JcClassOrInterface,
         method: JcMethod
@@ -30,20 +32,20 @@ object TransformerIntoVirtual {
         val parameters = parameters.map { param ->
             // TODO process annotations somehow to eliminate approximations
             with(param) {
-                JcEnrichedVirtualParameter(index, type.eliminateApproximation(), name, annotations, access)
+                JcEnrichedVirtualParameter(index, type.eliminateApproximation(approximations), name, annotations, access)
             }
         }
 
         val featuresChain = features?.let { JcFeaturesChain(it) } ?: JcFeaturesChain(emptyList())
 
-        val exceptions = exceptions.map { it.eliminateApproximation() }
+        val exceptions = exceptions.map { it.eliminateApproximation(approximations) }
 
         val methodNode = withAsmNode { it } // Safe since used under synchronization in JcEnrichedVirtualMethod
 
         (EnrichedVirtualMethodBuilder()
             .name(name)
             .access(access)
-            .returnType(returnType.eliminateApproximation().typeName) as EnrichedVirtualMethodBuilder)
+            .returnType(returnType.eliminateApproximation(approximations).typeName) as EnrichedVirtualMethodBuilder)
             .enrichedParameters(parameters)
             .featuresChain(featuresChain)
             .exceptions(exceptions)
@@ -59,7 +61,7 @@ object TransformerIntoVirtual {
     ): JcEnrichedVirtualField = with(field) {
         (EnrichedVirtualFieldBuilder()
             .name(name)
-            .type(type.eliminateApproximation().typeName)
+            .type(type.eliminateApproximation(approximations).typeName)
             .access(access) as EnrichedVirtualFieldBuilder)
             .annotations(annotations)
             .build()

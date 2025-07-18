@@ -95,13 +95,14 @@ import org.jacodb.api.jvm.cfg.JcRawUshrExpr
 import org.jacodb.api.jvm.cfg.JcRawValue
 import org.jacodb.api.jvm.cfg.JcRawVirtualCallExpr
 import org.jacodb.api.jvm.cfg.JcRawXorExpr
-import org.jacodb.approximation.Approximations.findOriginalByApproximationOrNull
 import org.jacodb.impl.types.TypeNameImpl
 
 /**
  * Removes all occurrences of approximations with their targets in [JcRawInst]s and [JcRawExpr]s.
  */
-object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExprVisitor<JcRawExpr> {
+class InstSubstitutorForApproximations(
+    private val approximations: Approximations
+) : JcRawInstVisitor<JcRawInst>, JcRawExprVisitor<JcRawExpr> {
     override fun visitJcRawAssignInst(inst: JcRawAssignInst): JcRawInst {
         val newLhv = inst.lhv.accept(this) as JcRawValue
         val newRhv = inst.rhv.accept(this)
@@ -144,7 +145,7 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
     override fun visitJcRawCatchInst(inst: JcRawCatchInst): JcRawInst {
         val newThrowable = inst.throwable.accept(this) as JcRawValue
         val entries = inst.entries.map {
-            it.copy(acceptedThrowable = it.acceptedThrowable.eliminateApproximation())
+            it.copy(acceptedThrowable = it.acceptedThrowable.eliminateApproximation(approximations))
         }
 
         return JcRawCatchInst(inst.owner, newThrowable, inst.handler, entries)
@@ -172,7 +173,7 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
         val newLhv = expr.lhv.accept(this) as JcRawValue
         val newRhv = expr.rhv.accept(this) as JcRawValue
 
-        return constructor(newLhv.typeName.eliminateApproximation(), newLhv, newRhv)
+        return constructor(newLhv.typeName.eliminateApproximation(approximations), newLhv, newRhv)
     }
 
     override fun visitJcRawAddExpr(expr: JcRawAddExpr): JcRawExpr = binaryHandler(expr) { type, lhv, rhv ->
@@ -204,27 +205,27 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
     }
 
     override fun visitJcRawEqExpr(expr: JcRawEqExpr) = binaryHandler(expr) { _, lhv, rhv ->
-        JcRawEqExpr(expr.typeName.eliminateApproximation(), lhv, rhv)
+        JcRawEqExpr(expr.typeName.eliminateApproximation(approximations), lhv, rhv)
     }
 
     override fun visitJcRawNeqExpr(expr: JcRawNeqExpr) = binaryHandler(expr) { _, lhv, rhv ->
-        JcRawNeqExpr(expr.typeName.eliminateApproximation(), lhv, rhv)
+        JcRawNeqExpr(expr.typeName.eliminateApproximation(approximations), lhv, rhv)
     }
 
     override fun visitJcRawGeExpr(expr: JcRawGeExpr) = binaryHandler(expr) { _, lhv, rhv ->
-        JcRawGeExpr(expr.typeName.eliminateApproximation(), lhv, rhv)
+        JcRawGeExpr(expr.typeName.eliminateApproximation(approximations), lhv, rhv)
     }
 
     override fun visitJcRawGtExpr(expr: JcRawGtExpr) = binaryHandler(expr) { _, lhv, rhv ->
-        JcRawGtExpr(expr.typeName.eliminateApproximation(), lhv, rhv)
+        JcRawGtExpr(expr.typeName.eliminateApproximation(approximations), lhv, rhv)
     }
 
     override fun visitJcRawLeExpr(expr: JcRawLeExpr) = binaryHandler(expr) { _, lhv, rhv ->
-        JcRawLeExpr(expr.typeName.eliminateApproximation(), lhv, rhv)
+        JcRawLeExpr(expr.typeName.eliminateApproximation(approximations), lhv, rhv)
     }
 
     override fun visitJcRawLtExpr(expr: JcRawLtExpr) = binaryHandler(expr) { _, lhv, rhv ->
-        JcRawLtExpr(expr.typeName.eliminateApproximation(), lhv, rhv)
+        JcRawLtExpr(expr.typeName.eliminateApproximation(approximations), lhv, rhv)
     }
 
     override fun visitJcRawOrExpr(expr: JcRawOrExpr) = binaryHandler(expr) { type, lhv, rhv ->
@@ -257,17 +258,17 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
 
     override fun visitJcRawLengthExpr(expr: JcRawLengthExpr): JcRawExpr {
         val newArray = expr.array.accept(this) as JcRawValue
-        return JcRawLengthExpr(expr.typeName.eliminateApproximation(), newArray)
+        return JcRawLengthExpr(expr.typeName.eliminateApproximation(approximations), newArray)
     }
 
     override fun visitJcRawNegExpr(expr: JcRawNegExpr): JcRawExpr {
         val newOperand = expr.operand.accept(this) as JcRawValue
-        return JcRawNegExpr(newOperand.typeName.eliminateApproximation(), newOperand)
+        return JcRawNegExpr(newOperand.typeName.eliminateApproximation(approximations), newOperand)
     }
 
     override fun visitJcRawCastExpr(expr: JcRawCastExpr): JcRawExpr {
         val newOperand = expr.operand.accept(this) as JcRawValue
-        return JcRawCastExpr(expr.typeName.eliminateApproximation(), newOperand)
+        return JcRawCastExpr(expr.typeName.eliminateApproximation(approximations), newOperand)
     }
 
     override fun visitJcRawNewExpr(expr: JcRawNewExpr): JcRawExpr {
@@ -276,22 +277,22 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
 
     override fun visitJcRawNewArrayExpr(expr: JcRawNewArrayExpr): JcRawExpr {
         val newDimensions = expr.dimensions.map { it.accept(this) as JcRawValue }
-        return JcRawNewArrayExpr(expr.typeName.eliminateApproximation(), newDimensions)
+        return JcRawNewArrayExpr(expr.typeName.eliminateApproximation(approximations), newDimensions)
     }
 
     override fun visitJcRawInstanceOfExpr(expr: JcRawInstanceOfExpr): JcRawExpr {
         val newOperand = expr.operand.accept(this) as JcRawValue
         return JcRawInstanceOfExpr(
-            expr.typeName.eliminateApproximation(),
+            expr.typeName.eliminateApproximation(approximations),
             newOperand,
-            expr.targetType.eliminateApproximation()
+            expr.targetType.eliminateApproximation(approximations)
         )
     }
 
     private fun BsmHandle.eliminateApproximations(): BsmHandle = copy(
-        declaringClass = declaringClass.eliminateApproximation(),
-        argTypes = argTypes.map { it.eliminateApproximation() },
-        returnType = returnType.eliminateApproximation()
+        declaringClass = declaringClass.eliminateApproximation(approximations),
+        argTypes = argTypes.map { it.eliminateApproximation(approximations) },
+        returnType = returnType.eliminateApproximation(approximations)
     )
 
     override fun visitJcRawDynamicCallExpr(expr: JcRawDynamicCallExpr): JcRawExpr {
@@ -308,17 +309,17 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
                         is BsmIntArg -> arg
                         is BsmLongArg -> arg
                         is BsmMethodTypeArg -> arg.copy(
-                            arg.argumentTypes.map { it.eliminateApproximation() },
-                            arg.returnType.eliminateApproximation()
+                            arg.argumentTypes.map { it.eliminateApproximation(approximations) },
+                            arg.returnType.eliminateApproximation(approximations)
                         )
 
                         is BsmStringArg -> arg
-                        is BsmTypeArg -> arg.copy(arg.typeName.eliminateApproximation())
+                        is BsmTypeArg -> arg.copy(arg.typeName.eliminateApproximation(approximations))
                     }
                 },
                 callSiteMethodName,
-                callSiteArgTypes.map { it.eliminateApproximation() },
-                callSiteReturnType.eliminateApproximation(),
+                callSiteArgTypes.map { it.eliminateApproximation(approximations) },
+                callSiteReturnType.eliminateApproximation(approximations),
                 newArgs
             )
         }
@@ -330,10 +331,10 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
 
         return with(expr) {
             JcRawVirtualCallExpr(
-                declaringClass.eliminateApproximation(),
+                declaringClass.eliminateApproximation(approximations),
                 methodName,
-                argumentTypes.map { it.eliminateApproximation() },
-                returnType.eliminateApproximation(),
+                argumentTypes.map { it.eliminateApproximation(approximations) },
+                returnType.eliminateApproximation(approximations),
                 newInstance,
                 newArgs
             )
@@ -346,10 +347,10 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
 
         return with(expr) {
             JcRawInterfaceCallExpr(
-                declaringClass.eliminateApproximation(),
+                declaringClass.eliminateApproximation(approximations),
                 methodName,
-                argumentTypes.map { it.eliminateApproximation() },
-                returnType.eliminateApproximation(),
+                argumentTypes.map { it.eliminateApproximation(approximations) },
+                returnType.eliminateApproximation(approximations),
                 newInstance,
                 newArgs
             )
@@ -361,10 +362,10 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
 
         return with(expr) {
             JcRawStaticCallExpr(
-                declaringClass.eliminateApproximation(),
+                declaringClass.eliminateApproximation(approximations),
                 methodName,
-                argumentTypes.map { it.eliminateApproximation() },
-                returnType.eliminateApproximation(),
+                argumentTypes.map { it.eliminateApproximation(approximations) },
+                returnType.eliminateApproximation(approximations),
                 newArgs,
                 isInterfaceMethodCall
             )
@@ -377,10 +378,10 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
 
         return with(expr) {
             JcRawSpecialCallExpr(
-                declaringClass.eliminateApproximation(),
+                declaringClass.eliminateApproximation(approximations),
                 methodName,
-                argumentTypes.map { it.eliminateApproximation() },
-                returnType.eliminateApproximation(),
+                argumentTypes.map { it.eliminateApproximation(approximations) },
+                returnType.eliminateApproximation(approximations),
                 newInstance,
                 newArgs
             )
@@ -388,7 +389,7 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
     }
 
     override fun visitJcRawThis(value: JcRawThis): JcRawExpr {
-        return value.copy(value.typeName.eliminateApproximation())
+        return value.copy(value.typeName.eliminateApproximation(approximations))
     }
 
     override fun visitJcRawArgument(value: JcRawArgument): JcRawExpr {
@@ -397,21 +398,21 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
 
     private fun <T : JcRawExpr> T.eliminateApproximations(typeName: TypeName, constructor: (TypeName) -> T): T {
         val className = typeName.typeName.toApproximationName()
-        val originalClassName = findOriginalByApproximationOrNull(className) ?: return this
+        val originalClassName = approximations.findOriginalByApproximationOrNull(className) ?: return this
         return constructor(TypeNameImpl.fromTypeName(originalClassName))
     }
 
     override fun visitJcRawLocalVar(value: JcRawLocalVar): JcRawExpr {
-        return value.copy(typeName = value.typeName.eliminateApproximation())
+        return value.copy(typeName = value.typeName.eliminateApproximation(approximations))
     }
 
     override fun visitJcRawFieldRef(value: JcRawFieldRef): JcRawExpr {
         val newInstance = value.instance?.accept(this) as? JcRawValue
         return JcRawFieldRef(
             newInstance,
-            value.declaringClass.eliminateApproximation(),
+            value.declaringClass.eliminateApproximation(approximations),
             value.fieldName,
-            value.typeName.eliminateApproximation()
+            value.typeName.eliminateApproximation(approximations)
         )
     }
 
@@ -419,43 +420,43 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
         val newArray = value.array.accept(this) as JcRawValue
         val newIndex = value.index.accept(this) as JcRawValue
 
-        return JcRawArrayAccess(newArray, newIndex, value.typeName.eliminateApproximation())
+        return JcRawArrayAccess(newArray, newIndex, value.typeName.eliminateApproximation(approximations))
     }
 
     override fun visitJcRawBool(value: JcRawBool): JcRawExpr {
-        return value.copy(typeName = value.typeName.eliminateApproximation())
+        return value.copy(typeName = value.typeName.eliminateApproximation(approximations))
     }
 
     override fun visitJcRawByte(value: JcRawByte): JcRawExpr {
-        return value.copy(typeName = value.typeName.eliminateApproximation())
+        return value.copy(typeName = value.typeName.eliminateApproximation(approximations))
     }
 
     override fun visitJcRawChar(value: JcRawChar): JcRawExpr {
-        return value.copy(typeName = value.typeName.eliminateApproximation())
+        return value.copy(typeName = value.typeName.eliminateApproximation(approximations))
     }
 
     override fun visitJcRawShort(value: JcRawShort): JcRawExpr {
-        return value.copy(typeName = value.typeName.eliminateApproximation())
+        return value.copy(typeName = value.typeName.eliminateApproximation(approximations))
     }
 
     override fun visitJcRawInt(value: JcRawInt): JcRawExpr {
-        return value.copy(typeName = value.typeName.eliminateApproximation())
+        return value.copy(typeName = value.typeName.eliminateApproximation(approximations))
     }
 
     override fun visitJcRawLong(value: JcRawLong): JcRawExpr {
-        return value.copy(typeName = value.typeName.eliminateApproximation())
+        return value.copy(typeName = value.typeName.eliminateApproximation(approximations))
     }
 
     override fun visitJcRawFloat(value: JcRawFloat): JcRawExpr {
-        return value.copy(typeName = value.typeName.eliminateApproximation())
+        return value.copy(typeName = value.typeName.eliminateApproximation(approximations))
     }
 
     override fun visitJcRawDouble(value: JcRawDouble): JcRawExpr {
-        return value.copy(typeName = value.typeName.eliminateApproximation())
+        return value.copy(typeName = value.typeName.eliminateApproximation(approximations))
     }
 
     override fun visitJcRawNullConstant(value: JcRawNullConstant): JcRawExpr {
-        return value.copy(typeName = value.typeName.eliminateApproximation())
+        return value.copy(typeName = value.typeName.eliminateApproximation(approximations))
     }
 
     override fun visitJcRawStringConstant(value: JcRawStringConstant): JcRawExpr {
@@ -464,19 +465,19 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
 
     override fun visitJcRawClassConstant(value: JcRawClassConstant): JcRawExpr {
         return JcRawClassConstant(
-            value.className.eliminateApproximation(),
-            value.typeName.eliminateApproximation()
+            value.className.eliminateApproximation(approximations),
+            value.typeName.eliminateApproximation(approximations)
         )
     }
 
     override fun visitJcRawMethodConstant(value: JcRawMethodConstant): JcRawExpr {
         return with(value) {
             JcRawMethodConstant(
-                declaringClass.eliminateApproximation(),
+                declaringClass.eliminateApproximation(approximations),
                 name,
-                argumentTypes.map { it.eliminateApproximation() },
-                returnType.eliminateApproximation(),
-                typeName.eliminateApproximation()
+                argumentTypes.map { it.eliminateApproximation(approximations) },
+                returnType.eliminateApproximation(approximations),
+                typeName.eliminateApproximation(approximations)
             )
         }
     }
@@ -484,9 +485,9 @@ object InstSubstitutorForApproximations : JcRawInstVisitor<JcRawInst>, JcRawExpr
     override fun visitJcRawMethodType(value: JcRawMethodType): JcRawExpr {
         return with(value) {
             JcRawMethodType(
-                argumentTypes.map { it.eliminateApproximation() },
-                returnType.eliminateApproximation(),
-                typeName.eliminateApproximation()
+                argumentTypes.map { it.eliminateApproximation(approximations) },
+                returnType.eliminateApproximation(approximations),
+                typeName.eliminateApproximation(approximations)
             )
         }
     }
