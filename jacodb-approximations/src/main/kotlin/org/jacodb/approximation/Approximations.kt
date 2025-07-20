@@ -90,6 +90,7 @@ class Approximations(
             persistence.read { context ->
                 context.execute(
                     sqlAction = {
+                        // TODO: support versions
                         context.dslContext.select(CLASSES.NAME, ANNOTATIONVALUES.CLASS_SYMBOL)
                             .from(ANNOTATIONS)
                             .join(CLASSES).on(ANNOTATIONS.CLASS_ID.eq(CLASSES.ID))
@@ -244,14 +245,18 @@ private val String.toNumbers: IntArray get() {
 
 /**
  * Checks if a version (array of 3 numbers) is within the inclusive range defined by fromVersion and toVersion (also arrays of 3 numbers).
+ * Example: 1.1.1 <= 1.2.0 <= 2.0.0
  */
 private fun IntArray.isVersionInRange(fromVersion: IntArray, toVersion: IntArray): Boolean {
     require(this.size == 3 && fromVersion.size == 3 && toVersion.size == 3) { "All version arrays must have size 3" }
     for (i in 0..2) {
         if (this[i] < fromVersion[i]) return false
-        if (this[i] > toVersion[i]) return false
+        if (this[i] > fromVersion[i]) break
     }
-
+    for (i in 0..2) {
+        if (this[i] > toVersion[i]) return false
+        if (this[i] < toVersion[i]) break
+    }
     return true
 }
 
