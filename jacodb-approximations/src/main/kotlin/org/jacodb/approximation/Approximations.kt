@@ -42,6 +42,7 @@ import org.jacodb.impl.storage.jooq.tables.references.ANNOTATIONVALUES
 import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.jacodb.impl.storage.txn
 import org.jacodb.impl.types.RefKind
+import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.ClassNode
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -69,6 +70,8 @@ class Approximations(
     private val originalToApproximation: ConcurrentMap<OriginalClassName, ApproximationClassName> = ConcurrentHashMap()
     private val approximationToOriginal: ConcurrentMap<ApproximationClassName, OriginalClassName> = ConcurrentHashMap()
 
+    private val versionMap: VersionMap = versions.associate { it.target to it.version }
+
     override suspend fun query(classpath: JcClasspath, req: Any?): Sequence<Any?> {
         // returns an empty sequence for now, all requests are made using
         // findApproximationOrNull and findOriginalByApproximation functions
@@ -78,7 +81,7 @@ class Approximations(
     override fun newIndexer(
         jcdb: JcDatabase,
         location: RegisteredLocation
-    ): ByteCodeIndexer = ApproximationIndexer(originalToApproximation, approximationToOriginal)
+    ): ByteCodeIndexer = ApproximationIndexer(originalToApproximation, approximationToOriginal, versionMap)
 
     override fun onSignal(signal: JcSignal) {
         if (signal is JcSignal.BeforeIndexing) {
@@ -126,7 +129,7 @@ class Approximations(
                                     val toVersion = persistence.findSymbolName(
                                         versionValues.find { toVersionId == it["nameId"] }!!["primitiveValue"]!!
                                     )
-                                    versions.any { VersionsIntervalInfo(target, fromVersion, toVersion).matches(it) }
+                                    VersionsIntervalInfo(target, fromVersion, toVersion).matches(versionMap)
                                 }
                                 if (versionMatches)
                                     annotation to values
@@ -202,6 +205,8 @@ data class VersionInfo(
     }
 }
 
+private typealias VersionMap = Map<String, String>
+
 private data class VersionsIntervalInfo(
     val target: String,
     val fromVersion: String,
@@ -210,6 +215,18 @@ private data class VersionsIntervalInfo(
     init {
         check(fromVersion.isVersion)
         check(toVersion.isVersion)
+    }
+
+    fun matches(versionMap: VersionMap): Boolean {
+        check(fromVersion.isVersion && toVersion.isVersion)
+
+        val version = versionMap[this.target] ?: return false
+
+        val fromVersionNumbers = fromVersion.toNumbers
+        val toVersionNumbers = toVersion.toNumbers
+        val versionNumbers = version.toNumbers
+
+        return versionNumbers.isVersionInRange(fromVersionNumbers, toVersionNumbers)
     }
 }
 
@@ -238,23 +255,50 @@ private fun IntArray.isVersionInRange(fromVersion: IntArray, toVersion: IntArray
     return true
 }
 
-private fun VersionsIntervalInfo.matches(versionInfo: VersionInfo): Boolean {
-    check(fromVersion.isVersion && toVersion.isVersion && versionInfo.version.isVersion)
-
-    if (versionInfo.target != this.target)
-        return false
-
-    val fromVersionNumbers = fromVersion.toNumbers
-    val toVersionNumbers = toVersion.toNumbers
-    val versionNumbers = versionInfo.version.toNumbers
-
-    return versionNumbers.isVersionInRange(fromVersionNumbers, toVersionNumbers)
-}
-
 private class ApproximationIndexer(
     private val originalToApproximation: ConcurrentMap<OriginalClassName, ApproximationClassName>,
-    private val approximationToOriginal: ConcurrentMap<ApproximationClassName, OriginalClassName>
+    private val approximationToOriginal: ConcurrentMap<ApproximationClassName, OriginalClassName>,
+    private val versionMap: VersionMap
 ) : ByteCodeIndexer {
+
+    private fun checkVersion(approximationAnnotation: AnnotationNode): Boolean {
+        val values = approximationAnnotation.values
+        val versionsNameIdx = values.indexOf("versions")
+        val versionsIdx = versionsNameIdx + 1
+        if (versionsNameIdx == -1 || versionsIdx >= values.size)
+            // When `Approximate` annotation does not contain `Version` annotation, it matches any version
+            return true
+
+        val versions = values[versionsIdx] as List<*>
+        if (versions.isEmpty())
+            return true
+
+        for (version in versions) {
+            version as AnnotationNode
+            val versionValues = version.values
+            val targetNameIdx = versionValues.indexOf("target")
+            check(targetNameIdx != -1)
+            val targetIdx = targetNameIdx + 1
+            check(targetIdx < versionValues.size)
+            val target = versionValues[targetIdx] as String
+            val fromNameIdx = versionValues.indexOf("fromVersion")
+            check(fromNameIdx != -1)
+            val fromIdx = fromNameIdx + 1
+            check(fromIdx < versionValues.size)
+            val from = versionValues[fromIdx] as String
+            val toNameIdx = versionValues.indexOf("toVersion")
+            check(toNameIdx != -1)
+            val toIdx = toNameIdx + 1
+            check(toIdx < versionValues.size)
+            val to = versionValues[toIdx] as String
+            val versionIntervalInfo = VersionsIntervalInfo(target, from, to)
+            if (versionIntervalInfo.matches(versionMap))
+                return true
+        }
+
+        return false
+    }
+
     override fun index(classNode: ClassNode) {
         val annotations = classNode.visibleAnnotations ?: return
 
@@ -262,6 +306,9 @@ private class ApproximationIndexer(
         val approximationAnnotation = annotations.singleOrNull {
             approximationAnnotationClassName in it.desc.className
         } ?: return
+
+        if (!checkVersion(approximationAnnotation))
+            return
 
         // Extract a name of the target class for this approximation
         val target = approximationAnnotation.values.filterIsInstance<org.objectweb.asm.Type>().single()
