@@ -21,6 +21,7 @@ import org.jacodb.api.jvm.JcClassExtFeature
 import org.jacodb.api.jvm.JcClassOrInterface
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcDatabase
+import org.jacodb.api.jvm.JcDatabasePersistence
 import org.jacodb.api.jvm.JcFeature
 import org.jacodb.api.jvm.JcField
 import org.jacodb.api.jvm.JcInstExtFeature
@@ -30,16 +31,14 @@ import org.jacodb.api.jvm.RegisteredLocation
 import org.jacodb.api.jvm.cfg.JcInstList
 import org.jacodb.api.jvm.cfg.JcRawInst
 import org.jacodb.api.storage.StorageContext
+import org.jacodb.api.storage.ers.Entity
+import org.jacodb.api.storage.ers.EntityIterable
 import org.jacodb.api.storage.ers.compressed
 import org.jacodb.approximation.annotation.Approximate
 import org.jacodb.approximation.annotation.Version
 import org.jacodb.impl.cfg.JcInstListImpl
 import org.jacodb.impl.fs.className
-import org.jacodb.impl.storage.dslContext
 import org.jacodb.impl.storage.execute
-import org.jacodb.impl.storage.jooq.tables.references.ANNOTATIONS
-import org.jacodb.impl.storage.jooq.tables.references.ANNOTATIONVALUES
-import org.jacodb.impl.storage.jooq.tables.references.CLASSES
 import org.jacodb.impl.storage.txn
 import org.jacodb.impl.types.RefKind
 import org.objectweb.asm.tree.AnnotationNode
@@ -61,7 +60,7 @@ import java.util.concurrent.ConcurrentMap
  *  See [JcDatabase.awaitBackgroundJobs].
  */
 class Approximations(
-    private val versions: List<VersionInfo>
+    versions: List<VersionInfo>
 ) : JcFeature<Any?, Any?>, JcClassExtFeature, JcInstExtFeature {
 
     private val instSubstitutorForApproximations = InstSubstitutorForApproximations(this)
@@ -83,6 +82,28 @@ class Approximations(
         location: RegisteredLocation
     ): ByteCodeIndexer = ApproximationIndexer(originalToApproximation, approximationToOriginal, versionMap)
 
+    private val Entity.annotationNameId: Long?
+        get() = getCompressed<Long>("nameId")
+
+    private val Entity.annotationValueNameId: Long?
+        get() = getCompressedBlob<Long>("nameId")
+
+    private fun EntityIterable.annotationPrimitiveValueByName(valueNameId: Long): Long? {
+        val value = find { valueNameId == it.getCompressedBlob<Long>("nameId") }
+        return value?.getCompressedBlob<Long>("primitiveValue")
+    }
+
+    private fun EntityIterable.annotationStringValueByName(
+        persistence: JcDatabasePersistence,
+        valueNameId: Long
+    ): String? {
+        val valueId = annotationPrimitiveValueByName(valueNameId)
+        if (valueId != null)
+            return persistence.findSymbolName(valueId)
+
+        return null
+    }
+
     override fun onSignal(signal: JcSignal) {
         if (signal is JcSignal.BeforeIndexing) {
             val persistence = signal.jcdb.persistence
@@ -90,17 +111,17 @@ class Approximations(
             persistence.read { context ->
                 context.execute(
                     sqlAction = {
-                        // TODO: support versions
-                        context.dslContext.select(CLASSES.NAME, ANNOTATIONVALUES.CLASS_SYMBOL)
-                            .from(ANNOTATIONS)
-                            .join(CLASSES).on(ANNOTATIONS.CLASS_ID.eq(CLASSES.ID))
-                            .join(ANNOTATIONVALUES).on(ANNOTATIONVALUES.ANNOTATION_ID.eq(ANNOTATIONS.ID))
-                            .where(
-                                ANNOTATIONS.ANNOTATION_NAME.eq(approxSymbol).and(
-                                    ANNOTATIONVALUES.NAME.eq("value")
-                                )
-                            )
-                            .fetch().asSequence().map { record -> record.value1() to record.value2() }
+                        TODO("support versions for SQL persistence")
+//                        context.dslContext.select(CLASSES.NAME, ANNOTATIONVALUES.CLASS_SYMBOL)
+//                            .from(ANNOTATIONS)
+//                            .join(CLASSES).on(ANNOTATIONS.CLASS_ID.eq(CLASSES.ID))
+//                            .join(ANNOTATIONVALUES).on(ANNOTATIONVALUES.ANNOTATION_ID.eq(ANNOTATIONS.ID))
+//                            .where(
+//                                ANNOTATIONS.ANNOTATION_NAME.eq(approxSymbol).and(
+//                                    ANNOTATIONVALUES.NAME.eq("value")
+//                                )
+//                            )
+//                            .fetch().asSequence().map { record -> record.value1() to record.value2() }
                     },
                     noSqlAction = {
                         val valueId = persistence.findSymbolId("value")
@@ -113,23 +134,22 @@ class Approximations(
                             .filter { it.getCompressedBlob<Int>("refKind") == RefKind.CLASS.ordinal }
                             .mapNotNull { annotation ->
                                 val values = annotation.getLinks("values")
-                                val versionsValue = values.filterTo(mutableListOf()) { versionsId == it["nameId"] }
+                                val versionsValue = values.filterTo(mutableListOf()) {
+                                    versionsId == it.annotationValueNameId
+                                }
                                 if (versionsValue.isEmpty())
                                     return@mapNotNull annotation to values
 
                                 val versionMatches = versionsValue.any { versionValue ->
                                     val versionAnnotation = versionValue.getLink("refAnnotation")
-                                    check(versionSymbol == versionAnnotation["nameId"])
+                                    check(versionSymbol == versionAnnotation.annotationNameId)
                                     val versionValues = versionAnnotation.getLinks("values")
-                                    val target = persistence.findSymbolName(
-                                        versionValues.find { targetId == it["nameId"] }!!["primitiveValue"]!!
-                                    )
-                                    val fromVersion = persistence.findSymbolName(
-                                        versionValues.find { fromVersionId == it["nameId"] }!!["primitiveValue"]!!
-                                    )
-                                    val toVersion = persistence.findSymbolName(
-                                        versionValues.find { toVersionId == it["nameId"] }!!["primitiveValue"]!!
-                                    )
+                                    val target = versionValues.annotationStringValueByName(persistence, targetId)
+                                        ?: error("unable to find `target` value in `Version` annotation")
+                                    val fromVersion = versionValues.annotationStringValueByName(persistence, fromVersionId)
+                                        ?: error("unable to find `fromVersion` value in `Version` annotation")
+                                    val toVersion = versionValues.annotationStringValueByName(persistence, toVersionId)
+                                        ?: error("unable to find `toVersion` value in `Version` annotation")
                                     VersionsIntervalInfo(target, fromVersion, toVersion).matches(versionMap)
                                 }
                                 if (versionMatches)
@@ -266,38 +286,43 @@ private class ApproximationIndexer(
     private val versionMap: VersionMap
 ) : ByteCodeIndexer {
 
-    private fun checkVersion(approximationAnnotation: AnnotationNode): Boolean {
-        val values = approximationAnnotation.values
-        val versionsNameIdx = values.indexOf("versions")
-        val versionsIdx = versionsNameIdx + 1
-        if (versionsNameIdx == -1 || versionsIdx >= values.size)
-            // When `Approximate` annotation does not contain `Version` annotation, it matches any version
-            return true
+    private fun annotationValueByName(versionValues: List<Any>, name: String): Any? {
+        val valueNameIdx = versionValues.indexOf(name)
+        if (valueNameIdx == -1)
+            return null
 
-        val versions = values[versionsIdx] as List<*>
+        val valueIdx = valueNameIdx + 1
+        if (valueIdx >= versionValues.size)
+            return null
+
+        return versionValues[valueIdx]
+    }
+
+    private fun annotationStringValueByName(versionValues: List<Any>, name: String): String? {
+        return annotationValueByName(versionValues, name) as? String
+    }
+
+    private val AnnotationNode.versionIntervalInfo: VersionsIntervalInfo get() {
+        val target = annotationStringValueByName(values, "target")
+            ?: error("unable to find `target` value in `Version` annotation")
+        val from = annotationStringValueByName(values, "fromVersion")
+            ?: error("unable to find `target` value in `Version` annotation")
+        val to = annotationStringValueByName(values, "toVersion")
+            ?: error("unable to find `target` value in `Version` annotation")
+        return VersionsIntervalInfo(target, from, to)
+    }
+
+    private fun checkVersion(approximationAnnotation: AnnotationNode): Boolean {
+        val versions = annotationValueByName(approximationAnnotation.values, "versions") as? List<*>
+            // When `Approximate` annotation does not contain `Version` annotation, it matches any version
+            ?: return true
+
         if (versions.isEmpty())
             return true
 
         for (version in versions) {
             version as AnnotationNode
-            val versionValues = version.values
-            val targetNameIdx = versionValues.indexOf("target")
-            check(targetNameIdx != -1)
-            val targetIdx = targetNameIdx + 1
-            check(targetIdx < versionValues.size)
-            val target = versionValues[targetIdx] as String
-            val fromNameIdx = versionValues.indexOf("fromVersion")
-            check(fromNameIdx != -1)
-            val fromIdx = fromNameIdx + 1
-            check(fromIdx < versionValues.size)
-            val from = versionValues[fromIdx] as String
-            val toNameIdx = versionValues.indexOf("toVersion")
-            check(toNameIdx != -1)
-            val toIdx = toNameIdx + 1
-            check(toIdx < versionValues.size)
-            val to = versionValues[toIdx] as String
-            val versionIntervalInfo = VersionsIntervalInfo(target, from, to)
-            if (versionIntervalInfo.matches(versionMap))
+            if (version.versionIntervalInfo.matches(versionMap))
                 return true
         }
 
