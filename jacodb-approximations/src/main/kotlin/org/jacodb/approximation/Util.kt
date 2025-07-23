@@ -17,7 +17,6 @@
 package org.jacodb.approximation
 
 import org.jacodb.api.jvm.TypeName
-import org.jacodb.approximation.Approximations.findOriginalByApproximationOrNull
 import org.jacodb.impl.cfg.util.asArray
 import org.jacodb.impl.cfg.util.baseElementType
 import org.jacodb.impl.cfg.util.isArray
@@ -26,12 +25,12 @@ import org.jacodb.impl.types.TypeNameImpl
 fun String.toApproximationName() = ApproximationClassName(this)
 fun String.toOriginalName() = OriginalClassName(this)
 
-fun TypeName.eliminateApproximation(): TypeName {
+fun TypeName.eliminateApproximation(approximations: Approximations): TypeName {
     if (this.isArray) {
         val (elemType, dim) = this.baseElementType()
-        val resultElemType = elemType.eliminateApproximation()
+        val resultElemType = elemType.eliminateApproximation(approximations)
         return resultElemType.asArray(dim)
     }
-    val originalClassName = findOriginalByApproximationOrNull(typeName.toApproximationName()) ?: return this
+    val originalClassName = approximations.findOriginalByApproximationOrNull(typeName.toApproximationName()) ?: return this
     return TypeNameImpl.fromTypeName(originalClassName)
 }

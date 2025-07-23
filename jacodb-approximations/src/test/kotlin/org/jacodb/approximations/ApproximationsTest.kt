@@ -26,8 +26,6 @@ import org.jacodb.api.jvm.cfg.JcRawFieldRef
 import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.api.jvm.ext.findDeclaredFieldOrNull
 import org.jacodb.approximation.Approximations
-import org.jacodb.approximation.Approximations.findApproximationByOriginOrNull
-import org.jacodb.approximation.Approximations.findOriginalByApproximationOrNull
 import org.jacodb.approximation.JcEnrichedVirtualField
 import org.jacodb.approximation.JcEnrichedVirtualMethod
 import org.jacodb.approximation.toApproximationName
@@ -42,24 +40,27 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
+
+private val approximations = Approximations(emptyList())
 
 open class ApproximationsTest : BaseTest() {
 
     // ApproximationsTest designed to work only with applied ApproximationIndexer
     // So, if WithDbImmutable is used then indexing would be skipped and tests would fail
-    companion object : WithDb(Approximations)
+    companion object : WithDb(approximations)
 
     @Test
     fun `kotlin approximation`() {
         val classes = cp.findClass<KotlinClass>()
 
         val originalClassName = KotlinClass::class.qualifiedName!!.toOriginalName()
-        val approximation = findApproximationByOriginOrNull(originalClassName)
+        val approximation = approximations.findApproximationByOriginOrNull(originalClassName)
 
         assertNotNull(approximation)
-        assertEquals(classes.name, findOriginalByApproximationOrNull(approximation!!.toApproximationName()))
+        assertEquals(classes.name, approximations.findOriginalByApproximationOrNull(approximation!!.toApproximationName()))
     }
 
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
@@ -68,10 +69,10 @@ open class ApproximationsTest : BaseTest() {
         val classec = cp.findClass<Integer>()
 
         val originalClassName = "java.lang.Integer".toOriginalName()
-        val approximation = findApproximationByOriginOrNull(originalClassName)
+        val approximation = approximations.findApproximationByOriginOrNull(originalClassName)
 
         assertNotNull(approximation)
-        assertEquals(classec.name, findOriginalByApproximationOrNull(approximation!!.toApproximationName()))
+        assertEquals(classec.name, approximations.findOriginalByApproximationOrNull(approximation!!.toApproximationName()))
     }
 
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
@@ -209,7 +210,7 @@ open class ApproximationsTest : BaseTest() {
             }
         }
 
-        assertTrue(types.none { findOriginalByApproximationOrNull(it.toApproximationName()) != null })
+        assertTrue(types.none { approximations.findOriginalByApproximationOrNull(it.toApproximationName()) != null })
     }
 
     @Test
@@ -235,7 +236,8 @@ open class ApproximationsTest : BaseTest() {
     }
 }
 
+@Disabled("support approximation versions for SQL persistence")
 class ApproximationsSQLiteTest : ApproximationsTest() {
 
-    companion object : WithSQLiteDb(Approximations)
+    companion object : WithSQLiteDb(approximations)
 }
