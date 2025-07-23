@@ -98,7 +98,7 @@ interface EtsTerminatingStmt : EtsStmt
 
 data class EtsReturnStmt(
     override val location: EtsStmtLocation,
-    override val returnValue: EtsValue?,
+    override val returnValue: EtsValue?, // TODO: make returnValue EtsLocal
 ) : EtsTerminatingStmt, CommonReturnInst {
     override fun toString(): String {
         return if (returnValue != null) {
