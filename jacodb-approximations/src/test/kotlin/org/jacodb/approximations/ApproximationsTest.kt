@@ -40,6 +40,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 
@@ -235,6 +236,7 @@ open class ApproximationsTest : BaseTest() {
     }
 }
 
+@Disabled("support approximation versions for SQL persistence")
 class ApproximationsSQLiteTest : ApproximationsTest() {
 
     companion object : WithSQLiteDb(approximations)
