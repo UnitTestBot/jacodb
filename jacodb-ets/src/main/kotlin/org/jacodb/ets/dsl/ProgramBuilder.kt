@@ -21,12 +21,12 @@ package org.jacodb.ets.dsl
 import org.jacodb.ets.model.EtsEntity
 
 interface ProgramBuilder {
+    fun nop()
     fun assign(target: Local, expr: Expr)
     fun ret(expr: Expr)
-    fun ifStmt(condition: Expr, block: IfBuilder.() -> Unit): IfBuilder
-    fun nop()
     fun label(name: String)
     fun goto(label: String)
+    fun ifStmt(condition: Expr, block: ProgramBuilder.() -> Unit): IfBuilder
 }
 
 fun ProgramBuilder.local(name: String) = Local(name)
@@ -85,6 +85,14 @@ class ProgramBuilderImpl : ProgramBuilder {
         _nodes += Nop
     }
 
+    override fun assign(target: Local, expr: Expr) {
+        _nodes += Assign(target, expr)
+    }
+
+    override fun ret(expr: Expr) {
+        _nodes += Return(expr)
+    }
+
     override fun label(name: String) {
         _nodes += Label(name)
     }
@@ -93,15 +101,7 @@ class ProgramBuilderImpl : ProgramBuilder {
         _nodes += Goto(label)
     }
 
-    override fun ret(expr: Expr) {
-        _nodes += Return(expr)
-    }
-
-    override fun assign(target: Local, expr: Expr) {
-        _nodes += Assign(target, expr)
-    }
-
-    override fun ifStmt(condition: Expr, block: IfBuilder.() -> Unit) : IfBuilder {
+    override fun ifStmt(condition: Expr, block: ProgramBuilder.() -> Unit): IfBuilder {
         val builder = IfBuilder().apply(block)
         _nodes += If(condition, builder.thenNodes, builder.elseNodes)
         return builder
@@ -111,10 +111,11 @@ class ProgramBuilderImpl : ProgramBuilder {
 class IfBuilder : ProgramBuilder {
     private val thenBuilder = ProgramBuilderImpl()
     private val elseBuilder = ProgramBuilderImpl()
-    private var elseEntered = false
 
     val thenNodes: List<Node> get() = thenBuilder.nodes
     val elseNodes: List<Node> get() = elseBuilder.nodes
+
+    private var elseEntered = false
 
     fun `else`(block: ProgramBuilder.() -> Unit) {
         check(!elseEntered) { "Multiple else branches" }
@@ -127,14 +128,12 @@ class IfBuilder : ProgramBuilder {
         return this
     }
 
-    override fun assign(target: Local, expr: Expr) = thenBuilder.assign(target, expr)
+    override fun ifStmt(condition: Expr, block: ProgramBuilder.() -> Unit): IfBuilder =
+        thenBuilder.ifStmt(condition, block)
 
-    override fun ifStmt(condition: Expr, block: IfBuilder.() -> Unit): IfBuilder {
-        return thenBuilder.ifStmt(condition, block)
-    }
-
-    override fun ret(expr: Expr) = thenBuilder.ret(expr)
     override fun nop() = thenBuilder.nop()
-    override fun goto(label: String) = thenBuilder.goto(label)
+    override fun assign(target: Local, expr: Expr) = thenBuilder.assign(target, expr)
+    override fun ret(expr: Expr) = thenBuilder.ret(expr)
     override fun label(name: String) = thenBuilder.label(name)
+    override fun goto(label: String) = thenBuilder.goto(label)
 }
