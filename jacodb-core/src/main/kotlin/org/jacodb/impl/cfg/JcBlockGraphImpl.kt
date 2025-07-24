@@ -109,8 +109,8 @@ class JcBlockGraphImpl(
         (block.start.index..block.end.index).map { jcGraph.instructions[it] }
 
     override fun block(inst: JcInst): JcBasicBlock {
-        assert(inst.method == jcGraph.method) {
-            "required method of instruction ${jcGraph.method} but got ${inst.method}"
+        assert(inst.location.method == jcGraph.method) {
+            "required method of instruction ${jcGraph.method} but got ${inst.location.method}"
         }
         for (basicBlock in entries) {
             if (basicBlock.contains(inst)) {
