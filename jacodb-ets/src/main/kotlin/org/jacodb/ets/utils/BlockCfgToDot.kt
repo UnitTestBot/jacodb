@@ -154,7 +154,7 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
         val h = sanitize(stmt.hashCode())
         val clusterName = "cluster_${h}_B${parentBlock}"
         // method signature label
-        val methodSig = cfg.entries.first().method.signature
+        val methodSig = cfg.entries.first().location.method.signature
         // open subgraph
         lines += "  subgraph \"$clusterName\" {"
         lines += "    label=\"$methodSig\";"

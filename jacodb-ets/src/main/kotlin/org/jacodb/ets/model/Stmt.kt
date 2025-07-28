@@ -25,9 +25,6 @@ import org.jacodb.api.common.cfg.CommonReturnInst
 interface EtsStmt : CommonInst {
     override val location: EtsStmtLocation
 
-    override val method: EtsMethod
-        get() = location.method
-
     interface Visitor<out R> {
         fun visit(stmt: EtsNopStmt): R
         fun visit(stmt: EtsAssignStmt): R

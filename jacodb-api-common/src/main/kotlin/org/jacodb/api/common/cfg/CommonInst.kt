@@ -20,9 +20,6 @@ import org.jacodb.api.common.CommonMethod
 
 interface CommonInst {
     val location: CommonInstLocation
-
-    val method: CommonMethod
-        get() = location.method
 }
 
 interface CommonInstLocation {
