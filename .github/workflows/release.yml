@@ -30,7 +30,7 @@ jobs:
           arguments: |
             publish
             -PincludeDokka=true
-            -PsemVer=${{inputs.semVer}}
+            -Pversion=${{inputs.semVer}}
             -Pactor=${{ secrets.MAVEN_CENTRAL_LOGIN }}
             -Ptoken=${{ secrets.MAVEN_CENTRAL_TOKEN }}
             -PgpgKey="${{ secrets.OSSRH_GPG_SECRET_KEY }}"
