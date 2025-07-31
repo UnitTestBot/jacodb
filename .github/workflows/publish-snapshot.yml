@@ -37,6 +37,7 @@ jobs:
       - name: Publish snapshot
         run: ./gradlew publish -Pversion=${{ steps.version.outputs.snapshot_version }}
         env:
+          GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Write summary
