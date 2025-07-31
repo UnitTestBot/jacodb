@@ -1,15 +1,16 @@
-name: Publish to GitHub packages
+name: Publish Snapshot
 
 on:
   push:
-    branches:
-      - neo
   workflow_dispatch:
+
+env:
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
 jobs:
   publish-snapshot:
+    name: Publish Snapshot to GitHub Packages
     runs-on: ubuntu-24.04
-
     permissions:
       contents: read
       packages: write
@@ -30,17 +31,17 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Generate snapshot version
-        id: version
+        id: snapshot_version
         run: |
-          DATE=$(date +'%Y%m%d')
-          COMMIT_HASH=$(git rev-parse --short HEAD)
-          SNAPSHOT_VERSION="${DATE}+${COMMIT_HASH}"
-          echo "snapshot_version=${SNAPSHOT_VERSION}" >> $GITHUB_OUTPUT
-          echo "Generated snapshot version: ${SNAPSHOT_VERSION}"
-          echo "::notice title=Snapshot Version::${SNAPSHOT_VERSION}"
+          # Replace non-alphanumeric characters in branch name with hyphens
+          SAFE_BRANCH=$(echo "${BRANCH_NAME}" | sed 's#[^A-Za-z0-9._-]#-#g')
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-8)
+          VERSION="${SAFE_BRANCH}+${SHORT_SHA}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "::notice title=Snapshot Version::Generated snapshot version: ${VERSION}"
 
       - name: Publish snapshot
-        run: ./gradlew publish -Pversion=${{ steps.version.outputs.snapshot_version }}
+        run: ./gradlew publish -Pversion=${{ steps.snapshot_version.outputs.version }}
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -48,7 +49,7 @@ jobs:
       - name: Write summary
         run: |
           echo "## 📦 Snapshot Published" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** \`${{ steps.version.outputs.snapshot_version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Repository:** GitHub Packages" >> $GITHUB_STEP_SUMMARY
+          echo "**Project:** \`${{ github.repository }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ steps.snapshot_version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${BRANCH_NAME}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${GITHUB_SHA}\`" >> $GITHUB_STEP_SUMMARY
