@@ -204,8 +204,6 @@ configure(
                             dependency.version.isNullOrBlank()
                         }
                     }
-                artifact(sourcesJar)
-                artifact(dokkaJavadocJar)
                 addPom()
                 signPublication(this@configure)
             }
