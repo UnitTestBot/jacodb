@@ -204,8 +204,6 @@ configure(
                             dependency.version.isNullOrBlank()
                         }
                     }
-                artifact(sourcesJar)
-                artifact(dokkaJavadocJar)
                 addPom()
                 signPublication(this@configure)
             }
@@ -222,10 +220,10 @@ configure(
             }
 
             // Use `./gradlew publishAllPublicationsToBuildRepository -Pversion=1.5`
-            // to publish to `./build/repository` directory.
+            // to publish to `/build/repository` directory in the root project.
             maven {
                 name = "Build"
-                url = uri(layout.buildDirectory.dir("repository"))
+                url = uri(rootProject.layout.buildDirectory.dir("repository"))
             }
         }
     }
