@@ -1,0 +1,54 @@
+name: Publish to GitHub packages
+
+on:
+  push:
+    branches:
+      - neo
+  workflow_dispatch:
+
+jobs:
+  publish-snapshot:
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Generate snapshot version
+        id: version
+        run: |
+          DATE=$(date +'%Y%m%d')
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          SNAPSHOT_VERSION="${DATE}+${COMMIT_HASH}"
+          echo "snapshot_version=${SNAPSHOT_VERSION}" >> $GITHUB_OUTPUT
+          echo "Generated snapshot version: ${SNAPSHOT_VERSION}"
+          echo "::notice title=Snapshot Version::${SNAPSHOT_VERSION}"
+
+      - name: Publish snapshot
+        run: ./gradlew publish -Pversion=${{ steps.version.outputs.snapshot_version }}
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Write summary
+        run: |
+          echo "## 📦 Snapshot Published" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ steps.version.outputs.snapshot_version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Repository:** GitHub Packages" >> $GITHUB_STEP_SUMMARY

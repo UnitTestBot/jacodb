@@ -1,10 +1,12 @@
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 
-val semVer: String? by project
-val includeDokka: String? by project
+// Use `-Pgroup=com.github.UnitTestBot` to emulate JitPack publishing.
+val groupProp = providers.gradleProperty("group").orNull
+// Use `-Pversion=1.5` to specify version for publishing.
+val versionProp = providers.gradleProperty("version").orNull
 
-group = "org.jacodb"
-version = semVer ?: "1.4-SNAPSHOT"
+group = groupProp ?: "org.jacodb"
+version = versionProp ?: "1.4-SNAPSHOT"
 
 plugins {
     kotlin("jvm") version Versions.kotlin
@@ -159,81 +161,77 @@ tasks.dokkaHtmlMultiModule {
     )
 }
 
-val repoUrl: String = project.properties["repoUrl"] as? String
-    ?: "https://maven.pkg.github.com/UnitTestBot/jacodb"
+val includeDokka: String? by project
 
-if (!repoUrl.isNullOrEmpty()) {
-    configure(
-        listOf(
-            project(":jacodb-api-common"),
-            project(":jacodb-api-jvm"),
-            project(":jacodb-api-storage"),
-            project(":jacodb-core"),
-            project(":jacodb-storage"),
-            project(":jacodb-approximations"),
-            project(":jacodb-taint-configuration"),
-            project(":jacodb-ets"),
-        )
-    ) {
-        tasks {
-            val dokkaJavadocJar by creating(Jar::class) {
-                dependsOn(dokkaJavadoc)
-                from(dokkaJavadoc.flatMap { it.outputDirectory })
-                archiveClassifier.set("javadoc")
-            }
+configure(
+    listOf(
+        project(":jacodb-api-common"),
+        project(":jacodb-api-jvm"),
+        project(":jacodb-api-storage"),
+        project(":jacodb-core"),
+        project(":jacodb-storage"),
+        project(":jacodb-approximations"),
+        project(":jacodb-taint-configuration"),
+        project(":jacodb-ets"),
+    )
+) {
+    val sourcesJar by tasks.registering(Jar::class) {
+        archiveClassifier.set("sources")
+        from(sourceSets.getByName("main").kotlin.srcDirs)
+    }
 
-            val sourcesJar by creating(Jar::class) {
-                archiveClassifier.set("sources")
-                from(sourceSets.getByName("main").kotlin.srcDirs)
-            }
+    val dokkaJavadocJar by tasks.registering(Jar::class) {
+        dependsOn(tasks.dokkaJavadoc)
+        from(tasks.dokkaJavadoc.flatMap { it.outputDirectory })
+        archiveClassifier.set("javadoc")
+    }
 
-            artifacts {
-                archives(sourcesJar)
-                if (includeDokka != null) {
-                    archives(dokkaJavadocJar)
-                }
-            }
-
+    artifacts {
+        archives(sourcesJar)
+        if (includeDokka != null) {
+            archives(dokkaJavadocJar)
         }
-        publishing {
-            publications {
-                register<MavenPublication>("jar") {
-                    from(components["java"])
-                    setOf("apiElements", "runtimeElements")
-                        .flatMap { configName -> configurations[configName].hierarchy }
-                        .forEach { configuration ->
-                            configuration.dependencies.removeIf { dependency ->
-                                dependency.version.isNullOrBlank()
-                            }
-                        }
-                    artifact(tasks.named("sourcesJar"))
-                    artifact(tasks.named("dokkaJavadocJar"))
+    }
 
-                    groupId = "org.jacodb"
-                    artifactId = project.name
-                    addPom()
-                    signPublication(this@configure)
+    publishing {
+        publications {
+            register<MavenPublication>("main") {
+                from(components["java"])
+                setOf("apiElements", "runtimeElements")
+                    .flatMap { configName -> configurations[configName].hierarchy }
+                    .forEach { configuration ->
+                        configuration.dependencies.removeIf { dependency ->
+                            dependency.version.isNullOrBlank()
+                        }
+                    }
+                artifact(sourcesJar)
+                artifact(dokkaJavadocJar)
+                addPom()
+                signPublication(this@configure)
+            }
+        }
+
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/UnitTestBot/jacodb")
+                credentials {
+                    username = System.getenv("GITHUB_ACTOR")
+                    password = System.getenv("GITHUB_TOKEN")
                 }
             }
 
-            repositories {
-                maven {
-                    name = "repo"
-                    url = uri(repoUrl)
-                    val actor: String? by project
-                    val token: String? by project
-
-                    credentials {
-                        username = actor
-                        password = token
-                    }
-                }
+            // Use `./gradlew publishAllPublicationsToBuildRepository -Pversion=1.5`
+            // to publish to `./build/repository` directory.
+            maven {
+                name = "Build"
+                url = uri(layout.buildDirectory.dir("repository"))
             }
         }
     }
 }
 
-fun MavenPublication.signPublication(project: Project) = with(project) {
+fun MavenPublication.signPublication(project: Project) {
     signing {
         val gpgKey: String? by project
         val gpgPassphrase: String? by project
@@ -250,9 +248,9 @@ fun MavenPublication.signPublication(project: Project) = with(project) {
 
 fun MavenPublication.addPom() {
     pom {
-        packaging = "jar"
-        name.set("org.jacodb")
-        description.set("analyse JVM bytecode with pleasure")
+        name.set("JacoDB")
+        description.set("Analyse JVM bytecode with pleasure")
+        url = "https://www.jacodb.org"
         issueManagement {
             url.set("https://github.com/UnitTestBot/jacodb/issues")
         }
@@ -261,7 +259,6 @@ fun MavenPublication.addPom() {
             developerConnection.set("scm:git:https://github.com/UnitTestBot/jacodb.git")
             url.set("https://www.jacodb.org")
         }
-        url.set("https://www.jacodb.org")
         licenses {
             license {
                 name.set("The Apache License, Version 2.0")
