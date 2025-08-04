@@ -91,7 +91,7 @@ object RawStmtSerializer : KSerializer<RawStmtDto> {
     override fun deserialize(decoder: Decoder): RawStmtDto {
         require(decoder is JsonDecoder)
         val element = decoder.decodeJsonElement().jsonObject
-        if ("_" in element.keys ) {
+        if ("_" in element.keys) {
             val kind = element.getValue("_").jsonPrimitive.content
             val details = element.toMutableMap()
             details.remove("_")
