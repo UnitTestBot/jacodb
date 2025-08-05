@@ -35,11 +35,13 @@ import org.jacodb.ets.model.EtsBooleanType
 import org.jacodb.ets.model.EtsCallExpr
 import org.jacodb.ets.model.EtsCallStmt
 import org.jacodb.ets.model.EtsCastExpr
+import org.jacodb.ets.model.EtsCaughtExceptionRef
 import org.jacodb.ets.model.EtsClass
 import org.jacodb.ets.model.EtsClassCategory
 import org.jacodb.ets.model.EtsClassImpl
 import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsClassType
+import org.jacodb.ets.model.EtsClosureFieldRef
 import org.jacodb.ets.model.EtsConstant
 import org.jacodb.ets.model.EtsDecorator
 import org.jacodb.ets.model.EtsDeleteExpr
@@ -57,6 +59,7 @@ import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsFileSignature
 import org.jacodb.ets.model.EtsFunctionType
 import org.jacodb.ets.model.EtsGenericType
+import org.jacodb.ets.model.EtsGlobalRef
 import org.jacodb.ets.model.EtsGtEqExpr
 import org.jacodb.ets.model.EtsGtExpr
 import org.jacodb.ets.model.EtsIfStmt
@@ -66,6 +69,7 @@ import org.jacodb.ets.model.EtsInstanceFieldRef
 import org.jacodb.ets.model.EtsInstanceOfExpr
 import org.jacodb.ets.model.EtsIntersectionType
 import org.jacodb.ets.model.EtsLeftShiftExpr
+import org.jacodb.ets.model.EtsLexicalEnvType
 import org.jacodb.ets.model.EtsLiteralType
 import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsLocalSignature
@@ -394,6 +398,21 @@ class EtsMethodBuilder(
 
         is FieldRefDto -> toEtsFieldRef()
 
+        is CaughtExceptionRefDto -> EtsCaughtExceptionRef(
+            type = type.toEtsType(),
+        )
+
+        is GlobalRefDto -> EtsGlobalRef(
+            name = name,
+            ref = ref?.let { ensureLocal(it.toEtsEntity()) },
+        )
+
+        is ClosureFieldRefDto -> EtsClosureFieldRef(
+            base = base.toEtsLocal(),
+            fieldName = fieldName,
+            type = type.toEtsType(),
+        )
+
         is RawValueDto -> EtsRawEntity(
             kind = kind,
             extra = extra,
@@ -511,6 +530,11 @@ fun TypeDto.toEtsType(): EtsType = when (this) {
 
     is IntersectionTypeDto -> EtsIntersectionType(
         types = types.map { it.toEtsType() },
+    )
+
+    is LexicalEnvTypeDto -> EtsLexicalEnvType(
+        nestedMethod = method.toEtsMethodSignature(),
+        closures = closures.map { it.toEtsLocal() },
     )
 
     is LiteralTypeDto -> EtsLiteralType(
