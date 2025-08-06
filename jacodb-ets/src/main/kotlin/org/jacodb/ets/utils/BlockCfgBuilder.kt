@@ -24,39 +24,35 @@ import org.jacodb.ets.dsl.BlockCfg
 import org.jacodb.ets.dsl.BlockIf
 import org.jacodb.ets.dsl.BlockNop
 import org.jacodb.ets.dsl.BlockReturn
-import org.jacodb.ets.dsl.Constant
+import org.jacodb.ets.dsl.ConstantBoolean
+import org.jacodb.ets.dsl.ConstantNumber
+import org.jacodb.ets.dsl.ConstantString
+import org.jacodb.ets.dsl.CustomBinaryExpr
+import org.jacodb.ets.dsl.CustomUnaryExpr
+import org.jacodb.ets.dsl.CustomValue
 import org.jacodb.ets.dsl.Expr
 import org.jacodb.ets.dsl.Local
 import org.jacodb.ets.dsl.Parameter
 import org.jacodb.ets.dsl.ThisRef
 import org.jacodb.ets.dsl.UnaryExpr
 import org.jacodb.ets.dsl.UnaryOperator
-import org.jacodb.ets.dsl.add
-import org.jacodb.ets.dsl.and
-import org.jacodb.ets.dsl.const
-import org.jacodb.ets.dsl.local
-import org.jacodb.ets.dsl.param
-import org.jacodb.ets.dsl.program
-import org.jacodb.ets.dsl.toBlockCfg
 import org.jacodb.ets.model.BasicBlock
 import org.jacodb.ets.model.EtsAddExpr
 import org.jacodb.ets.model.EtsAndExpr
 import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsBlockCfg
-import org.jacodb.ets.model.EtsClassSignature
+import org.jacodb.ets.model.EtsBooleanConstant
 import org.jacodb.ets.model.EtsDivExpr
 import org.jacodb.ets.model.EtsEntity
 import org.jacodb.ets.model.EtsEqExpr
 import org.jacodb.ets.model.EtsGtEqExpr
 import org.jacodb.ets.model.EtsGtExpr
 import org.jacodb.ets.model.EtsIfStmt
+import org.jacodb.ets.model.EtsImmediate
 import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsLtEqExpr
 import org.jacodb.ets.model.EtsLtExpr
 import org.jacodb.ets.model.EtsMethod
-import org.jacodb.ets.model.EtsMethodImpl
-import org.jacodb.ets.model.EtsMethodParameter
-import org.jacodb.ets.model.EtsMethodSignature
 import org.jacodb.ets.model.EtsMulExpr
 import org.jacodb.ets.model.EtsNegExpr
 import org.jacodb.ets.model.EtsNopStmt
@@ -65,9 +61,13 @@ import org.jacodb.ets.model.EtsNotExpr
 import org.jacodb.ets.model.EtsNumberConstant
 import org.jacodb.ets.model.EtsOrExpr
 import org.jacodb.ets.model.EtsParameterRef
+import org.jacodb.ets.model.EtsRemExpr
 import org.jacodb.ets.model.EtsReturnStmt
 import org.jacodb.ets.model.EtsStmt
 import org.jacodb.ets.model.EtsStmtLocation
+import org.jacodb.ets.model.EtsStrictEqExpr
+import org.jacodb.ets.model.EtsStrictNotEqExpr
+import org.jacodb.ets.model.EtsStringConstant
 import org.jacodb.ets.model.EtsSubExpr
 import org.jacodb.ets.model.EtsThis
 import org.jacodb.ets.model.EtsUnknownType
@@ -93,6 +93,9 @@ class EtsBlockCfgBuilder(
         )
     }
 
+    private val stub
+        get() = EtsStmtLocation.stub(method)
+
     private fun Block.toEtsBasicBlock(): BasicBlock {
         val etsStatements: MutableList<EtsStmt> = mutableListOf()
 
@@ -107,6 +110,164 @@ class EtsBlockCfgBuilder(
                 rhv = entity,
             )
             return newLocal
+        }
+
+        fun ensureImmediate(entity: EtsEntity): EtsImmediate {
+            if (entity is EtsImmediate) {
+                return entity
+            }
+            return ensureLocal(entity)
+        }
+
+        fun Expr.toEtsEntity(): EtsEntity = when (this) {
+            is Local -> {
+                EtsLocal(
+                    name = name,
+                    type = EtsUnknownType, // TODO
+                )
+            }
+
+            is Parameter -> {
+                EtsParameterRef(
+                    index = index,
+                    type = EtsUnknownType, // TODO
+                )
+            }
+
+            ThisRef -> {
+                EtsThis(
+                    type = EtsUnknownType, // TODO
+                )
+            }
+
+            is ConstantNumber -> {
+                EtsNumberConstant(value = value)
+            }
+
+            is ConstantBoolean -> {
+                EtsBooleanConstant(value = value)
+            }
+
+            is ConstantString -> {
+                EtsStringConstant(value = value)
+            }
+
+            is UnaryExpr -> {
+                val arg = ensureImmediate(expr.toEtsEntity())
+                when (operator) {
+                    UnaryOperator.NOT -> EtsNotExpr(
+                        arg = arg,
+                    )
+
+                    UnaryOperator.NEG -> EtsNegExpr(
+                        arg = arg,
+                        type = EtsUnknownType, // TODO
+                    )
+                }
+            }
+
+            is BinaryExpr -> {
+                val left = ensureImmediate(left.toEtsEntity())
+                val right = ensureImmediate(right.toEtsEntity())
+                when (operator) {
+                    BinaryOperator.AND -> EtsAndExpr(
+                        left = left,
+                        right = right,
+                        type = EtsUnknownType, // TODO
+                    )
+
+                    BinaryOperator.OR -> EtsOrExpr(
+                        left = left,
+                        right = right,
+                        type = EtsUnknownType, // TODO
+                    )
+
+                    BinaryOperator.EQ -> EtsEqExpr(
+                        left = left,
+                        right = right,
+                    )
+
+                    BinaryOperator.NEQ -> EtsNotEqExpr(
+                        left = left,
+                        right = right,
+                    )
+
+                    BinaryOperator.EQQ -> EtsStrictEqExpr(
+                        left = left,
+                        right = right,
+                    )
+
+                    BinaryOperator.NEQQ -> EtsStrictNotEqExpr(
+                        left = left,
+                        right = right,
+                    )
+
+                    BinaryOperator.LT -> EtsLtExpr(
+                        left = left,
+                        right = right,
+                    )
+
+                    BinaryOperator.LTE -> EtsLtEqExpr(
+                        left = left,
+                        right = right,
+                    )
+
+                    BinaryOperator.GT -> EtsGtExpr(
+                        left = left,
+                        right = right,
+                    )
+
+                    BinaryOperator.GTE -> EtsGtEqExpr(
+                        left = left,
+                        right = right,
+                    )
+
+                    BinaryOperator.ADD -> EtsAddExpr(
+                        left = left,
+                        right = right,
+                        type = EtsUnknownType, // TODO
+                    )
+
+                    BinaryOperator.SUB -> EtsSubExpr(
+                        left = left,
+                        right = right,
+                        type = EtsUnknownType, // TODO
+                    )
+
+                    BinaryOperator.MUL -> EtsMulExpr(
+                        left = left,
+                        right = right,
+                        type = EtsUnknownType, // TODO
+                    )
+
+                    BinaryOperator.DIV -> EtsDivExpr(
+                        left = left,
+                        right = right,
+                        type = EtsUnknownType, // TODO
+                    )
+
+                    BinaryOperator.REM -> EtsRemExpr(
+                        left = left,
+                        right = right,
+                        type = EtsUnknownType, // TODO
+                    )
+                }
+            }
+
+            is CustomValue -> {
+                toEts()
+            }
+
+            is CustomUnaryExpr -> {
+                val arg = ensureImmediate(arg.toEtsEntity())
+                toEts(arg)
+            }
+
+            is CustomBinaryExpr -> {
+                val left = ensureImmediate(left.toEtsEntity())
+                val right = ensureImmediate(right.toEtsEntity())
+                toEts(left, right)
+            }
         }
 
         for (stmt in statements) {
@@ -151,105 +312,5 @@ class EtsBlockCfgBuilder(
             id = id,
             statements = etsStatements,
         )
-    }
-
-    private val stub
-        get() = EtsStmtLocation.stub(method)
-
-    private fun Expr.toEtsEntity(): EtsEntity = when (this) {
-        is Local -> EtsLocal(
-            name = name,
-            type = EtsUnknownType, // TODO
-        )
-
-        is Parameter -> EtsParameterRef(
-            index = index,
-            type = EtsUnknownType, // TODO
-        )
-
-        ThisRef -> EtsThis(
-            type = EtsUnknownType, // TODO
-        )
-
-        is Constant -> EtsNumberConstant(value = value)
-
-        is UnaryExpr -> when (operator) {
-            UnaryOperator.NOT -> EtsNotExpr(
-                arg = expr.toEtsEntity(),
-            )
-
-            UnaryOperator.NEG -> EtsNegExpr(
-                arg = expr.toEtsEntity(),
-                type = EtsUnknownType, // TODO
-            )
-        }
-
-        is BinaryExpr -> when (operator) {
-            BinaryOperator.AND -> EtsAndExpr(
-                left = left.toEtsEntity(),
-                right = right.toEtsEntity(),
-                type = EtsUnknownType, // TODO
-            )
-
-            BinaryOperator.OR -> EtsOrExpr(
-                left = left.toEtsEntity(),
-                right = right.toEtsEntity(),
-                type = EtsUnknownType, // TODO
-            )
-
-            BinaryOperator.EQ -> EtsEqExpr(
-                left = left.toEtsEntity(),
-                right = right.toEtsEntity(),
-            )
-
-            BinaryOperator.NEQ -> EtsNotEqExpr(
-                left = left.toEtsEntity(),
-                right = right.toEtsEntity(),
-            )
-
-            BinaryOperator.LT -> EtsLtExpr(
-                left = left.toEtsEntity(),
-                right = right.toEtsEntity(),
-            )
-
-            BinaryOperator.LTE -> EtsLtEqExpr(
-                left = left.toEtsEntity(),
-                right = right.toEtsEntity(),
-            )
-
-            BinaryOperator.GT -> EtsGtExpr(
-                left = left.toEtsEntity(),
-                right = right.toEtsEntity(),
-            )
-
-            BinaryOperator.GTE -> EtsGtEqExpr(
-                left = left.toEtsEntity(),
-                right = right.toEtsEntity(),
-            )
-
-            BinaryOperator.ADD -> EtsAddExpr(
-                left = left.toEtsEntity(),
-                right = right.toEtsEntity(),
-                type = EtsUnknownType, // TODO
-            )
-
-            BinaryOperator.SUB -> EtsSubExpr(
-                left = left.toEtsEntity(),
-                right = right.toEtsEntity(),
-                type = EtsUnknownType, // TODO
-            )
-
-            BinaryOperator.MUL -> EtsMulExpr(
-                left = left.toEtsEntity(),
-                right = right.toEtsEntity(),
-                type = EtsUnknownType, // TODO
-            )
-
-            BinaryOperator.DIV -> EtsDivExpr(
-                left = left.toEtsEntity(),
-                right = right.toEtsEntity(),
-                type = EtsUnknownType, // TODO
-            )
-        }
     }
 }
