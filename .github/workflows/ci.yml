@@ -150,10 +150,11 @@ jobs:
       - name: Run ETS tests
         run: ./gradlew --scan :jacodb-ets:generateTestResources :jacodb-ets:test
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+      # Codecov step disabled
+      # - name: Upload coverage reports to Codecov
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload Gradle test results
         if: (!cancelled())
