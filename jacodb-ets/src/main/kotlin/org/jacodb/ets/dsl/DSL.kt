@@ -22,26 +22,26 @@ private fun main() {
     val prog = program {
         assign(local("i"), param(0))
 
-        ifStmt(gt(local("i"), const(10.0))) {
-            ifStmt(eq(local("i"), const(42.0))) {
+        ifStmt(gt(local("i"), const(10))) {
+            ifStmt(eq(local("i"), const(42))) {
                 ret(local("i"))
-                `else` {
-                    assign(local("i"), const(10.0))
-                }
+            }.elseIf(eq(local("i"), const(20))) {
+                ret(local("i"))
+            }.`else` {
+                assign(local("i"), const(10))
             }
             nop()
         }
 
         label("loop")
-        ifStmt(gt(local("i"), const(0.0))) {
-            assign(local("i"), sub(local("i"), const(1.0)))
+        ifStmt(gt(local("i"), const(0))) {
+            assign(local("i"), sub(local("i"), const(1)))
             goto("loop")
-            `else` {
-                ret(local("i"))
-            }
+        }.`else` {
+            ret(local("i"))
         }
 
-        ret(const(42.0)) // unreachable
+        ret(const(100)) // unreachable
     }
 
     val doView = false

@@ -30,14 +30,35 @@ object ThisRef : Expr {
     override fun toString() = "this"
 }
 
-data class Constant(val value: Double) : Expr {
+data class ConstantNumber(val value: Double) : Expr {
     override fun toString() = "const($value)"
 }
 
+data class ConstantBoolean(val value: Boolean) : Expr {
+    override fun toString() = "const($value)"
+}
+
+data class ConstantString(val value: String) : Expr {
+    override fun toString() = "const(\"$value\")"
+}
+
 enum class BinaryOperator {
-    AND, OR,
-    EQ, NEQ, LT, LTE, GT, GTE,
-    ADD, SUB, MUL, DIV
+    AND,  // &&
+    OR,   // ||
+    EQ,   // ==
+    NEQ,  // !=
+    EQQ,  // ===
+    NEQQ, // !==
+    LT,   // <
+    LTE,  // <=
+    GT,   // >
+    GTE,  // >=
+    ADD,  // +
+    SUB,  // -
+    MUL,  // *
+    DIV,  // /
+    REM,  // %
+    // TODO: shift
 }
 
 data class BinaryExpr(
