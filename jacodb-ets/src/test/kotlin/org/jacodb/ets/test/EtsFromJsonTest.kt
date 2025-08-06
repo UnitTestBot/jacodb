@@ -20,7 +20,9 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonPrimitive
 import mu.KotlinLogging
 import org.jacodb.ets.dto.AnyTypeDto
+import org.jacodb.ets.dto.AssignStmtDto
 import org.jacodb.ets.dto.ClassSignatureDto
+import org.jacodb.ets.dto.ClosureFieldRefDto
 import org.jacodb.ets.dto.DecoratorDto
 import org.jacodb.ets.dto.FieldDto
 import org.jacodb.ets.dto.FieldSignatureDto
@@ -492,5 +494,50 @@ class EtsFromJsonTest {
         assertEquals(2, cls.fields.size)
         assertEquals("Cat", cls.fields[0].name)
         assertEquals("Dog", cls.fields[1].name)
+    }
+
+    @Test
+    fun testClosureFieldRefDto() {
+        val s = """
+            {
+              "_": "ClosureFieldRef",
+              "base": {
+                "name": "a",
+                "type": { "_": "UnknownType" }
+              },
+              "fieldName": "foo",
+              "type": { "_": "UnknownType" }
+            }
+        """.trimIndent()
+        val dto = json.decodeFromString<ValueDto>(s)
+        logger.info { "dto = $dto" }
+        assertIs<ClosureFieldRefDto>(dto)
+    }
+
+    @Test
+    fun testAssignArrayRefDto() {
+        val s = """
+            {
+              "_": "AssignStmt",
+              "left": {
+                "_": "Local",
+                "name": "x",
+                "type": { "_": "NumberType" }
+              },
+              "right": {
+                "_": "ClosureFieldRef",
+                "base": {
+                  "name": "a",
+                  "type": { "_": "UnknownType" }
+                },
+                "fieldName": "foo",
+                "type": { "_": "UnknownType" }
+              }
+            }
+        """.trimIndent()
+        val dto = json.decodeFromString<StmtDto>(s)
+        logger.info { "dto = $dto" }
+        assertIs<AssignStmtDto>(dto)
+        assertIs<ClosureFieldRefDto>(dto.right)
     }
 }
