@@ -60,5 +60,8 @@ value class EtsModifiers(val mask: Int) : WithModifiers {
         val EMPTY = EtsModifiers(0)
     }
 
+    val modifiers: List<EtsModifier>
+        get() = EtsModifier.entries.filter { hasModifier(it) }
+
     override fun hasModifier(modifier: EtsModifier): Boolean = (mask and modifier.value) != 0
 }
