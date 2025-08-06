@@ -19,10 +19,10 @@ package org.jacodb.ets.dsl
 import java.util.IdentityHashMap
 
 private fun Node.toDotLabel() = when (this) {
+    is Nop -> "nop"
     is Assign -> "$target := $expr"
     is Return -> "return $expr"
     is If -> "if ($condition)"
-    is Nop -> "nop"
     is Label -> "label $name"
     is Goto -> "goto $targetLabel"
 }
@@ -90,6 +90,7 @@ fun Program.toDot(): String {
             lines += "  $curId -> $nextId"
         }
     }
+
     processForEdges(nodes)
 
     lines += "}"
@@ -111,7 +112,7 @@ fun BlockCfg.toDot(): String {
     // Nodes
     for (block in blocks) {
         val s = block.statements.joinToString("") { it.toDotLabel() + "\\l" }
-        lines += "  ${block.id} [label=\"Block #${block.id}\\n${s}\"]"
+        lines += "  ${block.id} [label=\"[#${block.id}]\\l${s}\"]"
     }
 
     // Edges

@@ -79,6 +79,31 @@ data class EtsClassSignature(
         }
     }
 
+    private val cachedHashCode: Int = run {
+        var result = name.hashCode()
+        result = 31 * result + file.hashCode()
+        result = 31 * result + (namespace?.hashCode() ?: 0)
+        result
+    }
+
+    override fun hashCode(): Int {
+        return cachedHashCode
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as EtsClassSignature
+
+        if (cachedHashCode != other.cachedHashCode) return false
+        if (name != other.name) return false
+        if (file != other.file) return false
+        if (namespace != other.namespace) return false
+
+        return true
+    }
+
     companion object {
         val UNKNOWN = EtsClassSignature(
             name = UNKNOWN_CLASS_NAME,

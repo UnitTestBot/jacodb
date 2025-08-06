@@ -21,6 +21,7 @@ import org.jacodb.api.common.CommonProject
 class EtsScene(
     val projectFiles: List<EtsFile>,
     val sdkFiles: List<EtsFile> = emptyList(),
+    val projectName: String? = null,
 ) : CommonProject {
     init {
         projectFiles.forEach { it.scene = this }

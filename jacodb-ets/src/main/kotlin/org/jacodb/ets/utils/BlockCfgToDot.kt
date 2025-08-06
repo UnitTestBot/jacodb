@@ -30,6 +30,7 @@ private fun String.htmlEncode(): String = this
     .replace("&", "&amp;")
     .replace("<", "&lt;")
     .replace(">", "&gt;")
+    .replace("\\\"", "&quot;")
     .replace("\"", "&quot;")
 
 fun EtsBlockCfg.toDot(
