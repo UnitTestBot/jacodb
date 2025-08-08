@@ -40,11 +40,6 @@ jobs:
       - name: Build and run tests
         run: ./gradlew --scan build -x :jacodb-ets:build
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
       - name: Upload Gradle test results
         if: (!cancelled())
         uses: actions/upload-artifact@v4
@@ -80,11 +75,6 @@ jobs:
 
       - name: Build and run lifecycle tests
         run: ./gradlew --scan lifecycleTest
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload Gradle test results
         if: (!cancelled())
@@ -149,12 +139,6 @@ jobs:
 
       - name: Run ETS tests
         run: ./gradlew --scan :jacodb-ets:generateTestResources :jacodb-ets:test
-
-      # Codecov step disabled
-      # - name: Upload coverage reports to Codecov
-      #   uses: codecov/codecov-action@v3
-      #   with:
-      #     token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload Gradle test results
         if: (!cancelled())
