@@ -50,6 +50,7 @@ import org.jacodb.ets.model.EtsEntity
 import org.jacodb.ets.model.EtsEnumValueType
 import org.jacodb.ets.model.EtsEqExpr
 import org.jacodb.ets.model.EtsExpExpr
+import org.jacodb.ets.model.EtsExportInfo
 import org.jacodb.ets.model.EtsExpr
 import org.jacodb.ets.model.EtsField
 import org.jacodb.ets.model.EtsFieldImpl
@@ -63,6 +64,8 @@ import org.jacodb.ets.model.EtsGlobalRef
 import org.jacodb.ets.model.EtsGtEqExpr
 import org.jacodb.ets.model.EtsGtExpr
 import org.jacodb.ets.model.EtsIfStmt
+import org.jacodb.ets.model.EtsImportInfo
+import org.jacodb.ets.model.EtsImportType
 import org.jacodb.ets.model.EtsInExpr
 import org.jacodb.ets.model.EtsInstanceCallExpr
 import org.jacodb.ets.model.EtsInstanceFieldRef
@@ -715,10 +718,14 @@ fun EtsFileDto.toEtsFile(): EtsFile {
     val signature = signature.toEtsFileSignature()
     val classes = classes.map { it.toEtsClass() }
     val namespaces = namespaces.map { it.toEtsNamespace() }
+    val importInfos = importInfos.map { it.toEtsImportInfo() }
+    val exportInfos = exportInfos.map { it.toEtsExportInfo() }
     return EtsFile(
         signature = signature,
         classes = classes,
         namespaces = namespaces,
+        importInfos = importInfos,
+        exportInfos = exportInfos,
     )
 }
 
@@ -734,6 +741,29 @@ fun LocalDto.toEtsLocal(): EtsLocal {
     return EtsLocal(
         name = name,
         type = type.toEtsType(),
+    )
+}
+
+fun ImportInfoDto.toEtsImportInfo(): EtsImportInfo {
+    return EtsImportInfo(
+        clauseName = importClauseName,
+        type = EtsImportType.fromString(importType),
+        from = importFrom,
+        originalName = nameBeforeAs,
+        modifiers = EtsModifiers(modifiers),
+        decorators = emptyList(), // TODO: Add decorators when available in DTO
+    )
+}
+
+fun ExportInfoDto.toEtsExportInfo(): EtsExportInfo {
+    return EtsExportInfo(
+        exportClauseName = exportClauseName,
+        exportClauseType = exportClauseType.toString(),
+        exportFrom = exportFrom,
+        nameBeforeAs = nameBeforeAs,
+        isDefaultExport = isDefault,
+        modifiers = EtsModifiers(modifiers),
+        decorators = emptyList(), // TODO: Add decorators when available in DTO
     )
 }
 
