@@ -20,6 +20,8 @@ class EtsFile(
     val signature: EtsFileSignature,
     val classes: List<EtsClass>,
     val namespaces: List<EtsNamespace>,
+    val importInfos: List<EtsImportInfo> = emptyList(),
+    val exportInfos: List<EtsExportInfo> = emptyList(),
 ) {
     init {
         classes.forEach { (it as EtsClassImpl).declaringFile = this }

@@ -16,6 +16,7 @@
 
 package org.jacodb.ets.dto
 
+import mu.KotlinLogging
 import org.jacodb.ets.model.BasicBlock
 import org.jacodb.ets.model.EtsAddExpr
 import org.jacodb.ets.model.EtsAliasType
@@ -50,6 +51,8 @@ import org.jacodb.ets.model.EtsEntity
 import org.jacodb.ets.model.EtsEnumValueType
 import org.jacodb.ets.model.EtsEqExpr
 import org.jacodb.ets.model.EtsExpExpr
+import org.jacodb.ets.model.EtsExportInfo
+import org.jacodb.ets.model.EtsExportType
 import org.jacodb.ets.model.EtsExpr
 import org.jacodb.ets.model.EtsField
 import org.jacodb.ets.model.EtsFieldImpl
@@ -63,6 +66,8 @@ import org.jacodb.ets.model.EtsGlobalRef
 import org.jacodb.ets.model.EtsGtEqExpr
 import org.jacodb.ets.model.EtsGtExpr
 import org.jacodb.ets.model.EtsIfStmt
+import org.jacodb.ets.model.EtsImportInfo
+import org.jacodb.ets.model.EtsImportType
 import org.jacodb.ets.model.EtsInExpr
 import org.jacodb.ets.model.EtsInstanceCallExpr
 import org.jacodb.ets.model.EtsInstanceFieldRef
@@ -130,6 +135,8 @@ import org.jacodb.ets.model.EtsUnsignedRightShiftExpr
 import org.jacodb.ets.model.EtsValue
 import org.jacodb.ets.model.EtsVoidType
 import org.jacodb.ets.model.EtsYieldExpr
+
+private val logger = KotlinLogging.logger {}
 
 class EtsMethodBuilder(
     signature: EtsMethodSignature,
@@ -715,10 +722,14 @@ fun EtsFileDto.toEtsFile(): EtsFile {
     val signature = signature.toEtsFileSignature()
     val classes = classes.map { it.toEtsClass() }
     val namespaces = namespaces.map { it.toEtsNamespace() }
+    val importInfos = importInfos.map { it.toEtsImportInfo() }
+    val exportInfos = exportInfos.map { it.toEtsExportInfo() }
     return EtsFile(
         signature = signature,
         classes = classes,
         namespaces = namespaces,
+        importInfos = importInfos,
+        exportInfos = exportInfos,
     )
 }
 
@@ -737,6 +748,32 @@ fun LocalDto.toEtsLocal(): EtsLocal {
     )
 }
 
+fun ImportInfoDto.toEtsImportInfo(): EtsImportInfo {
+    return EtsImportInfo(
+        name = importName,
+        type = when (importType) {
+            "Identifier" -> EtsImportType.DEFAULT
+            "NamedImports" -> EtsImportType.NAMED
+            "NamespaceImport" -> EtsImportType.NAMESPACE
+            "" -> EtsImportType.SIDE_EFFECT
+            else -> error("Unknown import type: $importType")
+        },
+        from = importFrom,
+        nameBeforeAs = nameBeforeAs,
+        modifiers = EtsModifiers(modifiers),
+    )
+}
+
+fun ExportInfoDto.toEtsExportInfo(): EtsExportInfo {
+    return EtsExportInfo(
+        name = exportName,
+        type = exportType.toEtsExportType(),
+        from = exportFrom,
+        nameBeforeAs = nameBeforeAs,
+        modifiers = EtsModifiers(modifiers),
+    )
+}
+
 private fun Int.toEtsClassCategory(): EtsClassCategory {
     return when (this) {
         0 -> EtsClassCategory.CLASS
@@ -746,5 +783,20 @@ private fun Int.toEtsClassCategory(): EtsClassCategory {
         4 -> EtsClassCategory.TYPE_LITERAL
         5 -> EtsClassCategory.OBJECT
         else -> error("Unknown class category: $this")
+    }
+}
+
+private fun Int.toEtsExportType(): EtsExportType {
+    return when (this) {
+        0 -> EtsExportType.NAME_SPACE
+        1 -> EtsExportType.CLASS
+        2 -> EtsExportType.METHOD
+        3 -> EtsExportType.LOCAL
+        4 -> EtsExportType.TYPE
+        9 -> EtsExportType.UNKNOWN
+        else -> {
+            logger.warn { "Unknown export type value: $this, defaulting to UNKNOWN" }
+            EtsExportType.UNKNOWN
+        }
     }
 }

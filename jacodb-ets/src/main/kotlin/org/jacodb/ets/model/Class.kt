@@ -44,7 +44,7 @@ class EtsClassImpl(
     override val superClass: EtsClassSignature? = null,
     override val implementedInterfaces: List<EtsClassSignature> = emptyList(),
     override val typeParameters: List<EtsType> = emptyList(),
-    override val modifiers: EtsModifiers = EtsModifiers.Companion.EMPTY,
+    override val modifiers: EtsModifiers = EtsModifiers.EMPTY,
     override val decorators: List<EtsDecorator> = emptyList(),
 ) : EtsClass {
     init {
