@@ -748,7 +748,7 @@ fun LocalDto.toEtsLocal(): EtsLocal {
 fun ImportInfoDto.toEtsImportInfo(): EtsImportInfo {
     return EtsImportInfo(
         name = importName,
-        type = when(importType) {
+        type = when (importType) {
             "Identifier" -> EtsImportType.DEFAULT
             "NamedImports" -> EtsImportType.NAMED
             "NamespaceImport" -> EtsImportType.NAMESPACE

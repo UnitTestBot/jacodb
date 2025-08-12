@@ -44,7 +44,7 @@ interface EtsMethod : Base, CommonMethod {
 class EtsMethodImpl(
     override val signature: EtsMethodSignature,
     override val typeParameters: List<EtsType> = emptyList(),
-    override val modifiers: EtsModifiers = EtsModifiers.Companion.EMPTY,
+    override val modifiers: EtsModifiers = EtsModifiers.EMPTY,
     override val decorators: List<EtsDecorator> = emptyList(),
 ) : EtsMethod {
     var _cfg: EtsBlockCfg? = null

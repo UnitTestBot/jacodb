@@ -30,7 +30,7 @@ interface EtsField : Base {
 
 class EtsFieldImpl(
     override val signature: EtsFieldSignature,
-    override val modifiers: EtsModifiers = EtsModifiers.Companion.EMPTY,
+    override val modifiers: EtsModifiers = EtsModifiers.EMPTY,
     val isOptional: Boolean = false,  // '?'
     val isDefinitelyAssigned: Boolean = false, // '!'
 ) : EtsField {

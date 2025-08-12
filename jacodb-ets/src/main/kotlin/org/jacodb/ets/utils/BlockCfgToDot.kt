@@ -17,10 +17,7 @@
 package org.jacodb.ets.utils
 
 import org.jacodb.ets.model.BasicBlock
-import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsBlockCfg
-import org.jacodb.ets.model.EtsCallExpr
-import org.jacodb.ets.model.EtsCallStmt
 import org.jacodb.ets.model.EtsStmt
 import java.nio.file.Files
 import java.nio.file.Path
@@ -34,7 +31,7 @@ private fun String.htmlEncode(): String = this
     .replace("\"", "&quot;")
 
 fun EtsBlockCfg.toDot(
-    useHtml: Boolean = true
+    useHtml: Boolean = true,
 ): String {
     val lines = mutableListOf<String>()
     lines += "digraph cfg {"
@@ -84,7 +81,7 @@ fun EtsBlockCfg.toDot(
  */
 data class InterproceduralCfg(
     val main: EtsBlockCfg,
-    val callees: Map<Pair<EtsStmt, Int>, EtsBlockCfg>
+    val callees: Map<Pair<EtsStmt, Int>, EtsBlockCfg>,
 )
 
 /**
@@ -95,7 +92,7 @@ data class InterproceduralCfg(
 fun InterproceduralCfg.toHighlightedDotWithCalls(
     pathStmts: Set<EtsStmt>,
     currentStmt: EtsStmt?,
-    useHtml: Boolean = true
+    useHtml: Boolean = true,
 ): String {
     val lines = mutableListOf<String>()
     lines += "digraph world {"
@@ -189,7 +186,7 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
         // connect from the specific port on the caller block
         // connect from the specific port on the caller block using tailport
         val caller = "M_${parentBlock}"
-        val entryId  = cfg.blocks.first().id
+        val entryId = cfg.blocks.first().id
         val calleeEntry = "C_${h}_$entryId"
         val stmtHash = sanitize(stmt.hashCode())
         lines += "  $caller:p$stmtHash -> $calleeEntry [tailport=\"p$stmtHash\" ltail=\"$clusterName\" lhead=\"$clusterName\" style=dotted label=\"call\"];"
@@ -202,7 +199,7 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
 private fun buildHtmlTable(
     block: BasicBlock,
     pathStmts: Set<EtsStmt>,
-    currentStmt: EtsStmt?
+    currentStmt: EtsStmt?,
 ): String {
     var i = 0
     val rows = block.statements.joinToString(separator = "") { stmt ->
@@ -226,7 +223,7 @@ private fun buildHtmlTable(
 private fun buildPlainLabel(
     block: BasicBlock,
     pathStmts: Set<EtsStmt>,
-    currentStmt: EtsStmt?
+    currentStmt: EtsStmt?,
 ): String {
     val body = block.statements.joinToString(separator = "") { stmt ->
         val raw = stmt.toDotLabel()
@@ -249,7 +246,7 @@ fun renderDotOverwrite(
         System.getProperty("os.name").startsWith("Mac") -> "open"
         System.getProperty("os.name").startsWith("Win") -> "cmd /c start"
         else -> "xdg-open"
-    }
+    },
 ) {
     val dotFile = outputDir.resolve("$baseName.dot")
     val outSvg = outputDir.resolve("$baseName.svg")
