@@ -24,6 +24,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 private val logger = KotlinLogging.logger {}
@@ -73,7 +74,8 @@ class EtsExportTest {
         }
         assertNotNull(constantExport, "Should find publicConstant named export")
         assertEquals("publicConstant", constantExport.name)
-        assertEquals(null, constantExport.originalName, "Direct export should have no original name")
+        assertEquals("publicConstant", constantExport.originalName)
+        assertNull( constantExport.nameBeforeAs, "Direct export should have no aliasing")
         logger.info { "✓ Named constant export test passed: $constantExport" }
 
         // Test: export function publicFunction()
@@ -99,11 +101,41 @@ class EtsExportTest {
 
         // Test: export default defaultValue;
         val defaultExport = file.exportInfos.find {
-            it.isDefaultExport
+            it.isDefaultExport && it.originalName == "defaultValue"
         }
-        assertNotNull(defaultExport, "Should find default export")
-        assertTrue(defaultExport.isDefaultExport, "Export should be marked as default")
-        logger.info { "✓ Default export test passed: $defaultExport" }
+        assertNotNull(defaultExport, "Should find direct default export")
+        logger.info { "✓ Direct default export test passed: $defaultExport" }
+    }
+
+    @Test
+    fun testDefaultReExports() {
+        logger.info { "Testing default re-exports" }
+
+        // // Test: export { default } from './module-with-default';
+        // val defaultReExport = file.exportInfos.find {
+        //     it.name == "default" &&
+        //         it.originalName == "default" &&
+        //         it.from == "./module-with-default"
+        // }
+        // assertNotNull(defaultReExport, "Should find re-exported default export")
+        // assertTrue(defaultReExport.isDefaultExport, "Re-exported default should be marked as default")
+        // assertEquals("default", defaultReExport.name)
+        // assertEquals("default", defaultReExport.originalName)
+        // assertEquals("./module-with-default", defaultReExport.from)
+        // logger.info { "✓ Default re-export test passed: $defaultReExport" }
+
+        // Test: export { default as ModuleDefault } from './another-module';
+        val aliasedDefaultReExport = file.exportInfos.find {
+            it.name == "ModuleDefault" &&
+                it.originalName == "default" &&
+                it.from == "./another-module"
+        }
+        assertNotNull(aliasedDefaultReExport, "Should find aliased default re-export")
+        assertTrue(aliasedDefaultReExport.isDefaultExport, "Aliased default re-export should be marked as default")
+        assertEquals("ModuleDefault", aliasedDefaultReExport.name)
+        assertEquals("default", aliasedDefaultReExport.originalName)
+        assertEquals("./another-module", aliasedDefaultReExport.from)
+        logger.info { "✓ Aliased default re-export test passed: $aliasedDefaultReExport" }
     }
 
     @Test
@@ -184,25 +216,85 @@ class EtsExportTest {
     fun testExportInfoToString() {
         logger.info { "Testing EtsExportInfo toString() method" }
 
-        // Test toString format for different export types
-        file.exportInfos.forEach { exportInfo ->
-            val stringRepr = exportInfo.toString()
-            logger.info { "Export string representation: $stringRepr" }
+        // Test named exports: export const publicConstant = 'hello';
+        val namedExport = file.exportInfos.find { it.name == "publicConstant" && it.from == null }
+        assertNotNull(namedExport, "Should find publicConstant export")
+        val namedExportString = namedExport.toString()
+        logger.info { "Named export string: $namedExportString" }
+        assertEquals("export { publicConstant }", namedExportString)
 
-            // Basic validation that toString contains expected elements
-            assertTrue(stringRepr.contains("export"), "toString should contain 'export'")
+        // Test default export: export default defaultValue;
+        val defaultExport = file.exportInfos.find { it.isDefaultExport && it.from == null }
+        assertNotNull(defaultExport, "Should find default export")
+        val defaultExportString = defaultExport.toString()
+        logger.info { "Default export string: $defaultExportString" }
+        assertEquals("export default defaultValue", defaultExportString)
 
-            // Re-exports should contain 'from'
-            if (exportInfo.from != null) {
-                assertTrue(stringRepr.contains("from"), "toString should contain 'from' for re-exports")
-            }
+        // Test re-export: export { internalFunction } from './internal-module';
+        val reExport = file.exportInfos.find {
+            it.name == "internalFunction" && it.from == "./internal-module"
+        }
+        assertNotNull(reExport, "Should find internalFunction re-export")
+        val reExportString = reExport.toString()
+        logger.info { "Re-export string: $reExportString" }
+        assertEquals("export { internalFunction } from './internal-module'", reExportString)
 
-            // Default exports should contain 'default'
-            if (exportInfo.isDefaultExport) {
-                assertTrue(stringRepr.contains("default"), "toString should contain 'default' for default exports")
-            }
+        // Test aliased re-export: export { Component as ReactComponent } from 'react';
+        val aliasedReExport = file.exportInfos.find {
+            it.name == "ReactComponent" && it.originalName == "Component" && it.from == "react"
+        }
+        assertNotNull(aliasedReExport, "Should find Component as ReactComponent re-export")
+        val aliasedReExportString = aliasedReExport.toString()
+        logger.info { "Aliased re-export string: $aliasedReExportString" }
+        assertEquals("export { Component as ReactComponent } from 'react'", aliasedReExportString)
+
+        // Test aliased export: export { internalName as publicName };
+        val aliasedExport = file.exportInfos.find {
+            it.name == "publicName" && it.originalName == "internalName" && it.from == null
+        }
+        assertNotNull(aliasedExport, "Should find internalName as publicName export")
+        val aliasedExportString = aliasedExport.toString()
+        logger.info { "Aliased export string: $aliasedExportString" }
+        assertEquals("export { internalName as publicName }", aliasedExportString)
+
+        // Test star re-export: export * from './all-exports';
+        val starReExport = file.exportInfos.find {
+            it.name == "*" && it.from == "./all-exports"
+        }
+        if (starReExport != null) {
+            val starReExportString = starReExport.toString()
+            logger.info { "Star re-export string: $starReExportString" }
+            assertEquals("export * from './all-exports'", starReExportString)
         }
 
-        logger.info { "✓ Export toString tests passed" }
+        // Test namespace re-export: export * as Utils from './utils';
+        val namespaceReExport = file.exportInfos.find {
+            it.name == "Utils" && it.from == "./utils"
+        }
+        if (namespaceReExport != null) {
+            val namespaceReExportString = namespaceReExport.toString()
+            logger.info { "Namespace re-export string: $namespaceReExportString" }
+            assertEquals("export * as Utils from './utils'", namespaceReExportString)
+        }
+
+        // // Test default re-export: export { default } from './module-with-default';
+        // val defaultReExport = file.exportInfos.find {
+        //     it.name == "default" && it.originalName == "default" && it.from == "./module-with-default"
+        // }
+        // assertNotNull(defaultReExport, "Should find default re-export")
+        // val defaultReExportString = defaultReExport.toString()
+        // logger.info { "Default re-export string: $defaultReExportString" }
+        // assertEquals("export { default } from './module-with-default'", defaultReExportString)
+
+        // Test aliased default re-export: export { default as ModuleDefault } from './another-module';
+        val aliasedDefaultReExport = file.exportInfos.find {
+            it.name == "ModuleDefault" && it.originalName == "default" && it.from == "./another-module"
+        }
+        assertNotNull(aliasedDefaultReExport, "Should find default as ModuleDefault re-export")
+        val aliasedDefaultReExportString = aliasedDefaultReExport.toString()
+        logger.info { "Aliased default re-export string: $aliasedDefaultReExportString" }
+        assertEquals("export { default as ModuleDefault } from './another-module'", aliasedDefaultReExportString)
+
+        logger.info { "✓ All specific export toString tests passed" }
     }
 }

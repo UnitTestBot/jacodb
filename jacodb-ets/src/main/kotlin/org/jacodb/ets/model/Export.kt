@@ -16,63 +16,114 @@
 
 package org.jacodb.ets.model
 
-import mu.KotlinLogging
-
-private val logger = KotlinLogging.logger {}
-
 /**
- * Represents export information for TypeScript exports.
+ * Represents export information for TypeScript/JavaScript exports.
+ *
+ * @property name The name of the exported entity.
+ * @property type The [type][EtsExportType] of export.
+ * @property from The module or path being exported from (null for direct exports).
+ * @property nameBeforeAs The original name before 'as' aliasing (null if no aliasing).
  */
 data class EtsExportInfo(
     val name: String,
     val type: EtsExportType,
     val from: String? = null,
-    val originalName: String? = null,
+    val nameBeforeAs: String? = null,
     override val modifiers: EtsModifiers = EtsModifiers.EMPTY,
 ) : Base {
 
-    // Export statements do not have decorators in TypeScript.
+    // Note: Export statements do not have decorators in JS/TS.
     override val decorators: List<EtsDecorator> = emptyList()
 
     /**
+     * Export clause name without any aliasing.
+     */
+    val originalName: String
+        get() = nameBeforeAs ?: name
+
+    /**
      * Whether this export is a default export.
+     *
+     * ```ts
+     * export default value;
+     * export { value as default };
+     * export { default } from './module';
+     * export { default as Name } from './module';
+     * ```
      */
     val isDefaultExport: Boolean
         get() {
+            // For re-exports:
+            //   export { default } from './module'
+            //   export { default as Name } from './module'
             if (from != null) return originalName == "default"
-            return name == "default" || super.isDefault
+
+            // For direct exports:
+            //   export default value
+            //   export { value as default }
+            return super.isDefault
         }
+
+    /**
+     * Whether this export is a star re-export (re-exporting everything from another module).
+     *
+     * ```ts
+     * export * from './module';
+     * export * as Utils from './utils';
+     * ```
+     */
+    val isStarExport: Boolean
+        get() = from != null && originalName == "*"
+
+    /**
+     * Whether this export is aliased.
+     *
+     * ```ts
+     * export { value as Name } from './module';
+     * export { default as Name } from './module';
+     * export * as Utils from './utils';
+     * ```
+     */
+    val isAliased: Boolean
+        get() = nameBeforeAs != null && nameBeforeAs != name
 
     override val isDefault: Boolean
         get() = isDefaultExport
 
     override fun toString(): String {
-        val alias = if (originalName != null) {
-            " as $name"
-        } else ""
+        return when {
+            // Re-exports
+            from != null -> {
+                val alias = if (isAliased) " as $name" else ""
+                if (isStarExport) {
+                    "export *$alias from '$from'"
+                } else {
+                    "export { $originalName$alias } from '$from'"
+                }
+            }
 
-        val from = from?.let { " from '$it'" } ?: ""
-        val defaultPrefix = if (isDefaultExport) "default " else ""
-        val originName = originalName ?: name
+            // Direct default export
+            isDefaultExport -> {
+                "export default $originalName"
+            }
 
-        return "export $defaultPrefix$originName$alias$from"
-    }
-}
-
-enum class EtsExportType(val value: Int) {
-    NAME_SPACE(0),
-    CLASS(1),
-    METHOD(2),
-    LOCAL(3),
-    TYPE(4),
-    UNKNOWN(9);
-
-    companion object {
-        fun from(value: Int): EtsExportType {
-            return entries.find { it.value == value } ?: run {
-                logger.warn { "Unknown export type value: $value, defaulting to UNKNOWN" }
-                UNKNOWN
+            // Direct named export
+            else -> {
+                val alias = if (isAliased) " as $name" else ""
+                "export { $originalName$alias }"
             }
         }
     }
+}
+
+/**
+ * Type of export in TypeScript/JavaScript.
+ */
+enum class EtsExportType {
+    NAME_SPACE,
+    CLASS,
+    METHOD,
+    LOCAL,
+    TYPE,
+    UNKNOWN;
 }

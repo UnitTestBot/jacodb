@@ -16,6 +16,7 @@
 
 package org.jacodb.ets.dto
 
+import mu.KotlinLogging
 import org.jacodb.ets.model.BasicBlock
 import org.jacodb.ets.model.EtsAddExpr
 import org.jacodb.ets.model.EtsAliasType
@@ -134,6 +135,8 @@ import org.jacodb.ets.model.EtsUnsignedRightShiftExpr
 import org.jacodb.ets.model.EtsValue
 import org.jacodb.ets.model.EtsVoidType
 import org.jacodb.ets.model.EtsYieldExpr
+
+private val logger = KotlinLogging.logger {}
 
 class EtsMethodBuilder(
     signature: EtsMethodSignature,
@@ -756,7 +759,7 @@ fun ImportInfoDto.toEtsImportInfo(): EtsImportInfo {
             else -> error("Unknown import type: $importType")
         },
         from = importFrom,
-        originalName = nameBeforeAs,
+        nameBeforeAs = nameBeforeAs,
         modifiers = EtsModifiers(modifiers),
     )
 }
@@ -764,9 +767,9 @@ fun ImportInfoDto.toEtsImportInfo(): EtsImportInfo {
 fun ExportInfoDto.toEtsExportInfo(): EtsExportInfo {
     return EtsExportInfo(
         name = exportName,
-        type = EtsExportType.from(exportType),
+        type = exportType.toEtsExportType(),
         from = exportFrom,
-        originalName = nameBeforeAs,
+        nameBeforeAs = nameBeforeAs,
         modifiers = EtsModifiers(modifiers),
     )
 }
@@ -780,5 +783,20 @@ private fun Int.toEtsClassCategory(): EtsClassCategory {
         4 -> EtsClassCategory.TYPE_LITERAL
         5 -> EtsClassCategory.OBJECT
         else -> error("Unknown class category: $this")
+    }
+}
+
+private fun Int.toEtsExportType(): EtsExportType {
+    return when (this) {
+        0 -> EtsExportType.NAME_SPACE
+        1 -> EtsExportType.CLASS
+        2 -> EtsExportType.METHOD
+        3 -> EtsExportType.LOCAL
+        4 -> EtsExportType.TYPE
+        9 -> EtsExportType.UNKNOWN
+        else -> {
+            logger.warn { "Unknown export type value: $this, defaulting to UNKNOWN" }
+            EtsExportType.UNKNOWN
+        }
     }
 }

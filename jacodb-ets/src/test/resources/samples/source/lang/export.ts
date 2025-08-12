@@ -4,13 +4,15 @@
 // Named exports
 export const publicConstant = 'hello';
 export let publicVariable = 42;
+
 export function publicFunction() {
     return 'public';
 }
 
 // Class export
 export class PublicClass {
-    constructor(public name: string) {}
+    constructor(public name: string) {
+    }
 }
 
 // Interface export
@@ -32,12 +34,6 @@ export enum PublicEnum {
 const defaultValue = 'default export value';
 export default defaultValue;
 
-// Re-exports
-export { internalFunction } from './internal-module';
-export { Component as ReactComponent } from 'react';
-export * from './all-exports';
-export * as Utils from './utils';
-
 // Export with alias
 const internalName = 'internal';
 export { internalName as publicName };
@@ -52,6 +48,18 @@ export { MyNamespace };
 
 // Local declarations for internal use (not exported)
 const privateConstant = 'private';
+
 function privateFunction() {
     return 'private';
 }
+
+// Re-exports
+export { internalFunction } from './internal-module';
+export { Component as ReactComponent } from 'react';
+export * from './all-exports';
+export * as Utils from './utils';
+
+// Re-export default exports
+// Note: this file already has a default export, so we cannot re-export it directly.
+// export { default } from './module-with-default';
+export { default as ModuleDefault } from './another-module';

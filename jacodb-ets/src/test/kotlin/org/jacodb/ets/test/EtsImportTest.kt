@@ -24,6 +24,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 private val logger = KotlinLogging.logger {}
@@ -73,6 +74,7 @@ class EtsImportTest {
         }
         assertNotNull(reactImport, "Should find React default import")
         assertTrue(reactImport.isDefault, "React import should be marked as default")
+        assertNull(reactImport.nameBeforeAs, "React import is not aliased")
         assertEquals("React", reactImport.name)
         logger.info { "✓ Default import test passed: $reactImport" }
     }
@@ -91,6 +93,8 @@ class EtsImportTest {
 
         assertNotNull(useStateImport, "Should find useState named import")
         assertNotNull(useEffectImport, "Should find useEffect named import")
+        assertNull(useStateImport.nameBeforeAs, "useState import is not aliased")
+        assertNull(useEffectImport.nameBeforeAs, "useEffect import is not aliased")
         assertEquals("useState", useStateImport.name)
         assertEquals("useEffect", useEffectImport.name)
         logger.info { "✓ Named imports test passed: useState, useEffect" }
@@ -107,8 +111,8 @@ class EtsImportTest {
                 it.from == "react"
         }
         assertNotNull(aliasedImport, "Should find Component as ReactComponent import")
-        assertEquals("Component", aliasedImport.originalName)
         assertEquals("ReactComponent", aliasedImport.name)
+        assertEquals("Component", aliasedImport.originalName)
         logger.info { "✓ Aliased import test passed: $aliasedImport" }
     }
 
@@ -152,7 +156,7 @@ class EtsImportTest {
         }
         assertNotNull(cssSideEffectImport, "Should find side effect import for styles.css")
         assertEquals("", cssSideEffectImport.name, "Side effect import should have empty clause name")
-        assertEquals(null, cssSideEffectImport.originalName, "Side effect import should have null original name")
+        assertNull(cssSideEffectImport.nameBeforeAs, "Side effect import should not have aliasing")
         assertTrue(cssSideEffectImport.isSideEffectImport, "Import should be marked as side effect")
         logger.info { "✓ Side effect import test passed: $cssSideEffectImport" }
     }
@@ -161,20 +165,68 @@ class EtsImportTest {
     fun testImportInfoToString() {
         logger.info { "Testing EtsImportInfo toString() method" }
 
-        // Test toString format for different import types
-        file.importInfos.forEach { importInfo ->
-            val stringRepr = importInfo.toString()
-            logger.info { "Import string representation: $stringRepr" }
-
-            // Basic validation that toString contains expected elements
-            assertTrue(stringRepr.contains("import"), "toString should contain 'import'")
-
-            // Only side-effect imports don't have 'from' in their syntax
-            if (!importInfo.isSideEffectImport) {
-                assertTrue(stringRepr.contains("from"), "toString should contain 'from' for imports with source")
-            }
+        // Test default import: import React from 'react';
+        val defaultImport = file.importInfos.find {
+            it.name == "React" && it.from == "react" && it.isDefaultImport
         }
+        assertNotNull(defaultImport, "Should find React default import")
+        val defaultImportString = defaultImport.toString()
+        logger.info { "Default import string: $defaultImportString" }
+        assertEquals("import React from 'react'", defaultImportString)
 
-        logger.info { "✓ Import toString tests passed" }
+        // Test named import: import { useState } from 'react';
+        val namedImport = file.importInfos.find {
+            it.name == "useState" && it.from == "react" && it.isNamedImport
+        }
+        assertNotNull(namedImport, "Should find useState named import")
+        val namedImportString = namedImport.toString()
+        logger.info { "Named import string: $namedImportString" }
+        assertEquals("import { useState } from 'react'", namedImportString)
+
+        // Test aliased import: import { Component as ReactComponent } from 'react';
+        val aliasedImport = file.importInfos.find {
+            it.name == "ReactComponent" && it.originalName == "Component" && it.from == "react"
+        }
+        assertNotNull(aliasedImport, "Should find Component as ReactComponent import")
+        val aliasedImportString = aliasedImport.toString()
+        logger.info { "Aliased import string: $aliasedImportString" }
+        assertEquals("import { Component as ReactComponent } from 'react'", aliasedImportString)
+
+        // Test namespace import: import * as Utils from './utils';
+        val namespaceImport = file.importInfos.find {
+            it.name == "Utils" && it.from == "./utils" && it.isNamespaceImport
+        }
+        assertNotNull(namespaceImport, "Should find Utils namespace import")
+        val namespaceImportString = namespaceImport.toString()
+        logger.info { "Namespace import string: $namespaceImportString" }
+        assertEquals("import * as Utils from './utils'", namespaceImportString)
+
+        // Test side effect import: import './styles.css';
+        val sideEffectImport = file.importInfos.find {
+            it.from == "./styles.css" && it.isSideEffectImport
+        }
+        assertNotNull(sideEffectImport, "Should find side effect import")
+        val sideEffectImportString = sideEffectImport.toString()
+        logger.info { "Side effect import string: $sideEffectImportString" }
+        assertEquals("import './styles.css'", sideEffectImportString)
+
+        // Test mixed imports from same module: import DefaultExport, { namedExport } from './module';
+        val mixedDefaultImport = file.importInfos.find {
+            it.name == "DefaultExport" && it.from == "./module" && it.isDefaultImport
+        }
+        val mixedNamedImport = file.importInfos.find {
+            it.name == "namedExport" && it.from == "./module" && it.isNamedImport
+        }
+        assertNotNull(mixedDefaultImport, "Should find DefaultExport from mixed import")
+        assertNotNull(mixedNamedImport, "Should find namedExport from mixed import")
+
+        val mixedDefaultString = mixedDefaultImport.toString()
+        val mixedNamedString = mixedNamedImport.toString()
+        logger.info { "Mixed default import string: $mixedDefaultString" }
+        logger.info { "Mixed named import string: $mixedNamedString" }
+        assertEquals("import DefaultExport from './module'", mixedDefaultString)
+        assertEquals("import { namedExport } from './module'", mixedNamedString)
+
+        logger.info { "✓ All specific import toString tests passed" }
     }
 }

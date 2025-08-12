@@ -17,55 +17,79 @@
 package org.jacodb.ets.model
 
 /**
- * This class captures all the essential information about import statements in TypeScript/JavaScript files,
- * including default imports, named imports, namespace imports, and side-effect imports.
+ * Represents import information for TypeScript/JavaScript imports.
  *
  * @property name The name that will be used in the importing module (empty for side-effect imports)
  * @property type The [type][EtsImportType] of import.
  * @property from The module or path being imported from.
- * @property originalName The original name before 'as' aliasing (`null` if no aliasing, `*` for namespace imports).
+ * @property nameBeforeAs The original name before 'as' aliasing (null if no aliasing, "*" for namespace imports).
  * @property modifiers Import modifiers.
  */
 data class EtsImportInfo(
     val name: String,
     val type: EtsImportType,
     val from: String,
-    val originalName: String? = null,
+    val nameBeforeAs: String? = null,
     override val modifiers: EtsModifiers = EtsModifiers.EMPTY,
 ) : Base {
 
-    // Import statements do not have decorators in TypeScript.
+    // Note: Import statements do not have decorators in JS/TS.
     override val decorators: List<EtsDecorator> = emptyList()
 
     /**
-     * Whether this is a default import (import React from 'react').
+     * Import clause name without any aliasing.
+     */
+    val originalName: String = nameBeforeAs ?: name
+
+    /**
+     * Whether this is a default import.
+     *
+     * ```ts
+     * import React from 'react';
+     * ```
      */
     val isDefaultImport: Boolean
         get() = type == EtsImportType.DEFAULT || originalName == "default"
 
     /**
-     * Whether this is a named import (import { useState } from 'react').
+     * Whether this is a named import.
+     *
+     * ```ts
+     * import { useState } from 'react';
+     * ```
      */
     val isNamedImport: Boolean
         get() = type == EtsImportType.NAMED
 
     /**
-     * Whether this is a namespace import (import * as Utils from './utils').
+     * Whether this is a namespace import.
+     *
+     * ```ts
+     * import * as Utils from './utils';
+     * ```
      */
     val isNamespaceImport: Boolean
-        get() = type == EtsImportType.NAMESPACE
+        get() = type == EtsImportType.NAMESPACE || nameBeforeAs == "*"
 
     /**
-     * Whether this is a side-effect import (import './styles.css').
+     * Whether this is a side-effect import.
+     *
+     * ```ts
+     * import './styles.css';
+     * ```
      */
     val isSideEffectImport: Boolean
         get() = type == EtsImportType.SIDE_EFFECT
 
     /**
-     * Whether this import uses aliasing (import { Component as ReactComponent }).
+     * Whether this import uses aliasing.
+     *
+     * ```ts
+     * import { Component as ReactComponent };
+     * ```
      */
     val isAliased: Boolean
-        get() = originalName != null && originalName != "*" && originalName != name
+        get() = nameBeforeAs != null && nameBeforeAs != "*" && nameBeforeAs != name
 
     override val isDefault: Boolean
         get() = isDefaultImport || super.isDefault
@@ -106,15 +130,35 @@ data class EtsImportInfo(
  * Type of import in TypeScript/JavaScript.
  */
 enum class EtsImportType {
-    /** Default import: `import React from 'react'` */
+    /**
+     * Default import:
+     * ```ts
+     * import React from 'react'
+     * ```
+     */
     DEFAULT,
 
-    /** Named import: `import { useState } from 'react'` */
+    /**
+     * Named import:
+     * ```ts
+     * import { useState } from 'react'
+     * ```
+     */
     NAMED,
 
-    /** Namespace import: `import * as Utils from './utils'` */
+    /**
+     * Namespace import:
+     * ```ts
+     * import * as Utils from './utils'
+     * ```
+     */
     NAMESPACE,
 
-    /** Side-effect import: `import './styles.css'` */
+    /**
+     * Side-effect import:
+     * ```ts
+     * import './styles.css'
+     * ```
+     */
     SIDE_EFFECT,
 }
