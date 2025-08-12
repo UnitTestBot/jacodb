@@ -17,9 +17,10 @@
 package org.jacodb.ets.test
 
 import mu.KotlinLogging
-import org.jacodb.ets.model.EtsImportInfo
+import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.test.utils.getResourcePath
 import org.jacodb.ets.utils.loadEtsFileAutoConvert
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -29,95 +30,111 @@ private val logger = KotlinLogging.logger {}
 
 class EtsImportTest {
 
-    @Test
-    fun testLoadImportTsFile() {
-        logger.info { "Loading import.ts sample file and testing import information" }
+    companion object {
+        private const val TS_PATH = "/samples/source/lang/import.ts"
 
-        // Load the TypeScript file
-        val tsFilePath = getResourcePath("/samples/source/lang/import.ts")
-        val etsFile = loadEtsFileAutoConvert(tsFilePath)
+        private val file: EtsFile by lazy {
+            logger.info { "Loading sample file: $TS_PATH" }
+            val path = getResourcePath(TS_PATH)
+            val file = loadEtsFileAutoConvert(path)
 
-        logger.info { "Loaded ETS file: ${etsFile.name}" }
-        logger.info { "Found ${etsFile.importInfos.size} import statements" }
+            logger.info { "Loaded ETS file: ${file.name}" }
+            logger.info { "Found ${file.importInfos.size} import statements" }
 
-        // Verify the file was loaded correctly
-        assertNotNull(etsFile)
-        assertEquals("import.ts", etsFile.name)
+            // Print all imports for debugging
+            file.importInfos.forEachIndexed { index, importInfo ->
+                logger.info { "Import $index: $importInfo" }
+            }
 
-        // Verify we have import information
-        assertTrue(etsFile.importInfos.isNotEmpty(), "Expected to find import statements")
-
-        // Print all imports for debugging
-        etsFile.importInfos.forEachIndexed { index, importInfo ->
-            logger.info { "Import $index: $importInfo" }
+            file
         }
 
-        // Test specific import patterns
-        testDefaultImport(etsFile.importInfos)
-        testNamedImports(etsFile.importInfos)
-        testAliasedImports(etsFile.importInfos)
-        testNamespaceImports(etsFile.importInfos)
-        testMixedImports(etsFile.importInfos)
-        testSideEffectImports(etsFile.importInfos)
+        @BeforeAll
+        @JvmStatic
+        fun setup() {
+            // Verify the file was loaded correctly
+            assertNotNull(file)
+            assertEquals("import.ts", file.name)
+
+            // Verify we have import information
+            assertTrue(file.importInfos.isNotEmpty(), "Expected to find import statements")
+
+            logger.info { "✓ Setup complete, ready to run tests on imports" }
+        }
     }
 
-    private fun testDefaultImport(imports: List<EtsImportInfo>) {
+    @Test
+    fun testDefaultImport() {
+        logger.info { "Testing default imports" }
+
         // Test: import React from 'react';
-        val reactImport = imports.find {
-            it.clauseName == "React" && it.from == "react"
+        val reactImport = file.importInfos.find {
+            it.name == "React" && it.from == "react"
         }
         assertNotNull(reactImport, "Should find React default import")
         assertTrue(reactImport.isDefault, "React import should be marked as default")
-        assertEquals("React", reactImport.importedName)
+        assertEquals("React", reactImport.name)
         logger.info { "✓ Default import test passed: $reactImport" }
     }
 
-    private fun testNamedImports(imports: List<EtsImportInfo>) {
+    @Test
+    fun testNamedImports() {
+        logger.info { "Testing named imports" }
+
         // Test: import { useState, useEffect } from 'react';
-        val useStateImport = imports.find {
-            it.clauseName == "useState" && it.from == "react"
+        val useStateImport = file.importInfos.find {
+            it.name == "useState" && it.from == "react"
         }
-        val useEffectImport = imports.find {
-            it.clauseName == "useEffect" && it.from == "react"
+        val useEffectImport = file.importInfos.find {
+            it.name == "useEffect" && it.from == "react"
         }
 
         assertNotNull(useStateImport, "Should find useState named import")
         assertNotNull(useEffectImport, "Should find useEffect named import")
-        assertEquals("useState", useStateImport.importedName)
-        assertEquals("useEffect", useEffectImport.importedName)
+        assertEquals("useState", useStateImport.name)
+        assertEquals("useEffect", useEffectImport.name)
         logger.info { "✓ Named imports test passed: useState, useEffect" }
     }
 
-    private fun testAliasedImports(imports: List<EtsImportInfo>) {
+    @Test
+    fun testAliasedImports() {
+        logger.info { "Testing aliased imports" }
+
         // Test: import { Component as ReactComponent } from 'react';
-        val aliasedImport = imports.find {
-            it.clauseName == "ReactComponent" &&
+        val aliasedImport = file.importInfos.find {
+            it.name == "ReactComponent" &&
                 it.originalName == "Component" &&
                 it.from == "react"
         }
         assertNotNull(aliasedImport, "Should find Component as ReactComponent import")
-        assertEquals("Component", aliasedImport.importedName)
-        assertEquals("ReactComponent", aliasedImport.clauseName)
+        assertEquals("Component", aliasedImport.originalName)
+        assertEquals("ReactComponent", aliasedImport.name)
         logger.info { "✓ Aliased import test passed: $aliasedImport" }
     }
 
-    private fun testNamespaceImports(imports: List<EtsImportInfo>) {
+    @Test
+    fun testNamespaceImports() {
+        logger.info { "Testing namespace imports" }
+
         // Test: import * as Utils from './utils';
-        val namespaceImport = imports.find {
-            it.clauseName == "Utils" && it.from == "./utils"
+        val namespaceImport = file.importInfos.find {
+            it.name == "Utils" && it.from == "./utils"
         }
         assertNotNull(namespaceImport, "Should find Utils namespace import")
-        assertEquals("Utils", namespaceImport.importedName)
+        assertEquals("Utils", namespaceImport.name)
         logger.info { "✓ Namespace import test passed: $namespaceImport" }
     }
 
-    private fun testMixedImports(imports: List<EtsImportInfo>) {
+    @Test
+    fun testMixedImports() {
+        logger.info { "Testing mixed imports" }
+
         // Test: import DefaultExport, { namedExport } from './module';
-        val defaultExport = imports.find {
-            it.clauseName == "DefaultExport" && it.from == "./module"
+        val defaultExport = file.importInfos.find {
+            it.name == "DefaultExport" && it.from == "./module"
         }
-        val namedExport = imports.find {
-            it.clauseName == "namedExport" && it.from == "./module"
+        val namedExport = file.importInfos.find {
+            it.name == "namedExport" && it.from == "./module"
         }
 
         assertNotNull(defaultExport, "Should find DefaultExport from mixed import")
@@ -125,14 +142,17 @@ class EtsImportTest {
         logger.info { "✓ Mixed imports test passed: DefaultExport, namedExport" }
     }
 
-    private fun testSideEffectImports(imports: List<EtsImportInfo>) {
+    @Test
+    fun testSideEffectImports() {
+        logger.info { "Testing side effect imports" }
+
         // Test: import './styles.css';
-        val cssSideEffectImport = imports.find {
+        val cssSideEffectImport = file.importInfos.find {
             it.from == "./styles.css" && it.isSideEffectImport
         }
         assertNotNull(cssSideEffectImport, "Should find side effect import for styles.css")
-        assertEquals("", cssSideEffectImport.clauseName, "Side effect import should have empty clause name")
-        assertEquals("", cssSideEffectImport.importedName, "Side effect import should have empty imported name")
+        assertEquals("", cssSideEffectImport.name, "Side effect import should have empty clause name")
+        assertEquals(null, cssSideEffectImport.originalName, "Side effect import should have null original name")
         assertTrue(cssSideEffectImport.isSideEffectImport, "Import should be marked as side effect")
         logger.info { "✓ Side effect import test passed: $cssSideEffectImport" }
     }
@@ -141,11 +161,8 @@ class EtsImportTest {
     fun testImportInfoToString() {
         logger.info { "Testing EtsImportInfo toString() method" }
 
-        val tsFilePath = getResourcePath("/samples/source/lang/import.ts")
-        val etsFile = loadEtsFileAutoConvert(tsFilePath)
-
         // Test toString format for different import types
-        etsFile.importInfos.forEach { importInfo ->
+        file.importInfos.forEach { importInfo ->
             val stringRepr = importInfo.toString()
             logger.info { "Import string representation: $stringRepr" }
 

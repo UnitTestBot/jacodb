@@ -51,6 +51,7 @@ import org.jacodb.ets.model.EtsEnumValueType
 import org.jacodb.ets.model.EtsEqExpr
 import org.jacodb.ets.model.EtsExpExpr
 import org.jacodb.ets.model.EtsExportInfo
+import org.jacodb.ets.model.EtsExportType
 import org.jacodb.ets.model.EtsExpr
 import org.jacodb.ets.model.EtsField
 import org.jacodb.ets.model.EtsFieldImpl
@@ -746,24 +747,27 @@ fun LocalDto.toEtsLocal(): EtsLocal {
 
 fun ImportInfoDto.toEtsImportInfo(): EtsImportInfo {
     return EtsImportInfo(
-        clauseName = importClauseName,
-        type = EtsImportType.fromString(importType),
+        name = importName,
+        type = when(importType) {
+            "Identifier" -> EtsImportType.DEFAULT
+            "NamedImports" -> EtsImportType.NAMED
+            "NamespaceImport" -> EtsImportType.NAMESPACE
+            "" -> EtsImportType.SIDE_EFFECT
+            else -> error("Unknown import type: $importType")
+        },
         from = importFrom,
         originalName = nameBeforeAs,
         modifiers = EtsModifiers(modifiers),
-        decorators = emptyList(), // TODO: Add decorators when available in DTO
     )
 }
 
 fun ExportInfoDto.toEtsExportInfo(): EtsExportInfo {
     return EtsExportInfo(
-        exportClauseName = exportClauseName,
-        exportClauseType = exportClauseType.toString(),
-        exportFrom = exportFrom,
-        nameBeforeAs = nameBeforeAs,
-        isDefaultExport = isDefault,
+        name = exportName,
+        type = EtsExportType.from(exportType),
+        from = exportFrom,
+        originalName = nameBeforeAs,
         modifiers = EtsModifiers(modifiers),
-        decorators = emptyList(), // TODO: Add decorators when available in DTO
     )
 }
 

@@ -17,45 +17,31 @@
 package org.jacodb.ets.model
 
 /**
- * Represents import information for ETS/TypeScript imports.
- *
  * This class captures all the essential information about import statements in TypeScript/JavaScript files,
  * including default imports, named imports, namespace imports, and side-effect imports.
  *
- * @property clauseName The name that will be used in the importing module (empty for side-effect imports)
- * @property type The type of import (DEFAULT, NAMED, NAMESPACE, SIDE_EFFECT)
- * @property from The module or path being imported from
- * @property originalName The original name before any 'as' aliasing (null if no aliasing, '*' for namespace imports)
- * @property modifiers Import modifiers (if any)
- * @property decorators Import decorators (if any)
+ * @property name The name that will be used in the importing module (empty for side-effect imports)
+ * @property type The [type][EtsImportType] of import.
+ * @property from The module or path being imported from.
+ * @property originalName The original name before 'as' aliasing (`null` if no aliasing, `*` for namespace imports).
+ * @property modifiers Import modifiers.
  */
 data class EtsImportInfo(
-    val clauseName: String,
+    val name: String,
     val type: EtsImportType,
     val from: String,
     val originalName: String? = null,
     override val modifiers: EtsModifiers = EtsModifiers.EMPTY,
-    override val decorators: List<EtsDecorator> = emptyList(),
 ) : Base {
 
-    /**
-     * The effective name being imported (before any aliasing).
-     * For aliased imports, this returns the original name.
-     * For regular imports, this returns the clause name.
-     * For side-effect imports, this returns an empty string.
-     */
-    val importedName: String
-        get() = when {
-            type == EtsImportType.SIDE_EFFECT -> ""
-            originalName != null && originalName != "*" -> originalName
-            else -> clauseName
-        }
+    // Import statements do not have decorators in TypeScript.
+    override val decorators: List<EtsDecorator> = emptyList()
 
     /**
      * Whether this is a default import (import React from 'react').
      */
     val isDefaultImport: Boolean
-        get() = type == EtsImportType.DEFAULT
+        get() = type == EtsImportType.DEFAULT || originalName == "default"
 
     /**
      * Whether this is a named import (import { useState } from 'react').
@@ -79,10 +65,10 @@ data class EtsImportInfo(
      * Whether this import uses aliasing (import { Component as ReactComponent }).
      */
     val isAliased: Boolean
-        get() = originalName != null && originalName != "*" && originalName != clauseName
+        get() = originalName != null && originalName != "*" && originalName != name
 
     override val isDefault: Boolean
-        get() = super.isDefault || isDefaultImport
+        get() = isDefaultImport || super.isDefault
 
     override fun toString(): String = buildString {
         append("import ")
@@ -95,53 +81,40 @@ data class EtsImportInfo(
 
             isNamespaceImport -> {
                 // Namespace import: import * as Utils from './utils'
-                append("* as $clauseName from '$from'")
+                append("* as $name from '$from'")
             }
 
             isAliased -> {
                 // Aliased import: import { Component as ReactComponent } from 'react'
-                append("{ $originalName as $clauseName } from '$from'")
+                append("{ $originalName as $name } from '$from'")
             }
 
             isNamedImport -> {
                 // Named import: import { useState } from 'react'
-                append("{ $clauseName } from '$from'")
+                append("{ $name } from '$from'")
             }
 
             isDefaultImport -> {
                 // Default import: import React from 'react'
-                append("$clauseName from '$from'")
+                append("$name from '$from'")
             }
         }
     }
 }
 
 /**
- * Enumeration of import types in TypeScript/JavaScript.
+ * Type of import in TypeScript/JavaScript.
  */
-enum class EtsImportType(val typeName: String) {
+enum class EtsImportType {
     /** Default import: `import React from 'react'` */
-    DEFAULT("Identifier"),
+    DEFAULT,
 
     /** Named import: `import { useState } from 'react'` */
-    NAMED("NamedImports"),
+    NAMED,
 
     /** Namespace import: `import * as Utils from './utils'` */
-    NAMESPACE("NamespaceImport"),
+    NAMESPACE,
 
     /** Side-effect import: `import './styles.css'` */
-    SIDE_EFFECT("");
-
-    companion object {
-        /**
-         * Converts a string representation to an EtsImportType.
-         */
-        fun fromString(typeString: String): EtsImportType = when (typeString) {
-            "Identifier" -> DEFAULT
-            "NamedImports" -> NAMED
-            "NamespaceImport" -> NAMESPACE
-            "" -> SIDE_EFFECT
-            else -> throw IllegalArgumentException("Unknown import type: '$typeString'")
-        }
-    }
+    SIDE_EFFECT,
 }

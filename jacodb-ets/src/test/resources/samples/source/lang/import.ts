@@ -1,4 +1,5 @@
 // Sample TypeScript file with various import statements for testing
+// noinspection ES6UnusedImports,TypeScriptCheckImport,JSUnusedLocalSymbols,JSUnusedGlobalSymbols
 
 // Default import
 import React from 'react';

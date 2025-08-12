@@ -93,25 +93,22 @@ data class BodyDto(
 
 @Serializable
 data class ImportInfoDto(
-    val importClauseName: String,
-    val importType: String,
+    val importName: String,
+    val importType: String, // "Identifier" | "NamedImports" | "NamespaceImport" | ""
     val importFrom: String,
     val nameBeforeAs: String? = null,
     val modifiers: Int,
     // val decorators: List<DecoratorDto>,
-    val originTsPosition: LineColPositionDto? = null,
 )
 
 @Serializable
 data class ExportInfoDto(
-    val exportClauseName: String,
-    val exportClauseType: Int,
+    val exportName: String,
+    val exportType: Int, // enum ExportType
     val exportFrom: String? = null,
     val nameBeforeAs: String? = null,
-    val isDefault: Boolean,
     val modifiers: Int,
     // val decorators: List<DecoratorDto>,
-    val originTsPosition: LineColPositionDto? = null,
 )
 
 @Serializable
@@ -119,10 +116,4 @@ data class DecoratorDto(
     val kind: String,
     // val content: String? = null,
     // val param: String? = null,
-)
-
-@Serializable
-data class LineColPositionDto(
-    val line: Int,
-    val col: Int,
 )
