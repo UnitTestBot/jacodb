@@ -16,6 +16,10 @@
 
 package org.jacodb.ets.model
 
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
+
 /**
  * Represents export information for TypeScript exports.
  */
@@ -65,7 +69,10 @@ enum class EtsExportType(val value: Int) {
 
     companion object {
         fun from(value: Int): EtsExportType {
-            return entries.find { it.value == value } ?: UNKNOWN
+            return entries.find { it.value == value } ?: run {
+                logger.warn { "Unknown export type value: $value, defaulting to UNKNOWN" }
+                UNKNOWN
+            }
         }
     }
 }
