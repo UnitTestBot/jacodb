@@ -16,6 +16,9 @@
 
 package org.jacodb.ets.dsl
 
+import org.jacodb.ets.model.EtsStmt
+import org.jacodb.ets.model.EtsStmtLocation
+
 sealed interface BlockStmt
 
 data object BlockNop : BlockStmt
@@ -31,4 +34,8 @@ data class BlockReturn(
 
 data class BlockIf(
     val condition: Expr,
+) : BlockStmt
+
+class BlockCustomEts(
+    val toEts: (EtsStmtLocation) -> EtsStmt,
 ) : BlockStmt

@@ -16,6 +16,9 @@
 
 package org.jacodb.ets.dsl
 
+import org.jacodb.ets.model.EtsStmt
+import org.jacodb.ets.model.EtsStmtLocation
+
 sealed interface Node
 
 data object Nop : Node
@@ -41,4 +44,8 @@ data class Label(
 
 data class Goto(
     val targetLabel: String,
+) : Node
+
+class CustomEts(
+    val toEts: (EtsStmtLocation) -> EtsStmt,
 ) : Node

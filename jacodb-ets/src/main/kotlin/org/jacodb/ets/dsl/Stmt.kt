@@ -16,6 +16,9 @@
 
 package org.jacodb.ets.dsl
 
+import org.jacodb.ets.model.EtsStmt
+import org.jacodb.ets.model.EtsStmtLocation
+
 typealias StmtLocation = Int
 
 sealed interface Stmt {
@@ -40,4 +43,9 @@ data class ReturnStmt(
 data class IfStmt(
     override val location: StmtLocation,
     val condition: Expr,
+) : Stmt
+
+class CustomEtsStmt(
+    override val location: StmtLocation,
+    val toEts: (EtsStmtLocation) -> EtsStmt,
 ) : Stmt

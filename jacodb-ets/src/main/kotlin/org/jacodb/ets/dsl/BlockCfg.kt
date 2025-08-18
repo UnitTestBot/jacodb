@@ -94,6 +94,7 @@ fun Program.toBlockCfg(): BlockCfg {
                     is Assign -> BlockAssign(node.target, node.expr)
                     is Return -> BlockReturn(node.expr)
                     is If -> BlockIf(node.condition)
+                    is CustomEts -> BlockCustomEts(node.toEts)
                     else -> error("Unexpected node: $node")
                 }
                 nodeToStmt[node] = stmt

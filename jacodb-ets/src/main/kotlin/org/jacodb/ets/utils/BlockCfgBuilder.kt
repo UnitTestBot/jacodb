@@ -21,6 +21,7 @@ import org.jacodb.ets.dsl.BinaryOperator
 import org.jacodb.ets.dsl.Block
 import org.jacodb.ets.dsl.BlockAssign
 import org.jacodb.ets.dsl.BlockCfg
+import org.jacodb.ets.dsl.BlockCustomEts
 import org.jacodb.ets.dsl.BlockIf
 import org.jacodb.ets.dsl.BlockNop
 import org.jacodb.ets.dsl.BlockReturn
@@ -300,6 +301,10 @@ class EtsBlockCfgBuilder(
                         location = stub,
                         condition = condition,
                     )
+                }
+
+                is BlockCustomEts -> {
+                    etsStatements += stmt.toEts(stub)
                 }
             }
         }
