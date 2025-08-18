@@ -143,15 +143,22 @@ class EtsMethodBuilder(
     typeParameters: List<EtsType> = emptyList(),
     modifiers: EtsModifiers = EtsModifiers.EMPTY,
     decorators: List<EtsDecorator> = emptyList(),
+    locals: List<EtsLocal> = emptyList(),
 ) {
-    private val method = EtsMethodImpl(signature, typeParameters, modifiers, decorators)
+    private val locals = locals.toMutableList()
+
+    private val method = EtsMethodImpl(signature, typeParameters, modifiers, decorators).also {
+        it.body.locals = this.locals
+    }
 
     private lateinit var currentStmts: MutableList<EtsStmt>
 
     private var freeTempLocal: Int = 0
 
     private fun newTempLocal(): EtsLocal {
-        return EtsLocal("_tmp${freeTempLocal++}")
+        val local = EtsLocal("_tmp${freeTempLocal++}")
+        this@EtsMethodBuilder.locals += local
+        return local
     }
 
     private fun loc(): EtsStmtLocation {
@@ -163,7 +170,7 @@ class EtsMethodBuilder(
     fun build(cfgDto: CfgDto): EtsMethod {
         require(!built) { "Method has already been built" }
         val cfg = cfgDto.toEtsCfg()
-        method._cfg = cfg
+        method.body.cfg = cfg
         built = true
         return method
     }
@@ -682,6 +689,7 @@ fun MethodDto.toEtsMethod(): EtsMethod {
             typeParameters = typeParameters,
             modifiers = modifiers,
             decorators = decorators,
+            locals = body.locals.map { it.toEtsLocal() },
         )
         return builder.build(body.cfg)
     } else {

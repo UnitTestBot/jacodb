@@ -23,7 +23,7 @@ import org.jacodb.api.common.CommonMethod
 interface EtsMethod : Base, CommonMethod {
     val signature: EtsMethodSignature
     val typeParameters: List<EtsType>
-    val cfg: EtsBlockCfg
+    val body: EtsMethodBody
 
     val enclosingClass: EtsClass?
 
@@ -36,10 +36,21 @@ interface EtsMethod : Base, CommonMethod {
     override val returnType: EtsType
         get() = signature.returnType
 
+    val cfg: EtsBlockCfg
+        get() = body.cfg
+
+    val locals: List<EtsLocal>
+        get() = body.locals
+
     override fun flowGraph(): EtsBytecodeGraph<EtsStmt> {
         return cfg
     }
 }
+
+class EtsMethodBody(
+    var cfg: EtsBlockCfg = EtsBlockCfg.EMPTY,
+    var locals: List<EtsLocal> = emptyList(),
+)
 
 class EtsMethodImpl(
     override val signature: EtsMethodSignature,
@@ -47,10 +58,14 @@ class EtsMethodImpl(
     override val modifiers: EtsModifiers = EtsModifiers.EMPTY,
     override val decorators: List<EtsDecorator> = emptyList(),
 ) : EtsMethod {
-    var _cfg: EtsBlockCfg? = null
+    override val body: EtsMethodBody = EtsMethodBody()
 
-    override val cfg: EtsBlockCfg
-        get() = _cfg ?: EtsBlockCfg.EMPTY
+    @Deprecated("Use body.cfg instead", ReplaceWith("body.cfg"))
+    var _cfg: EtsBlockCfg
+        get() = body.cfg
+        set(value) {
+            body.cfg = value
+        }
 
     override var enclosingClass: EtsClass? = null
 

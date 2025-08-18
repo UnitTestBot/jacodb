@@ -79,6 +79,6 @@ class EtsCfgDslTest {
         val etsCfg = etsBlockCfg.linearize()
         println("etsCfg:\n${etsCfg.toDot()}")
 
-        method._cfg = etsBlockCfg
+        method.body.cfg = etsBlockCfg
     }
 }
