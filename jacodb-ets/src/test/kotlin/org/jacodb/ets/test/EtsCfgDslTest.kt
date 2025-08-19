@@ -24,8 +24,10 @@ import org.jacodb.ets.dsl.param
 import org.jacodb.ets.dsl.program
 import org.jacodb.ets.dsl.toBlockCfg
 import org.jacodb.ets.dsl.toDot
+import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsFileSignature
+import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsMethodImpl
 import org.jacodb.ets.model.EtsMethodParameter
 import org.jacodb.ets.model.EtsMethodSignature
@@ -35,6 +37,8 @@ import org.jacodb.ets.utils.linearize
 import org.jacodb.ets.utils.toDot
 import org.jacodb.ets.utils.toEtsBlockCfg
 import org.junit.jupiter.api.Test
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
 
 class EtsCfgDslTest {
     @Test
@@ -80,5 +84,14 @@ class EtsCfgDslTest {
         println("etsCfg:\n${etsCfg.toDot()}")
 
         method.body.cfg = etsBlockCfg
+        method.body.locals = etsBlockCfg.stmts
+            .filterIsInstance<EtsAssignStmt>()
+            .mapNotNull { it.lhv as? EtsLocal }
+            .distinct()
+
+        assertEquals(method.locals, listOf(
+            EtsLocal("i", EtsUnknownType),
+            EtsLocal("_tmp0", EtsUnknownType),
+        ))
     }
 }
