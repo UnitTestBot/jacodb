@@ -19,6 +19,8 @@
 package org.jacodb.ets.dsl
 
 import org.jacodb.ets.model.EtsEntity
+import org.jacodb.ets.model.EtsStmt
+import org.jacodb.ets.model.EtsStmtLocation
 
 interface ProgramBuilder {
     fun nop()
@@ -27,6 +29,8 @@ interface ProgramBuilder {
     fun label(name: String)
     fun goto(label: String)
     fun ifStmt(condition: Expr, block: ProgramBuilder.() -> Unit): IfBuilder
+
+    fun customStmt(toEts: (EtsStmtLocation) -> EtsStmt)
 }
 
 fun ProgramBuilder.local(name: String) = Local(name)
@@ -106,6 +110,10 @@ class ProgramBuilderImpl : ProgramBuilder {
         _nodes += If(condition, builder.thenNodes, builder.elseNodes)
         return builder
     }
+
+    override fun customStmt(toEts: (EtsStmtLocation) -> EtsStmt) {
+        _nodes += CustomEts(toEts)
+    }
 }
 
 class IfBuilder : ProgramBuilder {
@@ -136,4 +144,6 @@ class IfBuilder : ProgramBuilder {
     override fun ret(expr: Expr) = thenBuilder.ret(expr)
     override fun label(name: String) = thenBuilder.label(name)
     override fun goto(label: String) = thenBuilder.goto(label)
+
+    override fun customStmt(toEts: (EtsStmtLocation) -> EtsStmt) = thenBuilder.customStmt(toEts)
 }

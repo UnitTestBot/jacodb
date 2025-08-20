@@ -46,6 +46,10 @@ fun BlockCfg.linearize(): LinearizedCfg {
                 is BlockIf -> {
                     processed += IfStmt(loc++, stmt.condition)
                 }
+
+                is BlockCustomEts -> {
+                    processed += CustomEtsStmt(loc++, stmt.toEts)
+                }
             }
         }
         if (processed.isEmpty()) {
@@ -60,7 +64,7 @@ fun BlockCfg.linearize(): LinearizedCfg {
 
     for ((id, statements) in linearizedBlocks) {
         for ((stmt, next) in statements.zipWithNext()) {
-            check(next !is ReturnStmt) { "Return statement in the middle of the block: $next" }
+            check(stmt !is ReturnStmt) { "Return statement in the middle of the block: $stmt" }
             check(stmt !is IfStmt) { "If statement in the middle of the block: $stmt" }
             successors[stmt.location] = listOf(next.location)
         }

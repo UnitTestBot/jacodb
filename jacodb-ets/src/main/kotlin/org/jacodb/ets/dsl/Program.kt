@@ -44,6 +44,8 @@ data class Program(
 
                     is Label -> line("label ${node.name}")
                     is Goto -> line("goto ${node.targetLabel}")
+
+                    is CustomEts -> line("???")
                 }
             }
         }

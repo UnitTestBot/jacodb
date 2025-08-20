@@ -16,6 +16,7 @@
 
 package org.jacodb.ets.dsl
 
+import org.jacodb.ets.utils.toDotLabel
 import java.util.IdentityHashMap
 
 private fun Node.toDotLabel() = when (this) {
@@ -25,6 +26,7 @@ private fun Node.toDotLabel() = when (this) {
     is If -> "if ($condition)"
     is Label -> "label $name"
     is Goto -> "goto $targetLabel"
+    is CustomEts -> "???"
 }
 
 fun Program.toDot(): String {
@@ -102,6 +104,7 @@ private fun BlockStmt.toDotLabel() = when (this) {
     is BlockReturn -> "return $expr"
     is BlockIf -> "if ($condition)"
     is BlockNop -> "nop"
+    is BlockCustomEts -> "???"
 }
 
 fun BlockCfg.toDot(): String {
@@ -138,6 +141,7 @@ private fun Stmt.toDotLabel() = when (this) {
     is AssignStmt -> "$target := $expr"
     is ReturnStmt -> "return $expr"
     is IfStmt -> "if ($condition)"
+    is CustomEtsStmt -> "???"
 }
 
 fun LinearizedCfg.toDot(): String {

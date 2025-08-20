@@ -16,18 +16,33 @@
 
 package org.jacodb.ets.dsl
 
+import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsClassSignature
+import org.jacodb.ets.model.EtsFieldSignature
+import org.jacodb.ets.model.EtsInstanceFieldRef
+import org.jacodb.ets.model.EtsLocal
+import org.jacodb.ets.model.EtsNumberConstant
+import org.jacodb.ets.model.EtsUnknownType
 import org.jacodb.ets.utils.view
 
 private fun main() {
     val prog = program {
+        // i := arg(0)
         assign(local("i"), param(0))
 
+        // if (i > 10)
         ifStmt(gt(local("i"), const(10))) {
             ifStmt(eq(local("i"), const(42))) {
+                // if (i == 42) {
+                //   return i
                 ret(local("i"))
             }.elseIf(eq(local("i"), const(20))) {
+                // } else if (i == 20) {
+                //   return i
                 ret(local("i"))
             }.`else` {
+                // } else {
+                //   i := 10
                 assign(local("i"), const(10))
             }
             nop()
@@ -35,10 +50,32 @@ private fun main() {
 
         label("loop")
         ifStmt(gt(local("i"), const(0))) {
+            // if (i > 0) {
+            //   i := i - 1
+            //   goto @loop
             assign(local("i"), sub(local("i"), const(1)))
             goto("loop")
         }.`else` {
+            // } else {
+            //   return i
             ret(local("i"))
+        }
+
+        // x.foo := 35
+        customStmt { loc ->
+            EtsAssignStmt(
+                location = loc,
+                lhv = EtsInstanceFieldRef(
+                    instance = EtsLocal("x", EtsUnknownType),
+                    field = EtsFieldSignature(
+                        enclosingClass = EtsClassSignature.UNKNOWN,
+                        name = "foo",
+                        type = EtsUnknownType,
+                    ),
+                    type = EtsUnknownType
+                ),
+                rhv = EtsNumberConstant(35.0)
+            )
         }
 
         ret(const(100)) // unreachable
