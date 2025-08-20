@@ -16,6 +16,10 @@
 
 package org.jacodb.ets.utils
 
+import org.jacodb.ets.dto.EtsFileDto
+import org.jacodb.ets.model.EtsBlockCfg
+import org.jacodb.ets.model.EtsFile
+import org.jacodb.ets.model.EtsLinearCfg
 import java.nio.file.Path
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.div
@@ -45,4 +49,20 @@ fun view(
 
 fun <T> T.view(dot: (T) -> String) {
     view(dot(this))
+}
+
+fun EtsFile.view() {
+    view(toDot())
+}
+
+fun EtsFileDto.view() {
+    view(toDot())
+}
+
+fun EtsBlockCfg.view() {
+    view(toDot())
+}
+
+fun EtsLinearCfg.view() {
+    view(toDot())
 }
