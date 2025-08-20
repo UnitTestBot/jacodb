@@ -32,6 +32,7 @@ import org.jacodb.ets.model.EtsBitOrExpr
 import org.jacodb.ets.model.EtsBitXorExpr
 import org.jacodb.ets.model.EtsBlockCfg
 import org.jacodb.ets.model.EtsBooleanConstant
+import org.jacodb.ets.model.EtsBooleanLiteralType
 import org.jacodb.ets.model.EtsBooleanType
 import org.jacodb.ets.model.EtsCallExpr
 import org.jacodb.ets.model.EtsCallStmt
@@ -75,7 +76,6 @@ import org.jacodb.ets.model.EtsInstanceOfExpr
 import org.jacodb.ets.model.EtsIntersectionType
 import org.jacodb.ets.model.EtsLeftShiftExpr
 import org.jacodb.ets.model.EtsLexicalEnvType
-import org.jacodb.ets.model.EtsLiteralType
 import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsLocalSignature
 import org.jacodb.ets.model.EtsLtEqExpr
@@ -99,6 +99,7 @@ import org.jacodb.ets.model.EtsNullConstant
 import org.jacodb.ets.model.EtsNullType
 import org.jacodb.ets.model.EtsNullishCoalescingExpr
 import org.jacodb.ets.model.EtsNumberConstant
+import org.jacodb.ets.model.EtsNumberLiteralType
 import org.jacodb.ets.model.EtsNumberType
 import org.jacodb.ets.model.EtsOrExpr
 import org.jacodb.ets.model.EtsParameterRef
@@ -118,6 +119,7 @@ import org.jacodb.ets.model.EtsStmtLocation
 import org.jacodb.ets.model.EtsStrictEqExpr
 import org.jacodb.ets.model.EtsStrictNotEqExpr
 import org.jacodb.ets.model.EtsStringConstant
+import org.jacodb.ets.model.EtsStringLiteralType
 import org.jacodb.ets.model.EtsStringType
 import org.jacodb.ets.model.EtsSubExpr
 import org.jacodb.ets.model.EtsThis
@@ -551,9 +553,11 @@ fun TypeDto.toEtsType(): EtsType = when (this) {
         closures = closures.map { it.toEtsLocal() },
     )
 
-    is LiteralTypeDto -> EtsLiteralType(
-        literalTypeName = literal.toString(),
-    )
+    is LiteralTypeDto -> when (val literalValue = literal) {
+        is PrimitiveLiteralDto.StringLiteral -> EtsStringLiteralType(literalValue.value)
+        is PrimitiveLiteralDto.NumberLiteral -> EtsNumberLiteralType(literalValue.value)
+        is PrimitiveLiteralDto.BooleanLiteral -> EtsBooleanLiteralType(literalValue.value)
+    }
 
     NeverTypeDto -> EtsNeverType
 

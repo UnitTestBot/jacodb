@@ -429,6 +429,126 @@ class EtsFromJsonTest {
     }
 
     @Test
+    fun testLoadNumberLiteralTypeFromJson() {
+        // TS: `let x: 42 = 42;`
+        val jsonString = """
+            {
+              "_": "LiteralType",
+              "literal": 42
+            }
+        """.trimIndent()
+        val typeDto = Json.decodeFromString<TypeDto>(jsonString)
+        logger.info { "typeDto = $typeDto" }
+        assertIs<LiteralTypeDto>(typeDto)
+        assertEquals(PrimitiveLiteralDto.NumberLiteral(42.0), typeDto.literal)
+    }
+
+    @Test
+    fun testLoadFloatLiteralTypeFromJson() {
+        // TS: `let x: 3.14 = 3.14;`
+        val jsonString = """
+            {
+              "_": "LiteralType",
+              "literal": 3.14
+            }
+        """.trimIndent()
+        val typeDto = Json.decodeFromString<TypeDto>(jsonString)
+        logger.info { "typeDto = $typeDto" }
+        assertIs<LiteralTypeDto>(typeDto)
+        assertEquals(PrimitiveLiteralDto.NumberLiteral(3.14), typeDto.literal)
+    }
+
+    @Test
+    fun testLoadNegativeNumberLiteralTypeFromJson() {
+        // TS: `let x: -5 = -5;`
+        val jsonString = """
+            {
+              "_": "LiteralType",
+              "literal": -5
+            }
+        """.trimIndent()
+        val typeDto = Json.decodeFromString<TypeDto>(jsonString)
+        logger.info { "typeDto = $typeDto" }
+        assertIs<LiteralTypeDto>(typeDto)
+        assertEquals(PrimitiveLiteralDto.NumberLiteral(-5.0), typeDto.literal)
+    }
+
+    @Test
+    fun testLoadBooleanTrueLiteralTypeFromJson() {
+        // TS: `let x: true = true;`
+        val jsonString = """
+            {
+              "_": "LiteralType",
+              "literal": true
+            }
+        """.trimIndent()
+        val typeDto = Json.decodeFromString<TypeDto>(jsonString)
+        logger.info { "typeDto = $typeDto" }
+        assertIs<LiteralTypeDto>(typeDto)
+        assertEquals(PrimitiveLiteralDto.BooleanLiteral(true), typeDto.literal)
+    }
+
+    @Test
+    fun testLoadBooleanFalseLiteralTypeFromJson() {
+        // TS: `let x: false = false;`
+        val jsonString = """
+            {
+              "_": "LiteralType",
+              "literal": false
+            }
+        """.trimIndent()
+        val typeDto = Json.decodeFromString<TypeDto>(jsonString)
+        logger.info { "typeDto = $typeDto" }
+        assertIs<LiteralTypeDto>(typeDto)
+        assertEquals(PrimitiveLiteralDto.BooleanLiteral(false), typeDto.literal)
+    }
+
+    @Test
+    fun testLoadEmptyStringLiteralTypeFromJson() {
+        // TS: `let x: "" = "";`
+        val jsonString = """
+            {
+              "_": "LiteralType",
+              "literal": ""
+            }
+        """.trimIndent()
+        val typeDto = Json.decodeFromString<TypeDto>(jsonString)
+        logger.info { "typeDto = $typeDto" }
+        assertIs<LiteralTypeDto>(typeDto)
+        assertEquals(PrimitiveLiteralDto.StringLiteral(""), typeDto.literal)
+    }
+
+    @Test
+    fun testLoadStringLiteralWithSpecialCharactersFromJson() {
+        // TS: `let x: "Hello\nWorld\t!" = "Hello\nWorld\t!";`
+        val jsonString = """
+            {
+              "_": "LiteralType",
+              "literal": "Hello\nWorld\t!"
+            }
+        """.trimIndent()
+        val typeDto = Json.decodeFromString<TypeDto>(jsonString)
+        logger.info { "typeDto = $typeDto" }
+        assertIs<LiteralTypeDto>(typeDto)
+        assertEquals(PrimitiveLiteralDto.StringLiteral("Hello\nWorld\t!"), typeDto.literal)
+    }
+
+    @Test
+    fun testLoadZeroLiteralTypeFromJson() {
+        // TS: `let x: 0 = 0;`
+        val jsonString = """
+            {
+              "_": "LiteralType",
+              "literal": 0
+            }
+        """.trimIndent()
+        val typeDto = Json.decodeFromString<TypeDto>(jsonString)
+        logger.info { "typeDto = $typeDto" }
+        assertIs<LiteralTypeDto>(typeDto)
+        assertEquals(PrimitiveLiteralDto.NumberLiteral(0.0), typeDto.literal)
+    }
+
+    @Test
     fun testLoadRawTypeFromJson() {
         val jsonString = """
             {

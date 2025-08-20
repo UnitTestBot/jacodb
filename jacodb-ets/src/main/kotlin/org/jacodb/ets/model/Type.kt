@@ -41,7 +41,11 @@ interface EtsType : TypeName, CommonType {
         fun visit(type: EtsUndefinedType): R
         fun visit(type: EtsVoidType): R
         fun visit(type: EtsNeverType): R
-        fun visit(type: EtsLiteralType): R
+
+        // Literal
+        fun visit(type: EtsStringLiteralType): R
+        fun visit(type: EtsNumberLiteralType): R
+        fun visit(type: EtsBooleanLiteralType): R
 
         // Ref
         fun visit(type: EtsClassType): R
@@ -74,7 +78,10 @@ interface EtsType : TypeName, CommonType {
             override fun visit(type: EtsUndefinedType): R = defaultVisit(type)
             override fun visit(type: EtsVoidType): R = defaultVisit(type)
             override fun visit(type: EtsNeverType): R = defaultVisit(type)
-            override fun visit(type: EtsLiteralType): R = defaultVisit(type)
+
+            override fun visit(type: EtsStringLiteralType): R = defaultVisit(type)
+            override fun visit(type: EtsNumberLiteralType): R = defaultVisit(type)
+            override fun visit(type: EtsBooleanLiteralType): R = defaultVisit(type)
 
             override fun visit(type: EtsClassType): R = defaultVisit(type)
             override fun visit(type: EtsUnclearRefType): R = defaultVisit(type)
@@ -277,11 +284,39 @@ object EtsNeverType : EtsPrimitiveType {
     }
 }
 
-data class EtsLiteralType(
-    val literalTypeName: String,
-) : EtsPrimitiveType {
+sealed interface EtsLiteralType : EtsPrimitiveType
+
+data class EtsStringLiteralType(
+    val value: String,
+) : EtsLiteralType {
     override val typeName: String
-        get() = literalTypeName
+        get() = "\"$value\""
+
+    override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: EtsType.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class EtsNumberLiteralType(
+    val value: Double,
+) : EtsLiteralType {
+    override val typeName: String
+        get() = value.toString()
+
+    override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: EtsType.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class EtsBooleanLiteralType(
+    val value: Boolean,
+) : EtsLiteralType {
+    override val typeName: String
+        get() = value.toString()
 
     override fun toString(): String = typeName
 
