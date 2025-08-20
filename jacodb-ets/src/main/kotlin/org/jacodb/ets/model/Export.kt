@@ -61,7 +61,7 @@ data class EtsExportInfo(
             // For direct exports:
             //   export default value
             //   export { value as default }
-            return super.isDefault
+            return name == "default" || super.isDefault
         }
 
     /**
