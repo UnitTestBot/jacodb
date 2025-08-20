@@ -24,7 +24,7 @@ sealed interface Node
 data object Nop : Node
 
 data class Assign(
-    val target: Local,
+    val target: LValue,
     val expr: Expr,
 ) : Node
 

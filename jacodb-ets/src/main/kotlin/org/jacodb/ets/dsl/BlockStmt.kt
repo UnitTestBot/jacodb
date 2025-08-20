@@ -24,7 +24,7 @@ sealed interface BlockStmt
 data object BlockNop : BlockStmt
 
 data class BlockAssign(
-    val target: Local,
+    val target: LValue,
     val expr: Expr,
 ) : BlockStmt
 

@@ -24,7 +24,7 @@ import org.jacodb.ets.model.EtsStmtLocation
 
 interface ProgramBuilder {
     fun nop()
-    fun assign(target: Local, expr: Expr)
+    fun assign(target: LValue, expr: Expr)
     fun ret(expr: Expr)
     fun label(name: String)
     fun goto(label: String)
@@ -36,10 +36,17 @@ interface ProgramBuilder {
 fun ProgramBuilder.local(name: String) = Local(name)
 fun ProgramBuilder.param(index: Int) = Parameter(index)
 fun ProgramBuilder.thisRef() = ThisRef
-fun ProgramBuilder.const(value: Int) = ConstantNumber(value.toDouble())
+fun ProgramBuilder.const(value: Int) = ConstantInt(value)
 fun ProgramBuilder.const(value: Double) = ConstantNumber(value)
 fun ProgramBuilder.const(value: Boolean) = ConstantBoolean(value)
 fun ProgramBuilder.const(value: String) = ConstantString(value)
+
+fun ProgramBuilder.fieldRef(instance: Expr, fieldName: String) = FieldRef(instance, fieldName)
+fun ProgramBuilder.staticFieldRef(className: String, fieldName: String) = StaticFieldRef(className, fieldName)
+fun ProgramBuilder.arrayAccess(array: Expr, index: Expr) = ArrayAccess(array, index)
+
+fun Expr.field(name: String) = FieldRef(this, name)
+operator fun Expr.get(index: Expr) = ArrayAccess(this, index)
 
 fun ProgramBuilder.and(left: Expr, right: Expr) = BinaryExpr(BinaryOperator.AND, left, right)
 fun ProgramBuilder.or(left: Expr, right: Expr) = BinaryExpr(BinaryOperator.OR, left, right)
@@ -89,7 +96,7 @@ class ProgramBuilderImpl : ProgramBuilder {
         _nodes += Nop
     }
 
-    override fun assign(target: Local, expr: Expr) {
+    override fun assign(target: LValue, expr: Expr) {
         _nodes += Assign(target, expr)
     }
 
@@ -140,7 +147,7 @@ class IfBuilder : ProgramBuilder {
         thenBuilder.ifStmt(condition, block)
 
     override fun nop() = thenBuilder.nop()
-    override fun assign(target: Local, expr: Expr) = thenBuilder.assign(target, expr)
+    override fun assign(target: LValue, expr: Expr) = thenBuilder.assign(target, expr)
     override fun ret(expr: Expr) = thenBuilder.ret(expr)
     override fun label(name: String) = thenBuilder.label(name)
     override fun goto(label: String) = thenBuilder.goto(label)

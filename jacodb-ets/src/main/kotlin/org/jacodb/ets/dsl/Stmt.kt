@@ -31,7 +31,7 @@ data class NopStmt(
 
 data class AssignStmt(
     override val location: StmtLocation,
-    val target: Local,
+    val target: LValue,
     val expr: Expr,
 ) : Stmt
 
