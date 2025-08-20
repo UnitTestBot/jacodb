@@ -58,6 +58,10 @@ interface WithModifiers {
 value class EtsModifiers(val mask: Int) : WithModifiers {
     companion object {
         val EMPTY = EtsModifiers(0)
+
+        fun of(vararg modifiers: EtsModifier): EtsModifiers {
+            return EtsModifiers(modifiers.fold(0) { acc, modifier -> acc or modifier.value })
+        }
     }
 
     val modifiers: List<EtsModifier>
