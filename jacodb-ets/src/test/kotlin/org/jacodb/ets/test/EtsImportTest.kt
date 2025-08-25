@@ -73,7 +73,7 @@ class EtsImportTest {
             it.name == "React" && it.from == "react"
         }
         assertNotNull(reactImport, "Should find React default import")
-        assertTrue(reactImport.isDefault, "React import should be marked as default")
+        assertTrue(reactImport.isDefaultImport, "React import should be marked as default")
         assertNull(reactImport.nameBeforeAs, "React import is not aliased")
         assertEquals("React", reactImport.name)
         logger.info { "✓ Default import test passed: $reactImport" }
