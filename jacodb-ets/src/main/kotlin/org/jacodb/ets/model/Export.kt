@@ -121,10 +121,50 @@ data class EtsExportInfo(
  * Type of export in TypeScript/JavaScript.
  */
 enum class EtsExportType {
-    NAME_SPACE,
+    /**
+     * Namespace export:
+     * ```ts
+     * export namespace MyNamespace { ... }
+     * ```
+     */
+    NAMESPACE,
+
+    /**
+     * Class export:
+     * ```ts
+     * export class MyClass { ... }
+     * ```
+     */
     CLASS,
+
+    /**
+     * Function export:
+     * ```ts
+     * export function myFunction() { ... }
+     * ```
+     */
     METHOD,
+
+    /**
+     * Local variable/constant export:
+     * ```ts
+     * export const myVariable = 42;
+     * export let myLet = 'hello';
+     * export var myVar = true;
+     * ```
+     */
     LOCAL,
+
+    /**
+     * Type export:
+     * ```ts
+     * export type MyType = string | number;
+     * ```
+     */
     TYPE,
+
+    /**
+     * Unknown export type, fallback for unrecognized export patterns.
+     */
     UNKNOWN;
 }
