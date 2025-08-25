@@ -47,6 +47,7 @@ data class EtsImportInfo(
      *
      * ```ts
      * import React from 'react';
+     * import { default as React } from 'react';
      * ```
      */
     val isDefaultImport: Boolean
@@ -57,6 +58,7 @@ data class EtsImportInfo(
      *
      * ```ts
      * import { useState } from 'react';
+     * import { useState as useReactState } from 'react';
      * ```
      */
     val isNamedImport: Boolean
@@ -86,7 +88,9 @@ data class EtsImportInfo(
      * Whether this import uses aliasing.
      *
      * ```ts
-     * import { Component as ReactComponent };
+     * import { Component as ReactComponent } from 'react';
+     * import { default as React } from 'react';
+     * import React from 'react';
      * ```
      */
     val isAliased: Boolean
