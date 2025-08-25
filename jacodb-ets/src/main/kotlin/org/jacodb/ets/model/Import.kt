@@ -60,14 +60,14 @@ data class EtsImportInfo(
      * ```
      */
     val isDefaultImport: Boolean
-        get() = type == EtsImportType.DEFAULT || originalName == "default"
+        get() = type == EtsImportType.DEFAULT
 
     /**
      * Whether this is a named import.
      *
      * ```ts
      * import { useState } from 'react';
-     * import { useState as useReactState } from 'react';
+     * import { Component as ReactComponent } from 'react';
      * ```
      */
     val isNamedImport: Boolean
@@ -81,7 +81,7 @@ data class EtsImportInfo(
      * ```
      */
     val isNamespaceImport: Boolean
-        get() = type == EtsImportType.NAMESPACE || nameBeforeAs == "*"
+        get() = type == EtsImportType.NAMESPACE
 
     /**
      * Whether this is a side-effect import.
@@ -93,49 +93,28 @@ data class EtsImportInfo(
     val isSideEffectImport: Boolean
         get() = type == EtsImportType.SIDE_EFFECT
 
-    /**
-     * Whether this import uses aliasing.
-     *
-     * ```ts
-     * import { Component as ReactComponent } from 'react';
-     * import { default as React } from 'react';
-     * import React from 'react';
-     * ```
-     */
-    val isAliased: Boolean
-        get() = nameBeforeAs != null && nameBeforeAs != "*" && nameBeforeAs != name
+    override fun toString(): String = when(type) {
+        EtsImportType.DEFAULT -> {
+            // Default import: import React from 'react'
+            "import $name from '$from'"
+        }
 
-    override val isDefault: Boolean
-        get() = isDefaultImport || super.isDefault
+        EtsImportType.NAMED -> {
+            // Named import:
+            //   import { useState } from 'react'
+            //   import { Component as ReactComponent } from 'react'
+            val alias = if (name != originalName) " as $name" else ""
+            "import { $originalName$alias } from '$from'"
+        }
 
-    override fun toString(): String = buildString {
-        append("import ")
+        EtsImportType.NAMESPACE -> {
+            // Namespace import: import * as Utils from './utils'
+            "import * as $name from '$from'"
+        }
 
-        when {
-            isSideEffectImport -> {
-                // Side effect import: import './styles.css'
-                append("'$from'")
-            }
-
-            isNamespaceImport -> {
-                // Namespace import: import * as Utils from './utils'
-                append("* as $name from '$from'")
-            }
-
-            isAliased -> {
-                // Aliased import: import { Component as ReactComponent } from 'react'
-                append("{ $originalName as $name } from '$from'")
-            }
-
-            isNamedImport -> {
-                // Named import: import { useState } from 'react'
-                append("{ $name } from '$from'")
-            }
-
-            isDefaultImport -> {
-                // Default import: import React from 'react'
-                append("$name from '$from'")
-            }
+        EtsImportType.SIDE_EFFECT -> {
+            // Side effect import: import './styles.css'
+            "import '$from'"
         }
     }
 }
