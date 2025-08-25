@@ -23,6 +23,7 @@ package org.jacodb.ets.model
  * @property type The [type][EtsExportType] of export.
  * @property from The module or path being exported from (null for direct exports).
  * @property nameBeforeAs The original name before 'as' aliasing (null if no aliasing).
+ * @property modifiers Export modifiers.
  */
 data class EtsExportInfo(
     val name: String,
