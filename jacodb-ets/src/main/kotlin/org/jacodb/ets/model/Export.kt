@@ -34,7 +34,7 @@ data class EtsExportInfo(
 ) : Base {
 
     // Note: Export statements do not have decorators in JS/TS.
-    override val decorators: List<EtsDecorator> = emptyList()
+    override val decorators: List<EtsDecorator> get() = emptyList()
 
     /**
      * Export clause name without any aliasing.

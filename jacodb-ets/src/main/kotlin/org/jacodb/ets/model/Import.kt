@@ -34,12 +34,13 @@ data class EtsImportInfo(
 ) : Base {
 
     // Note: Import statements do not have decorators in JS/TS.
-    override val decorators: List<EtsDecorator> = emptyList()
+    override val decorators: List<EtsDecorator> get() = emptyList()
 
     /**
      * Import clause name without any aliasing.
      */
-    val originalName: String = nameBeforeAs ?: name
+    val originalName: String
+        get() = nameBeforeAs ?: name
 
     /**
      * Whether this is a default import.
