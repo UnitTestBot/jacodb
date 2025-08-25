@@ -66,15 +66,21 @@ data class EtsExportInfo(
         }
 
     /**
-     * Whether this export is a star re-export (re-exporting everything from another module).
+     * Whether this export is a re-export.
+     */
+    val isReExport: Boolean
+        get() = from != null
+
+    /**
+     * Whether this export is a star re-export.
      *
      * ```ts
      * export * from './module';
      * export * as Utils from './utils';
      * ```
      */
-    val isStarExport: Boolean
-        get() = from != null && originalName == "*"
+    val isStarReExport: Boolean
+        get() = isReExport && originalName == "*"
 
     /**
      * Whether this export is aliased.
@@ -86,7 +92,7 @@ data class EtsExportInfo(
      * ```
      */
     val isAliased: Boolean
-        get() = nameBeforeAs != null && nameBeforeAs != name
+        get() = name != originalName
 
     override val isDefault: Boolean
         get() = isDefaultExport
@@ -96,7 +102,7 @@ data class EtsExportInfo(
             // Re-exports
             from != null -> {
                 val alias = if (isAliased) " as $name" else ""
-                if (isStarExport) {
+                if (isStarReExport) {
                     "export *$alias from '$from'"
                 } else {
                     "export { $originalName$alias } from '$from'"
