@@ -33,6 +33,15 @@ data class EtsImportInfo(
     override val modifiers: EtsModifiers = EtsModifiers.EMPTY,
 ) : Base {
 
+    init {
+        if (type == EtsImportType.SIDE_EFFECT) {
+            require(name.isEmpty()) { "Side-effect imports should have empty name" }
+            require(nameBeforeAs == null) { "Side-effect imports should not have nameBeforeAs" }
+        } else {
+            require(name.isNotEmpty()) { "Only side-effect imports can have empty name" }
+        }
+    }
+
     // Note: Import statements do not have decorators in JS/TS.
     override val decorators: List<EtsDecorator> get() = emptyList()
 
