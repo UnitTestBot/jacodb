@@ -52,7 +52,7 @@ interface WithModifiers {
     val isDeclare: Boolean get() = hasModifier(EtsModifier.DECLARE)
 
     fun hasModifier(modifier: EtsModifier): Boolean
-    
+
     val modifiersList: List<EtsModifier>
         get() = EtsModifier.entries.filter { hasModifier(it) }
 }
