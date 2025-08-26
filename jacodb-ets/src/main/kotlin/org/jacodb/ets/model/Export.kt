@@ -99,9 +99,6 @@ data class EtsExportInfo(
     val isAliased: Boolean
         get() = name != originalName
 
-    override val isDefault: Boolean
-        get() = isDefaultExport
-
     override fun toString(): String {
         return when {
             // Re-exports
