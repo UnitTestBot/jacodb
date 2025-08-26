@@ -67,6 +67,11 @@ data class EtsExportInfo(
 
     /**
      * Whether this export is a re-export.
+     *
+     * ```ts
+     * export { value } from './module';
+     * export * from './module';
+     * ```
      */
     val isReExport: Boolean
         get() = from != null
