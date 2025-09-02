@@ -529,8 +529,8 @@ fun TypeDto.toEtsType(): EtsType = when (this) {
     is ClassTypeDto -> toEtsClassType()
 
     is EnumValueTypeDto -> EtsEnumValueType(
-        signature = signature.toEtsFieldSignature(),
-        constant = constant?.toEtsConstant(),
+        signature = signature.toEtsClassSignature(),
+        name = name,
     )
 
     is FunctionTypeDto -> EtsFunctionType(
