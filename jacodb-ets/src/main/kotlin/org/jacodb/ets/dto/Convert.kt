@@ -800,7 +800,7 @@ private fun Int.toEtsClassCategory(): EtsClassCategory {
 
 private fun Int.toEtsExportType(): EtsExportType {
     return when (this) {
-        0 -> EtsExportType.NAME_SPACE
+        0 -> EtsExportType.NAMESPACE
         1 -> EtsExportType.CLASS
         2 -> EtsExportType.METHOD
         3 -> EtsExportType.LOCAL

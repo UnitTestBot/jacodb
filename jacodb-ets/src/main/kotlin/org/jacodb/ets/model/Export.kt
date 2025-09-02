@@ -23,6 +23,7 @@ package org.jacodb.ets.model
  * @property type The [type][EtsExportType] of export.
  * @property from The module or path being exported from (null for direct exports).
  * @property nameBeforeAs The original name before 'as' aliasing (null if no aliasing).
+ * @property modifiers Export modifiers.
  */
 data class EtsExportInfo(
     val name: String,
@@ -33,7 +34,7 @@ data class EtsExportInfo(
 ) : Base {
 
     // Note: Export statements do not have decorators in JS/TS.
-    override val decorators: List<EtsDecorator> = emptyList()
+    override val decorators: List<EtsDecorator> get() = emptyList()
 
     /**
      * Export clause name without any aliasing.
@@ -65,15 +66,26 @@ data class EtsExportInfo(
         }
 
     /**
-     * Whether this export is a star re-export (re-exporting everything from another module).
+     * Whether this export is a re-export.
+     *
+     * ```ts
+     * export { value } from './module';
+     * export * from './module';
+     * ```
+     */
+    val isReExport: Boolean
+        get() = from != null
+
+    /**
+     * Whether this export is a star re-export.
      *
      * ```ts
      * export * from './module';
      * export * as Utils from './utils';
      * ```
      */
-    val isStarExport: Boolean
-        get() = from != null && originalName == "*"
+    val isStarReExport: Boolean
+        get() = isReExport && originalName == "*"
 
     /**
      * Whether this export is aliased.
@@ -85,17 +97,14 @@ data class EtsExportInfo(
      * ```
      */
     val isAliased: Boolean
-        get() = nameBeforeAs != null && nameBeforeAs != name
-
-    override val isDefault: Boolean
-        get() = isDefaultExport
+        get() = name != originalName
 
     override fun toString(): String {
         return when {
             // Re-exports
             from != null -> {
                 val alias = if (isAliased) " as $name" else ""
-                if (isStarExport) {
+                if (isStarReExport) {
                     "export *$alias from '$from'"
                 } else {
                     "export { $originalName$alias } from '$from'"
@@ -120,10 +129,50 @@ data class EtsExportInfo(
  * Type of export in TypeScript/JavaScript.
  */
 enum class EtsExportType {
-    NAME_SPACE,
+    /**
+     * Namespace export:
+     * ```ts
+     * export namespace MyNamespace { ... }
+     * ```
+     */
+    NAMESPACE,
+
+    /**
+     * Class export:
+     * ```ts
+     * export class MyClass { ... }
+     * ```
+     */
     CLASS,
+
+    /**
+     * Function export:
+     * ```ts
+     * export function myFunction() { ... }
+     * ```
+     */
     METHOD,
+
+    /**
+     * Local variable/constant export:
+     * ```ts
+     * export const myVariable = 42;
+     * export let myLet = 'hello';
+     * export var myVar = true;
+     * ```
+     */
     LOCAL,
+
+    /**
+     * Type export:
+     * ```ts
+     * export type MyType = string | number;
+     * ```
+     */
     TYPE,
+
+    /**
+     * Unknown export type, fallback for unrecognized export patterns.
+     */
     UNKNOWN;
 }
