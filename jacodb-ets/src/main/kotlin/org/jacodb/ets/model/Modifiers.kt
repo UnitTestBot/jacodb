@@ -52,6 +52,9 @@ interface WithModifiers {
     val isDeclare: Boolean get() = hasModifier(EtsModifier.DECLARE)
 
     fun hasModifier(modifier: EtsModifier): Boolean
+    
+    val modifiersList: List<EtsModifier>
+        get() = EtsModifier.entries.filter { hasModifier(it) }
 }
 
 @JvmInline
@@ -63,9 +66,6 @@ value class EtsModifiers(val mask: Int) : WithModifiers {
             return EtsModifiers(modifiers.fold(0) { acc, modifier -> acc or modifier.value })
         }
     }
-
-    val modifiers: List<EtsModifier>
-        get() = EtsModifier.entries.filter { hasModifier(it) }
 
     override fun hasModifier(modifier: EtsModifier): Boolean = (mask and modifier.value) != 0
 }

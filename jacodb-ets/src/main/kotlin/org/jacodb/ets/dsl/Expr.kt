@@ -18,7 +18,7 @@ package org.jacodb.ets.dsl
 
 sealed interface Expr
 
-data class Local(val name: String) : Expr {
+data class Local(val name: String) : LValue {
     override fun toString() = name
 }
 
@@ -28,6 +28,10 @@ data class Parameter(val index: Int) : Expr {
 
 object ThisRef : Expr {
     override fun toString() = "this"
+}
+
+data class ConstantInt(val value: Int) : Expr {
+    override fun toString() = "const($value)"
 }
 
 data class ConstantNumber(val value: Double) : Expr {
@@ -78,4 +82,27 @@ data class UnaryExpr(
     val expr: Expr,
 ) : Expr {
     override fun toString() = "${operator.name.lowercase()}($expr)"
+}
+
+sealed interface LValue : Expr
+
+data class FieldRef(
+    val instance: Expr,
+    val fieldName: String,
+) : LValue {
+    override fun toString() = "$instance.$fieldName"
+}
+
+data class StaticFieldRef(
+    val className: String,
+    val fieldName: String,
+) : LValue {
+    override fun toString() = "$className.$fieldName"
+}
+
+data class ArrayAccess(
+    val array: Expr,
+    val index: Expr,
+) : LValue {
+    override fun toString() = "$array[$index]"
 }

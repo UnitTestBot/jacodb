@@ -62,6 +62,21 @@ private fun main() {
         }
 
         // x.foo := 35
+        assign(local("x").field("foo"), const(35))
+
+        // arr[i] := 42
+        assign(local("arr")[local("i")], const(42))
+
+        // MyClass.staticField := "hello"
+        assign(staticFieldRef("MyClass", "staticField"), const("hello"))
+
+        // obj.field1.field2 := 100
+        assign(local("obj").field("field1").field("field2"), const(100))
+
+        // objects[0].value := 99
+        assign(local("objects")[const(0)].field("value"), const(99))
+
+        // x.foo := 35  (using CustomStmt approach)
         customStmt { loc ->
             EtsAssignStmt(
                 location = loc,

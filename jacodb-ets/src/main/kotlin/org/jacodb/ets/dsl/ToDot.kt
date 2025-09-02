@@ -16,17 +16,19 @@
 
 package org.jacodb.ets.dsl
 
-import org.jacodb.ets.utils.toDotLabel
 import java.util.IdentityHashMap
 
-private fun Node.toDotLabel() = when (this) {
-    is Nop -> "nop"
-    is Assign -> "$target := $expr"
-    is Return -> "return $expr"
-    is If -> "if ($condition)"
-    is Label -> "label $name"
-    is Goto -> "goto $targetLabel"
-    is CustomEts -> "???"
+private fun Node.toDotLabel(): String {
+    val label = when (this) {
+        is Nop -> "nop"
+        is Assign -> "$target := $expr"
+        is Return -> "return $expr"
+        is If -> "if ($condition)"
+        is Label -> "label $name"
+        is Goto -> "goto $targetLabel"
+        is CustomEts -> "???"
+    }
+    return label.replace("\"", "\\\"")
 }
 
 fun Program.toDot(): String {
@@ -99,12 +101,15 @@ fun Program.toDot(): String {
     return lines.joinToString("\n")
 }
 
-private fun BlockStmt.toDotLabel() = when (this) {
-    is BlockAssign -> "$target := $expr"
-    is BlockReturn -> "return $expr"
-    is BlockIf -> "if ($condition)"
-    is BlockNop -> "nop"
-    is BlockCustomEts -> "???"
+private fun BlockStmt.toDotLabel(): String {
+    val label = when (this) {
+        is BlockAssign -> "$target := $expr"
+        is BlockReturn -> "return $expr"
+        is BlockIf -> "if ($condition)"
+        is BlockNop -> "nop"
+        is BlockCustomEts -> "???"
+    }
+    return label.replace("\"", "\\\"")
 }
 
 fun BlockCfg.toDot(): String {
@@ -136,12 +141,15 @@ fun BlockCfg.toDot(): String {
     return lines.joinToString("\n")
 }
 
-private fun Stmt.toDotLabel() = when (this) {
-    is NopStmt -> "nop"
-    is AssignStmt -> "$target := $expr"
-    is ReturnStmt -> "return $expr"
-    is IfStmt -> "if ($condition)"
-    is CustomEtsStmt -> "???"
+private fun Stmt.toDotLabel(): String {
+    val label = when (this) {
+        is NopStmt -> "nop"
+        is AssignStmt -> "$target := $expr"
+        is ReturnStmt -> "return $expr"
+        is IfStmt -> "if ($condition)"
+        is CustomEtsStmt -> "???"
+    }
+    return label.replace("\"", "\\\"")
 }
 
 fun LinearizedCfg.toDot(): String {

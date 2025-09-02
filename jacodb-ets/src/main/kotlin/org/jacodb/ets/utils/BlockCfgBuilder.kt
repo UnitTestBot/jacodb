@@ -16,6 +16,7 @@
 
 package org.jacodb.ets.utils
 
+import org.jacodb.ets.dsl.ArrayAccess
 import org.jacodb.ets.dsl.BinaryExpr
 import org.jacodb.ets.dsl.BinaryOperator
 import org.jacodb.ets.dsl.Block
@@ -26,30 +27,38 @@ import org.jacodb.ets.dsl.BlockIf
 import org.jacodb.ets.dsl.BlockNop
 import org.jacodb.ets.dsl.BlockReturn
 import org.jacodb.ets.dsl.ConstantBoolean
+import org.jacodb.ets.dsl.ConstantInt
 import org.jacodb.ets.dsl.ConstantNumber
 import org.jacodb.ets.dsl.ConstantString
 import org.jacodb.ets.dsl.CustomBinaryExpr
 import org.jacodb.ets.dsl.CustomUnaryExpr
 import org.jacodb.ets.dsl.CustomValue
 import org.jacodb.ets.dsl.Expr
+import org.jacodb.ets.dsl.FieldRef
 import org.jacodb.ets.dsl.Local
 import org.jacodb.ets.dsl.Parameter
+import org.jacodb.ets.dsl.StaticFieldRef
 import org.jacodb.ets.dsl.ThisRef
 import org.jacodb.ets.dsl.UnaryExpr
 import org.jacodb.ets.dsl.UnaryOperator
 import org.jacodb.ets.model.BasicBlock
 import org.jacodb.ets.model.EtsAddExpr
 import org.jacodb.ets.model.EtsAndExpr
+import org.jacodb.ets.model.EtsArrayAccess
 import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsBlockCfg
 import org.jacodb.ets.model.EtsBooleanConstant
+import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsDivExpr
 import org.jacodb.ets.model.EtsEntity
 import org.jacodb.ets.model.EtsEqExpr
+import org.jacodb.ets.model.EtsFieldSignature
 import org.jacodb.ets.model.EtsGtEqExpr
 import org.jacodb.ets.model.EtsGtExpr
 import org.jacodb.ets.model.EtsIfStmt
 import org.jacodb.ets.model.EtsImmediate
+import org.jacodb.ets.model.EtsInstanceFieldRef
+import org.jacodb.ets.model.EtsLValue
 import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsLtEqExpr
 import org.jacodb.ets.model.EtsLtExpr
@@ -64,6 +73,7 @@ import org.jacodb.ets.model.EtsOrExpr
 import org.jacodb.ets.model.EtsParameterRef
 import org.jacodb.ets.model.EtsRemExpr
 import org.jacodb.ets.model.EtsReturnStmt
+import org.jacodb.ets.model.EtsStaticFieldRef
 import org.jacodb.ets.model.EtsStmt
 import org.jacodb.ets.model.EtsStmtLocation
 import org.jacodb.ets.model.EtsStrictEqExpr
@@ -124,21 +134,25 @@ class EtsBlockCfgBuilder(
             is Local -> {
                 EtsLocal(
                     name = name,
-                    type = EtsUnknownType, // TODO
+                    type = EtsUnknownType,
                 )
             }
 
             is Parameter -> {
                 EtsParameterRef(
                     index = index,
-                    type = EtsUnknownType, // TODO
+                    type = EtsUnknownType,
                 )
             }
 
             ThisRef -> {
                 EtsThis(
-                    type = EtsUnknownType, // TODO
+                    type = EtsUnknownType,
                 )
+            }
+
+            is ConstantInt -> {
+                EtsNumberConstant(value = value.toDouble())
             }
 
             is ConstantNumber -> {
@@ -153,6 +167,43 @@ class EtsBlockCfgBuilder(
                 EtsStringConstant(value = value)
             }
 
+            is FieldRef -> {
+                val instanceEntity = instance.toEtsEntity()
+                val instanceLocal = ensureLocal(instanceEntity)
+                EtsInstanceFieldRef(
+                    instance = instanceLocal,
+                    field = EtsFieldSignature(
+                        enclosingClass = EtsClassSignature.UNKNOWN,
+                        name = fieldName,
+                        type = EtsUnknownType,
+                    ),
+                    type = EtsUnknownType
+                )
+            }
+
+            is StaticFieldRef -> {
+                EtsStaticFieldRef(
+                    field = EtsFieldSignature(
+                        enclosingClass = EtsClassSignature.UNKNOWN,
+                        name = fieldName,
+                        type = EtsUnknownType,
+                    ),
+                    type = EtsUnknownType
+                )
+            }
+
+            is ArrayAccess -> {
+                val arrayEntity = array.toEtsEntity()
+                val arrayLocal = ensureLocal(arrayEntity)
+                val indexEntity = index.toEtsEntity()
+                val indexValue = ensureImmediate(indexEntity)
+                EtsArrayAccess(
+                    array = arrayLocal,
+                    index = indexValue,
+                    type = EtsUnknownType,
+                )
+            }
+
             is UnaryExpr -> {
                 val arg = ensureImmediate(expr.toEtsEntity())
                 when (operator) {
@@ -162,7 +213,7 @@ class EtsBlockCfgBuilder(
 
                     UnaryOperator.NEG -> EtsNegExpr(
                         arg = arg,
-                        type = EtsUnknownType, // TODO
+                        type = EtsUnknownType,
                     )
                 }
             }
@@ -174,13 +225,13 @@ class EtsBlockCfgBuilder(
                     BinaryOperator.AND -> EtsAndExpr(
                         left = left,
                         right = right,
-                        type = EtsUnknownType, // TODO
+                        type = EtsUnknownType,
                     )
 
                     BinaryOperator.OR -> EtsOrExpr(
                         left = left,
                         right = right,
-                        type = EtsUnknownType, // TODO
+                        type = EtsUnknownType,
                     )
 
                     BinaryOperator.EQ -> EtsEqExpr(
@@ -226,31 +277,31 @@ class EtsBlockCfgBuilder(
                     BinaryOperator.ADD -> EtsAddExpr(
                         left = left,
                         right = right,
-                        type = EtsUnknownType, // TODO
+                        type = EtsUnknownType,
                     )
 
                     BinaryOperator.SUB -> EtsSubExpr(
                         left = left,
                         right = right,
-                        type = EtsUnknownType, // TODO
+                        type = EtsUnknownType,
                     )
 
                     BinaryOperator.MUL -> EtsMulExpr(
                         left = left,
                         right = right,
-                        type = EtsUnknownType, // TODO
+                        type = EtsUnknownType,
                     )
 
                     BinaryOperator.DIV -> EtsDivExpr(
                         left = left,
                         right = right,
-                        type = EtsUnknownType, // TODO
+                        type = EtsUnknownType,
                     )
 
                     BinaryOperator.REM -> EtsRemExpr(
                         left = left,
                         right = right,
-                        type = EtsUnknownType, // TODO
+                        type = EtsUnknownType,
                     )
                 }
             }
@@ -278,8 +329,11 @@ class EtsBlockCfgBuilder(
                 }
 
                 is BlockAssign -> {
-                    val lhv = stmt.target.toEtsEntity() as EtsLocal // safe cast
+                    val lhv = stmt.target.toEtsEntity()
                     val rhv = stmt.expr.toEtsEntity()
+                    check(lhv is EtsLValue) {
+                        "Assignment target must be an LValue, got: ${lhv::class.simpleName}"
+                    }
                     etsStatements += EtsAssignStmt(
                         location = stub,
                         lhv = lhv,
