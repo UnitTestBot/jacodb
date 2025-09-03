@@ -71,8 +71,8 @@ data class LexicalEnvTypeDto(
 @Serializable
 @SerialName("EnumValueType")
 data class EnumValueTypeDto(
-    val signature: FieldSignatureDto,
-    val constant: ConstantDto? = null,
+    val signature: ClassSignatureDto,
+    val name: String? = null,
 ) : TypeDto
 
 @Serializable

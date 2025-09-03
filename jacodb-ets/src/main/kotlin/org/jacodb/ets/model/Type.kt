@@ -428,11 +428,15 @@ data class EtsLexicalEnvType(
 }
 
 data class EtsEnumValueType(
-    val signature: EtsFieldSignature,
-    val constant: EtsConstant? = null,
+    val signature: EtsClassSignature,
+    val name: String? = null,
 ) : EtsType {
     override val typeName: String
-        get() = signature.name
+        get() = if (name != null) {
+            "${signature.name}.$name"
+        } else {
+            signature.name
+        }
 
     override fun toString(): String = typeName
 

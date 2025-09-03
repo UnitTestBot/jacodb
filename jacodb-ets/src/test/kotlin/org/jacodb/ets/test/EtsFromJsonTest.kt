@@ -609,11 +609,12 @@ class EtsFromJsonTest {
     fun testClassCategory() {
         val path = "/samples/etsir/ast/lang/enum.ts.json"
         val file = loadEtsFileFromResource(path)
-        val cls = file.classes.first { it.name == "Animal" }
+        val cls = file.classes.first { it.name == "BasicEnum" }
         assertEquals(EtsClassCategory.ENUM, cls.category)
-        assertEquals(2, cls.fields.size)
-        assertEquals("Cat", cls.fields[0].name)
-        assertEquals("Dog", cls.fields[1].name)
+        assertEquals(3, cls.fields.size)
+        assertEquals("First", cls.fields[0].name)
+        assertEquals("Second", cls.fields[1].name)
+        assertEquals("Third", cls.fields[2].name)
     }
 
     @Test
