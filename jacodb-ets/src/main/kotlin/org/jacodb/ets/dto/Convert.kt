@@ -483,11 +483,17 @@ class EtsMethodBuilder(
 
         val blocks = this.blocks.map { block ->
             currentStmts = mutableListOf()
-            for (stmt in block.stmts) {
-                currentStmts += stmt.toEtsStmt()
+            for ((index, stmt) in block.stmts.withIndex()) {
+                currentStmts += stmt.toEtsStmt().also {
+                    it.location.blockDtoIndex = block.id
+                    it.location.stmtDtoIndex = index
+                }
             }
             if (currentStmts.isEmpty()) {
-                currentStmts += EtsNopStmt(location = loc())
+                currentStmts += EtsNopStmt(location = loc()).also {
+                    it.location.blockDtoIndex = block.id
+                    it.location.stmtDtoIndex = 0
+                }
             }
             BasicBlock(block.id, currentStmts)
         }

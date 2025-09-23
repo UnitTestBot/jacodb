@@ -22,6 +22,9 @@ data class EtsStmtLocation(
     override val method: EtsMethod,
     var index: Int,
 ) : CommonInstLocation {
+    var blockDtoIndex: Int? = null
+    var stmtDtoIndex: Int? = null
+
     companion object {
         fun stub(method: EtsMethod): EtsStmtLocation {
             return EtsStmtLocation(method, -1)
