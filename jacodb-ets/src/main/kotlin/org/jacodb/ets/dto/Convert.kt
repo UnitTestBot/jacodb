@@ -473,7 +473,9 @@ class EtsMethodBuilder(
         }
         // Note: in DTO, successors for IF stmts are (false, true) branches,
         //       however in all our CFGs we use (true, false) order.
-        val successors = this.blocks.associate { it.id to it.successors.asReversed() }
+        // val successors = this.blocks.associate { it.id to it.successors.asReversed() }
+
+        val successors = this.blocks.associate { it.id to it.successors }
 
         return EtsBlockCfg(
             blocks = blocks,
