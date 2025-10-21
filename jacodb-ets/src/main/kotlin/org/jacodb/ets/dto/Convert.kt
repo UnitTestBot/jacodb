@@ -207,9 +207,9 @@ class EtsMethodBuilder(
         }
 
         is AssignStmtDto -> {
-            val lhv = left.toEtsEntity() as EtsValue // safe cast
+            val lhv = left.toEtsEntity()
             check(lhv is EtsLocal || lhv is EtsFieldRef || lhv is EtsArrayAccess) {
-                "LHV of AssignStmt should be EtsLocal, EtsFieldRef, or EtsArrayAccess, but got $lhv"
+                "LHV of AssignStmt should be EtsLocal, EtsFieldRef, or EtsArrayAccess, but got ${lhv::class.java}: $lhv"
             }
             val rhv = right.toEtsEntity().let { rhv ->
                 if (lhv is EtsLocal) {
