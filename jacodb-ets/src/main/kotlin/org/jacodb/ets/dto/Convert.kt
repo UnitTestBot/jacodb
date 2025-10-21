@@ -232,7 +232,10 @@ class EtsMethodBuilder(
         }
 
         is CallStmtDto -> {
-            val expr = expr.toEtsEntity() as EtsCallExpr // safe cast
+            val expr = expr.toEtsEntity()
+            check(expr is EtsCallExpr) {
+                "Expr in CallStmt should be EtsCallExpr, but got ${expr::class.java}: $expr"
+            }
             EtsCallStmt(
                 location = loc(),
                 expr = expr,
