@@ -194,8 +194,11 @@ class EtsMethodBuilder(
         if (entity is EtsExpr || entity is EtsFieldRef || entity is EtsArrayAccess) {
             return ensureLocal(entity)
         } else {
-            check(entity is EtsValue) {
-                "Expected EtsValue, but got $entity"
+            if (entity !is EtsValue) {
+                logger.error {
+                    "Expected EtsValue, but got ${entity::class.java}: $entity\nMethod: $method"
+                }
+                error("Expected EtsValue, but got ${entity::class.java}")
             }
             return entity
         }
@@ -208,8 +211,11 @@ class EtsMethodBuilder(
 
         is AssignStmtDto -> {
             val lhv = left.toEtsEntity()
-            check(lhv is EtsLocal || lhv is EtsFieldRef || lhv is EtsArrayAccess) {
-                "LHV of AssignStmt should be EtsLocal, EtsFieldRef, or EtsArrayAccess, but got ${lhv::class.java}: $lhv"
+            if (!(lhv is EtsLocal || lhv is EtsFieldRef || lhv is EtsArrayAccess)) {
+                logger.error {
+                    "LHV of AssignStmt should be EtsLocal, EtsFieldRef, or EtsArrayAccess, but got ${lhv::class.java}: $lhv\nMethod: $method\nStmt: $this"
+                }
+                error("LHV of AssignStmt should be EtsLocal, EtsFieldRef, or EtsArrayAccess, but got ${lhv::class.java}")
             }
             val rhv = right.toEtsEntity().let { rhv ->
                 if (lhv is EtsLocal) {
@@ -233,8 +239,11 @@ class EtsMethodBuilder(
 
         is CallStmtDto -> {
             val expr = expr.toEtsEntity()
-            check(expr is EtsCallExpr) {
-                "Expr in CallStmt should be EtsCallExpr, but got ${expr::class.java}: $expr"
+            if (expr !is EtsCallExpr) {
+                logger.error {
+                    "Expr in CallStmt should be EtsCallExpr, but got ${expr::class.java}: $expr\nMethod: $method\nStmt: $this"
+                }
+                error("Expr in CallStmt should be EtsCallExpr, but got ${expr::class.java}")
             }
             EtsCallStmt(
                 location = loc(),
