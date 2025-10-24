@@ -210,7 +210,14 @@ class EtsMethodBuilder(
         }
 
         is AssignStmtDto -> {
-            val lhv = left.toEtsEntity()
+            val lhv = left.toEtsEntity().let {
+                // Drop cast on LHV
+                if (it is EtsCastExpr) {
+                    it.arg
+                } else {
+                    it
+                }
+            }
             if (!(lhv is EtsLocal || lhv is EtsFieldRef || lhv is EtsArrayAccess)) {
                 logger.error {
                     "LHV of AssignStmt should be EtsLocal, EtsFieldRef, or EtsArrayAccess, but got ${lhv::class.java}: $lhv\nMethod: $method\nStmt: $this"
