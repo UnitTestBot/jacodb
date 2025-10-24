@@ -211,7 +211,7 @@ class EtsMethodBuilder(
 
         is AssignStmtDto -> {
             val lhv = left.toEtsEntity().let {
-                // Drop cast on LHV
+                // Drop cast on LHV.
                 if (it is EtsCastExpr) {
                     it.arg
                 } else {
