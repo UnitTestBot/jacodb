@@ -659,8 +659,8 @@ class EtsFromJsonTest {
         val file = loadEtsFileAutoConvert(res)
         val method = file.classes.flatMap { it.methods }.first { it.name == "testTryCatch" }
 
-        // Should have one trap for the try-catch-finally block
-        assertEquals(1, method.body.traps.size)
+        // Should have two trap for the try-catch-finally block
+        assertEquals(2, method.body.traps.size)
         val trap = method.body.traps[0]
 
         // Verify trap has try blocks and catch blocks

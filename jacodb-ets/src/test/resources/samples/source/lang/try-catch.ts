@@ -10,15 +10,13 @@ function testTryCatch(x: number): number {
             throw new Error("Value too large");
         }
         result = result + 10;
+        return result;
     } catch (e) {
         console.log("Error caught: " + e);
-        result = -1;
+        return -1;
     } finally {
         console.log("Finally block executed");
-        result = result + 1;
     }
-
-    return result;
 }
 
 // Test different branches
