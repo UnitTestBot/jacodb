@@ -56,11 +56,11 @@ import org.jacodb.ets.model.EtsUnknownType
 import org.jacodb.ets.test.utils.getResourcePath
 import org.jacodb.ets.test.utils.getResourcePathOrNull
 import org.jacodb.ets.test.utils.loadEtsFileFromResource
-import org.jacodb.ets.test.utils.loadEtsProjectFromResources
 import org.jacodb.ets.test.utils.testFactory
 import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
 import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
 import org.jacodb.ets.utils.loadEtsFileAutoConvert
+import org.jacodb.ets.utils.loadEtsProjectAutoConvert
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
@@ -212,11 +212,10 @@ class EtsFromJsonTest {
 
     @Test
     fun testLoadEtsProject() {
-        val res = "/projects/Demo_Calc"
+        val res = "/projects/Demo_Calc/source"
         Assumptions.assumeTrue(projectAvailable(res)) { "Project not available: $res" }
-        val modules = listOf("entry")
-        val prefix = "$res/etsir"
-        val project = loadEtsProjectFromResources(modules, prefix)
+        val projectPath = getResourcePath(res)
+        val project = loadEtsProjectAutoConvert(projectPath)
         printProject(project)
     }
 
@@ -254,21 +253,12 @@ class EtsFromJsonTest {
     private fun dynamicLoadEtsProject(projectName: String) {
         logger.info { "Loading project: $projectName" }
         val projectPath = getResourcePath("/projects/$projectName")
-        val etsirPath = projectPath / "etsir"
-        if (!etsirPath.exists()) {
-            logger.warn { "No etsir directory found for project $projectName" }
+        val sourcePath = projectPath / "source"
+        if (!sourcePath.exists()) {
+            logger.warn { "No source directory found for project $projectName" }
             return
         }
-        val modules = etsirPath.listDirectoryEntries()
-            .filter { it.isDirectory() }
-            .map { it.name }
-            .sorted()
-        logger.info { "Found ${modules.size} modules: $modules" }
-        if (modules.isEmpty()) {
-            logger.warn { "No modules found for project $projectName" }
-            return
-        }
-        val project = loadEtsProjectFromResources(modules, "/projects/$projectName/etsir")
+        val project = loadEtsProjectAutoConvert(sourcePath)
         printProject(project)
     }
 
