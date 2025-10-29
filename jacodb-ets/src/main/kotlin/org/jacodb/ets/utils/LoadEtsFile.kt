@@ -118,6 +118,7 @@ fun loadEtsFileAutoConvert(
     val irFilePath = generateEtsIR(
         path,
         isProject = false,
+        loadEntrypoints = false,
         useArkAnalyzerTypeInference = useArkAnalyzerTypeInference,
     )
     irFilePath.inputStream().use { stream ->
