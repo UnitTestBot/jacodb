@@ -89,6 +89,7 @@ data class MethodDto(
 data class BodyDto(
     val locals: List<LocalDto>,
     val cfg: CfgDto,
+    val traps: List<TrapDto> = emptyList(),
 )
 
 @Serializable

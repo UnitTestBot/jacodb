@@ -124,6 +124,7 @@ import org.jacodb.ets.model.EtsStringType
 import org.jacodb.ets.model.EtsSubExpr
 import org.jacodb.ets.model.EtsThis
 import org.jacodb.ets.model.EtsThrowStmt
+import org.jacodb.ets.model.EtsTrap
 import org.jacodb.ets.model.EtsTupleType
 import org.jacodb.ets.model.EtsType
 import org.jacodb.ets.model.EtsTypeOfExpr
@@ -169,10 +170,16 @@ class EtsMethodBuilder(
 
     private var built: Boolean = false
 
-    fun build(cfgDto: CfgDto): EtsMethod {
+    fun build(cfgDto: CfgDto, trapsDto: List<TrapDto>): EtsMethod {
         require(!built) { "Method has already been built" }
         val cfg = cfgDto.toEtsCfg()
         method.body.cfg = cfg
+        method.body.traps = trapsDto.map { trapDto ->
+            EtsTrap(
+                tryBlocks = trapDto.tryBlocks.map { i -> cfg.blocks[i] },
+                catchBlocks = trapDto.catchBlocks.map { i -> cfg.blocks[i] },
+            )
+        }
         built = true
         return method
     }
@@ -697,7 +704,7 @@ fun MethodDto.toEtsMethod(): EtsMethod {
             decorators = decorators,
             locals = body.locals.map { it.toEtsLocal() },
         )
-        return builder.build(body.cfg)
+        return builder.build(body.cfg, body.traps)
     } else {
         return EtsMethodImpl(
             signature = signature,

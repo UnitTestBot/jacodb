@@ -42,6 +42,9 @@ interface EtsMethod : Base, CommonMethod {
     val locals: List<EtsLocal>
         get() = body.locals
 
+    val traps: List<EtsTrap>
+        get() = body.traps
+
     override fun flowGraph(): EtsBytecodeGraph<EtsStmt> {
         return cfg
     }
@@ -50,6 +53,7 @@ interface EtsMethod : Base, CommonMethod {
 class EtsMethodBody(
     var cfg: EtsBlockCfg = EtsBlockCfg.EMPTY,
     var locals: List<EtsLocal> = emptyList(),
+    var traps: List<EtsTrap> = emptyList(),
 )
 
 class EtsMethodImpl(
