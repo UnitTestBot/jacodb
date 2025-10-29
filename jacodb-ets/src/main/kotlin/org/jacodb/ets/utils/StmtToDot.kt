@@ -23,12 +23,14 @@ import org.jacodb.ets.model.EtsNopStmt
 import org.jacodb.ets.model.EtsRawStmt
 import org.jacodb.ets.model.EtsReturnStmt
 import org.jacodb.ets.model.EtsStmt
+import org.jacodb.ets.model.EtsThrowStmt
 
 internal fun EtsStmt.toDotLabel(): String {
     val label = when (this) {
         is EtsNopStmt -> "nop"
         is EtsAssignStmt -> "$lhv := $rhv"
         is EtsReturnStmt -> returnValue?.let { "return $it" } ?: "return"
+        is EtsThrowStmt -> "throw $exception"
         is EtsIfStmt -> "if ($condition)"
         is EtsCallStmt -> "call $expr"
         is EtsRawStmt -> "raw $kind"
