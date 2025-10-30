@@ -180,23 +180,53 @@ class EtsOperatorTest : EtsLangTestBase() {
     }
 
     @Test
-    fun testConditionalOperator() {
-        val method = assertMethodExists(file, "testConditional", minStmts = 1)
+    fun testCommaOperator() {
+        val method = assertMethodExists(file, "testCommaOperator", minStmts = 1)
 
         logMethodDetails(method)
 
-        // Ternary operator should create conditional flow
-        assertTrue(method.cfg.stmts.isNotEmpty(), "Method should have ternary operator")
+        // Should handle comma operator
+        assertTrue(method.cfg.stmts.isNotEmpty(), "Method should have comma operator")
     }
 
     @Test
-    fun testTemplateLiterals() {
-        val method = assertMethodExists(file, "testTemplateLiterals", minStmts = 1)
+    fun testGrouping() {
+        val method = assertMethodExists(file, "testGrouping", minStmts = 1)
 
         logMethodDetails(method)
 
-        // Should handle template string interpolation
-        assertTrue(method.cfg.stmts.isNotEmpty(), "Method should have template literal")
+        // Should handle grouping with parentheses
+        assertTrue(method.cfg.stmts.isNotEmpty(), "Method should have grouping operator")
+    }
+
+    @Test
+    fun testDelete() {
+        val method = assertMethodExists(file, "testDelete", minStmts = 1)
+
+        logMethodDetails(method)
+
+        // Should handle delete operator
+        assertTrue(method.cfg.stmts.isNotEmpty(), "Method should have delete operator")
+    }
+
+    @Test
+    fun testVoid() {
+        val method = assertMethodExists(file, "testVoid", minStmts = 1)
+
+        logMethodDetails(method)
+
+        // Should handle void operator
+        assertTrue(method.cfg.stmts.isNotEmpty(), "Method should have void operator")
+    }
+
+    @Test
+    fun testInOperator() {
+        val method = assertMethodExists(file, "testInOperator", minStmts = 1)
+
+        logMethodDetails(method)
+
+        // Should handle in operator
+        assertTrue(method.cfg.stmts.isNotEmpty(), "Method should have in operator")
     }
 
     @Test
@@ -217,5 +247,35 @@ class EtsOperatorTest : EtsLangTestBase() {
 
         // Should handle variable shadowing in nested scopes
         assertTrue(method.cfg.blocks.size > 1, "Method should have multiple scopes")
+    }
+
+    @Test
+    fun testConditionalOperator() {
+        val method = assertMethodExists(file, "testConditional", minStmts = 1)
+
+        logMethodDetails(method)
+
+        // Ternary operator should create conditional flow
+        assertTrue(method.cfg.stmts.isNotEmpty(), "Method should have ternary operator")
+    }
+
+    @Test
+    fun testStringConcat() {
+        val method = assertMethodExists(file, "testStringConcat", minStmts = 1)
+
+        logMethodDetails(method)
+
+        // Should handle string concatenation
+        assertTrue(method.cfg.stmts.isNotEmpty(), "Method should have string concatenation")
+    }
+
+    @Test
+    fun testTemplateLiterals() {
+        val method = assertMethodExists(file, "testTemplateLiterals", minStmts = 1)
+
+        logMethodDetails(method)
+
+        // Should handle template string interpolation
+        assertTrue(method.cfg.stmts.isNotEmpty(), "Method should have template literal")
     }
 }
