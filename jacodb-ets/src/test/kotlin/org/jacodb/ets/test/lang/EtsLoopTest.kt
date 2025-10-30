@@ -30,7 +30,6 @@ private val logger = KotlinLogging.logger {}
  * Tests for loop constructions (for, while, do-while, for-in, for-of).
  */
 class EtsLoopTest : EtsLangTestBase() {
-
     companion object {
         private const val SOURCE_PATH = "/samples/source/lang/loops.ts"
 
@@ -58,7 +57,6 @@ class EtsLoopTest : EtsLangTestBase() {
 
     @Test
     fun testForLoopWithBreak() {
-
         val method = assertMethodExists(file, "testForLoopWithBreak", minStmts = 1)
 
         logMethodDetails(method)
@@ -69,7 +67,6 @@ class EtsLoopTest : EtsLangTestBase() {
 
     @Test
     fun testForLoopWithContinue() {
-
         val method = assertMethodExists(file, "testForLoopWithContinue", minStmts = 1)
 
         logMethodDetails(method)
@@ -80,7 +77,6 @@ class EtsLoopTest : EtsLangTestBase() {
 
     @Test
     fun testWhileLoop() {
-
         val method = assertMethodExists(file, "testWhileLoop", minStmts = 1)
 
         logMethodDetails(method)
@@ -91,7 +87,6 @@ class EtsLoopTest : EtsLangTestBase() {
 
     @Test
     fun testWhileLoopWithBreak() {
-
         val method = assertMethodExists(file, "testWhileLoopWithBreak", minStmts = 1)
 
         logMethodDetails(method)
@@ -102,7 +97,6 @@ class EtsLoopTest : EtsLangTestBase() {
 
     @Test
     fun testDoWhileLoop() {
-
         val method = assertMethodExists(file, "testDoWhileLoop", minStmts = 1)
 
         logMethodDetails(method)
@@ -113,7 +107,6 @@ class EtsLoopTest : EtsLangTestBase() {
 
     @Test
     fun testNestedLoops() {
-
         val method = assertMethodExists(file, "testNestedLoops", minStmts = 1)
 
         logMethodDetails(method)
@@ -124,7 +117,6 @@ class EtsLoopTest : EtsLangTestBase() {
 
     @Test
     fun testForInLoop() {
-
         val method = assertMethodExists(file, "testForInLoop", minStmts = 1)
 
         logMethodDetails(method)
@@ -135,7 +127,6 @@ class EtsLoopTest : EtsLangTestBase() {
 
     @Test
     fun testForOfLoop() {
-
         val method = assertMethodExists(file, "testForOfLoop", minStmts = 1)
 
         logMethodDetails(method)
@@ -147,7 +138,6 @@ class EtsLoopTest : EtsLangTestBase() {
     @Disabled("Labeled loops are not supported by ArkAnalyzer")
     @Test
     fun testLabeledBreak() {
-
         val method = assertMethodExists(file, "testLabeledBreak", minStmts = 1)
 
         logMethodDetails(method)
@@ -159,7 +149,6 @@ class EtsLoopTest : EtsLangTestBase() {
     @Disabled("Labeled loops are not supported by ArkAnalyzer")
     @Test
     fun testLabeledContinue() {
-
         val method = assertMethodExists(file, "testLabeledContinue", minStmts = 1)
 
         logMethodDetails(method)
@@ -170,7 +159,6 @@ class EtsLoopTest : EtsLangTestBase() {
 
     @Test
     fun testInfiniteLoop() {
-
         val method = assertMethodExists(file, "testInfiniteLoop", minStmts = 1)
 
         logMethodDetails(method)

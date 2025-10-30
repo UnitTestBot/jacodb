@@ -59,7 +59,6 @@ class EtsOperatorTest : EtsLangTestBase() {
 
     @Test
     fun testUnaryOperators() {
-
         val method = assertMethodExists(file, "testUnaryOperators", minStmts = 1)
 
         logMethodDetails(method)
@@ -70,7 +69,6 @@ class EtsOperatorTest : EtsLangTestBase() {
 
     @Test
     fun testComparisonOperators() {
-
         val method = assertMethodExists(file, "testComparisonOperators", minStmts = 1)
 
         logMethodDetails(method)
@@ -81,7 +79,6 @@ class EtsOperatorTest : EtsLangTestBase() {
 
     @Test
     fun testLogicalOperators() {
-
         val method = assertMethodExists(file, "testLogicalOperators", minStmts = 1)
 
         logMethodDetails(method)
@@ -92,7 +89,6 @@ class EtsOperatorTest : EtsLangTestBase() {
 
     @Test
     fun testBitwiseOperators() {
-
         val method = assertMethodExists(file, "testBitwiseOperators", minStmts = 1)
 
         logMethodDetails(method)
@@ -104,7 +100,6 @@ class EtsOperatorTest : EtsLangTestBase() {
 
     @Test
     fun testAssignmentOperators() {
-
         val method = assertMethodExists(file, "testAssignmentOperators", minStmts = 1)
 
         logMethodDetails(method)
@@ -116,7 +111,6 @@ class EtsOperatorTest : EtsLangTestBase() {
 
     @Test
     fun testNullCoalescing() {
-
         val method = assertMethodExists(file, "testNullCoalescing", minStmts = 1)
 
         logMethodDetails(method)
@@ -127,7 +121,6 @@ class EtsOperatorTest : EtsLangTestBase() {
 
     @Test
     fun testOptionalChaining() {
-
         val method = assertMethodExists(file, "testOptionalChaining", minStmts = 1)
 
         logMethodDetails(method)
@@ -138,7 +131,6 @@ class EtsOperatorTest : EtsLangTestBase() {
 
     @Test
     fun testTypeOf() {
-
         val method = assertMethodExists(file, "testTypeOf", minStmts = 1)
 
         logMethodDetails(method)
@@ -149,7 +141,6 @@ class EtsOperatorTest : EtsLangTestBase() {
 
     @Test
     fun testInstanceOf() {
-
         val method = assertMethodExists(file, "testInstanceOf", minStmts = 1)
 
         logMethodDetails(method)
@@ -160,7 +151,6 @@ class EtsOperatorTest : EtsLangTestBase() {
 
     @Test
     fun testSpreadOperator() {
-
         val method = assertMethodExists(file, "testSpreadOperator", minStmts = 1)
 
         logMethodDetails(method)
@@ -171,7 +161,6 @@ class EtsOperatorTest : EtsLangTestBase() {
 
     @Test
     fun testDestructuring() {
-
         val method = assertMethodExists(file, "testDestructuring", minStmts = 1)
 
         logMethodDetails(method)
@@ -182,7 +171,6 @@ class EtsOperatorTest : EtsLangTestBase() {
 
     @Test
     fun testObjectDestructuring() {
-
         val method = assertMethodExists(file, "testObjectDestructuring", minStmts = 1)
 
         logMethodDetails(method)
@@ -193,7 +181,6 @@ class EtsOperatorTest : EtsLangTestBase() {
 
     @Test
     fun testConditionalOperator() {
-
         val method = assertMethodExists(file, "testConditional", minStmts = 1)
 
         logMethodDetails(method)
@@ -204,7 +191,6 @@ class EtsOperatorTest : EtsLangTestBase() {
 
     @Test
     fun testTemplateLiterals() {
-
         val method = assertMethodExists(file, "testTemplateLiterals", minStmts = 1)
 
         logMethodDetails(method)
@@ -215,7 +201,6 @@ class EtsOperatorTest : EtsLangTestBase() {
 
     @Test
     fun testInOperatorWithClass() {
-
         val method = assertMethodExists(file, "testInOperatorWithClass", minStmts = 1)
 
         logMethodDetails(method)
@@ -226,7 +211,6 @@ class EtsOperatorTest : EtsLangTestBase() {
 
     @Test
     fun testScopedVariables() {
-
         val method = assertMethodExists(file, "testScopedVariables", minStmts = 1)
 
         logMethodDetails(method)
