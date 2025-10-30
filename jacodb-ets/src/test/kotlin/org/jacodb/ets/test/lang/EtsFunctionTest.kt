@@ -18,6 +18,8 @@ package org.jacodb.ets.test.lang
 
 import mu.KotlinLogging
 import org.jacodb.ets.model.EtsFile
+import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
+import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -103,11 +105,12 @@ class EtsFunctionTest : EtsLangTestBase() {
 
     @Test
     fun testArrowFunction() {
-        // Arrow function may be stored as a field or constant
-        val arrowFn = file.findMethods { it.name.contains("arrow") || it.name.contains("lambda") }
+        // Top-level arrow function is stored as global variable
+        val dfltClass = file.classes.first { it.name == DEFAULT_ARK_CLASS_NAME }
+        val dfltMethod = dfltClass.methods.first { it.name == DEFAULT_ARK_METHOD_NAME }
         assertTrue(
-            arrowFn.isNotEmpty() || file.allClasses.isNotEmpty(),
-            "Arrow functions should be present in the file"
+            dfltMethod.locals.any { it.name == "arrowFunction" },
+            "Arrow function should be present as a local variable in %dflt::%dflt"
         )
     }
 
