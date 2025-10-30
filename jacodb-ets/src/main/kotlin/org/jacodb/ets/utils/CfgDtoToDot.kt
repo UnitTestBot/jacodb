@@ -227,8 +227,27 @@ private fun TypeDto.toDotLabel(): String {
         is StringTypeDto -> "string"
         is BooleanTypeDto -> "boolean"
 
+        is LiteralTypeDto -> when (literal) {
+            is PrimitiveLiteralDto.StringLiteral -> "\"${literal.value}\""
+            is PrimitiveLiteralDto.NumberLiteral -> literal.value.toString()
+            is PrimitiveLiteralDto.BooleanLiteral -> literal.value.toString()
+        }
+
         // Complex types
-        is ClassTypeDto -> signature.name
+        is ClassTypeDto -> if (typeParameters.isNotEmpty()) {
+            val generics = typeParameters.joinToString(", ") { it.toDotLabel() }
+            "${signature.name}<$generics>"
+        } else {
+            signature.name
+        }
+
+        is UnclearReferenceTypeDto -> if (typeParameters.isNotEmpty()) {
+            val generics = typeParameters.joinToString(", ") { it.toDotLabel() }
+            "$name<$generics>"
+        } else {
+            name
+        }
+
         is ArrayTypeDto -> "${elementType.toDotLabel()}${"[]".repeat(dimensions)}"
         is TupleTypeDto -> types.joinToString(", ", "[", "]") { it.toDotLabel() }
 
@@ -249,20 +268,9 @@ private fun TypeDto.toDotLabel(): String {
 
         // Special types
         is GenericTypeDto -> name
-        is AliasTypeDto -> name
+        is AliasTypeDto -> "$name=${originalType.toDotLabel()}"
         is EnumValueTypeDto -> "${signature.name}${name?.let { ".$it" } ?: ""}"
-        is LexicalEnvTypeDto -> "LexicalEnv<${method.name}>"
-
-        is LiteralTypeDto -> when (literal) {
-            is PrimitiveLiteralDto.StringLiteral -> "\"${literal.value}\""
-            is PrimitiveLiteralDto.NumberLiteral -> literal.value.toString()
-            is PrimitiveLiteralDto.BooleanLiteral -> literal.value.toString()
-        }
-
-        is UnclearReferenceTypeDto -> {
-            if (typeParameters.isEmpty()) name
-            else "$name<${typeParameters.joinToString(", ") { it.toDotLabel() }}>"
-        }
+        is LexicalEnvTypeDto -> "<${method.name}>(${closures.joinToString { it.name }})"
 
         // Raw type
         is RawTypeDto -> "raw:$kind"
