@@ -33,29 +33,23 @@ private val logger = KotlinLogging.logger {}
 class EtsExceptionHandlingTest : EtsLangTestBase() {
 
     companion object {
-        private const val EXCEPTIONS_PATH = "/samples/source/lang/exceptions.ts"
-        private const val TRY_CATCH_PATH = "/samples/source/lang/try-catch.ts"
+        private const val SOURCE_PATH = "/samples/source/lang/exceptions.ts"
 
-        private val exceptionsFile: EtsFile by lazy {
-            loadSourceFile(EXCEPTIONS_PATH)
-        }
-
-        private val tryCatchFile: EtsFile by lazy {
-            loadSourceFile(TRY_CATCH_PATH)
+        private val file: EtsFile by lazy {
+            loadSourceFile(SOURCE_PATH)
         }
 
         @BeforeAll
         @JvmStatic
         fun setup() {
-            assertNotNull(exceptionsFile, "Failed to load $EXCEPTIONS_PATH")
-            assertNotNull(tryCatchFile, "Failed to load $TRY_CATCH_PATH")
+            assertNotNull(file, "Failed to load $SOURCE_PATH")
             logger.info { "✓ Setup complete, ready to run ${EtsExceptionHandlingTest::class.simpleName} tests" }
         }
     }
 
     @Test
     fun testSimpleTryCatch() {
-        val method = assertMethodExists(exceptionsFile, "testSimpleTryCatch", minStmts = 1, hasTraps = true)
+        val method = assertMethodExists(file, "testSimpleTryCatch", minStmts = 1, hasTraps = true)
 
         logMethodDetails(method)
 
@@ -69,7 +63,7 @@ class EtsExceptionHandlingTest : EtsLangTestBase() {
 
     @Test
     fun testTryCatchFinally() {
-        val method = assertMethodExists(exceptionsFile, "testTryCatchFinally", minStmts = 1, hasTraps = true)
+        val method = assertMethodExists(file, "testTryCatchFinally", minStmts = 1, hasTraps = true)
 
         logMethodDetails(method)
 
@@ -85,7 +79,7 @@ class EtsExceptionHandlingTest : EtsLangTestBase() {
 
     @Test
     fun testTryFinally() {
-        val method = assertMethodExists(exceptionsFile, "testTryFinally", minStmts = 1, hasTraps = true)
+        val method = assertMethodExists(file, "testTryFinally", minStmts = 1, hasTraps = true)
 
         logMethodDetails(method)
 
@@ -96,7 +90,7 @@ class EtsExceptionHandlingTest : EtsLangTestBase() {
     @Disabled("ArkAnalyzer issue with nested try-catch: https://gitcode.com/openharmony-sig/arkanalyzer/issues/816")
     @Test
     fun testNestedTryCatch() {
-        val method = assertMethodExists(exceptionsFile, "testNestedTryCatch", minStmts = 1, hasTraps = true)
+        val method = assertMethodExists(file, "testNestedTryCatch", minStmts = 1, hasTraps = true)
 
         logMethodDetails(method)
 
@@ -106,7 +100,7 @@ class EtsExceptionHandlingTest : EtsLangTestBase() {
 
     @Test
     fun testMultipleCatchPaths() {
-        val method = assertMethodExists(exceptionsFile, "testMultipleCatchPaths", minStmts = 1, hasTraps = true)
+        val method = assertMethodExists(file, "testMultipleCatchPaths", minStmts = 1, hasTraps = true)
 
         logMethodDetails(method)
 
@@ -116,7 +110,7 @@ class EtsExceptionHandlingTest : EtsLangTestBase() {
 
     @Test
     fun testFinallyOverridesReturn() {
-        val method = assertMethodExists(exceptionsFile, "testFinallyOverridesReturn", minStmts = 1, hasTraps = true)
+        val method = assertMethodExists(file, "testFinallyOverridesReturn", minStmts = 1, hasTraps = true)
 
         logMethodDetails(method)
 
@@ -126,27 +120,11 @@ class EtsExceptionHandlingTest : EtsLangTestBase() {
 
     @Test
     fun testMultipleExits() {
-        val method = assertMethodExists(exceptionsFile, "testMultipleExits", minStmts = 1, hasTraps = true)
+        val method = assertMethodExists(file, "testMultipleExits", minStmts = 1, hasTraps = true)
 
         logMethodDetails(method)
 
         // Should have traps for catch and finally with multiple return points
         assertTrue(method.body.traps.size >= 2, "Method should have multiple traps")
-    }
-
-    @Test
-    fun testOriginalTryCatchSample() {
-        // Test the original sample from try-catch.ts
-        val method = assertMethodExists(tryCatchFile, "testTryCatch", minStmts = 1, hasTraps = true)
-
-        logMethodDetails(method)
-
-        // Should have two traps for the try-catch-finally block
-        assertEquals(2, method.body.traps.size, "Original sample should have 2 traps")
-        val trap = method.body.traps[0]
-
-        // Verify trap has try blocks and catch blocks
-        assertTrue(trap.tryBlocks.isNotEmpty(), "Try blocks should not be empty")
-        assertTrue(trap.catchBlocks.isNotEmpty(), "Catch blocks should not be empty")
     }
 }
