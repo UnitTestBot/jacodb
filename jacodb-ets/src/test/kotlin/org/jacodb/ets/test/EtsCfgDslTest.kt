@@ -37,7 +37,6 @@ import org.jacodb.ets.utils.linearize
 import org.jacodb.ets.utils.toDot
 import org.jacodb.ets.utils.toEtsBlockCfg
 import org.junit.jupiter.api.Test
-import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
 class EtsCfgDslTest {
@@ -89,9 +88,12 @@ class EtsCfgDslTest {
             .mapNotNull { it.lhv as? EtsLocal }
             .distinct()
 
-        assertEquals(method.locals, listOf(
-            EtsLocal("i", EtsUnknownType),
-            EtsLocal("_tmp0", EtsUnknownType),
-        ))
+        assertEquals(
+            method.locals,
+            listOf(
+                EtsLocal("i", EtsUnknownType),
+                EtsLocal("_tmp0", EtsUnknownType),
+            )
+        )
     }
 }

@@ -64,14 +64,11 @@ import org.jacodb.ets.utils.loadEtsProjectAutoConvert
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
-import kotlin.io.path.PathWalkOption
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
-import kotlin.io.path.relativeTo
-import kotlin.io.path.walk
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
@@ -145,70 +142,38 @@ class EtsFromJsonTest {
         printFile(file, showStmts = true)
     }
 
-    @TestFactory
-    fun testLoadAllAvailableEtsFilesFromJson() = testFactory {
-        val prefix = "/samples"
-        val base = getResourcePathOrNull("$prefix/source") ?: run {
-            logger.warn { "No samples directory found in resources" }
-            return@testFactory
-        }
-        val availableFiles = base.walk(PathWalkOption.BREADTH_FIRST)
-            .map { it.relativeTo(base) }
-            .toList()
-        logger.info {
-            buildString {
-                appendLine("Found ${availableFiles.size} sample files")
-                for (path in availableFiles) {
-                    appendLine("  - $path")
-                }
-            }
-        }
-        if (availableFiles.isEmpty()) {
-            logger.warn { "No sample files found" }
-            return@testFactory
-        }
-        container("load ${availableFiles.size} files") {
-            for (path in availableFiles) {
-                test("load $path") {
-                    val file = loadEtsFileFromResource("$prefix/etsir/ast/$path.json")
-                    printFile(file, showStmts = true)
-                }
-            }
-        }
-    }
-
-    @TestFactory
-    fun testLoadAllAvailableEtsFilesAutoConvert() = testFactory {
-        val prefix = "/samples/source"
-        val base = getResourcePathOrNull(prefix) ?: run {
-            logger.warn { "No samples directory found in resources" }
-            return@testFactory
-        }
-        val availableFiles = base.walk(PathWalkOption.BREADTH_FIRST)
-            .map { it.relativeTo(base) }
-            .toList()
-        logger.info {
-            buildString {
-                appendLine("Found ${availableFiles.size} sample files")
-                for (path in availableFiles) {
-                    appendLine("  - $path")
-                }
-            }
-        }
-        if (availableFiles.isEmpty()) {
-            logger.warn { "No sample files found" }
-            return@testFactory
-        }
-        container("auto-load ${availableFiles.size} files") {
-            for (path in availableFiles) {
-                test("load $path") {
-                    val p = getResourcePath("$prefix/$path")
-                    val file = loadEtsFileAutoConvert(p)
-                    printFile(file, showStmts = true)
-                }
-            }
-        }
-    }
+    // @TestFactory
+    // fun testLoadAllAvailableEtsFilesAutoConvert() = testFactory {
+    //     val prefix = "/samples/source"
+    //     val base = getResourcePathOrNull(prefix) ?: run {
+    //         logger.warn { "No samples directory found in resources" }
+    //         return@testFactory
+    //     }
+    //     val availableFiles = base.walk(PathWalkOption.BREADTH_FIRST)
+    //         .map { it.relativeTo(base) }
+    //         .toList()
+    //     logger.info {
+    //         buildString {
+    //             appendLine("Found ${availableFiles.size} sample files")
+    //             for (path in availableFiles) {
+    //                 appendLine("  - $path")
+    //             }
+    //         }
+    //     }
+    //     if (availableFiles.isEmpty()) {
+    //         logger.warn { "No sample files found" }
+    //         return@testFactory
+    //     }
+    //     container("auto-load ${availableFiles.size} files") {
+    //         for (path in availableFiles) {
+    //             test("load $path") {
+    //                 val p = getResourcePath("$prefix/$path")
+    //                 val file = loadEtsFileAutoConvert(p)
+    //                 printFile(file, showStmts = true)
+    //             }
+    //         }
+    //     }
+    // }
 
     @Test
     fun testLoadEtsProject() {

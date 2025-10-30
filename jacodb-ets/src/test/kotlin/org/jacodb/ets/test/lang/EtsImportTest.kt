@@ -14,12 +14,10 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.test
+package org.jacodb.ets.test.lang
 
 import mu.KotlinLogging
 import org.jacodb.ets.model.EtsFile
-import org.jacodb.ets.test.utils.getResourcePath
-import org.jacodb.ets.utils.loadEtsFileAutoConvert
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -29,38 +27,22 @@ import kotlin.test.assertTrue
 
 private val logger = KotlinLogging.logger {}
 
-class EtsImportTest {
+class EtsImportTest : EtsLangTestBase() {
 
     companion object {
-        private const val TS_PATH = "/samples/source/lang/import.ts"
+        private const val SOURCE_PATH = "/samples/source/lang/import.ts"
 
         private val file: EtsFile by lazy {
-            logger.info { "Loading sample file: $TS_PATH" }
-            val path = getResourcePath(TS_PATH)
-            val file = loadEtsFileAutoConvert(path)
-
-            logger.info { "Loaded ETS file: ${file.name}" }
-            logger.info { "Found ${file.importInfos.size} import statements" }
-
-            // Print all imports for debugging
-            file.importInfos.forEachIndexed { index, importInfo ->
-                logger.info { "Import $index: $importInfo" }
-            }
-
-            file
+            loadSourceFile(SOURCE_PATH)
         }
 
         @BeforeAll
         @JvmStatic
         fun setup() {
-            // Verify the file was loaded correctly
-            assertNotNull(file)
+            assertNotNull(file, "Failed to load $SOURCE_PATH")
             assertEquals("import.ts", file.name)
-
-            // Verify we have import information
             assertTrue(file.importInfos.isNotEmpty(), "Expected to find import statements")
-
-            logger.info { "✓ Setup complete, ready to run tests on imports" }
+            logger.info { "✓ Setup complete, ready to run ${EtsImportTest::class.simpleName} tests" }
         }
     }
 

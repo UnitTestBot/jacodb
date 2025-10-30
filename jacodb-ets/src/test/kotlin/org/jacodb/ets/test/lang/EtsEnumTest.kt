@@ -14,26 +14,57 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.test
+package org.jacodb.ets.test.lang
 
+import mu.KotlinLogging
 import org.jacodb.ets.model.EtsClassCategory
-import org.jacodb.ets.test.utils.getResourcePath
-import org.jacodb.ets.utils.loadEtsFileAutoConvert
+import org.jacodb.ets.model.EtsFile
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-class EnumTest {
+private val logger = KotlinLogging.logger {}
+
+/**
+ * Tests for enum constructions.
+ */
+class EtsEnumTest : EtsLangTestBase() {
+
+    companion object {
+        private const val ENUM_PATH = "/samples/source/lang/enum.ts"
+        private const val ENUM_EDGE_CASES_PATH = "/samples/source/lang/enum-edge-cases.ts"
+        private const val ENUM_MODULES_PATH = "/samples/source/lang/enum-modules.ts"
+
+        private val enumFile: EtsFile by lazy {
+            loadSourceFile(ENUM_PATH)
+        }
+
+        private val enumEdgeCasesFile: EtsFile by lazy {
+            loadSourceFile(ENUM_EDGE_CASES_PATH)
+        }
+
+        private val enumModulesFile: EtsFile by lazy {
+            loadSourceFile(ENUM_MODULES_PATH)
+        }
+
+        @BeforeAll
+        @JvmStatic
+        fun setup() {
+            assertNotNull(enumFile, "Failed to load $ENUM_PATH")
+            assertNotNull(enumEdgeCasesFile, "Failed to load $ENUM_EDGE_CASES_PATH")
+            assertNotNull(enumModulesFile, "Failed to load $ENUM_MODULES_PATH")
+            logger.info { "✓ Setup complete, ready to run ${EtsEnumTest::class.simpleName} tests" }
+        }
+    }
 
     @Test
     fun testEnum() {
-        val path = "/samples/source/lang/enum.ts"
-        val res = getResourcePath(path)
-        val file = loadEtsFileAutoConvert(res)
+        logMethodDetails(enumFile.findMethod("setColor"))
 
         // Count enum classes
-        val enumClasses = file.allClasses.filter { it.category == EtsClassCategory.ENUM }
+        val enumClasses = enumFile.allClasses.filter { it.category == EtsClassCategory.ENUM }
         assertTrue(enumClasses.size >= 5, "File should have multiple enums")
 
         // Check for specific enum types
@@ -53,11 +84,7 @@ class EnumTest {
 
     @Test
     fun testEnumEdgeCases() {
-        val path = "/samples/source/lang/enum-edge-cases.ts"
-        val res = getResourcePath(path)
-        val file = loadEtsFileAutoConvert(res)
-
-        val enumClasses = file.allClasses.filter { it.category == EtsClassCategory.ENUM }
+        val enumClasses = enumEdgeCasesFile.allClasses.filter { it.category == EtsClassCategory.ENUM }
         assertTrue(enumClasses.isNotEmpty(), "Edge cases file should have enums")
 
         // Check for specific edge case enums
@@ -77,11 +104,7 @@ class EnumTest {
 
     @Test
     fun testEnumModules() {
-        val path = "/samples/source/lang/enum-modules.ts"
-        val res = getResourcePath(path)
-        val file = loadEtsFileAutoConvert(res)
-
-        val enumClasses = file.allClasses.filter { it.category == EtsClassCategory.ENUM }
+        val enumClasses = enumModulesFile.allClasses.filter { it.category == EtsClassCategory.ENUM }
         assertTrue(enumClasses.isNotEmpty(), "Modules file should have enums")
 
         // Check for exported enums
@@ -98,12 +121,8 @@ class EnumTest {
 
     @Test
     fun testEnumUsageInClasses() {
-        val path = "/samples/source/lang/enum.ts"
-        val res = getResourcePath(path)
-        val file = loadEtsFileAutoConvert(res)
-
         // Find class that uses enums
-        val usageClass = file.allClasses.find { it.name == "EnumUsageExamples" }
+        val usageClass = enumFile.allClasses.find { it.name == "EnumUsageExamples" }
         assertNotNull(usageClass, "Should find EnumUsageExamples class")
 
         // Verify the class has methods that work with enums
@@ -124,20 +143,16 @@ class EnumTest {
 
     @Test
     fun testEnumVsClassDistinction() {
-        val path = "/samples/source/lang/enum.ts"
-        val res = getResourcePath(path)
-        val file = loadEtsFileAutoConvert(res)
-
         // Count different class categories
-        val enumCount = file.allClasses.count { it.category == EtsClassCategory.ENUM }
-        val classCount = file.allClasses.count { it.category == EtsClassCategory.CLASS }
+        val enumCount = enumFile.allClasses.count { it.category == EtsClassCategory.ENUM }
+        val classCount = enumFile.allClasses.count { it.category == EtsClassCategory.CLASS }
 
         assertTrue(enumCount > 0, "Should have enum classes")
         assertTrue(classCount > 0, "Should have regular classes")
 
         // Verify proper categorization
-        val basicEnum = file.allClasses.find { it.name == "BasicEnum" }
-        val usageClass = file.allClasses.find { it.name == "EnumUsageExamples" }
+        val basicEnum = enumFile.allClasses.find { it.name == "BasicEnum" }
+        val usageClass = enumFile.allClasses.find { it.name == "EnumUsageExamples" }
 
         assertNotNull(basicEnum, "Should find BasicEnum")
         assertNotNull(usageClass, "Should find EnumUsageExamples")

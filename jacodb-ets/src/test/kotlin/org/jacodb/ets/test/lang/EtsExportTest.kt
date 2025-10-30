@@ -14,12 +14,10 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.test
+package org.jacodb.ets.test.lang
 
 import mu.KotlinLogging
 import org.jacodb.ets.model.EtsFile
-import org.jacodb.ets.test.utils.getResourcePath
-import org.jacodb.ets.utils.loadEtsFileAutoConvert
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -29,38 +27,22 @@ import kotlin.test.assertTrue
 
 private val logger = KotlinLogging.logger {}
 
-class EtsExportTest {
+class EtsExportTest : EtsLangTestBase() {
 
     companion object {
-        private const val TS_PATH = "/samples/source/lang/export.ts"
+        private const val SOURCE_PATH = "/samples/source/lang/export.ts"
 
         private val file: EtsFile by lazy {
-            logger.info { "Loading sample file: $TS_PATH" }
-            val path = getResourcePath(TS_PATH)
-            val file = loadEtsFileAutoConvert(path)
-
-            logger.info { "Loaded ETS file: ${file.name}" }
-            logger.info { "Found ${file.exportInfos.size} export statements" }
-
-            // Print all exports for debugging
-            file.exportInfos.forEachIndexed { index, exportInfo ->
-                logger.info { "Export $index: $exportInfo" }
-            }
-
-            file
+            loadSourceFile(SOURCE_PATH)
         }
 
         @BeforeAll
         @JvmStatic
         fun setup() {
-            // Verify the file was loaded correctly
-            assertNotNull(file)
+            assertNotNull(file, "Failed to load $SOURCE_PATH")
             assertEquals("export.ts", file.name)
-
-            // Verify we have export information
             assertTrue(file.exportInfos.isNotEmpty(), "Expected to find export statements")
-
-            logger.info { "✓ Setup complete, ready to run tests on exports" }
+            logger.info { "✓ Setup complete, ready to run ${EtsExportTest::class.simpleName} tests" }
         }
     }
 
@@ -75,7 +57,7 @@ class EtsExportTest {
         assertNotNull(constantExport, "Should find publicConstant named export")
         assertEquals("publicConstant", constantExport.name)
         assertEquals("publicConstant", constantExport.originalName)
-        assertNull( constantExport.nameBeforeAs, "Direct export should have no aliasing")
+        assertNull(constantExport.nameBeforeAs, "Direct export should have no aliasing")
         logger.info { "✓ Named constant export test passed: $constantExport" }
 
         // Test: export function publicFunction()

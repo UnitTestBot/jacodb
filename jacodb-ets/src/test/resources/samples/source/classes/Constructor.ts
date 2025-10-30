@@ -1,4 +1,4 @@
-class ConstructorClass {
+class Person {
     private readonly name: string;
 
     constructor(name: string) {
@@ -10,5 +10,5 @@ class ConstructorClass {
     }
 }
 
-const constructorObj = new ConstructorClass("Constructor Example");
-console.log(constructorObj.getName());
+const obj = new Person("Constructor Example");
+console.log(obj.getName());
