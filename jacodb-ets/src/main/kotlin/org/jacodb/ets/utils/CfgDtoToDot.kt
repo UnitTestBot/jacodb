@@ -143,7 +143,7 @@ private fun StmtDto.toDotLabel(): String {
         is ReturnStmtDto -> "return ${arg.toDotLabel()}"
         is ThrowStmtDto -> "throw ${arg.toDotLabel()}"
         is IfStmtDto -> "if (${condition.toDotLabel()})"
-        is CallStmtDto -> "call ${expr.toDotLabel()}"
+        is CallStmtDto -> expr.toDotLabel()
         is RawStmtDto -> "raw $kind"
     }
     return label.replace("\"", "\\\"")
@@ -198,12 +198,12 @@ private fun ValueDto.toDotLabel(): String {
 
         is StaticCallExprDto -> {
             val argsStr = args.joinToString(", ") { it.toDotLabel() }
-            "static ${method.declaringClass.name}.${method.name}($argsStr)"
+            "static_call ${method.declaringClass.name}.${method.name}($argsStr)"
         }
 
         is PtrCallExprDto -> {
             val argsStr = args.joinToString(", ") { it.toDotLabel() }
-            "ptr ${ptr.toDotLabel()}.${method.name}($argsStr)"
+            "ptr_call ${ptr.toDotLabel()}.${method.name}($argsStr)"
         }
 
         // Raw value
