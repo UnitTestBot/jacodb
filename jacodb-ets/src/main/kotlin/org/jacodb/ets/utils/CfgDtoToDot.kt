@@ -51,6 +51,7 @@ import org.jacodb.ets.dto.NopStmtDto
 import org.jacodb.ets.dto.NullTypeDto
 import org.jacodb.ets.dto.NumberTypeDto
 import org.jacodb.ets.dto.ParameterRefDto
+import org.jacodb.ets.dto.PrimitiveLiteralDto
 import org.jacodb.ets.dto.PtrCallExprDto
 import org.jacodb.ets.dto.RawStmtDto
 import org.jacodb.ets.dto.RawTypeDto
@@ -165,7 +166,7 @@ private fun ValueDto.toDotLabel(): String {
         // References
         is ThisRefDto -> "this"
         is ParameterRefDto -> "arg$index"
-        is CaughtExceptionRefDto -> "@caughtException"
+        is CaughtExceptionRefDto -> "@caught ${type.toDotLabel()}"
         is GlobalRefDto -> name
         is ClosureFieldRefDto -> "${base.name}.$fieldName"
         is ArrayRefDto -> "${array.toDotLabel()}[${index.toDotLabel()}]"
@@ -174,16 +175,16 @@ private fun ValueDto.toDotLabel(): String {
 
         // Expressions
         is NewExprDto -> "new ${classType.toDotLabel()}"
-        is NewArrayExprDto -> "new ${elementType.toDotLabel()}[${size.toDotLabel()}]"
+        is NewArrayExprDto -> "new Array<${elementType.toDotLabel()}>(${size.toDotLabel()})"
         is DeleteExprDto -> "delete ${arg.toDotLabel()}"
         is AwaitExprDto -> "await ${arg.toDotLabel()}"
         is YieldExprDto -> "yield ${arg.toDotLabel()}"
         is TypeOfExprDto -> "typeof ${arg.toDotLabel()}"
         is InstanceOfExprDto -> "${arg.toDotLabel()} instanceof ${checkType.toDotLabel()}"
-        is CastExprDto -> "(${type.toDotLabel()}) ${arg.toDotLabel()}"
+        is CastExprDto -> "${arg.toDotLabel()} as ${type.toDotLabel()}"
 
         // Unary operations
-        is UnaryOperationDto -> "$op${arg.toDotLabel()}"
+        is UnaryOperationDto -> "$op ${arg.toDotLabel()}"
 
         // Binary operations
         is BinaryOperationDto -> "${left.toDotLabel()} $op ${right.toDotLabel()}"
@@ -192,17 +193,17 @@ private fun ValueDto.toDotLabel(): String {
         // Call expressions
         is InstanceCallExprDto -> {
             val argsStr = args.joinToString(", ") { it.toDotLabel() }
-            "${instance.toDotLabel()}.${method.name}($argsStr)"
+            "call ${instance.toDotLabel()}.${method.name}($argsStr)"
         }
 
         is StaticCallExprDto -> {
             val argsStr = args.joinToString(", ") { it.toDotLabel() }
-            "${method.declaringClass.name}.${method.name}($argsStr)"
+            "static ${method.declaringClass.name}.${method.name}($argsStr)"
         }
 
         is PtrCallExprDto -> {
             val argsStr = args.joinToString(", ") { it.toDotLabel() }
-            "${ptr.toDotLabel()}.${method.name}($argsStr)"
+            "ptr ${ptr.toDotLabel()}.${method.name}($argsStr)"
         }
 
         // Raw value
@@ -226,28 +227,50 @@ private fun TypeDto.toDotLabel(): String {
         is StringTypeDto -> "string"
         is BooleanTypeDto -> "boolean"
 
+        is LiteralTypeDto -> when (literal) {
+            is PrimitiveLiteralDto.StringLiteral -> "\"${literal.value}\""
+            is PrimitiveLiteralDto.NumberLiteral -> literal.value.toString()
+            is PrimitiveLiteralDto.BooleanLiteral -> literal.value.toString()
+        }
+
         // Complex types
-        is ClassTypeDto -> signature.name
+        is ClassTypeDto -> if (typeParameters.isNotEmpty()) {
+            val generics = typeParameters.joinToString(", ") { it.toDotLabel() }
+            "${signature.name}<$generics>"
+        } else {
+            signature.name
+        }
+
+        is UnclearReferenceTypeDto -> if (typeParameters.isNotEmpty()) {
+            val generics = typeParameters.joinToString(", ") { it.toDotLabel() }
+            "$name<$generics>"
+        } else {
+            name
+        }
+
         is ArrayTypeDto -> "${elementType.toDotLabel()}${"[]".repeat(dimensions)}"
-        is UnionTypeDto -> types.joinToString(" | ") { it.toDotLabel() }
-        is IntersectionTypeDto -> types.joinToString(" & ") { it.toDotLabel() }
-        is TupleTypeDto -> "[${types.joinToString(", ") { it.toDotLabel() }}]"
+        is TupleTypeDto -> types.joinToString(", ", "[", "]") { it.toDotLabel() }
+
+        is UnionTypeDto -> types.joinToString(" | ") {
+            val s = it.toDotLabel()
+            if (it is UnionTypeDto || it is IntersectionTypeDto) "($s)" else s
+        }
+
+        is IntersectionTypeDto -> types.joinToString(" & ") {
+            val s = it.toDotLabel()
+            if (it is UnionTypeDto || it is IntersectionTypeDto) "($s)" else s
+        }
+
         is FunctionTypeDto -> {
             val params = signature.parameters.joinToString(", ") { it.type.toDotLabel() }
             "($params) => ${signature.returnType.toDotLabel()}"
         }
 
         // Special types
-        is LiteralTypeDto -> literal.toString()
         is GenericTypeDto -> name
-        is AliasTypeDto -> name
+        is AliasTypeDto -> "$name=${originalType.toDotLabel()}"
         is EnumValueTypeDto -> "${signature.name}${name?.let { ".$it" } ?: ""}"
-        is UnclearReferenceTypeDto -> {
-            if (typeParameters.isEmpty()) name
-            else "$name<${typeParameters.joinToString(", ") { it.toDotLabel() }}>"
-        }
-
-        is LexicalEnvTypeDto -> "LexicalEnv<${method.name}>"
+        is LexicalEnvTypeDto -> "<${method.name}>(${closures.joinToString { it.name }})"
 
         // Raw type
         is RawTypeDto -> "raw:$kind"
