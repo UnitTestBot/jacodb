@@ -8,8 +8,8 @@ class PixelMap {
 }
 
 class Size {
-    height: number
-    width: number
+    height: number;
+    width: number;
 }
 
 function createPixelMap(bytes: ArrayBuffer, size: Size): PixelMap {
@@ -23,7 +23,7 @@ class Request {
                 let height = data.readInt();
                 let width = data.readInt();
                 let bytesNumber = data.readInt();
-                let pixelMap = createPixelMap(new ArrayBuffer(bytesNumber), {height: height, width: width});
+                let pixelMap = createPixelMap(new ArrayBuffer(bytesNumber), { height: height, width: width });
             }
             return true;
         } catch (e) {

@@ -25,13 +25,13 @@ const tree: TreeNode = {
     left: {
         value: 2,
         left: { value: 4 },
-        right: { value: 5 }
+        right: { value: 5 },
     },
     right: {
         value: 3,
         left: { value: 6 },
-        right: { value: 7 }
-    }
+        right: { value: 7 },
+    },
 };
 
 const traversalResult = iterativeDFS(tree);

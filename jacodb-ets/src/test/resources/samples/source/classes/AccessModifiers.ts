@@ -1,7 +1,7 @@
 class User {
-    private username: string;
-    protected email: string;
     public name: string;
+    protected email: string;
+    private username: string;
 
     constructor(username: string, email: string, name: string) {
         this.username = username;

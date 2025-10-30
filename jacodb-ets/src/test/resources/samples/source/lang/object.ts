@@ -15,7 +15,7 @@ function main() {
         },
         set accessor(value) {
             console.log('setter', value);
-        }
+        },
     };
 
     console.log(obj);

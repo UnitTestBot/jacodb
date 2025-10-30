@@ -39,7 +39,7 @@ const arrowFunctionImplicit = (x: number): number => x * 2;
 
 // Function returning function (closure)
 function outerFunction(x: number): (y: number) => number {
-    return function(y: number): number {
+    return function (y: number): number {
         return x + y;
     };
 }
@@ -73,7 +73,7 @@ function isOdd(n: number): boolean {
 }
 
 // Function with destructuring parameters
-function destructuringParams({x, y}: {x: number, y: number}): number {
+function destructuringParams({ x, y }: { x: number, y: number }): number {
     return x + y;
 }
 
@@ -96,7 +96,7 @@ async function asyncWithAwait(x: number): Promise<number> {
 }
 
 // IIFE (Immediately Invoked Function Expression)
-const iifeResult = (function(x: number): number {
+const iifeResult = (function (x: number): number {
     return x * 2;
 })(42);
 

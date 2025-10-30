@@ -1,4 +1,5 @@
 import { getLogger, configure } from 'log4js';
+
 configure({
     appenders: {
         console: {
@@ -14,8 +15,8 @@ configure({
             appenders: ['console'],
             level: 'info',
             enableCallStack: false,
-        }
-    }
+        },
+    },
 });
 const logger = getLogger();
 
@@ -85,16 +86,17 @@ class Person {
     constructor(public age: number) {
 
     }
-    growOld = () => {
-        this.age++;
-    }
-
-    public getAge() {
-        return this.age
-    }
 
     static wooooof() {
-        logger.info("not a person sound")
+        logger.info("not a person sound");
+    }
+
+    growOld = () => {
+        this.age++;
+    };
+
+    public getAge() {
+        return this.age;
     }
 }
 
@@ -103,9 +105,9 @@ export function classMethodTest() {
     let x = new Map();
     let z = new Error();
     let y = controlTest();
-    let a = notPerson.age
-    notPerson.growOld()
-    Person.wooooof()
+    let a = notPerson.age;
+    notPerson.growOld();
+    Person.wooooof();
 }
 
 interface Alarm {
@@ -128,52 +130,60 @@ export function foo(x: number): number {
 }
 
 class Adder {
-    constructor(public a: number) { }
+    constructor(public a: number) {
+    }
+
     // This function is now safe to pass around
     add = (b: string): string => {
         return this.a + b;
-    }
+    };
 }
 
 class ExtendedAdder extends Adder {
-    // Create a copy of parent before creating our own
-    private superAdd = this.add;
     // Now create our override
     add = (b: string): string => {
         return this.superAdd(b);
-    }
+    };
+
+    // Create a copy of parent before creating our own
+    private superAdd = this.add;
 }
 
 export function listParameters(u: number, v: number, w: string): { x: number, y: number, z: string } {
-    return { x: u, y: v, z: w }
+    return { x: u, y: v, z: w };
 }
 
 export class SecurityDoor extends Door implements Alarm, Alarm2 {
     x: number = 0;
     y: string = '';
     z: Person = new Person(10);
-    alert(): void {
-        logger.info("SecurityDoor alert");
-    }
-    alert2(): void {
-        logger.info("SecurityDoor alert2");
-    }
     public Members = class {
 
-    }
-    public fooo() {
-        logger.info("This is fooo!");
-    }
+    };
+
     constructor(x: number, y: string) {
         super();
         this.x = x;
         this.y = y;
         logger.info("This is a constrctor!");
     }
+
+    alert(): void {
+        logger.info("SecurityDoor alert");
+    }
+
+    alert2(): void {
+        logger.info("SecurityDoor alert2");
+    }
+
+    public fooo() {
+        logger.info("This is fooo!");
+    }
 }
 
-const someClass = class <Type> {
+const someClass = class<Type> {
     content: Type;
+
     constructor(value: Type) {
         this.content = value;
     }
@@ -182,9 +192,11 @@ const m = new someClass("Hello, world");
 
 abstract class Animal {
     public name;
+
     public constructor(name: string) {
         this.name = name;
     }
+
     public abstract sayHi(): void;
 }
 
@@ -200,11 +212,14 @@ function deleteTest() {
 export default 123;
 export let x: number = 1;
 export const soo = 123;
+
 export interface StringValidator {
-    isAcceptable(s?: string): boolean;
     color?: string;
     width?: number;
+
+    isAcceptable(s?: string): boolean;
 }
+
 export { ExtendedAdder as ExtAdder, ExtendedAdder };
 
 forLoopTest();

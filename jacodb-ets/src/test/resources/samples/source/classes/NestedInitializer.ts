@@ -1,4 +1,5 @@
-class Bar {}
+class Bar {
+}
 
 class Foo {
     bar: Bar = new Bar();

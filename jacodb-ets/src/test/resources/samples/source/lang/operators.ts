@@ -102,8 +102,8 @@ function testDestructuring(arr: number[]): number {
 }
 
 // Object destructuring
-function testObjectDestructuring(obj: {x: number, y: number}): number {
-    const {x, y} = obj;
+function testObjectDestructuring(obj: { x: number, y: number }): number {
+    const { x, y } = obj;
     return x + y;
 }
 
@@ -136,7 +136,8 @@ function testInOperator(obj: any): boolean {
 // In operator with class
 function testInOperatorWithClass(): boolean {
     class Cat {
-        constructor(public name: string) {}
+        constructor(public name: string) {
+        }
     }
 
     let cat = new Cat("Barsik");
@@ -154,7 +155,6 @@ function testScopedVariables(): void {
     }
     console.log(x);
 }
-
 
 // Conditional (ternary) operator
 function testConditional(x: number): string {

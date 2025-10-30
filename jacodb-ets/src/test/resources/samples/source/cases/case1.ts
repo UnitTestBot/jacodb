@@ -1,7 +1,7 @@
-const RESULT = 9
+const RESULT = 9;
 
 function readInt(data: Message) {
-    return RESULT
+    return RESULT;
 }
 
 function onRequest(data: Message) {

@@ -1,8 +1,8 @@
 interface MyError {
-    code: int
-    name: string
-    message: string
-    stack?: string
+    code: int;
+    name: string;
+    message: string;
+    stack?: string;
 }
 
 function publishEvent(event: string, password: String, callback: (err: MyError) => void) {
@@ -10,14 +10,14 @@ function publishEvent(event: string, password: String, callback: (err: MyError) 
 }
 
 class CommonSecurity {
-    private publish: String = ""
+    private publish: String = "";
 
     private getPassword() {
-        return "Password123"
+        return "Password123";
     }
 
     private publishEventWithData() {
-        let password = this.getPassword()
+        let password = this.getPassword();
         // SINK: send with sensitive data
         publishEvent("MyCommonEvent", password, (err) => {
             if (err.code) {
