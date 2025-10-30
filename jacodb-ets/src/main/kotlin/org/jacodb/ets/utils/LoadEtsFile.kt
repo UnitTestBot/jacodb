@@ -51,7 +51,7 @@ private const val DEFAULT_NODE_EXECUTABLE = "node"
 fun generateEtsIR(
     projectPath: Path,
     isProject: Boolean = false,
-    loadEntrypoints: Boolean = true,
+    loadEntrypoints: Boolean = isProject,
     useArkAnalyzerTypeInference: Int? = null,
     timeout: Duration? = 10.seconds,
 ): Path {
@@ -118,7 +118,6 @@ fun loadEtsFileAutoConvert(
     val irFilePath = generateEtsIR(
         path,
         isProject = false,
-        loadEntrypoints = false,
         useArkAnalyzerTypeInference = useArkAnalyzerTypeInference,
     )
     irFilePath.inputStream().use { stream ->
