@@ -85,13 +85,18 @@ function testMultipleCatchPaths(x: number, throwType: string): number {
     }
 }
 
-// Try-catch with return in finally
+// Try-catch-finally where finally overrides return value
 function testFinallyOverridesReturn(x: number): number {
     try {
-        return x * 2;
+        if (x < 0) {
+            throw new Error("Negative value");
+        }
+        return x * 2;  // This return will be overridden
+    } catch (e) {
+        console.log("Error: " + e);
+        return -1;  // This return will also be overridden
     } finally {
-        // This doesn't override in TS but tests control flow
-        console.log("Finally after return");
+        return 42;  // Return in 'finally' overrides everything
     }
 }
 
