@@ -121,7 +121,13 @@ abstract class EtsLangTestBase {
                 appendLine("  Traps: ${method.body.traps.size}")
                 if (method.body.traps.isNotEmpty()) {
                     for ((idx, trap) in method.body.traps.withIndex()) {
-                        appendLine("    Trap $idx: tryBlocks=${trap.tryBlocks.size}, catchBlocks=${trap.catchBlocks.size}")
+                        appendLine(
+                            "    Trap $idx: ${trap.tryBlocks.size} try blocks: ${
+                                trap.tryBlocks.map { it.id }
+                            }, ${trap.catchBlocks.size} catch blocks: ${
+                                trap.catchBlocks.map { it.id }
+                            }"
+                        )
                     }
                 }
                 appendLine("  Statements:")
