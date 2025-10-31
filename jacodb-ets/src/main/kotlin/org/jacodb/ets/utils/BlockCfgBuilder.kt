@@ -92,6 +92,7 @@ class EtsBlockCfgBuilder(
 ) {
     fun build(blockCfg: BlockCfg): EtsBlockCfg {
         return EtsBlockCfg(
+            method = method,
             blocks = blockCfg.blocks.map { it.toEtsBasicBlock() },
             successors = blockCfg.successors,
         )

@@ -17,43 +17,65 @@
 package org.jacodb.ets.utils
 
 import org.jacodb.ets.model.EtsBlockCfg
+import org.jacodb.ets.model.EtsMethod
+import org.jacodb.ets.model.EtsTrap
 
 fun EtsBlockCfg.toDot(
     useHtml: Boolean = true,
+    showExceptional: Boolean = true,
 ): String {
     val lines = mutableListOf<String>()
     lines += "digraph cfg {"
     lines += "  node [shape=${if (useHtml) "none" else "rect"} fontname=\"monospace\"]"
+    lines += "  edge [fontname=\"monospace\"]"
 
     // Nodes
     for (block in blocks) {
         if (useHtml) {
-            val s = block.statements.joinToString("") {
-                it.toDotLabel().htmlEncode() + "<br/>"
-            }
-            val h = "<table border=\"0\" cellborder=\"1\" cellspacing=\"0\">" +
-                "<tr><td>" + "<b>Block #${block.id}</b>" + "</td></tr>" +
-                "<tr><td balign=\"left\">" + s + "</td></tr>" +
-                "</table>"
-            lines += "  ${block.id} [label=<${h}>]"
+            val s = block.statements.joinToString("") { it.toDotLabel().htmlEncode() + "<br/>" }
+            val h =
+                "<table border=\"0\" cellborder=\"1\" cellspacing=\"0\">" +
+                    "<tr><td><b>Block #${block.id}</b></td></tr>" +
+                    "<tr><td align=\"left\" balign=\"left\" cellpadding=\"4\">$s</td></tr>" +
+                    "</table>"
+            val attrs = " color=gray"
+            lines += "  ${block.id} [label=<${h}>$attrs]"
         } else {
             val s = block.statements.joinToString("") { it.toDotLabel() + "\\l" }
-            lines += "  ${block.id} [label=\"Block #${block.id}\\n$s\"]"
+            val attrs = " color=lightgray"
+            lines += "  ${block.id} [label=\"Block #${block.id}\\n$s\"$attrs]"
         }
     }
 
     // Edges
+    // Normal control-flow edges
     for (block in blocks) {
         val succs = successors[block.id]
-        if (succs != null) {
-            if (succs.isEmpty()) continue
-            if (succs.size == 1) {
-                lines += "  ${block.id} -> ${succs.single()}"
-            } else {
-                check(succs.size == 2)
-                val (trueBranch, falseBranch) = succs
-                lines += "  ${block.id} -> $trueBranch [label=\"true\"]"
-                lines += "  ${block.id} -> $falseBranch [label=\"false\"]"
+        if (succs == null || succs.isEmpty()) continue
+        if (succs.size == 1) {
+            lines += "  ${block.id} -> ${succs.single()}"
+        } else {
+            check(succs.size == 2)
+            val (trueBranch, falseBranch) = succs
+            lines += "  ${block.id} -> $trueBranch [label=\"true\"]"
+            lines += "  ${block.id} -> $falseBranch [label=\"false\"]"
+        }
+    }
+
+    // Exceptional edges: dashed edges from try blocks to handler entries
+    if (showExceptional) {
+        val traps = method?.traps
+        if (traps != null) {
+            val seen = hashSetOf<Pair<Int, Int>>()
+            for (t in traps) {
+                val handler = t.catchBlocks.firstOrNull() ?: continue
+                for (b in t.tryBlocks) {
+                    val edge = b.id to handler.id
+                    if (seen.add(edge)) {
+                        val attrs = " style=dashed color=gray"
+                        lines += "  ${b.id} -> ${handler.id} [label=\"exc\"$attrs]"
+                    }
+                }
             }
         }
     }

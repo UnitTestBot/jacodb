@@ -498,6 +498,7 @@ class EtsMethodBuilder(
         val successors = this.blocks.associate { it.id to it.successors }
 
         return EtsBlockCfg(
+            method,
             blocks = blocks,
             successors = successors,
         )

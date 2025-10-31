@@ -28,6 +28,7 @@ data class BasicBlock(
 }
 
 class EtsBlockCfg(
+    val method: EtsMethod?,
     val blocks: List<BasicBlock>,
     val successors: Map<Int, List<Int>>, // for 'if-stmt' block, successors are (true, false) branches
 ) : EtsBytecodeGraph<EtsStmt> {
@@ -43,6 +44,9 @@ class EtsBlockCfg(
             for (s in successorIds) {
                 require(s in 0..blocks.size) { "Successor $s is out of bounds" }
             }
+        }
+        if (method is EtsMethodImpl) {
+            method.body.cfg = this
         }
     }
 
@@ -60,14 +64,18 @@ class EtsBlockCfg(
     override val exits: List<EtsStmt>
         get() = linear.exits
 
-    override fun successors(stmt: EtsStmt): Set<EtsStmt> = linear.successors(stmt)
-    override fun predecessors(stmt: EtsStmt): Set<EtsStmt> = linear.predecessors(stmt)
+    override fun successors(node: EtsStmt): Set<EtsStmt> = linear.successors(node)
+    override fun predecessors(node: EtsStmt): Set<EtsStmt> = linear.predecessors(node)
     override fun throwers(node: EtsStmt): Set<EtsStmt> = linear.throwers(node)
     override fun catchers(node: EtsStmt): Set<EtsStmt> = linear.catchers(node)
 
     companion object {
         val EMPTY: EtsBlockCfg by lazy {
-            EtsBlockCfg(emptyList(), emptyMap())
+            EtsBlockCfg(
+                method = null,
+                blocks = emptyList(),
+                successors = emptyMap(),
+            )
         }
     }
 }
