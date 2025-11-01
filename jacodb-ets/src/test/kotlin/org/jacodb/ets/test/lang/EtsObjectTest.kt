@@ -18,6 +18,7 @@ package org.jacodb.ets.test.lang
 
 import mu.KotlinLogging
 import org.jacodb.ets.model.EtsFile
+import org.jacodb.ets.test.TestBase
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.test.assertNotNull
@@ -28,7 +29,7 @@ private val logger = KotlinLogging.logger {}
 /**
  * Tests for object literal constructions.
  */
-class EtsObjectTest : EtsLangTestBase() {
+class EtsObjectTest : TestBase() {
 
     companion object {
         private const val SOURCE_PATH = "/samples/source/lang/object.ts"

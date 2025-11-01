@@ -20,6 +20,7 @@ import mu.KotlinLogging
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsIfStmt
 import org.jacodb.ets.model.EtsReturnStmt
+import org.jacodb.ets.test.TestBase
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.test.assertNotNull
@@ -30,7 +31,7 @@ private val logger = KotlinLogging.logger {}
 /**
  * Tests for control flow constructions (if-else, switch, ternary).
  */
-class EtsControlFlowTest : EtsLangTestBase() {
+class EtsControlFlowTest : TestBase() {
 
     companion object {
         private const val SOURCE_PATH = "/samples/source/lang/control-flow.ts"

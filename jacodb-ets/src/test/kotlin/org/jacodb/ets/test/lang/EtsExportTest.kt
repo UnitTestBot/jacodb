@@ -18,6 +18,7 @@ package org.jacodb.ets.test.lang
 
 import mu.KotlinLogging
 import org.jacodb.ets.model.EtsFile
+import org.jacodb.ets.test.TestBase
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -27,7 +28,7 @@ import kotlin.test.assertTrue
 
 private val logger = KotlinLogging.logger {}
 
-class EtsExportTest : EtsLangTestBase() {
+class EtsExportTest : TestBase() {
 
     companion object {
         private const val SOURCE_PATH = "/samples/source/lang/export.ts"

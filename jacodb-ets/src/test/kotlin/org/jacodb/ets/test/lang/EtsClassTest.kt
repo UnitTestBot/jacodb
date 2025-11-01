@@ -18,6 +18,7 @@ package org.jacodb.ets.test.lang
 
 import mu.KotlinLogging
 import org.jacodb.ets.model.EtsClassCategory
+import org.jacodb.ets.test.TestBase
 import org.junit.jupiter.api.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -27,7 +28,7 @@ private val logger = KotlinLogging.logger {}
 /**
  * Tests for class-related constructions.
  */
-class EtsClassTest : EtsLangTestBase() {
+class EtsClassTest : TestBase() {
 
     @Test
     fun testSimpleClass() {

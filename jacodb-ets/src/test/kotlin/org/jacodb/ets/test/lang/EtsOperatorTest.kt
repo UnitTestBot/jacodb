@@ -19,6 +19,7 @@ package org.jacodb.ets.test.lang
 import mu.KotlinLogging
 import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsFile
+import org.jacodb.ets.test.TestBase
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.test.assertNotNull
@@ -29,7 +30,7 @@ private val logger = KotlinLogging.logger {}
 /**
  * Tests for operator and expression constructions.
  */
-class EtsOperatorTest : EtsLangTestBase() {
+class EtsOperatorTest : TestBase() {
 
     companion object {
         private const val SOURCE_PATH = "/samples/source/lang/operators.ts"

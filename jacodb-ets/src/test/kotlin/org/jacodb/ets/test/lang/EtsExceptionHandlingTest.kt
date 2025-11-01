@@ -18,6 +18,7 @@ package org.jacodb.ets.test.lang
 
 import mu.KotlinLogging
 import org.jacodb.ets.model.EtsFile
+import org.jacodb.ets.test.TestBase
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -30,7 +31,7 @@ private val logger = KotlinLogging.logger {}
 /**
  * Tests for exception handling constructions (try-catch-finally).
  */
-class EtsExceptionHandlingTest : EtsLangTestBase() {
+class EtsExceptionHandlingTest : TestBase() {
 
     companion object {
         private const val SOURCE_PATH = "/samples/source/lang/exceptions.ts"

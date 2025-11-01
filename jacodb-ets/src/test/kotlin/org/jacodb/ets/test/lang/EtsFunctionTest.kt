@@ -18,6 +18,7 @@ package org.jacodb.ets.test.lang
 
 import mu.KotlinLogging
 import org.jacodb.ets.model.EtsFile
+import org.jacodb.ets.test.TestBase
 import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
 import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
 import org.junit.jupiter.api.BeforeAll
@@ -31,7 +32,7 @@ private val logger = KotlinLogging.logger {}
 /**
  * Tests for function-related constructions.
  */
-class EtsFunctionTest : EtsLangTestBase() {
+class EtsFunctionTest : TestBase() {
 
     companion object {
         private const val SOURCE_PATH = "/samples/source/lang/functions.ts"

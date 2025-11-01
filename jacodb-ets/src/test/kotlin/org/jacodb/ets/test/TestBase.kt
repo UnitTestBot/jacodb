@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jacodb.ets.test.lang
+package org.jacodb.ets.test
 
 import mu.KotlinLogging
 import org.jacodb.ets.model.EtsFile
@@ -28,10 +28,10 @@ import kotlin.test.assertTrue
 private val logger = KotlinLogging.logger {}
 
 /**
- * Base class for language construction tests.
+ * Base class for tests.
  * Provides utilities for loading files and finding methods.
  */
-abstract class EtsLangTestBase {
+abstract class TestBase {
 
     companion object {
         /**
