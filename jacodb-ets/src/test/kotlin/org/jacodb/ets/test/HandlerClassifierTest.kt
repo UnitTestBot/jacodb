@@ -121,11 +121,11 @@ class HandlerClassifierTest : TestBase() {
         val classification = TrapUtils.classifyHandler(trap, traps)
 
         assertEquals(
-            TrapUtils.HandlerKind.COPIED_FINALLY,
+            TrapUtils.HandlerKind.CATCH,
             classification,
-            "Catch with rethrow should be classified as COPIED_FINALLY"
+            "Catch with rethrow should be classified as CATCH"
         )
-        logger.info { "✓ Handler correctly classified as COPIED_FINALLY in catchWithRethrow" }
+        logger.info { "✓ Handler correctly classified as CATCH in catchWithRethrow" }
     }
 
     @Disabled("ArkAnalyze drops traps when 'finally' contains 'return'")
@@ -171,15 +171,67 @@ class HandlerClassifierTest : TestBase() {
     }
 
     @Test
-    fun testClassifierConsistency() {
-        val method = assertMethodExists(file, "tryCatchFinally", minStmts = 1, hasTraps = true)
+    fun testNestedTryCatchInTry() {
+        val method = assertMethodExists(file, "nestedTryCatchInTry", minStmts = 1, hasTraps = true)
+        logMethodDetails(method)
 
         val traps = method.body.traps
+        assertTrue(traps.size >= 2, "Nested try-catch in try should have at least 2 traps (inner and outer)")
 
-        val firstRun = traps.map { trap -> TrapUtils.classifyHandler(trap, traps) }
-        val secondRun = traps.map { trap -> TrapUtils.classifyHandler(trap, traps) }
+        val classifications = traps.map { trap -> TrapUtils.classifyHandler(trap, traps) }
 
-        assertEquals(firstRun, secondRun, "Classifier should return consistent results")
-        logger.info { "✓ Classifier returns consistent results across multiple calls" }
+        // Both outer and inner catches should be classified as CATCH (or UNKNOWN)
+        assertTrue(
+            classifications.all { it == TrapUtils.HandlerKind.CATCH || it == TrapUtils.HandlerKind.UNKNOWN },
+            "Nested try-catch in try should have CATCH handlers, got: $classifications"
+        )
+
+        logger.info { "✓ Nested try-catch in try has ${traps.size} traps: $classifications" }
+    }
+
+    @Disabled("ArkAnalyze has issues with nested try-catch in catch blocks")
+    @Test
+    fun testNestedTryCatchInCatch() {
+        val method = assertMethodExists(file, "nestedTryCatchInCatch", minStmts = 1, hasTraps = true)
+        logMethodDetails(method)
+
+        val traps = method.body.traps
+        assertTrue(traps.size >= 2, "Nested try-catch in catch should have at least 2 traps")
+
+        val classifications = traps.map { trap -> TrapUtils.classifyHandler(trap, traps) }
+
+        // Both outer and inner catches should be classified as CATCH (or UNKNOWN)
+        assertTrue(
+            classifications.all { it == TrapUtils.HandlerKind.CATCH || it == TrapUtils.HandlerKind.UNKNOWN },
+            "Nested try-catch in catch should have CATCH handlers, got: $classifications"
+        )
+
+        logger.info { "✓ Nested try-catch in catch has ${traps.size} traps: $classifications" }
+    }
+
+    @Disabled("ArkAnalyze has issues with nested try-finally in try-catch blocks")
+    @Test
+    fun testNestedTryFinallyInTryCatch() {
+        val method = assertMethodExists(file, "nestedTryFinallyInTryCatch", minStmts = 1, hasTraps = true)
+        logMethodDetails(method)
+
+        val traps = method.body.traps
+        assertTrue(traps.size >= 2, "Nested try-finally in try-catch should have at least 2 traps")
+
+        val classifications = traps.map { trap -> TrapUtils.classifyHandler(trap, traps) }
+
+        // Trap 0 should be CATCH (or UNKNOWN)
+        assertTrue(
+            classifications[0] == TrapUtils.HandlerKind.CATCH || classifications[0] == TrapUtils.HandlerKind.UNKNOWN,
+            "Outer try-catch handler should be CATCH (or UNKNOWN), got: ${classifications[0]}"
+        )
+        // Trap 1 should be COPIED_FINALLY
+        assertEquals(
+            TrapUtils.HandlerKind.COPIED_FINALLY,
+            classifications[1],
+            "Inner try-finally handler should be COPIED_FINALLY"
+        )
+
+        logger.info { "✓ Nested try-finally in try-catch has ${traps.size} traps: $classifications" }
     }
 }

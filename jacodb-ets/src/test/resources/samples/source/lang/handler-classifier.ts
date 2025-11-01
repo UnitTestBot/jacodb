@@ -41,7 +41,7 @@ function tryCatchFinally(x: number): number {
     }
 }
 
-// Catch with rethrow: should have CATCH handler with rethrow pattern
+// Catch with rethrow: should have CATCH handler
 function catchWithRethrow(x: number): number {
     try {
         if (x < 0) {
@@ -91,4 +91,66 @@ function complexTryCatchFinally(x: number): number {
         result = result + 1;
     }
     return result;
+}
+
+// Nested try-catch: inner try-catch inside outer try
+function nestedTryCatchInTry(x: number): number {
+    try {
+        console.log("Outer try");
+        try {
+            console.log("Inner try");
+            if (x < 0) {
+                throw new Error("Inner error");
+            }
+            return x * 2;
+        } catch (e) {
+            console.log("Inner catch: " + e);
+            if (x < -10) {
+                throw new Error("Throwing from inner catch");
+            }
+            return x + 10;
+        }
+    } catch (e) {
+        console.log("Outer catch: " + e);
+        return -1;
+    }
+}
+
+// Nested try-catch: inner try-catch inside catch block
+function nestedTryCatchInCatch(x: number): number {
+    try {
+        if (x < 0) {
+            throw new Error("Outer error");
+        }
+        return x * 2;
+    } catch (e) {
+        console.log("Outer catch: " + e);
+        try {
+            console.log("Attempting recovery");
+            if (x < -10) {
+                throw new Error("Recovery failed");
+            }
+            return x + 100;
+        } catch (innerError) {
+            console.log("Inner catch: " + innerError);
+            return -999;
+        }
+    }
+}
+
+// Nested try-finally inside try-catch
+function nestedTryFinallyInTryCatch(x: number): number {
+    try {
+        try {
+            if (x < 0) {
+                throw new Error("Error in nested try");
+            }
+            return x * 2;
+        } finally {
+            console.log("Nested finally");
+        }
+    } catch (e) {
+        console.log("Outer catch: " + e);
+        return -1;
+    }
 }
