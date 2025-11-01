@@ -28,6 +28,7 @@ import org.jacodb.ets.model.EtsBitXorExpr
 import org.jacodb.ets.model.EtsBooleanConstant
 import org.jacodb.ets.model.EtsCallStmt
 import org.jacodb.ets.model.EtsCastExpr
+import org.jacodb.ets.model.EtsCatchStmt
 import org.jacodb.ets.model.EtsCaughtExceptionRef
 import org.jacodb.ets.model.EtsClosureFieldRef
 import org.jacodb.ets.model.EtsConstant
@@ -129,6 +130,11 @@ abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> 
     final override fun visit(stmt: EtsCallStmt) {
         handle(stmt)
         stmt.expr.accept(this)
+    }
+
+    final override fun visit(stmt: EtsCatchStmt) {
+        handle(stmt)
+        stmt.error.accept(this)
     }
 
     final override fun visit(stmt: EtsReturnStmt) {

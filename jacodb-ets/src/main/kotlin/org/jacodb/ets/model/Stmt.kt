@@ -32,6 +32,7 @@ interface EtsStmt : CommonInst {
         fun visit(stmt: EtsThrowStmt): R
         fun visit(stmt: EtsIfStmt): R
         fun visit(stmt: EtsCallStmt): R
+        fun visit(stmt: EtsCatchStmt): R
 
         fun visit(stmt: EtsRawStmt): R {
             if (this is Default) {
@@ -48,6 +49,7 @@ interface EtsStmt : CommonInst {
             override fun visit(stmt: EtsIfStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsCallStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsRawStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: EtsCatchStmt): R = defaultVisit(stmt)
 
             fun defaultVisit(stmt: EtsStmt): R
         }
@@ -145,6 +147,19 @@ data class EtsCallStmt(
 ) : EtsStmt, CommonCallInst {
     override fun toString(): String {
         return expr.toString()
+    }
+
+    override fun <R> accept(visitor: EtsStmt.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class EtsCatchStmt(
+    override val location: EtsStmtLocation,
+    val error: EtsLocal,
+): EtsStmt {
+    override fun toString(): String {
+        return "catch ($error)"
     }
 
     override fun <R> accept(visitor: EtsStmt.Visitor<R>): R {

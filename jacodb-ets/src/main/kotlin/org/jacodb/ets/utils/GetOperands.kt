@@ -28,6 +28,7 @@ import org.jacodb.ets.model.EtsBitXorExpr
 import org.jacodb.ets.model.EtsBooleanConstant
 import org.jacodb.ets.model.EtsCallStmt
 import org.jacodb.ets.model.EtsCastExpr
+import org.jacodb.ets.model.EtsCatchStmt
 import org.jacodb.ets.model.EtsCaughtExceptionRef
 import org.jacodb.ets.model.EtsClosureFieldRef
 import org.jacodb.ets.model.EtsConstant
@@ -104,6 +105,9 @@ private object StmtGetOperands : EtsStmt.Visitor<Sequence<EtsEntity>> {
 
     override fun visit(stmt: EtsCallStmt): Sequence<EtsEntity> =
         sequenceOf(stmt.expr)
+
+    override fun visit(stmt: EtsCatchStmt): Sequence<EtsEntity> =
+        sequenceOf(stmt.error)
 
     override fun visit(stmt: EtsReturnStmt): Sequence<EtsEntity> =
         listOfNotNull(stmt.returnValue).asSequence()
