@@ -74,6 +74,7 @@ fun EtsBlockCfg.linearize(): EtsLinearCfg {
     linearSuccessors as Array<List<Int>>
 
     return EtsLinearCfg(
+        method = method,
         stmts = linearized,
         successors = linearSuccessors.asList()
     )

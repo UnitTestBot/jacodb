@@ -17,6 +17,7 @@
 package org.jacodb.ets.model
 
 class EtsLinearCfg(
+    val method: EtsMethod?,
     val stmts: List<EtsStmt>,
     val successors: List<List<Int>>, // for 'if-stmt', successors are (true, false) branches
 ) : EtsBytecodeGraph<EtsStmt> {
@@ -72,7 +73,11 @@ class EtsLinearCfg(
 
     companion object {
         val EMPTY: EtsLinearCfg by lazy {
-            EtsLinearCfg(emptyList(), emptyList())
+            EtsLinearCfg(
+                method = null,
+                stmts = emptyList(),
+                successors = emptyList(),
+            )
         }
     }
 }
