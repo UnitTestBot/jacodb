@@ -119,3 +119,17 @@ function testMultipleExits(x: number): number {
         console.log("Done");
     }
 }
+
+// TODO: Uncomment this test when ArkAnalyzer fully supports nested exceptions
+// Cascading exceptions
+// function testCascadingExceptions(): number {
+//     try {
+//         try {
+//             return 0;
+//         } catch (e) {
+//             return 1;
+//         }
+//     } catch (e) {
+//         return 2;
+//     }
+// }

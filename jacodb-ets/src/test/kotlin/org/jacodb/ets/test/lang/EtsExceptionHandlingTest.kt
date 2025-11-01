@@ -135,4 +135,15 @@ class EtsExceptionHandlingTest : TestBase() {
         // Should have traps for catch and finally with multiple return points
         assertTrue(method.body.traps.size >= 2, "Method should have multiple traps")
     }
+
+    @Disabled("ArkAnalyzer issue with nested exceptions: https://gitcode.com/openharmony-sig/arkanalyzer/issues/816")
+    @Test
+    fun testCascadingExceptions() {
+        val method = assertMethodExists(file, "testCascadingExceptions", minStmts = 1, hasTraps = true)
+
+        logMethodDetails(method)
+
+        // Should have traps for cascading exceptions
+        assertTrue(method.body.traps.size >= 2, "Method should have multiple traps for cascading exceptions")
+    }
 }
