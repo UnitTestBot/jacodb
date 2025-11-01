@@ -16,6 +16,7 @@
 
 package org.jacodb.ets.model
 
+import org.jacodb.ets.utils.TrapUtils
 import org.jacodb.ets.utils.linearize
 
 data class BasicBlock(
@@ -67,7 +68,18 @@ class EtsBlockCfg(
     override fun successors(node: EtsStmt): Set<EtsStmt> = linear.successors(node)
     override fun predecessors(node: EtsStmt): Set<EtsStmt> = linear.predecessors(node)
     override fun throwers(node: EtsStmt): Set<EtsStmt> = linear.throwers(node)
-    override fun catchers(node: EtsStmt): Set<EtsStmt> = linear.catchers(node)
+
+    override fun catchers(node: EtsStmt): Set<EtsStmt> {
+        if (method == null) {
+            return emptySet()
+        }
+        val block = blocks.find { it.statements.contains(node) }
+            ?: return emptySet()
+        val catchers = TrapUtils.findInnermostTrap(method.traps, block)
+            ?: return emptySet()
+        val catcher = catchers.catchBlocks.first().statements.first()
+        return setOf(catcher)
+    }
 
     companion object {
         val EMPTY: EtsBlockCfg by lazy {
