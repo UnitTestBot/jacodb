@@ -295,29 +295,4 @@ class TrapUtilsTest {
         assertEquals(result1, result2, "First and second call should return same result")
         assertEquals(result2, result3, "Second and third call should return same result")
     }
-
-    @Test
-    fun `classifyHandler with custom predicate`() {
-        val method = mkMethod()
-        val s0 = nop(method)
-        val s1 = nop(method)
-        val b0 = BasicBlock(0, listOf(s0))
-        val b1 = BasicBlock(1, listOf(s1))
-
-        val trap = EtsTrap(listOf(b0), listOf(b1))
-
-        // Custom predicate that always returns true
-        val alwaysTrue: (BasicBlock) -> Boolean = { true }
-        assertEquals(
-            TrapUtils.HandlerKind.COPIED_FINALLY,
-            TrapUtils.classifyHandler(trap, listOf(trap), alwaysTrue)
-        )
-
-        // Custom predicate that always returns false
-        val alwaysFalse: (BasicBlock) -> Boolean = { false }
-        assertEquals(
-            TrapUtils.HandlerKind.UNKNOWN,
-            TrapUtils.classifyHandler(trap, listOf(trap), alwaysFalse)
-        )
-    }
 }

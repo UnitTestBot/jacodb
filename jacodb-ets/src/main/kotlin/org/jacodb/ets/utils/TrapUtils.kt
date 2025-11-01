@@ -75,51 +75,31 @@ object TrapUtils {
     /**
      * Decide whether [trap]'s handler is a copied finally or a regular catch.
      *
-     * @param allTraps list of all traps in the method (used to detect "handler is try-region of another trap" -> catch).
-     * @param hasInjectedExceptionAssign predicate to detect the builder-inserted "caught exception" assignment inside a block.
-     * Default implementation checks if first statement is an assignment from EtsCaughtExceptionRef.
+     * @param allTraps list of all traps in the method
      */
     fun classifyHandler(
         trap: EtsTrap,
         allTraps: List<EtsTrap>,
-        hasInjectedExceptionAssign: (BasicBlock) -> Boolean = { block ->
-            val first = block.statements.firstOrNull()
-            first is EtsAssignStmt && first.lhv is EtsLocal && first.rhv is EtsCaughtExceptionRef
-        },
     ): HandlerKind {
         // 1) if handler blocks are the try-blocks of some trap -> it's a catch region
         if (allTraps.any { other -> sameBlockSet(other.tryBlocks, trap.catchBlocks) }) {
             return HandlerKind.CATCH
         }
 
-        // 2) injected assignment heuristic (best signal for copied-finally)
-        if (trap.catchBlocks.any { hasInjectedExceptionAssign(it) }) return HandlerKind.COPIED_FINALLY
-
-        // 3) try to detect "rethrow of the injected-local" pattern:
-        //    find left local name of injected-assign if any, then search for throws of that name in handler blocks.
-        val injectedLeftNames = trap.catchBlocks.mapNotNull { block ->
-            val first = block.statements.firstOrNull()
-            if (first is EtsAssignStmt && first.lhv is EtsLocal && first.rhv is EtsCaughtExceptionRef) {
-                first.lhv.name
-            } else {
-                null
-            }
-        }.toSet()
-
-        if (injectedLeftNames.isNotEmpty()) {
-            val anyRethrow = trap.catchBlocks.any { block ->
-                block.statements.any { stmt ->
-                    if (stmt is EtsThrowStmt) {
-                        injectedLeftNames.contains(stmt.exception.name)
-                    } else {
-                        false
-                    }
+        // 2) injected re-throw pattern
+        val first = trap.catchBlocks.first().statements.firstOrNull()
+        if (first is EtsAssignStmt && first.lhv is EtsLocal && first.rhv is EtsCaughtExceptionRef) {
+            val last = trap.catchBlocks.last().statements.last()
+            if (last is EtsThrowStmt) {
+                val assignedName = first.lhv.name
+                val thrownName = last.exception.name
+                if (assignedName == thrownName) {
+                    return HandlerKind.COPIED_FINALLY
                 }
             }
-            if (anyRethrow) return HandlerKind.COPIED_FINALLY
         }
 
-        // 4) fallback: unknown (prefer interpreting as catch for safety)
+        // 3) fallback: unknown (prefer interpreting as catch for safety)
         return HandlerKind.UNKNOWN
     }
 }

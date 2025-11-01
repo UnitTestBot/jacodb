@@ -20,6 +20,7 @@ import mu.KotlinLogging
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.utils.TrapUtils
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -54,13 +55,17 @@ class HandlerClassifierTest : TestBase() {
         logMethodDetails(method)
 
         val traps = method.body.traps
-        assertTrue(traps.isNotEmpty(), "Method should have at least one trap")
+        assertEquals(1, traps.size, "Simple try-catch should have exactly 1 trap")
 
-        // Classify all handlers and verify the classifier runs without errors
-        val classifications = traps.map { trap -> TrapUtils.classifyHandler(trap, traps) }
+        val trap = traps[0]
+        val classification = TrapUtils.classifyHandler(trap, traps)
 
-        assertTrue(classifications.isNotEmpty(), "Should have classified at least one handler")
-        logger.info { "✓ Handler classifications in simpleTryCatch: $classifications" }
+        assertEquals(
+            TrapUtils.HandlerKind.UNKNOWN,
+            classification,
+            "Simple try-catch handler should be classified as UNKNOWN"
+        )
+        logger.info { "✓ Handler correctly classified as UNKNOWN in simpleTryCatch" }
     }
 
     @Test
@@ -69,15 +74,17 @@ class HandlerClassifierTest : TestBase() {
         logMethodDetails(method)
 
         val traps = method.body.traps
-        assertTrue(traps.isNotEmpty(), "Method should have at least one trap for finally")
+        assertEquals(1, traps.size, "Try-finally should have exactly 1 trap")
 
-        // For try-finally, we expect COPIED_FINALLY handlers
-        val finallyTraps = traps.filter { trap ->
-            TrapUtils.classifyHandler(trap, traps) == TrapUtils.HandlerKind.COPIED_FINALLY
-        }
+        val trap = traps[0]
+        val classification = TrapUtils.classifyHandler(trap, traps)
 
-        assertTrue(finallyTraps.isNotEmpty(), "Should have at least one COPIED_FINALLY handler")
-        logger.info { "✓ Found ${finallyTraps.size} COPIED_FINALLY handler(s) in tryFinally" }
+        assertEquals(
+            TrapUtils.HandlerKind.COPIED_FINALLY,
+            classification,
+            "Try-finally handler should be classified as COPIED_FINALLY"
+        )
+        logger.info { "✓ Handler correctly classified as COPIED_FINALLY in tryFinally" }
     }
 
     @Test
@@ -86,19 +93,20 @@ class HandlerClassifierTest : TestBase() {
         logMethodDetails(method)
 
         val traps = method.body.traps
-        assertTrue(traps.size >= 2, "Method should have at least 2 traps (for catch and finally)")
+        assertEquals(2, traps.size, "Try-catch-finally should have exactly 2 traps")
 
-        val catchTraps = traps.filter { trap ->
-            TrapUtils.classifyHandler(trap, traps) == TrapUtils.HandlerKind.CATCH
-        }
-        val finallyTraps = traps.filter { trap ->
-            TrapUtils.classifyHandler(trap, traps) == TrapUtils.HandlerKind.COPIED_FINALLY
-        }
+        val classifications = traps.map { trap -> TrapUtils.classifyHandler(trap, traps) }
 
-        assertTrue(catchTraps.isNotEmpty(), "Should have at least one CATCH handler")
-        assertTrue(finallyTraps.isNotEmpty(), "Should have at least one COPIED_FINALLY handler")
+        assertTrue(
+            classifications.contains(TrapUtils.HandlerKind.CATCH),
+            "Should have one CATCH handler"
+        )
+        assertTrue(
+            classifications.contains(TrapUtils.HandlerKind.COPIED_FINALLY),
+            "Should have one COPIED_FINALLY handler"
+        )
 
-        logger.info { "✓ Found ${catchTraps.size} CATCH and ${finallyTraps.size} COPIED_FINALLY handlers in tryCatchFinally" }
+        logger.info { "✓ Found both CATCH and COPIED_FINALLY handlers in tryCatchFinally" }
     }
 
     @Test
@@ -107,52 +115,37 @@ class HandlerClassifierTest : TestBase() {
         logMethodDetails(method)
 
         val traps = method.body.traps
-        assertTrue(traps.isNotEmpty(), "Method should have at least one trap")
+        assertEquals(1, traps.size, "Catch with rethrow should have exactly 1 trap")
 
-        // A catch with rethrow should still be classified as CATCH (or possibly COPIED_FINALLY if it rethrows)
-        // The classifier should detect the rethrow pattern
-        val classifications = traps.associateWith { trap ->
-            TrapUtils.classifyHandler(trap, traps)
-        }
+        val trap = traps[0]
+        val classification = TrapUtils.classifyHandler(trap, traps)
 
-        logger.info { "✓ Handler classifications in catchWithRethrow: $classifications" }
-
-        // At least one trap should be present
-        assertTrue(classifications.isNotEmpty(), "Should have classified at least one handler")
+        assertEquals(
+            TrapUtils.HandlerKind.COPIED_FINALLY,
+            classification,
+            "Catch with rethrow should be classified as COPIED_FINALLY"
+        )
+        logger.info { "✓ Handler correctly classified as COPIED_FINALLY in catchWithRethrow" }
     }
 
-    @Test
-    fun testMultipleCatches() {
-        val method = assertMethodExists(file, "multipleCatches", minStmts = 1, hasTraps = true)
-        logMethodDetails(method)
-
-        val traps = method.body.traps
-        assertTrue(traps.isNotEmpty(), "Method should have at least one trap")
-
-        val classifications = traps.map { trap -> TrapUtils.classifyHandler(trap, traps) }
-        logger.info { "✓ Handler classifications in multipleCatches: $classifications" }
-
-        // Just verify that classification works without errors
-        assertTrue(classifications.isNotEmpty(), "Should have classified handlers")
-    }
-
+    @Disabled("ArkAnalyze drops traps when 'finally' contains 'return'")
     @Test
     fun testFinallyOverridesReturn() {
-        // Note: ArkAnalyzer might optimize finally blocks that override return values
-        val method = assertMethodExists(file, "finallyOverridesReturn", minStmts = 1, hasTraps = null)
+        val method = assertMethodExists(file, "finallyOverridesReturn", minStmts = 1, hasTraps = true)
         logMethodDetails(method)
 
         val traps = method.body.traps
-        if (traps.isEmpty()) {
-            logger.info { "⚠ No traps generated for finallyOverridesReturn (possibly optimized away)" }
-            return
-        }
+        assertEquals(1, traps.size, "Finally that overrides return should have exactly 1 trap")
 
-        val finallyTraps = traps.filter { trap ->
-            TrapUtils.classifyHandler(trap, traps) == TrapUtils.HandlerKind.COPIED_FINALLY
-        }
+        val trap = traps[0]
+        val classification = TrapUtils.classifyHandler(trap, traps)
 
-        logger.info { "✓ Found ${finallyTraps.size} COPIED_FINALLY handler(s) in finallyOverridesReturn" }
+        assertEquals(
+            TrapUtils.HandlerKind.COPIED_FINALLY,
+            classification,
+            "Finally that overrides return should be classified as COPIED_FINALLY"
+        )
+        logger.info { "✓ Handler correctly classified as COPIED_FINALLY in finallyOverridesReturn" }
     }
 
     @Test
@@ -161,28 +154,20 @@ class HandlerClassifierTest : TestBase() {
         logMethodDetails(method)
 
         val traps = method.body.traps
-        assertTrue(traps.size >= 2, "Complex try-catch-finally should have at least 2 traps")
+        assertEquals(2, traps.size, "Complex try-catch-finally should have exactly 2 traps")
 
-        val catchTraps = traps.filter { trap ->
-            TrapUtils.classifyHandler(trap, traps) == TrapUtils.HandlerKind.CATCH
-        }
-        val finallyTraps = traps.filter { trap ->
-            TrapUtils.classifyHandler(trap, traps) == TrapUtils.HandlerKind.COPIED_FINALLY
-        }
-        val unknownTraps = traps.filter { trap ->
-            TrapUtils.classifyHandler(trap, traps) == TrapUtils.HandlerKind.UNKNOWN
-        }
+        val classifications = traps.map { trap -> TrapUtils.classifyHandler(trap, traps) }
 
-        logger.info {
-            "✓ Handler classifications in complexTryCatchFinally: " +
-                "${catchTraps.size} CATCH, ${finallyTraps.size} COPIED_FINALLY, ${unknownTraps.size} UNKNOWN"
-        }
-
-        // Should have both catch and finally handlers
         assertTrue(
-            catchTraps.isNotEmpty() || finallyTraps.isNotEmpty(),
-            "Should have at least one CATCH or COPIED_FINALLY handler"
+            classifications.contains(TrapUtils.HandlerKind.CATCH),
+            "Should have one CATCH handler"
         )
+        assertTrue(
+            classifications.contains(TrapUtils.HandlerKind.COPIED_FINALLY),
+            "Should have one COPIED_FINALLY handler"
+        )
+
+        logger.info { "✓ Found both CATCH and COPIED_FINALLY handlers in complexTryCatchFinally" }
     }
 
     @Test
@@ -191,7 +176,6 @@ class HandlerClassifierTest : TestBase() {
 
         val traps = method.body.traps
 
-        // Test that calling classifier multiple times gives consistent results
         val firstRun = traps.map { trap -> TrapUtils.classifyHandler(trap, traps) }
         val secondRun = traps.map { trap -> TrapUtils.classifyHandler(trap, traps) }
 

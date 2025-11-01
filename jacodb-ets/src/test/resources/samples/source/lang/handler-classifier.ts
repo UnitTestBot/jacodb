@@ -54,22 +54,6 @@ function catchWithRethrow(x: number): number {
     }
 }
 
-// Multiple catches (if supported)
-function multipleCatches(x: number): number {
-    try {
-        if (x < 0) {
-            throw new Error("Negative");
-        }
-        if (x > 100) {
-            throw new RangeError("Too large");
-        }
-        return x * 2;
-    } catch (e) {
-        console.log("Error: " + e);
-        return -1;
-    }
-}
-
 // Finally that overrides return value
 function finallyOverridesReturn(x: number): number {
     try {
