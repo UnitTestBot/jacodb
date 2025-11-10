@@ -24,12 +24,8 @@ import org.jacodb.ets.model.EtsStmt
 fun EtsBlockCfg.linearize(): EtsLinearCfg {
     val linearized: MutableList<EtsStmt> = mutableListOf()
 
-    val queue: ArrayDeque<BasicBlock> = ArrayDeque()
+    val queue: ArrayDeque<BasicBlock> = ArrayDeque(blocks)
     val visited: MutableSet<Int> = hashSetOf()
-
-    if (blocks.isNotEmpty()) {
-        queue.add(blocks.first())
-    }
 
     while (queue.isNotEmpty()) {
         val block = queue.removeFirst()
