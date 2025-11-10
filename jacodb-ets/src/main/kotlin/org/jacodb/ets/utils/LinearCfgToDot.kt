@@ -27,7 +27,7 @@ fun EtsLinearCfg.toDot(): String {
     // Nodes
     for (stmt in stmts) {
         val id = stmt.location.index
-        val label = stmt.toDotLabel().replace("\"", "\\\"")
+        val label = stmt.toDotLabel()
         lines += "  $id [label=\"$id: $label\"]"
     }
 
