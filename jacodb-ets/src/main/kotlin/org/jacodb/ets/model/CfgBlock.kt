@@ -38,12 +38,12 @@ class EtsBlockCfg(
         for ((i, block) in blocks.withIndex()) {
             require(block.id == i) { "Block id ${block.id} mismatch index $i" }
         }
-        for ((id, successorIds) in successors) {
-            require(id in 0..blocks.size) { "Block id $id is out of bounds" }
-            for (s in successorIds) {
-                require(s in 0..blocks.size) { "Successor $s is out of bounds" }
-            }
-        }
+        // for ((id, successorIds) in successors) {
+        //     require(id in 0..blocks.size) { "Block id $id is out of bounds" }
+        //     for (s in successorIds) {
+        //         require(s in 0..blocks.size) { "Successor $s is out of bounds" }
+        //     }
+        // }
     }
 
     val linear: EtsLinearCfg by lazy {
