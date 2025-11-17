@@ -43,7 +43,7 @@ private const val ENV_VAR_ARK_ANALYZER_DIR = "ARKANALYZER_DIR"
 private const val DEFAULT_ARK_ANALYZER_DIR = "arkanalyzer"
 
 private const val ENV_VAR_SERIALIZE_SCRIPT_PATH = "SERIALIZE_SCRIPT_PATH"
-private const val DEFAULT_SERIALIZE_SCRIPT_PATH = "out/src/save/serializeArkIR.js"
+private const val DEFAULT_SERIALIZE_SCRIPT_PATH = "out/src/save/json/serializeArkIR.js"
 
 private const val ENV_VAR_NODE_EXECUTABLE = "NODE_EXECUTABLE"
 private const val DEFAULT_NODE_EXECUTABLE = "node"
