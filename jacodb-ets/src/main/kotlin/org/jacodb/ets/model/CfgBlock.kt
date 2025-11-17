@@ -16,7 +16,10 @@
 
 package org.jacodb.ets.model
 
+import mu.KotlinLogging
 import org.jacodb.ets.utils.linearize
+
+private val logger = KotlinLogging.logger {}
 
 data class BasicBlock(
     val id: Int,
@@ -32,18 +35,19 @@ class EtsBlockCfg(
     val successors: Map<Int, List<Int>>, // for 'if-stmt' block, successors are (true, false) branches
 ) : EtsBytecodeGraph<EtsStmt> {
     init {
-        for (block in blocks) {
-            require(block.statements.isNotEmpty()) { "Empty block ${block.id}" }
-        }
         for ((i, block) in blocks.withIndex()) {
             require(block.id == i) { "Block id ${block.id} mismatch index $i" }
         }
-        // for ((id, successorIds) in successors) {
-        //     require(id in 0..blocks.size) { "Block id $id is out of bounds" }
-        //     for (s in successorIds) {
-        //         require(s in 0..blocks.size) { "Successor $s is out of bounds" }
-        //     }
-        // }
+        for ((id, successorIds) in successors) {
+            if (id !in 0..blocks.size) {
+                logger.warn { "Block id $id is out of bounds (${0..blocks.size})" }
+            }
+            for (s in successorIds) {
+                if (s !in 0..blocks.size) {
+                    logger.warn { "Successor $s is out of bounds (${0..blocks.size})" }
+                }
+            }
+        }
     }
 
     val linear: EtsLinearCfg by lazy {
