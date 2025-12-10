@@ -146,27 +146,37 @@ fun loadEtsProjectFromIR(
     projectFilesPath: Path,
     sdkFilesPath: Path?,
 ): EtsScene {
-    val projectFiles = walker(projectFilesPath)
-    val sdkFiles = sdkFilesPath?.let { walker(it) }.orEmpty()
+    val projectFiles = walk(projectFilesPath).toList()
+    val sdkFiles = sdkFilesPath?.let { walk(it).toList() }.orEmpty()
 
     return EtsScene(projectFiles, sdkFiles)
 }
 
 fun loadEtsProjectFromMultipleIR(input: List<Path>, sdkPaths: List<Path>): EtsScene {
-    val projectFiles = input.flatMap(walker)
-    val sdkFiles = sdkPaths.flatMap(walker)
+    val projectFiles = input.flatMap { walk(it) }
+    val sdkFiles = sdkPaths.flatMap { walk(it) }
 
     return EtsScene(projectFiles, sdkFiles)
 }
 
-private val walker = { dir: Path ->
-    dir.walk(PathWalkOption.BREADTH_FIRST)
+private fun walk(dir: Path, strict: Boolean = false): Sequence<EtsFile> {
+    return dir.walk(PathWalkOption.BREADTH_FIRST)
         .filter { it.extension == "json" }
-        .map {
+        .mapNotNull {
             it.inputStream().use { stream ->
-                val etsFileDto = EtsFileDto.loadFromJson(stream)
-                etsFileDto.toEtsFile()
+                try {
+                    val etsFileDto = EtsFileDto.loadFromJson(stream)
+                    etsFileDto.toEtsFile()
+                } catch (e: Throwable) {
+                    if (strict) {
+                        throw e
+                    } else {
+                        logger.error {
+                            "Exception of type ${e::class.java.simpleName} when loading '$dir': ${e.message}"
+                        }
+                        null
+                    }
+                }
             }
         }
-        .toList()
 }
