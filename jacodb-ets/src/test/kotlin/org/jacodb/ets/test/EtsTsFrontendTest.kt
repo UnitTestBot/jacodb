@@ -154,6 +154,66 @@ class EtsTsFrontendTest {
     }
 
     @Test
+    fun `classes, enums and namespaces convert to the model`() {
+        val etsFileDto = runFrontend(
+            """
+                export interface Shape {
+                    area(): number;
+                }
+
+                export class Circle implements Shape {
+                    static count: number = 0;
+                    radius: number = 1;
+
+                    constructor(radius: number) {
+                        this.radius = radius;
+                        Circle.count++;
+                    }
+
+                    area(): number {
+                        return 3.14 * this.radius * this.radius;
+                    }
+                }
+
+                enum Color { Red, Green = 5, Blue }
+
+                namespace Geometry {
+                    export class Point {
+                        x: number = 0;
+                    }
+                }
+
+                let c = new Circle(2);
+                console.log(c.area(), Color.Green);
+            """.trimIndent()
+        )
+
+        val etsFile = etsFileDto.toEtsFile()
+        val scene = EtsScene(listOf(etsFile))
+
+        val circle = scene.projectClasses.single { it.name == "Circle" }
+        assertTrue(circle.fields.any { it.name == "radius" })
+        assertTrue(circle.fields.any { it.name == "count" })
+
+        // ArkAnalyzer conventions: ctor + %instInit + %statInit present and linearizable.
+        val ctor = circle.methods.single { it.name == "constructor" }
+        assertTrue(ctor.cfg.stmts.isNotEmpty())
+        val instInit = circle.methods.single { it.name == "%instInit" }
+        assertTrue(instInit.cfg.stmts.isNotEmpty())
+        val statInit = circle.methods.single { it.name == "%statInit" }
+        assertTrue(statInit.cfg.stmts.isNotEmpty())
+
+        val shape = scene.projectClasses.single { it.name == "Shape" }
+        assertTrue(shape.methods.single { it.name == "area" }.cfg.stmts.isEmpty(), "interface methods have no body")
+
+        val color = scene.projectClasses.single { it.name == "Color" }
+        assertTrue(color.fields.any { it.name == "Green" })
+
+        val point = etsFile.namespaces.single().classes.single { it.name == "Point" }
+        assertTrue(point.methods.any { it.name == "%instInit" })
+    }
+
+    @Test
     fun `smoke - produced JSON deserializes and converts to a valid EtsFile`() {
         val etsFileDto = runFrontend("")
 

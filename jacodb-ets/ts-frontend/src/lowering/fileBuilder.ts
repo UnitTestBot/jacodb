@@ -18,19 +18,21 @@
  * File-level lowering: ts.SourceFile -> EtsFileDto.
  *
  * Structure conventions (ArkAnalyzer-compatible):
- *  - every file gets a default class `%dflt`;
+ *  - every file (and every namespace) gets a default class `%dflt`;
  *  - loose top-level statements form its default method `%dflt`;
- *  - top-level function declarations become methods of `%dflt`;
- *  - classes/interfaces/enums become ClassDto entries (M5);
+ *  - function declarations become methods of the enclosing `%dflt`;
+ *  - classes/interfaces/enums become ClassDto entries;
+ *  - namespaces become NamespaceDto entries (recursively);
  *  - imports/exports become Import/ExportInfoDto entries (M6).
  */
 
 import * as ts from "typescript";
-import { DEFAULT_ARK_CLASS_NAME, DEFAULT_ARK_METHOD_NAME, Modifier } from "../dto/constants";
-import { ClassDto, EtsFileDto, MethodDto } from "../dto/model";
-import { ClassSignatureDto, FileSignatureDto, MethodParameterDto } from "../dto/signatures";
-import { TypeDto, UNKNOWN_TYPE, VOID_TYPE } from "../dto/types";
+import { DEFAULT_ARK_CLASS_NAME, DEFAULT_ARK_METHOD_NAME } from "../dto/constants";
+import { ClassDto, EtsFileDto, MethodDto, NamespaceDto } from "../dto/model";
+import { ClassSignatureDto, FileSignatureDto, NamespaceSignatureDto } from "../dto/signatures";
+import { VOID_TYPE } from "../dto/types";
 import { TypeConverter } from "../types/convert";
+import { ClassBuilder } from "./classBuilder";
 import { Diagnostics } from "./diagnostics";
 import { LoweringContext, MethodContext } from "./methodBuilder";
 import { StmtLowerer } from "./stmtLowering";
@@ -71,47 +73,74 @@ export function buildEtsFile(
     return builder.build(sourceFile);
 }
 
+/** Lowered contents of a statement scope (source file or namespace body). */
+interface ScopeContents {
+    classes: ClassDto[];
+    namespaces: NamespaceDto[];
+}
+
 class FileBuilder {
+    private readonly classBuilder: ClassBuilder;
+
     constructor(
         private readonly ctx: LoweringContext,
         private readonly fileSignature: FileSignatureDto,
-    ) {}
+    ) {
+        this.classBuilder = new ClassBuilder(ctx);
+    }
 
     build(sourceFile: ts.SourceFile): EtsFileDto {
-        const defaultClass = this.buildDefaultClass(sourceFile);
+        const contents = this.buildScope(sourceFile.statements, undefined);
         return {
             signature: this.fileSignature,
-            namespaces: [],
-            classes: [defaultClass],
+            namespaces: contents.namespaces,
+            classes: contents.classes,
             importInfos: [],
             exportInfos: [],
         };
     }
 
-    private buildDefaultClass(sourceFile: ts.SourceFile): ClassDto {
-        const signature: ClassSignatureDto = {
+    /**
+     * Lower the statements of a scope (file or namespace body):
+     * a `%dflt` class collecting loose statements + functions, plus
+     * declared classes/interfaces/enums and nested namespaces.
+     */
+    private buildScope(
+        statements: readonly ts.Statement[],
+        declaringNamespace: NamespaceSignatureDto | undefined,
+    ): ScopeContents {
+        const classes: ClassDto[] = [];
+        const namespaces: NamespaceDto[] = [];
+
+        const defaultClassSignature: ClassSignatureDto = {
             name: DEFAULT_ARK_CLASS_NAME,
             declaringFile: this.fileSignature,
         };
+        if (declaringNamespace !== undefined) {
+            defaultClassSignature.declaringNamespace = declaringNamespace;
+        }
 
-        const methods: MethodDto[] = [this.buildDefaultMethod(signature, sourceFile)];
+        const methods: MethodDto[] = [this.buildDefaultMethod(defaultClassSignature, statements)];
 
-        for (const statement of sourceFile.statements) {
+        for (const statement of statements) {
             if (ts.isFunctionDeclaration(statement) && statement.name !== undefined) {
-                methods.push(this.buildMethodFromFunction(signature, statement));
-            } else if (
-                ts.isClassDeclaration(statement) ||
-                ts.isInterfaceDeclaration(statement) ||
-                ts.isEnumDeclaration(statement) ||
-                ts.isModuleDeclaration(statement)
-            ) {
-                // M5: classes/interfaces/enums/namespaces.
-                this.ctx.diagnostics.warn(statement, `${ts.SyntaxKind[statement.kind]} is not lowered yet (M5)`);
+                methods.push(this.classBuilder.buildMethodFromDecl(defaultClassSignature, statement));
+            } else if (ts.isClassDeclaration(statement)) {
+                classes.push(this.classBuilder.buildClass(statement));
+            } else if (ts.isInterfaceDeclaration(statement)) {
+                classes.push(this.classBuilder.buildInterface(statement));
+            } else if (ts.isEnumDeclaration(statement)) {
+                classes.push(this.classBuilder.buildEnum(statement));
+            } else if (ts.isModuleDeclaration(statement)) {
+                const namespace = this.buildNamespace(statement);
+                if (namespace !== undefined) {
+                    namespaces.push(namespace);
+                }
             }
         }
 
-        return {
-            signature,
+        classes.unshift({
+            signature: defaultClassSignature,
             modifiers: 0,
             decorators: [],
             category: 0,
@@ -119,15 +148,58 @@ class FileBuilder {
             implementedInterfaceNames: [],
             fields: [],
             methods,
+        });
+
+        return { classes, namespaces };
+    }
+
+    private buildNamespace(decl: ts.ModuleDeclaration): NamespaceDto | undefined {
+        if (!ts.isIdentifier(decl.name)) {
+            this.ctx.diagnostics.warn(decl, "string-named modules are not supported");
+            return undefined;
+        }
+        // `namespace A.B {}` nests; resolve the innermost body.
+        let body = decl.body;
+        let signature: NamespaceSignatureDto = {
+            name: decl.name.text,
+            declaringFile: this.fileSignature,
+        };
+        const outer = this.ctx.converter.namespaceSignatureOf(decl);
+        if (outer !== undefined) {
+            signature.declaringNamespace = outer;
+        }
+
+        while (body !== undefined && ts.isModuleDeclaration(body)) {
+            const innerSignature: NamespaceSignatureDto = {
+                name: ts.isIdentifier(body.name) ? body.name.text : "%unk",
+                declaringFile: this.fileSignature,
+                declaringNamespace: signature,
+            };
+            signature = innerSignature;
+            body = body.body;
+        }
+        if (body === undefined || !ts.isModuleBlock(body)) {
+            // Ambient namespace without a body.
+            return { signature, classes: [], namespaces: [] };
+        }
+
+        const contents = this.buildScope(body.statements, signature);
+        return {
+            signature,
+            classes: contents.classes,
+            namespaces: contents.namespaces,
         };
     }
 
-    /** Loose top-level statements -> `%dflt` method. */
-    private buildDefaultMethod(declaringClass: ClassSignatureDto, sourceFile: ts.SourceFile): MethodDto {
+    /** Loose scope statements -> `%dflt` method. */
+    private buildDefaultMethod(
+        declaringClass: ClassSignatureDto,
+        statements: readonly ts.Statement[],
+    ): MethodDto {
         const m = new MethodContext(this.ctx, declaringClass, DEFAULT_ARK_METHOD_NAME);
         m.emitPrologue([]);
         const lowerer = new StmtLowerer(m);
-        for (const statement of sourceFile.statements) {
+        for (const statement of statements) {
             lowerer.lowerStatement(statement);
         }
         return {
@@ -142,84 +214,4 @@ class FileBuilder {
             body: m.build(),
         };
     }
-
-    buildMethodFromFunction(
-        declaringClass: ClassSignatureDto,
-        decl: ts.FunctionDeclaration,
-    ): MethodDto {
-        const name = decl.name !== undefined ? decl.name.text : DEFAULT_ARK_METHOD_NAME;
-        const m = new MethodContext(this.ctx, declaringClass, name);
-
-        const parameters: MethodParameterDto[] = [];
-        const prologueParams: { name: string; type: TypeDto }[] = [];
-        for (const p of decl.parameters) {
-            const paramName = ts.isIdentifier(p.name) ? p.name.text : "%pat";
-            const paramType =
-                p.type !== undefined
-                    ? this.ctx.converter.convertTypeNode(p.type)
-                    : this.ctx.converter.typeOfNode(p.name);
-            const param: MethodParameterDto = { name: paramName, type: paramType };
-            if (p.questionToken !== undefined) param.isOptional = true;
-            if (p.dotDotDotToken !== undefined) param.isRest = true;
-            parameters.push(param);
-            prologueParams.push({ name: paramName, type: paramType });
-        }
-
-        const returnType =
-            decl.type !== undefined
-                ? this.ctx.converter.convertTypeNode(decl.type)
-                : this.inferredReturnType(decl);
-
-        const method: MethodDto = {
-            signature: { declaringClass, name, parameters, returnType },
-            modifiers: modifiersOf(decl),
-            decorators: [],
-        };
-        const typeParameters = this.ctx.converter.convertTypeParameters(decl.typeParameters);
-        if (typeParameters !== undefined) {
-            method.typeParameters = typeParameters;
-        }
-
-        if (decl.body !== undefined) {
-            m.emitPrologue(prologueParams);
-            const lowerer = new StmtLowerer(m);
-            lowerer.lowerStatements(decl.body.statements);
-            method.body = m.build();
-        }
-        return method;
-    }
-
-    private inferredReturnType(decl: ts.SignatureDeclaration): TypeDto {
-        try {
-            const signature = this.ctx.checker.getSignatureFromDeclaration(decl);
-            if (signature !== undefined) {
-                return this.ctx.converter.convertType(this.ctx.checker.getReturnTypeOfSignature(signature));
-            }
-        } catch {
-            // fall through
-        }
-        return UNKNOWN_TYPE;
-    }
-}
-
-/** Map ts modifiers to the EtsIR bitmask. */
-export function modifiersOf(node: ts.HasModifiers): number {
-    const flags = ts.getCombinedModifierFlags(node as ts.Declaration);
-    let result = 0;
-    if (flags & ts.ModifierFlags.Private) result |= Modifier.PRIVATE;
-    if (flags & ts.ModifierFlags.Protected) result |= Modifier.PROTECTED;
-    if (flags & ts.ModifierFlags.Public) result |= Modifier.PUBLIC;
-    if (flags & ts.ModifierFlags.Export) result |= Modifier.EXPORT;
-    if (flags & ts.ModifierFlags.Static) result |= Modifier.STATIC;
-    if (flags & ts.ModifierFlags.Abstract) result |= Modifier.ABSTRACT;
-    if (flags & ts.ModifierFlags.Async) result |= Modifier.ASYNC;
-    if (flags & ts.ModifierFlags.Const) result |= Modifier.CONST;
-    if (flags & ts.ModifierFlags.Accessor) result |= Modifier.ACCESSOR;
-    if (flags & ts.ModifierFlags.Default) result |= Modifier.DEFAULT;
-    if (flags & ts.ModifierFlags.In) result |= Modifier.IN;
-    if (flags & ts.ModifierFlags.Readonly) result |= Modifier.READONLY;
-    if (flags & ts.ModifierFlags.Out) result |= Modifier.OUT;
-    if (flags & ts.ModifierFlags.Override) result |= Modifier.OVERRIDE;
-    if (flags & ts.ModifierFlags.Ambient) result |= Modifier.DECLARE;
-    return result;
 }
