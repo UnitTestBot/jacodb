@@ -65,3 +65,14 @@ export interface LocalSignatureDto {
     name: string;
     method: MethodSignatureDto;
 }
+
+/** Signature placeholders mirroring `EtsFileSignature.UNKNOWN` / `EtsClassSignature.UNKNOWN` semantics. */
+export const UNKNOWN_FILE_SIGNATURE: FileSignatureDto = {
+    projectName: "%unk",
+    fileName: "%unk",
+};
+
+export const UNKNOWN_CLASS_SIGNATURE: ClassSignatureDto = {
+    name: "",
+    declaringFile: UNKNOWN_FILE_SIGNATURE,
+};
