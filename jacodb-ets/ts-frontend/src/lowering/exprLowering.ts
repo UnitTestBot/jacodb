@@ -306,6 +306,14 @@ export class ExprLowerer {
             }));
         }
 
+        // `this.f` inside a STATIC method addresses a static field of the class.
+        if (node.expression.kind === ts.SyntaxKind.ThisKeyword && this.m.isStaticMethod) {
+            return {
+                _: "StaticFieldRef",
+                field: { declaringClass: this.m.declaringClass, name: fieldName, type: fieldType },
+            };
+        }
+
         const staticTarget = this.classLikeSignatureOf(node.expression);
         if (staticTarget !== undefined) {
             return {

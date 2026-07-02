@@ -60,7 +60,7 @@ describe("export infos", () => {
             { exportName: "X", exportType: 9, modifiers: 0, exportFrom: "./other" },
             { exportName: "Z", exportType: 9, nameBeforeAs: "Y", modifiers: 0, exportFrom: "./other" },
             { exportName: "*", exportType: 9, modifiers: 0, exportFrom: "./star" },
-            { exportName: "bundle", exportType: 0, modifiers: 0, exportFrom: "./bundle" },
+            { exportName: "bundle", exportType: 0, nameBeforeAs: "*", modifiers: 0, exportFrom: "./bundle" },
         ]);
     });
 

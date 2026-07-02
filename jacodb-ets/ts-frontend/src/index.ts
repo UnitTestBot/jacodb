@@ -113,6 +113,67 @@ export function parseArgs(argv: string[]): CliArgs | string {
     return args;
 }
 
+const SOURCE_EXTENSIONS = [".ts", ".mts", ".cts", ".js", ".mjs", ".cjs", ".ets"];
+
+function isSourceFilePath(filePath: string): boolean {
+    if (filePath.endsWith(".d.ts")) return false;
+    return SOURCE_EXTENSIONS.some((ext) => filePath.endsWith(ext));
+}
+
+/** Recursively collect source files under a directory. */
+function collectSourceFiles(dir: string): string[] {
+    const result: string[] = [];
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+            if (entry.name === "node_modules" || entry.name.startsWith(".")) continue;
+            result.push(...collectSourceFiles(full));
+        } else if (entry.isFile() && isSourceFilePath(entry.name)) {
+            result.push(full);
+        }
+    }
+    return result.sort();
+}
+
+/** Compiler host that parses unknown extensions (.ets) as TypeScript. */
+function createHost(): ts.CompilerHost {
+    const host = ts.createCompilerHost(COMPILER_OPTIONS);
+    const originalGetSourceFile = host.getSourceFile.bind(host);
+    host.getSourceFile = (name, languageVersion, onError, shouldCreateNewSourceFile) => {
+        if (name.endsWith(".ets")) {
+            const text = host.readFile(name);
+            if (text === undefined) return undefined;
+            return ts.createSourceFile(name, text, languageVersion, true, ts.ScriptKind.TS);
+        }
+        return originalGetSourceFile(name, languageVersion, onError, shouldCreateNewSourceFile);
+    };
+    return host;
+}
+
+interface EmitResult {
+    violations: string[];
+    warnings: string[];
+}
+
+/** Lower one source file of `program` and write its JSON next to `outputPath`. */
+function emitOne(
+    program: ts.Program,
+    sourceFile: ts.SourceFile,
+    projectName: string,
+    fileName: string,
+    outputPath: string,
+    fileSignatureFor: ((sf: ts.SourceFile) => { projectName: string; fileName: string }) | undefined,
+): EmitResult {
+    const diagnostics = new Diagnostics();
+    const file = buildEtsFile(program, sourceFile, { projectName, fileName, fileSignatureFor }, diagnostics);
+    const violations = validateEtsFile(file);
+    if (violations.length === 0) {
+        fs.mkdirSync(path.dirname(path.resolve(outputPath)), { recursive: true });
+        fs.writeFileSync(outputPath, serializeEtsFile(file));
+    }
+    return { violations, warnings: diagnostics.messages };
+}
+
 function main(argv: string[]): number {
     const parsed = parseArgs(argv);
     if (typeof parsed === "string") {
@@ -125,50 +186,79 @@ function main(argv: string[]): number {
             process.stderr.write(`[ets-frontend] ${msg}\n`);
         }
     };
-
-    if (parsed.project || parsed.multi) {
-        process.stderr.write("error: project/multi modes are not implemented yet\n");
-        return 2;
-    }
-
     log(`input: ${parsed.input}`);
     log(`output: ${parsed.output}`);
 
     const inputPath = path.resolve(parsed.input);
     if (!fs.existsSync(inputPath)) {
-        process.stderr.write(`error: input file does not exist: ${inputPath}\n`);
+        process.stderr.write(`error: input does not exist: ${inputPath}\n`);
         return 1;
     }
 
-    const program = ts.createProgram([inputPath], COMPILER_OPTIONS);
+    // Directory mode: -p (project) and --multi behave the same here — one shared
+    // program over all files, one JSON per source file mirroring the input tree.
+    if (parsed.project || parsed.multi) {
+        if (!fs.statSync(inputPath).isDirectory()) {
+            process.stderr.write(`error: directory expected in project/multi mode: ${inputPath}\n`);
+            return 1;
+        }
+        const projectName = path.basename(inputPath);
+        const sources = collectSourceFiles(inputPath);
+        log(`found ${sources.length} source files`);
+        if (sources.length === 0) {
+            return 0;
+        }
+
+        const program = ts.createProgram(sources, COMPILER_OPTIONS, createHost());
+        const relativeOf = (sf: ts.SourceFile): string =>
+            path.relative(inputPath, path.resolve(sf.fileName)).split(path.sep).join("/");
+        const fileSignatureFor = (sf: ts.SourceFile) => {
+            if (!sf.isDeclarationFile && !path.relative(inputPath, path.resolve(sf.fileName)).startsWith("..")) {
+                return { projectName, fileName: relativeOf(sf) };
+            }
+            return { projectName: "%unk", fileName: "%unk" };
+        };
+
+        let hadErrors = false;
+        for (const source of sources) {
+            const sourceFile = program.getSourceFile(source);
+            if (sourceFile === undefined) {
+                process.stderr.write(`error: could not load: ${source}\n`);
+                hadErrors = true;
+                continue;
+            }
+            const relative = path.relative(inputPath, source).split(path.sep).join("/");
+            const outputFile = path.join(parsed.output, `${relative}.json`);
+            const result = emitOne(program, sourceFile, projectName, relative, outputFile, fileSignatureFor);
+            for (const warning of result.warnings) {
+                log(`warning: ${warning}`);
+            }
+            for (const violation of result.violations) {
+                process.stderr.write(`invariant violation in ${relative}: ${violation}\n`);
+                hadErrors = true;
+            }
+            log(`emitted: ${outputFile}`);
+        }
+        return hadErrors ? 1 : 0;
+    }
+
+    // Single-file mode.
+    const program = ts.createProgram([inputPath], COMPILER_OPTIONS, createHost());
     const sourceFile = program.getSourceFile(inputPath);
     if (sourceFile === undefined) {
         process.stderr.write(`error: could not load source file: ${inputPath}\n`);
         return 1;
     }
-
-    const diagnostics = new Diagnostics();
-    const file = buildEtsFile(
-        program,
-        sourceFile,
-        { projectName: "", fileName: path.basename(inputPath) },
-        diagnostics,
-    );
-
-    for (const message of diagnostics.messages) {
-        log(`warning: ${message}`);
+    const result = emitOne(program, sourceFile, "", path.basename(inputPath), parsed.output, undefined);
+    for (const warning of result.warnings) {
+        log(`warning: ${warning}`);
     }
-
-    const violations = validateEtsFile(file);
-    if (violations.length > 0) {
-        for (const violation of violations) {
+    if (result.violations.length > 0) {
+        for (const violation of result.violations) {
             process.stderr.write(`invariant violation: ${violation}\n`);
         }
         return 1;
     }
-
-    fs.mkdirSync(path.dirname(path.resolve(parsed.output)), { recursive: true });
-    fs.writeFileSync(parsed.output, serializeEtsFile(file));
     log("done");
     return 0;
 }

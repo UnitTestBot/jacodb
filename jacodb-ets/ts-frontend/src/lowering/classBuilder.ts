@@ -271,7 +271,8 @@ export class ClassBuilder {
         }
 
         if (decl.body !== undefined) {
-            const m = new MethodContext(this.ctx, declaringClass, name);
+            const isStaticMethod = (modifiersOf(decl) & Modifier.STATIC) !== 0;
+            const m = new MethodContext(this.ctx, declaringClass, name, isStaticMethod);
             m.emitPrologue(prologueParams);
             new StmtLowerer(m).lowerStatements(decl.body.statements);
             method.body = m.build();

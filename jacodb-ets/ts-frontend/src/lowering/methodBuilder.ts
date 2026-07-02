@@ -62,6 +62,8 @@ export class MethodContext {
         readonly ctx: LoweringContext,
         readonly declaringClass: ClassSignatureDto,
         readonly methodName: string,
+        /** In static methods `this` refers to the class itself (static field access). */
+        readonly isStaticMethod: boolean = false,
     ) {}
 
     get checker(): ts.TypeChecker {

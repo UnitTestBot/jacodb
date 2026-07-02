@@ -214,10 +214,12 @@ class FileBuilder {
                         infos.push(info);
                     }
                 } else if (ts.isNamespaceExport(statement.exportClause)) {
-                    // `export * as ns from "module"`.
+                    // `export * as ns from "module"` — star re-export with an alias
+                    // (nameBeforeAs "*" drives the model's isStarReExport).
                     const info: ExportInfoDto = {
                         exportName: statement.exportClause.name.text,
                         exportType: ExportType.NAMESPACE,
+                        nameBeforeAs: "*",
                         modifiers: 0,
                     };
                     if (exportFrom !== undefined) info.exportFrom = exportFrom;

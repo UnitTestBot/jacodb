@@ -23,15 +23,13 @@ import org.jacodb.ets.model.EtsCaughtExceptionRef
 import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
 import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
-import org.jacodb.ets.utils.ProcessUtil
+import org.jacodb.ets.utils.EtsIrProvider
+import org.jacodb.ets.utils.etsIrSerializerScript
+import org.jacodb.ets.utils.generateEtsIR
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
-import java.nio.file.Path
-import kotlin.io.path.Path
-import kotlin.io.path.absolute
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.exists
-import kotlin.io.path.pathString
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.test.assertEquals
@@ -50,31 +48,26 @@ import kotlin.time.Duration.Companion.seconds
 class EtsTsFrontendTest {
 
     companion object {
-        private val tsFrontendDir: Path = run {
-            val fromProperty = System.getProperty("ets.frontend.dir")
-            val fromEnv = System.getenv("ETS_FRONTEND_DIR")
-            Path(fromProperty ?: fromEnv ?: "ts-frontend").absolute()
-        }
+        private fun tsFrontendAvailable(): Boolean =
+            try {
+                etsIrSerializerScript(EtsIrProvider.TS_FRONTEND).exists()
+            } catch (_: Exception) {
+                false
+            }
 
-        private val script: Path = tsFrontendDir.resolve("dist/index.js")
-
-        private val node: String = System.getenv("NODE_EXECUTABLE") ?: "node"
-
+        /** Run the PRODUCTION integration path: generateEtsIR + EtsFileDto.loadFromJson. */
         private fun runFrontend(source: String, fileName: String = "test.ts"): EtsFileDto {
-            assumeTrue(script.exists(), "ts-frontend is not built: $script does not exist")
+            assumeTrue(tsFrontendAvailable(), "ts-frontend is not built (run 'npm run build' in ts-frontend)")
 
             val dir = createTempDirectory("ts-frontend-test")
             val inputPath = dir.resolve(fileName)
             inputPath.writeText(source)
-            val outputPath = dir.resolve("$fileName.json")
 
-            val result = ProcessUtil.run(
-                listOf(node, script.pathString, inputPath.pathString, outputPath.pathString),
+            val outputPath = generateEtsIR(
+                inputPath,
+                isProject = false,
                 timeout = 60.seconds,
-            )
-            assertEquals(
-                0, result.exitCode,
-                "ts-frontend failed with exit code ${result.exitCode}\nSTDOUT:\n${result.stdout}\nSTDERR:\n${result.stderr}",
+                provider = EtsIrProvider.TS_FRONTEND,
             )
             assertTrue(outputPath.exists(), "ts-frontend did not produce output: $outputPath")
 
