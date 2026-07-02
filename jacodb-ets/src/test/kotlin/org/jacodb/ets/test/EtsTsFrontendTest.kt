@@ -18,6 +18,8 @@ package org.jacodb.ets.test
 
 import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.dto.toEtsFile
+import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsCaughtExceptionRef
 import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
 import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
@@ -211,6 +213,52 @@ class EtsTsFrontendTest {
 
         val point = etsFile.namespaces.single().classes.single { it.name == "Point" }
         assertTrue(point.methods.any { it.name == "%instInit" })
+    }
+
+    @Test
+    fun `try-catch and imports-exports convert to the model`() {
+        val etsFileDto = runFrontend(
+            """
+                import { helper as h } from "./helper";
+                import * as fs from "fs";
+
+                export function risky(x: number): number {
+                    try {
+                        if (x < 0) {
+                            throw new Error("negative");
+                        }
+                        return x;
+                    } catch (e) {
+                        console.log(e);
+                        return -1;
+                    } finally {
+                        console.log("done");
+                    }
+                }
+
+                export { risky as saferRisky };
+            """.trimIndent()
+        )
+
+        assertEquals(2, etsFileDto.importInfos.size)
+        assertEquals("h", etsFileDto.importInfos[0].importName)
+        assertEquals("helper", etsFileDto.importInfos[0].nameBeforeAs)
+        assertEquals("NamespaceImport", etsFileDto.importInfos[1].importType)
+        assertTrue(etsFileDto.exportInfos.any { it.exportName == "risky" })
+        assertTrue(etsFileDto.exportInfos.any { it.exportName == "saferRisky" && it.nameBeforeAs == "risky" })
+
+        val etsFile = etsFileDto.toEtsFile()
+        val scene = EtsScene(listOf(etsFile))
+        val method = scene.projectClasses
+            .single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "risky" }
+
+        // The catch handler must survive lowering (ArkAnalyzer used to drop it).
+        val stmts = method.cfg.stmts
+        assertTrue(
+            stmts.filterIsInstance<EtsAssignStmt>().any { it.rhv is EtsCaughtExceptionRef },
+            "expected a caught-exception binding in:\n${stmts.joinToString("\n")}"
+        )
     }
 
     @Test

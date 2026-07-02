@@ -115,6 +115,10 @@ export class StmtLowerer {
             this.lowerLabeled(node);
             return;
         }
+        if (ts.isTryStatement(node)) {
+            this.lowerTry(node);
+            return;
+        }
         if (ts.isExpressionStatement(node)) {
             this.expr.lowerDiscarded(node.expression);
             return;
@@ -455,6 +459,62 @@ export class StmtLowerer {
         });
         cfg.goto(exitLabel);
         cfg.placeLabel(exitLabel);
+    }
+
+    /**
+     * `try { A } catch (e) { B } finally { C }`.
+     *
+     * The DTO has no trap tables and non-if blocks allow at most one successor,
+     * so exception edges cannot be expressed. ArkAnalyzer simply DROPS catch
+     * blocks; we instead keep them analyzable via a synthetic nondeterministic
+     * branch on an undefined `%N` local:
+     *
+     *   if (%exc != 0) -> catch else -> try
+     *   try:   A; goto join
+     *   catch: e := CaughtExceptionRef; B; goto join
+     *   join:  C (finally, shared by both paths)
+     *
+     * Approximation: abrupt exits (return/throw/break) inside A/B do not run C.
+     */
+    private lowerTry(node: ts.TryStatement): void {
+        const cfg = this.m.cfg;
+        const joinLabel = cfg.newLabel();
+        const tryLabel = cfg.newLabel();
+
+        if (node.catchClause !== undefined) {
+            const catchLabel = cfg.newLabel();
+            const excFlag = this.m.newTemp(BOOLEAN_TYPE);
+            cfg.branch(this.expr.truthyCondition(excFlag), catchLabel, tryLabel);
+
+            cfg.placeLabel(tryLabel);
+            this.lowerStatement(node.tryBlock);
+            cfg.goto(joinLabel);
+
+            cfg.placeLabel(catchLabel);
+            const decl = node.catchClause.variableDeclaration;
+            if (decl !== undefined && ts.isIdentifier(decl.name)) {
+                const caughtType =
+                    decl.type !== undefined ? this.m.converter.convertTypeNode(decl.type) : UNKNOWN_TYPE;
+                const caught = this.m.getOrCreateLocal(decl.name.text, caughtType);
+                cfg.emit({
+                    _: "AssignStmt",
+                    left: caught,
+                    right: { _: "CaughtExceptionRef", type: caughtType },
+                });
+            }
+            this.lowerStatement(node.catchClause.block);
+            cfg.goto(joinLabel);
+        } else {
+            cfg.goto(tryLabel);
+            cfg.placeLabel(tryLabel);
+            this.lowerStatement(node.tryBlock);
+            cfg.goto(joinLabel);
+        }
+
+        cfg.placeLabel(joinLabel);
+        if (node.finallyBlock !== undefined) {
+            this.lowerStatement(node.finallyBlock);
+        }
     }
 
     private inBreakable(context: BreakableContext, body: () => void): void {

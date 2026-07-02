@@ -27,12 +27,19 @@
  */
 
 import * as ts from "typescript";
-import { DEFAULT_ARK_CLASS_NAME, DEFAULT_ARK_METHOD_NAME } from "../dto/constants";
-import { ClassDto, EtsFileDto, MethodDto, NamespaceDto } from "../dto/model";
+import {
+    DEFAULT_ARK_CLASS_NAME,
+    DEFAULT_ARK_METHOD_NAME,
+    ExportType,
+    ExportTypeValue,
+    ImportType,
+    Modifier,
+} from "../dto/constants";
+import { ClassDto, EtsFileDto, ExportInfoDto, ImportInfoDto, MethodDto, NamespaceDto } from "../dto/model";
 import { ClassSignatureDto, FileSignatureDto, NamespaceSignatureDto } from "../dto/signatures";
 import { VOID_TYPE } from "../dto/types";
 import { TypeConverter } from "../types/convert";
-import { ClassBuilder } from "./classBuilder";
+import { ClassBuilder, modifiersOf } from "./classBuilder";
 import { Diagnostics } from "./diagnostics";
 import { LoweringContext, MethodContext } from "./methodBuilder";
 import { StmtLowerer } from "./stmtLowering";
@@ -95,9 +102,140 @@ class FileBuilder {
             signature: this.fileSignature,
             namespaces: contents.namespaces,
             classes: contents.classes,
-            importInfos: [],
-            exportInfos: [],
+            importInfos: this.buildImportInfos(sourceFile),
+            exportInfos: this.buildExportInfos(sourceFile),
         };
+    }
+
+    // ------------------------------------------------------------------
+    // Imports / exports
+    // ------------------------------------------------------------------
+
+    private buildImportInfos(sourceFile: ts.SourceFile): ImportInfoDto[] {
+        const infos: ImportInfoDto[] = [];
+        for (const statement of sourceFile.statements) {
+            if (!ts.isImportDeclaration(statement)) {
+                continue;
+            }
+            const importFrom = ts.isStringLiteral(statement.moduleSpecifier) ? statement.moduleSpecifier.text : "";
+            const clause = statement.importClause;
+            if (clause === undefined) {
+                // Side-effect import: `import "module"`.
+                infos.push(this.importInfo("", "", importFrom));
+                continue;
+            }
+            if (clause.name !== undefined) {
+                // Default import: `import d from "module"`.
+                infos.push(this.importInfo(clause.name.text, "Identifier", importFrom));
+            }
+            const bindings = clause.namedBindings;
+            if (bindings !== undefined) {
+                if (ts.isNamespaceImport(bindings)) {
+                    // `import * as ns from "module"`.
+                    infos.push(this.importInfo(bindings.name.text, "NamespaceImport", importFrom));
+                } else {
+                    // `import { a, b as c } from "module"`.
+                    for (const element of bindings.elements) {
+                        const info = this.importInfo(element.name.text, "NamedImports", importFrom);
+                        if (element.propertyName !== undefined) {
+                            info.nameBeforeAs = element.propertyName.text;
+                        }
+                        infos.push(info);
+                    }
+                }
+            }
+        }
+        return infos;
+    }
+
+    private importInfo(importName: string, importType: ImportType, importFrom: string): ImportInfoDto {
+        return { importName, importType, importFrom, modifiers: 0 };
+    }
+
+    private buildExportInfos(sourceFile: ts.SourceFile): ExportInfoDto[] {
+        const infos: ExportInfoDto[] = [];
+        for (const statement of sourceFile.statements) {
+            // Exported declarations: `export class C {}`, `export function f() {}`, ...
+            const modifiers = modifiersOf(statement);
+            if ((modifiers & Modifier.EXPORT) !== 0) {
+                const name = declarationName(statement);
+                if (name !== undefined) {
+                    infos.push({
+                        exportName: name,
+                        exportType: exportTypeOfDeclaration(statement),
+                        modifiers,
+                    });
+                } else if (ts.isVariableStatement(statement)) {
+                    for (const decl of statement.declarationList.declarations) {
+                        if (ts.isIdentifier(decl.name)) {
+                            infos.push({ exportName: decl.name.text, exportType: ExportType.LOCAL, modifiers });
+                        }
+                    }
+                }
+                continue;
+            }
+            // Re-exports: `export { a, b as c } [from "module"]`, `export * from "module"`.
+            if (ts.isExportDeclaration(statement)) {
+                const exportFrom =
+                    statement.moduleSpecifier !== undefined && ts.isStringLiteral(statement.moduleSpecifier)
+                        ? statement.moduleSpecifier.text
+                        : undefined;
+                if (statement.exportClause === undefined) {
+                    // `export * from "module"`.
+                    const info: ExportInfoDto = { exportName: "*", exportType: ExportType.UNKNOWN, modifiers: 0 };
+                    if (exportFrom !== undefined) info.exportFrom = exportFrom;
+                    infos.push(info);
+                } else if (ts.isNamedExports(statement.exportClause)) {
+                    for (const element of statement.exportClause.elements) {
+                        const info: ExportInfoDto = {
+                            exportName: element.name.text,
+                            exportType: this.exportTypeOfSymbol(element.name),
+                            modifiers: 0,
+                        };
+                        if (element.propertyName !== undefined) info.nameBeforeAs = element.propertyName.text;
+                        if (exportFrom !== undefined) info.exportFrom = exportFrom;
+                        infos.push(info);
+                    }
+                } else if (ts.isNamespaceExport(statement.exportClause)) {
+                    // `export * as ns from "module"`.
+                    const info: ExportInfoDto = {
+                        exportName: statement.exportClause.name.text,
+                        exportType: ExportType.NAMESPACE,
+                        modifiers: 0,
+                    };
+                    if (exportFrom !== undefined) info.exportFrom = exportFrom;
+                    infos.push(info);
+                }
+                continue;
+            }
+            // `export default <expr>;` / `export = <expr>;`
+            if (ts.isExportAssignment(statement)) {
+                const name = ts.isIdentifier(statement.expression) ? statement.expression.text : "default";
+                infos.push({
+                    exportName: name,
+                    exportType: this.exportTypeOfSymbol(statement.expression),
+                    modifiers: Modifier.DEFAULT,
+                });
+            }
+        }
+        return infos;
+    }
+
+    /** Export type of a re-exported name, resolved through the checker. */
+    private exportTypeOfSymbol(node: ts.Node): ExportTypeValue {
+        try {
+            let symbol = this.ctx.checker.getSymbolAtLocation(node);
+            if (symbol !== undefined && (symbol.flags & ts.SymbolFlags.Alias) !== 0) {
+                symbol = this.ctx.checker.getAliasedSymbol(symbol);
+            }
+            const decl = symbol?.declarations?.[0];
+            if (decl !== undefined) {
+                return exportTypeOfDeclaration(decl);
+            }
+        } catch {
+            // fall through
+        }
+        return ExportType.UNKNOWN;
     }
 
     /**
@@ -191,7 +329,7 @@ class FileBuilder {
         };
     }
 
-    /** Loose scope statements -> `%dflt` method. */
+    /** Loose scope statements -> `%dflt` method (impl continues below). */
     private buildDefaultMethod(
         declaringClass: ClassSignatureDto,
         statements: readonly ts.Statement[],
@@ -214,4 +352,43 @@ class FileBuilder {
             body: m.build(),
         };
     }
+}
+
+// ----------------------------------------------------------------------
+// Export helpers
+// ----------------------------------------------------------------------
+
+function declarationName(node: ts.Node): string | undefined {
+    if (
+        (ts.isClassDeclaration(node) ||
+            ts.isInterfaceDeclaration(node) ||
+            ts.isEnumDeclaration(node) ||
+            ts.isFunctionDeclaration(node) ||
+            ts.isTypeAliasDeclaration(node) ||
+            ts.isModuleDeclaration(node)) &&
+        node.name !== undefined &&
+        ts.isIdentifier(node.name)
+    ) {
+        return node.name.text;
+    }
+    return undefined;
+}
+
+function exportTypeOfDeclaration(node: ts.Node): ExportTypeValue {
+    if (ts.isClassDeclaration(node) || ts.isEnumDeclaration(node)) {
+        return ExportType.CLASS;
+    }
+    if (ts.isFunctionDeclaration(node) || ts.isMethodDeclaration(node)) {
+        return ExportType.METHOD;
+    }
+    if (ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node)) {
+        return ExportType.TYPE;
+    }
+    if (ts.isModuleDeclaration(node)) {
+        return ExportType.NAMESPACE;
+    }
+    if (ts.isVariableStatement(node) || ts.isVariableDeclaration(node)) {
+        return ExportType.LOCAL;
+    }
+    return ExportType.UNKNOWN;
 }
