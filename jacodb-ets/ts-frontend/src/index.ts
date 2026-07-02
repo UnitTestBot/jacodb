@@ -19,20 +19,27 @@
  *
  * Usage: `node dist/index.js [-p] [-e] [-t N] [--multi] [-v] <input> <output>`
  *
- * M1 status: skeleton emitter — parses no code yet, emits a minimal valid
- * EtsFileDto (default class `%dflt` with default method `%dflt`) so the whole
- * TS → JSON → Kotlin pipeline can be exercised end-to-end.
+ * Parses TS/JS with the real TypeScript compiler and emits EtsIR JSON
+ * consumable by the Kotlin side (`EtsFileDto.loadFromJson`).
  */
 
 import * as fs from "fs";
 import * as path from "path";
-import { DEFAULT_ARK_CLASS_NAME, DEFAULT_ARK_METHOD_NAME } from "./dto/constants";
-import { EtsFileDto } from "./dto/model";
-import { ClassSignatureDto, FileSignatureDto } from "./dto/signatures";
-import { RETURN_VOID_STMT } from "./dto/stmts";
-import { ClassTypeDto, VOID_TYPE } from "./dto/types";
+import * as ts from "typescript";
+import { Diagnostics } from "./lowering/diagnostics";
+import { buildEtsFile } from "./lowering/fileBuilder";
 import { serializeEtsFile } from "./serialize";
 import { validateEtsFile } from "./validate";
+
+export const COMPILER_OPTIONS: ts.CompilerOptions = {
+    target: ts.ScriptTarget.ES2020,
+    module: ts.ModuleKind.CommonJS,
+    strict: false,
+    allowJs: true,
+    checkJs: false,
+    noEmit: true,
+    skipLibCheck: true,
+};
 
 interface CliArgs {
     input: string;
@@ -106,65 +113,6 @@ export function parseArgs(argv: string[]): CliArgs | string {
     return args;
 }
 
-/** M1 placeholder: minimal valid EtsFileDto for a source file (no parsing yet). */
-export function buildSkeletonFile(projectName: string, fileName: string): EtsFileDto {
-    const fileSignature: FileSignatureDto = { projectName, fileName };
-    const classSignature: ClassSignatureDto = {
-        name: DEFAULT_ARK_CLASS_NAME,
-        declaringFile: fileSignature,
-    };
-    const classType: ClassTypeDto = { _: "ClassType", signature: classSignature };
-    return {
-        signature: fileSignature,
-        namespaces: [],
-        classes: [
-            {
-                signature: classSignature,
-                modifiers: 0,
-                decorators: [],
-                category: 0,
-                superClassName: "",
-                implementedInterfaceNames: [],
-                fields: [],
-                methods: [
-                    {
-                        signature: {
-                            declaringClass: classSignature,
-                            name: DEFAULT_ARK_METHOD_NAME,
-                            parameters: [],
-                            returnType: VOID_TYPE,
-                        },
-                        modifiers: 0,
-                        decorators: [],
-                        body: {
-                            locals: [{ name: "this", type: classType }],
-                            cfg: {
-                                blocks: [
-                                    {
-                                        id: 0,
-                                        successors: [],
-                                        predecessors: [],
-                                        stmts: [
-                                            {
-                                                _: "AssignStmt",
-                                                left: { _: "Local", name: "this", type: classType },
-                                                right: { _: "ThisRef", type: classType },
-                                            },
-                                            RETURN_VOID_STMT,
-                                        ],
-                                    },
-                                ],
-                            },
-                        },
-                    },
-                ],
-            },
-        ],
-        importInfos: [],
-        exportInfos: [],
-    };
-}
-
 function main(argv: string[]): number {
     const parsed = parseArgs(argv);
     if (typeof parsed === "string") {
@@ -186,8 +134,30 @@ function main(argv: string[]): number {
     log(`input: ${parsed.input}`);
     log(`output: ${parsed.output}`);
 
-    const fileName = path.basename(parsed.input);
-    const file = buildSkeletonFile("", fileName);
+    const inputPath = path.resolve(parsed.input);
+    if (!fs.existsSync(inputPath)) {
+        process.stderr.write(`error: input file does not exist: ${inputPath}\n`);
+        return 1;
+    }
+
+    const program = ts.createProgram([inputPath], COMPILER_OPTIONS);
+    const sourceFile = program.getSourceFile(inputPath);
+    if (sourceFile === undefined) {
+        process.stderr.write(`error: could not load source file: ${inputPath}\n`);
+        return 1;
+    }
+
+    const diagnostics = new Diagnostics();
+    const file = buildEtsFile(
+        program,
+        sourceFile,
+        { projectName: "", fileName: path.basename(inputPath) },
+        diagnostics,
+    );
+
+    for (const message of diagnostics.messages) {
+        log(`warning: ${message}`);
+    }
 
     const violations = validateEtsFile(file);
     if (violations.length > 0) {

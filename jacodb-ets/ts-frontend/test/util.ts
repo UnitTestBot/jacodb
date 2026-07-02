@@ -1,4 +1,9 @@
 import * as ts from "typescript";
+import { EtsFileDto, MethodDto } from "../src/dto/model";
+import { StmtDto } from "../src/dto/stmts";
+import { Diagnostics } from "../src/lowering/diagnostics";
+import { buildEtsFile } from "../src/lowering/fileBuilder";
+import { validateEtsFile } from "../src/validate";
 
 export interface Compiled {
     program: ts.Program;
@@ -56,6 +61,50 @@ export function findNode<T extends ts.Node>(
     };
     visit(root);
     return result;
+}
+
+export interface Lowered {
+    file: EtsFileDto;
+    diagnostics: Diagnostics;
+}
+
+/** Run the full lowering pipeline on an in-memory source; asserts invariants hold. */
+export function lower(source: string, projectName: string = "proj", fileName: string = "test.ts"): Lowered {
+    const { program, sourceFile } = compile(source, fileName);
+    const diagnostics = new Diagnostics();
+    const file = buildEtsFile(program, sourceFile, { projectName, fileName }, diagnostics);
+    const violations = validateEtsFile(file);
+    if (violations.length > 0) {
+        throw new Error(`invariant violations:\n${violations.join("\n")}`);
+    }
+    return { file, diagnostics };
+}
+
+/** The `%dflt` method of the `%dflt` class. */
+export function defaultMethod(file: EtsFileDto): MethodDto {
+    const clazz = file.classes.find((c) => c.signature.name === "%dflt");
+    if (clazz === undefined) throw new Error("no %dflt class");
+    const method = clazz.methods.find((m) => m.signature.name === "%dflt");
+    if (method === undefined) throw new Error("no %dflt method");
+    return method;
+}
+
+/** Method by name across all classes of the file. */
+export function methodByName(file: EtsFileDto, name: string): MethodDto {
+    for (const clazz of file.classes) {
+        for (const method of clazz.methods) {
+            if (method.signature.name === name) return method;
+        }
+    }
+    throw new Error(`method '${name}' not found`);
+}
+
+/** All statements of a single-block body (asserts the body has exactly one block). */
+export function singleBlockStmts(method: MethodDto): StmtDto[] {
+    if (method.body === undefined) throw new Error("method has no body");
+    const blocks = method.body.cfg.blocks;
+    if (blocks.length !== 1) throw new Error(`expected 1 block, got ${blocks.length}`);
+    return blocks[0].stmts;
 }
 
 /** Find the variable declaration with the given name. */

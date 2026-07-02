@@ -1,14 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { buildSkeletonFile } from "../src/index";
 import { serializeEtsFile } from "../src/serialize";
-import { validateEtsFile } from "../src/validate";
+import { defaultMethod, lower } from "./util";
 
-describe("skeleton EtsFileDto", () => {
-    it("is valid and serializes to the exact wire format", () => {
-        const file = buildSkeletonFile("myProject", "src/foo.ts");
-        expect(validateEtsFile(file)).toEqual([]);
-
+describe("wire format", () => {
+    it("an empty file serializes to the exact %dflt skeleton", () => {
+        const { file } = lower("", "myProject", "src/foo.ts");
         const json = JSON.parse(serializeEtsFile(file));
+
         const fileSig = { projectName: "myProject", fileName: "src/foo.ts" };
         const classSig = { name: "%dflt", declaringFile: fileSig };
         const classType = { _: "ClassType", signature: classSig };
@@ -64,7 +62,7 @@ describe("skeleton EtsFileDto", () => {
     });
 
     it("drops undefined optional fields but keeps nulls", () => {
-        const file = buildSkeletonFile("p", "f.ts");
+        const { file } = lower("");
         file.classes[0].typeParameters = undefined;
         file.classes[0].superClassName = null;
         const json = JSON.parse(serializeEtsFile(file));
@@ -73,7 +71,7 @@ describe("skeleton EtsFileDto", () => {
     });
 
     it("does not emit a discriminator for body.locals entries", () => {
-        const file = buildSkeletonFile("p", "f.ts");
+        const { file } = lower("");
         const json = JSON.parse(serializeEtsFile(file));
         const local = json.classes[0].methods[0].body.locals[0];
         expect(Object.keys(local).sort()).toEqual(["name", "type"]);

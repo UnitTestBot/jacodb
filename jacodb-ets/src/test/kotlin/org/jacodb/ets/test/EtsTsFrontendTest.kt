@@ -81,6 +81,36 @@ class EtsTsFrontendTest {
     }
 
     @Test
+    fun `straight-line program lowers, converts and linearizes`() {
+        val etsFileDto = runFrontend(
+            """
+                function add(a: number, b: number): number {
+                    return a + b;
+                }
+                class C {}
+                let x = add(1, 2);
+                let arr = [1, 2, 3];
+                arr[0] = x + 1;
+                let s = "value: " + x;
+                console.log(s);
+            """.trimIndent()
+        )
+
+        val etsFile = etsFileDto.toEtsFile()
+        val scene = EtsScene(listOf(etsFile))
+        val defaultClass = scene.projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
+
+        val addMethod = defaultClass.methods.single { it.name == "add" }
+        assertEquals(2, addMethod.parameters.size)
+        assertTrue(addMethod.cfg.stmts.isNotEmpty(), "'add' must have a non-empty body")
+
+        val defaultMethod = defaultClass.methods.single { it.name == DEFAULT_ARK_METHOD_NAME }
+        assertTrue(defaultMethod.cfg.stmts.size >= 8, "top-level code must be lowered into the default method")
+        assertTrue(defaultMethod.locals.any { it.name == "x" }, "local 'x' must be declared")
+        assertTrue(defaultMethod.locals.any { it.name == "arr" }, "local 'arr' must be declared")
+    }
+
+    @Test
     fun `smoke - produced JSON deserializes and converts to a valid EtsFile`() {
         val etsFileDto = runFrontend("")
 
