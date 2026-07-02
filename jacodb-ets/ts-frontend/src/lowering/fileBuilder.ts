@@ -39,9 +39,10 @@ import { ClassDto, EtsFileDto, ExportInfoDto, ImportInfoDto, MethodDto, Namespac
 import { ClassSignatureDto, FileSignatureDto, NamespaceSignatureDto } from "../dto/signatures";
 import { VOID_TYPE } from "../dto/types";
 import { TypeConverter } from "../types/convert";
-import { ClassBuilder, modifiersOf } from "./classBuilder";
+import { modifiersOf } from "./astUtils";
+import { ClassBuilder } from "./classBuilder";
 import { Diagnostics } from "./diagnostics";
-import { LoweringContext, MethodContext } from "./methodBuilder";
+import { AnonymousRegistry, LoweringContext, MethodContext } from "./methodBuilder";
 import { StmtLowerer } from "./stmtLowering";
 
 export interface BuildFileOptions {
@@ -74,7 +75,14 @@ export function buildEtsFile(
 
     const checker = program.getTypeChecker();
     const converter = new TypeConverter(checker, fileSignatureFor);
-    const ctx: LoweringContext = { checker, converter, fileSignatureFor, diagnostics };
+    const anonymous: AnonymousRegistry = {
+        defaultClassSignature: { name: DEFAULT_ARK_CLASS_NAME, declaringFile: fileSignature },
+        methods: [],
+        classes: [],
+        nextMethodId: 0,
+        nextClassId: 0,
+    };
+    const ctx: LoweringContext = { checker, converter, fileSignatureFor, diagnostics, anonymous };
 
     const builder = new FileBuilder(ctx, fileSignature);
     return builder.build(sourceFile);
@@ -98,6 +106,15 @@ class FileBuilder {
 
     build(sourceFile: ts.SourceFile): EtsFileDto {
         const contents = this.buildScope(sourceFile.statements, undefined);
+
+        // Anonymous methods (closures) and classes (object literals) registered
+        // during body lowering are attached to the file's %dflt class / class list.
+        const defaultClass = contents.classes.find(
+            (c) => c.signature.name === DEFAULT_ARK_CLASS_NAME && c.signature.declaringNamespace === undefined,
+        );
+        defaultClass?.methods.push(...this.ctx.anonymous.methods);
+        contents.classes.push(...this.ctx.anonymous.classes);
+
         return {
             signature: this.fileSignature,
             namespaces: contents.namespaces,

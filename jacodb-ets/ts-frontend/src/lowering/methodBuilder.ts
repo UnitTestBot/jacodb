@@ -16,7 +16,7 @@
 
 import * as ts from "typescript";
 import { TEMP_LOCAL_PREFIX } from "../dto/constants";
-import { BodyDto, LocalDeclDto } from "../dto/model";
+import { BodyDto, ClassDto, LocalDeclDto, MethodDto } from "../dto/model";
 import { ClassSignatureDto, FileSignatureDto } from "../dto/signatures";
 import { ClassTypeDto, TypeDto, UNKNOWN_TYPE } from "../dto/types";
 import { LocalDto } from "../dto/values";
@@ -24,12 +24,27 @@ import { TypeConverter } from "../types/convert";
 import { CfgBuilder } from "./cfg";
 import { Diagnostics } from "./diagnostics";
 
+/**
+ * Registry for anonymous methods (`%AM<n>$<method>`, closures) and anonymous
+ * classes (`%AC<n>$<method>`, object literals) created while lowering bodies.
+ * Everything registered here is attached to the file's `%dflt` class /
+ * top-level class list when the file is assembled.
+ */
+export interface AnonymousRegistry {
+    defaultClassSignature: ClassSignatureDto;
+    methods: MethodDto[];
+    classes: ClassDto[];
+    nextMethodId: number;
+    nextClassId: number;
+}
+
 /** Shared per-file lowering context. */
 export interface LoweringContext {
     checker: ts.TypeChecker;
     converter: TypeConverter;
     fileSignatureFor(sf: ts.SourceFile): FileSignatureDto;
     diagnostics: Diagnostics;
+    anonymous: AnonymousRegistry;
 }
 
 /**

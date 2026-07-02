@@ -29,7 +29,14 @@
  */
 
 import * as ts from "typescript";
-import { CONSTRUCTOR_NAME, DEFAULT_ARK_CLASS_NAME } from "../dto/constants";
+import {
+    ANONYMOUS_CLASS_PREFIX,
+    ANONYMOUS_METHOD_PREFIX,
+    CONSTRUCTOR_NAME,
+    DEFAULT_ARK_CLASS_NAME,
+} from "../dto/constants";
+import { FieldDto, MethodDto } from "../dto/model";
+import { buildParameters, memberName, modifiersOf, returnTypeOf } from "./astUtils";
 import { BinaryOp, RelationOp, UnaryOp } from "../dto/ops";
 import {
     ClassSignatureDto,
@@ -112,8 +119,14 @@ const COMPOUND_ASSIGN_BY_SYNTAX: Partial<Record<ts.SyntaxKind, BinaryOp>> = {
 /** Thrown internally for constructs the current milestone cannot lower; callers degrade to Raw*. */
 export class LoweringError extends Error {}
 
+/** Lowers the body of a nested function (closure / object-literal method) into a fresh MethodContext. */
+export type FunctionBodyLowerer = (m: MethodContext, body: ts.ConciseBody) => void;
+
 export class ExprLowerer {
-    constructor(private readonly m: MethodContext) {}
+    constructor(
+        private readonly m: MethodContext,
+        private readonly lowerFunctionBody?: FunctionBodyLowerer,
+    ) {}
 
     // ------------------------------------------------------------------
     // Entry points
@@ -180,6 +193,10 @@ export class ExprLowerer {
         if (node.kind === ts.SyntaxKind.ThisKeyword) {
             return this.m.getOrCreateLocal("this", this.m.thisType());
         }
+        if (node.kind === ts.SyntaxKind.SuperKeyword) {
+            // `super` is the same object as `this`.
+            return this.m.getOrCreateLocal("this", this.m.thisType());
+        }
         if (ts.isIdentifier(node)) {
             return this.lowerIdentifier(node);
         }
@@ -238,6 +255,20 @@ export class ExprLowerer {
         if (ts.isConditionalExpression(node)) {
             return this.lowerTernary(node);
         }
+        if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
+            return this.lowerClosure(node);
+        }
+        if (ts.isObjectLiteralExpression(node)) {
+            return this.lowerObjectLiteral(node);
+        }
+        if (ts.isYieldExpression(node)) {
+            return {
+                _: "YieldExpr",
+                arg: node.expression !== undefined
+                    ? this.lowerToImmediate(node.expression)
+                    : constant("undefined", UNDEFINED_TYPE),
+            };
+        }
         throw new LoweringError(ts.SyntaxKind[node.kind]);
     }
 
@@ -262,6 +293,19 @@ export class ExprLowerer {
         const fieldName = node.name.text;
         const fieldType = this.safeTypeOf(node);
 
+        if (node.questionDotToken !== undefined) {
+            // a?.b
+            return this.optionalDiamond(node.expression, fieldType, (obj) => ({
+                _: "InstanceFieldRef",
+                instance: obj,
+                field: {
+                    declaringClass: this.classSignatureFromType(obj.type),
+                    name: fieldName,
+                    type: fieldType,
+                },
+            }));
+        }
+
         const staticTarget = this.classLikeSignatureOf(node.expression);
         if (staticTarget !== undefined) {
             return {
@@ -283,6 +327,15 @@ export class ExprLowerer {
     }
 
     private lowerElementAccess(node: ts.ElementAccessExpression): ValueDto {
+        if (node.questionDotToken !== undefined) {
+            // a?.[i]
+            return this.optionalDiamond(node.expression, this.safeTypeOf(node), (obj) => ({
+                _: "ArrayRef",
+                array: obj,
+                index: this.lowerToImmediate(node.argumentExpression),
+                type: this.safeTypeOf(node),
+            }));
+        }
         return {
             _: "ArrayRef",
             array: this.lowerToImmediate(node.expression),
@@ -505,11 +558,63 @@ export class ExprLowerer {
     // Calls / new / literals
     // ------------------------------------------------------------------
 
-    lowerCall(node: ts.CallExpression): CallExprDto {
+    lowerCall(node: ts.CallExpression): ValueDto {
+        const callee = node.expression;
+
+        // a?.b(...) / f?.(...) — wrap the whole call in a null-check diamond.
+        if (ts.isPropertyAccessExpression(callee) && callee.questionDotToken !== undefined) {
+            return this.optionalDiamond(callee.expression, this.safeTypeOf(node), (obj) => ({
+                _: "InstanceCallExpr",
+                instance: obj,
+                method: this.methodSignatureForCall(node, callee.name.text, this.classSignatureFromType(obj.type)),
+                args: node.arguments.map((a) =>
+                    ts.isSpreadElement(a) ? this.spreadFallback(a) : this.lowerToImmediate(a),
+                ),
+            }));
+        }
+        if (node.questionDotToken !== undefined) {
+            return this.optionalDiamond(callee, this.safeTypeOf(node), (obj) => ({
+                _: "PtrCallExpr",
+                ptr: obj,
+                method: this.methodSignatureForCall(node, "%call", UNKNOWN_CLASS_SIGNATURE),
+                args: node.arguments.map((a) =>
+                    ts.isSpreadElement(a) ? this.spreadFallback(a) : this.lowerToImmediate(a),
+                ),
+            }));
+        }
+
         const args = node.arguments.map((a) =>
             ts.isSpreadElement(a) ? this.spreadFallback(a) : this.lowerToImmediate(a),
         );
-        const callee = node.expression;
+
+        // `super(...)` — call the superclass constructor on `this`.
+        if (callee.kind === ts.SyntaxKind.SuperKeyword) {
+            const thisLocal = this.m.getOrCreateLocal("this", this.m.thisType());
+            const superSignature = this.classSignatureFromType(this.safeTypeOf(callee));
+            return {
+                _: "InstanceCallExpr",
+                instance: thisLocal,
+                method: {
+                    declaringClass: superSignature,
+                    name: CONSTRUCTOR_NAME,
+                    parameters: [],
+                    returnType: { _: "ClassType", signature: superSignature },
+                },
+                args,
+            };
+        }
+
+        // `super.m(...)` — instance call on `this` with the superclass as declaring class.
+        if (ts.isPropertyAccessExpression(callee) && callee.expression.kind === ts.SyntaxKind.SuperKeyword) {
+            const thisLocal = this.m.getOrCreateLocal("this", this.m.thisType());
+            const superSignature = this.classSignatureFromType(this.safeTypeOf(callee.expression));
+            return {
+                _: "InstanceCallExpr",
+                instance: thisLocal,
+                method: this.methodSignatureForCall(node, callee.name.text, superSignature),
+                args,
+            };
+        }
 
         if (ts.isPropertyAccessExpression(callee)) {
             const methodName = callee.name.text;
@@ -648,6 +753,158 @@ export class ExprLowerer {
         } else if (value._ !== "Local" && value._ !== "Constant") {
             this.materialize(value);
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Closures / object literals
+    // ------------------------------------------------------------------
+
+    /**
+     * Arrow function / function expression -> anonymous `%AM<n>$<method>` method
+     * on the file's %dflt class; the use-site value is a Local of that name typed
+     * FunctionType (the ArkAnalyzer shape). Captured outer variables degrade to
+     * same-named locals inside the anonymous method (no LexicalEnvType yet).
+     */
+    private lowerClosure(node: ts.ArrowFunction | ts.FunctionExpression): ValueDto {
+        if (this.lowerFunctionBody === undefined) {
+            throw new LoweringError("closure in a context without a body lowerer");
+        }
+        const registry = this.m.ctx.anonymous;
+        const name = `${ANONYMOUS_METHOD_PREFIX}${registry.nextMethodId++}$${this.m.methodName}`;
+        const declaringClass = registry.defaultClassSignature;
+
+        const { parameters, prologueParams } = buildParameters(this.m.ctx, node);
+        const returnType = returnTypeOf(this.m.ctx, node);
+        const signature: MethodSignatureDto = { declaringClass, name, parameters, returnType };
+
+        const closureContext = new MethodContext(this.m.ctx, declaringClass, name);
+        closureContext.emitPrologue(prologueParams);
+        this.lowerFunctionBody(closureContext, node.body);
+        registry.methods.push({
+            signature,
+            modifiers: modifiersOf(node),
+            decorators: [],
+            body: closureContext.build(),
+        });
+
+        return this.m.getOrCreateLocal(name, { _: "FunctionType", signature });
+    }
+
+    /**
+     * Object literal -> anonymous `%AC<n>$<method>` class (category OBJECT) plus
+     * `new` + per-property stores at the use site. Literal methods become methods
+     * of the anonymous class.
+     */
+    private lowerObjectLiteral(node: ts.ObjectLiteralExpression): ValueDto {
+        if (this.lowerFunctionBody === undefined) {
+            throw new LoweringError("object literal in a context without a body lowerer");
+        }
+        const registry = this.m.ctx.anonymous;
+        const name = `${ANONYMOUS_CLASS_PREFIX}${registry.nextClassId++}$${this.m.methodName}`;
+        const signature: ClassSignatureDto = {
+            name,
+            declaringFile: registry.defaultClassSignature.declaringFile,
+        };
+        const classType: ClassTypeDto = { _: "ClassType", signature };
+
+        // Evaluate property values BEFORE instantiation (source evaluation order).
+        const stores: { name: string; type: TypeDto; value: ValueDto }[] = [];
+        const fields: FieldDto[] = [];
+        const methods: MethodDto[] = [];
+        for (const property of node.properties) {
+            if (ts.isPropertyAssignment(property)) {
+                const propName = memberName(property.name);
+                const propType = this.safeTypeOf(property.initializer);
+                fields.push(objectField(signature, propName, propType));
+                stores.push({ name: propName, type: propType, value: this.lowerToImmediate(property.initializer) });
+            } else if (ts.isShorthandPropertyAssignment(property)) {
+                const propName = property.name.text;
+                const local = this.m.getOrCreateLocal(propName, this.safeTypeOf(property.name));
+                fields.push(objectField(signature, propName, local.type));
+                stores.push({ name: propName, type: local.type, value: local });
+            } else if (ts.isMethodDeclaration(property)) {
+                const methodName = memberName(property.name);
+                const { parameters, prologueParams } = buildParameters(this.m.ctx, property);
+                const methodSignature: MethodSignatureDto = {
+                    declaringClass: signature,
+                    name: methodName,
+                    parameters,
+                    returnType: returnTypeOf(this.m.ctx, property),
+                };
+                const methodContext = new MethodContext(this.m.ctx, signature, methodName);
+                methodContext.emitPrologue(prologueParams);
+                if (property.body !== undefined) {
+                    this.lowerFunctionBody(methodContext, property.body);
+                }
+                methods.push({
+                    signature: methodSignature,
+                    modifiers: modifiersOf(property),
+                    decorators: [],
+                    body: methodContext.build(),
+                });
+            } else {
+                // spread / accessors / computed names degrade the whole literal
+                throw new LoweringError(`object literal member: ${ts.SyntaxKind[property.kind]}`);
+            }
+        }
+
+        registry.classes.push({
+            signature,
+            modifiers: 0,
+            decorators: [],
+            category: 5, // OBJECT
+            superClassName: "",
+            implementedInterfaceNames: [],
+            fields,
+            methods,
+        });
+
+        const temp = this.m.newTemp(classType);
+        this.m.cfg.emit({ _: "AssignStmt", left: temp, right: { _: "NewExpr", classType } });
+        for (const store of stores) {
+            this.m.cfg.emit({
+                _: "AssignStmt",
+                left: {
+                    _: "InstanceFieldRef",
+                    instance: temp,
+                    field: { declaringClass: signature, name: store.name, type: store.type },
+                },
+                right: store.value,
+            });
+        }
+        return temp;
+    }
+
+    // ------------------------------------------------------------------
+    // Optional chaining
+    // ------------------------------------------------------------------
+
+    /**
+     * `obj?.access` -> null-check diamond:
+     *   if (obj != null) %t := <access>; else %t := undefined
+     * (loose `!= null` also covers undefined).
+     */
+    private optionalDiamond(
+        objectNode: ts.Expression,
+        resultType: TypeDto,
+        access: (obj: LocalDto) => ValueDto,
+    ): LocalDto {
+        const cfg = this.m.cfg;
+        const obj = this.lowerToLocal(objectNode);
+        const result = this.m.newTemp(resultType);
+        const accessLabel = cfg.newLabel();
+        const elseLabel = cfg.newLabel();
+        const joinLabel = cfg.newLabel();
+
+        cfg.branch(this.relation("!=", obj, constant("null", NULL_TYPE)), accessLabel, elseLabel);
+        cfg.placeLabel(accessLabel);
+        cfg.emit({ _: "AssignStmt", left: result, right: access(obj) });
+        cfg.goto(joinLabel);
+        cfg.placeLabel(elseLabel);
+        cfg.emit({ _: "AssignStmt", left: result, right: constant("undefined", UNDEFINED_TYPE) });
+        cfg.goto(joinLabel);
+        cfg.placeLabel(joinLabel);
+        return result;
     }
 
     // ------------------------------------------------------------------
@@ -795,6 +1052,16 @@ export class ExprLowerer {
 
 export function constant(value: string, type: TypeDto): ConstantDto {
     return { _: "Constant", value, type };
+}
+
+function objectField(declaringClass: ClassSignatureDto, name: string, type: TypeDto): FieldDto {
+    return {
+        signature: { declaringClass, name, type },
+        modifiers: 0,
+        decorators: [],
+        questionToken: false,
+        exclamationToken: false,
+    };
 }
 
 function lvalueType(target: LValueDto): TypeDto {

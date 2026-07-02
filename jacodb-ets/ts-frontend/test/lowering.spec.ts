@@ -278,7 +278,7 @@ describe("straight-line lowering", () => {
     });
 
     it("degrades unsupported expressions to raw fallback values with diagnostics", () => {
-        const { file, diagnostics } = lower("let p = { x: 1 };");
+        const { file, diagnostics } = lower("let p = /abc/g;");
         const stmts = singleBlockStmts(defaultMethod(file));
         const assign = stmts.find((s): s is AssignStmtDto => s._ === "AssignStmt" && s.left._ === "Local" && s.left.name === "p");
         expect(assign!.right).toMatchObject({ _: "UnsupportedValue" });

@@ -32,6 +32,7 @@ import { CONSTRUCTOR_NAME, INSTANCE_INIT_METHOD_NAME, Modifier, STATIC_INIT_METH
 import { ClassDto, DecoratorDto, FieldDto, MethodDto } from "../dto/model";
 import { ClassSignatureDto, MethodParameterDto } from "../dto/signatures";
 import { ClassTypeDto, TypeDto, BOOLEAN_TYPE, NUMBER_TYPE, STRING_TYPE, UNKNOWN_TYPE, VOID_TYPE } from "../dto/types";
+import { buildParameters, decoratorsOf, memberName, modifiersOf, parameterType, returnTypeOf } from "./astUtils";
 import { constant } from "./exprLowering";
 import { LoweringContext, MethodContext } from "./methodBuilder";
 import { StmtLowerer } from "./stmtLowering";
@@ -256,8 +257,8 @@ export class ClassBuilder {
 
     buildMethodFromDecl(declaringClass: ClassSignatureDto, decl: ClassMemberDecl | ts.FunctionDeclaration): MethodDto {
         const name = decl.name !== undefined ? memberName(decl.name) : "";
-        const { parameters, prologueParams } = this.buildParameters(decl);
-        const returnType = this.returnTypeOf(decl);
+        const { parameters, prologueParams } = buildParameters(this.ctx, decl);
+        const returnType = returnTypeOf(this.ctx, decl);
 
         const method: MethodDto = {
             signature: { declaringClass, name, parameters, returnType },
@@ -279,13 +280,13 @@ export class ClassBuilder {
     }
 
     buildBodylessMethod(declaringClass: ClassSignatureDto, decl: ts.MethodSignature): MethodDto {
-        const { parameters } = this.buildParameters(decl);
+        const { parameters } = buildParameters(this.ctx, decl);
         return {
             signature: {
                 declaringClass,
                 name: memberName(decl.name),
                 parameters,
-                returnType: this.returnTypeOf(decl),
+                returnType: returnTypeOf(this.ctx, decl),
             },
             modifiers: modifiersOf(decl),
             decorators: [],
@@ -293,7 +294,7 @@ export class ClassBuilder {
     }
 
     private buildConstructor(declaringClass: ClassSignatureDto, decl: ts.ConstructorDeclaration): MethodDto {
-        const { parameters, prologueParams } = this.buildParameters(decl);
+        const { parameters, prologueParams } = buildParameters(this.ctx, decl);
         const classType: ClassTypeDto = { _: "ClassType", signature: declaringClass };
 
         const m = new MethodContext(this.ctx, declaringClass, CONSTRUCTOR_NAME);
@@ -303,7 +304,7 @@ export class ClassBuilder {
         // Parameter properties: this.x := x
         for (const p of decl.parameters) {
             if (hasParameterPropertyModifier(p) && ts.isIdentifier(p.name)) {
-                const paramType = this.parameterType(p);
+                const paramType = parameterType(this.ctx, p);
                 m.cfg.emit({
                     _: "AssignStmt",
                     left: {
@@ -443,7 +444,7 @@ export class ClassBuilder {
             signature: {
                 declaringClass,
                 name: ts.isIdentifier(p.name) ? p.name.text : "%pat",
-                type: this.parameterType(p),
+                type: parameterType(this.ctx, p),
             },
             modifiers: modifiersOf(p),
             decorators: [],
@@ -463,94 +464,11 @@ export class ClassBuilder {
         return UNKNOWN_TYPE;
     }
 
-    private parameterType(p: ts.ParameterDeclaration): TypeDto {
-        return p.type !== undefined
-            ? this.ctx.converter.convertTypeNode(p.type)
-            : this.ctx.converter.typeOfNode(p.name);
-    }
-
-    buildParameters(decl: ts.SignatureDeclarationBase): {
-        parameters: MethodParameterDto[];
-        prologueParams: { name: string; type: TypeDto }[];
-    } {
-        const parameters: MethodParameterDto[] = [];
-        const prologueParams: { name: string; type: TypeDto }[] = [];
-        for (const p of decl.parameters) {
-            const name = ts.isIdentifier(p.name) ? p.name.text : "%pat";
-            const type = this.parameterType(p);
-            const param: MethodParameterDto = { name, type };
-            if (p.questionToken !== undefined) param.isOptional = true;
-            if (p.dotDotDotToken !== undefined) param.isRest = true;
-            parameters.push(param);
-            prologueParams.push({ name, type });
-        }
-        return { parameters, prologueParams };
-    }
-
-    returnTypeOf(decl: ts.SignatureDeclarationBase): TypeDto {
-        if (decl.type !== undefined) {
-            return this.ctx.converter.convertTypeNode(decl.type);
-        }
-        try {
-            const signature = this.ctx.checker.getSignatureFromDeclaration(decl as ts.SignatureDeclaration);
-            if (signature !== undefined) {
-                return this.ctx.converter.convertType(this.ctx.checker.getReturnTypeOfSignature(signature));
-            }
-        } catch {
-            // fall through
-        }
-        return UNKNOWN_TYPE;
-    }
 }
 
 // ----------------------------------------------------------------------
 // Shared helpers
 // ----------------------------------------------------------------------
-
-export function memberName(name: ts.PropertyName | ts.BindingName | ts.EntityName): string {
-    if (ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name) || ts.isPrivateIdentifier(name)) {
-        return name.text;
-    }
-    return "%computed";
-}
-
-export function modifiersOf(node: ts.Node): number {
-    const flags = ts.getCombinedModifierFlags(node as ts.Declaration);
-    let result = 0;
-    if (flags & ts.ModifierFlags.Private) result |= Modifier.PRIVATE;
-    if (flags & ts.ModifierFlags.Protected) result |= Modifier.PROTECTED;
-    if (flags & ts.ModifierFlags.Public) result |= Modifier.PUBLIC;
-    if (flags & ts.ModifierFlags.Export) result |= Modifier.EXPORT;
-    if (flags & ts.ModifierFlags.Static) result |= Modifier.STATIC;
-    if (flags & ts.ModifierFlags.Abstract) result |= Modifier.ABSTRACT;
-    if (flags & ts.ModifierFlags.Async) result |= Modifier.ASYNC;
-    if (flags & ts.ModifierFlags.Const) result |= Modifier.CONST;
-    if (flags & ts.ModifierFlags.Accessor) result |= Modifier.ACCESSOR;
-    if (flags & ts.ModifierFlags.Default) result |= Modifier.DEFAULT;
-    if (flags & ts.ModifierFlags.In) result |= Modifier.IN;
-    if (flags & ts.ModifierFlags.Readonly) result |= Modifier.READONLY;
-    if (flags & ts.ModifierFlags.Out) result |= Modifier.OUT;
-    if (flags & ts.ModifierFlags.Override) result |= Modifier.OVERRIDE;
-    if (flags & ts.ModifierFlags.Ambient) result |= Modifier.DECLARE;
-    return result;
-}
-
-export function decoratorsOf(node: ts.Node): DecoratorDto[] {
-    const decorators = ts.canHaveDecorators(node) ? ts.getDecorators(node) : undefined;
-    if (decorators === undefined) {
-        return [];
-    }
-    return decorators.map((d) => {
-        const expr = d.expression;
-        if (ts.isIdentifier(expr)) {
-            return { kind: expr.text };
-        }
-        if (ts.isCallExpression(expr) && ts.isIdentifier(expr.expression)) {
-            return { kind: expr.expression.text };
-        }
-        return { kind: expr.getText().slice(0, 50) };
-    });
-}
 
 function isStatic(member: ts.ClassElement): boolean {
     return (ts.getCombinedModifierFlags(member as ts.Declaration) & ts.ModifierFlags.Static) !== 0;

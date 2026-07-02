@@ -262,6 +262,51 @@ class EtsTsFrontendTest {
     }
 
     @Test
+    fun `closures, destructuring and object literals convert to the model`() {
+        val etsFileDto = runFrontend(
+            """
+                const config = { host: "localhost", port: 8080, describe(): string { return this.host; } };
+                const { host, port: p = 80 } = config;
+
+                const handlers = [1, 2, 3].map((x: number) => x * 2);
+
+                function safeFirst(arr?: number[]): number | undefined {
+                    return arr?.[0];
+                }
+
+                function* naturals(): Generator<number> {
+                    let i = 0;
+                    while (true) {
+                        yield i++;
+                    }
+                }
+            """.trimIndent()
+        )
+
+        val etsFile = etsFileDto.toEtsFile()
+        val scene = EtsScene(listOf(etsFile))
+        val defaultClass = scene.projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
+
+        // Closure lifted into an anonymous method.
+        val anonymousMethod = defaultClass.methods.single { it.name.startsWith("%AM0") }
+        assertTrue(anonymousMethod.cfg.stmts.isNotEmpty(), "closure body must be lowered")
+
+        // Object literal became an anonymous class with fields and a method.
+        val anonymousClass = scene.projectClasses.single { it.name.startsWith("%AC0") }
+        assertTrue(anonymousClass.fields.any { it.name == "host" })
+        assertTrue(anonymousClass.methods.any { it.name == "describe" })
+
+        // Destructured locals exist in the default method.
+        val defaultMethod = defaultClass.methods.single { it.name == DEFAULT_ARK_METHOD_NAME }
+        assertTrue(defaultMethod.locals.any { it.name == "host" })
+        assertTrue(defaultMethod.locals.any { it.name == "p" })
+
+        // Optional chaining and generators linearize fine.
+        assertTrue(defaultClass.methods.single { it.name == "safeFirst" }.cfg.stmts.isNotEmpty())
+        assertTrue(defaultClass.methods.single { it.name == "naturals" }.cfg.stmts.isNotEmpty())
+    }
+
+    @Test
     fun `smoke - produced JSON deserializes and converts to a valid EtsFile`() {
         val etsFileDto = runFrontend("")
 

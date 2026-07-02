@@ -23,8 +23,8 @@
 
 import * as ts from "typescript";
 import { MethodSignatureDto, UNKNOWN_CLASS_SIGNATURE, UNKNOWN_FILE_SIGNATURE } from "../dto/signatures";
-import { BOOLEAN_TYPE, NUMBER_TYPE, UNKNOWN_TYPE } from "../dto/types";
-import { LocalDto } from "../dto/values";
+import { BOOLEAN_TYPE, NUMBER_TYPE, TypeDto, UNDEFINED_TYPE, UNKNOWN_TYPE } from "../dto/types";
+import { LocalDto, ValueDto } from "../dto/values";
 import { Label } from "./cfg";
 import { unsupportedStmt } from "./diagnostics";
 import { ExprLowerer, LoweringError, constant } from "./exprLowering";
@@ -44,7 +44,16 @@ export class StmtLowerer {
     private pendingLabel: string | undefined;
 
     constructor(private readonly m: MethodContext) {
-        this.expr = new ExprLowerer(m);
+        // Nested function bodies (closures, object-literal methods) are lowered
+        // with a fresh StmtLowerer over their own MethodContext.
+        this.expr = new ExprLowerer(m, (nestedContext, body) => {
+            const nested = new StmtLowerer(nestedContext);
+            if (ts.isBlock(body)) {
+                nested.lowerStatements(body.statements);
+            } else {
+                nestedContext.cfg.ret(nested.expr.lowerToImmediate(body));
+            }
+        });
     }
 
     lowerStatements(statements: readonly ts.Statement[]): void {
@@ -290,16 +299,19 @@ export class StmtLowerer {
         cfg.branch(this.expr.relation("==", done, constant("true", BOOLEAN_TYPE)), exitLabel, bodyLabel);
 
         cfg.placeLabel(bodyLabel);
-        const bindTarget = this.forEachBindingLocal(node.initializer);
+        const binding = this.loopBinding(node.initializer);
         cfg.emit({
             _: "AssignStmt",
-            left: bindTarget,
+            left: binding.local,
             right: {
                 _: "InstanceFieldRef",
                 instance: result,
-                field: { declaringClass: UNKNOWN_CLASS_SIGNATURE, name: "value", type: bindTarget.type },
+                field: { declaringClass: UNKNOWN_CLASS_SIGNATURE, name: "value", type: binding.local.type },
             },
         });
+        if (binding.pattern !== undefined) {
+            this.lowerBindingPattern(binding.pattern, binding.local);
+        }
         this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: headLabel, label }, () => {
             this.lowerStatement(node.statement);
         });
@@ -353,12 +365,15 @@ export class StmtLowerer {
         cfg.branch(this.expr.relation("<", index, length), bodyLabel, exitLabel);
 
         cfg.placeLabel(bodyLabel);
-        const bindTarget = this.forEachBindingLocal(node.initializer);
+        const binding = this.loopBinding(node.initializer);
         cfg.emit({
             _: "AssignStmt",
-            left: bindTarget,
+            left: binding.local,
             right: { _: "ArrayRef", array: keys, index, type: { _: "StringType" } },
         });
+        if (binding.pattern !== undefined) {
+            this.lowerBindingPattern(binding.pattern, binding.local);
+        }
         const continueLabel = cfg.newLabel();
         this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: continueLabel, label }, () => {
             this.lowerStatement(node.statement);
@@ -370,17 +385,20 @@ export class StmtLowerer {
         cfg.placeLabel(exitLabel);
     }
 
-    /** The loop variable of for-of/for-in (identifier bindings only). */
-    private forEachBindingLocal(initializer: ts.ForInitializer): LocalDto {
+    /** The loop variable of for-of/for-in; destructuring goes through a temp + pattern. */
+    private loopBinding(initializer: ts.ForInitializer): { local: LocalDto; pattern?: ts.BindingPattern } {
         if (ts.isVariableDeclarationList(initializer)) {
             const decl = initializer.declarations[0];
             if (decl !== undefined && ts.isIdentifier(decl.name)) {
-                return this.m.getOrCreateLocal(decl.name.text, this.m.converter.typeOfNode(decl.name));
+                return { local: this.m.getOrCreateLocal(decl.name.text, this.m.converter.typeOfNode(decl.name)) };
             }
-            throw new LoweringError("destructuring loop binding");
+            if (decl !== undefined) {
+                return { local: this.m.newTemp(UNKNOWN_TYPE), pattern: decl.name as ts.BindingPattern };
+            }
+            throw new LoweringError("empty loop binding");
         }
         if (ts.isIdentifier(initializer)) {
-            return this.m.getOrCreateLocal(initializer.text, this.m.converter.typeOfNode(initializer));
+            return { local: this.m.getOrCreateLocal(initializer.text, this.m.converter.typeOfNode(initializer)) };
         }
         throw new LoweringError("unsupported loop binding");
     }
@@ -548,8 +566,13 @@ export class StmtLowerer {
 
     private lowerVariableDeclaration(decl: ts.VariableDeclaration): void {
         if (!ts.isIdentifier(decl.name)) {
-            // Destructuring patterns are supported in M7.
-            throw new LoweringError(`destructuring declaration: ${decl.name.getText().slice(0, 50)}`);
+            // Destructuring: evaluate the initializer into a temp, then unpack.
+            if (decl.initializer === undefined) {
+                throw new LoweringError("destructuring declaration without initializer");
+            }
+            const source = this.expr.lowerToLocal(decl.initializer);
+            this.lowerBindingPattern(decl.name, source);
+            return;
         }
         const declaredType =
             decl.type !== undefined
@@ -561,6 +584,103 @@ export class StmtLowerer {
             this.m.cfg.emit({ _: "AssignStmt", left: local, right: value });
         }
     }
+
+    // ------------------------------------------------------------------
+    // Destructuring
+    // ------------------------------------------------------------------
+
+    /** `{a, b: {c}, d = 1}` / `[x, , y]` unpacked from `source` via field/array refs. */
+    private lowerBindingPattern(pattern: ts.BindingPattern, source: LocalDto): void {
+        if (ts.isObjectBindingPattern(pattern)) {
+            for (const element of pattern.elements) {
+                if (element.dotDotDotToken !== undefined) {
+                    throw new LoweringError("rest element in object destructuring");
+                }
+                const propName =
+                    element.propertyName !== undefined
+                        ? propertyNameText(element.propertyName)
+                        : ts.isIdentifier(element.name)
+                          ? element.name.text
+                          : undefined;
+                if (propName === undefined) {
+                    throw new LoweringError("computed property in destructuring");
+                }
+                const ref: ValueDto = {
+                    _: "InstanceFieldRef",
+                    instance: source,
+                    field: {
+                        declaringClass:
+                            source.type._ === "ClassType" ? source.type.signature : UNKNOWN_CLASS_SIGNATURE,
+                        name: propName,
+                        type: this.bindingType(element.name),
+                    },
+                };
+                this.bindDestructured(element.name, ref, element.initializer);
+            }
+            return;
+        }
+        // Array pattern.
+        pattern.elements.forEach((element, index) => {
+            if (ts.isOmittedExpression(element)) {
+                return;
+            }
+            if (element.dotDotDotToken !== undefined) {
+                throw new LoweringError("rest element in array destructuring");
+            }
+            const ref: ValueDto = {
+                _: "ArrayRef",
+                array: source,
+                index: constant(String(index), NUMBER_TYPE),
+                type: this.bindingType(element.name),
+            };
+            this.bindDestructured(element.name, ref, element.initializer);
+        });
+    }
+
+    private bindingType(name: ts.BindingName): TypeDto {
+        return ts.isIdentifier(name) ? this.m.converter.typeOfNode(name) : UNKNOWN_TYPE;
+    }
+
+    private bindDestructured(target: ts.BindingName, ref: ValueDto, defaultInit: ts.Expression | undefined): void {
+        if (ts.isIdentifier(target)) {
+            const local = this.m.getOrCreateLocal(target.text, this.m.converter.typeOfNode(target));
+            this.m.cfg.emit({ _: "AssignStmt", left: local, right: ref });
+            if (defaultInit !== undefined) {
+                this.emitDefaultValue(local, defaultInit);
+            }
+            return;
+        }
+        // Nested pattern: unpack through a temp.
+        const temp = this.m.newTemp(UNKNOWN_TYPE);
+        this.m.cfg.emit({ _: "AssignStmt", left: temp, right: ref });
+        if (defaultInit !== undefined) {
+            this.emitDefaultValue(temp, defaultInit);
+        }
+        this.lowerBindingPattern(target, temp);
+    }
+
+    /** `if (local === undefined) local := <default>` */
+    private emitDefaultValue(local: LocalDto, defaultInit: ts.Expression): void {
+        const cfg = this.m.cfg;
+        const setLabel = cfg.newLabel();
+        const doneLabel = cfg.newLabel();
+        cfg.branch(
+            this.expr.relation("===", local, constant("undefined", UNDEFINED_TYPE)),
+            setLabel,
+            doneLabel,
+        );
+        cfg.placeLabel(setLabel);
+        cfg.emit({ _: "AssignStmt", left: local, right: this.expr.lowerExpr(defaultInit) });
+        cfg.goto(doneLabel);
+        cfg.placeLabel(doneLabel);
+    }
+}
+
+function propertyNameText(name: ts.PropertyName): string | undefined {
+    if (ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name)) {
+        return name.text;
+    }
+    return undefined;
 }
 
 function unknownMethod(name: string): MethodSignatureDto {
