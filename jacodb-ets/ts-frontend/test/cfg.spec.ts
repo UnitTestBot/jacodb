@@ -1,0 +1,282 @@
+import { describe, expect, it } from "vitest";
+import { BasicBlockDto, MethodDto } from "../src/dto/model";
+import { IfStmtDto, StmtDto } from "../src/dto/stmts";
+import { defaultMethod, lower, methodByName } from "./util";
+
+function blocksOf(method: MethodDto): BasicBlockDto[] {
+    if (method.body === undefined) throw new Error("no body");
+    return method.body.cfg.blocks;
+}
+
+function lastStmt(block: BasicBlockDto): StmtDto | undefined {
+    return block.stmts[block.stmts.length - 1];
+}
+
+function ifBlocks(blocks: BasicBlockDto[]): BasicBlockDto[] {
+    return blocks.filter((b) => lastStmt(b)?._ === "IfStmt");
+}
+
+/** Collect all stmts of all blocks. */
+function allStmts(method: MethodDto): StmtDto[] {
+    return blocksOf(method).flatMap((b) => b.stmts);
+}
+
+describe("control flow lowering", () => {
+    it("lowers if/else into a diamond with [false, true] successor order", () => {
+        const { file } = lower(`
+            function f(a: number): number {
+                if (a > 0) { return 1; } else { return 2; }
+            }
+        `);
+        const blocks = blocksOf(methodByName(file, "f"));
+        const entry = blocks[0];
+        const last = lastStmt(entry);
+        expect(last).toMatchObject({
+            _: "IfStmt",
+            condition: { _: "ConditionExpr", op: ">" },
+        });
+        expect(entry.successors).toHaveLength(2);
+        const [falseTarget, trueTarget] = entry.successors;
+        // true branch: return 1; false branch: return 2
+        expect(lastStmt(blocks[trueTarget])).toMatchObject({ _: "ReturnStmt", arg: { value: "1" } });
+        expect(lastStmt(blocks[falseTarget])).toMatchObject({ _: "ReturnStmt", arg: { value: "2" } });
+    });
+
+    it("normalizes truthiness: booleans as != false, others as != 0", () => {
+        const { file } = lower(`
+            function f(b: boolean, n: number): void {
+                if (b) { console.log(1); }
+                if (n) { console.log(2); }
+            }
+        `);
+        const conditions = ifBlocks(blocksOf(methodByName(file, "f"))).map(
+            (b) => (lastStmt(b) as IfStmtDto).condition,
+        );
+        expect(conditions[0]).toMatchObject({
+            op: "!=",
+            left: { _: "Local", name: "b" },
+            right: { _: "Constant", value: "false", type: { _: "BooleanType" } },
+        });
+        expect(conditions[1]).toMatchObject({
+            op: "!=",
+            left: { _: "Local", name: "n" },
+            right: { _: "Constant", value: "0", type: { _: "NumberType" } },
+        });
+    });
+
+    it("swaps branches for negated conditions", () => {
+        const { file } = lower(`
+            function f(b: boolean): number {
+                if (!b) { return 1; }
+                return 2;
+            }
+        `);
+        const blocks = blocksOf(methodByName(file, "f"));
+        const entry = blocks[0];
+        // `!b` swaps targets: true branch of the emitted `b != false` goes to `return 2`.
+        const [falseTarget, trueTarget] = entry.successors;
+        expect(lastStmt(blocks[trueTarget])).toMatchObject({ _: "ReturnStmt", arg: { value: "2" } });
+        expect(lastStmt(blocks[falseTarget])).toMatchObject({ _: "ReturnStmt", arg: { value: "1" } });
+    });
+
+    it("lowers while loops with a back edge", () => {
+        const { file } = lower(`
+            function f(n: number): number {
+                let i = 0;
+                while (i < n) { i++; }
+                return i;
+            }
+        `);
+        const blocks = blocksOf(methodByName(file, "f"));
+        const headBlock = ifBlocks(blocks)[0];
+        const [, bodyId] = headBlock.successors; // [exit, body]
+        const body = blocks[bodyId];
+        expect(body.successors).toEqual([headBlock.id]); // back edge
+        expect(body.stmts.some((s) => s._ === "AssignStmt" && s.right._ === "UnopExpr")).toBe(true);
+    });
+
+    it("lowers do-while with the body before the condition", () => {
+        const { file } = lower(`
+            function f(n: number): number {
+                let i = 0;
+                do { i++; } while (i < n);
+                return i;
+            }
+        `);
+        const blocks = blocksOf(methodByName(file, "f"));
+        // entry falls into the body; condition block branches back to the body
+        const condBlock = ifBlocks(blocks)[0];
+        const [, trueTarget] = condBlock.successors;
+        const bodyBlock = blocks[trueTarget];
+        expect(bodyBlock.stmts.some((s) => s._ === "AssignStmt" && s.right._ === "UnopExpr")).toBe(true);
+        expect(bodyBlock.successors).toEqual([condBlock.id]);
+    });
+
+    it("lowers for loops: continue targets the update block", () => {
+        const { file } = lower(`
+            function f(): number {
+                let s = 0;
+                for (let i = 0; i < 10; i++) {
+                    if (i === 5) { continue; }
+                    s += i;
+                }
+                return s;
+            }
+        `);
+        const blocks = blocksOf(methodByName(file, "f"));
+        // The continue block jumps to the update block which contains i := i ++
+        const continueTargets = blocks
+            .filter((b) => b.successors.length === 1)
+            .map((b) => blocks[b.successors[0]]);
+        const updateBlocks = continueTargets.filter((b) =>
+            b.stmts.some(
+                (s) =>
+                    s._ === "AssignStmt" &&
+                    s.left._ === "Local" &&
+                    s.left.name === "i" &&
+                    s.right._ === "UnopExpr" &&
+                    s.right.op === "++",
+            ),
+        );
+        expect(updateBlocks.length).toBeGreaterThanOrEqual(2); // from body end AND from continue
+    });
+
+    it("lowers break out of a loop", () => {
+        const { file } = lower(`
+            function f(): number {
+                let i = 0;
+                while (true) {
+                    if (i > 3) { break; }
+                    i++;
+                }
+                return i;
+            }
+        `);
+        const blocks = blocksOf(methodByName(file, "f"));
+        const returnBlock = blocks.find((b) => lastStmt(b)?._ === "ReturnStmt")!;
+        // some block inside the loop jumps straight to the return block's region
+        expect(returnBlock.predecessors!.length).toBeGreaterThan(0);
+    });
+
+    it("lowers ternary into a temp diamond", () => {
+        const { file } = lower("let a = 1;\nlet x = a > 0 ? 'pos' : 'neg';");
+        const blocks = blocksOf(defaultMethod(file));
+        expect(blocks.length).toBeGreaterThanOrEqual(4);
+        const assignsToTemp = blocks
+            .flatMap((b) => b.stmts)
+            .filter(
+                (s): s is Extract<StmtDto, { _: "AssignStmt" }> =>
+                    s._ === "AssignStmt" &&
+                    s.left._ === "Local" &&
+                    s.left.name.startsWith("%") &&
+                    s.right._ === "Constant",
+            );
+        const values = assignsToTemp.map((s) => (s.right as { value: string }).value).sort();
+        expect(values).toEqual(["neg", "pos"]);
+    });
+
+    it("lowers switch with === chain and fallthrough", () => {
+        const { file } = lower(`
+            function f(x: number): string {
+                switch (x) {
+                    case 1:
+                    case 2:
+                        return "small";
+                    case 3:
+                        return "three";
+                    default:
+                        return "big";
+                }
+            }
+        `);
+        const method = methodByName(file, "f");
+        const stmts = allStmts(method);
+        const conditions = stmts.filter(
+            (s): s is IfStmtDto => s._ === "IfStmt" && s.condition.op === "===",
+        );
+        expect(conditions).toHaveLength(3);
+        // empty case 1 falls through to case 2's body
+        const returns = stmts.filter((s) => s._ === "ReturnStmt");
+        expect(returns).toHaveLength(3);
+    });
+
+    it("lowers for-of via the iterator protocol", () => {
+        const { file } = lower(`
+            let arr = [1, 2, 3];
+            for (const v of arr) { console.log(v); }
+        `);
+        const method = defaultMethod(file);
+        const stmts = allStmts(method);
+        const calls = stmts.filter((s) => s._ === "AssignStmt" && s.right._ === "InstanceCallExpr");
+        const methodNames = calls.map(
+            (s) => ((s as { right: { method: { name: string } } }).right.method.name),
+        );
+        expect(methodNames).toContain("Symbol.iterator");
+        expect(methodNames).toContain("next");
+        const fieldReads = stmts
+            .filter((s) => s._ === "AssignStmt" && s.right._ === "InstanceFieldRef")
+            .map((s) => (s as { right: { field: { name: string } } }).right.field.name);
+        expect(fieldReads).toContain("done");
+        expect(fieldReads).toContain("value");
+        // loop variable is bound
+        expect(method.body!.locals.some((l) => l.name === "v")).toBe(true);
+    });
+
+    it("lowers for-in via Object.keys indexing", () => {
+        const { file } = lower(`
+            let obj = [1];
+            for (const k in obj) { console.log(k); }
+        `);
+        const stmts = allStmts(defaultMethod(file));
+        const staticCalls = stmts.filter((s) => s._ === "AssignStmt" && s.right._ === "StaticCallExpr");
+        expect(staticCalls.length).toBeGreaterThan(0);
+        expect(staticCalls[0]).toMatchObject({
+            right: { method: { declaringClass: { name: "Object" }, name: "keys" } },
+        });
+    });
+
+    it("supports labeled break from nested loops", () => {
+        const { file } = lower(`
+            function f(): number {
+                let c = 0;
+                outer: for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (j > i) { break outer; }
+                        c++;
+                    }
+                }
+                return c;
+            }
+        `);
+        // must lower without raw fallbacks
+        const stmts = allStmts(methodByName(file, "f"));
+        expect(stmts.every((s) => s._ !== ("UnsupportedStmt" as never))).toBe(true);
+    });
+
+    it("drops unreachable code after return", () => {
+        const { file } = lower(`
+            function f(): number {
+                return 1;
+                console.log("never");
+            }
+        `);
+        const stmts = allStmts(methodByName(file, "f"));
+        expect(stmts.some((s) => s._ === "CallStmt")).toBe(false);
+    });
+
+    it("logical operators stay value-level binops (ArkAnalyzer-compatible)", () => {
+        const { file } = lower(`
+            function f(a: boolean, b: boolean): void {
+                if (a && b) { console.log(1); }
+            }
+        `);
+        const blocks = blocksOf(methodByName(file, "f"));
+        const entry = blocks[0];
+        const binop = entry.stmts.find((s) => s._ === "AssignStmt" && s.right._ === "BinopExpr");
+        expect(binop).toMatchObject({ right: { op: "&&" } });
+        expect(lastStmt(entry)).toMatchObject({
+            _: "IfStmt",
+            condition: { op: "!=", right: { value: "false" } },
+        });
+    });
+});

@@ -235,6 +235,9 @@ export class ExprLowerer {
             this.lowerDiscarded(node.expression);
             return constant("undefined", UNDEFINED_TYPE);
         }
+        if (ts.isConditionalExpression(node)) {
+            return this.lowerTernary(node);
+        }
         throw new LoweringError(ts.SyntaxKind[node.kind]);
     }
 
@@ -356,6 +359,69 @@ export class ExprLowerer {
 
     relation(op: RelationOp, left: ValueDto, right: ValueDto): ConditionExprDto {
         return { _: "ConditionExpr", op, left, right, type: BOOLEAN_TYPE };
+    }
+
+    // ------------------------------------------------------------------
+    // Conditions / branching
+    // ------------------------------------------------------------------
+
+    /**
+     * Lower a boolean context expression into a conditional branch.
+     * Direct comparisons branch on the ConditionExpr itself; anything else is
+     * normalized the ArkAnalyzer way: booleans as `v != false`, others as `v != 0`.
+     * `!x` swaps the branch targets.
+     */
+    lowerCondition(node: ts.Expression, trueTarget: number, falseTarget: number): void {
+        if (ts.isParenthesizedExpression(node)) {
+            this.lowerCondition(node.expression, trueTarget, falseTarget);
+            return;
+        }
+        if (ts.isPrefixUnaryExpression(node) && node.operator === ts.SyntaxKind.ExclamationToken) {
+            this.lowerCondition(node.operand, falseTarget, trueTarget);
+            return;
+        }
+        if (ts.isBinaryExpression(node)) {
+            const relationOp = RELATION_BY_SYNTAX[node.operatorToken.kind];
+            if (relationOp !== undefined) {
+                const condition = this.relation(
+                    relationOp,
+                    this.lowerToImmediate(node.left),
+                    this.lowerToImmediate(node.right),
+                );
+                this.m.cfg.branch(condition, trueTarget, falseTarget);
+                return;
+            }
+        }
+        const value = this.lowerToImmediate(node);
+        this.m.cfg.branch(this.truthyCondition(value), trueTarget, falseTarget);
+    }
+
+    /** ArkAnalyzer truthiness normalization: `v != false` for booleans, `v != 0` otherwise. */
+    truthyCondition(value: ValueDto): ConditionExprDto {
+        const valueType = value._ === "Local" || value._ === "Constant" ? value.type : UNKNOWN_TYPE;
+        if (valueType._ === "BooleanType") {
+            return this.relation("!=", value, constant("false", BOOLEAN_TYPE));
+        }
+        return this.relation("!=", value, constant("0", NUMBER_TYPE));
+    }
+
+    /** `c ? a : b` -> branch diamond writing a shared temp. */
+    private lowerTernary(node: ts.ConditionalExpression): ValueDto {
+        const cfg = this.m.cfg;
+        const result = this.m.newTemp(this.safeTypeOf(node));
+        const trueLabel = cfg.newLabel();
+        const falseLabel = cfg.newLabel();
+        const joinLabel = cfg.newLabel();
+
+        this.lowerCondition(node.condition, trueLabel, falseLabel);
+        cfg.placeLabel(trueLabel);
+        cfg.emit({ _: "AssignStmt", left: result, right: this.lowerExpr(node.whenTrue) });
+        cfg.goto(joinLabel);
+        cfg.placeLabel(falseLabel);
+        cfg.emit({ _: "AssignStmt", left: result, right: this.lowerExpr(node.whenFalse) });
+        cfg.goto(joinLabel);
+        cfg.placeLabel(joinLabel);
+        return result;
     }
 
     /** `x = e`, `x += e`, obj.f = e, arr[i] = e; returns the assigned value. */

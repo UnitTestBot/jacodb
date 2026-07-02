@@ -111,6 +111,49 @@ class EtsTsFrontendTest {
     }
 
     @Test
+    fun `control flow program converts and linearizes`() {
+        val etsFileDto = runFrontend(
+            """
+                function classify(n: number): string {
+                    if (n < 0) {
+                        return "negative";
+                    }
+                    let result = "";
+                    for (let i = 0; i < n; i++) {
+                        if (i % 2 === 0) {
+                            continue;
+                        }
+                        result += i;
+                    }
+                    switch (n) {
+                        case 0: return "zero";
+                        case 1: return "one";
+                        default: break;
+                    }
+                    let arr = [1, 2, 3];
+                    for (const v of arr) {
+                        result = n > 5 ? result + v : result;
+                    }
+                    while (n > 0) {
+                        n--;
+                    }
+                    return result;
+                }
+            """.trimIndent()
+        )
+
+        val etsFile = etsFileDto.toEtsFile()
+        val scene = EtsScene(listOf(etsFile))
+        val defaultClass = scene.projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
+        val method = defaultClass.methods.single { it.name == "classify" }
+
+        // Linearization walks the whole block CFG — this validates successor structure.
+        val stmts = method.cfg.stmts
+        assertTrue(stmts.size > 20, "expected a rich linearized body, got ${stmts.size} stmts")
+        assertTrue(method.cfg.blocks.size > 10, "expected multiple basic blocks, got ${method.cfg.blocks.size}")
+    }
+
+    @Test
     fun `smoke - produced JSON deserializes and converts to a valid EtsFile`() {
         val etsFileDto = runFrontend("")
 
