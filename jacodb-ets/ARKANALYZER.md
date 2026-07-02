@@ -1,5 +1,11 @@
 # ArkAnalyzer
 
+> **Note:** ArkAnalyzer is now the LEGACY EtsIR provider. The default provider
+> is the native TypeScript frontend in [`ts-frontend`](ts-frontend/README.md),
+> which requires no external checkout. ArkAnalyzer remains fully supported:
+> select it with `ETS_IR_PROVIDER=arkanalyzer` (plus `ARKANALYZER_DIR`) or by
+> passing `EtsIrProvider.ARKANALYZER` to the `loadEts*AutoConvert` functions.
+
 ## Installation
 
 Clone and install the ArkAnalyzer via NPM:

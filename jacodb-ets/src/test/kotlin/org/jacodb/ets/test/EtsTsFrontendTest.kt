@@ -26,6 +26,7 @@ import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
 import org.jacodb.ets.utils.EtsIrProvider
 import org.jacodb.ets.utils.etsIrSerializerScript
 import org.jacodb.ets.utils.generateEtsIR
+import org.jacodb.ets.utils.loadEtsFileAutoConvert
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import kotlin.io.path.createTempDirectory
@@ -297,6 +298,32 @@ class EtsTsFrontendTest {
         // Optional chaining and generators linearize fine.
         assertTrue(defaultClass.methods.single { it.name == "safeFirst" }.cfg.stmts.isNotEmpty())
         assertTrue(defaultClass.methods.single { it.name == "naturals" }.cfg.stmts.isNotEmpty())
+    }
+
+    @Test
+    fun `arkanalyzer provider stays selectable`() {
+        val arkAnalyzerAvailable = try {
+            etsIrSerializerScript(EtsIrProvider.ARKANALYZER).exists()
+        } catch (_: Exception) {
+            false
+        }
+        assumeTrue(arkAnalyzerAvailable, "ArkAnalyzer is not available (set ARKANALYZER_DIR to enable)")
+
+        val dir = createTempDirectory("arkanalyzer-provider-test")
+        val inputPath = dir.resolve("simple.ts")
+        inputPath.writeText(
+            """
+                function twice(x: number): number {
+                    return x * 2;
+                }
+                let y = twice(21);
+            """.trimIndent()
+        )
+
+        val etsFile = loadEtsFileAutoConvert(inputPath, provider = EtsIrProvider.ARKANALYZER)
+        val scene = EtsScene(listOf(etsFile))
+        val defaultClass = scene.projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
+        assertTrue(defaultClass.methods.any { it.name == "twice" })
     }
 
     @Test

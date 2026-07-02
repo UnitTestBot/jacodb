@@ -110,6 +110,23 @@ jobs:
           # Builds on other branches will only read existing entries from the cache.
           cache-read-only: ${{ github.ref != 'refs/heads/develop' && github.ref != 'ref/heads/neo' }}
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: jacodb-ets/ts-frontend/package-lock.json
+
+      - name: Build and test ts-frontend
+        working-directory: jacodb-ets/ts-frontend
+        run: |
+          npm ci
+          npm run build
+          npm test
+
+      # The legacy ArkAnalyzer provider stays supported (selectable via
+      # ETS_IR_PROVIDER=arkanalyzer); setting ARKANALYZER_DIR here enables
+      # the provider-parity test in EtsTsFrontendTest.
       - name: Set up ArkAnalyzer
         run: |
           REPO_URL="https://gitcode.com/Lipen/arkanalyzer"
