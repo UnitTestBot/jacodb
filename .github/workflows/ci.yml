@@ -135,6 +135,10 @@ jobs:
           cd $DEST_DIR
 
           npm install
+          # ArkAnalyzer's bundled TypeScript cannot parse the d.ts files of the
+          # latest floating @types/node (e.g. ffi.d.ts uses newer syntax and
+          # breaks `npm run build` with TS1139 etc.); pin a compatible major.
+          npm install --no-save @types/node@18
           npm run build
 
       - name: Run ETS tests
