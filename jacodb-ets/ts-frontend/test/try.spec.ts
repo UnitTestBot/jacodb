@@ -83,6 +83,123 @@ describe("try/catch/finally lowering", () => {
         expect(logged).toEqual(["try", "finally"]);
     });
 
+    it("duplicates finally before return (finally never drops out of the IR)", () => {
+        const blocks = blocksOf(`
+            function f(): number {
+                try {
+                    return 1;
+                } finally {
+                    console.log("fin");
+                }
+            }
+        `);
+        // try body always returns — the finally must still be present,
+        // duplicated BEFORE the ReturnStmt in the same path.
+        const returnBlock = blocks.find((b) => b.stmts.some((s) => s._ === "ReturnStmt"))!;
+        const stmtKinds = returnBlock.stmts.map((s) => s._);
+        const callIdx = returnBlock.stmts.findIndex(
+            (s) =>
+                s._ === "CallStmt" &&
+                ((s.expr.args[0] ?? {}) as { value?: string }).value === "fin",
+        );
+        const retIdx = stmtKinds.indexOf("ReturnStmt");
+        expect(callIdx).toBeGreaterThanOrEqual(0);
+        expect(callIdx).toBeLessThan(retIdx);
+    });
+
+    it("captures the return value before the finally runs", () => {
+        const blocks = blocksOf(`
+            function f(): number {
+                let x = 1;
+                try {
+                    return x;
+                } finally {
+                    x = 2;
+                }
+            }
+        `);
+        const returnBlock = blocks.find((b) => b.stmts.some((s) => s._ === "ReturnStmt"))!;
+        const ret = returnBlock.stmts.find((s) => s._ === "ReturnStmt") as { arg: { name?: string } };
+        // returned value is a snapshot temp, not `x` (which finally mutates)
+        expect(ret.arg.name).toMatch(/^%/);
+        const copyIdx = returnBlock.stmts.findIndex(
+            (s) => s._ === "AssignStmt" && (s.left as { name?: string }).name === ret.arg.name,
+        );
+        const mutateIdx = returnBlock.stmts.findIndex(
+            (s) =>
+                s._ === "AssignStmt" &&
+                (s.left as { name?: string }).name === "x" &&
+                (s.right as { value?: string }).value === "2",
+        );
+        expect(copyIdx).toBeGreaterThanOrEqual(0);
+        expect(mutateIdx).toBeGreaterThan(copyIdx); // snapshot BEFORE the finally mutation
+    });
+
+    it("duplicates finally on break out of the try, but not for loops inside the try", () => {
+        const stmts = (blocks: { stmts: { _: string }[] }[]) => blocks.flatMap((b) => b.stmts);
+
+        // break LEAVES the try -> finally duplicated on the break path + the normal path
+        const breakOut = blocksOf(`
+            function f(): void {
+                while (true) {
+                    try {
+                        break;
+                    } finally {
+                        console.log("fin");
+                    }
+                }
+            }
+        `);
+        // The try body always breaks, so the normal-path finally is unreachable
+        // and dropped; the surviving copy comes from the break-path duplication.
+        const finCalls = stmts(breakOut).filter(
+            (s) =>
+                s._ === "CallStmt" &&
+                (((s as { expr: { args: { value?: string }[] } }).expr.args[0] ?? {}).value === "fin"),
+        );
+        expect(finCalls).toHaveLength(1);
+
+        // break stays INSIDE the try (loop is inside) -> no duplication, single finally
+        const breakIn = blocksOf(`
+            function f(): void {
+                try {
+                    while (true) {
+                        break;
+                    }
+                } finally {
+                    console.log("fin");
+                }
+            }
+        `);
+        const finCallsIn = stmts(breakIn).filter(
+            (s) =>
+                s._ === "CallStmt" &&
+                (((s as { expr: { args: { value?: string }[] } }).expr.args[0] ?? {}).value === "fin"),
+        );
+        expect(finCallsIn).toHaveLength(1);
+    });
+
+    it("duplicates nested finallies innermost-first on return", () => {
+        const blocks = blocksOf(`
+            function f(): number {
+                try {
+                    try {
+                        return 1;
+                    } finally {
+                        console.log("inner");
+                    }
+                } finally {
+                    console.log("outer");
+                }
+            }
+        `);
+        const returnBlock = blocks.find((b) => b.stmts.some((s) => s._ === "ReturnStmt"))!;
+        const order = returnBlock.stmts
+            .filter((s) => s._ === "CallStmt")
+            .map((s) => ((s as { expr: { args: { value?: string }[] } }).expr.args[0] ?? {}).value);
+        expect(order).toEqual(["inner", "outer"]);
+    });
+
     it("supports throw inside try and nested try", () => {
         const blocks = blocksOf(`
             function f(x: number): number {

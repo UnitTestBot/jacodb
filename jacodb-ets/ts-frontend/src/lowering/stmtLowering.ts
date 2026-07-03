@@ -37,11 +37,15 @@ interface BreakableContext {
     breakTarget: Label;
     continueTarget?: Label;
     label?: string;
+    /** finallyScopes depth at the moment this breakable was entered. */
+    finallyDepth?: number;
 }
 
 export class StmtLowerer {
     readonly expr: ExprLowerer;
     private readonly breakables: BreakableContext[] = [];
+    /** finally blocks of the enclosing try statements (outermost first). */
+    private readonly finallyScopes: ts.Block[] = [];
     private pendingLabel: string | undefined;
 
     constructor(private readonly m: MethodContext) {
@@ -134,11 +138,21 @@ export class StmtLowerer {
             return;
         }
         if (ts.isReturnStatement(node)) {
-            this.m.cfg.ret(node.expression !== undefined ? this.expr.lowerToImmediate(node.expression) : undefined);
+            // JS evaluates the return value BEFORE finally blocks run; capture it
+            // in a temp so finally-code mutations cannot change what is returned.
+            let value = node.expression !== undefined ? this.expr.lowerToImmediate(node.expression) : undefined;
+            if (value !== undefined && value._ === "Local" && this.finallyScopes.length > 0) {
+                value = this.expr.materialize(value, value.type);
+            }
+            this.emitFinallies(0);
+            this.m.cfg.ret(value);
             return;
         }
         if (ts.isThrowStatement(node)) {
-            this.m.cfg.throwValue(this.expr.lowerToImmediate(node.expression));
+            // Exceptions propagate through finally blocks: run them before the throw.
+            const value = this.expr.lowerToImmediate(node.expression);
+            this.emitFinallies(0);
+            this.m.cfg.throwValue(value);
             return;
         }
         if (ts.isBlock(node)) {
@@ -457,6 +471,8 @@ export class StmtLowerer {
         if (target === undefined) {
             throw new LoweringError(`break outside of a breakable context`);
         }
+        // Run finally blocks of try statements entered INSIDE the target breakable.
+        this.emitFinallies(target.finallyDepth ?? 0);
         this.m.cfg.goto(target.breakTarget);
     }
 
@@ -465,6 +481,8 @@ export class StmtLowerer {
         if (target === undefined || target.continueTarget === undefined) {
             throw new LoweringError(`continue outside of a loop`);
         }
+        // Run finally blocks of try statements entered INSIDE the target loop.
+        this.emitFinallies(target.finallyDepth ?? 0);
         this.m.cfg.goto(target.continueTarget);
     }
 
@@ -505,50 +523,81 @@ export class StmtLowerer {
      *   catch: e := CaughtExceptionRef; B; goto join
      *   join:  C (finally, shared by both paths)
      *
-     * Approximation: abrupt exits (return/throw/break) inside A/B do not run C.
+     * Finally blocks are DUPLICATED on abrupt exits: every return/throw and
+     * every break/continue that leaves the try emits a copy of C (innermost
+     * scopes first) before its terminator, so C never drops out of the IR even
+     * when the try body always exits abruptly.
      */
     private lowerTry(node: ts.TryStatement): void {
         const cfg = this.m.cfg;
         const joinLabel = cfg.newLabel();
         const tryLabel = cfg.newLabel();
 
-        if (node.catchClause !== undefined) {
-            const catchLabel = cfg.newLabel();
-            const excFlag = this.m.newTemp(BOOLEAN_TYPE);
-            cfg.branch(this.expr.truthyCondition(excFlag), catchLabel, tryLabel);
+        if (node.finallyBlock !== undefined) {
+            this.finallyScopes.push(node.finallyBlock);
+        }
+        try {
+            if (node.catchClause !== undefined) {
+                const catchLabel = cfg.newLabel();
+                const excFlag = this.m.newTemp(BOOLEAN_TYPE);
+                cfg.branch(this.expr.truthyCondition(excFlag), catchLabel, tryLabel);
 
-            cfg.placeLabel(tryLabel);
-            this.lowerStatement(node.tryBlock);
-            cfg.goto(joinLabel);
+                cfg.placeLabel(tryLabel);
+                this.lowerStatement(node.tryBlock);
+                cfg.goto(joinLabel);
 
-            cfg.placeLabel(catchLabel);
-            const decl = node.catchClause.variableDeclaration;
-            if (decl !== undefined && ts.isIdentifier(decl.name)) {
-                const caughtType =
-                    decl.type !== undefined ? this.m.converter.convertTypeNode(decl.type) : UNKNOWN_TYPE;
-                const caught = this.m.getOrCreateLocal(decl.name.text, caughtType);
-                cfg.emit({
-                    _: "AssignStmt",
-                    left: caught,
-                    right: { _: "CaughtExceptionRef", type: caughtType },
-                });
+                cfg.placeLabel(catchLabel);
+                const decl = node.catchClause.variableDeclaration;
+                if (decl !== undefined && ts.isIdentifier(decl.name)) {
+                    const caughtType =
+                        decl.type !== undefined ? this.m.converter.convertTypeNode(decl.type) : UNKNOWN_TYPE;
+                    const caught = this.m.getOrCreateLocal(decl.name.text, caughtType);
+                    cfg.emit({
+                        _: "AssignStmt",
+                        left: caught,
+                        right: { _: "CaughtExceptionRef", type: caughtType },
+                    });
+                }
+                this.lowerStatement(node.catchClause.block);
+                cfg.goto(joinLabel);
+            } else {
+                cfg.goto(tryLabel);
+                cfg.placeLabel(tryLabel);
+                this.lowerStatement(node.tryBlock);
+                cfg.goto(joinLabel);
             }
-            this.lowerStatement(node.catchClause.block);
-            cfg.goto(joinLabel);
-        } else {
-            cfg.goto(tryLabel);
-            cfg.placeLabel(tryLabel);
-            this.lowerStatement(node.tryBlock);
-            cfg.goto(joinLabel);
+        } finally {
+            if (node.finallyBlock !== undefined) {
+                this.finallyScopes.pop();
+            }
         }
 
+        // Normal (fall-through) path.
         cfg.placeLabel(joinLabel);
         if (node.finallyBlock !== undefined) {
             this.lowerStatement(node.finallyBlock);
         }
     }
 
+    /**
+     * Emit copies of the enclosing finally blocks with stack depth > `downTo`,
+     * innermost first — used before abrupt exits (return/throw/break/continue).
+     * While a finally body is being emitted, its own scope (and deeper ones) is
+     * masked so a nested abrupt exit only re-runs the OUTER finallies.
+     */
+    private emitFinallies(downTo: number): void {
+        for (let i = this.finallyScopes.length - 1; i >= downTo; i--) {
+            const masked = this.finallyScopes.splice(i);
+            try {
+                this.lowerStatement(masked[0]);
+            } finally {
+                this.finallyScopes.push(...masked);
+            }
+        }
+    }
+
     private inBreakable(context: BreakableContext, body: () => void): void {
+        context.finallyDepth = this.finallyScopes.length;
         this.breakables.push(context);
         try {
             body();
