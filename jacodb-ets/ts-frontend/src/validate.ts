@@ -205,8 +205,12 @@ function validateStmt(
 ): void {
     // Raw fallback values are ONLY legal as the RHS of a Local assignment:
     // Kotlin's ensureOneAddress rejects EtsRawEntity in every other position.
+    // Kotlin Convert strips a CastExpr on the LHS before that check, so
+    // `CastExpr(Local) := <raw>` is a Local assignment too — mirror that here.
+    const effectiveLeft =
+        stmt._ === "AssignStmt" ? (stmt.left._ === "CastExpr" ? stmt.left.arg : stmt.left) : undefined;
     const rawAllowedFor =
-        stmt._ === "AssignStmt" && stmt.left._ === "Local" ? stmt.right : undefined;
+        stmt._ === "AssignStmt" && effectiveLeft!._ === "Local" ? stmt.right : undefined;
     const values = stmtOperands(stmt);
     for (const value of values) {
         validateValue(value, ctx, declaredLocals, err, value === rawAllowedFor);

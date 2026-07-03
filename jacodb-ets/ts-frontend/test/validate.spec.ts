@@ -254,6 +254,30 @@ describe("validateEtsFile", () => {
             ),
         );
         expect(ok).toEqual([]);
+
+        // Kotlin strips CastExpr on the LHS, so CastExpr(Local) := <raw> is a
+        // Local assignment too and must not be flagged.
+        const okCast = violations(
+            bodyWithBlocks(
+                [
+                    {
+                        id: 0,
+                        successors: [],
+                        predecessors: [],
+                        stmts: [
+                            {
+                                _: "AssignStmt",
+                                left: { _: "CastExpr", arg: local("x"), type: UNKNOWN_TYPE },
+                                right: rawValue,
+                            },
+                            { _: "ReturnVoidStmt" },
+                        ],
+                    },
+                ],
+                ["x"],
+            ),
+        );
+        expect(okCast).toEqual([]);
     });
 
     it("requires 'type' on raw fallback values", () => {
