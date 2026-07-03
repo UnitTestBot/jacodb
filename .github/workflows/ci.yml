@@ -134,11 +134,15 @@ jobs:
           echo "ARKANALYZER_DIR=$(realpath $DEST_DIR)" >> $GITHUB_ENV
           cd $DEST_DIR
 
+          # ArkAnalyzer's bundled TypeScript (ohos-typescript 4.9.5) cannot parse
+          # the d.ts files of the latest floating @types/node (e.g. ffi.d.ts uses
+          # newer syntax and breaks `npm run build` with TS1139 etc.), so pin a
+          # compatible major IN THE MANIFEST before the single `npm install`.
+          # NB: do not run a second `npm install <pkg>` afterwards — it re-resolves
+          # the tree and prunes ohos-typescript, which the postinstall script adds
+          # with --no-save (i.e. it is absent from package.json).
+          npm pkg set 'devDependencies.@types/node=18'
           npm install
-          # ArkAnalyzer's bundled TypeScript cannot parse the d.ts files of the
-          # latest floating @types/node (e.g. ffi.d.ts uses newer syntax and
-          # breaks `npm run build` with TS1139 etc.); pin a compatible major.
-          npm install --no-save @types/node@18
           npm run build
 
       - name: Run ETS tests
