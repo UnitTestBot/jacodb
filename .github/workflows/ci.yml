@@ -127,7 +127,12 @@ jobs:
       # The legacy ArkAnalyzer provider stays supported (selectable via
       # ETS_IR_PROVIDER=arkanalyzer); setting ARKANALYZER_DIR here enables
       # the provider-parity test in EtsTsFrontendTest.
-      - name: Set up ArkAnalyzer
+      #
+      # Best-effort: the default provider is the bundled ts-frontend, so a
+      # broken upstream ArkAnalyzer must not fail the job — without
+      # ARKANALYZER_DIR the parity test skips itself.
+      - name: Set up ArkAnalyzer (legacy provider, best-effort)
+        continue-on-error: true
         run: |
           REPO_URL="https://gitcode.com/Lipen/arkanalyzer"
           DEST_DIR="arkanalyzer"
@@ -148,7 +153,6 @@ jobs:
               echo "Repository cloned successfully."
           fi
 
-          echo "ARKANALYZER_DIR=$(realpath $DEST_DIR)" >> $GITHUB_ENV
           cd $DEST_DIR
 
           # ArkAnalyzer's bundled TypeScript (ohos-typescript 4.9.5) cannot parse
@@ -160,7 +164,13 @@ jobs:
           # with --no-save (i.e. it is absent from package.json).
           npm pkg set 'devDependencies.@types/node=18'
           npm install
+          # ArkAnalyzer's bundled TypeScript cannot parse the d.ts files of the
+          # latest floating @types/node (e.g. ffi.d.ts); pin a compatible major.
+          npm install --no-save @types/node@18
           npm run build
+
+          # Export only after a successful build so a broken checkout is never used.
+          echo "ARKANALYZER_DIR=$(realpath .)" >> $GITHUB_ENV
 
       - name: Run ETS tests
         run: ./gradlew --scan :jacodb-ets:generateTestResources :jacodb-ets:test
