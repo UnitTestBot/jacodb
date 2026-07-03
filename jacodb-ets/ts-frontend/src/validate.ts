@@ -203,9 +203,13 @@ function validateStmt(
     declaredLocals: Set<string>,
     err: (msg: string) => void,
 ): void {
+    // Raw fallback values are ONLY legal as the RHS of a Local assignment:
+    // Kotlin's ensureOneAddress rejects EtsRawEntity in every other position.
+    const rawAllowedFor =
+        stmt._ === "AssignStmt" && stmt.left._ === "Local" ? stmt.right : undefined;
     const values = stmtOperands(stmt);
     for (const value of values) {
-        validateValue(value, ctx, declaredLocals, err);
+        validateValue(value, ctx, declaredLocals, err, value === rawAllowedFor);
     }
 
     switch (stmt._) {
@@ -258,11 +262,18 @@ function validateValue(
     ctx: string,
     declaredLocals: Set<string>,
     err: (msg: string) => void,
+    rawAllowed: boolean = false,
 ): void {
     if (!KNOWN_VALUE_KINDS.has(value._)) {
         // Raw fallback value: Kotlin's RawValueSerializer requires a "type" key.
         if ((value as { type?: unknown }).type === undefined) {
             err(`${ctx}: raw value of kind '${value._}' is missing required 'type'`);
+        }
+        if (!rawAllowed) {
+            err(
+                `${ctx}: raw value of kind '${value._}' in an operand position — ` +
+                    `raw values are only legal as the RHS of a Local assignment`,
+            );
         }
         return; // do not recurse into unknown shapes
     }

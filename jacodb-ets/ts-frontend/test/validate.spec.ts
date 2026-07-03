@@ -221,6 +221,41 @@ describe("validateEtsFile", () => {
         expect(errs.some((e) => e.includes("PtrCallExpr.ptr has expr kind"))).toBe(true);
     });
 
+    it("rejects raw fallback values outside Local-assignment RHS", () => {
+        const rawValue = { _: "SomeExoticValue", type: UNKNOWN_TYPE } as unknown as ValueDto;
+        // raw as a call argument — forbidden (Kotlin ensureOneAddress rejects EtsRawEntity)
+        const errs = violations(
+            bodyWithBlocks([
+                {
+                    id: 0,
+                    successors: [],
+                    predecessors: [],
+                    stmts: [
+                        { _: "CallStmt", expr: { _: "StaticCallExpr", method: METHOD_SIG, args: [rawValue] } },
+                        { _: "ReturnVoidStmt" },
+                    ],
+                },
+            ]),
+        );
+        expect(errs.some((e) => e.includes("raw value") && e.includes("operand position"))).toBe(true);
+
+        // raw as the RHS of a Local assignment — the one allowed position
+        const ok = violations(
+            bodyWithBlocks(
+                [
+                    {
+                        id: 0,
+                        successors: [],
+                        predecessors: [],
+                        stmts: [{ _: "AssignStmt", left: local("x"), right: rawValue }, { _: "ReturnVoidStmt" }],
+                    },
+                ],
+                ["x"],
+            ),
+        );
+        expect(ok).toEqual([]);
+    });
+
     it("requires 'type' on raw fallback values", () => {
         const rawValue = { _: "SomeExoticValue", whatever: 1 } as unknown as ValueDto;
         const errs = violations(

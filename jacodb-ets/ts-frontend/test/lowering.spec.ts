@@ -342,13 +342,39 @@ describe("straight-line lowering", () => {
         expect(last).toMatchObject({ _: "ThrowStmt", arg: { _: "Local" } });
     });
 
-    it("degrades unsupported expressions to raw fallback values with diagnostics", () => {
+    it("degrades unsupported expressions to raw fallback values hoisted into temps", () => {
         const { file, diagnostics } = lower("let p = /abc/g;");
         const stmts = singleBlockStmts(defaultMethod(file));
-        const assign = stmts.find((s): s is AssignStmtDto => s._ === "AssignStmt" && s.left._ === "Local" && s.left.name === "p");
-        expect(assign!.right).toMatchObject({ _: "UnsupportedValue" });
-        expect((assign!.right as unknown as { type: unknown }).type).toBeDefined();
+        // raw values are only legal as the RHS of a Local assignment: %0 := <raw>; p := %0
+        const rawAssign = stmts.find(
+            (s): s is AssignStmtDto => s._ === "AssignStmt" && (s.right as { _: string })._ === "UnsupportedValue",
+        );
+        expect(rawAssign).toBeDefined();
+        expect(rawAssign!.left).toMatchObject({ _: "Local", name: "%0" });
+        expect((rawAssign!.right as unknown as { type: unknown }).type).toBeDefined();
+        const pAssign = stmts.find(
+            (s): s is AssignStmtDto => s._ === "AssignStmt" && s.left._ === "Local" && s.left.name === "p",
+        );
+        expect(pAssign!.right).toMatchObject({ _: "Local", name: "%0" });
         expect(diagnostics.messages.length).toBeGreaterThan(0);
+    });
+
+    it("hoists raw fallbacks out of ref stores and call arguments", () => {
+        const { file } = lower(`
+            let parts = [1, ...[2, 3]];
+            console.log(...parts);
+        `);
+        const stmts = singleBlockStmts(defaultMethod(file));
+        for (const s of stmts) {
+            if (s._ === "AssignStmt" && s.left._ !== "Local") {
+                expect((s.right as { _: string })._).not.toMatch(/^Unsupported/);
+            }
+            if (s._ === "CallStmt") {
+                for (const arg of s.expr.args) {
+                    expect((arg as { _: string })._).not.toMatch(/^Unsupported/);
+                }
+            }
+        }
     });
 
     it("lowers typeof/await/cast expressions", () => {

@@ -139,7 +139,11 @@ export class ExprLowerer {
         } catch (e) {
             if (e instanceof LoweringError) {
                 this.m.diagnostics.warn(node, `unsupported expression: ${e.message}`);
-                return unsupportedValue(node, this.safeTypeOf(node));
+                // Raw fallback values are only legal as the RHS of a Local
+                // assignment (Kotlin's ensureOneAddress rejects EtsRawEntity in
+                // every other position), so hoist into a temp right away.
+                const type = this.safeTypeOf(node);
+                return this.materialize(unsupportedValue(node, type), type);
             }
             throw e;
         }
@@ -1053,7 +1057,10 @@ export class ExprLowerer {
 
     private spreadFallback(node: ts.SpreadElement): ValueDto {
         this.m.diagnostics.warn(node, "spread arguments are not supported yet");
-        return unsupportedValue(node, this.safeTypeOf(node.expression));
+        // Hoisted for the same reason as in lowerExpr: raw values are only
+        // legal as the RHS of a Local assignment.
+        const type = this.safeTypeOf(node.expression);
+        return this.materialize(unsupportedValue(node, type), type);
     }
 }
 
