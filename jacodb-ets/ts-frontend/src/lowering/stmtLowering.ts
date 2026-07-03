@@ -25,6 +25,7 @@ import * as ts from "typescript";
 import { MethodSignatureDto, UNKNOWN_CLASS_SIGNATURE, UNKNOWN_FILE_SIGNATURE } from "../dto/signatures";
 import { BOOLEAN_TYPE, NUMBER_TYPE, TypeDto, UNDEFINED_TYPE, UNKNOWN_TYPE } from "../dto/types";
 import { LocalDto, ValueDto } from "../dto/values";
+import { buildParameters, modifiersOf, returnTypeOf } from "./astUtils";
 import { Label } from "./cfg";
 import { unsupportedStmt } from "./diagnostics";
 import { ExprLowerer, LoweringError, constant } from "./exprLowering";
@@ -147,8 +148,20 @@ export class StmtLowerer {
         if (node.kind === ts.SyntaxKind.EmptyStatement) {
             return;
         }
+        if (ts.isFunctionDeclaration(node)) {
+            // Top-level / namespace-level functions are lowered by the scope
+            // builder (fileBuilder); NESTED functions would otherwise be lost —
+            // lift them onto the file's %dflt class, like closures but keeping
+            // their real name (call sites resolve them as %dflt static calls).
+            const parent: ts.Node | undefined = node.parent;
+            const handledByScopeBuilder =
+                parent !== undefined && (ts.isSourceFile(parent) || ts.isModuleBlock(parent));
+            if (!handledByScopeBuilder) {
+                this.lowerNestedFunction(node);
+            }
+            return;
+        }
         if (
-            ts.isFunctionDeclaration(node) ||
             ts.isClassDeclaration(node) ||
             ts.isInterfaceDeclaration(node) ||
             ts.isEnumDeclaration(node) ||
@@ -583,6 +596,32 @@ export class StmtLowerer {
             const value = this.expr.lowerExpr(decl.initializer);
             this.m.cfg.emit({ _: "AssignStmt", left: local, right: value });
         }
+    }
+
+    /** A function declared inside a method body -> method of the file's %dflt class. */
+    private lowerNestedFunction(decl: ts.FunctionDeclaration): void {
+        if (decl.name === undefined || decl.body === undefined) {
+            return;
+        }
+        const registry = this.m.ctx.anonymous;
+        const declaringClass = registry.defaultClassSignature;
+        const { parameters, prologueParams } = buildParameters(this.m.ctx, decl);
+
+        const nested = new MethodContext(this.m.ctx, declaringClass, decl.name.text);
+        nested.emitPrologue(prologueParams);
+        new StmtLowerer(nested).lowerStatements(decl.body.statements);
+
+        registry.methods.push({
+            signature: {
+                declaringClass,
+                name: decl.name.text,
+                parameters,
+                returnType: returnTypeOf(this.m.ctx, decl),
+            },
+            modifiers: modifiersOf(decl),
+            decorators: [],
+            body: nested.build(),
+        });
     }
 
     // ------------------------------------------------------------------

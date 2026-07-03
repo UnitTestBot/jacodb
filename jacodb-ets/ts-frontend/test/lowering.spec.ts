@@ -251,6 +251,71 @@ describe("straight-line lowering", () => {
         });
     });
 
+    it("returns the OLD value for postfix and the NEW value for prefix inc/dec on fields", () => {
+        const source = `
+            class C { f: number = 0; }
+            let c = new C();
+            let post = c.f++;
+            let pre = ++c.f;
+        `;
+        const stmts = bodyStmts(source);
+        const all = assigns(stmts);
+
+        // postfix: %old := c.f; %new := %old ++; c.f := %new; post := %old
+        const postAssign = all.find((a) => a.left._ === "Local" && a.left.name === "post")!;
+        const postSource = (postAssign.right as { name: string }).name;
+        const oldLoad = all.find((a) => a.left._ === "Local" && a.left.name === postSource)!;
+        expect(oldLoad.right._).toBe("InstanceFieldRef"); // holds the OLD value
+
+        // prefix: %old := c.f; %new := %old ++; c.f := %new; pre := %new
+        const preAssign = all.find((a) => a.left._ === "Local" && a.left.name === "pre")!;
+        const preSource = (preAssign.right as { name: string }).name;
+        const newCompute = all.find((a) => a.left._ === "Local" && a.left.name === preSource)!;
+        expect(newCompute.right._).toBe("UnopExpr"); // holds the UPDATED value
+    });
+
+    it("ignores TS fake `this` parameters", () => {
+        const { file } = lower(`
+            function f(this: Window, x: number): number {
+                return x;
+            }
+        `);
+        const method = methodByName(file, "f");
+        expect(method.signature.parameters).toEqual([{ name: "x", type: { _: "NumberType" } }]);
+        const stmts = singleBlockStmts(method);
+        // x binds to ParameterRef(0) — the fake `this` must not shift indices
+        expect(stmts[0]).toMatchObject({
+            left: { _: "Local", name: "x" },
+            right: { _: "ParameterRef", index: 0 },
+        });
+        // and the `this` local still comes from ThisRef, not a ParameterRef
+        expect(stmts[1]).toMatchObject({ left: { name: "this" }, right: { _: "ThisRef" } });
+    });
+
+    it("lifts nested function declarations onto the %dflt class", () => {
+        const source = `
+            function outer(n: number): number {
+                function inner(k: number): number {
+                    return k + 1;
+                }
+                return inner(n);
+            }
+        `;
+        const { file } = lower(source);
+        // inner must not be lost: it becomes a %dflt method with its real name
+        const inner = methodByName(file, "inner");
+        expect(inner.body).toBeDefined();
+        expect(inner.signature.parameters).toEqual([{ name: "k", type: { _: "NumberType" } }]);
+        // and the call site resolves to it as a static call on %dflt
+        const outer = methodByName(file, "outer");
+        const call = outer
+            .body!.cfg.blocks.flatMap((b) => b.stmts)
+            .find((s) => s._ === "AssignStmt" && s.right._ === "StaticCallExpr");
+        expect(call).toMatchObject({
+            right: { method: { declaringClass: { name: "%dflt" }, name: "inner" } },
+        });
+    });
+
     it("lowers template literals into string concatenation chains", () => {
         const stmts = bodyStmts("let n = 1; let s = `a${n}b`;");
         const all = assigns(stmts);

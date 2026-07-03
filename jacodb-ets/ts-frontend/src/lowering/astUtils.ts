@@ -81,6 +81,11 @@ export function buildParameters(ctx: LoweringContext, decl: ts.SignatureDeclarat
     const parameters: MethodParameterDto[] = [];
     const prologueParams: { name: string; type: TypeDto }[] = [];
     for (const p of decl.parameters) {
+        // A TS fake `this` parameter is a type annotation, not a real parameter:
+        // it must not shift ParameterRef indices or shadow the `this` local.
+        if (ts.isIdentifier(p.name) && p.name.text === "this") {
+            continue;
+        }
         const name = ts.isIdentifier(p.name) ? p.name.text : "%pat";
         const type = parameterType(ctx, p);
         const param: MethodParameterDto = { name, type };

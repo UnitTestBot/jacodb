@@ -306,6 +306,12 @@ function validateValue(
                 err(`${ctx}: ArrayRef.index has expr kind '${value.index._}', must be an immediate or ref`);
             }
             break;
+        case "PtrCallExpr":
+            // Kotlin Convert casts ptr to EtsValue — expr kinds would throw a ClassCastException.
+            if (EXPR_KINDS.has(value.ptr._)) {
+                err(`${ctx}: PtrCallExpr.ptr has expr kind '${value.ptr._}', must be an immediate or ref`);
+            }
+            break;
         default:
             break;
     }

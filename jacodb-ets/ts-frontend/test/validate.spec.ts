@@ -195,6 +195,32 @@ describe("validateEtsFile", () => {
         expect(errs.some((e) => e.includes("ArrayRef.index has expr kind"))).toBe(true);
     });
 
+    it("rejects expr-kind PtrCallExpr ptr", () => {
+        const badPtrCall = {
+            _: "PtrCallExpr",
+            ptr: { _: "BinopExpr", op: "+", left: local("a"), right: local("b") },
+            method: METHOD_SIG,
+            args: [],
+        } as const;
+        const errs = violations(
+            bodyWithBlocks(
+                [
+                    {
+                        id: 0,
+                        successors: [],
+                        predecessors: [],
+                        stmts: [
+                            { _: "CallStmt", expr: badPtrCall as never },
+                            { _: "ReturnVoidStmt" },
+                        ],
+                    },
+                ],
+                ["a", "b"],
+            ),
+        );
+        expect(errs.some((e) => e.includes("PtrCallExpr.ptr has expr kind"))).toBe(true);
+    });
+
     it("requires 'type' on raw fallback values", () => {
         const rawValue = { _: "SomeExoticValue", whatever: 1 } as unknown as ValueDto;
         const errs = violations(

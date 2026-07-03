@@ -161,8 +161,11 @@ tasks.register("generateTestResources") {
         }
 
         if (!ok) {
-            println("Timeout!")
             process.destroy()
+            throw GradleException("Test resource generation timed out")
+        }
+        if (process.exitValue() != 0) {
+            throw GradleException("Test resource generation failed with exit code ${process.exitValue()}")
         }
 
         println("Done generating test resources in %.1fs".format((System.currentTimeMillis() - startTime) / 1000.0))

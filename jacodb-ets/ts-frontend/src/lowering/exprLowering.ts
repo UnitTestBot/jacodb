@@ -549,17 +549,20 @@ export class ExprLowerer {
     ): ValueDto {
         const op: UnaryOp = operator === ts.SyntaxKind.PlusPlusToken ? "++" : "--";
         const target = this.lowerLValue(operand);
-        const oldValue = target._ === "Local" ? target : this.materialize(target, lvalueType(target));
-        const saved = returnOld ? this.materialize(oldValue, lvalueType(target)) : undefined;
 
-        const updated: ValueDto = { _: "UnopExpr", op, arg: oldValue };
         if (target._ === "Local") {
-            this.m.cfg.emit({ _: "AssignStmt", left: target, right: updated });
-        } else {
-            const temp = this.materialize(updated, lvalueType(target));
-            this.m.cfg.emit({ _: "AssignStmt", left: target, right: temp });
+            // Postfix needs a copy of the old value BEFORE the update.
+            const saved = returnOld ? this.materialize(target, target.type) : undefined;
+            this.m.cfg.emit({ _: "AssignStmt", left: target, right: { _: "UnopExpr", op, arg: target } });
+            return saved ?? target;
         }
-        return saved ?? (target._ === "Local" ? target : oldValue);
+
+        // Field/array target: load old, compute updated, store back.
+        //   %old := ref; %new := %old ++; ref := %new
+        const oldValue = this.materialize(target, lvalueType(target));
+        const updated = this.materialize({ _: "UnopExpr", op, arg: oldValue }, lvalueType(target));
+        this.m.cfg.emit({ _: "AssignStmt", left: target, right: updated });
+        return returnOld ? oldValue : updated;
     }
 
     // ------------------------------------------------------------------
