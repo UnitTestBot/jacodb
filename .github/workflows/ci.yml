@@ -164,9 +164,6 @@ jobs:
           # with --no-save (i.e. it is absent from package.json).
           npm pkg set 'devDependencies.@types/node=18'
           npm install
-          # ArkAnalyzer's bundled TypeScript cannot parse the d.ts files of the
-          # latest floating @types/node (e.g. ffi.d.ts); pin a compatible major.
-          npm install --no-save @types/node@18
           npm run build
 
           # Export only after a successful build so a broken checkout is never used.
