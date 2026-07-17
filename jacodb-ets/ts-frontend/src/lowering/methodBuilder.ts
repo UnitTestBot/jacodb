@@ -16,7 +16,7 @@
 
 import * as ts from "typescript";
 import { TEMP_LOCAL_PREFIX } from "../dto/constants";
-import { BodyDto, ClassDto, LocalDeclDto, MethodDto } from "../dto/model";
+import { BodyDto, ClassDto, LocalDeclDto, MethodDto, SourceSpanDto } from "../dto/model";
 import { ClassSignatureDto, FileSignatureDto } from "../dto/signatures";
 import { ClassTypeDto, TypeDto, UNKNOWN_TYPE } from "../dto/types";
 import { LocalDto } from "../dto/values";
@@ -78,6 +78,30 @@ export class MethodContext {
         return this.ctx.diagnostics;
     }
 
+    /** Execute lowering while attributing emitted EtsIR statements to [node]. */
+    withOrigin<T>(node: ts.Node, action: () => T): T {
+        return this.cfg.withOrigin(this.sourceSpan(node), action);
+    }
+
+    private sourceSpan(node: ts.Node): SourceSpanDto | undefined {
+        if (node.pos < 0 || node.end < 0) return undefined;
+        const sourceFile = node.getSourceFile();
+        const startOffset = node.getStart(sourceFile, false);
+        const endOffset = node.getEnd();
+        const start = sourceFile.getLineAndCharacterOfPosition(startOffset);
+        const end = sourceFile.getLineAndCharacterOfPosition(endOffset);
+        return {
+            fileName: this.ctx.fileSignatureFor(sourceFile).fileName,
+            startOffset,
+            endOffset,
+            startLine: start.line,
+            startColumn: start.character,
+            endLine: end.line,
+            endColumn: end.character,
+            nodeKind: ts.SyntaxKind[node.kind],
+        };
+    }
+
     thisType(): ClassTypeDto {
         return { _: "ClassType", signature: this.declaringClass };
     }
@@ -127,11 +151,11 @@ export class MethodContext {
     }
 
     build(): BodyDto {
-        const cfg = this.cfg.finalize();
+        const { cfg, stmtOrigins } = this.cfg.finalize();
         const locals: LocalDeclDto[] = [...this.locals.values()].map((l) => ({
             name: l.name,
             type: l.type,
         }));
-        return { locals, cfg };
+        return stmtOrigins.length === 0 ? { locals, cfg } : { locals, cfg, stmtOrigins };
     }
 }

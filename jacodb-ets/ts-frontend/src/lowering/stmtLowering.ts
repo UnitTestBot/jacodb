@@ -68,16 +68,18 @@ export class StmtLowerer {
     }
 
     lowerStatement(node: ts.Statement): void {
-        try {
-            this.lowerStatementImpl(node);
-        } catch (e) {
-            if (e instanceof LoweringError) {
-                this.m.diagnostics.warn(node, `unsupported statement: ${e.message}`);
-                this.m.cfg.emit(unsupportedStmt(node));
-                return;
+        this.m.withOrigin(node, () => {
+            try {
+                this.lowerStatementImpl(node);
+            } catch (e) {
+                if (e instanceof LoweringError) {
+                    this.m.diagnostics.warn(node, `unsupported statement: ${e.message}`);
+                    this.m.cfg.emit(unsupportedStmt(node));
+                    return;
+                }
+                throw e;
             }
-            throw e;
-        }
+        });
     }
 
     private lowerStatementImpl(node: ts.Statement): void {

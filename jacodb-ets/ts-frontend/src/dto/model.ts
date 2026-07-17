@@ -76,6 +76,26 @@ export interface MethodDto {
 export interface BodyDto {
     locals: LocalDeclDto[];
     cfg: CfgDto;
+    /** Source origins keyed by final DTO block/statement indices. */
+    stmtOrigins?: StmtOriginDto[];
+}
+
+/** UTF-16 offsets and zero-based line/column pairs, matching TypeScript. */
+export interface SourceSpanDto {
+    fileName: string;
+    startOffset: number;
+    endOffset: number;
+    startLine: number;
+    startColumn: number;
+    endLine: number;
+    endColumn: number;
+    nodeKind: string;
+}
+
+export interface StmtOriginDto {
+    blockId: number;
+    stmtIndex: number;
+    source: SourceSpanDto;
 }
 
 /**

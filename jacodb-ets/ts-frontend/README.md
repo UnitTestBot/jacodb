@@ -211,6 +211,20 @@ The output follows the ArkAnalyzer conventions expected by `Convert.kt`
 - truthiness in conditions is normalized as `v != false` (booleans) /
   `v != 0` (everything else).
 
+### Source origins
+
+For statements emitted from source code, a method body may contain a
+`stmtOrigins` side table. Each entry identifies a statement by its final
+`blockId` and `stmtIndex` and stores the originating file, syntax kind, and
+source range. Offsets use UTF-16 code units (like the TypeScript compiler API),
+and line/column pairs are zero-based. On the Kotlin side the range is available
+as `stmt.location.origin`.
+
+One source expression can lower to several three-address EtsIR statements, so
+multiple entries may carry the same range. Synthetic prologue, control-flow,
+and fallback statements may have no origin. Consumers must therefore treat the
+mapping as many-to-one and optional rather than as a source-line identifier.
+
 ## Development
 
 ```shell

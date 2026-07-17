@@ -22,6 +22,30 @@ function allStmts(method: MethodDto): StmtDto[] {
 }
 
 describe("control flow lowering", () => {
+    it("records source origins for normalized statements and branch terminators", () => {
+        const source = [
+            "function f(a: number): number {",
+            "    const doubled = a * 2;",
+            "    if (doubled > 10) return 1;",
+            "    return 0;",
+            "}",
+        ].join("\n");
+        const { file } = lower(source, "proj", "src/origins.ts");
+        const body = methodByName(file, "f").body!;
+        const origins = body.stmtOrigins!;
+
+        expect(origins.length).toBeGreaterThan(0);
+        expect(origins.every((origin) => origin.source.fileName === "src/origins.ts")).toBe(true);
+
+        const ifOrigin = origins.find(({ blockId, stmtIndex }) => {
+            return body.cfg.blocks[blockId].stmts[stmtIndex]._ === "IfStmt";
+        });
+        expect(ifOrigin).toBeDefined();
+        expect(ifOrigin!.source.nodeKind).toBe("BinaryExpression");
+        expect(source.slice(ifOrigin!.source.startOffset, ifOrigin!.source.endOffset)).toBe("doubled > 10");
+        expect(ifOrigin!.source.startLine).toBe(2);
+    });
+
     it("lowers if/else into a diamond with [false, true] successor order", () => {
         const { file } = lower(`
             function f(a: number): number {

@@ -18,13 +18,32 @@ package org.jacodb.ets.model
 
 import org.jacodb.api.common.cfg.CommonInstLocation
 
+/**
+ * Origin of an EtsIR statement in the source program.
+ *
+ * Offsets are UTF-16 offsets, matching the TypeScript compiler API. Lines and
+ * columns are zero-based. Several normalized EtsIR statements may share the
+ * same origin when one source expression is lowered into three-address code.
+ */
+data class EtsSourceSpan(
+    val fileName: String,
+    val startOffset: Int,
+    val endOffset: Int,
+    val startLine: Int,
+    val startColumn: Int,
+    val endLine: Int,
+    val endColumn: Int,
+    val nodeKind: String,
+)
+
 data class EtsStmtLocation(
     override val method: EtsMethod,
     var index: Int,
+    val origin: EtsSourceSpan? = null,
 ) : CommonInstLocation {
     companion object {
-        fun stub(method: EtsMethod): EtsStmtLocation {
-            return EtsStmtLocation(method, -1)
+        fun stub(method: EtsMethod, origin: EtsSourceSpan? = null): EtsStmtLocation {
+            return EtsStmtLocation(method, -1, origin)
         }
     }
 }

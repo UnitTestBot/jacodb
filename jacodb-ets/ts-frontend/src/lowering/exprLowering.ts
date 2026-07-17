@@ -134,19 +134,21 @@ export class ExprLowerer {
 
     /** Lower to any value (full exprs allowed). Use only for AssignStmt.right / CallStmt. */
     lowerExpr(node: ts.Expression): ValueDto {
-        try {
-            return this.lowerExprImpl(node);
-        } catch (e) {
-            if (e instanceof LoweringError) {
-                this.m.diagnostics.warn(node, `unsupported expression: ${e.message}`);
-                // Raw fallback values are only legal as the RHS of a Local
-                // assignment (Kotlin's ensureOneAddress rejects EtsRawEntity in
-                // every other position), so hoist into a temp right away.
-                const type = this.safeTypeOf(node);
-                return this.materialize(unsupportedValue(node, type), type);
+        return this.m.withOrigin(node, () => {
+            try {
+                return this.lowerExprImpl(node);
+            } catch (e) {
+                if (e instanceof LoweringError) {
+                    this.m.diagnostics.warn(node, `unsupported expression: ${e.message}`);
+                    // Raw fallback values are only legal as the RHS of a Local
+                    // assignment (Kotlin's ensureOneAddress rejects EtsRawEntity in
+                    // every other position), so hoist into a temp right away.
+                    const type = this.safeTypeOf(node);
+                    return this.materialize(unsupportedValue(node, type), type);
+                }
+                throw e;
             }
-            throw e;
-        }
+        });
     }
 
     /** Lower to an immediate (Local | Constant), hoisting into a temp if needed. */
@@ -437,6 +439,10 @@ export class ExprLowerer {
      * `!x` swaps the branch targets.
      */
     lowerCondition(node: ts.Expression, trueTarget: number, falseTarget: number): void {
+        this.m.withOrigin(node, () => this.lowerConditionImpl(node, trueTarget, falseTarget));
+    }
+
+    private lowerConditionImpl(node: ts.Expression, trueTarget: number, falseTarget: number): void {
         if (ts.isParenthesizedExpression(node)) {
             this.lowerCondition(node.expression, trueTarget, falseTarget);
             return;

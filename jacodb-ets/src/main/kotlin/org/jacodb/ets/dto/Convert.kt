@@ -116,6 +116,7 @@ import org.jacodb.ets.model.EtsStaticCallExpr
 import org.jacodb.ets.model.EtsStaticFieldRef
 import org.jacodb.ets.model.EtsStmt
 import org.jacodb.ets.model.EtsStmtLocation
+import org.jacodb.ets.model.EtsSourceSpan
 import org.jacodb.ets.model.EtsStrictEqExpr
 import org.jacodb.ets.model.EtsStrictNotEqExpr
 import org.jacodb.ets.model.EtsStringConstant
@@ -146,6 +147,7 @@ class EtsMethodBuilder(
     modifiers: EtsModifiers = EtsModifiers.EMPTY,
     decorators: List<EtsDecorator> = emptyList(),
     locals: List<EtsLocal> = emptyList(),
+    private val stmtOrigins: Map<Pair<Int, Int>, EtsSourceSpan> = emptyMap(),
 ) {
     private val locals = locals.toMutableList()
 
@@ -157,6 +159,8 @@ class EtsMethodBuilder(
 
     private var freeTempLocal: Int = 0
 
+    private var currentOrigin: EtsSourceSpan? = null
+
     private fun newTempLocal(): EtsLocal {
         val local = EtsLocal("_tmp${freeTempLocal++}")
         this@EtsMethodBuilder.locals += local
@@ -164,7 +168,7 @@ class EtsMethodBuilder(
     }
 
     private fun loc(): EtsStmtLocation {
-        return EtsStmtLocation.stub(method)
+        return EtsStmtLocation.stub(method, currentOrigin)
     }
 
     private var built: Boolean = false
@@ -476,9 +480,11 @@ class EtsMethodBuilder(
 
         val blocks = this.blocks.map { block ->
             currentStmts = mutableListOf()
-            for (stmt in block.stmts) {
+            for ((stmtIndex, stmt) in block.stmts.withIndex()) {
+                currentOrigin = stmtOrigins[block.id to stmtIndex]
                 currentStmts += stmt.toEtsStmt()
             }
+            currentOrigin = null
             if (currentStmts.isEmpty()) {
                 currentStmts += EtsNopStmt(location = loc())
             }
@@ -713,6 +719,9 @@ fun MethodDto.toEtsMethod(): EtsMethod {
             modifiers = modifiers,
             decorators = decorators,
             locals = body.locals.map { it.toEtsLocal() },
+            stmtOrigins = body.stmtOrigins.associate { origin ->
+                (origin.blockId to origin.stmtIndex) to origin.source.toEtsSourceSpan()
+            },
         )
         return builder.build(body.cfg)
     } else {
@@ -724,6 +733,17 @@ fun MethodDto.toEtsMethod(): EtsMethod {
         )
     }
 }
+
+fun SourceSpanDto.toEtsSourceSpan(): EtsSourceSpan = EtsSourceSpan(
+    fileName = fileName,
+    startOffset = startOffset,
+    endOffset = endOffset,
+    startLine = startLine,
+    startColumn = startColumn,
+    endLine = endLine,
+    endColumn = endColumn,
+    nodeKind = nodeKind,
+)
 
 fun FieldDto.toEtsField(): EtsField {
     return EtsFieldImpl(

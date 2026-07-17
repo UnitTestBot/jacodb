@@ -126,6 +126,33 @@ describe("validateEtsFile", () => {
         expect(errs.some((e) => e.includes("terminator 'ReturnVoidStmt' at position 0"))).toBe(true);
     });
 
+    it("rejects invalid source-origin references", () => {
+        const body = bodyWithBlocks([
+            { id: 0, successors: [], predecessors: [], stmts: [{ _: "ReturnVoidStmt" }] },
+        ]);
+        body.stmtOrigins = [
+            {
+                blockId: 0,
+                stmtIndex: 3,
+                source: {
+                    fileName: "f.ts",
+                    startOffset: 10,
+                    endOffset: 5,
+                    startLine: 1,
+                    startColumn: 0,
+                    endLine: 0,
+                    endColumn: 2,
+                    nodeKind: "ReturnStatement",
+                },
+            },
+        ];
+
+        const errs = violations(body);
+        expect(errs.some((e) => e.includes("stmt 3 outside block 0"))).toBe(true);
+        expect(errs.some((e) => e.includes("invalid offset range"))).toBe(true);
+        expect(errs.some((e) => e.includes("invalid line/column range"))).toBe(true);
+    });
+
     it("rejects undeclared locals", () => {
         const errs = violations(
             bodyWithBlocks([

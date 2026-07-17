@@ -174,6 +174,43 @@ function validateBody(body: BodyDto, ctx: string, errors: string[]): void {
         }
     });
 
+    // --- Optional source-origin side table ---
+    const originKeys = new Set<string>();
+    for (const origin of body.stmtOrigins ?? []) {
+        const key = `${origin.blockId}:${origin.stmtIndex}`;
+        if (originKeys.has(key)) {
+            err(`duplicate source origin for block ${origin.blockId}, stmt ${origin.stmtIndex}`);
+        }
+        originKeys.add(key);
+
+        const block = blocks[origin.blockId];
+        if (block === undefined) {
+            err(`source origin references block ${origin.blockId} outside [0, ${blockCount})`);
+        } else if (origin.stmtIndex < 0 || origin.stmtIndex >= block.stmts.length) {
+            err(
+                `source origin references stmt ${origin.stmtIndex} outside block ${origin.blockId} ` +
+                    `[0, ${block.stmts.length})`,
+            );
+        }
+
+        const source = origin.source;
+        if (source.startOffset < 0 || source.endOffset < source.startOffset) {
+            err(`source origin ${key} has invalid offset range [${source.startOffset}, ${source.endOffset})`);
+        }
+        if (
+            source.startLine < 0 ||
+            source.startColumn < 0 ||
+            source.endLine < source.startLine ||
+            source.endColumn < 0 ||
+            (source.endLine === source.startLine && source.endColumn < source.startColumn)
+        ) {
+            err(
+                `source origin ${key} has invalid line/column range ` +
+                    `${source.startLine}:${source.startColumn}-${source.endLine}:${source.endColumn}`,
+            );
+        }
+    }
+
     // --- Predecessor/successor consistency (when predecessors are emitted) ---
     if (blocks.length > 0 && blocks.every((b) => b.predecessors !== undefined)) {
         const expectedPreds = new Map<number, Set<number>>();

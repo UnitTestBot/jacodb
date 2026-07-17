@@ -26,7 +26,7 @@
  *   - any other block has at most one successor.
  */
 
-import { BasicBlockDto, CfgDto } from "../dto/model";
+import { BasicBlockDto, CfgDto, SourceSpanDto, StmtOriginDto } from "../dto/model";
 import { RETURN_VOID_STMT, StmtDto } from "../dto/stmts";
 import { ConditionExprDto, ValueDto } from "../dto/values";
 
@@ -34,15 +34,25 @@ export type Label = number;
 
 type Terminator =
     | { kind: "goto"; target: Label }
-    | { kind: "if"; condition: ConditionExprDto; trueTarget: Label; falseTarget: Label }
-    | { kind: "return"; arg?: ValueDto }
-    | { kind: "throw"; arg: ValueDto }
+    | { kind: "if"; condition: ConditionExprDto; trueTarget: Label; falseTarget: Label; origin?: SourceSpanDto }
+    | { kind: "return"; arg?: ValueDto; origin?: SourceSpanDto }
+    | { kind: "throw"; arg: ValueDto; origin?: SourceSpanDto }
     | { kind: "open" }; // fall-through end; finalize() turns it into `return void`
+
+interface LocatedStmt {
+    stmt: StmtDto;
+    origin?: SourceSpanDto;
+}
 
 interface BuilderBlock {
     label: Label;
-    stmts: StmtDto[];
+    stmts: LocatedStmt[];
     terminator: Terminator;
+}
+
+export interface FinalizedCfg {
+    cfg: CfgDto;
+    stmtOrigins: StmtOriginDto[];
 }
 
 export class CfgBuilder {
@@ -50,6 +60,7 @@ export class CfgBuilder {
     private current: BuilderBlock;
     private nextLabel: Label = 0;
     private readonly entry: Label;
+    private currentOrigin: SourceSpanDto | undefined;
 
     constructor() {
         this.entry = this.newLabel();
@@ -88,13 +99,24 @@ export class CfgBuilder {
         return this.current.terminator.kind === "open";
     }
 
+    /** Attribute all statements/terminators emitted by [action] to [origin]. */
+    withOrigin<T>(origin: SourceSpanDto | undefined, action: () => T): T {
+        const previous = this.currentOrigin;
+        this.currentOrigin = origin;
+        try {
+            return action();
+        } finally {
+            this.currentOrigin = previous;
+        }
+    }
+
     emit(stmt: StmtDto): void {
         if (!this.isOpen()) {
             // Unreachable code after return/throw/etc: emit into a detached block
             // so lowering can proceed; it is dropped by reachability in finalize().
             this.current = this.place(this.newLabel());
         }
-        this.current.stmts.push(stmt);
+        this.current.stmts.push({ stmt, origin: this.currentOrigin });
     }
 
     goto(target: Label): void {
@@ -108,21 +130,21 @@ export class CfgBuilder {
         if (!this.isOpen()) {
             this.current = this.place(this.newLabel());
         }
-        this.current.terminator = { kind: "if", condition, trueTarget, falseTarget };
+        this.current.terminator = { kind: "if", condition, trueTarget, falseTarget, origin: this.currentOrigin };
     }
 
     ret(arg?: ValueDto): void {
         if (!this.isOpen()) {
             this.current = this.place(this.newLabel());
         }
-        this.current.terminator = { kind: "return", arg };
+        this.current.terminator = { kind: "return", arg, origin: this.currentOrigin };
     }
 
     throwValue(arg: ValueDto): void {
         if (!this.isOpen()) {
             this.current = this.place(this.newLabel());
         }
-        this.current.terminator = { kind: "throw", arg };
+        this.current.terminator = { kind: "throw", arg, origin: this.currentOrigin };
     }
 
     /**
@@ -130,7 +152,7 @@ export class CfgBuilder {
      * in DFS order (true branch first), successors in the DTO convention,
      * predecessors computed.
      */
-    finalize(): CfgDto {
+    finalize(): FinalizedCfg {
         for (const block of this.blocks) {
             if (block === undefined) {
                 throw new Error("finalize() with unplaced labels");
@@ -152,8 +174,9 @@ export class CfgBuilder {
         };
         visit(this.entry);
 
+        const stmtOrigins: StmtOriginDto[] = [];
         const result: BasicBlockDto[] = order.map((block, id) => {
-            const stmts = [...block.stmts];
+            const locatedStmts = [...block.stmts];
             let successors: number[];
             const t = block.terminator;
             switch (t.kind) {
@@ -161,24 +184,33 @@ export class CfgBuilder {
                     successors = [idOf.get(t.target)!];
                     break;
                 case "if":
-                    stmts.push({ _: "IfStmt", condition: t.condition });
+                    locatedStmts.push({ stmt: { _: "IfStmt", condition: t.condition }, origin: t.origin });
                     // DTO convention: [false, true].
                     successors = [idOf.get(t.falseTarget)!, idOf.get(t.trueTarget)!];
                     break;
                 case "return":
-                    stmts.push(t.arg === undefined ? RETURN_VOID_STMT : { _: "ReturnStmt", arg: t.arg });
+                    locatedStmts.push({
+                        stmt: t.arg === undefined ? RETURN_VOID_STMT : { _: "ReturnStmt", arg: t.arg },
+                        origin: t.origin,
+                    });
                     successors = [];
                     break;
                 case "throw":
-                    stmts.push({ _: "ThrowStmt", arg: t.arg });
+                    locatedStmts.push({ stmt: { _: "ThrowStmt", arg: t.arg }, origin: t.origin });
                     successors = [];
                     break;
                 case "open":
                     // Fall-through method end.
-                    stmts.push(RETURN_VOID_STMT);
+                    locatedStmts.push({ stmt: RETURN_VOID_STMT });
                     successors = [];
                     break;
             }
+            const stmts = locatedStmts.map(({ stmt }) => stmt);
+            locatedStmts.forEach(({ origin }, stmtIndex) => {
+                if (origin !== undefined) {
+                    stmtOrigins.push({ blockId: id, stmtIndex, source: origin });
+                }
+            });
             return { id, successors, predecessors: [], stmts };
         });
 
@@ -189,7 +221,7 @@ export class CfgBuilder {
             }
         }
 
-        return { blocks: result };
+        return { cfg: { blocks: result }, stmtOrigins };
     }
 }
 
