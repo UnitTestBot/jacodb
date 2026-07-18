@@ -695,11 +695,25 @@ export class ExprLowerer {
     }
 
     private lowerNew(node: ts.NewExpression): ValueDto {
+        const inferredType = this.safeTypeOf(node);
+        const args = node.arguments ?? ts.factory.createNodeArray();
+        const numericLength = args.length === 1 && this.safeTypeOf(args[0])._ === "NumberType";
+        if (inferredType._ === "ArrayType" && (args.length === 0 || numericLength)) {
+            const size = args.length === 0 ? constant("0", NUMBER_TYPE) : this.lowerToImmediate(args[0]);
+            const temp = this.m.newTemp(inferredType);
+            this.m.cfg.emit({
+                _: "AssignStmt",
+                left: temp,
+                right: { _: "NewArrayExpr", elementType: inferredType.elementType, size },
+            });
+            return temp;
+        }
+
         const classType = this.newTargetClassType(node.expression);
         const temp = this.m.newTemp(classType);
         this.m.cfg.emit({ _: "AssignStmt", left: temp, right: { _: "NewExpr", classType } });
 
-        const args = (node.arguments ?? []).map((a) =>
+        const loweredArgs = args.map((a) =>
             ts.isSpreadElement(a) ? this.spreadFallback(a) : this.lowerToImmediate(a),
         );
         const ctorSig: MethodSignatureDto = {
@@ -711,13 +725,19 @@ export class ExprLowerer {
         this.m.cfg.emit({
             _: "AssignStmt",
             left: temp,
-            right: { _: "InstanceCallExpr", instance: temp, method: ctorSig, args },
+            right: { _: "InstanceCallExpr", instance: temp, method: ctorSig, args: loweredArgs },
         });
         return temp;
     }
 
     private lowerArrayLiteral(node: ts.ArrayLiteralExpression): ValueDto {
-        const arrayType = this.safeTypeOf(node);
+        const inferredType = this.safeTypeOf(node);
+        const contextualType = this.m.converter.contextualTypeOfNode(node);
+        // An empty literal is inferred as never[] in isolation. Prefer the
+        // contextual annotation (`const xs: number[] = []`) when available.
+        const arrayType = node.elements.length === 0 && contextualType._ === "ArrayType"
+            ? contextualType
+            : inferredType;
         const elementType: TypeDto = arrayType._ === "ArrayType" ? arrayType.elementType : UNKNOWN_TYPE;
         const temp = this.m.newTemp(
             arrayType._ === "ArrayType" ? arrayType : { _: "ArrayType", elementType, dimensions: 1 },

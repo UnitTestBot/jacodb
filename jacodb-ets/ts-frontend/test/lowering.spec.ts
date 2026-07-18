@@ -178,6 +178,34 @@ describe("straight-line lowering", () => {
         expect(all[3]).toMatchObject({ left: { _: "Local", name: "arr" } });
     });
 
+    it("uses the contextual element type for an empty array literal", () => {
+        const all = assigns(bodyStmts("const values: number[] = [];"));
+        expect(all[0]).toMatchObject({
+            left: { _: "Local", type: { _: "ArrayType", elementType: { _: "NumberType" } } },
+            right: { _: "NewArrayExpr", elementType: { _: "NumberType" } },
+        });
+    });
+
+    it("preserves the element type of a numeric Array constructor", () => {
+        const all = assigns(bodyStmts("let n = 3; let flags = new Array<boolean>(n);"));
+        const allocation = all.find((stmt) => stmt.right._ === "NewArrayExpr");
+        expect(allocation).toMatchObject({
+            left: { _: "Local", type: { _: "ArrayType", elementType: { _: "BooleanType" } } },
+            right: {
+                _: "NewArrayExpr",
+                elementType: { _: "BooleanType" },
+                size: { _: "Local", name: "n", type: { _: "NumberType" } },
+            },
+        });
+        expect(all.some((stmt) => stmt.right._ === "InstanceCallExpr")).toBe(false);
+    });
+
+    it("keeps the one-element Array overload as a constructor call", () => {
+        const all = assigns(bodyStmts('let values = new Array<string>("x");'));
+        expect(all.some((stmt) => stmt.right._ === "NewArrayExpr")).toBe(false);
+        expect(all.some((stmt) => stmt.right._ === "InstanceCallExpr")).toBe(true);
+    });
+
     it("lowers element reads and writes through ArrayRef", () => {
         const stmts = bodyStmts("let arr = [1]; let v = arr[0]; arr[0] = 5;");
         const all = assigns(stmts);

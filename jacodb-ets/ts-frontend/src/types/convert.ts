@@ -315,6 +315,15 @@ export class TypeConverter {
         }
     }
 
+    /** Resolve the contextual type supplied by an assignment/argument site. */
+    contextualTypeOfNode(node: ts.Expression): TypeDto {
+        try {
+            return this.convertType(this.checker.getContextualType(node));
+        } catch {
+            return UNKNOWN_TYPE;
+        }
+    }
+
     convertType(type: ts.Type | undefined, depth: number = 0): TypeDto {
         if (type === undefined || depth > MAX_DEPTH) {
             return UNKNOWN_TYPE;
