@@ -313,7 +313,7 @@ export class ClassBuilder {
                         instance: thisLocal,
                         field: { declaringClass, name: p.name.text, type: paramType },
                     },
-                    right: m.getOrCreateLocal(p.name.text, paramType),
+                    right: m.localForIdentifier(p.name, paramType),
                 });
             }
         }

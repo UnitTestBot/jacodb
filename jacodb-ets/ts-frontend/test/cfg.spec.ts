@@ -66,26 +66,44 @@ describe("control flow lowering", () => {
         expect(lastStmt(blocks[falseTarget])).toMatchObject({ _: "ReturnStmt", arg: { value: "2" } });
     });
 
-    it("normalizes truthiness: booleans as != false, others as != 0", () => {
+    it("implements JavaScript truthiness for booleans, numbers, strings, objects, and unknown values", () => {
         const { file } = lower(`
-            function f(b: boolean, n: number): void {
+            class Box {}
+            function f(b: boolean, n: number, s: string, o: Box, u: unknown): void {
                 if (b) { console.log(1); }
                 if (n) { console.log(2); }
+                if (s) { console.log(3); }
+                if (o) { console.log(4); }
+                if (u) { console.log(5); }
             }
         `);
         const conditions = ifBlocks(blocksOf(methodByName(file, "f"))).map(
             (b) => (lastStmt(b) as IfStmtDto).condition,
         );
         expect(conditions[0]).toMatchObject({
-            op: "!=",
+            op: "!==",
             left: { _: "Local", name: "b" },
             right: { _: "Constant", value: "false", type: { _: "BooleanType" } },
         });
-        expect(conditions[1]).toMatchObject({
-            op: "!=",
+        expect(conditions.find((c) => c.left._ === "Local" && c.left.name === "n" && c.right._ === "Constant")).toMatchObject({
+            op: "!==",
             left: { _: "Local", name: "n" },
             right: { _: "Constant", value: "0", type: { _: "NumberType" } },
         });
+        expect(conditions).toContainEqual(expect.objectContaining({
+            op: "===",
+            left: expect.objectContaining({ _: "Local", name: "n" }),
+            right: expect.objectContaining({ _: "Local", name: "n" }),
+        }));
+        expect(conditions).toContainEqual(expect.objectContaining({
+            op: "!==",
+            left: expect.objectContaining({ _: "Local", name: "s" }),
+            right: expect.objectContaining({ _: "Constant", value: "" }),
+        }));
+        // Objects are statically always truthy, so their condition needs no IfStmt.
+        expect(conditions.some((c) => c.left._ === "Local" && c.left.name === "o")).toBe(false);
+        // Unknown values cover false, zero, empty string, nullish, and NaN.
+        expect(conditions.filter((c) => c.left._ === "Local" && c.left.name === "u")).toHaveLength(5);
     });
 
     it("swaps branches for negated conditions", () => {
@@ -288,19 +306,45 @@ describe("control flow lowering", () => {
         expect(stmts.some((s) => s._ === "CallStmt")).toBe(false);
     });
 
-    it("logical operators stay value-level binops (ArkAnalyzer-compatible)", () => {
+    it.each([
+        ["&&", 1],
+        ["||", 0],
+        ["??", null],
+    ])("short-circuits %s and evaluates the RHS only in its branch", (operator, initial) => {
         const { file } = lower(`
-            function f(a: boolean, b: boolean): void {
-                if (a && b) { console.log(1); }
+            function sideEffect(): number { return 7; }
+            function f(a: number | null): number {
+                a = ${JSON.stringify(initial)};
+                return a ${operator} sideEffect();
             }
         `);
         const blocks = blocksOf(methodByName(file, "f"));
         const entry = blocks[0];
-        const binop = entry.stmts.find((s) => s._ === "AssignStmt" && s.right._ === "BinopExpr");
-        expect(binop).toMatchObject({ right: { op: "&&" } });
-        expect(lastStmt(entry)).toMatchObject({
-            _: "IfStmt",
-            condition: { op: "!=", right: { value: "false" } },
-        });
+        const callBlock = blocks.find((block) => block.stmts.some(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "sideEffect",
+        ));
+        expect(lastStmt(entry)).toMatchObject({ _: "IfStmt" });
+        expect(callBlock).toBeDefined();
+        expect(callBlock!.id).not.toBe(entry.id);
+        expect(blocks.some((block) => lastStmt(block)?._ === "IfStmt" && block.successors.includes(callBlock!.id))).toBe(true);
+        expect(allStmts(methodByName(file, "f")).some(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "BinopExpr" && stmt.right.op === operator,
+        )).toBe(false);
+    });
+
+    it.each(["&&=", "||=", "??="])("short-circuits logical assignment %s", (operator) => {
+        const { file } = lower(`
+            function sideEffect(): number { return 7; }
+            function f(a: number | null): number { return (a ${operator} sideEffect()); }
+        `);
+        const blocks = blocksOf(methodByName(file, "f"));
+        const entry = blocks[0];
+        const callBlock = blocks.find((block) => block.stmts.some(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "sideEffect",
+        ));
+        expect(lastStmt(entry)).toMatchObject({ _: "IfStmt" });
+        expect(callBlock).toBeDefined();
+        expect(callBlock!.id).not.toBe(entry.id);
+        expect(blocks.some((block) => lastStmt(block)?._ === "IfStmt" && block.successors.includes(callBlock!.id))).toBe(true);
     });
 });

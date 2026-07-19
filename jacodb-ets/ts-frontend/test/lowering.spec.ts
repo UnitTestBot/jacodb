@@ -200,6 +200,28 @@ describe("straight-line lowering", () => {
         expect(all.some((stmt) => stmt.right._ === "InstanceCallExpr")).toBe(false);
     });
 
+    it("preserves nested element types for multidimensional arrays", () => {
+        const literal = assigns(bodyStmts("const matrix: number[][] = [[1], [2]];"));
+        const outerAllocation = literal.find(
+            (stmt) => stmt.right._ === "NewArrayExpr" && stmt.right.size.value === "2" && stmt.left._ === "Local" && stmt.left.type._ === "ArrayType" && stmt.left.type.dimensions === 2,
+        );
+        expect(outerAllocation).toMatchObject({
+            right: {
+                _: "NewArrayExpr",
+                elementType: { _: "ArrayType", elementType: { _: "NumberType" }, dimensions: 1 },
+            },
+        });
+        expect(literal.some((stmt) => stmt.left._ === "ArrayRef" && stmt.left.type._ === "ArrayType" && stmt.left.type.dimensions === 1)).toBe(true);
+
+        const constructor = assigns(bodyStmts("const matrix = new Array<number[]>(3);"));
+        expect(constructor.find((stmt) => stmt.right._ === "NewArrayExpr")).toMatchObject({
+            right: {
+                _: "NewArrayExpr",
+                elementType: { _: "ArrayType", elementType: { _: "NumberType" }, dimensions: 1 },
+            },
+        });
+    });
+
     it("keeps the one-element Array overload as a constructor call", () => {
         const all = assigns(bodyStmts('let values = new Array<string>("x");'));
         expect(all.some((stmt) => stmt.right._ === "NewArrayExpr")).toBe(false);
@@ -268,6 +290,26 @@ describe("straight-line lowering", () => {
                 right: { _: "Constant", value: "2" },
             },
         });
+    });
+
+    it("keeps shadowed block-scoped declarations in distinct typed locals", () => {
+        const { file } = lower(`
+            function f(): number {
+                let value = 1;
+                { let value = "inner"; console.log(value); }
+                return value;
+            }
+        `);
+        const method = methodByName(file, "f");
+        expect(method.body!.locals).toEqual(expect.arrayContaining([
+            expect.objectContaining({ name: "value", type: { _: "NumberType" } }),
+            expect.objectContaining({ name: "value$1", type: { _: "StringType" } }),
+        ]));
+        const stmts = singleBlockStmts(method);
+        expect(stmts.find((stmt) => stmt._ === "CallStmt")).toMatchObject({
+            expr: { args: [{ _: "Local", name: "value$1" }] },
+        });
+        expect(stmts.find((stmt) => stmt._ === "ReturnStmt")).toMatchObject({ arg: { _: "Local", name: "value" } });
     });
 
     it("lowers increments with the ++ unop", () => {

@@ -141,7 +141,10 @@ data class NewArrayExprDto(
     val size: ValueDto,
 ) : ExprDto {
     override val type: TypeDto
-        get() = ArrayTypeDto(elementType, 1)
+        get() = when (elementType) {
+            is ArrayTypeDto -> ArrayTypeDto(elementType.elementType, elementType.dimensions + 1)
+            else -> ArrayTypeDto(elementType, 1)
+        }
 }
 
 @Serializable

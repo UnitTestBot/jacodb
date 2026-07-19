@@ -158,7 +158,10 @@ data class EtsNewArrayExpr(
     val size: EtsEntity,
 ) : EtsExpr {
     override val type: EtsType
-        get() = EtsArrayType(elementType, 1)
+        get() = when (elementType) {
+            is EtsArrayType -> EtsArrayType(elementType.elementType, elementType.dimensions + 1)
+            else -> EtsArrayType(elementType, 1)
+        }
 
     override fun toString(): String {
         return "new Array<$elementType>($size)"

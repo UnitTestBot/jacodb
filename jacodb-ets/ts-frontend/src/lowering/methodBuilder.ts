@@ -56,6 +56,8 @@ export interface LoweringContext {
 export class MethodContext {
     readonly cfg = new CfgBuilder();
     private readonly locals = new Map<string, LocalDto>();
+    private readonly symbolLocals = new Map<ts.Symbol, LocalDto>();
+    private readonly localNameCounters = new Map<string, number>();
     private tempCount = 0;
 
     constructor(
@@ -113,14 +115,64 @@ export class MethodContext {
     getOrCreateLocal(name: string, type: TypeDto = UNKNOWN_TYPE): LocalDto {
         const existing = this.locals.get(name);
         if (existing !== undefined) {
-            if (existing.type._ === "UnknownType" && type._ !== "UnknownType") {
-                existing.type = type;
-            }
+            this.upgradeLocalType(existing, type);
             return existing;
         }
         const local: LocalDto = { _: "Local", name, type };
         this.locals.set(name, local);
         return local;
+    }
+
+    /**
+     * Resolve a source identifier to a method local by TypeScript symbol.
+     *
+     * Text alone is insufficient because block-scoped declarations may shadow
+     * one another. The first symbol keeps the source name; later same-named
+     * symbols receive deterministic `$N` suffixes.
+     */
+    localForIdentifier(node: ts.Identifier, type: TypeDto = UNKNOWN_TYPE): LocalDto {
+        let symbol: ts.Symbol | undefined;
+        try {
+            symbol = this.checker.getSymbolAtLocation(node);
+        } catch {
+            // Unresolved identifiers (for example ambient globals in malformed
+            // input) retain the old name-based fallback.
+        }
+        if (symbol === undefined) {
+            return this.getOrCreateLocal(node.text, type);
+        }
+
+        const existing = this.symbolLocals.get(symbol);
+        if (existing !== undefined) {
+            this.upgradeLocalType(existing, type);
+            return existing;
+        }
+
+        const name = this.freshSourceLocalName(node.text);
+        const local: LocalDto = { _: "Local", name, type };
+        this.locals.set(name, local);
+        this.symbolLocals.set(symbol, local);
+        return local;
+    }
+
+    private freshSourceLocalName(base: string): string {
+        if (!this.locals.has(base)) {
+            this.localNameCounters.set(base, 1);
+            return base;
+        }
+        let suffix = this.localNameCounters.get(base) ?? 1;
+        let candidate: string;
+        do {
+            candidate = `${base}$${suffix++}`;
+        } while (this.locals.has(candidate));
+        this.localNameCounters.set(base, suffix);
+        return candidate;
+    }
+
+    private upgradeLocalType(local: LocalDto, type: TypeDto): void {
+        if (local.type._ === "UnknownType" && type._ !== "UnknownType") {
+            local.type = type;
+        }
     }
 
     /** Fresh temp local `%N`. */
@@ -132,9 +184,11 @@ export class MethodContext {
     }
 
     /** Emit the standard prologue: parameter assignments, then `this := ThisRef`. */
-    emitPrologue(parameters: { name: string; type: TypeDto }[]): void {
+    emitPrologue(parameters: { name: string; type: TypeDto; identifier?: ts.Identifier }[]): void {
         parameters.forEach((param, index) => {
-            const local = this.getOrCreateLocal(param.name, param.type);
+            const local = param.identifier !== undefined
+                ? this.localForIdentifier(param.identifier, param.type)
+                : this.getOrCreateLocal(param.name, param.type);
             this.cfg.emit({
                 _: "AssignStmt",
                 left: local,

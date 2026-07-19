@@ -74,12 +74,12 @@ export function parameterType(ctx: LoweringContext, p: ts.ParameterDeclaration):
 
 export interface BuiltParameters {
     parameters: MethodParameterDto[];
-    prologueParams: { name: string; type: TypeDto }[];
+    prologueParams: { name: string; type: TypeDto; identifier?: ts.Identifier }[];
 }
 
 export function buildParameters(ctx: LoweringContext, decl: ts.SignatureDeclarationBase): BuiltParameters {
     const parameters: MethodParameterDto[] = [];
-    const prologueParams: { name: string; type: TypeDto }[] = [];
+    const prologueParams: BuiltParameters["prologueParams"] = [];
     for (const p of decl.parameters) {
         // A TS fake `this` parameter is a type annotation, not a real parameter:
         // it must not shift ParameterRef indices or shadow the `this` local.
@@ -92,7 +92,11 @@ export function buildParameters(ctx: LoweringContext, decl: ts.SignatureDeclarat
         if (p.questionToken !== undefined) param.isOptional = true;
         if (p.dotDotDotToken !== undefined) param.isRest = true;
         parameters.push(param);
-        prologueParams.push({ name, type });
+        prologueParams.push({
+            name,
+            type,
+            identifier: ts.isIdentifier(p.name) ? p.name : undefined,
+        });
     }
     return { parameters, prologueParams };
 }

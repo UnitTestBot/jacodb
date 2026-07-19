@@ -288,7 +288,7 @@ export class ExprLowerer {
         }
         // Every named reference in a method body is a Local; unresolved globals
         // (e.g. `console`) become Locals with UnknownType, same as ArkAnalyzer.
-        return this.m.getOrCreateLocal(node.text, this.safeTypeOf(node));
+        return this.m.localForIdentifier(node, this.safeTypeOf(node));
     }
 
     // ------------------------------------------------------------------
@@ -364,7 +364,7 @@ export class ExprLowerer {
             return this.lowerLValue(node.expression);
         }
         if (ts.isIdentifier(node)) {
-            return this.m.getOrCreateLocal(node.text, this.safeTypeOf(node));
+            return this.m.localForIdentifier(node, this.safeTypeOf(node));
         }
         if (ts.isPropertyAccessExpression(node)) {
             const ref = this.lowerPropertyAccess(node);
@@ -403,6 +403,14 @@ export class ExprLowerer {
                 arg: this.lowerToImmediate(node.left),
                 checkType: this.checkTypeOf(node.right),
             };
+        }
+
+        if (
+            opKind === ts.SyntaxKind.AmpersandAmpersandToken ||
+            opKind === ts.SyntaxKind.BarBarToken ||
+            opKind === ts.SyntaxKind.QuestionQuestionToken
+        ) {
+            return this.lowerLogicalBinary(node);
         }
 
         const relationOp = RELATION_BY_SYNTAX[opKind];
@@ -464,16 +472,113 @@ export class ExprLowerer {
             }
         }
         const value = this.lowerToImmediate(node);
-        this.m.cfg.branch(this.truthyCondition(value), trueTarget, falseTarget);
+        this.branchOnTruthiness(value, trueTarget, falseTarget);
     }
 
-    /** ArkAnalyzer truthiness normalization: `v != false` for booleans, `v != 0` otherwise. */
+    /** A single-condition truthiness check for values whose type has a direct representation. */
     truthyCondition(value: ValueDto): ConditionExprDto {
         const valueType = value._ === "Local" || value._ === "Constant" ? value.type : UNKNOWN_TYPE;
         if (valueType._ === "BooleanType") {
             return this.relation("!=", value, constant("false", BOOLEAN_TYPE));
         }
+        if (valueType._ === "StringType") {
+            return this.relation("!==", value, constant("", STRING_TYPE));
+        }
         return this.relation("!=", value, constant("0", NUMBER_TYPE));
+    }
+
+    /** Branch with JavaScript ToBoolean semantics for the representable type cases. */
+    private branchOnTruthiness(value: ImmediateDto, trueTarget: number, falseTarget: number): void {
+        const type = value.type;
+        switch (type._) {
+            case "BooleanType":
+                this.m.cfg.branch(this.relation("!==", value, constant("false", BOOLEAN_TYPE)), trueTarget, falseTarget);
+                return;
+            case "NumberType":
+            case "EnumValueType": {
+                const nonZero = this.m.cfg.newLabel();
+                this.m.cfg.branch(this.relation("!==", value, constant("0", NUMBER_TYPE)), nonZero, falseTarget);
+                this.m.cfg.placeLabel(nonZero);
+                // NaN is the only non-zero falsy number. It is also the only
+                // JavaScript value that is not strictly equal to itself.
+                this.m.cfg.branch(this.relation("===", value, value), trueTarget, falseTarget);
+                return;
+            }
+            case "StringType":
+                this.m.cfg.branch(this.relation("!==", value, constant("", STRING_TYPE)), trueTarget, falseTarget);
+                return;
+            case "NullType":
+            case "UndefinedType":
+            case "VoidType":
+            case "NeverType":
+                this.m.cfg.goto(falseTarget);
+                return;
+            case "ClassType":
+            case "ArrayType":
+            case "TupleType":
+            case "FunctionType":
+                this.m.cfg.goto(trueTarget);
+                return;
+            case "LiteralType": {
+                const literal = type.literal;
+                this.m.cfg.goto(literal === false || literal === 0 || literal === "" ? falseTarget : trueTarget);
+                return;
+            }
+            default:
+                this.branchOnUnknownTruthiness(value, trueTarget, falseTarget);
+        }
+    }
+
+    /**
+     * Unknown/union values need the full falsy set rather than the old `v != 0`
+     * approximation. The final self-equality check rejects NaN.
+     */
+    private branchOnUnknownTruthiness(value: ImmediateDto, trueTarget: number, falseTarget: number): void {
+        const notFalse = this.m.cfg.newLabel();
+        const notZero = this.m.cfg.newLabel();
+        const notEmpty = this.m.cfg.newLabel();
+        this.m.cfg.branch(this.relation("===", value, constant("false", BOOLEAN_TYPE)), falseTarget, notFalse);
+        this.m.cfg.placeLabel(notFalse);
+        this.m.cfg.branch(this.relation("===", value, constant("0", NUMBER_TYPE)), falseTarget, notZero);
+        this.m.cfg.placeLabel(notZero);
+        this.m.cfg.branch(this.relation("===", value, constant("", STRING_TYPE)), falseTarget, notEmpty);
+        this.m.cfg.placeLabel(notEmpty);
+        const notNullish = this.m.cfg.newLabel();
+        // Loose equality intentionally covers both null and undefined.
+        this.m.cfg.branch(this.relation("==", value, constant("null", NULL_TYPE)), falseTarget, notNullish);
+        this.m.cfg.placeLabel(notNullish);
+        this.m.cfg.branch(this.relation("!==", value, value), falseTarget, trueTarget);
+    }
+
+    /** Value-preserving, side-effect-safe lowering for `&&`, `||`, and `??`. */
+    private lowerLogicalBinary(node: ts.BinaryExpression): LocalDto {
+        const cfg = this.m.cfg;
+        const left = this.lowerToImmediate(node.left);
+        const result = this.m.newTemp(this.safeTypeOf(node));
+        const rightLabel = cfg.newLabel();
+        const leftLabel = cfg.newLabel();
+        const joinLabel = cfg.newLabel();
+
+        switch (node.operatorToken.kind) {
+            case ts.SyntaxKind.AmpersandAmpersandToken:
+                this.branchOnTruthiness(left, rightLabel, leftLabel);
+                break;
+            case ts.SyntaxKind.BarBarToken:
+                this.branchOnTruthiness(left, leftLabel, rightLabel);
+                break;
+            case ts.SyntaxKind.QuestionQuestionToken:
+                cfg.branch(this.relation("!=", left, constant("null", NULL_TYPE)), leftLabel, rightLabel);
+                break;
+        }
+
+        cfg.placeLabel(leftLabel);
+        cfg.emit({ _: "AssignStmt", left: result, right: left });
+        cfg.goto(joinLabel);
+        cfg.placeLabel(rightLabel);
+        cfg.emit({ _: "AssignStmt", left: result, right: this.lowerExpr(node.right) });
+        cfg.goto(joinLabel);
+        cfg.placeLabel(joinLabel);
+        return result;
     }
 
     /** `c ? a : b` -> branch diamond writing a shared temp. */
@@ -500,6 +605,14 @@ export class ExprLowerer {
         const opKind = node.operatorToken.kind;
         const target = this.lowerLValue(node.left);
 
+        if (
+            opKind === ts.SyntaxKind.AmpersandAmpersandEqualsToken ||
+            opKind === ts.SyntaxKind.BarBarEqualsToken ||
+            opKind === ts.SyntaxKind.QuestionQuestionEqualsToken
+        ) {
+            return this.lowerLogicalAssignment(node, target);
+        }
+
         let rhs: ValueDto;
         const compoundOp = COMPOUND_ASSIGN_BY_SYNTAX[opKind];
         if (compoundOp !== undefined) {
@@ -523,6 +636,42 @@ export class ExprLowerer {
         }
         this.m.cfg.emit({ _: "AssignStmt", left: target, right: rhs });
         return target._ === "Local" ? target : (rhs as ImmediateDto);
+    }
+
+    private lowerLogicalAssignment(node: ts.BinaryExpression, target: LValueDto): LocalDto {
+        const cfg = this.m.cfg;
+        const oldValue = target._ === "Local" ? target : this.materialize(target, lvalueType(target));
+        const result = this.m.newTemp(this.safeTypeOf(node));
+        const assignLabel = cfg.newLabel();
+        const keepLabel = cfg.newLabel();
+        const joinLabel = cfg.newLabel();
+
+        switch (node.operatorToken.kind) {
+            case ts.SyntaxKind.AmpersandAmpersandEqualsToken:
+                this.branchOnTruthiness(oldValue, assignLabel, keepLabel);
+                break;
+            case ts.SyntaxKind.BarBarEqualsToken:
+                this.branchOnTruthiness(oldValue, keepLabel, assignLabel);
+                break;
+            case ts.SyntaxKind.QuestionQuestionEqualsToken:
+                cfg.branch(this.relation("!=", oldValue, constant("null", NULL_TYPE)), keepLabel, assignLabel);
+                break;
+        }
+
+        cfg.placeLabel(keepLabel);
+        cfg.emit({ _: "AssignStmt", left: result, right: oldValue });
+        cfg.goto(joinLabel);
+        cfg.placeLabel(assignLabel);
+        let rhs = this.lowerExpr(node.right);
+        if (target._ !== "Local" && rhs._ !== "Local" && rhs._ !== "Constant") {
+            rhs = this.materialize(rhs, lvalueType(target));
+        }
+        cfg.emit({ _: "AssignStmt", left: target, right: rhs });
+        const assigned = rhs._ === "Local" || rhs._ === "Constant" ? rhs : target;
+        cfg.emit({ _: "AssignStmt", left: result, right: assigned });
+        cfg.goto(joinLabel);
+        cfg.placeLabel(joinLabel);
+        return result;
     }
 
     private lowerPrefixUnary(node: ts.PrefixUnaryExpression): ValueDto {
@@ -675,7 +824,7 @@ export class ExprLowerer {
                 };
             }
             // Function value in a variable -> pointer call.
-            const localCallee = this.m.getOrCreateLocal(callee.text, this.safeTypeOf(callee));
+            const localCallee = this.m.localForIdentifier(callee, this.safeTypeOf(callee));
             return {
                 _: "PtrCallExpr",
                 ptr: localCallee,
@@ -697,14 +846,16 @@ export class ExprLowerer {
     private lowerNew(node: ts.NewExpression): ValueDto {
         const inferredType = this.safeTypeOf(node);
         const args = node.arguments ?? ts.factory.createNodeArray();
-        const numericLength = args.length === 1 && this.safeTypeOf(args[0])._ === "NumberType";
+        const lengthType = args.length === 1 ? this.safeTypeOf(args[0]) : undefined;
+        const numericLength = lengthType?._ === "NumberType"
+            || (lengthType?._ === "LiteralType" && typeof lengthType.literal === "number");
         if (inferredType._ === "ArrayType" && (args.length === 0 || numericLength)) {
             const size = args.length === 0 ? constant("0", NUMBER_TYPE) : this.lowerToImmediate(args[0]);
             const temp = this.m.newTemp(inferredType);
             this.m.cfg.emit({
                 _: "AssignStmt",
                 left: temp,
-                right: { _: "NewArrayExpr", elementType: inferredType.elementType, size },
+                right: { _: "NewArrayExpr", elementType: arrayElementType(inferredType), size },
             });
             return temp;
         }
@@ -738,7 +889,7 @@ export class ExprLowerer {
         const arrayType = node.elements.length === 0 && contextualType._ === "ArrayType"
             ? contextualType
             : inferredType;
-        const elementType: TypeDto = arrayType._ === "ArrayType" ? arrayType.elementType : UNKNOWN_TYPE;
+        const elementType: TypeDto = arrayType._ === "ArrayType" ? arrayElementType(arrayType) : UNKNOWN_TYPE;
         const temp = this.m.newTemp(
             arrayType._ === "ArrayType" ? arrayType : { _: "ArrayType", elementType, dimensions: 1 },
         );
@@ -860,7 +1011,7 @@ export class ExprLowerer {
                 stores.push({ name: propName, type: propType, value: this.lowerToImmediate(property.initializer) });
             } else if (ts.isShorthandPropertyAssignment(property)) {
                 const propName = property.name.text;
-                const local = this.m.getOrCreateLocal(propName, this.safeTypeOf(property.name));
+                const local = this.m.localForIdentifier(property.name, this.safeTypeOf(property.name));
                 fields.push(objectField(signature, propName, local.type));
                 stores.push({ name: propName, type: local.type, value: local });
             } else if (ts.isMethodDeclaration(property)) {
@@ -1117,6 +1268,13 @@ function lvalueType(target: LValueDto): TypeDto {
         case "StaticFieldRef":
             return target.field.type;
     }
+}
+
+function arrayElementType(array: Extract<TypeDto, { _: "ArrayType" }>): TypeDto {
+    if (array.dimensions <= 1) {
+        return array.elementType;
+    }
+    return { _: "ArrayType", elementType: array.elementType, dimensions: array.dimensions - 1 };
 }
 
 function isProjectFile(decl: ts.Node): boolean {

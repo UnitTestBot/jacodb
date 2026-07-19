@@ -419,7 +419,7 @@ export class StmtLowerer {
         if (ts.isVariableDeclarationList(initializer)) {
             const decl = initializer.declarations[0];
             if (decl !== undefined && ts.isIdentifier(decl.name)) {
-                return { local: this.m.getOrCreateLocal(decl.name.text, this.m.converter.typeOfNode(decl.name)) };
+                return { local: this.m.localForIdentifier(decl.name, this.m.converter.typeOfNode(decl.name)) };
             }
             if (decl !== undefined) {
                 return { local: this.m.newTemp(UNKNOWN_TYPE), pattern: decl.name as ts.BindingPattern };
@@ -427,7 +427,7 @@ export class StmtLowerer {
             throw new LoweringError("empty loop binding");
         }
         if (ts.isIdentifier(initializer)) {
-            return { local: this.m.getOrCreateLocal(initializer.text, this.m.converter.typeOfNode(initializer)) };
+            return { local: this.m.localForIdentifier(initializer, this.m.converter.typeOfNode(initializer)) };
         }
         throw new LoweringError("unsupported loop binding");
     }
@@ -553,7 +553,7 @@ export class StmtLowerer {
                 if (decl !== undefined && ts.isIdentifier(decl.name)) {
                     const caughtType =
                         decl.type !== undefined ? this.m.converter.convertTypeNode(decl.type) : UNKNOWN_TYPE;
-                    const caught = this.m.getOrCreateLocal(decl.name.text, caughtType);
+                    const caught = this.m.localForIdentifier(decl.name, caughtType);
                     cfg.emit({
                         _: "AssignStmt",
                         left: caught,
@@ -642,7 +642,7 @@ export class StmtLowerer {
             decl.type !== undefined
                 ? this.m.converter.convertTypeNode(decl.type)
                 : this.m.converter.typeOfNode(decl.name);
-        const local = this.m.getOrCreateLocal(decl.name.text, declaredType);
+        const local = this.m.localForIdentifier(decl.name, declaredType);
         if (decl.initializer !== undefined) {
             const value = this.expr.lowerExpr(decl.initializer);
             this.m.cfg.emit({ _: "AssignStmt", left: local, right: value });
@@ -733,7 +733,7 @@ export class StmtLowerer {
 
     private bindDestructured(target: ts.BindingName, ref: ValueDto, defaultInit: ts.Expression | undefined): void {
         if (ts.isIdentifier(target)) {
-            const local = this.m.getOrCreateLocal(target.text, this.m.converter.typeOfNode(target));
+            const local = this.m.localForIdentifier(target, this.m.converter.typeOfNode(target));
             this.m.cfg.emit({ _: "AssignStmt", left: local, right: ref });
             if (defaultInit !== undefined) {
                 this.emitDefaultValue(local, defaultInit);
