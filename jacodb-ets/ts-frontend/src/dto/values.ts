@@ -201,7 +201,9 @@ export interface GlobalRefDto {
 
 export interface ClosureFieldRefDto {
     readonly _: "ClosureFieldRef";
-    base: LocalDto;
+    // Kotlin declares this as a concrete LocalDto, so no polymorphic
+    // "_": "Local" discriminator is allowed here.
+    base: { name: string; type: TypeDto };
     fieldName: string;
     type: TypeDto;
 }

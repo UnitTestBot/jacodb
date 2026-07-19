@@ -358,6 +358,11 @@ function validateValue(
                 err(`${ctx}: ArrayRef.index has expr kind '${value.index._}', must be an immediate or ref`);
             }
             break;
+        case "ClosureFieldRef":
+            if (!declaredLocals.has(value.base.name)) {
+                err(`${ctx}: closure environment '${value.base.name}' is not declared in body.locals`);
+            }
+            break;
         case "PtrCallExpr":
             // Kotlin Convert casts ptr to EtsValue — expr kinds would throw a ClassCastException.
             if (EXPR_KINDS.has(value.ptr._)) {
@@ -398,7 +403,9 @@ export function valueOperands(value: ValueDto): ValueDto[] {
         case "GlobalRef":
             return value.ref !== null ? [value.ref] : [];
         case "ClosureFieldRef":
-            return [value.base];
+            // base is a concrete LocalDto on the wire (without a discriminator)
+            // and was checked directly in validateValue.
+            return [];
         case "ArrayRef":
             return [value.array, value.index];
         case "InstanceFieldRef":

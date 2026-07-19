@@ -48,6 +48,7 @@ export class ClassBuilder {
 
     buildClass(decl: ts.ClassDeclaration): ClassDto {
         const signature = this.ctx.converter.classSignatureOf(decl);
+        const superClass = this.superClassInfo(decl);
 
         const instanceFields: ts.PropertyDeclaration[] = [];
         const staticFields: ts.PropertyDeclaration[] = [];
@@ -97,8 +98,8 @@ export class ClassBuilder {
         methods.push(this.buildStatInit(signature, staticFields, staticBlocks));
         methods.push(
             ctorDecl !== undefined
-                ? this.buildConstructor(signature, ctorDecl)
-                : this.synthesizeDefaultConstructor(signature),
+                ? this.buildConstructor(signature, ctorDecl, superClass?.signature)
+                : this.synthesizeDefaultConstructor(signature, superClass),
         );
 
         const result: ClassDto = {
@@ -294,16 +295,95 @@ export class ClassBuilder {
         };
     }
 
-    private buildConstructor(declaringClass: ClassSignatureDto, decl: ts.ConstructorDeclaration): MethodDto {
+    private buildConstructor(
+        declaringClass: ClassSignatureDto,
+        decl: ts.ConstructorDeclaration,
+        superClass: ClassSignatureDto | undefined,
+    ): MethodDto {
         const { parameters, prologueParams } = buildParameters(this.ctx, decl);
         const classType: ClassTypeDto = { _: "ClassType", signature: declaringClass };
 
         const m = new MethodContext(this.ctx, declaringClass, CONSTRUCTOR_NAME);
         m.emitPrologue(prologueParams);
         const thisLocal = m.getOrCreateLocal("this", classType);
+        const emitInitializers = (): void => {
+            this.emitInstInitCall(m, declaringClass);
+            this.emitParameterProperties(m, thisLocal, declaringClass, decl.parameters);
+        };
+        if (decl.body !== undefined) {
+            if (superClass === undefined) {
+                emitInitializers();
+                new StmtLowerer(m).lowerStatements(decl.body.statements);
+            } else {
+                // In a derived class, JavaScript initializes instance fields and
+                // parameter properties only after the base constructor returns.
+                new StmtLowerer(m, emitInitializers).lowerStatements(decl.body.statements);
+            }
+        }
+        if (m.cfg.isOpen()) {
+            m.cfg.ret(thisLocal);
+        }
+        return {
+            signature: { declaringClass, name: CONSTRUCTOR_NAME, parameters, returnType: classType },
+            modifiers: modifiersOf(decl),
+            decorators: decoratorsOf(decl),
+            body: m.build(),
+        };
+    }
+
+    private synthesizeDefaultConstructor(
+        declaringClass: ClassSignatureDto,
+        superClass?: { signature: ClassSignatureDto; constructorDecl?: ts.ConstructorDeclaration },
+    ): MethodDto {
+        const classType: ClassTypeDto = { _: "ClassType", signature: declaringClass };
+        const m = new MethodContext(this.ctx, declaringClass, CONSTRUCTOR_NAME);
+        const inherited = superClass?.constructorDecl !== undefined
+            ? buildParameters(this.ctx, superClass.constructorDecl)
+            : { parameters: [], prologueParams: [] };
+        m.emitPrologue(inherited.prologueParams);
+        if (superClass !== undefined) {
+            const thisLocal = m.getOrCreateLocal("this", classType);
+            m.cfg.emit({
+                _: "CallStmt",
+                expr: {
+                    _: "InstanceCallExpr",
+                    instance: thisLocal,
+                    method: {
+                        declaringClass: superClass.signature,
+                        name: CONSTRUCTOR_NAME,
+                        parameters: inherited.parameters,
+                        returnType: { _: "ClassType", signature: superClass.signature },
+                    },
+                    args: inherited.prologueParams.map((param) =>
+                        param.identifier !== undefined
+                            ? m.localForIdentifier(param.identifier, param.type)
+                            : m.getOrCreateLocal(param.name, param.type),
+                    ),
+                },
+            });
+        }
         this.emitInstInitCall(m, declaringClass);
-        // Parameter properties: this.x := x
-        for (const p of decl.parameters) {
+        m.cfg.ret(m.getOrCreateLocal("this", classType));
+        return {
+            signature: {
+                declaringClass,
+                name: CONSTRUCTOR_NAME,
+                parameters: inherited.parameters,
+                returnType: classType,
+            },
+            modifiers: 0,
+            decorators: [],
+            body: m.build(),
+        };
+    }
+
+    private emitParameterProperties(
+        m: MethodContext,
+        thisLocal: ReturnType<MethodContext["getOrCreateLocal"]>,
+        declaringClass: ClassSignatureDto,
+        parameters: readonly ts.ParameterDeclaration[],
+    ): void {
+        for (const p of parameters) {
             if (hasParameterPropertyModifier(p) && ts.isIdentifier(p.name)) {
                 const paramType = parameterType(this.ctx, p);
                 m.cfg.emit({
@@ -317,32 +397,37 @@ export class ClassBuilder {
                 });
             }
         }
-        if (decl.body !== undefined) {
-            new StmtLowerer(m).lowerStatements(decl.body.statements);
-        }
-        if (m.cfg.isOpen()) {
-            m.cfg.ret(thisLocal);
-        }
-        return {
-            signature: { declaringClass, name: CONSTRUCTOR_NAME, parameters, returnType: classType },
-            modifiers: modifiersOf(decl),
-            decorators: decoratorsOf(decl),
-            body: m.build(),
-        };
     }
 
-    private synthesizeDefaultConstructor(declaringClass: ClassSignatureDto): MethodDto {
-        const classType: ClassTypeDto = { _: "ClassType", signature: declaringClass };
-        const m = new MethodContext(this.ctx, declaringClass, CONSTRUCTOR_NAME);
-        m.emitPrologue([]);
-        this.emitInstInitCall(m, declaringClass);
-        m.cfg.ret(m.getOrCreateLocal("this", classType));
-        return {
-            signature: { declaringClass, name: CONSTRUCTOR_NAME, parameters: [], returnType: classType },
-            modifiers: 0,
-            decorators: [],
-            body: m.build(),
-        };
+    private superClassInfo(
+        decl: ts.ClassDeclaration,
+    ): { signature: ClassSignatureDto; constructorDecl?: ts.ConstructorDeclaration } | undefined {
+        const extended = decl.heritageClauses
+            ?.find((clause) => clause.token === ts.SyntaxKind.ExtendsKeyword)
+            ?.types[0];
+        if (extended === undefined) return undefined;
+
+        let classDeclaration: ts.ClassDeclaration | undefined;
+        try {
+            let symbol = this.ctx.checker.getSymbolAtLocation(extended.expression);
+            if (symbol !== undefined && (symbol.flags & ts.SymbolFlags.Alias) !== 0) {
+                symbol = this.ctx.checker.getAliasedSymbol(symbol);
+            }
+            classDeclaration = symbol?.declarations?.find(ts.isClassDeclaration);
+        } catch {
+            // Keep the syntactic superclass signature below.
+        }
+
+        const signature = classDeclaration !== undefined
+            ? this.ctx.converter.classSignatureOf(classDeclaration)
+            : {
+                name: extended.expression.getText(),
+                declaringFile: { projectName: "%unk", fileName: "%unk" },
+            };
+        const constructorDecl = classDeclaration?.members.find(
+            (member): member is ts.ConstructorDeclaration => ts.isConstructorDeclaration(member) && member.body !== undefined,
+        ) ?? classDeclaration?.members.find(ts.isConstructorDeclaration);
+        return constructorDecl === undefined ? { signature } : { signature, constructorDecl };
     }
 
     private emitInstInitCall(m: MethodContext, declaringClass: ClassSignatureDto): void {

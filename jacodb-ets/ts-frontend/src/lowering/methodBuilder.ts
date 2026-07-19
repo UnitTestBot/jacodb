@@ -18,7 +18,7 @@ import * as ts from "typescript";
 import { TEMP_LOCAL_PREFIX } from "../dto/constants";
 import { BodyDto, ClassDto, LocalDeclDto, MethodDto, SourceSpanDto } from "../dto/model";
 import { ClassSignatureDto, FileSignatureDto } from "../dto/signatures";
-import { ClassTypeDto, TypeDto, UNKNOWN_TYPE } from "../dto/types";
+import { ClassTypeDto, LexicalEnvTypeDto, TypeDto, UNKNOWN_TYPE } from "../dto/types";
 import { LocalDto } from "../dto/values";
 import { TypeConverter } from "../types/convert";
 import { CfgBuilder } from "./cfg";
@@ -27,8 +27,8 @@ import { Diagnostics } from "./diagnostics";
 /**
  * Registry for anonymous methods (`%AM<n>$<method>`, closures) and anonymous
  * classes (`%AC<n>$<method>`, object literals) created while lowering bodies.
- * Everything registered here is attached to the file's `%dflt` class /
- * top-level class list when the file is assembled.
+ * Methods are attached to their recorded declaring class and anonymous classes
+ * to the top-level class list when the file is assembled.
  */
 export interface AnonymousRegistry {
     defaultClassSignature: ClassSignatureDto;
@@ -47,6 +47,11 @@ export interface LoweringContext {
     anonymous: AnonymousRegistry;
 }
 
+export interface ClosureCapture {
+    identifier: ts.Identifier;
+    outerLocal: LocalDto;
+}
+
 /**
  * Per-method lowering state: locals table, temp counter, CFG builder.
  *
@@ -59,6 +64,7 @@ export class MethodContext {
     private readonly symbolLocals = new Map<ts.Symbol, LocalDto>();
     private readonly localNameCounters = new Map<string, number>();
     private tempCount = 0;
+    private closureEnvCount = 0;
 
     constructor(
         readonly ctx: LoweringContext,
@@ -183,6 +189,15 @@ export class MethodContext {
         return local;
     }
 
+    /** Reserve the lexical-environment local used implicitly by a closure value. */
+    newClosureEnvironment(type: LexicalEnvTypeDto): LocalDto {
+        let name: string;
+        do {
+            name = `%closures${this.closureEnvCount++}`;
+        } while (this.locals.has(name));
+        return this.getOrCreateLocal(name, type);
+    }
+
     /** Emit the standard prologue: parameter assignments, then `this := ThisRef`. */
     emitPrologue(parameters: { name: string; type: TypeDto; identifier?: ts.Identifier }[]): void {
         parameters.forEach((param, index) => {
@@ -195,6 +210,52 @@ export class MethodContext {
                 right: { _: "ParameterRef", index, type: param.type },
             });
         });
+        this.emitThisAssignment();
+    }
+
+    /**
+     * ArkAnalyzer closure prologue: environment parameter, regular parameters,
+     * captured-local loads, then `this := ThisRef`.
+     */
+    emitClosurePrologue(
+        environmentName: string,
+        environmentType: LexicalEnvTypeDto,
+        captures: ClosureCapture[],
+        parameters: { name: string; type: TypeDto; identifier?: ts.Identifier }[],
+    ): void {
+        const environment = this.getOrCreateLocal(environmentName, environmentType);
+        this.cfg.emit({
+            _: "AssignStmt",
+            left: environment,
+            right: { _: "ParameterRef", index: 0, type: environmentType },
+        });
+        parameters.forEach((param, index) => {
+            const local = param.identifier !== undefined
+                ? this.localForIdentifier(param.identifier, param.type)
+                : this.getOrCreateLocal(param.name, param.type);
+            this.cfg.emit({
+                _: "AssignStmt",
+                left: local,
+                right: { _: "ParameterRef", index: index + 1, type: param.type },
+            });
+        });
+        for (const capture of captures) {
+            const local = this.localForIdentifier(capture.identifier, capture.outerLocal.type);
+            this.cfg.emit({
+                _: "AssignStmt",
+                left: local,
+                right: {
+                    _: "ClosureFieldRef",
+                    base: { name: environment.name, type: environment.type },
+                    fieldName: capture.outerLocal.name,
+                    type: capture.outerLocal.type,
+                },
+            });
+        }
+        this.emitThisAssignment();
+    }
+
+    private emitThisAssignment(): void {
         const thisType = this.thisType();
         const thisLocal = this.getOrCreateLocal("this", thisType);
         this.cfg.emit({

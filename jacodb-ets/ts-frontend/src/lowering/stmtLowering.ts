@@ -48,7 +48,10 @@ export class StmtLowerer {
     private readonly finallyScopes: ts.Block[] = [];
     private pendingLabel: string | undefined;
 
-    constructor(private readonly m: MethodContext) {
+    constructor(
+        private readonly m: MethodContext,
+        private readonly afterSuperCall?: () => void,
+    ) {
         // Nested function bodies (closures, object-literal methods) are lowered
         // with a fresh StmtLowerer over their own MethodContext.
         this.expr = new ExprLowerer(m, (nestedContext, body) => {
@@ -137,6 +140,9 @@ export class StmtLowerer {
         }
         if (ts.isExpressionStatement(node)) {
             this.expr.lowerDiscarded(node.expression);
+            if (isDirectSuperCall(node.expression)) {
+                this.afterSuperCall?.();
+            }
             return;
         }
         if (ts.isReturnStatement(node)) {
@@ -764,6 +770,13 @@ export class StmtLowerer {
         cfg.goto(doneLabel);
         cfg.placeLabel(doneLabel);
     }
+}
+
+function isDirectSuperCall(node: ts.Expression): boolean {
+    while (ts.isParenthesizedExpression(node)) {
+        node = node.expression;
+    }
+    return ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.SuperKeyword;
 }
 
 function propertyNameText(name: ts.PropertyName): string | undefined {

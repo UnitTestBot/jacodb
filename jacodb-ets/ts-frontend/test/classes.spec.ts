@@ -134,6 +134,77 @@ describe("class lowering", () => {
         expect(derived.implementedInterfaceNames).toEqual(["Shaped"]);
     });
 
+    it("initializes derived instances only after the explicit super call", () => {
+        const { file } = lower(`
+            class Base { constructor(value: number) {} }
+            class Derived extends Base {
+                field = 1;
+                constructor(value: number) {
+                    const doubled = value * 2;
+                    super(doubled);
+                    this.field = doubled;
+                }
+            }
+        `);
+        const stmts = singleBlockStmts(methodOf(classByName(file, "Derived"), "constructor"));
+        const superIndex = stmts.findIndex(
+            (stmt) => stmt._ === "CallStmt" && stmt.expr.method.name === "constructor" && stmt.expr.method.declaringClass.name === "Base",
+        );
+        const initIndex = stmts.findIndex(
+            (stmt) => stmt._ === "CallStmt" && stmt.expr.method.name === "%instInit",
+        );
+        const doubledIndex = stmts.findIndex(
+            (stmt) => stmt._ === "AssignStmt" && stmt.left._ === "Local" && stmt.left.name === "doubled",
+        );
+        expect(doubledIndex).toBeLessThan(superIndex);
+        expect(superIndex).toBeLessThan(initIndex);
+        expect((stmts[superIndex] as Extract<(typeof stmts)[number], { _: "CallStmt" }>).expr.method.parameters).toMatchObject([
+            { name: "value", type: { _: "NumberType" } },
+        ]);
+    });
+
+    it("synthesizes a derived constructor that forwards base parameters before initialization", () => {
+        const { file } = lower(`
+            class Base { constructor(value: number, label?: string) {} }
+            class Derived extends Base { field = 1; }
+        `);
+        const ctor = methodOf(classByName(file, "Derived"), "constructor");
+        expect(ctor.signature.parameters).toMatchObject([
+            { name: "value", type: { _: "NumberType" } },
+            { name: "label", type: { _: "StringType" }, isOptional: true },
+        ]);
+        const stmts = singleBlockStmts(ctor);
+        const superIndex = stmts.findIndex(
+            (stmt) => stmt._ === "CallStmt" && stmt.expr.method.name === "constructor" && stmt.expr.method.declaringClass.name === "Base",
+        );
+        const initIndex = stmts.findIndex(
+            (stmt) => stmt._ === "CallStmt" && stmt.expr.method.name === "%instInit",
+        );
+        expect(superIndex).toBeGreaterThanOrEqual(0);
+        expect(superIndex).toBeLessThan(initIndex);
+        expect(stmts[superIndex]).toMatchObject({
+            expr: { args: [{ name: "value" }, { name: "label" }] },
+        });
+    });
+
+    it("places derived parameter properties after super and instance fields", () => {
+        const { file } = lower(`
+            class Base { constructor() {} }
+            class Derived extends Base {
+                field = 1;
+                constructor(public value: number) { super(); }
+            }
+        `);
+        const stmts = singleBlockStmts(methodOf(classByName(file, "Derived"), "constructor"));
+        const superIndex = stmts.findIndex((stmt) => stmt._ === "CallStmt" && stmt.expr.method.name === "constructor");
+        const initIndex = stmts.findIndex((stmt) => stmt._ === "CallStmt" && stmt.expr.method.name === "%instInit");
+        const propertyIndex = stmts.findIndex(
+            (stmt) => stmt._ === "AssignStmt" && stmt.left._ === "InstanceFieldRef" && stmt.left.field.name === "value",
+        );
+        expect(superIndex).toBeLessThan(initIndex);
+        expect(initIndex).toBeLessThan(propertyIndex);
+    });
+
     it("lowers parameter properties into fields and constructor assignments", () => {
         const { file } = lower(`
             class Vec {

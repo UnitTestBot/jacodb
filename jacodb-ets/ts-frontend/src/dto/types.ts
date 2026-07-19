@@ -26,7 +26,6 @@
  */
 
 import { ClassSignatureDto, LocalSignatureDto, MethodSignatureDto } from "./signatures";
-import { LocalDto } from "./values";
 
 export type TypeDto =
     | AnyTypeDto
@@ -76,7 +75,14 @@ export interface AliasTypeDto {
 export interface LexicalEnvTypeDto {
     readonly _: "LexicalEnvType";
     method: MethodSignatureDto;
-    closures: LocalDto[];
+    // This list is statically List<LocalDto> on the Kotlin side, so entries do
+    // not carry the polymorphic "_": "Local" discriminator.
+    closures: LexicalEnvLocalDto[];
+}
+
+export interface LexicalEnvLocalDto {
+    name: string;
+    type: TypeDto;
 }
 
 export interface EnumValueTypeDto {

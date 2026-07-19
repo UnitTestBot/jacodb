@@ -107,13 +107,11 @@ class FileBuilder {
     build(sourceFile: ts.SourceFile): EtsFileDto {
         const contents = this.buildScope(sourceFile.statements, undefined);
 
-        // Anonymous methods (closures) and classes (object literals) registered
-        // during body lowering are attached to the file's %dflt class / class list.
-        const defaultClass = contents.classes.find(
-            (c) => c.signature.name === DEFAULT_ARK_CLASS_NAME && c.signature.declaringNamespace === undefined,
-        );
-        defaultClass?.methods.push(...this.ctx.anonymous.methods);
         contents.classes.push(...this.ctx.anonymous.classes);
+        // Anonymous closure methods retain the enclosing class so lexical
+        // `this` has the same type as in the source method. Add anonymous
+        // classes first because their methods may themselves contain closures.
+        this.attachAnonymousMethods(contents);
 
         return {
             signature: this.fileSignature,
@@ -122,6 +120,29 @@ class FileBuilder {
             importInfos: this.buildImportInfos(sourceFile),
             exportInfos: this.buildExportInfos(sourceFile),
         };
+    }
+
+    private attachAnonymousMethods(contents: ScopeContents): void {
+        const classes: ClassDto[] = [...contents.classes];
+        const collectNamespace = (namespace: NamespaceDto): void => {
+            classes.push(...(namespace.classes ?? []));
+            (namespace.namespaces ?? []).forEach(collectNamespace);
+        };
+        contents.namespaces.forEach(collectNamespace);
+
+        for (const method of this.ctx.anonymous.methods) {
+            const target = classes.find(
+                (candidate) => classSignatureKey(candidate.signature) === classSignatureKey(method.signature.declaringClass),
+            );
+            if (target === undefined) {
+                this.ctx.diagnostics.warn(
+                    undefined,
+                    `anonymous method target not found: ${method.signature.declaringClass.name}.${method.signature.name}`,
+                );
+                continue;
+            }
+            target.methods.push(method);
+        }
     }
 
     // ------------------------------------------------------------------
@@ -376,6 +397,23 @@ class FileBuilder {
 // ----------------------------------------------------------------------
 // Export helpers
 // ----------------------------------------------------------------------
+
+function classSignatureKey(signature: ClassSignatureDto): string {
+    const namespaceNames: string[] = [];
+    for (
+        let namespace = signature.declaringNamespace;
+        namespace !== undefined;
+        namespace = namespace.declaringNamespace
+    ) {
+        namespaceNames.unshift(namespace.name);
+    }
+    return [
+        signature.declaringFile.projectName,
+        signature.declaringFile.fileName,
+        ...namespaceNames,
+        signature.name,
+    ].join("\u0000");
+}
 
 function declarationName(node: ts.Node): string | undefined {
     if (

@@ -60,6 +60,90 @@ describe("closures", () => {
         expect(methodByName(file, "%AM0$%dflt")).toBeDefined();
         expect(methodByName(file, "%AM1$%AM0$%dflt")).toBeDefined();
     });
+
+    it("loads captured locals through a lexical environment", () => {
+        const { file } = lower(`
+            function outer(seed: number): (delta: number) => number {
+                let current = seed;
+                return (delta: number): number => {
+                    current += delta;
+                    return current;
+                };
+            }
+        `);
+        const closure = methodByName(file, "%AM0$outer");
+        expect(closure.signature.parameters).toMatchObject([
+            {
+                name: "%closures0",
+                type: {
+                    _: "LexicalEnvType",
+                    closures: [{ name: "current", type: { _: "NumberType" } }],
+                },
+            },
+            { name: "delta", type: { _: "NumberType" } },
+        ]);
+        const stmts = singleBlockStmts(closure);
+        expect(stmts.slice(0, 4)).toMatchObject([
+            { left: { name: "%closures0" }, right: { _: "ParameterRef", index: 0 } },
+            { left: { name: "delta" }, right: { _: "ParameterRef", index: 1 } },
+            {
+                left: { name: "current" },
+                right: { _: "ClosureFieldRef", base: { name: "%closures0" }, fieldName: "current" },
+            },
+            { left: { name: "this" }, right: { _: "ThisRef" } },
+        ]);
+        const outer = methodByName(file, "outer");
+        expect(outer.body!.locals).toContainEqual(expect.objectContaining({
+            name: "%closures0",
+            type: expect.objectContaining({ _: "LexicalEnvType" }),
+        }));
+    });
+
+    it("retains lexical this and attaches lifted methods to the enclosing class", () => {
+        const { file } = lower(`
+            class Counter {
+                value = 1;
+                make(step: number): () => number {
+                    return () => this.value + step;
+                }
+            }
+        `);
+        const counter = file.classes.find((clazz) => clazz.signature.name === "Counter")!;
+        const closure = counter.methods.find((method) => method.signature.name === "%AM0$make");
+        expect(closure).toBeDefined();
+        expect(closure!.signature.declaringClass.name).toBe("Counter");
+        expect(closure!.body!.locals).toContainEqual(expect.objectContaining({
+            name: "this",
+            type: { _: "ClassType", signature: expect.objectContaining({ name: "Counter" }) },
+        }));
+        expect(file.classes.find((clazz) => clazz.signature.name === "%dflt")!.methods).not.toContainEqual(
+            expect.objectContaining({ signature: expect.objectContaining({ name: "%AM0$make" }) }),
+        );
+    });
+
+    it("propagates transitive captures through nested closures", () => {
+        const { file } = lower(`
+            function outer(seed: number): () => () => number {
+                let current = seed;
+                return () => () => current;
+            }
+        `);
+        const middle = methodByName(file, "%AM0$outer");
+        const inner = methodByName(file, "%AM1$%AM0$outer");
+        for (const closure of [middle, inner]) {
+            expect(closure.signature.parameters[0]).toMatchObject({
+                type: { _: "LexicalEnvType", closures: [{ name: "current" }] },
+            });
+            expect(singleBlockStmts(closure)).toContainEqual(expect.objectContaining({
+                right: expect.objectContaining({ _: "ClosureFieldRef", fieldName: "current" }),
+            }));
+        }
+        expect(inner.signature.parameters[0].name).toBe("%closures1");
+        expect(middle.body!.locals.filter((local) => local.type._ === "LexicalEnvType").map((local) => local.name)).toEqual([
+            "%closures0",
+            "%closures1",
+        ]);
+    });
 });
 
 describe("object literals", () => {

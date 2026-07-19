@@ -764,12 +764,7 @@ export class ExprLowerer {
             return {
                 _: "InstanceCallExpr",
                 instance: thisLocal,
-                method: {
-                    declaringClass: superSignature,
-                    name: CONSTRUCTOR_NAME,
-                    parameters: [],
-                    returnType: { _: "ClassType", signature: superSignature },
-                },
+                method: this.methodSignatureForCall(node, CONSTRUCTOR_NAME, superSignature),
                 args,
             };
         }
@@ -953,9 +948,9 @@ export class ExprLowerer {
 
     /**
      * Arrow function / function expression -> anonymous `%AM<n>$<method>` method
-     * on the file's %dflt class; the use-site value is a Local of that name typed
-     * FunctionType (the ArkAnalyzer shape). Captured outer variables degrade to
-     * same-named locals inside the anonymous method (no LexicalEnvType yet).
+     * on the enclosing class; the use-site value is a Local of that name typed
+     * FunctionType. Captured locals are carried by an implicit LexicalEnvType
+     * parameter and loaded through ClosureFieldRef in the lifted method.
      */
     private lowerClosure(node: ts.ArrowFunction | ts.FunctionExpression): ValueDto {
         if (this.lowerFunctionBody === undefined) {
@@ -963,14 +958,43 @@ export class ExprLowerer {
         }
         const registry = this.m.ctx.anonymous;
         const name = `${ANONYMOUS_METHOD_PREFIX}${registry.nextMethodId++}$${this.m.methodName}`;
-        const declaringClass = registry.defaultClassSignature;
+        const declaringClass = this.m.declaringClass;
 
         const { parameters, prologueParams } = buildParameters(this.m.ctx, node);
         const returnType = returnTypeOf(this.m.ctx, node);
-        const signature: MethodSignatureDto = { declaringClass, name, parameters, returnType };
+        const baseSignature: MethodSignatureDto = { declaringClass, name, parameters, returnType };
+        const captures = collectCapturedIdentifiers(node, this.m.checker).map((identifier) => ({
+            identifier,
+            outerLocal: this.m.localForIdentifier(identifier, this.safeTypeOf(identifier)),
+        }));
+
+        let signature = baseSignature;
+        let environment:
+            | { name: string; type: Extract<TypeDto, { _: "LexicalEnvType" }> }
+            | undefined;
+        if (captures.length > 0) {
+            const environmentType: Extract<TypeDto, { _: "LexicalEnvType" }> = {
+                _: "LexicalEnvType",
+                method: baseSignature,
+                closures: captures.map((capture) => ({
+                    name: capture.outerLocal.name,
+                    type: capture.outerLocal.type,
+                })),
+            };
+            const environmentLocal = this.m.newClosureEnvironment(environmentType);
+            environment = { name: environmentLocal.name, type: environmentType };
+            signature = {
+                ...baseSignature,
+                parameters: [{ name: environment.name, type: environment.type }, ...parameters],
+            };
+        }
 
         const closureContext = new MethodContext(this.m.ctx, declaringClass, name);
-        closureContext.emitPrologue(prologueParams);
+        if (environment === undefined) {
+            closureContext.emitPrologue(prologueParams);
+        } else {
+            closureContext.emitClosurePrologue(environment.name, environment.type, captures, prologueParams);
+        }
         this.lowerFunctionBody(closureContext, node.body);
         registry.methods.push({
             signature,
@@ -1279,6 +1303,51 @@ function arrayElementType(array: Extract<TypeDto, { _: "ArrayType" }>): TypeDto 
 
 function isProjectFile(decl: ts.Node): boolean {
     return !decl.getSourceFile().isDeclarationFile;
+}
+
+/**
+ * Collect source locals referenced from outside a lifted function. Traversing
+ * nested functions as well propagates transitive captures through nested
+ * lexical environments; declarations owned by the current function subtree
+ * are excluded.
+ */
+function collectCapturedIdentifiers(
+    closure: ts.ArrowFunction | ts.FunctionExpression,
+    checker: ts.TypeChecker,
+): ts.Identifier[] {
+    const captures = new Map<ts.Symbol, ts.Identifier>();
+    const visit = (node: ts.Node): void => {
+        if (ts.isIdentifier(node)) {
+            let symbol: ts.Symbol | undefined;
+            try {
+                symbol = checker.getSymbolAtLocation(node);
+            } catch {
+                // Ignore unresolved names; they remain ordinary ambient locals.
+            }
+            if (
+                symbol !== undefined
+                && !captures.has(symbol)
+                && symbol.declarations?.some(isCapturableDeclaration)
+                && !symbol.declarations.some((decl) => isNodeWithin(decl, closure))
+            ) {
+                captures.set(symbol, node);
+            }
+        }
+        ts.forEachChild(node, visit);
+    };
+    visit(closure.body);
+    return [...captures.values()];
+}
+
+function isCapturableDeclaration(node: ts.Declaration): boolean {
+    return ts.isVariableDeclaration(node) || ts.isParameter(node) || ts.isBindingElement(node);
+}
+
+function isNodeWithin(node: ts.Node, ancestor: ts.Node): boolean {
+    for (let current: ts.Node | undefined = node; current !== undefined; current = current.parent) {
+        if (current === ancestor) return true;
+    }
+    return false;
 }
 
 /** Whether the identifier refers to a value declared somewhere in project code. */

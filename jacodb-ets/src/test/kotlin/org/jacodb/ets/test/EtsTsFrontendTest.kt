@@ -20,6 +20,7 @@ import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.dto.toEtsFile
 import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsCaughtExceptionRef
+import org.jacodb.ets.model.EtsClosureFieldRef
 import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
 import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
@@ -264,6 +265,10 @@ class EtsTsFrontendTest {
 
                 const handlers = [1, 2, 3].map((x: number) => x * 2);
 
+                function makeMultiplier(factor: number): (value: number) => number {
+                    return (value: number) => value * factor;
+                }
+
                 function safeFirst(arr?: number[]): number | undefined {
                     return arr?.[0];
                 }
@@ -284,6 +289,15 @@ class EtsTsFrontendTest {
         // Closure lifted into an anonymous method.
         val anonymousMethod = defaultClass.methods.single { it.name.startsWith("%AM0") }
         assertTrue(anonymousMethod.cfg.stmts.isNotEmpty(), "closure body must be lowered")
+        val capturingMethod = defaultClass.methods.single {
+            it.name.startsWith("%AM") && it.name.contains("makeMultiplier")
+        }
+        assertTrue(
+            capturingMethod.cfg.stmts
+                .filterIsInstance<EtsAssignStmt>()
+                .any { it.rhv is EtsClosureFieldRef },
+            "captured locals must be loaded from a lexical environment",
+        )
 
         // Object literal became an anonymous class with fields and a method.
         val anonymousClass = scene.projectClasses.single { it.name.startsWith("%AC0") }
