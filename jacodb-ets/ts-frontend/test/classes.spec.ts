@@ -261,6 +261,25 @@ describe("interface lowering", () => {
         expect(check.signature.parameters).toEqual([{ name: "value", type: { _: "StringType" } }]);
         expect(check.signature.returnType).toEqual({ _: "BooleanType" });
     });
+
+    it("represents index signatures as typed fields", () => {
+        const { file, diagnostics } = lower(`
+            interface Graph {
+                [key: string]: string[];
+            }
+        `);
+        expect(classByName(file, "Graph").fields).toMatchObject([
+            {
+                signature: {
+                    name: "[key: string]",
+                    type: { _: "ArrayType", elementType: { _: "StringType" }, dimensions: 1 },
+                },
+                questionToken: false,
+                exclamationToken: false,
+            },
+        ]);
+        expect(diagnostics.messages).toEqual([]);
+    });
 });
 
 describe("enum lowering", () => {

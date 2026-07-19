@@ -213,6 +213,14 @@ describe("straight-line lowering", () => {
         });
         expect(literal.some((stmt) => stmt.left._ === "ArrayRef" && stmt.left.type._ === "ArrayType" && stmt.left.type.dimensions === 1)).toBe(true);
 
+        const inferred = assigns(bodyStmts("const matrix = [[1], [2]];"));
+        expect(inferred.find((stmt) => stmt.right._ === "NewArrayExpr" && stmt.left._ === "Local" && stmt.left.type._ === "ArrayType" && stmt.left.type.dimensions === 2)).toMatchObject({
+            right: {
+                _: "NewArrayExpr",
+                elementType: { _: "ArrayType", elementType: { _: "NumberType" }, dimensions: 1 },
+            },
+        });
+
         const constructor = assigns(bodyStmts("const matrix = new Array<number[]>(3);"));
         expect(constructor.find((stmt) => stmt.right._ === "NewArrayExpr")).toMatchObject({
             right: {

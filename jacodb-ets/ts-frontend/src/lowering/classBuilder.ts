@@ -82,7 +82,9 @@ export class ClassBuilder {
                 ts.isSetAccessorDeclaration(member)
             ) {
                 methods.push(this.buildMethodFromDecl(signature, member));
-            } else if (ts.isSemicolonClassElement(member) || ts.isIndexSignatureDeclaration(member)) {
+            } else if (ts.isIndexSignatureDeclaration(member)) {
+                fields.push(this.buildIndexSignatureField(signature, member));
+            } else if (ts.isSemicolonClassElement(member)) {
                 // ignore
             } else if (ts.isClassStaticBlockDeclaration(member)) {
                 this.ctx.diagnostics.warn(member, "static blocks are folded into %statInit");
@@ -145,6 +147,8 @@ export class ClassBuilder {
                     exclamationToken: false,
                 };
                 fields.push(field);
+            } else if (ts.isIndexSignatureDeclaration(member)) {
+                fields.push(this.buildIndexSignatureField(signature, member));
             } else if (ts.isMethodSignature(member)) {
                 methods.push(this.buildBodylessMethod(signature, member));
             } else {
@@ -167,6 +171,28 @@ export class ClassBuilder {
             result.typeParameters = typeParameters;
         }
         return result;
+    }
+
+    private buildIndexSignatureField(
+        declaringClass: ClassSignatureDto,
+        member: ts.IndexSignatureDeclaration,
+    ): FieldDto {
+        const parameters = member.parameters.map((parameter) => {
+            const name = parameter.name.getText();
+            const type = parameter.type?.getText() ?? "unknown";
+            return `${name}: ${type}`;
+        });
+        return {
+            signature: {
+                declaringClass,
+                name: `[${parameters.join(", ")}]`,
+                type: this.ctx.converter.convertTypeNode(member.type),
+            },
+            modifiers: modifiersOf(member),
+            decorators: [],
+            questionToken: false,
+            exclamationToken: false,
+        };
     }
 
     // ------------------------------------------------------------------
