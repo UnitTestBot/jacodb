@@ -22,8 +22,9 @@ required. Both frontends remain supported and selectable
 
 ## Prerequisites
 
-- **Node.js ≥ 18** and **npm** on `PATH` (that is the only requirement —
-  the frontend has a single runtime dependency, the `typescript` package).
+- **Node.js ≥ 18** on `PATH` at runtime.
+- **npm** is needed only when building this repository. The Gradle build bundles
+  the compiler and TypeScript runtime into the `jacodb-ets` JAR.
 
 ## Quick start
 
@@ -32,7 +33,7 @@ required. Both frontends remain supported and selectable
 ```shell
 cd jacodb-ets/ts-frontend
 npm ci
-npm run build      # compiles src/ -> dist/
+npm run build      # type-checks and creates standalone dist/index.js
 ```
 
 Or let Gradle do it (also happens automatically before `:jacodb-ets:test`):
@@ -62,13 +63,16 @@ node dist/index.js --multi path/to/sources out/ir/
 One shared compiler program is built over all sources (so cross-file
 references resolve to proper signatures), and a `<relative-path>.json` is
 written per source file, mirroring the input tree under the output directory.
+`--project` finds and applies `tsconfig.json` (including `extends`, compiler
+options, and include/exclude rules); `--multi` deliberately ignores it and
+recursively converts all supported source files. Both modes include
+`.ts/.tsx/.js/.jsx/.mts/.cts/.mjs/.cjs/.ets` sources.
 
 ## Using from Kotlin
 
 The main entry points live in `org.jacodb.ets.utils` (`LoadEtsFile.kt`).
-With the frontend built, no configuration is needed when running from the
-`jacodb-ets` module directory (Gradle sets `ets.frontend.dir` for tests
-automatically):
+No frontend checkout or working-directory setup is required: the standalone
+script is extracted from the `jacodb-ets` JAR automatically.
 
 ```kotlin
 import org.jacodb.ets.utils.loadEtsFileAutoConvert
@@ -104,16 +108,16 @@ val dto = EtsFileDto.loadFromJson(jsonPath.readText())
 val file = dto.toEtsFile()
 ```
 
-### Locating the frontend
+### Overriding the bundled frontend
 
-When your working directory is not `jacodb-ets`, tell the loader where the
-frontend lives (any one of these):
+The bundled script is the default. For frontend development, it can be
+overridden with a local checkout:
 
 | Mechanism | Example |
 |---|---|
 | env var | `ETS_FRONTEND_DIR=/path/to/jacodb/jacodb-ets/ts-frontend` |
 | system property | `-Dets.frontend.dir=/path/to/jacodb/jacodb-ets/ts-frontend` |
-| default | `ts-frontend` relative to the current working directory |
+| default | bundled resource `ets-frontend/index.js` from the JAR |
 
 Additional knobs: `ETS_FRONTEND_SCRIPT` (default `dist/index.js`),
 `NODE_EXECUTABLE` (default `node`).
@@ -150,15 +154,16 @@ node dist/index.js [options] <input> <output>
   <input>          source file, or a directory with -p/--multi
   <output>         output JSON file, or a directory with -p/--multi
 
-  -p, --project    treat <input> as a project directory
-  -m, --multi      same as -p (kept for serializeArkIR compatibility)
+  -p, --project    apply tsconfig.json and convert its project roots
+  -m, --multi      recursively convert sources, ignoring tsconfig.json
   -e               accepted for compatibility (entrypoints), no-op
   -t N             accepted for compatibility (type inference level), no-op —
                    checker-based type inference is always on
   -v, --verbose    log progress and degradation diagnostics to stderr
 ```
 
-Exit codes: `0` — success, `1` — I/O or invariant failure, `2` — bad usage.
+Exit codes: `0` — success, `1` — configuration, I/O, or invariant failure,
+`2` — bad usage.
 Stdout is never used for data; diagnostics go to stderr.
 
 **Robustness guarantees.** The frontend never fails on exotic-but-parseable
@@ -171,23 +176,26 @@ before being written — invalid IR is never emitted.
 ## Supported language features
 
 Fully lowered to IR: literals and template strings; all `Ops.kt` operators;
-variables and compound assignments; free/method/static/pointer calls; `new` +
-constructor calls; arrays and element access; fields (instance and static,
+variables, compound assignments, and short-circuiting logical operators;
+free/method/static/pointer calls; `new` + constructor calls; arrays and element
+access; fields (instance and static,
 including `this.f` in static methods); `if`/ternary; `while`/`do`/`for`/
 `for-of` (iterator protocol)/`for-in`; `switch` with fallthrough;
 `break`/`continue` (incl. labeled); `return`/`throw`; `try/catch/finally`
 (catch handlers stay reachable and bind `CaughtExceptionRef`); classes with
-`%instInit`/`%statInit`/constructors, inheritance, parameter properties,
-static blocks; interfaces (bodyless methods); enums (numeric auto-increment
-and string); namespaces (nested); closures (`%AM` methods); object literals
+`%instInit`/`%statInit`/constructors, inheritance, parameter properties, and
+derived initialization after `super`; static blocks; interfaces (bodyless
+methods); enums (numeric auto-increment and string); namespaces (nested);
+closures (`%AM` methods) with `LexicalEnvType`/`ClosureFieldRef` captures and
+lexical `this`; object literals
 (`%AC` classes); object/array destructuring with defaults and nesting;
 optional chaining; `super()`/`super.m()`; `typeof`/`await`/`yield`/`delete`/
 `void`/`instanceof`/`as`-casts; imports/exports of every flavor.
 
-Degrades to `Raw*` fallbacks (for now): regex literals, tagged templates,
-spread arguments/elements, rest patterns in destructuring, accessors/spread
-in object literals, variable capture via `LexicalEnvType` (captured outer
-variables become same-named locals instead).
+Project parsing supports TSX/JSX files; JSX element expressions currently
+degrade to `RawValue`. Other `Raw*` fallbacks include regex literals, tagged
+templates, spread arguments/elements, rest patterns in destructuring, and
+accessors/spread in object literals.
 
 ## IR conventions
 
@@ -198,8 +206,10 @@ The output follows the ArkAnalyzer conventions expected by `Convert.kt`
   method; free functions become its methods;
 - method prologue: `param_i := ParameterRef(i)` per parameter, then
   `this := ThisRef`;
-- classes get synthesized `%instInit`/`%statInit` initializers; constructors
-  call `%instInit` and `return this` (a default constructor is synthesized
+- classes get synthesized `%instInit`/`%statInit` initializers; base
+  constructors call `%instInit` before their body, while derived constructors
+  call `super` first and initialize fields immediately afterwards; every
+  constructor returns `this` (a forwarding default constructor is synthesized
   when absent);
 - basic blocks are listed with `id == index`, entry block is `0`; a block
   ending with `IfStmt` has successors `[falseBranch, trueBranch]` (the Kotlin
@@ -208,8 +218,21 @@ The output follows the ArkAnalyzer conventions expected by `Convert.kt`
   operands, call arguments and array indices are immediates (`Local` /
   `Constant`), hoisted into `%0, %1, …` temps (never `_tmp*` — that prefix is
   reserved by the Kotlin converter);
-- truthiness in conditions is normalized as `v != false` (booleans) /
-  `v != 0` (everything else).
+- truthiness follows JavaScript `ToBoolean`: `false`, `0`, `NaN`, `""`, `null`,
+  and `undefined` are false; objects/functions/arrays are true; unknown and
+  union values receive the complete runtime check chain.
+
+### Exception CFG approximation
+
+The current EtsIR DTO has no trap table or exceptional-successor edge. To keep
+both `try` and `catch` analyzable, the frontend emits a synthetic
+nondeterministic entry branch: one successor enters the try body and the other
+binds `CaughtExceptionRef` and enters the catch body. This intentionally
+over-approximates reachability; it does not claim that an exception occurs at a
+specific throwing statement. `finally` is shared on normal joins and duplicated
+before abrupt exits (`return`, `throw`, and escaping `break`/`continue`). This is
+the frontend's explicit exception-model contract until EtsIR grows real
+exception edges.
 
 ### Source origins
 
@@ -271,8 +294,7 @@ When adding support for a new construct:
 
 | Symptom | Fix |
 |---|---|
-| `Script file not found: '.../dist/index.js'` | run `npm run build` (or `./gradlew :jacodb-ets:buildTsFrontend`) |
-| `ts-frontend directory does not exist` | set `ETS_FRONTEND_DIR` / `-Dets.frontend.dir` (see above) |
-| Kotlin tests are skipped with "ts-frontend is not built" | same as above — the tests skip instead of failing when the frontend is missing |
+| `Script file not found: '.../dist/index.js'` | an explicit frontend override is active; build that checkout or remove the override |
+| `ts-frontend directory does not exist` | an explicit `ETS_FRONTEND_DIR` / `-Dets.frontend.dir` points to a missing checkout |
 | `npm is not available; skipping ts-frontend build` in Gradle | install Node.js ≥ 18 and ensure `npm` is on `PATH` |
 | Constructs missing from the IR | run the CLI with `-v` — every degraded construct is reported to stderr |

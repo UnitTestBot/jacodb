@@ -41,11 +41,9 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Tests for the native TypeScript frontend (`jacodb-ets/ts-frontend`).
  *
- * These tests spawn `node ts-frontend/dist/index.js` on TS/JS sources and verify
- * that the produced JSON deserializes into [EtsFileDto] and converts to a valid model.
- *
- * Tests are skipped if the frontend is not built (`npm run build` in `ts-frontend`)
- * or `node` is not available.
+ * These tests spawn the standalone frontend bundled in the module resources on
+ * TS/JS sources and verify that the produced JSON deserializes into [EtsFileDto]
+ * and converts to a valid model. Node.js must be available on PATH.
  */
 class EtsTsFrontendTest {
 
@@ -59,7 +57,7 @@ class EtsTsFrontendTest {
 
         /** Run the PRODUCTION integration path: generateEtsIR + EtsFileDto.loadFromJson. */
         private fun runFrontend(source: String, fileName: String = "test.ts"): EtsFileDto {
-            assumeTrue(tsFrontendAvailable(), "ts-frontend is not built (run 'npm run build' in ts-frontend)")
+            assumeTrue(tsFrontendAvailable(), "bundled ts-frontend resource is unavailable")
 
             val dir = createTempDirectory("ts-frontend-test")
             val inputPath = dir.resolve(fileName)

@@ -39,6 +39,7 @@ export const COMPILER_OPTIONS: ts.CompilerOptions = {
     checkJs: false,
     noEmit: true,
     skipLibCheck: true,
+    jsx: ts.JsxEmit.Preserve,
 };
 
 interface CliArgs {
@@ -113,11 +114,12 @@ export function parseArgs(argv: string[]): CliArgs | string {
     return args;
 }
 
-const SOURCE_EXTENSIONS = [".ts", ".mts", ".cts", ".js", ".mjs", ".cjs", ".ets"];
+const SOURCE_EXTENSIONS = [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs", ".ets"];
 
 function isSourceFilePath(filePath: string): boolean {
-    if (filePath.endsWith(".d.ts")) return false;
-    return SOURCE_EXTENSIONS.some((ext) => filePath.endsWith(ext));
+    const lower = filePath.toLowerCase();
+    if (/\.d\.[mc]?ts$/.test(lower)) return false;
+    return SOURCE_EXTENSIONS.some((ext) => lower.endsWith(ext));
 }
 
 /** Recursively collect source files under a directory. */
@@ -136,8 +138,8 @@ function collectSourceFiles(dir: string): string[] {
 }
 
 /** Compiler host that parses unknown extensions (.ets) as TypeScript. */
-function createHost(): ts.CompilerHost {
-    const host = ts.createCompilerHost(COMPILER_OPTIONS);
+function createHost(options: ts.CompilerOptions): ts.CompilerHost {
+    const host = ts.createCompilerHost(options);
     const originalGetSourceFile = host.getSourceFile.bind(host);
     host.getSourceFile = (name, languageVersion, onError, shouldCreateNewSourceFile) => {
         if (name.endsWith(".ets")) {
@@ -148,6 +150,64 @@ function createHost(): ts.CompilerHost {
         return originalGetSourceFile(name, languageVersion, onError, shouldCreateNewSourceFile);
     };
     return host;
+}
+
+export interface ProjectInputs {
+    sources: string[];
+    options: ts.CompilerOptions;
+    configPath?: string;
+}
+
+/** Resolve root files and compiler options, honoring tsconfig.json in project mode. */
+export function resolveProjectInputs(inputDir: string, honorTsConfig: boolean = true): ProjectInputs {
+    const configPath = honorTsConfig
+        ? ts.findConfigFile(inputDir, ts.sys.fileExists, "tsconfig.json")
+        : undefined;
+    if (configPath === undefined) {
+        return { sources: collectSourceFiles(inputDir), options: COMPILER_OPTIONS };
+    }
+
+    const loaded = ts.readConfigFile(configPath, ts.sys.readFile);
+    if (loaded.error !== undefined) {
+        throw new Error(formatDiagnostic(loaded.error));
+    }
+    const parsed = ts.parseJsonConfigFileContent(
+        loaded.config,
+        ts.sys,
+        path.dirname(configPath),
+        { noEmit: true },
+        configPath,
+    );
+    if (parsed.errors.length > 0) {
+        throw new Error(parsed.errors.map(formatDiagnostic).join("\n"));
+    }
+
+    // TypeScript does not recognize ArkTS' .ets extension in tsconfig include
+    // patterns. Keep those project files alongside the config-selected roots.
+    const etsFiles = collectSourceFiles(inputDir).filter((file) => file.toLowerCase().endsWith(".ets"));
+    const sources = [...new Set([
+        ...parsed.fileNames.filter((file) => isSourceFilePath(file) && isWithinDirectory(inputDir, file)),
+        ...etsFiles,
+    ])]
+        .map((file) => path.resolve(file))
+        .sort();
+    return {
+        sources,
+        options: { ...parsed.options, noEmit: true },
+        configPath,
+    };
+}
+
+function isWithinDirectory(directory: string, file: string): boolean {
+    const relative = path.relative(path.resolve(directory), path.resolve(file));
+    return relative !== "" && !relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative);
+}
+
+function formatDiagnostic(diagnostic: ts.Diagnostic): string {
+    const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
+    if (diagnostic.file === undefined || diagnostic.start === undefined) return message;
+    const position = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+    return `${diagnostic.file.fileName}:${position.line + 1}:${position.character + 1}: ${message}`;
 }
 
 interface EmitResult {
@@ -174,7 +234,7 @@ function emitOne(
     return { violations, warnings: diagnostics.messages };
 }
 
-function main(argv: string[]): number {
+export function main(argv: string[]): number {
     const parsed = parseArgs(argv);
     if (typeof parsed === "string") {
         process.stderr.write(`error: ${parsed}\n`);
@@ -203,13 +263,25 @@ function main(argv: string[]): number {
             return 1;
         }
         const projectName = path.basename(inputPath);
-        const sources = collectSourceFiles(inputPath);
+        let projectInputs: ProjectInputs;
+        try {
+            // --multi intentionally remains a raw recursive conversion mode;
+            // only --project applies tsconfig include/exclude and options.
+            projectInputs = resolveProjectInputs(inputPath, parsed.project);
+        } catch (error) {
+            process.stderr.write(`error: failed to load project configuration: ${String(error)}\n`);
+            return 1;
+        }
+        const { sources, options } = projectInputs;
+        if (projectInputs.configPath !== undefined) {
+            log(`using tsconfig: ${projectInputs.configPath}`);
+        }
         log(`found ${sources.length} source files`);
         if (sources.length === 0) {
             return 0;
         }
 
-        const program = ts.createProgram(sources, COMPILER_OPTIONS, createHost());
+        const program = ts.createProgram(sources, options, createHost(options));
         const relativeOf = (sf: ts.SourceFile): string =>
             path.relative(inputPath, path.resolve(sf.fileName)).split(path.sep).join("/");
         const fileSignatureFor = (sf: ts.SourceFile) => {
@@ -243,7 +315,7 @@ function main(argv: string[]): number {
     }
 
     // Single-file mode.
-    const program = ts.createProgram([inputPath], COMPILER_OPTIONS, createHost());
+    const program = ts.createProgram([inputPath], COMPILER_OPTIONS, createHost(COMPILER_OPTIONS));
     const sourceFile = program.getSourceFile(inputPath);
     if (sourceFile === undefined) {
         process.stderr.write(`error: could not load source file: ${inputPath}\n`);

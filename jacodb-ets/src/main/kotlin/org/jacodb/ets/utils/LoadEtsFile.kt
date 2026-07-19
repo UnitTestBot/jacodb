@@ -42,8 +42,8 @@ private val logger = KotlinLogging.logger {}
 /**
  * Which frontend generates the EtsIR JSON.
  *
- * - [TS_FRONTEND] — the native TypeScript frontend bundled with jacodb
- *   (`jacodb-ets/ts-frontend`, build with `npm run build`). Default.
+ * - [TS_FRONTEND] — the native TypeScript frontend bundled as a standalone
+ *   script in the `jacodb-ets` JAR. Default.
  * - [ARKANALYZER] — the external ArkAnalyzer `serializeArkIR` script
  *   (requires the `ARKANALYZER_DIR` environment variable).
  *
@@ -83,9 +83,19 @@ private const val DEFAULT_ETS_FRONTEND_DIR = "ts-frontend"
 
 private const val ENV_VAR_ETS_FRONTEND_SCRIPT = "ETS_FRONTEND_SCRIPT"
 private const val DEFAULT_ETS_FRONTEND_SCRIPT = "dist/index.js"
+private const val BUNDLED_ETS_FRONTEND_SCRIPT = "/ets-frontend/index.js"
 
 private const val ENV_VAR_NODE_EXECUTABLE = "NODE_EXECUTABLE"
 private const val DEFAULT_NODE_EXECUTABLE = "node"
+
+private val extractedBundledFrontend: Path? by lazy {
+    EtsIrProvider::class.java.getResourceAsStream(BUNDLED_ETS_FRONTEND_SCRIPT)?.use { input ->
+        createTempFile("jacodb-ets-frontend-", suffix = ".js").also { target ->
+            target.toFile().deleteOnExit()
+            target.toFile().outputStream().use(input::copyTo)
+        }
+    }
+}
 
 /** Location of the serializer script for the chosen [provider]. */
 fun etsIrSerializerScript(provider: EtsIrProvider = EtsIrProvider.default()): Path =
@@ -112,30 +122,40 @@ fun etsIrSerializerScript(provider: EtsIrProvider = EtsIrProvider.default()): Pa
         }
 
         EtsIrProvider.TS_FRONTEND -> {
-            val frontendDir = Path(
-                System.getenv(ENV_VAR_ETS_FRONTEND_DIR)
-                    ?: System.getProperty(PROPERTY_ETS_FRONTEND_DIR)
-                    ?: DEFAULT_ETS_FRONTEND_DIR
-            )
-            if (!frontendDir.exists()) {
-                throw FileNotFoundException(
-                    "ts-frontend directory does not exist: '${frontendDir.absolute()}'. " +
-                        "Set the '$ENV_VAR_ETS_FRONTEND_DIR' environment variable " +
-                        "(or the '$PROPERTY_ETS_FRONTEND_DIR' system property) " +
-                        "to the location of jacodb-ets/ts-frontend. " +
-                        "Current dir is '${Path("").toAbsolutePath()}'."
+            val configuredDir = System.getenv(ENV_VAR_ETS_FRONTEND_DIR)
+                ?: System.getProperty(PROPERTY_ETS_FRONTEND_DIR)
+            val configuredScript = System.getenv(ENV_VAR_ETS_FRONTEND_SCRIPT)
+            if (configuredDir != null || configuredScript != null) {
+                resolveFrontendScript(
+                    Path(configuredDir ?: DEFAULT_ETS_FRONTEND_DIR),
+                    configuredScript ?: DEFAULT_ETS_FRONTEND_SCRIPT,
                 )
+            } else {
+                extractedBundledFrontend
+                    ?: resolveFrontendScript(Path(DEFAULT_ETS_FRONTEND_DIR), DEFAULT_ETS_FRONTEND_SCRIPT)
             }
-            val script = frontendDir.resolve(System.getenv(ENV_VAR_ETS_FRONTEND_SCRIPT) ?: DEFAULT_ETS_FRONTEND_SCRIPT)
-            if (!script.exists()) {
-                throw FileNotFoundException(
-                    "Script file not found: '$script'. " +
-                        "Did you forget to execute 'npm run build' in ts-frontend?"
-                )
-            }
-            script
         }
     }
+
+private fun resolveFrontendScript(frontendDir: Path, scriptPath: String): Path {
+    if (!frontendDir.exists()) {
+        throw FileNotFoundException(
+            "ts-frontend directory does not exist: '${frontendDir.absolute()}'. " +
+                "The bundled frontend resource '$BUNDLED_ETS_FRONTEND_SCRIPT' is unavailable. " +
+                "Set the '$ENV_VAR_ETS_FRONTEND_DIR' environment variable " +
+                "(or the '$PROPERTY_ETS_FRONTEND_DIR' system property) to a frontend checkout."
+        )
+    }
+    val script = frontendDir.resolve(scriptPath)
+    if (!script.exists()) {
+        throw FileNotFoundException(
+            "Script file not found: '$script'. Did you forget to execute 'npm run build' in ts-frontend?"
+        )
+    }
+    return script
+}
+
+class EtsIrGenerationException(message: String) : IllegalStateException(message)
 
 fun generateEtsIR(
     projectPath: Path,
@@ -167,14 +187,16 @@ fun generateEtsIR(
         add("-v")
     }
     val res = ProcessUtil.run(cmd, timeout = timeout)
-    if (res.exitCode != 0) {
-        logger.error { "EtsIR generation ($provider) failed with exit code ${res.exitCode}" }
-        logger.error { "STDOUT:\n${res.stdout}" }
-        logger.error { "STDERR:\n${res.stderr}" }
-    } else if (res.isTimeout) {
-        logger.error { "EtsIR generation ($provider) timed out after $timeout" }
-        logger.error { "STDOUT:\n${res.stdout}" }
-        logger.error { "STDERR:\n${res.stderr}" }
+    val failure = when {
+        res.isTimeout -> "EtsIR generation ($provider) timed out after $timeout"
+        res.exitCode != 0 -> "EtsIR generation ($provider) failed with exit code ${res.exitCode}"
+        else -> null
+    }
+    if (failure != null) {
+        output.toFile().deleteRecursively()
+        throw EtsIrGenerationException(
+            "$failure\nCommand: ${cmd.joinToString(" ")}\nSTDOUT:\n${res.stdout}\nSTDERR:\n${res.stderr}"
+        )
     }
     return output
 }

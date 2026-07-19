@@ -90,6 +90,13 @@ object ProcessUtil {
             process.waitFor()
             false
         }
+        if (isTimeout) {
+            process.destroy()
+            if (!process.waitFor(250, TimeUnit.MILLISECONDS)) {
+                process.destroyForcibly()
+                process.waitFor()
+            }
+        }
         runBlocking {
             stdinJob.join()
             stdoutJob.join()

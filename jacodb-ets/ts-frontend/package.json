@@ -6,15 +6,16 @@
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json --noEmit && esbuild src/index.ts --bundle --platform=node --format=cjs --target=node18 --outfile=dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --testTimeout=15000"
   },
   "dependencies": {
     "typescript": "^5.4.5"
   },
   "devDependencies": {
     "@types/node": "^18.19.0",
-    "vitest": "^2.1.9"
+    "esbuild": "^0.28.1",
+    "vitest": "^3.2.7"
   }
 }

@@ -42,26 +42,27 @@ val installTsFrontend = tasks.register<Exec>("installTsFrontend") {
     commandLine(npmExecutable, "ci")
     inputs.files(tsFrontendDir.resolve("package.json"), tsFrontendDir.resolve("package-lock.json"))
     outputs.dir(tsFrontendDir.resolve("node_modules"))
-    onlyIf {
-        isNpmAvailable().also { available ->
-            if (!available) logger.warn("npm is not available; skipping ts-frontend install")
-        }
-    }
 }
 
 val buildTsFrontend = tasks.register<Exec>("buildTsFrontend") {
     group = "build"
-    description = "Compiles the ts-frontend (TypeScript -> dist)."
+    description = "Type-checks and bundles the ts-frontend into a standalone Node.js script."
     dependsOn(installTsFrontend)
     workingDir = tsFrontendDir
     commandLine(npmExecutable, "run", "build")
     inputs.dir(tsFrontendDir.resolve("src"))
-    inputs.files(tsFrontendDir.resolve("package.json"), tsFrontendDir.resolve("tsconfig.json"))
-    outputs.dir(tsFrontendDir.resolve("dist"))
-    onlyIf {
-        isNpmAvailable().also { available ->
-            if (!available) logger.warn("npm is not available; skipping ts-frontend build")
-        }
+    inputs.files(
+        tsFrontendDir.resolve("package.json"),
+        tsFrontendDir.resolve("package-lock.json"),
+        tsFrontendDir.resolve("tsconfig.json"),
+    )
+    outputs.file(tsFrontendDir.resolve("dist/index.js"))
+}
+
+tasks.processResources {
+    dependsOn(buildTsFrontend)
+    from(tsFrontendDir.resolve("dist/index.js")) {
+        into("ets-frontend")
     }
 }
 
@@ -80,7 +81,6 @@ tasks.register<Exec>("testTsFrontend") {
 
 tasks.test {
     dependsOn(buildTsFrontend)
-    systemProperty("ets.frontend.dir", tsFrontendDir.absolutePath)
 }
 
 // ----------------------------------------------------------------------------
@@ -140,7 +140,7 @@ tasks.register("generateTestResources") {
         println("Generating test resources in '${outputDir.relativeTo(projectDir)}'...")
 
         val cmd: List<String> = listOf(
-            "node",
+            System.getenv("NODE_EXECUTABLE") ?: "node",
             script.absolutePath,
             "--multi",
             inputDir.relativeTo(resources).path,
@@ -148,21 +148,25 @@ tasks.register("generateTestResources") {
             "-t",
         )
         println("Running: '${cmd.joinToString(" ")}'")
-        val process = ProcessBuilder(cmd).directory(resources).start()
+        val processLog = temporaryDir.resolve("generate-test-resources.log")
+        val process = ProcessBuilder(cmd)
+            .directory(resources)
+            .redirectErrorStream(true)
+            .redirectOutput(processLog)
+            .start()
         val ok = process.waitFor(10, TimeUnit.MINUTES)
-
-        val stdout = process.inputStream.bufferedReader().readText().trim()
-        if (stdout.isNotBlank()) {
-            println("[STDOUT]:\n--------\n$stdout\n--------")
-        }
-        val stderr = process.errorStream.bufferedReader().readText().trim()
-        if (stderr.isNotBlank()) {
-            println("[STDERR]:\n--------\n$stderr\n--------")
-        }
 
         if (!ok) {
             process.destroy()
+            if (!process.waitFor(5, TimeUnit.SECONDS)) {
+                process.destroyForcibly()
+                process.waitFor()
+            }
             throw GradleException("Test resource generation timed out")
+        }
+        val processOutput = processLog.readText().trim()
+        if (processOutput.isNotBlank()) {
+            println("[GENERATOR OUTPUT]:\n--------\n$processOutput\n--------")
         }
         if (process.exitValue() != 0) {
             throw GradleException("Test resource generation failed with exit code ${process.exitValue()}")

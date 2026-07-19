@@ -1,5 +1,17 @@
-import { describe, expect, it } from "vitest";
-import { parseArgs } from "../src/index";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
+import * as ts from "typescript";
+import { afterEach, describe, expect, it } from "vitest";
+import { main, parseArgs, resolveProjectInputs } from "../src/index";
+
+const tempDirs: string[] = [];
+
+afterEach(() => {
+    for (const dir of tempDirs.splice(0)) {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
 
 describe("parseArgs", () => {
     it("parses plain positional arguments", () => {
@@ -33,5 +45,51 @@ describe("parseArgs", () => {
 
     it("rejects wrong positional count", () => {
         expect(typeof parseArgs(["onlyone"])).toBe("string");
+    });
+});
+
+describe("project mode", () => {
+    it("honors tsconfig include/exclude and compiler options, including TSX", () => {
+        const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-project-"));
+        tempDirs.push(projectDir);
+        fs.mkdirSync(path.join(projectDir, "src"));
+        fs.writeFileSync(
+            path.join(projectDir, "tsconfig.json"),
+            JSON.stringify({
+                compilerOptions: { strict: true, target: "ES2017", jsx: "react-jsx" },
+                include: ["src/**/*.tsx"],
+                exclude: ["src/ignored.tsx"],
+            }),
+        );
+        fs.writeFileSync(
+            path.join(projectDir, "src", "included.tsx"),
+            "export const view = <section>ready</section>;",
+        );
+        fs.writeFileSync(path.join(projectDir, "src", "ignored.tsx"), "export const ignored = 1;");
+        fs.writeFileSync(path.join(projectDir, "outside.ts"), "export const outside = 2;");
+
+        const inputs = resolveProjectInputs(projectDir);
+        expect(inputs.configPath).toBe(path.join(projectDir, "tsconfig.json"));
+        expect(inputs.sources.map((file) => path.basename(file))).toEqual(["included.tsx"]);
+        expect(inputs.options.strict).toBe(true);
+        expect(inputs.options.target).toBe(ts.ScriptTarget.ES2017);
+        expect(inputs.options.jsx).toBe(ts.JsxEmit.ReactJSX);
+
+        const outputDir = path.join(projectDir, "ir");
+        expect(main(["--project", projectDir, outputDir])).toBe(0);
+        expect(fs.existsSync(path.join(outputDir, "src", "included.tsx.json"))).toBe(true);
+        expect(fs.existsSync(path.join(outputDir, "src", "ignored.tsx.json"))).toBe(false);
+        expect(fs.existsSync(path.join(outputDir, "outside.ts.json"))).toBe(false);
+    });
+
+    it("keeps multi mode independent from tsconfig filtering", () => {
+        const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-multi-"));
+        tempDirs.push(projectDir);
+        fs.writeFileSync(path.join(projectDir, "tsconfig.json"), JSON.stringify({ files: [] }));
+        fs.writeFileSync(path.join(projectDir, "component.jsx"), "export const component = 1;");
+
+        const inputs = resolveProjectInputs(projectDir, false);
+        expect(inputs.configPath).toBeUndefined();
+        expect(inputs.sources.map((file) => path.basename(file))).toEqual(["component.jsx"]);
     });
 });
