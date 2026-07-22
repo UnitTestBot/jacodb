@@ -6,10 +6,10 @@ basic-block CFG — serialized as JSON that the Kotlin side of `jacodb-ets`
 deserializes with `EtsFileDto.loadFromJson` and converts into `EtsFile` /
 `EtsScene` model objects.
 
-It is a drop-in replacement for the external [ArkAnalyzer](../ARKANALYZER.md)
-dependency: wire-compatible output, same CLI shape, no external checkout
-required. Both frontends remain supported and selectable
-(see [Choosing a provider](#choosing-a-provider)).
+For TypeScript and JavaScript it replaces the external
+[ArkAnalyzer](../ARKANALYZER.md) dependency with wire-compatible output and
+the same CLI shape. ArkTS `.ets` sources deliberately remain on the legacy
+ArkAnalyzer provider (see [Choosing a provider](#choosing-a-provider)).
 
 ```
    .ts / .js sources                      JVM (jacodb-ets)
@@ -24,7 +24,8 @@ required. Both frontends remain supported and selectable
 
 - **Node.js ≥ 18** on `PATH` at runtime.
 - **npm** is needed only when building this repository. The Gradle build bundles
-  the compiler and TypeScript runtime into the `jacodb-ets` JAR.
+  the compiler plus the matching TypeScript `lib*.d.ts` standard libraries into
+  the `jacodb-ets` JAR. Runtime conversion does not download dependencies.
 
 ## Quick start
 
@@ -33,7 +34,7 @@ required. Both frontends remain supported and selectable
 ```shell
 cd jacodb-ets/ts-frontend
 npm ci
-npm run build      # type-checks and creates standalone dist/index.js
+npm run build      # type-checks and creates dist/index.js + matching lib*.d.ts
 ```
 
 Or let Gradle do it (also happens automatically before `:jacodb-ets:test`):
@@ -66,13 +67,14 @@ written per source file, mirroring the input tree under the output directory.
 `--project` finds and applies `tsconfig.json` (including `extends`, compiler
 options, and include/exclude rules); `--multi` deliberately ignores it and
 recursively converts all supported source files. Both modes include
-`.ts/.tsx/.js/.jsx/.mts/.cts/.mjs/.cjs/.ets` sources.
+`.ts/.tsx/.js/.jsx/.mts/.cts/.mjs/.cjs` sources. Use ArkAnalyzer for `.ets`.
 
 ## Using from Kotlin
 
 The main entry points live in `org.jacodb.ets.utils` (`LoadEtsFile.kt`).
-No frontend checkout or working-directory setup is required: the standalone
-script is extracted from the `jacodb-ets` JAR automatically.
+No frontend checkout, network access, or working-directory setup is required:
+the script and its standard-library declarations are extracted together from
+the `jacodb-ets` JAR automatically.
 
 ```kotlin
 import org.jacodb.ets.utils.loadEtsFileAutoConvert
@@ -110,14 +112,14 @@ val file = dto.toEtsFile()
 
 ### Overriding the bundled frontend
 
-The bundled script is the default. For frontend development, it can be
+The bundled runtime is the default. For frontend development, it can be
 overridden with a local checkout:
 
 | Mechanism | Example |
 |---|---|
 | env var | `ETS_FRONTEND_DIR=/path/to/jacodb/jacodb-ets/ts-frontend` |
 | system property | `-Dets.frontend.dir=/path/to/jacodb/jacodb-ets/ts-frontend` |
-| default | bundled resource `ets-frontend/index.js` from the JAR |
+| default | bundled `ets-frontend/runtime.zip` from the JAR |
 
 Additional knobs: `ETS_FRONTEND_SCRIPT` (default `dist/index.js`),
 `NODE_EXECUTABLE` (default `node`).
@@ -125,7 +127,9 @@ Additional knobs: `ETS_FRONTEND_SCRIPT` (default `dist/index.js`),
 ### Choosing a provider
 
 `EtsIrProvider` selects which frontend generates the IR. The default is
-`TS_FRONTEND`; the legacy ArkAnalyzer path is fully preserved:
+`TS_FRONTEND` for TS/JS; a single `.ets` file or a project containing `.ets`
+defaults to `ARKANALYZER`. The legacy path is fully preserved and can always
+be selected explicitly:
 
 ```kotlin
 // explicitly per call:
@@ -177,6 +181,7 @@ before being written — invalid IR is never emitted.
 
 Fully lowered to IR: literals and template strings; all `Ops.kt` operators;
 variables, compound assignments, and short-circuiting logical operators;
+module variables as shared `%dflt` static storage visible to free functions;
 free/method/static/pointer calls; `new` + constructor calls; arrays and element
 access; fields (instance and static,
 including `this.f` in static methods); `if`/ternary; `while`/`do`/`for`/
@@ -186,8 +191,8 @@ including `this.f` in static methods); `if`/ternary; `while`/`do`/`for`/
 `%instInit`/`%statInit`/constructors, inheritance, parameter properties, and
 derived initialization after `super`; static blocks; interfaces (bodyless
 methods); enums (numeric auto-increment and string); namespaces (nested);
-closures (`%AM` methods) with `LexicalEnvType`/`ClosureFieldRef` captures and
-lexical `this`; object literals
+closures (`%AM` methods) with mutable `LexicalEnvType`/`ClosureFieldRef`
+captures, nested function-declaration lifting, and lexical `this`; object literals
 (`%AC` classes); object/array destructuring with defaults and nesting;
 optional chaining; `super()`/`super.m()`; `typeof`/`await`/`yield`/`delete`/
 `void`/`instanceof`/`as`-casts; imports/exports of every flavor.
@@ -203,12 +208,14 @@ The output follows the ArkAnalyzer conventions expected by `Convert.kt`
 (see `../src/main/kotlin/org/jacodb/ets/dto/`):
 
 - every file gets a `%dflt` class; loose top-level statements form its `%dflt`
-  method; free functions become its methods;
+  method; free functions become its methods; module variables are static fields
+  of this class so every method observes the same storage;
 - method prologue: `param_i := ParameterRef(i)` per parameter, then
   `this := ThisRef`;
 - classes get synthesized `%instInit`/`%statInit` initializers; base
   constructors call `%instInit` before their body, while derived constructors
-  call `super` first and initialize fields immediately afterwards; every
+  call `super` first, initialize parameter properties, and then call `%instInit`;
+  `%statInit` preserves source order across static fields and blocks; every
   constructor returns `this` (a forwarding default constructor is synthesized
   when absent);
 - basic blocks are listed with `id == index`, entry block is `0`; a block

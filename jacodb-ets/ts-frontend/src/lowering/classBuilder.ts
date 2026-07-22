@@ -51,7 +51,7 @@ export class ClassBuilder {
         const superClass = this.superClassInfo(decl);
 
         const instanceFields: ts.PropertyDeclaration[] = [];
-        const staticFields: ts.PropertyDeclaration[] = [];
+        const staticInitializers: (ts.PropertyDeclaration | ts.ClassStaticBlockDeclaration)[] = [];
         const fields: FieldDto[] = [];
         const methods: MethodDto[] = [];
         let ctorDecl: ts.ConstructorDeclaration | undefined;
@@ -61,7 +61,7 @@ export class ClassBuilder {
                 fields.push(this.buildField(signature, member));
                 if (member.initializer !== undefined) {
                     if (isStatic(member)) {
-                        staticFields.push(member);
+                        staticInitializers.push(member);
                     } else {
                         instanceFields.push(member);
                     }
@@ -87,17 +87,14 @@ export class ClassBuilder {
             } else if (ts.isSemicolonClassElement(member)) {
                 // ignore
             } else if (ts.isClassStaticBlockDeclaration(member)) {
-                this.ctx.diagnostics.warn(member, "static blocks are folded into %statInit");
-                // handled below via buildStatInit extension: keep simple — lowered into %statInit
+                staticInitializers.push(member);
             } else {
                 this.ctx.diagnostics.warn(member, `unsupported class member: ${ts.SyntaxKind[member.kind]}`);
             }
         }
 
-        const staticBlocks = decl.members.filter(ts.isClassStaticBlockDeclaration);
-
         methods.push(this.buildInstInit(signature, instanceFields));
-        methods.push(this.buildStatInit(signature, staticFields, staticBlocks));
+        methods.push(this.buildStatInit(signature, staticInitializers));
         methods.push(
             ctorDecl !== undefined
                 ? this.buildConstructor(signature, ctorDecl, superClass?.signature)
@@ -333,8 +330,10 @@ export class ClassBuilder {
         m.emitPrologue(prologueParams);
         const thisLocal = m.getOrCreateLocal("this", classType);
         const emitInitializers = (): void => {
-            this.emitInstInitCall(m, declaringClass);
+            // Parameter properties are initialized at constructor entry (after
+            // super() in a derived class), before ordinary instance fields.
             this.emitParameterProperties(m, thisLocal, declaringClass, decl.parameters);
+            this.emitInstInitCall(m, declaringClass);
         };
         if (decl.body !== undefined) {
             if (superClass === undefined) {
@@ -505,24 +504,28 @@ export class ClassBuilder {
 
     private buildStatInit(
         declaringClass: ClassSignatureDto,
-        fields: ts.PropertyDeclaration[],
-        staticBlocks: readonly ts.ClassStaticBlockDeclaration[] = [],
+        initializers: readonly (ts.PropertyDeclaration | ts.ClassStaticBlockDeclaration)[],
     ): MethodDto {
         const m = new MethodContext(this.ctx, declaringClass, STATIC_INIT_METHOD_NAME);
         m.emitPrologue([]);
         const lowerer = new StmtLowerer(m);
-        for (const field of fields) {
-            m.cfg.emit({
-                _: "AssignStmt",
-                left: {
-                    _: "StaticFieldRef",
-                    field: { declaringClass, name: memberName(field.name), type: this.fieldType(field) },
-                },
-                right: lowerer.expr.lowerToImmediate(field.initializer!),
-            });
-        }
-        for (const block of staticBlocks) {
-            lowerer.lowerStatements(block.body.statements);
+        for (const initializer of initializers) {
+            if (ts.isPropertyDeclaration(initializer)) {
+                m.cfg.emit({
+                    _: "AssignStmt",
+                    left: {
+                        _: "StaticFieldRef",
+                        field: {
+                            declaringClass,
+                            name: memberName(initializer.name),
+                            type: this.fieldType(initializer),
+                        },
+                    },
+                    right: lowerer.expr.lowerToImmediate(initializer.initializer!),
+                });
+            } else {
+                lowerer.lowerStatements(initializer.body.statements);
+            }
         }
         m.cfg.ret();
         return {

@@ -35,7 +35,7 @@ import {
     ImportType,
     Modifier,
 } from "../dto/constants";
-import { ClassDto, EtsFileDto, ExportInfoDto, ImportInfoDto, MethodDto, NamespaceDto } from "../dto/model";
+import { ClassDto, EtsFileDto, ExportInfoDto, FieldDto, ImportInfoDto, MethodDto, NamespaceDto } from "../dto/model";
 import { ClassSignatureDto, FileSignatureDto, NamespaceSignatureDto } from "../dto/signatures";
 import { VOID_TYPE } from "../dto/types";
 import { TypeConverter } from "../types/convert";
@@ -82,7 +82,14 @@ export function buildEtsFile(
         nextMethodId: 0,
         nextClassId: 0,
     };
-    const ctx: LoweringContext = { checker, converter, fileSignatureFor, diagnostics, anonymous };
+    const ctx: LoweringContext = {
+        checker,
+        converter,
+        fileSignatureFor,
+        diagnostics,
+        anonymous,
+        moduleFields: new Map(),
+    };
 
     const builder = new FileBuilder(ctx, fileSignature);
     return builder.build(sourceFile);
@@ -298,6 +305,7 @@ class FileBuilder {
             defaultClassSignature.declaringNamespace = declaringNamespace;
         }
 
+        const fields = this.registerModuleFields(defaultClassSignature, statements);
         const methods: MethodDto[] = [this.buildDefaultMethod(defaultClassSignature, statements)];
 
         for (const statement of statements) {
@@ -324,11 +332,44 @@ class FileBuilder {
             category: 0,
             superClassName: "",
             implementedInterfaceNames: [],
-            fields: [],
+            fields,
             methods,
         });
 
         return { classes, namespaces };
+    }
+
+    /** Direct scope variables have one storage location shared by all scope methods. */
+    private registerModuleFields(
+        declaringClass: ClassSignatureDto,
+        statements: readonly ts.Statement[],
+    ): FieldDto[] {
+        const fields: FieldDto[] = [];
+        const registeredSymbols = new Set<ts.Symbol>();
+        for (const declaration of scopeVariableDeclarations(statements)) {
+            const declarationList = declaration.parent;
+            const statement = declarationList.parent;
+            const declarationModifiers = ts.isVariableStatement(statement) ? modifiersOf(statement) : 0;
+            const isConst = (declarationList.flags & ts.NodeFlags.Const) !== 0;
+            for (const identifier of bindingIdentifiers(declaration.name)) {
+                const type = this.ctx.converter.typeOfNode(identifier);
+                const signature = { declaringClass, name: identifier.text, type };
+                const symbol = this.ctx.checker.getSymbolAtLocation(identifier);
+                if (symbol !== undefined) {
+                    if (registeredSymbols.has(symbol)) continue;
+                    registeredSymbols.add(symbol);
+                    this.ctx.moduleFields.set(symbol, signature);
+                }
+                fields.push({
+                    signature,
+                    modifiers: declarationModifiers | Modifier.STATIC | (isConst ? Modifier.CONST : 0),
+                    decorators: [],
+                    questionToken: false,
+                    exclamationToken: false,
+                });
+            }
+        }
+        return fields;
     }
 
     private buildNamespace(decl: ts.ModuleDeclaration): NamespaceDto | undefined {
@@ -392,6 +433,44 @@ class FileBuilder {
             body: m.build(),
         };
     }
+}
+
+function bindingIdentifiers(name: ts.BindingName): ts.Identifier[] {
+    if (ts.isIdentifier(name)) return [name];
+    return name.elements.flatMap((element) =>
+        ts.isOmittedExpression(element) ? [] : bindingIdentifiers(element.name),
+    );
+}
+
+/** Direct declarations plus function-scoped `var`s nested in top-level control flow. */
+function scopeVariableDeclarations(statements: readonly ts.Statement[]): ts.VariableDeclaration[] {
+    const declarations = new Set<ts.VariableDeclaration>();
+    const visit = (node: ts.Node): void => {
+        if (isNestedScopeBoundary(node)) return;
+        if (ts.isVariableDeclarationList(node)) {
+            const direct = ts.isVariableStatement(node.parent) && statements.includes(node.parent);
+            const functionScoped = (node.flags & ts.NodeFlags.BlockScoped) === 0;
+            if (direct || functionScoped) {
+                node.declarations.forEach((declaration) => declarations.add(declaration));
+            }
+        }
+        ts.forEachChild(node, visit);
+    };
+    statements.forEach(visit);
+    return [...declarations];
+}
+
+function isNestedScopeBoundary(node: ts.Node): boolean {
+    return ts.isFunctionDeclaration(node)
+        || ts.isFunctionExpression(node)
+        || ts.isArrowFunction(node)
+        || ts.isMethodDeclaration(node)
+        || ts.isConstructorDeclaration(node)
+        || ts.isGetAccessorDeclaration(node)
+        || ts.isSetAccessorDeclaration(node)
+        || ts.isClassDeclaration(node)
+        || ts.isModuleDeclaration(node)
+        || ts.isClassStaticBlockDeclaration(node);
 }
 
 // ----------------------------------------------------------------------

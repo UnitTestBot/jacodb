@@ -16,7 +16,12 @@
 
 package org.jacodb.ets.test
 
+import org.jacodb.ets.dto.ArrayTypeDto
+import org.jacodb.ets.dto.AssignStmtDto
+import org.jacodb.ets.dto.BooleanTypeDto
 import org.jacodb.ets.dto.EtsFileDto
+import org.jacodb.ets.dto.NewArrayExprDto
+import org.jacodb.ets.dto.NumberTypeDto
 import org.jacodb.ets.dto.toEtsFile
 import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsCaughtExceptionRef
@@ -25,11 +30,13 @@ import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
 import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
 import org.jacodb.ets.utils.EtsIrProvider
+import org.jacodb.ets.utils.defaultProviderFor
 import org.jacodb.ets.utils.etsIrSerializerScript
 import org.jacodb.ets.utils.generateEtsIR
 import org.jacodb.ets.utils.loadEtsFileAutoConvert
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
+import kotlin.io.path.createDirectories
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.exists
 import kotlin.io.path.readText
@@ -76,6 +83,47 @@ class EtsTsFrontendTest {
     }
 
     @Test
+    fun `bundled frontend keeps matching TypeScript standard libraries`() {
+        val script = etsIrSerializerScript(EtsIrProvider.TS_FRONTEND)
+        assertTrue(
+            script.parent.resolve("lib.es2020.d.ts").exists(),
+            "the production frontend runtime must include TypeScript standard libraries next to index.js",
+        )
+
+        val dto = runFrontend(
+            """
+                const flags = new Array<boolean>(3);
+                const values = Array.from([1, 2]);
+            """.trimIndent(),
+        )
+        val defaultClass = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+        assertEquals(ArrayTypeDto(BooleanTypeDto, 1), defaultClass.fields.single { it.signature.name == "flags" }.signature.type)
+        assertEquals(ArrayTypeDto(NumberTypeDto, 1), defaultClass.fields.single { it.signature.name == "values" }.signature.type)
+
+        val allocation = defaultClass.methods
+            .single { it.signature.name == DEFAULT_ARK_METHOD_NAME }
+            .body!!
+            .cfg
+            .blocks
+            .flatMap { it.stmts }
+            .filterIsInstance<AssignStmtDto>()
+            .map { it.right }
+            .filterIsInstance<NewArrayExprDto>()
+            .single { it.elementType == BooleanTypeDto }
+        assertEquals(BooleanTypeDto, allocation.elementType)
+    }
+
+    @Test
+    fun `ets files stay on the legacy provider by default`() {
+        val dir = createTempDirectory("ets-provider-test")
+        assertEquals(EtsIrProvider.ARKANALYZER, defaultProviderFor(dir.resolve("sample.ets"), isProject = false))
+        assertEquals(EtsIrProvider.ARKANALYZER, defaultProviderFor(dir.resolve("sample.ETS"), isProject = false))
+        dir.resolve("nested").createDirectories()
+        dir.resolve("nested/sample.ets").writeText("")
+        assertEquals(EtsIrProvider.ARKANALYZER, defaultProviderFor(dir, isProject = true))
+    }
+
+    @Test
     fun `straight-line program lowers, converts and linearizes`() {
         val etsFileDto = runFrontend(
             """
@@ -101,8 +149,8 @@ class EtsTsFrontendTest {
 
         val defaultMethod = defaultClass.methods.single { it.name == DEFAULT_ARK_METHOD_NAME }
         assertTrue(defaultMethod.cfg.stmts.size >= 8, "top-level code must be lowered into the default method")
-        assertTrue(defaultMethod.locals.any { it.name == "x" }, "local 'x' must be declared")
-        assertTrue(defaultMethod.locals.any { it.name == "arr" }, "local 'arr' must be declared")
+        assertTrue(defaultClass.fields.any { it.name == "x" }, "module field 'x' must be declared")
+        assertTrue(defaultClass.fields.any { it.name == "arr" }, "module field 'arr' must be declared")
     }
 
     @Test
@@ -264,7 +312,11 @@ class EtsTsFrontendTest {
                 const handlers = [1, 2, 3].map((x: number) => x * 2);
 
                 function makeMultiplier(factor: number): (value: number) => number {
-                    return (value: number) => value * factor;
+                    let total = factor;
+                    return (value: number) => {
+                        total += value;
+                        return total;
+                    };
                 }
 
                 function safeFirst(arr?: number[]): number | undefined {
@@ -296,16 +348,21 @@ class EtsTsFrontendTest {
                 .any { it.rhv is EtsClosureFieldRef },
             "captured locals must be loaded from a lexical environment",
         )
+        assertTrue(
+            capturingMethod.cfg.stmts
+                .filterIsInstance<EtsAssignStmt>()
+                .any { it.lhv is EtsClosureFieldRef },
+            "captured locals must be writable through the lexical environment",
+        )
 
         // Object literal became an anonymous class with fields and a method.
         val anonymousClass = scene.projectClasses.single { it.name.startsWith("%AC0") }
         assertTrue(anonymousClass.fields.any { it.name == "host" })
         assertTrue(anonymousClass.methods.any { it.name == "describe" })
 
-        // Destructured locals exist in the default method.
-        val defaultMethod = defaultClass.methods.single { it.name == DEFAULT_ARK_METHOD_NAME }
-        assertTrue(defaultMethod.locals.any { it.name == "host" })
-        assertTrue(defaultMethod.locals.any { it.name == "p" })
+        // Destructured module bindings use the default class's shared storage.
+        assertTrue(defaultClass.fields.any { it.name == "host" })
+        assertTrue(defaultClass.fields.any { it.name == "p" })
 
         // Optional chaining and generators linearize fine.
         assertTrue(defaultClass.methods.single { it.name == "safeFirst" }.cfg.stmts.isNotEmpty())

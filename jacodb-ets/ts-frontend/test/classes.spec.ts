@@ -187,7 +187,7 @@ describe("class lowering", () => {
         });
     });
 
-    it("places derived parameter properties after super and instance fields", () => {
+    it("places derived parameter properties after super and before instance fields", () => {
         const { file } = lower(`
             class Base { constructor() {} }
             class Derived extends Base {
@@ -201,8 +201,33 @@ describe("class lowering", () => {
         const propertyIndex = stmts.findIndex(
             (stmt) => stmt._ === "AssignStmt" && stmt.left._ === "InstanceFieldRef" && stmt.left.field.name === "value",
         );
-        expect(superIndex).toBeLessThan(initIndex);
-        expect(initIndex).toBeLessThan(propertyIndex);
+        expect(superIndex).toBeLessThan(propertyIndex);
+        expect(propertyIndex).toBeLessThan(initIndex);
+    });
+
+    it("preserves source order between static fields and static blocks", () => {
+        const { file } = lower(`
+            function mark(value: number): number { return value; }
+            class Ordered {
+                static first = mark(1);
+                static { mark(2); }
+                static third = mark(3);
+            }
+        `);
+        const stmts = singleBlockStmts(methodOf(classByName(file, "Ordered"), "%statInit"));
+        const marks = stmts.flatMap((stmt) => {
+            const call = stmt._ === "CallStmt"
+                ? stmt.expr
+                : stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+                  ? stmt.right
+                  : undefined;
+            return call?.method.name === "mark" ? [call.args[0]] : [];
+        });
+        expect(marks).toMatchObject([
+            { _: "Constant", value: "1" },
+            { _: "Constant", value: "2" },
+            { _: "Constant", value: "3" },
+        ]);
     });
 
     it("lowers parameter properties into fields and constructor assignments", () => {

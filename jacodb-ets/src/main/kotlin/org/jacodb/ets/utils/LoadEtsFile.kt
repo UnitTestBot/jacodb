@@ -23,15 +23,18 @@ import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsScene
 import java.io.FileNotFoundException
 import java.nio.file.Path
+import java.util.zip.ZipInputStream
 import kotlin.io.path.Path
 import kotlin.io.path.PathWalkOption
 import kotlin.io.path.absolute
+import kotlin.io.path.createDirectories
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.createTempFile
 import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.inputStream
 import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.outputStream
 import kotlin.io.path.pathString
 import kotlin.io.path.walk
 import kotlin.time.Duration
@@ -42,8 +45,8 @@ private val logger = KotlinLogging.logger {}
 /**
  * Which frontend generates the EtsIR JSON.
  *
- * - [TS_FRONTEND] — the native TypeScript frontend bundled as a standalone
- *   script in the `jacodb-ets` JAR. Default.
+ * - [TS_FRONTEND] — the native TypeScript frontend bundled with its standard
+ *   library declarations in the `jacodb-ets` JAR. Default.
  * - [ARKANALYZER] — the external ArkAnalyzer `serializeArkIR` script
  *   (requires the `ARKANALYZER_DIR` environment variable).
  *
@@ -83,17 +86,49 @@ private const val DEFAULT_ETS_FRONTEND_DIR = "ts-frontend"
 
 private const val ENV_VAR_ETS_FRONTEND_SCRIPT = "ETS_FRONTEND_SCRIPT"
 private const val DEFAULT_ETS_FRONTEND_SCRIPT = "dist/index.js"
-private const val BUNDLED_ETS_FRONTEND_SCRIPT = "/ets-frontend/index.js"
+private const val BUNDLED_ETS_FRONTEND_RUNTIME = "/ets-frontend/runtime.zip"
 
 private const val ENV_VAR_NODE_EXECUTABLE = "NODE_EXECUTABLE"
 private const val DEFAULT_NODE_EXECUTABLE = "node"
 
 private val extractedBundledFrontend: Path? by lazy {
-    EtsIrProvider::class.java.getResourceAsStream(BUNDLED_ETS_FRONTEND_SCRIPT)?.use { input ->
-        createTempFile("jacodb-ets-frontend-", suffix = ".js").also { target ->
-            target.toFile().deleteOnExit()
-            target.toFile().outputStream().use(input::copyTo)
+    EtsIrProvider::class.java.getResourceAsStream(BUNDLED_ETS_FRONTEND_RUNTIME)?.use { input ->
+        val runtimeDir = createTempDirectory("jacodb-ets-frontend-")
+        runtimeDir.toFile().deleteOnExit()
+        ZipInputStream(input).use { archive ->
+            var entry = archive.nextEntry
+            while (entry != null) {
+                val target = runtimeDir.resolve(entry.name).normalize()
+                require(target.startsWith(runtimeDir)) {
+                    "Unsafe entry in bundled ts-frontend runtime: '${entry.name}'"
+                }
+                if (entry.isDirectory) {
+                    target.createDirectories()
+                    target.toFile().deleteOnExit()
+                } else {
+                    target.parent.createDirectories()
+                    target.outputStream().use(archive::copyTo)
+                    target.toFile().deleteOnExit()
+                }
+                archive.closeEntry()
+                entry = archive.nextEntry
+            }
         }
+        runtimeDir.resolve("index.js").takeIf(Path::exists)
+    }
+}
+
+/** ArkTS remains on the legacy provider; the native frontend owns TS/JS only. */
+internal fun defaultProviderFor(path: Path, isProject: Boolean): EtsIrProvider {
+    val containsEts = if (isProject) {
+        path.exists() && path.walk().any { it.extension.equals("ets", ignoreCase = true) }
+    } else {
+        path.extension.equals("ets", ignoreCase = true)
+    }
+    return if (containsEts) {
+        EtsIrProvider.ARKANALYZER
+    } else {
+        EtsIrProvider.default()
     }
 }
 
@@ -141,7 +176,7 @@ private fun resolveFrontendScript(frontendDir: Path, scriptPath: String): Path {
     if (!frontendDir.exists()) {
         throw FileNotFoundException(
             "ts-frontend directory does not exist: '${frontendDir.absolute()}'. " +
-                "The bundled frontend resource '$BUNDLED_ETS_FRONTEND_SCRIPT' is unavailable. " +
+                "The bundled frontend resource '$BUNDLED_ETS_FRONTEND_RUNTIME' is unavailable. " +
                 "Set the '$ENV_VAR_ETS_FRONTEND_DIR' environment variable " +
                 "(or the '$PROPERTY_ETS_FRONTEND_DIR' system property) to a frontend checkout."
         )
@@ -163,7 +198,7 @@ fun generateEtsIR(
     loadEntrypoints: Boolean = true,
     useArkAnalyzerTypeInference: Int? = null,
     timeout: Duration? = 10.seconds,
-    provider: EtsIrProvider = EtsIrProvider.default(),
+    provider: EtsIrProvider = defaultProviderFor(projectPath, isProject),
 ): Path {
     val script = etsIrSerializerScript(provider)
     val node = System.getenv(ENV_VAR_NODE_EXECUTABLE) ?: DEFAULT_NODE_EXECUTABLE
@@ -211,7 +246,7 @@ fun generateSdkIR(sdkPath: Path): Path = generateEtsIR(
 fun loadEtsFileAutoConvert(
     path: Path,
     useArkAnalyzerTypeInference: Int? = 1,
-    provider: EtsIrProvider = EtsIrProvider.default(),
+    provider: EtsIrProvider = defaultProviderFor(path, isProject = false),
 ): EtsFile {
     val irFilePath = generateEtsIR(
         path,

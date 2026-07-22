@@ -61,7 +61,7 @@ describe("closures", () => {
         expect(methodByName(file, "%AM1$%AM0$%dflt")).toBeDefined();
     });
 
-    it("loads captured locals through a lexical environment", () => {
+    it("reads and writes captured locals through a lexical environment", () => {
         const { file } = lower(`
             function outer(seed: number): (delta: number) => number {
                 let current = seed;
@@ -83,15 +83,18 @@ describe("closures", () => {
             { name: "delta", type: { _: "NumberType" } },
         ]);
         const stmts = singleBlockStmts(closure);
-        expect(stmts.slice(0, 4)).toMatchObject([
+        expect(stmts.slice(0, 2)).toMatchObject([
             { left: { name: "%closures0" }, right: { _: "ParameterRef", index: 0 } },
             { left: { name: "delta" }, right: { _: "ParameterRef", index: 1 } },
-            {
-                left: { name: "current" },
-                right: { _: "ClosureFieldRef", base: { name: "%closures0" }, fieldName: "current" },
-            },
-            { left: { name: "this" }, right: { _: "ThisRef" } },
         ]);
+        expect(stmts).toContainEqual(expect.objectContaining({
+            left: expect.objectContaining({
+                _: "ClosureFieldRef",
+                base: { name: "%closures0", type: expect.anything() },
+                fieldName: "current",
+            }),
+        }));
+        expect(closure.body!.locals).not.toContainEqual(expect.objectContaining({ name: "current" }));
         const outer = methodByName(file, "outer");
         expect(outer.body!.locals).toContainEqual(expect.objectContaining({
             name: "%closures0",
@@ -144,6 +147,26 @@ describe("closures", () => {
             "%closures1",
         ]);
     });
+
+    it("hoists nested function declarations and captures their outer bindings", () => {
+        const { file } = lower(`
+            function outer(seed: number): number {
+                return inner();
+                function inner(): number {
+                    seed++;
+                    return seed;
+                }
+            }
+        `);
+        const outer = methodByName(file, "outer");
+        const inner = methodByName(file, "%AM0$outer");
+        expect(singleBlockStmts(outer)).toContainEqual(expect.objectContaining({
+            right: expect.objectContaining({ _: "PtrCallExpr", ptr: expect.objectContaining({ _: "Local" }) }),
+        }));
+        expect(singleBlockStmts(inner)).toContainEqual(expect.objectContaining({
+            left: expect.objectContaining({ _: "ClosureFieldRef", fieldName: "seed" }),
+        }));
+    });
 });
 
 describe("object literals", () => {
@@ -181,7 +204,11 @@ describe("destructuring", () => {
             (s): s is AssignStmtDto => s._ === "AssignStmt" && s.right._ === "InstanceFieldRef",
         );
         const bound = fieldReads.map((s) => ({
-            local: (s.left as { name: string }).name,
+            local: s.left._ === "Local"
+                ? s.left.name
+                : s.left._ === "StaticFieldRef"
+                  ? s.left.field.name
+                  : undefined,
             field: (s.right as { field: { name: string } }).field.name,
         }));
         expect(bound).toContainEqual({ local: "host", field: "host" });
@@ -210,7 +237,11 @@ describe("destructuring", () => {
         expect(indices).toContain("0");
         expect(indices).toContain("2");
         expect(indices).not.toContain("1"); // hole skipped
-        expect(stmts.some((s) => s._ === "AssignStmt" && s.left._ === "Local" && s.left.name === "inner")).toBe(true);
+        expect(stmts.some((s) =>
+            s._ === "AssignStmt"
+            && s.left._ === "StaticFieldRef"
+            && s.left.field.name === "inner",
+        )).toBe(true);
     });
 
     it("supports destructuring in for-of", () => {

@@ -27,6 +27,7 @@ dependencies {
 // ----------------------------------------------------------------------------
 
 val tsFrontendDir: File = projectDir.resolve("ts-frontend")
+val tsFrontendDist: File = tsFrontendDir.resolve("dist")
 val npmExecutable: String = if (Os.isFamily(Os.FAMILY_WINDOWS)) "npm.cmd" else "npm"
 
 fun isNpmAvailable(): Boolean = try {
@@ -46,7 +47,7 @@ val installTsFrontend = tasks.register<Exec>("installTsFrontend") {
 
 val buildTsFrontend = tasks.register<Exec>("buildTsFrontend") {
     group = "build"
-    description = "Type-checks and bundles the ts-frontend into a standalone Node.js script."
+    description = "Type-checks and builds the self-contained ts-frontend runtime."
     dependsOn(installTsFrontend)
     workingDir = tsFrontendDir
     commandLine(npmExecutable, "run", "build")
@@ -56,12 +57,24 @@ val buildTsFrontend = tasks.register<Exec>("buildTsFrontend") {
         tsFrontendDir.resolve("package-lock.json"),
         tsFrontendDir.resolve("tsconfig.json"),
     )
-    outputs.file(tsFrontendDir.resolve("dist/index.js"))
+    inputs.dir(tsFrontendDir.resolve("scripts"))
+    outputs.dir(tsFrontendDist)
+}
+
+val packageTsFrontendRuntime = tasks.register<Zip>("packageTsFrontendRuntime") {
+    group = "build"
+    description = "Packages the ts-frontend script and TypeScript standard libraries."
+    dependsOn(buildTsFrontend)
+    from(tsFrontendDist) {
+        include("index.js", "lib*.d.ts")
+    }
+    archiveFileName.set("runtime.zip")
+    destinationDirectory.set(layout.buildDirectory.dir("generated/etsFrontend"))
 }
 
 tasks.processResources {
-    dependsOn(buildTsFrontend)
-    from(tsFrontendDir.resolve("dist/index.js")) {
+    dependsOn(packageTsFrontendRuntime)
+    from(packageTsFrontendRuntime.flatMap { it.archiveFile }) {
         into("ets-frontend")
     }
 }

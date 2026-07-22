@@ -286,8 +286,12 @@ export class ExprLowerer {
         if (node.text === "undefined") {
             return constant("undefined", UNDEFINED_TYPE);
         }
-        // Every named reference in a method body is a Local; unresolved globals
-        // (e.g. `console`) become Locals with UnknownType, same as ArkAnalyzer.
+        const captured = this.m.capturedRefForIdentifier(node);
+        if (captured !== undefined) return captured;
+        const moduleField = this.m.moduleFieldForIdentifier(node);
+        if (moduleField !== undefined) return moduleField;
+        // Other named references are locals; unresolved globals (e.g. console)
+        // become locals with UnknownType, same as ArkAnalyzer.
         return this.m.localForIdentifier(node, this.safeTypeOf(node));
     }
 
@@ -364,6 +368,10 @@ export class ExprLowerer {
             return this.lowerLValue(node.expression);
         }
         if (ts.isIdentifier(node)) {
+            const captured = this.m.capturedRefForIdentifier(node);
+            if (captured !== undefined) return captured;
+            const moduleField = this.m.moduleFieldForIdentifier(node);
+            if (moduleField !== undefined) return moduleField;
             return this.m.localForIdentifier(node, this.safeTypeOf(node));
         }
         if (ts.isPropertyAccessExpression(node)) {
@@ -731,31 +739,68 @@ export class ExprLowerer {
     lowerCall(node: ts.CallExpression): ValueDto {
         const callee = node.expression;
 
-        // a?.b(...) / f?.(...) — wrap the whole call in a null-check diamond.
+        // `a?.b(...)`: evaluate/test the receiver before evaluating arguments.
         if (ts.isPropertyAccessExpression(callee) && callee.questionDotToken !== undefined) {
             return this.optionalDiamond(callee.expression, this.safeTypeOf(node), (obj) => ({
                 _: "InstanceCallExpr",
                 instance: obj,
                 method: this.methodSignatureForCall(node, callee.name.text, this.classSignatureFromType(obj.type)),
-                args: node.arguments.map((a) =>
-                    ts.isSpreadElement(a) ? this.spreadFallback(a) : this.lowerToImmediate(a),
-                ),
+                args: this.lowerCallArguments(node),
             }));
         }
+
+        // `a.b?.(...)`: evaluate receiver and method value exactly once, test
+        // the method value, but retain `a` as the call receiver (`this`).
+        if (node.questionDotToken !== undefined && ts.isPropertyAccessExpression(callee)) {
+            const staticTarget = this.classLikeSignatureOf(callee.expression);
+            if (staticTarget !== undefined) {
+                const methodValue = this.materialize(
+                    {
+                        _: "StaticFieldRef",
+                        field: { declaringClass: staticTarget, name: callee.name.text, type: this.safeTypeOf(callee) },
+                    },
+                    this.safeTypeOf(callee),
+                );
+                return this.optionalEvaluatedDiamond(methodValue, this.safeTypeOf(node), () => ({
+                    _: "StaticCallExpr",
+                    method: this.methodSignatureForCall(node, callee.name.text, staticTarget),
+                    args: this.lowerCallArguments(node),
+                }));
+            }
+            const receiver = this.snapshotToLocal(callee.expression);
+            const methodValue = this.materialize(
+                {
+                    _: "InstanceFieldRef",
+                    instance: receiver,
+                    field: {
+                        declaringClass: this.classSignatureFromType(receiver.type),
+                        name: callee.name.text,
+                        type: this.safeTypeOf(callee),
+                    },
+                },
+                this.safeTypeOf(callee),
+            );
+            return this.optionalEvaluatedDiamond(methodValue, this.safeTypeOf(node), () => ({
+                _: "InstanceCallExpr",
+                instance: receiver,
+                method: this.methodSignatureForCall(
+                    node,
+                    callee.name.text,
+                    this.classSignatureFromType(receiver.type),
+                ),
+                args: this.lowerCallArguments(node),
+            }));
+        }
+
+        // `f?.(...)`: evaluate/test the function value before arguments.
         if (node.questionDotToken !== undefined) {
             return this.optionalDiamond(callee, this.safeTypeOf(node), (obj) => ({
                 _: "PtrCallExpr",
                 ptr: obj,
                 method: this.methodSignatureForCall(node, "%call", UNKNOWN_CLASS_SIGNATURE),
-                args: node.arguments.map((a) =>
-                    ts.isSpreadElement(a) ? this.spreadFallback(a) : this.lowerToImmediate(a),
-                ),
+                args: this.lowerCallArguments(node),
             }));
         }
-
-        const args = node.arguments.map((a) =>
-            ts.isSpreadElement(a) ? this.spreadFallback(a) : this.lowerToImmediate(a),
-        );
 
         // `super(...)` — call the superclass constructor on `this`.
         if (callee.kind === ts.SyntaxKind.SuperKeyword) {
@@ -765,7 +810,7 @@ export class ExprLowerer {
                 _: "InstanceCallExpr",
                 instance: thisLocal,
                 method: this.methodSignatureForCall(node, CONSTRUCTOR_NAME, superSignature),
-                args,
+                args: this.lowerCallArguments(node),
             };
         }
 
@@ -777,7 +822,7 @@ export class ExprLowerer {
                 _: "InstanceCallExpr",
                 instance: thisLocal,
                 method: this.methodSignatureForCall(node, callee.name.text, superSignature),
-                args,
+                args: this.lowerCallArguments(node),
             };
         }
 
@@ -788,54 +833,76 @@ export class ExprLowerer {
                 return {
                     _: "StaticCallExpr",
                     method: this.methodSignatureForCall(node, methodName, staticTarget),
-                    args,
+                    args: this.lowerCallArguments(node),
                 };
             }
-            const instance = this.lowerToLocal(callee.expression);
+            // ECMAScript evaluates the receiver before any argument.
+            const instance = this.snapshotToLocal(callee.expression);
             return {
                 _: "InstanceCallExpr",
                 instance,
                 method: this.methodSignatureForCall(node, methodName, this.classSignatureFromType(instance.type)),
-                args,
+                args: this.lowerCallArguments(node),
             };
         }
 
         if (ts.isIdentifier(callee)) {
             const resolved = this.resolveCalleeDeclaration(node);
-            if (resolved !== undefined && ts.isFunctionDeclaration(resolved) && isProjectFile(resolved)) {
+            if (
+                resolved !== undefined
+                && ts.isFunctionDeclaration(resolved)
+                && isProjectFile(resolved)
+                && isScopeFunctionDeclaration(resolved)
+            ) {
                 // Free function declared in a project file: method of that file's %dflt class.
                 const declaringClass: ClassSignatureDto = {
                     name: DEFAULT_ARK_CLASS_NAME,
                     declaringFile: this.m.ctx.fileSignatureFor(resolved.getSourceFile()),
                 };
-                return { _: "StaticCallExpr", method: this.methodSignatureForCall(node, callee.text, declaringClass), args };
+                return {
+                    _: "StaticCallExpr",
+                    method: this.methodSignatureForCall(node, callee.text, declaringClass),
+                    args: this.lowerCallArguments(node),
+                };
             }
             if (resolved === undefined && !isDeclaredLocalValue(this.m, callee)) {
                 // Fully unresolved global callee — static call with the UNKNOWN class.
                 return {
                     _: "StaticCallExpr",
                     method: this.methodSignatureForCall(node, callee.text, UNKNOWN_CLASS_SIGNATURE),
-                    args,
+                    args: this.lowerCallArguments(node),
                 };
             }
-            // Function value in a variable -> pointer call.
-            const localCallee = this.m.localForIdentifier(callee, this.safeTypeOf(callee));
+            // Snapshot a function value before arguments; an argument may mutate
+            // the binding but must not change this call's selected callee.
+            const localCallee = this.snapshotToLocal(callee);
             return {
                 _: "PtrCallExpr",
                 ptr: localCallee,
                 method: this.methodSignatureForCall(node, callee.text, UNKNOWN_CLASS_SIGNATURE),
-                args,
+                args: this.lowerCallArguments(node),
             };
         }
 
-        // Computed callee: evaluate to a local, pointer call.
-        const ptr = this.lowerToLocal(callee);
+        // Computed callee is evaluated before arguments.
+        const ptr = this.snapshotToLocal(callee);
         return {
             _: "PtrCallExpr",
             ptr,
             method: this.methodSignatureForCall(node, "%call", UNKNOWN_CLASS_SIGNATURE),
-            args,
+            args: this.lowerCallArguments(node),
         };
+    }
+
+    private lowerCallArguments(node: ts.CallExpression): ValueDto[] {
+        return node.arguments.map((argument) =>
+            ts.isSpreadElement(argument) ? this.spreadFallback(argument) : this.lowerToImmediate(argument),
+        );
+    }
+
+    /** Preserve an already selected receiver/callee even if an argument mutates its source binding. */
+    private snapshotToLocal(node: ts.Expression): LocalDto {
+        return this.materialize(this.lowerExpr(node), this.safeTypeOf(node));
     }
 
     private lowerNew(node: ts.NewExpression): ValueDto {
@@ -952,9 +1019,16 @@ export class ExprLowerer {
      * FunctionType. Captured locals are carried by an implicit LexicalEnvType
      * parameter and loaded through ClosureFieldRef in the lifted method.
      */
-    private lowerClosure(node: ts.ArrowFunction | ts.FunctionExpression): ValueDto {
+    lowerFunctionDeclaration(node: ts.FunctionDeclaration): LocalDto {
+        return this.lowerClosure(node);
+    }
+
+    private lowerClosure(node: ts.ArrowFunction | ts.FunctionExpression | ts.FunctionDeclaration): LocalDto {
         if (this.lowerFunctionBody === undefined) {
             throw new LoweringError("closure in a context without a body lowerer");
+        }
+        if (node.body === undefined) {
+            throw new LoweringError("function declaration without a body");
         }
         const registry = this.m.ctx.anonymous;
         const name = `${ANONYMOUS_METHOD_PREFIX}${registry.nextMethodId++}$${this.m.methodName}`;
@@ -963,10 +1037,12 @@ export class ExprLowerer {
         const { parameters, prologueParams } = buildParameters(this.m.ctx, node);
         const returnType = returnTypeOf(this.m.ctx, node);
         const baseSignature: MethodSignatureDto = { declaringClass, name, parameters, returnType };
-        const captures = collectCapturedIdentifiers(node, this.m.checker).map((identifier) => ({
-            identifier,
-            outerLocal: this.m.localForIdentifier(identifier, this.safeTypeOf(identifier)),
-        }));
+        const captures = collectCapturedIdentifiers(node, this.m.checker)
+            .filter((identifier) => this.m.moduleFieldForIdentifier(identifier) === undefined)
+            .map((identifier) => ({
+                identifier,
+                outerLocal: this.m.localForCapture(identifier, this.safeTypeOf(identifier)),
+            }));
 
         let signature = baseSignature;
         let environment:
@@ -1105,16 +1181,25 @@ export class ExprLowerer {
         resultType: TypeDto,
         access: (obj: LocalDto) => ValueDto,
     ): LocalDto {
+        const obj = this.snapshotToLocal(objectNode);
+        return this.optionalEvaluatedDiamond(obj, resultType, () => access(obj));
+    }
+
+    /** Null-check diamond for a value that has already been evaluated once. */
+    private optionalEvaluatedDiamond(
+        tested: LocalDto,
+        resultType: TypeDto,
+        access: () => ValueDto,
+    ): LocalDto {
         const cfg = this.m.cfg;
-        const obj = this.lowerToLocal(objectNode);
         const result = this.m.newTemp(resultType);
         const accessLabel = cfg.newLabel();
         const elseLabel = cfg.newLabel();
         const joinLabel = cfg.newLabel();
 
-        cfg.branch(this.relation("!=", obj, constant("null", NULL_TYPE)), accessLabel, elseLabel);
+        cfg.branch(this.relation("!=", tested, constant("null", NULL_TYPE)), accessLabel, elseLabel);
         cfg.placeLabel(accessLabel);
-        cfg.emit({ _: "AssignStmt", left: result, right: access(obj) });
+        cfg.emit({ _: "AssignStmt", left: result, right: access() });
         cfg.goto(joinLabel);
         cfg.placeLabel(elseLabel);
         cfg.emit({ _: "AssignStmt", left: result, right: constant("undefined", UNDEFINED_TYPE) });
@@ -1286,6 +1371,7 @@ function objectField(declaringClass: ClassSignatureDto, name: string, type: Type
 function lvalueType(target: LValueDto): TypeDto {
     switch (target._) {
         case "Local":
+        case "ClosureFieldRef":
         case "ArrayRef":
             return target.type;
         case "InstanceFieldRef":
@@ -1305,6 +1391,10 @@ function isProjectFile(decl: ts.Node): boolean {
     return !decl.getSourceFile().isDeclarationFile;
 }
 
+function isScopeFunctionDeclaration(decl: ts.FunctionDeclaration): boolean {
+    return ts.isSourceFile(decl.parent) || ts.isModuleBlock(decl.parent);
+}
+
 /**
  * Collect source locals referenced from outside a lifted function. Traversing
  * nested functions as well propagates transitive captures through nested
@@ -1312,9 +1402,10 @@ function isProjectFile(decl: ts.Node): boolean {
  * are excluded.
  */
 function collectCapturedIdentifiers(
-    closure: ts.ArrowFunction | ts.FunctionExpression,
+    closure: ts.ArrowFunction | ts.FunctionExpression | ts.FunctionDeclaration,
     checker: ts.TypeChecker,
 ): ts.Identifier[] {
+    if (closure.body === undefined) return [];
     const captures = new Map<ts.Symbol, ts.Identifier>();
     const visit = (node: ts.Node): void => {
         if (ts.isIdentifier(node)) {
@@ -1340,7 +1431,10 @@ function collectCapturedIdentifiers(
 }
 
 function isCapturableDeclaration(node: ts.Declaration): boolean {
-    return ts.isVariableDeclaration(node) || ts.isParameter(node) || ts.isBindingElement(node);
+    return ts.isVariableDeclaration(node)
+        || ts.isParameter(node)
+        || ts.isBindingElement(node)
+        || ts.isFunctionDeclaration(node);
 }
 
 function isNodeWithin(node: ts.Node, ancestor: ts.Node): boolean {

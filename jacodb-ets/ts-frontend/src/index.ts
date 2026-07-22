@@ -114,7 +114,7 @@ export function parseArgs(argv: string[]): CliArgs | string {
     return args;
 }
 
-const SOURCE_EXTENSIONS = [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs", ".ets"];
+const SOURCE_EXTENSIONS = [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"];
 
 function isSourceFilePath(filePath: string): boolean {
     const lower = filePath.toLowerCase();
@@ -135,21 +135,6 @@ function collectSourceFiles(dir: string): string[] {
         }
     }
     return result.sort();
-}
-
-/** Compiler host that parses unknown extensions (.ets) as TypeScript. */
-function createHost(options: ts.CompilerOptions): ts.CompilerHost {
-    const host = ts.createCompilerHost(options);
-    const originalGetSourceFile = host.getSourceFile.bind(host);
-    host.getSourceFile = (name, languageVersion, onError, shouldCreateNewSourceFile) => {
-        if (name.endsWith(".ets")) {
-            const text = host.readFile(name);
-            if (text === undefined) return undefined;
-            return ts.createSourceFile(name, text, languageVersion, true, ts.ScriptKind.TS);
-        }
-        return originalGetSourceFile(name, languageVersion, onError, shouldCreateNewSourceFile);
-    };
-    return host;
 }
 
 export interface ProjectInputs {
@@ -182,13 +167,9 @@ export function resolveProjectInputs(inputDir: string, honorTsConfig: boolean = 
         throw new Error(parsed.errors.map(formatDiagnostic).join("\n"));
     }
 
-    // TypeScript does not recognize ArkTS' .ets extension in tsconfig include
-    // patterns. Keep those project files alongside the config-selected roots.
-    const etsFiles = collectSourceFiles(inputDir).filter((file) => file.toLowerCase().endsWith(".ets"));
-    const sources = [...new Set([
-        ...parsed.fileNames.filter((file) => isSourceFilePath(file) && isWithinDirectory(inputDir, file)),
-        ...etsFiles,
-    ])]
+    const sources = [...new Set(
+        parsed.fileNames.filter((file) => isSourceFilePath(file) && isWithinDirectory(inputDir, file)),
+    )]
         .map((file) => path.resolve(file))
         .sort();
     return {
@@ -281,7 +262,7 @@ export function main(argv: string[]): number {
             return 0;
         }
 
-        const program = ts.createProgram(sources, options, createHost(options));
+        const program = ts.createProgram(sources, options);
         const relativeOf = (sf: ts.SourceFile): string =>
             path.relative(inputPath, path.resolve(sf.fileName)).split(path.sep).join("/");
         const fileSignatureFor = (sf: ts.SourceFile) => {
@@ -315,7 +296,7 @@ export function main(argv: string[]): number {
     }
 
     // Single-file mode.
-    const program = ts.createProgram([inputPath], COMPILER_OPTIONS, createHost(COMPILER_OPTIONS));
+    const program = ts.createProgram([inputPath], COMPILER_OPTIONS);
     const sourceFile = program.getSourceFile(inputPath);
     if (sourceFile === undefined) {
         process.stderr.write(`error: could not load source file: ${inputPath}\n`);

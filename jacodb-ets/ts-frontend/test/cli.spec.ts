@@ -92,4 +92,37 @@ describe("project mode", () => {
         expect(inputs.configPath).toBeUndefined();
         expect(inputs.sources.map((file) => path.basename(file))).toEqual(["component.jsx"]);
     });
+
+    it("resolves imported module bindings to the exporting file storage", () => {
+        const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-bindings-"));
+        tempDirs.push(projectDir);
+        fs.writeFileSync(path.join(projectDir, "a.ts"), "export let state = 1;");
+        fs.writeFileSync(
+            path.join(projectDir, "b.ts"),
+            'import { state } from "./a"; export function read(): number { return state; }',
+        );
+
+        const outputDir = path.join(projectDir, "ir");
+        expect(main(["--project", projectDir, outputDir])).toBe(0);
+        const exported = JSON.parse(fs.readFileSync(path.join(outputDir, "a.ts.json"), "utf8"));
+        expect(exported.classes[0].fields).toContainEqual(expect.objectContaining({
+            signature: expect.objectContaining({ name: "state" }),
+        }));
+
+        const imported = JSON.parse(fs.readFileSync(path.join(outputDir, "b.ts.json"), "utf8"));
+        const readMethod = imported.classes[0].methods.find(
+            (method: { signature: { name: string } }) => method.signature.name === "read",
+        );
+        const fieldRead = readMethod.body.cfg.blocks
+            .flatMap((block: { stmts: unknown[] }) => block.stmts)
+            .find((stmt: { right?: { _?: string } }) => stmt.right?._ === "StaticFieldRef");
+        expect(fieldRead).toMatchObject({
+            right: {
+                field: {
+                    name: "state",
+                    declaringClass: { name: "%dflt", declaringFile: { fileName: "a.ts" } },
+                },
+            },
+        });
+    });
 });

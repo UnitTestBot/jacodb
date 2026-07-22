@@ -24,8 +24,7 @@
 import * as ts from "typescript";
 import { MethodSignatureDto, UNKNOWN_CLASS_SIGNATURE, UNKNOWN_FILE_SIGNATURE } from "../dto/signatures";
 import { BOOLEAN_TYPE, NUMBER_TYPE, TypeDto, UNDEFINED_TYPE, UNKNOWN_TYPE } from "../dto/types";
-import { LocalDto, ValueDto } from "../dto/values";
-import { buildParameters, modifiersOf, returnTypeOf } from "./astUtils";
+import { LValueDto, LocalDto, ValueDto } from "../dto/values";
 import { Label } from "./cfg";
 import { unsupportedStmt } from "./diagnostics";
 import { ExprLowerer, LoweringError, constant } from "./exprLowering";
@@ -65,8 +64,18 @@ export class StmtLowerer {
     }
 
     lowerStatements(statements: readonly ts.Statement[]): void {
+        // Function declarations are hoisted. Materialize their closure values
+        // before the first executable statement, including calls preceding the
+        // declaration in source order.
         for (const statement of statements) {
-            this.lowerStatement(statement);
+            if (ts.isFunctionDeclaration(statement)) {
+                this.lowerStatement(statement);
+            }
+        }
+        for (const statement of statements) {
+            if (!ts.isFunctionDeclaration(statement)) {
+                this.lowerStatement(statement);
+            }
         }
     }
 
@@ -337,15 +346,15 @@ export class StmtLowerer {
         const binding = this.loopBinding(node.initializer);
         cfg.emit({
             _: "AssignStmt",
-            left: binding.local,
+            left: binding.target,
             right: {
                 _: "InstanceFieldRef",
                 instance: result,
-                field: { declaringClass: UNKNOWN_CLASS_SIGNATURE, name: "value", type: binding.local.type },
+                field: { declaringClass: UNKNOWN_CLASS_SIGNATURE, name: "value", type: binding.type },
             },
         });
-        if (binding.pattern !== undefined) {
-            this.lowerBindingPattern(binding.pattern, binding.local);
+        if (binding.pattern !== undefined && binding.patternSource !== undefined) {
+            this.lowerBindingPattern(binding.pattern, binding.patternSource);
         }
         this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: headLabel, label }, () => {
             this.lowerStatement(node.statement);
@@ -403,11 +412,11 @@ export class StmtLowerer {
         const binding = this.loopBinding(node.initializer);
         cfg.emit({
             _: "AssignStmt",
-            left: binding.local,
+            left: binding.target,
             right: { _: "ArrayRef", array: keys, index, type: { _: "StringType" } },
         });
-        if (binding.pattern !== undefined) {
-            this.lowerBindingPattern(binding.pattern, binding.local);
+        if (binding.pattern !== undefined && binding.patternSource !== undefined) {
+            this.lowerBindingPattern(binding.pattern, binding.patternSource);
         }
         const continueLabel = cfg.newLabel();
         this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: continueLabel, label }, () => {
@@ -421,19 +430,35 @@ export class StmtLowerer {
     }
 
     /** The loop variable of for-of/for-in; destructuring goes through a temp + pattern. */
-    private loopBinding(initializer: ts.ForInitializer): { local: LocalDto; pattern?: ts.BindingPattern } {
+    private loopBinding(
+        initializer: ts.ForInitializer,
+    ): { target: LValueDto; type: TypeDto; pattern?: ts.BindingPattern; patternSource?: LocalDto } {
         if (ts.isVariableDeclarationList(initializer)) {
             const decl = initializer.declarations[0];
             if (decl !== undefined && ts.isIdentifier(decl.name)) {
-                return { local: this.m.localForIdentifier(decl.name, this.m.converter.typeOfNode(decl.name)) };
+                const type = this.m.converter.typeOfNode(decl.name);
+                return {
+                    target: this.m.moduleFieldForIdentifier(decl.name) ?? this.m.localForIdentifier(decl.name, type),
+                    type,
+                };
             }
             if (decl !== undefined) {
-                return { local: this.m.newTemp(UNKNOWN_TYPE), pattern: decl.name as ts.BindingPattern };
+                const patternSource = this.m.newTemp(UNKNOWN_TYPE);
+                return {
+                    target: patternSource,
+                    type: UNKNOWN_TYPE,
+                    pattern: decl.name as ts.BindingPattern,
+                    patternSource,
+                };
             }
             throw new LoweringError("empty loop binding");
         }
         if (ts.isIdentifier(initializer)) {
-            return { local: this.m.localForIdentifier(initializer, this.m.converter.typeOfNode(initializer)) };
+            const type = this.m.converter.typeOfNode(initializer);
+            return {
+                target: this.m.moduleFieldForIdentifier(initializer) ?? this.m.localForIdentifier(initializer, type),
+                type,
+            };
         }
         throw new LoweringError("unsupported loop binding");
     }
@@ -648,37 +673,22 @@ export class StmtLowerer {
             decl.type !== undefined
                 ? this.m.converter.convertTypeNode(decl.type)
                 : this.m.converter.typeOfNode(decl.name);
-        const local = this.m.localForIdentifier(decl.name, declaredType);
+        const local = this.m.moduleFieldForIdentifier(decl.name)
+            ?? this.m.localForIdentifier(decl.name, declaredType);
         if (decl.initializer !== undefined) {
             const value = this.expr.lowerExpr(decl.initializer);
             this.m.cfg.emit({ _: "AssignStmt", left: local, right: value });
         }
     }
 
-    /** A function declared inside a method body -> method of the file's %dflt class. */
+    /** A function declared inside a method body -> hoisted lexical closure. */
     private lowerNestedFunction(decl: ts.FunctionDeclaration): void {
         if (decl.name === undefined || decl.body === undefined) {
             return;
         }
-        const registry = this.m.ctx.anonymous;
-        const declaringClass = registry.defaultClassSignature;
-        const { parameters, prologueParams } = buildParameters(this.m.ctx, decl);
-
-        const nested = new MethodContext(this.m.ctx, declaringClass, decl.name.text);
-        nested.emitPrologue(prologueParams);
-        new StmtLowerer(nested).lowerStatements(decl.body.statements);
-
-        registry.methods.push({
-            signature: {
-                declaringClass,
-                name: decl.name.text,
-                parameters,
-                returnType: returnTypeOf(this.m.ctx, decl),
-            },
-            modifiers: modifiersOf(decl),
-            decorators: [],
-            body: nested.build(),
-        });
+        const closure = this.expr.lowerFunctionDeclaration(decl);
+        const binding = this.m.localForIdentifier(decl.name, closure.type);
+        this.m.cfg.emit({ _: "AssignStmt", left: binding, right: closure });
     }
 
     // ------------------------------------------------------------------
@@ -739,10 +749,12 @@ export class StmtLowerer {
 
     private bindDestructured(target: ts.BindingName, ref: ValueDto, defaultInit: ts.Expression | undefined): void {
         if (ts.isIdentifier(target)) {
-            const local = this.m.localForIdentifier(target, this.m.converter.typeOfNode(target));
-            this.m.cfg.emit({ _: "AssignStmt", left: local, right: ref });
+            const type = this.m.converter.typeOfNode(target);
+            const destination = this.m.moduleFieldForIdentifier(target)
+                ?? this.m.localForIdentifier(target, type);
+            this.m.cfg.emit({ _: "AssignStmt", left: destination, right: ref });
             if (defaultInit !== undefined) {
-                this.emitDefaultValue(local, defaultInit);
+                this.emitDefaultValue(destination, type, defaultInit);
             }
             return;
         }
@@ -750,23 +762,24 @@ export class StmtLowerer {
         const temp = this.m.newTemp(UNKNOWN_TYPE);
         this.m.cfg.emit({ _: "AssignStmt", left: temp, right: ref });
         if (defaultInit !== undefined) {
-            this.emitDefaultValue(temp, defaultInit);
+            this.emitDefaultValue(temp, UNKNOWN_TYPE, defaultInit);
         }
         this.lowerBindingPattern(target, temp);
     }
 
-    /** `if (local === undefined) local := <default>` */
-    private emitDefaultValue(local: LocalDto, defaultInit: ts.Expression): void {
+    /** `if (target === undefined) target := <default>` */
+    private emitDefaultValue(target: LValueDto, type: TypeDto, defaultInit: ts.Expression): void {
         const cfg = this.m.cfg;
         const setLabel = cfg.newLabel();
         const doneLabel = cfg.newLabel();
+        const tested = target._ === "Local" ? target : this.expr.materialize(target, type);
         cfg.branch(
-            this.expr.relation("===", local, constant("undefined", UNDEFINED_TYPE)),
+            this.expr.relation("===", tested, constant("undefined", UNDEFINED_TYPE)),
             setLabel,
             doneLabel,
         );
         cfg.placeLabel(setLabel);
-        cfg.emit({ _: "AssignStmt", left: local, right: this.expr.lowerExpr(defaultInit) });
+        cfg.emit({ _: "AssignStmt", left: target, right: this.expr.lowerExpr(defaultInit) });
         cfg.goto(doneLabel);
         cfg.placeLabel(doneLabel);
     }

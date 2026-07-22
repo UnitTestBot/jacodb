@@ -77,6 +77,7 @@ import org.jacodb.ets.model.EtsIntersectionType
 import org.jacodb.ets.model.EtsLeftShiftExpr
 import org.jacodb.ets.model.EtsLexicalEnvType
 import org.jacodb.ets.model.EtsLocal
+import org.jacodb.ets.model.EtsLValue
 import org.jacodb.ets.model.EtsLocalSignature
 import org.jacodb.ets.model.EtsLtEqExpr
 import org.jacodb.ets.model.EtsLtExpr
@@ -222,11 +223,11 @@ class EtsMethodBuilder(
                     it
                 }
             }
-            if (!(lhv is EtsLocal || lhv is EtsFieldRef || lhv is EtsArrayAccess)) {
+            if (lhv !is EtsLValue) {
                 logger.error {
-                    "LHV of AssignStmt should be EtsLocal, EtsFieldRef, or EtsArrayAccess, but got ${lhv::class.java}: $lhv\nMethod: $method\nStmt: $this"
+                    "LHV of AssignStmt should be EtsLValue, but got ${lhv::class.java}: $lhv\nMethod: $method\nStmt: $this"
                 }
-                error("LHV of AssignStmt should be EtsLocal, EtsFieldRef, or EtsArrayAccess, but got ${lhv::class.java}")
+                error("LHV of AssignStmt should be EtsLValue, but got ${lhv::class.java}")
             }
             val rhv = right.toEtsEntity().let { rhv ->
                 if (lhv is EtsLocal) {

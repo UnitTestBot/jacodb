@@ -14,6 +14,13 @@ function assigns(stmts: StmtDto[]): AssignStmtDto[] {
     return stmts.filter((s): s is AssignStmtDto => s._ === "AssignStmt");
 }
 
+function assignmentTo(stmts: StmtDto[], name: string): AssignStmtDto | undefined {
+    return assigns(stmts).find((stmt) =>
+        (stmt.left._ === "Local" && stmt.left.name === name)
+        || (stmt.left._ === "StaticFieldRef" && stmt.left.field.name === name),
+    );
+}
+
 describe("straight-line lowering", () => {
     it("lowers literal initializers to constants", () => {
         const stmts = bodyStmts(`let x = 42; let s = "hi"; let b = true; let n = null; let u = undefined;`);
@@ -26,18 +33,22 @@ describe("straight-line lowering", () => {
         ]);
 
         function asgn(name: string, right: unknown) {
-            return { _: "AssignStmt", left: expect.objectContaining({ _: "Local", name }), right };
+            return {
+                _: "AssignStmt",
+                left: expect.objectContaining({ _: "StaticFieldRef", field: expect.objectContaining({ name }) }),
+                right,
+            };
         }
     });
 
     it("lowers binary expressions with immediate operands", () => {
         const stmts = bodyStmts("let a = 1; let b = 2; let c = a + b;");
-        const c = assigns(stmts)[2];
-        expect(c.right).toEqual({
+        const c = assignmentTo(stmts, "c")!;
+        expect(c.right).toMatchObject({
             _: "BinopExpr",
             op: "+",
-            left: expect.objectContaining({ _: "Local", name: "a" }),
-            right: expect.objectContaining({ _: "Local", name: "b" }),
+            left: expect.objectContaining({ _: "Local" }),
+            right: expect.objectContaining({ _: "Local" }),
             type: { _: "NumberType" },
         });
     });
@@ -45,22 +56,20 @@ describe("straight-line lowering", () => {
     it("hoists nested expressions into %N temps", () => {
         const stmts = bodyStmts("let a = 1; let b = 2; let d = (a + b) * 2;");
         const all = assigns(stmts);
-        // a, b, %0 := a + b, d := %0 * 2
-        expect(all).toHaveLength(4);
-        expect(all[2].left).toMatchObject({ _: "Local", name: "%0" });
-        expect(all[2].right).toMatchObject({ _: "BinopExpr", op: "+" });
-        expect(all[3].left).toMatchObject({ _: "Local", name: "d" });
-        expect(all[3].right).toMatchObject({
+        const addition = all.find((stmt) => stmt.right._ === "BinopExpr" && stmt.right.op === "+")!;
+        expect(addition.left).toMatchObject({ _: "Local" });
+        const d = assignmentTo(stmts, "d")!;
+        expect(d.right).toMatchObject({
             _: "BinopExpr",
             op: "*",
-            left: { _: "Local", name: "%0" },
+            left: { _: "Local" },
             right: { _: "Constant", value: "2" },
         });
     });
 
     it("lowers comparisons in value position to ConditionExpr", () => {
         const stmts = bodyStmts("let a = 1; let e = a < 2;");
-        expect(assigns(stmts)[1].right).toMatchObject({
+        expect(assignmentTo(stmts, "e")!.right).toMatchObject({
             _: "ConditionExpr",
             op: "<",
             type: { _: "BooleanType" },
@@ -73,7 +82,7 @@ describe("straight-line lowering", () => {
         expect(call).toBeDefined();
         expect(call!.expr).toMatchObject({
             _: "InstanceCallExpr",
-            instance: { _: "Local", name: "console" },
+            instance: { _: "Local" },
             method: { name: "log" },
             args: [{ _: "Constant", value: "hello", type: { _: "StringType" } }],
         });
@@ -86,9 +95,7 @@ describe("straight-line lowering", () => {
         `;
         const { file } = lower(source);
         const stmts = singleBlockStmts(defaultMethod(file));
-        const sAssign = stmts.find(
-            (s): s is AssignStmtDto => s._ === "AssignStmt" && s.left._ === "Local" && s.left.name === "s",
-        );
+        const sAssign = assignmentTo(stmts, "s");
         expect(sAssign!.right).toMatchObject({
             _: "StaticCallExpr",
             method: {
@@ -145,7 +152,10 @@ describe("straight-line lowering", () => {
                 args: [],
             },
         });
-        expect(all[2]).toMatchObject({ left: { _: "Local", name: "o" }, right: { _: "Local", name: "%0" } });
+        expect(all[2]).toMatchObject({
+            left: { _: "StaticFieldRef", field: { name: "o" } },
+            right: { _: "Local", name: "%0" },
+        });
     });
 
     it("lowers ambient `new` with the %unk file signature", () => {
@@ -175,7 +185,7 @@ describe("straight-line lowering", () => {
             left: { _: "ArrayRef", index: { _: "Constant", value: "1" } },
             right: { _: "Constant", value: "20" },
         });
-        expect(all[3]).toMatchObject({ left: { _: "Local", name: "arr" } });
+        expect(all[3]).toMatchObject({ left: { _: "StaticFieldRef", field: { name: "arr" } } });
     });
 
     it("uses the contextual element type for an empty array literal", () => {
@@ -194,7 +204,7 @@ describe("straight-line lowering", () => {
             right: {
                 _: "NewArrayExpr",
                 elementType: { _: "BooleanType" },
-                size: { _: "Local", name: "n", type: { _: "NumberType" } },
+                size: { _: "Local", type: { _: "NumberType" } },
             },
         });
         expect(all.some((stmt) => stmt.right._ === "InstanceCallExpr")).toBe(false);
@@ -239,11 +249,11 @@ describe("straight-line lowering", () => {
     it("lowers element reads and writes through ArrayRef", () => {
         const stmts = bodyStmts("let arr = [1]; let v = arr[0]; arr[0] = 5;");
         const all = assigns(stmts);
-        const read = all.find((a) => a.left._ === "Local" && a.left.name === "v")!;
-        expect(read.right).toMatchObject({ _: "ArrayRef", array: { _: "Local", name: "arr" } });
+        const read = assignmentTo(stmts, "v")!;
+        expect(read.right).toMatchObject({ _: "ArrayRef", array: { _: "Local" } });
         const write = all[all.length - 1];
         expect(write).toMatchObject({
-            left: { _: "ArrayRef", array: { _: "Local", name: "arr" } },
+            left: { _: "ArrayRef", array: { _: "Local" } },
             right: { _: "Constant", value: "5" },
         });
     });
@@ -258,10 +268,10 @@ describe("straight-line lowering", () => {
         const stmts = bodyStmts(source);
         const all = assigns(stmts);
         const classSig = { name: "A", declaringFile: { projectName: "proj", fileName: "test.ts" } };
-        const read = all.find((s) => s.left._ === "Local" && s.left.name === "v")!;
+        const read = assignmentTo(stmts, "v")!;
         expect(read.right).toEqual({
             _: "InstanceFieldRef",
-            instance: expect.objectContaining({ _: "Local", name: "a" }),
+            instance: expect.objectContaining({ _: "Local" }),
             field: { declaringClass: classSig, name: "f", type: { _: "NumberType" } },
         });
         const write = all[all.length - 1];
@@ -288,16 +298,21 @@ describe("straight-line lowering", () => {
 
     it("desugars compound assignment into load-op-store", () => {
         const stmts = bodyStmts("let x = 1; x += 2;");
-        const compound = assigns(stmts)[1];
+        const all = assigns(stmts);
+        const compound = all.find((stmt) => stmt.right._ === "BinopExpr" && stmt.right.op === "+")!;
         expect(compound).toMatchObject({
-            left: { _: "Local", name: "x" },
+            left: { _: "Local" },
             right: {
                 _: "BinopExpr",
                 op: "+",
-                left: { _: "Local", name: "x" },
+                left: { _: "Local" },
                 right: { _: "Constant", value: "2" },
             },
         });
+        expect(all).toContainEqual(expect.objectContaining({
+            left: expect.objectContaining({ _: "StaticFieldRef", field: expect.objectContaining({ name: "x" }) }),
+            right: compound.left,
+        }));
     });
 
     it("keeps shadowed block-scoped declarations in distinct typed locals", () => {
@@ -324,9 +339,13 @@ describe("straight-line lowering", () => {
         const stmts = bodyStmts("let x = 1; x++;");
         const inc = assigns(stmts).find((a) => a.right._ === "UnopExpr")!;
         expect(inc).toMatchObject({
-            left: { _: "Local", name: "x" },
-            right: { _: "UnopExpr", op: "++", arg: { _: "Local", name: "x" } },
+            left: { _: "Local" },
+            right: { _: "UnopExpr", op: "++", arg: { _: "Local" } },
         });
+        expect(assigns(stmts)).toContainEqual(expect.objectContaining({
+            left: expect.objectContaining({ _: "StaticFieldRef", field: expect.objectContaining({ name: "x" }) }),
+            right: inc.left,
+        }));
     });
 
     it("returns the OLD value for postfix and the NEW value for prefix inc/dec on fields", () => {
@@ -340,13 +359,13 @@ describe("straight-line lowering", () => {
         const all = assigns(stmts);
 
         // postfix: %old := c.f; %new := %old ++; c.f := %new; post := %old
-        const postAssign = all.find((a) => a.left._ === "Local" && a.left.name === "post")!;
+        const postAssign = assignmentTo(stmts, "post")!;
         const postSource = (postAssign.right as { name: string }).name;
         const oldLoad = all.find((a) => a.left._ === "Local" && a.left.name === postSource)!;
         expect(oldLoad.right._).toBe("InstanceFieldRef"); // holds the OLD value
 
         // prefix: %old := c.f; %new := %old ++; c.f := %new; pre := %new
-        const preAssign = all.find((a) => a.left._ === "Local" && a.left.name === "pre")!;
+        const preAssign = assignmentTo(stmts, "pre")!;
         const preSource = (preAssign.right as { name: string }).name;
         const newCompute = all.find((a) => a.left._ === "Local" && a.left.name === preSource)!;
         expect(newCompute.right._).toBe("UnopExpr"); // holds the UPDATED value
@@ -370,7 +389,7 @@ describe("straight-line lowering", () => {
         expect(stmts[1]).toMatchObject({ left: { name: "this" }, right: { _: "ThisRef" } });
     });
 
-    it("lifts nested function declarations onto the %dflt class", () => {
+    it("lifts nested function declarations as lexical closures", () => {
         const source = `
             function outer(n: number): number {
                 function inner(k: number): number {
@@ -380,37 +399,36 @@ describe("straight-line lowering", () => {
             }
         `;
         const { file } = lower(source);
-        // inner must not be lost: it becomes a %dflt method with its real name
-        const inner = methodByName(file, "inner");
+        const inner = methodByName(file, "%AM0$outer");
         expect(inner.body).toBeDefined();
         expect(inner.signature.parameters).toEqual([{ name: "k", type: { _: "NumberType" } }]);
-        // and the call site resolves to it as a static call on %dflt
+        // and the hoisted local is called through its closure pointer
         const outer = methodByName(file, "outer");
         const call = outer
             .body!.cfg.blocks.flatMap((b) => b.stmts)
-            .find((s) => s._ === "AssignStmt" && s.right._ === "StaticCallExpr");
+            .find((s) => s._ === "AssignStmt" && s.right._ === "PtrCallExpr");
         expect(call).toMatchObject({
-            right: { method: { declaringClass: { name: "%dflt" }, name: "inner" } },
+            right: { _: "PtrCallExpr", ptr: { _: "Local" } },
         });
     });
 
     it("lowers template literals into string concatenation chains", () => {
         const stmts = bodyStmts("let n = 1; let s = `a${n}b`;");
         const all = assigns(stmts);
-        // n, %0 := "a" + n, %1 := %0 + "b", s := %1
-        expect(all[1].right).toMatchObject({
+        const concatenations = all.filter((stmt) => stmt.right._ === "BinopExpr" && stmt.right.op === "+");
+        expect(concatenations[0].right).toMatchObject({
             _: "BinopExpr",
             op: "+",
             left: { _: "Constant", value: "a" },
-            right: { _: "Local", name: "n" },
+            right: { _: "Local" },
         });
-        expect(all[2].right).toMatchObject({
+        expect(concatenations[1].right).toMatchObject({
             _: "BinopExpr",
             op: "+",
-            left: { _: "Local", name: "%0" },
+            left: { _: "Local" },
             right: { _: "Constant", value: "b" },
         });
-        expect(all[3]).toMatchObject({ left: { _: "Local", name: "s" } });
+        expect(assignmentTo(stmts, "s")).toBeDefined();
     });
 
     it("lowers throw statements", () => {
@@ -430,9 +448,7 @@ describe("straight-line lowering", () => {
         expect(rawAssign).toBeDefined();
         expect(rawAssign!.left).toMatchObject({ _: "Local", name: "%0" });
         expect((rawAssign!.right as unknown as { type: unknown }).type).toBeDefined();
-        const pAssign = stmts.find(
-            (s): s is AssignStmtDto => s._ === "AssignStmt" && s.left._ === "Local" && s.left.name === "p",
-        );
+        const pAssign = assignmentTo(stmts, "p");
         expect(pAssign!.right).toMatchObject({ _: "Local", name: "%0" });
         expect(diagnostics.messages.length).toBeGreaterThan(0);
     });
@@ -462,8 +478,10 @@ describe("straight-line lowering", () => {
             let c = x as unknown;
         `);
         const all = assigns(stmts);
-        expect(all[1].right).toMatchObject({ _: "TypeOfExpr", arg: { _: "Local", name: "x" } });
-        expect(all[2].right).toMatchObject({ _: "CastExpr", arg: { _: "Local", name: "x" }, type: { _: "UnknownType" } });
+        expect(all.find((stmt) => stmt.right._ === "TypeOfExpr")!.right)
+            .toMatchObject({ _: "TypeOfExpr", arg: { _: "Local" } });
+        expect(all.find((stmt) => stmt.right._ === "CastExpr")!.right)
+            .toMatchObject({ _: "CastExpr", arg: { _: "Local" }, type: { _: "UnknownType" } });
     });
 
     it("lowers instanceof", () => {
@@ -471,7 +489,7 @@ describe("straight-line lowering", () => {
         const check = assigns(stmts).find((a) => a.right._ === "InstanceOfExpr")!;
         expect(check.right).toMatchObject({
             _: "InstanceOfExpr",
-            arg: { _: "Local", name: "o" },
+            arg: { _: "Local" },
             checkType: { _: "ClassType", signature: { name: "C" } },
         });
     });

@@ -70,7 +70,7 @@ export type RefDto =
     | StaticFieldRefDto;
 
 /** LValue kinds accepted by Kotlin Convert as the LHS of AssignStmt. */
-export type LValueDto = LocalDto | ArrayRefDto | InstanceFieldRefDto | StaticFieldRefDto;
+export type LValueDto = LocalDto | ClosureFieldRefDto | ArrayRefDto | InstanceFieldRefDto | StaticFieldRefDto;
 
 /** Fallback for constructs we cannot model; Kotlin deserializes any unknown kind into RawValueDto. */
 export interface RawValueDto {

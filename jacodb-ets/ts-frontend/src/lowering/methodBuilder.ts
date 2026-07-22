@@ -17,9 +17,9 @@
 import * as ts from "typescript";
 import { TEMP_LOCAL_PREFIX } from "../dto/constants";
 import { BodyDto, ClassDto, LocalDeclDto, MethodDto, SourceSpanDto } from "../dto/model";
-import { ClassSignatureDto, FileSignatureDto } from "../dto/signatures";
+import { ClassSignatureDto, FieldSignatureDto, FileSignatureDto } from "../dto/signatures";
 import { ClassTypeDto, LexicalEnvTypeDto, TypeDto, UNKNOWN_TYPE } from "../dto/types";
-import { LocalDto } from "../dto/values";
+import { ClosureFieldRefDto, LocalDto, StaticFieldRefDto } from "../dto/values";
 import { TypeConverter } from "../types/convert";
 import { CfgBuilder } from "./cfg";
 import { Diagnostics } from "./diagnostics";
@@ -45,6 +45,8 @@ export interface LoweringContext {
     fileSignatureFor(sf: ts.SourceFile): FileSignatureDto;
     diagnostics: Diagnostics;
     anonymous: AnonymousRegistry;
+    /** File/namespace variables represented as static fields of the owning %dflt class. */
+    moduleFields: Map<ts.Symbol, FieldSignatureDto>;
 }
 
 export interface ClosureCapture {
@@ -62,6 +64,7 @@ export class MethodContext {
     readonly cfg = new CfgBuilder();
     private readonly locals = new Map<string, LocalDto>();
     private readonly symbolLocals = new Map<ts.Symbol, LocalDto>();
+    private readonly capturedRefs = new Map<ts.Symbol, ClosureFieldRefDto>();
     private readonly localNameCounters = new Map<string, number>();
     private tempCount = 0;
     private closureEnvCount = 0;
@@ -137,13 +140,7 @@ export class MethodContext {
      * symbols receive deterministic `$N` suffixes.
      */
     localForIdentifier(node: ts.Identifier, type: TypeDto = UNKNOWN_TYPE): LocalDto {
-        let symbol: ts.Symbol | undefined;
-        try {
-            symbol = this.checker.getSymbolAtLocation(node);
-        } catch {
-            // Unresolved identifiers (for example ambient globals in malformed
-            // input) retain the old name-based fallback.
-        }
+        const symbol = this.symbolForIdentifier(node);
         if (symbol === undefined) {
             return this.getOrCreateLocal(node.text, type);
         }
@@ -159,6 +156,87 @@ export class MethodContext {
         this.locals.set(name, local);
         this.symbolLocals.set(symbol, local);
         return local;
+    }
+
+    /** Static storage shared by the scope default method and its free functions. */
+    moduleFieldForIdentifier(node: ts.Identifier): StaticFieldRefDto | undefined {
+        const symbol = this.symbolForIdentifier(node);
+        if (symbol === undefined) return undefined;
+        let field = this.ctx.moduleFields.get(symbol);
+        if (field === undefined) {
+            field = this.moduleFieldFromSymbol(symbol);
+            if (field !== undefined) this.ctx.moduleFields.set(symbol, field);
+        }
+        return field === undefined ? undefined : { _: "StaticFieldRef", field };
+    }
+
+    /** Captured slot used directly for both reads and writes in a lifted function. */
+    capturedRefForIdentifier(node: ts.Identifier): ClosureFieldRefDto | undefined {
+        const symbol = this.symbolForIdentifier(node);
+        return symbol === undefined ? undefined : this.capturedRefs.get(symbol);
+    }
+
+    /**
+     * A nested lexical environment can only list locals. Materialize an outer
+     * captured slot at the closure-creation point so transitive captures are
+     * initialized instead of becoming phantom locals.
+     */
+    localForCapture(node: ts.Identifier, type: TypeDto): LocalDto {
+        const captured = this.capturedRefForIdentifier(node);
+        if (captured === undefined) {
+            return this.localForIdentifier(node, type);
+        }
+        const local = this.localForIdentifier(node, type);
+        this.cfg.emit({ _: "AssignStmt", left: local, right: captured });
+        return local;
+    }
+
+    private symbolForIdentifier(node: ts.Identifier): ts.Symbol | undefined {
+        try {
+            const symbol = this.checker.getSymbolAtLocation(node);
+            if (symbol !== undefined && (symbol.flags & ts.SymbolFlags.Alias) !== 0) {
+                return this.checker.getAliasedSymbol(symbol);
+            }
+            return symbol;
+        } catch {
+            // Unresolved identifiers (for example ambient globals in malformed
+            // input) retain the old name-based fallback.
+            return undefined;
+        }
+    }
+
+    /** Derive storage for an imported scope variable from its declaration. */
+    private moduleFieldFromSymbol(symbol: ts.Symbol): FieldSignatureDto | undefined {
+        const identifier = symbol.declarations
+            ?.map(declaredBindingIdentifier)
+            .find((candidate): candidate is ts.Identifier => candidate !== undefined);
+        if (identifier === undefined) return undefined;
+        if (identifier.getSourceFile().isDeclarationFile) return undefined;
+
+        let declaration: ts.Node | undefined = identifier.parent;
+        while (declaration !== undefined && !ts.isVariableDeclaration(declaration)) {
+            declaration = declaration.parent;
+        }
+        if (declaration === undefined) return undefined;
+        const variableDeclaration = declaration;
+        const declarationList = variableDeclaration.parent;
+        if (!ts.isVariableDeclarationList(declarationList)) return undefined;
+        const statement = declarationList.parent;
+        const directScope = ts.isVariableStatement(statement)
+            && (ts.isSourceFile(statement.parent) || ts.isModuleBlock(statement.parent));
+        const functionScoped = (declarationList.flags & ts.NodeFlags.BlockScoped) === 0;
+        if (!directScope && (!functionScoped || moduleScopeOf(variableDeclaration) === undefined)) return undefined;
+
+        const declaringClass: ClassSignatureDto = {
+            name: "%dflt",
+            declaringFile: this.ctx.fileSignatureFor(identifier.getSourceFile()),
+        };
+        const moduleScope = directScope ? statement.parent : moduleScopeOf(variableDeclaration);
+        if (moduleScope !== undefined && ts.isModuleBlock(moduleScope) && ts.isModuleDeclaration(moduleScope.parent)) {
+            const namespace = this.converter.namespaceSignatureOf(moduleScope.parent);
+            if (namespace !== undefined) declaringClass.declaringNamespace = namespace;
+        }
+        return { declaringClass, name: identifier.text, type: this.converter.typeOfNode(identifier) };
     }
 
     private freshSourceLocalName(base: string): string {
@@ -215,7 +293,7 @@ export class MethodContext {
 
     /**
      * ArkAnalyzer closure prologue: environment parameter, regular parameters,
-     * captured-local loads, then `this := ThisRef`.
+     * captured-slot bindings, then `this := ThisRef`.
      */
     emitClosurePrologue(
         environmentName: string,
@@ -240,17 +318,15 @@ export class MethodContext {
             });
         });
         for (const capture of captures) {
-            const local = this.localForIdentifier(capture.identifier, capture.outerLocal.type);
-            this.cfg.emit({
-                _: "AssignStmt",
-                left: local,
-                right: {
+            const symbol = this.symbolForIdentifier(capture.identifier);
+            if (symbol !== undefined) {
+                this.capturedRefs.set(symbol, {
                     _: "ClosureFieldRef",
                     base: { name: environment.name, type: environment.type },
                     fieldName: capture.outerLocal.name,
                     type: capture.outerLocal.type,
-                },
-            });
+                });
+            }
         }
         this.emitThisAssignment();
     }
@@ -273,4 +349,27 @@ export class MethodContext {
         }));
         return stmtOrigins.length === 0 ? { locals, cfg } : { locals, cfg, stmtOrigins };
     }
+}
+
+function declaredBindingIdentifier(declaration: ts.Declaration): ts.Identifier | undefined {
+    if (ts.isVariableDeclaration(declaration) && ts.isIdentifier(declaration.name)) return declaration.name;
+    if (ts.isBindingElement(declaration) && ts.isIdentifier(declaration.name)) return declaration.name;
+    return undefined;
+}
+
+function moduleScopeOf(node: ts.Node): ts.SourceFile | ts.ModuleBlock | undefined {
+    for (let current: ts.Node | undefined = node.parent; current !== undefined; current = current.parent) {
+        if (ts.isSourceFile(current) || ts.isModuleBlock(current)) return current;
+        if (
+            ts.isFunctionDeclaration(current)
+            || ts.isFunctionExpression(current)
+            || ts.isArrowFunction(current)
+            || ts.isMethodDeclaration(current)
+            || ts.isConstructorDeclaration(current)
+            || ts.isGetAccessorDeclaration(current)
+            || ts.isSetAccessorDeclaration(current)
+            || ts.isClassStaticBlockDeclaration(current)
+        ) return undefined;
+    }
+    return undefined;
 }

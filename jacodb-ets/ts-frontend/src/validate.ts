@@ -74,7 +74,7 @@ const KNOWN_STMT_KINDS = new Set([
 const CALL_EXPR_KINDS = new Set(["InstanceCallExpr", "StaticCallExpr", "PtrCallExpr"]);
 
 /** LValue kinds accepted by Kotlin Convert as AssignStmt.left (CastExpr is stripped there). */
-const LVALUE_KINDS = new Set(["Local", "ArrayRef", "InstanceFieldRef", "StaticFieldRef"]);
+const LVALUE_KINDS = new Set(["Local", "ClosureFieldRef", "ArrayRef", "InstanceFieldRef", "StaticFieldRef"]);
 
 export function validateEtsFile(file: EtsFileDto): string[] {
     const errors: string[] = [];

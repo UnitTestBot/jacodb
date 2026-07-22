@@ -127,7 +127,7 @@ data class EtsClosureFieldRef(
     val base: EtsLocal,
     val fieldName: String,
     override val type: EtsType,
-) : EtsRef {
+) : EtsRef, EtsLValue {
     override fun toString(): String {
         return "$base.$fieldName"
     }
