@@ -92,4 +92,27 @@ describe("export infos", () => {
         expect(widget!.exportType).toBe(1);
         expect(widget!.modifiers & Modifier.DEFAULT).toBe(Modifier.DEFAULT);
     });
+
+    it("synthesizes stable bindings for anonymous default declarations", () => {
+        const anonymousFunction = lower(`export default function (): number { return 1; }`).file;
+        const functionMethod = anonymousFunction.classes
+            .find((clazz) => clazz.signature.name === "%dflt")!
+            .methods.find((method) => method.signature.name === "default");
+        expect(functionMethod).toBeDefined();
+        expect(anonymousFunction.exportInfos).toContainEqual({
+            exportName: "default",
+            exportType: 2,
+            modifiers: Modifier.EXPORT | Modifier.DEFAULT,
+        });
+
+        const anonymousClass = lower(`export default class {}`).file;
+        expect(anonymousClass.classes).toContainEqual(expect.objectContaining({
+            signature: expect.objectContaining({ name: "default" }),
+        }));
+        expect(anonymousClass.exportInfos).toContainEqual({
+            exportName: "default",
+            exportType: 1,
+            modifiers: Modifier.EXPORT | Modifier.DEFAULT,
+        });
+    });
 });

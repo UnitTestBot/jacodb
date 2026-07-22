@@ -92,6 +92,54 @@ describe("class lowering", () => {
         });
     });
 
+    it("keeps static this accesses static in initializers, arrows and calls", () => {
+        const { file } = lower(`
+            class C {
+                static x = 1;
+                static y = this.x;
+                static z: number;
+                static { this.z = this.y; }
+                static helper(): number { return this.x; }
+                static make(): () => number { return () => this.x; }
+                static use(): number { return this.helper(); }
+            }
+        `);
+        const clazz = classByName(file, "C");
+        const statInit = singleBlockStmts(methodOf(clazz, "%statInit"));
+        expect(statInit.some((stmt) =>
+            stmt._ === "AssignStmt"
+            && (stmt.left._ === "InstanceFieldRef" || stmt.right._ === "InstanceFieldRef"),
+        )).toBe(false);
+        expect(statInit, "static initializer must read this.x as a static field").toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            right: expect.objectContaining({
+                _: "StaticFieldRef",
+                field: expect.objectContaining({ name: "x" }),
+            }),
+        }));
+
+        const arrow = singleBlockStmts(methodOf(clazz, "%AM0$make"));
+        expect(arrow, "static arrow must retain lexical static this").toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            right: expect.objectContaining({
+                _: "StaticFieldRef",
+                field: expect.objectContaining({ name: "x" }),
+            }),
+        }));
+
+        const use = singleBlockStmts(methodOf(clazz, "use"));
+        expect(use, "this.helper() in a static method must be a static call").toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            right: expect.objectContaining({
+                _: "StaticCallExpr",
+                method: expect.objectContaining({
+                    name: "helper",
+                    declaringClass: expect.objectContaining({ name: "C" }),
+                }),
+            }),
+        }));
+    });
+
     it("shapes the explicit constructor: prologue, %instInit call, body, return this", () => {
         const { file } = lower(source);
         const ctor = methodOf(classByName(file, "Point"), "constructor");

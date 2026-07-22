@@ -193,7 +193,13 @@ export class MethodContext {
 
     private symbolForIdentifier(node: ts.Identifier): ts.Symbol | undefined {
         try {
-            const symbol = this.checker.getSymbolAtLocation(node);
+            let symbol = this.checker.getSymbolAtLocation(node);
+            // The symbol of a shorthand-property name belongs to the generated
+            // object field. Ask TypeScript for the value symbol instead so
+            // `{ value }` follows the same storage path as an ordinary read.
+            if (ts.isShorthandPropertyAssignment(node.parent) && node.parent.name === node) {
+                symbol = this.checker.getShorthandAssignmentValueSymbol(node.parent) ?? symbol;
+            }
             if (symbol !== undefined && (symbol.flags & ts.SymbolFlags.Alias) !== 0) {
                 return this.checker.getAliasedSymbol(symbol);
             }

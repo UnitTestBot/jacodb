@@ -828,6 +828,15 @@ export class ExprLowerer {
 
         if (ts.isPropertyAccessExpression(callee)) {
             const methodName = callee.name.text;
+            // `this.m()` inside a static method targets a static member of the
+            // current class, just like `C.m()`.
+            if (callee.expression.kind === ts.SyntaxKind.ThisKeyword && this.m.isStaticMethod) {
+                return {
+                    _: "StaticCallExpr",
+                    method: this.methodSignatureForCall(node, methodName, this.m.declaringClass),
+                    args: this.lowerCallArguments(node),
+                };
+            }
             const staticTarget = this.classLikeSignatureOf(callee.expression);
             if (staticTarget !== undefined) {
                 return {
@@ -859,6 +868,10 @@ export class ExprLowerer {
                     name: DEFAULT_ARK_CLASS_NAME,
                     declaringFile: this.m.ctx.fileSignatureFor(resolved.getSourceFile()),
                 };
+                const declaringNamespace = this.m.converter.namespaceSignatureOf(resolved);
+                if (declaringNamespace !== undefined) {
+                    declaringClass.declaringNamespace = declaringNamespace;
+                }
                 return {
                     _: "StaticCallExpr",
                     method: this.methodSignatureForCall(node, callee.text, declaringClass),
@@ -1065,7 +1078,14 @@ export class ExprLowerer {
             };
         }
 
-        const closureContext = new MethodContext(this.m.ctx, declaringClass, name);
+        // Arrow functions retain lexical `this`; ordinary function expressions
+        // have their own dynamic `this` and therefore must not inherit staticness.
+        const closureContext = new MethodContext(
+            this.m.ctx,
+            declaringClass,
+            name,
+            ts.isArrowFunction(node) && this.m.isStaticMethod,
+        );
         if (environment === undefined) {
             closureContext.emitPrologue(prologueParams);
         } else {
@@ -1111,9 +1131,9 @@ export class ExprLowerer {
                 stores.push({ name: propName, type: propType, value: this.lowerToImmediate(property.initializer) });
             } else if (ts.isShorthandPropertyAssignment(property)) {
                 const propName = property.name.text;
-                const local = this.m.localForIdentifier(property.name, this.safeTypeOf(property.name));
-                fields.push(objectField(signature, propName, local.type));
-                stores.push({ name: propName, type: local.type, value: local });
+                const value = this.lowerToImmediate(property.name);
+                fields.push(objectField(signature, propName, value.type));
+                stores.push({ name: propName, type: value.type, value });
             } else if (ts.isMethodDeclaration(property)) {
                 const methodName = memberName(property.name);
                 const { parameters, prologueParams } = buildParameters(this.m.ctx, property);
@@ -1412,6 +1432,9 @@ function collectCapturedIdentifiers(
             let symbol: ts.Symbol | undefined;
             try {
                 symbol = checker.getSymbolAtLocation(node);
+                if (ts.isShorthandPropertyAssignment(node.parent) && node.parent.name === node) {
+                    symbol = checker.getShorthandAssignmentValueSymbol(node.parent) ?? symbol;
+                }
             } catch {
                 // Ignore unresolved names; they remain ordinary ambient locals.
             }

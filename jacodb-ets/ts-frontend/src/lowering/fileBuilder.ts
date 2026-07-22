@@ -45,6 +45,9 @@ import { Diagnostics } from "./diagnostics";
 import { AnonymousRegistry, LoweringContext, MethodContext } from "./methodBuilder";
 import { StmtLowerer } from "./stmtLowering";
 
+/** Stable IR binding for anonymous `export default class/function` declarations. */
+const DEFAULT_EXPORT_BINDING_NAME = "default";
+
 export interface BuildFileOptions {
     projectName: string;
     /** Project-relative file name, e.g. `src/foo.ts`. */
@@ -203,7 +206,7 @@ class FileBuilder {
             // Exported declarations: `export class C {}`, `export function f() {}`, ...
             const modifiers = modifiersOf(statement);
             if ((modifiers & Modifier.EXPORT) !== 0) {
-                const name = declarationName(statement);
+                const name = declarationName(statement) ?? anonymousDefaultExportBinding(statement);
                 if (name !== undefined) {
                     infos.push({
                         exportName: name,
@@ -309,10 +312,13 @@ class FileBuilder {
         const methods: MethodDto[] = [this.buildDefaultMethod(defaultClassSignature, statements)];
 
         for (const statement of statements) {
-            if (ts.isFunctionDeclaration(statement) && statement.name !== undefined) {
-                methods.push(this.classBuilder.buildMethodFromDecl(defaultClassSignature, statement));
+            if (ts.isFunctionDeclaration(statement)) {
+                const name = declarationName(statement) ?? anonymousDefaultExportBinding(statement);
+                if (name !== undefined) {
+                    methods.push(this.classBuilder.buildMethodFromDecl(defaultClassSignature, statement, name));
+                }
             } else if (ts.isClassDeclaration(statement)) {
-                classes.push(this.classBuilder.buildClass(statement));
+                classes.push(this.classBuilder.buildClass(statement, anonymousDefaultExportBinding(statement)));
             } else if (ts.isInterfaceDeclaration(statement)) {
                 classes.push(this.classBuilder.buildInterface(statement));
             } else if (ts.isEnumDeclaration(statement)) {
@@ -508,6 +514,15 @@ function declarationName(node: ts.Node): string | undefined {
         return node.name.text;
     }
     return undefined;
+}
+
+/** Anonymous default declarations need a stable IR binding because JavaScript has no source name to preserve. */
+function anonymousDefaultExportBinding(node: ts.Node): string | undefined {
+    const isAnonymousDeclaration =
+        (ts.isClassDeclaration(node) || ts.isFunctionDeclaration(node)) && node.name === undefined;
+    return isAnonymousDeclaration && (modifiersOf(node) & Modifier.DEFAULT) !== 0
+        ? DEFAULT_EXPORT_BINDING_NAME
+        : undefined;
 }
 
 function exportTypeOfDeclaration(node: ts.Node): ExportTypeValue {

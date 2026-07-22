@@ -46,8 +46,11 @@ export class ClassBuilder {
     // Classes
     // ------------------------------------------------------------------
 
-    buildClass(decl: ts.ClassDeclaration): ClassDto {
-        const signature = this.ctx.converter.classSignatureOf(decl);
+    buildClass(decl: ts.ClassDeclaration, nameOverride?: string): ClassDto {
+        const convertedSignature = this.ctx.converter.classSignatureOf(decl);
+        const signature = nameOverride === undefined
+            ? convertedSignature
+            : { ...convertedSignature, name: nameOverride };
         const superClass = this.superClassInfo(decl);
 
         const instanceFields: ts.PropertyDeclaration[] = [];
@@ -212,7 +215,7 @@ export class ClassBuilder {
         }));
 
         // %statInit assigns member values.
-        const m = new MethodContext(this.ctx, signature, STATIC_INIT_METHOD_NAME);
+        const m = new MethodContext(this.ctx, signature, STATIC_INIT_METHOD_NAME, true);
         m.emitPrologue([]);
         const lowerer = new StmtLowerer(m);
         let autoValue = 0;
@@ -279,8 +282,12 @@ export class ClassBuilder {
     // Methods
     // ------------------------------------------------------------------
 
-    buildMethodFromDecl(declaringClass: ClassSignatureDto, decl: ClassMemberDecl | ts.FunctionDeclaration): MethodDto {
-        const name = decl.name !== undefined ? memberName(decl.name) : "";
+    buildMethodFromDecl(
+        declaringClass: ClassSignatureDto,
+        decl: ClassMemberDecl | ts.FunctionDeclaration,
+        nameOverride?: string,
+    ): MethodDto {
+        const name = nameOverride ?? (decl.name !== undefined ? memberName(decl.name) : "");
         const { parameters, prologueParams } = buildParameters(this.ctx, decl);
         const returnType = returnTypeOf(this.ctx, decl);
 
@@ -506,7 +513,7 @@ export class ClassBuilder {
         declaringClass: ClassSignatureDto,
         initializers: readonly (ts.PropertyDeclaration | ts.ClassStaticBlockDeclaration)[],
     ): MethodDto {
-        const m = new MethodContext(this.ctx, declaringClass, STATIC_INIT_METHOD_NAME);
+        const m = new MethodContext(this.ctx, declaringClass, STATIC_INIT_METHOD_NAME, true);
         m.emitPrologue([]);
         const lowerer = new StmtLowerer(m);
         for (const initializer of initializers) {

@@ -191,6 +191,26 @@ describe("object literals", () => {
             (s) => s._ === "AssignStmt" && s.left._ === "InstanceFieldRef",
         );
         expect(fieldStores).toHaveLength(2);
+        expect(stmts).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            right: expect.objectContaining({
+                _: "StaticFieldRef",
+                field: expect.objectContaining({ name: "radius" }),
+            }),
+        }));
+    });
+
+    it("resolves shorthand properties through captured bindings", () => {
+        const { file } = lower(`
+            function make(radius: number): () => object {
+                return () => ({ radius });
+            }
+        `);
+        const closure = methodByName(file, "%AM0$make");
+        expect(singleBlockStmts(closure)).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            right: expect.objectContaining({ _: "ClosureFieldRef", fieldName: "radius" }),
+        }));
     });
 });
 

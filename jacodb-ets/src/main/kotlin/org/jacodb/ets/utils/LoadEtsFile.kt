@@ -265,7 +265,7 @@ fun loadEtsProjectAutoConvert(
     sdkIRPath: Path? = null,
     loadEntrypoints: Boolean = false,
     useArkAnalyzerTypeInference: Int? = 1,
-    provider: EtsIrProvider = EtsIrProvider.default(),
+    provider: EtsIrProvider = defaultProviderFor(projectPath, isProject = true),
 ): EtsScene {
     val irFolderPath = generateEtsIR(
         projectPath,

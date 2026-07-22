@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { StmtDto, AssignStmtDto, CallStmtDto } from "../src/dto/stmts";
 import { defaultMethod, lower, methodByName, singleBlockStmts } from "./util";
 
+const FILE_SIG = { projectName: "proj", fileName: "test.ts" };
+
 /** Statements of the %dflt method between the prologue (`this := ThisRef`) and the final return. */
 function bodyStmts(source: string): StmtDto[] {
     const { file } = lower(source);
@@ -111,6 +113,33 @@ describe("straight-line lowering", () => {
                 { _: "Constant", value: "1" },
                 { _: "Constant", value: "2" },
             ],
+        });
+    });
+
+    it("keeps the namespace on free-function call targets", () => {
+        const { file } = lower(`
+            namespace Geometry {
+                export function area(): number { return 1; }
+                export function twiceArea(): number { return area() * 2; }
+            }
+        `);
+        const namespace = file.namespaces[0]!;
+        const defaultClass = namespace.classes!.find((clazz) => clazz.signature.name === "%dflt")!;
+        const twiceArea = defaultClass.methods.find((method) => method.signature.name === "twiceArea")!;
+        const call = singleBlockStmts(twiceArea).find(
+            (stmt): stmt is AssignStmtDto => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr",
+        );
+
+        expect(call).toMatchObject({
+            right: {
+                method: {
+                    name: "area",
+                    declaringClass: {
+                        name: "%dflt",
+                        declaringNamespace: { name: "Geometry", declaringFile: FILE_SIG },
+                    },
+                },
+            },
         });
     });
 
