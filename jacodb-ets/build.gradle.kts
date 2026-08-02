@@ -32,9 +32,12 @@ val npmExecutable: String = if (Os.isFamily(Os.FAMILY_WINDOWS)) "npm.cmd" else "
 
 val npmAvailable: Boolean by lazy {
     try {
+        // NB: `Redirect.DISCARD` is Java 9+, and this script is compiled with JDK 8 in CI,
+        // so the output is redirected into a throwaway temp file instead.
+        val npmVersionSink = File.createTempFile("jacodb-npm-version", ".log").apply { deleteOnExit() }
         val process = ProcessBuilder(npmExecutable, "--version")
             .redirectErrorStream(true)
-            .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+            .redirectOutput(npmVersionSink)
             .start()
         process.outputStream.close()
         // Never block the whole build on a hung npm.
