@@ -28,9 +28,15 @@
  */
 
 import * as ts from "typescript";
-import { CONSTRUCTOR_NAME, INSTANCE_INIT_METHOD_NAME, Modifier, STATIC_INIT_METHOD_NAME } from "../dto/constants";
-import { ClassDto, DecoratorDto, FieldDto, MethodDto } from "../dto/model";
-import { ClassSignatureDto, MethodParameterDto } from "../dto/signatures";
+import {
+    CONSTRUCTOR_NAME,
+    INSTANCE_INIT_METHOD_NAME,
+    Modifier,
+    PATTERN_PARAMETER_PREFIX,
+    STATIC_INIT_METHOD_NAME,
+} from "../dto/constants";
+import { ClassDto, FieldDto, MethodDto } from "../dto/model";
+import { ClassSignatureDto, UNKNOWN_FILE_SIGNATURE } from "../dto/signatures";
 import { ClassTypeDto, TypeDto, BOOLEAN_TYPE, NUMBER_TYPE, STRING_TYPE, UNKNOWN_TYPE, VOID_TYPE } from "../dto/types";
 import { buildParameters, decoratorsOf, memberName, modifiersOf, parameterType, returnTypeOf } from "./astUtils";
 import { constant } from "./exprLowering";
@@ -74,11 +80,11 @@ export class ClassBuilder {
                     ctorDecl = member;
                 }
                 // Parameter properties (constructor(private x: number)) become fields.
-                for (const p of member.parameters) {
+                member.parameters.forEach((p, index) => {
                     if (hasParameterPropertyModifier(p) && ts.isIdentifier(p.name)) {
-                        fields.push(this.buildParameterPropertyField(signature, p));
+                        fields.push(this.buildParameterPropertyField(signature, p, index));
                     }
-                }
+                });
             } else if (
                 ts.isMethodDeclaration(member) ||
                 ts.isGetAccessorDeclaration(member) ||
@@ -215,7 +221,7 @@ export class ClassBuilder {
         }));
 
         // %statInit assigns member values.
-        const m = new MethodContext(this.ctx, signature, STATIC_INIT_METHOD_NAME, true);
+        const m = new MethodContext(this.ctx, signature, STATIC_INIT_METHOD_NAME, /* isStaticMethod */ true);
         m.emitPrologue([]);
         const lowerer = new StmtLowerer(m);
         let autoValue = 0;
@@ -336,7 +342,20 @@ export class ClassBuilder {
         const m = new MethodContext(this.ctx, declaringClass, CONSTRUCTOR_NAME);
         m.emitPrologue(prologueParams);
         const thisLocal = m.getOrCreateLocal("this", classType);
+        // `super()` may appear in several branches; the initializers must be emitted once.
+        // NB: this is an approximation — the initializers land on the FIRST super() path only,
+        // so a second branch has none. Emitting a copy per branch would be worse (duplicated
+        // field stores), and a dominance-correct placement needs a join point we do not track.
+        let initializersEmitted = false;
         const emitInitializers = (): void => {
+            if (initializersEmitted) {
+                this.ctx.diagnostics.warn(
+                    decl,
+                    "multiple super() calls: field initializers are emitted on the first path only",
+                );
+                return;
+            }
+            initializersEmitted = true;
             // Parameter properties are initialized at constructor entry (after
             // super() in a derived class), before ordinary instance fields.
             this.emitParameterProperties(m, thisLocal, declaringClass, decl.parameters);
@@ -439,22 +458,15 @@ export class ClassBuilder {
             ?.types[0];
         if (extended === undefined) return undefined;
 
-        let classDeclaration: ts.ClassDeclaration | undefined;
-        try {
-            let symbol = this.ctx.checker.getSymbolAtLocation(extended.expression);
-            if (symbol !== undefined && (symbol.flags & ts.SymbolFlags.Alias) !== 0) {
-                symbol = this.ctx.checker.getAliasedSymbol(symbol);
-            }
-            classDeclaration = symbol?.declarations?.find(ts.isClassDeclaration);
-        } catch {
-            // Keep the syntactic superclass signature below.
-        }
+        // Unresolved superclasses keep the syntactic signature below.
+        const classDeclaration = this.ctx.converter.symbolOf(extended.expression)
+            ?.declarations?.find(ts.isClassDeclaration);
 
         const signature = classDeclaration !== undefined
             ? this.ctx.converter.classSignatureOf(classDeclaration)
             : {
                 name: extended.expression.getText(),
-                declaringFile: { projectName: "%unk", fileName: "%unk" },
+                declaringFile: UNKNOWN_FILE_SIGNATURE,
             };
         const constructorDecl = classDeclaration?.members.find(
             (member): member is ts.ConstructorDeclaration => ts.isConstructorDeclaration(member) && member.body !== undefined,
@@ -513,7 +525,7 @@ export class ClassBuilder {
         declaringClass: ClassSignatureDto,
         initializers: readonly (ts.PropertyDeclaration | ts.ClassStaticBlockDeclaration)[],
     ): MethodDto {
-        const m = new MethodContext(this.ctx, declaringClass, STATIC_INIT_METHOD_NAME, true);
+        const m = new MethodContext(this.ctx, declaringClass, STATIC_INIT_METHOD_NAME, /* isStaticMethod */ true);
         m.emitPrologue([]);
         const lowerer = new StmtLowerer(m);
         for (const initializer of initializers) {
@@ -561,11 +573,15 @@ export class ClassBuilder {
         };
     }
 
-    private buildParameterPropertyField(declaringClass: ClassSignatureDto, p: ts.ParameterDeclaration): FieldDto {
+    private buildParameterPropertyField(
+        declaringClass: ClassSignatureDto,
+        p: ts.ParameterDeclaration,
+        index: number,
+    ): FieldDto {
         return {
             signature: {
                 declaringClass,
-                name: ts.isIdentifier(p.name) ? p.name.text : "%pat",
+                name: ts.isIdentifier(p.name) ? p.name.text : `${PATTERN_PARAMETER_PREFIX}${index}`,
                 type: parameterType(this.ctx, p),
             },
             modifiers: modifiersOf(p),

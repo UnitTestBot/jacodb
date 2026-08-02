@@ -78,7 +78,6 @@ export interface IfStmtDto {
     condition: ConditionExprDto;
 }
 
-export const NOP_STMT: NopStmtDto = { _: "NopStmt" };
 export const RETURN_VOID_STMT: ReturnVoidStmtDto = { _: "ReturnVoidStmt" };
 
 /** Statements that must terminate a basic block (no stmts may follow them). */

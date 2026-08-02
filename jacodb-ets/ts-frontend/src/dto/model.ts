@@ -23,7 +23,6 @@ import { ClassCategoryValue, ExportTypeValue, ImportType } from "./constants";
 import {
     ClassSignatureDto,
     FieldSignatureDto,
-    MethodParameterDto,
     MethodSignatureDto,
     NamespaceSignatureDto,
     FileSignatureDto,
@@ -82,7 +81,8 @@ export interface BodyDto {
 
 /** UTF-16 offsets and zero-based line/column pairs, matching TypeScript. */
 export interface SourceSpanDto {
-    fileName: string;
+    /** Omitted when the span belongs to the enclosing file (Kotlin falls back to it). */
+    fileName?: string;
     startOffset: number;
     endOffset: number;
     startLine: number;

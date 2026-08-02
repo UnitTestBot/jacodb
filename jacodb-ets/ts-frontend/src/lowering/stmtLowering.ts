@@ -30,6 +30,14 @@ import { unsupportedStmt } from "./diagnostics";
 import { ExprLowerer, LoweringError, constant } from "./exprLowering";
 import { MethodContext } from "./methodBuilder";
 
+/** The lowered loop variable of a for-of/for-in statement. */
+interface LoopBinding {
+    target: LValueDto;
+    type: TypeDto;
+    pattern?: ts.BindingPattern;
+    patternSource?: LocalDto;
+}
+
 /** Target labels for break/continue resolution. */
 interface BreakableContext {
     kind: "loop" | "switch" | "labeled-block";
@@ -64,16 +72,31 @@ export class StmtLowerer {
     }
 
     lowerStatements(statements: readonly ts.Statement[]): void {
-        // Function declarations are hoisted. Materialize their closure values
-        // before the first executable statement, including calls preceding the
-        // declaration in source order.
+        // Function declarations are hoisted in JavaScript, but lowering materializes
+        // their captured values at the creation point: hoisting unconditionally would
+        // snapshot captures BEFORE the captured variables are assigned. Hoist only the
+        // declarations that are actually referenced earlier in the same statement list;
+        // everything else keeps source order, so its captures are already initialized.
+        const hoisted = new Set<ts.Statement>();
+        statements.forEach((statement, index) => {
+            if (!ts.isFunctionDeclaration(statement) || statement.name === undefined) {
+                return;
+            }
+            const name = statement.name.text;
+            for (let i = 0; i < index; i++) {
+                if (referencesName(statements[i], name)) {
+                    hoisted.add(statement);
+                    return;
+                }
+            }
+        });
         for (const statement of statements) {
-            if (ts.isFunctionDeclaration(statement)) {
+            if (hoisted.has(statement)) {
                 this.lowerStatement(statement);
             }
         }
         for (const statement of statements) {
-            if (!ts.isFunctionDeclaration(statement)) {
+            if (!hoisted.has(statement)) {
                 this.lowerStatement(statement);
             }
         }
@@ -343,19 +366,11 @@ export class StmtLowerer {
         cfg.branch(this.expr.relation("==", done, constant("true", BOOLEAN_TYPE)), exitLabel, bodyLabel);
 
         cfg.placeLabel(bodyLabel);
-        const binding = this.loopBinding(node.initializer);
-        cfg.emit({
-            _: "AssignStmt",
-            left: binding.target,
-            right: {
-                _: "InstanceFieldRef",
-                instance: result,
-                field: { declaringClass: UNKNOWN_CLASS_SIGNATURE, name: "value", type: binding.type },
-            },
-        });
-        if (binding.pattern !== undefined && binding.patternSource !== undefined) {
-            this.lowerBindingPattern(binding.pattern, binding.patternSource);
-        }
+        this.emitLoopBinding(node.initializer, (binding) => ({
+            _: "InstanceFieldRef",
+            instance: result,
+            field: { declaringClass: UNKNOWN_CLASS_SIGNATURE, name: "value", type: binding.type },
+        }));
         this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: headLabel, label }, () => {
             this.lowerStatement(node.statement);
         });
@@ -409,15 +424,12 @@ export class StmtLowerer {
         cfg.branch(this.expr.relation("<", index, length), bodyLabel, exitLabel);
 
         cfg.placeLabel(bodyLabel);
-        const binding = this.loopBinding(node.initializer);
-        cfg.emit({
-            _: "AssignStmt",
-            left: binding.target,
-            right: { _: "ArrayRef", array: keys, index, type: { _: "StringType" } },
-        });
-        if (binding.pattern !== undefined && binding.patternSource !== undefined) {
-            this.lowerBindingPattern(binding.pattern, binding.patternSource);
-        }
+        this.emitLoopBinding(node.initializer, () => ({
+            _: "ArrayRef",
+            array: keys,
+            index,
+            type: { _: "StringType" },
+        }));
         const continueLabel = cfg.newLabel();
         this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: continueLabel, label }, () => {
             this.lowerStatement(node.statement);
@@ -429,10 +441,36 @@ export class StmtLowerer {
         cfg.placeLabel(exitLabel);
     }
 
-    /** The loop variable of for-of/for-in; destructuring goes through a temp + pattern. */
-    private loopBinding(
+    /**
+     * Bind the loop variable inside an already placed body block.
+     *
+     * An unsupported binding (`for (obj.x of xs)`, `for (const [a, ...rest] of xs)`, ...)
+     * must NOT escape as a LoweringError: the enclosing labels of the loop are already
+     * allocated, and aborting here would leave them unplaced, which makes `finalize()`
+     * fail and takes the whole file down. Degrade to a raw fallback statement instead.
+     */
+    private emitLoopBinding(
         initializer: ts.ForInitializer,
-    ): { target: LValueDto; type: TypeDto; pattern?: ts.BindingPattern; patternSource?: LocalDto } {
+        right: (binding: LoopBinding) => ValueDto,
+    ): void {
+        try {
+            const binding = this.loopBinding(initializer);
+            this.m.cfg.emit({ _: "AssignStmt", left: binding.target, right: right(binding) });
+            if (binding.pattern !== undefined && binding.patternSource !== undefined) {
+                this.lowerBindingPattern(binding.pattern, binding.patternSource);
+            }
+        } catch (e) {
+            if (e instanceof LoweringError) {
+                this.m.diagnostics.warn(initializer, `unsupported loop binding: ${e.message}`);
+                this.m.cfg.emit(unsupportedStmt(initializer));
+                return;
+            }
+            throw e;
+        }
+    }
+
+    /** The loop variable of for-of/for-in; destructuring goes through a temp + pattern. */
+    private loopBinding(initializer: ts.ForInitializer): LoopBinding {
         if (ts.isVariableDeclarationList(initializer)) {
             const decl = initializer.declarations[0];
             if (decl !== undefined && ts.isIdentifier(decl.name)) {
@@ -783,6 +821,21 @@ export class StmtLowerer {
         cfg.goto(doneLabel);
         cfg.placeLabel(doneLabel);
     }
+}
+
+/** Whether [node] mentions the identifier [name] anywhere in its subtree. */
+function referencesName(node: ts.Node, name: string): boolean {
+    let found = false;
+    const visit = (current: ts.Node): void => {
+        if (found) return;
+        if (ts.isIdentifier(current) && current.text === name) {
+            found = true;
+            return;
+        }
+        ts.forEachChild(current, visit);
+    };
+    visit(node);
+    return found;
 }
 
 function isDirectSuperCall(node: ts.Expression): boolean {

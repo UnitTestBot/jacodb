@@ -15,14 +15,14 @@
  */
 
 import * as ts from "typescript";
-import { TEMP_LOCAL_PREFIX } from "../dto/constants";
+import { DEFAULT_ARK_CLASS_NAME, TEMP_LOCAL_PREFIX } from "../dto/constants";
 import { BodyDto, ClassDto, LocalDeclDto, MethodDto, SourceSpanDto } from "../dto/model";
 import { ClassSignatureDto, FieldSignatureDto, FileSignatureDto } from "../dto/signatures";
 import { ClassTypeDto, LexicalEnvTypeDto, TypeDto, UNKNOWN_TYPE } from "../dto/types";
 import { ClosureFieldRefDto, LocalDto, StaticFieldRefDto } from "../dto/values";
 import { TypeConverter } from "../types/convert";
 import { CfgBuilder } from "./cfg";
-import { Diagnostics } from "./diagnostics";
+import { Diagnostics, syntaxKindName } from "./diagnostics";
 
 /**
  * Registry for anonymous methods (`%AM<n>$<method>`, closures) and anonymous
@@ -101,16 +101,22 @@ export class MethodContext {
         const endOffset = node.getEnd();
         const start = sourceFile.getLineAndCharacterOfPosition(startOffset);
         const end = sourceFile.getLineAndCharacterOfPosition(endOffset);
-        return {
-            fileName: this.ctx.fileSignatureFor(sourceFile).fileName,
+        // The enclosing file name is already present in the file signature; repeating it in
+        // every origin entry inflates the JSON, so emit it only for foreign source files.
+        const fileName = this.ctx.fileSignatureFor(sourceFile).fileName;
+        const span: SourceSpanDto = {
             startOffset,
             endOffset,
             startLine: start.line,
             startColumn: start.character,
             endLine: end.line,
             endColumn: end.character,
-            nodeKind: ts.SyntaxKind[node.kind],
+            nodeKind: syntaxKindName(node.kind),
         };
+        if (fileName !== this.declaringClass.declaringFile.fileName) {
+            span.fileName = fileName;
+        }
+        return span;
     }
 
     thisType(): ClassTypeDto {
@@ -192,23 +198,10 @@ export class MethodContext {
     }
 
     private symbolForIdentifier(node: ts.Identifier): ts.Symbol | undefined {
-        try {
-            let symbol = this.checker.getSymbolAtLocation(node);
-            // The symbol of a shorthand-property name belongs to the generated
-            // object field. Ask TypeScript for the value symbol instead so
-            // `{ value }` follows the same storage path as an ordinary read.
-            if (ts.isShorthandPropertyAssignment(node.parent) && node.parent.name === node) {
-                symbol = this.checker.getShorthandAssignmentValueSymbol(node.parent) ?? symbol;
-            }
-            if (symbol !== undefined && (symbol.flags & ts.SymbolFlags.Alias) !== 0) {
-                return this.checker.getAliasedSymbol(symbol);
-            }
-            return symbol;
-        } catch {
-            // Unresolved identifiers (for example ambient globals in malformed
-            // input) retain the old name-based fallback.
-            return undefined;
-        }
+        // Unresolved identifiers (for example ambient globals in malformed input)
+        // yield undefined here and retain the name-based fallback. Shorthand-property
+        // names are redirected to their value symbol inside `symbolOf`.
+        return this.converter.symbolOf(node);
     }
 
     /** Derive storage for an imported scope variable from its declaration. */
@@ -234,7 +227,7 @@ export class MethodContext {
         if (!directScope && (!functionScoped || moduleScopeOf(variableDeclaration) === undefined)) return undefined;
 
         const declaringClass: ClassSignatureDto = {
-            name: "%dflt",
+            name: DEFAULT_ARK_CLASS_NAME,
             declaringFile: this.ctx.fileSignatureFor(identifier.getSourceFile()),
         };
         const moduleScope = directScope ? statement.parent : moduleScopeOf(variableDeclaration);

@@ -17,7 +17,7 @@
 /** Shared AST helpers used across the lowering modules. */
 
 import * as ts from "typescript";
-import { Modifier } from "../dto/constants";
+import { COMPUTED_MEMBER_NAME, Modifier, PATTERN_PARAMETER_PREFIX } from "../dto/constants";
 import { DecoratorDto } from "../dto/model";
 import { MethodParameterDto } from "../dto/signatures";
 import { TypeDto, UNKNOWN_TYPE } from "../dto/types";
@@ -27,7 +27,7 @@ export function memberName(name: ts.PropertyName | ts.BindingName | ts.EntityNam
     if (ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name) || ts.isPrivateIdentifier(name)) {
         return name.text;
     }
-    return "%computed";
+    return COMPUTED_MEMBER_NAME;
 }
 
 export function modifiersOf(node: ts.Node): number {
@@ -86,7 +86,11 @@ export function buildParameters(ctx: LoweringContext, decl: ts.SignatureDeclarat
         if (ts.isIdentifier(p.name) && p.name.text === "this") {
             continue;
         }
-        const name = ts.isIdentifier(p.name) ? p.name.text : "%pat";
+        // Pattern parameters need distinct names: a shared `%pat` would make the second
+        // ParameterRef overwrite the first one and duplicate the name in the signature.
+        const name = ts.isIdentifier(p.name)
+            ? p.name.text
+            : `${PATTERN_PARAMETER_PREFIX}${parameters.length}`;
         const type = parameterType(ctx, p);
         const param: MethodParameterDto = { name, type };
         if (p.questionToken !== undefined) param.isOptional = true;

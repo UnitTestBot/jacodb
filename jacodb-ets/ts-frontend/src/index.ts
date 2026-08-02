@@ -56,6 +56,8 @@ interface CliArgs {
  * Hand-rolled arg parsing.
  * NOTE: the Kotlin side historically passes `-t N` as a SINGLE argv token `"-t N"`,
  * so tokens containing spaces are pre-split here.
+ * Everything after a `--` separator is treated as positional, which is the escape
+ * hatch for paths starting with a dash.
  */
 export function parseArgs(argv: string[]): CliArgs | string {
     const tokens = argv.flatMap((a) => (a.startsWith("-") && a.includes(" ") ? a.split(/\s+/) : [a]));
@@ -69,8 +71,17 @@ export function parseArgs(argv: string[]): CliArgs | string {
         typeInference: undefined,
         verbose: false,
     };
+    let positionalOnly = false;
     for (let i = 0; i < tokens.length; i++) {
         const token = tokens[i];
+        if (positionalOnly) {
+            positional.push(token);
+            continue;
+        }
+        if (token === "--") {
+            positionalOnly = true;
+            continue;
+        }
         switch (token) {
             case "-p":
             case "--project":
@@ -125,15 +136,20 @@ function isSourceFilePath(filePath: string): boolean {
 /** Recursively collect source files under a directory. */
 function collectSourceFiles(dir: string): string[] {
     const result: string[] = [];
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-        const full = path.join(dir, entry.name);
-        if (entry.isDirectory()) {
-            if (entry.name === "node_modules" || entry.name.startsWith(".")) continue;
-            result.push(...collectSourceFiles(full));
-        } else if (entry.isFile() && isSourceFilePath(entry.name)) {
-            result.push(full);
+    // NB: an explicit loop instead of `push(...spread)` — spreading a large array into
+    // arguments overflows the call stack (RangeError) on very big subtrees.
+    const walk = (current: string): void => {
+        for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+            const full = path.join(current, entry.name);
+            if (entry.isDirectory()) {
+                if (entry.name === "node_modules" || entry.name.startsWith(".")) continue;
+                walk(full);
+            } else if (entry.isFile() && isSourceFilePath(entry.name)) {
+                result.push(full);
+            }
         }
-    }
+    };
+    walk(dir);
     return result.sort();
 }
 
@@ -145,9 +161,11 @@ export interface ProjectInputs {
 
 /** Resolve root files and compiler options, honoring tsconfig.json in project mode. */
 export function resolveProjectInputs(inputDir: string, honorTsConfig: boolean = true): ProjectInputs {
-    const configPath = honorTsConfig
-        ? ts.findConfigFile(inputDir, ts.sys.fileExists, "tsconfig.json")
-        : undefined;
+    // Deliberately NOT `ts.findConfigFile`: it walks UP the directory tree, so analyzing a
+    // directory in /tmp or inside a monorepo would pick up a foreign tsconfig whose
+    // fileNames are then filtered away to nothing.
+    const localConfig = path.join(path.resolve(inputDir), "tsconfig.json");
+    const configPath = honorTsConfig && ts.sys.fileExists(localConfig) ? localConfig : undefined;
     if (configPath === undefined) {
         return { sources: collectSourceFiles(inputDir), options: COMPILER_OPTIONS };
     }
@@ -259,7 +277,14 @@ export function main(argv: string[]): number {
         }
         log(`found ${sources.length} source files`);
         if (sources.length === 0) {
-            return 0;
+            // Silently producing an empty scene hides real misconfigurations
+            // (ArkTS-only project, SDK of *.d.ts files, foreign tsconfig).
+            process.stderr.write(`error: no source files found under: ${inputPath}\n`);
+            if (projectInputs.configPath !== undefined) {
+                process.stderr.write(`note: using tsconfig: ${projectInputs.configPath}\n`);
+            }
+            process.stderr.write(`note: recognized extensions: ${SOURCE_EXTENSIONS.join(", ")}\n`);
+            return 1;
         }
 
         const program = ts.createProgram(sources, options);

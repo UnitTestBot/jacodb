@@ -30,10 +30,35 @@ val tsFrontendDir: File = projectDir.resolve("ts-frontend")
 val tsFrontendDist: File = tsFrontendDir.resolve("dist")
 val npmExecutable: String = if (Os.isFamily(Os.FAMILY_WINDOWS)) "npm.cmd" else "npm"
 
-fun isNpmAvailable(): Boolean = try {
-    ProcessBuilder(npmExecutable, "--version").start().waitFor() == 0
-} catch (_: Exception) {
-    false
+val npmAvailable: Boolean by lazy {
+    try {
+        val process = ProcessBuilder(npmExecutable, "--version")
+            .redirectErrorStream(true)
+            .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+            .start()
+        process.outputStream.close()
+        // Never block the whole build on a hung npm.
+        if (!process.waitFor(30, TimeUnit.SECONDS)) {
+            process.destroyForcibly()
+            process.waitFor()
+            false
+        } else {
+            process.exitValue() == 0
+        }
+    } catch (_: Exception) {
+        false
+    }
+}
+
+/**
+ * The ts-frontend is built with npm, which is not guaranteed to be present
+ * (offline builds, publishing from a machine without Node). Skipping keeps such
+ * builds working; a prebuilt `dist` is still packaged if it exists.
+ */
+fun Task.onlyIfNpmAvailable() = onlyIf {
+    npmAvailable.also { available ->
+        if (!available) logger.warn("npm is not available; skipping task '$name'")
+    }
 }
 
 val installTsFrontend = tasks.register<Exec>("installTsFrontend") {
@@ -42,7 +67,10 @@ val installTsFrontend = tasks.register<Exec>("installTsFrontend") {
     workingDir = tsFrontendDir
     commandLine(npmExecutable, "ci")
     inputs.files(tsFrontendDir.resolve("package.json"), tsFrontendDir.resolve("package-lock.json"))
-    outputs.dir(tsFrontendDir.resolve("node_modules"))
+    // `npm ci` wipes node_modules anyway, so snapshotting its tens of thousands of
+    // files on every up-to-date check buys nothing; the marker file is enough.
+    outputs.file(tsFrontendDir.resolve("node_modules/.package-lock.json"))
+    onlyIfNpmAvailable()
 }
 
 val buildTsFrontend = tasks.register<Exec>("buildTsFrontend") {
@@ -51,6 +79,7 @@ val buildTsFrontend = tasks.register<Exec>("buildTsFrontend") {
     dependsOn(installTsFrontend)
     workingDir = tsFrontendDir
     commandLine(npmExecutable, "run", "build")
+    onlyIfNpmAvailable()
     inputs.dir(tsFrontendDir.resolve("src"))
     inputs.files(
         tsFrontendDir.resolve("package.json"),
@@ -70,6 +99,28 @@ val packageTsFrontendRuntime = tasks.register<Zip>("packageTsFrontendRuntime") {
     }
     archiveFileName.set("runtime.zip")
     destinationDirectory.set(layout.buildDirectory.dir("generated/etsFrontend"))
+    // Without npm and without a prebuilt `dist` there is nothing to package; skipping keeps
+    // offline builds and publishing from a machine without Node working (see onlyIfNpmAvailable).
+    onlyIf {
+        (tsFrontendDist.resolve("index.js").isFile || npmAvailable).also { runnable ->
+            if (!runnable) logger.warn("ts-frontend was not built and npm is unavailable; skipping task '$name'")
+        }
+    }
+    // A silently incomplete archive would be published and only fail at runtime:
+    // the consumer (LoadEtsFile.kt) checks for index.js but not for the type libraries.
+    doFirst {
+        require(tsFrontendDist.resolve("index.js").isFile) {
+            "ts-frontend was not built: '${tsFrontendDist.resolve("index.js")}' is missing"
+        }
+        val libs = tsFrontendDist.listFiles()
+            ?.count { it.isFile && it.name.startsWith("lib") && it.name.endsWith(".d.ts") }
+            ?: 0
+        require(libs > 0) {
+            "ts-frontend dist contains no 'lib*.d.ts' type libraries in '$tsFrontendDist'; " +
+                "the packaged runtime would be silently broken"
+        }
+        logger.info("Packaging ts-frontend runtime: index.js + $libs type libraries")
+    }
 }
 
 tasks.processResources {
@@ -79,21 +130,35 @@ tasks.processResources {
     }
 }
 
-tasks.register<Exec>("testTsFrontend") {
+val testTsFrontend = tasks.register<Exec>("testTsFrontend") {
     group = "verification"
     description = "Runs the ts-frontend unit tests (vitest)."
     dependsOn(installTsFrontend)
     workingDir = tsFrontendDir
     commandLine(npmExecutable, "test")
-    onlyIf {
-        isNpmAvailable().also { available ->
-            if (!available) logger.warn("npm is not available; skipping ts-frontend tests")
-        }
+    inputs.dir(tsFrontendDir.resolve("src"))
+    inputs.dir(tsFrontendDir.resolve("test"))
+    inputs.files(
+        tsFrontendDir.resolve("package.json"),
+        tsFrontendDir.resolve("package-lock.json"),
+        tsFrontendDir.resolve("tsconfig.json"),
+        tsFrontendDir.resolve("vitest.config.ts"),
+    )
+    outputs.file(layout.buildDirectory.file("test-results/testTsFrontend/success.marker"))
+    doLast {
+        val marker = layout.buildDirectory.file("test-results/testTsFrontend/success.marker").get().asFile
+        marker.parentFile.mkdirs()
+        marker.writeText("ok")
     }
+    onlyIfNpmAvailable()
 }
 
 tasks.test {
     dependsOn(buildTsFrontend)
+}
+
+tasks.check {
+    dependsOn(testTsFrontend)
 }
 
 // ----------------------------------------------------------------------------
@@ -112,7 +177,13 @@ tasks.register("generateTestResources") {
     description = "Generates test resources (EtsIR JSON) from TypeScript sample files."
     dependsOn(buildTsFrontend)
     doLast {
-        val provider = (System.getenv("ETS_IR_PROVIDER") ?: "ts-frontend").lowercase()
+        // NB: keep the accepted aliases in sync with `EtsIrProvider.default()`
+        // (jacodb-ets/src/main/kotlin/org/jacodb/ets/utils/LoadEtsFile.kt); this task
+        // runs before the module is compiled and therefore cannot call it.
+        val provider = when (System.getenv("ETS_IR_PROVIDER")?.trim()?.lowercase()) {
+            "arkanalyzer", "ark-analyzer", "ark_analyzer" -> "arkanalyzer"
+            else -> "ts-frontend"
+        }
         println("Generating test resources using provider: $provider")
         val startTime = System.currentTimeMillis()
 
@@ -175,11 +246,15 @@ tasks.register("generateTestResources") {
                 process.destroyForcibly()
                 process.waitFor()
             }
-            throw GradleException("Test resource generation timed out")
         }
+        // Print the generator output BEFORE failing: otherwise a timeout leaves
+        // the only diagnostics buried in build/tmp.
         val processOutput = processLog.readText().trim()
         if (processOutput.isNotBlank()) {
             println("[GENERATOR OUTPUT]:\n--------\n$processOutput\n--------")
+        }
+        if (!ok) {
+            throw GradleException("Test resource generation timed out")
         }
         if (process.exitValue() != 0) {
             throw GradleException("Test resource generation failed with exit code ${process.exitValue()}")

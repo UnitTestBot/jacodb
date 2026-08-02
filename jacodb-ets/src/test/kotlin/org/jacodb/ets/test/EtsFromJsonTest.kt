@@ -75,6 +75,7 @@ import kotlin.io.path.relativeTo
 import kotlin.io.path.walk
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 private val logger = KotlinLogging.logger {}
 
@@ -540,6 +541,24 @@ class EtsFromJsonTest {
         logger.info { "typeDto = $typeDto" }
         assertIs<LiteralTypeDto>(typeDto)
         assertEquals(PrimitiveLiteralDto.BooleanLiteral(false), typeDto.literal)
+    }
+
+    @Test
+    fun testLoadNonFiniteNumericLiteralTypeFromJson() {
+        // TS: `let x: 1e999 = 1e999;` — the value overflows to Infinity and
+        // `JSON.stringify` writes it out as `null`, which must not crash the load.
+        val jsonString = """
+            {
+              "_": "LiteralType",
+              "literal": null
+            }
+        """.trimIndent()
+        val typeDto = Json.decodeFromString<TypeDto>(jsonString)
+        logger.info { "typeDto = $typeDto" }
+        assertIs<LiteralTypeDto>(typeDto)
+        val literal = typeDto.literal
+        assertIs<PrimitiveLiteralDto.NumberLiteral>(literal)
+        assertTrue(literal.value.isNaN())
     }
 
     @Test

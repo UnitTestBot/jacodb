@@ -23,6 +23,6 @@ import { EtsFileDto } from "./dto/model";
  * optional DTO fields correspond to Kotlin constructor parameters with defaults.
  * `null` values (e.g. `superClassName: null`, `GlobalRef.ref: null`) are preserved.
  */
-export function serializeEtsFile(file: EtsFileDto, pretty: boolean = false): string {
-    return pretty ? JSON.stringify(file, null, 2) : JSON.stringify(file);
+export function serializeEtsFile(file: EtsFileDto): string {
+    return JSON.stringify(file);
 }

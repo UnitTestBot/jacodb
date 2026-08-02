@@ -110,40 +110,38 @@ export class CfgBuilder {
         }
     }
 
-    emit(stmt: StmtDto): void {
+    /**
+     * Unreachable code after return/throw/etc: continue in a detached block so
+     * lowering can proceed; it is dropped by reachability in `finalize()`.
+     */
+    private ensureOpen(): void {
         if (!this.isOpen()) {
-            // Unreachable code after return/throw/etc: emit into a detached block
-            // so lowering can proceed; it is dropped by reachability in finalize().
             this.current = this.place(this.newLabel());
         }
+    }
+
+    emit(stmt: StmtDto): void {
+        this.ensureOpen();
         this.current.stmts.push({ stmt, origin: this.currentOrigin });
     }
 
     goto(target: Label): void {
-        if (!this.isOpen()) {
-            this.current = this.place(this.newLabel());
-        }
+        this.ensureOpen();
         this.current.terminator = { kind: "goto", target };
     }
 
     branch(condition: ConditionExprDto, trueTarget: Label, falseTarget: Label): void {
-        if (!this.isOpen()) {
-            this.current = this.place(this.newLabel());
-        }
+        this.ensureOpen();
         this.current.terminator = { kind: "if", condition, trueTarget, falseTarget, origin: this.currentOrigin };
     }
 
     ret(arg?: ValueDto): void {
-        if (!this.isOpen()) {
-            this.current = this.place(this.newLabel());
-        }
+        this.ensureOpen();
         this.current.terminator = { kind: "return", arg, origin: this.currentOrigin };
     }
 
     throwValue(arg: ValueDto): void {
-        if (!this.isOpen()) {
-            this.current = this.place(this.newLabel());
-        }
+        this.ensureOpen();
         this.current.terminator = { kind: "throw", arg, origin: this.currentOrigin };
     }
 

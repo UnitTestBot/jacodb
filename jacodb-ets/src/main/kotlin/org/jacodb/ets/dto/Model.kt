@@ -100,7 +100,8 @@ data class BodyDto(
  */
 @Serializable
 data class SourceSpanDto(
-    val fileName: String,
+    /** Omitted when the span belongs to the enclosing file; see [org.jacodb.ets.dto.toEtsSourceSpan]. */
+    val fileName: String? = null,
     val startOffset: Int,
     val endOffset: Int,
     val startLine: Int,

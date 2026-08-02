@@ -5,6 +5,9 @@
   "description": "Native TypeScript frontend producing EtsIR JSON for jacodb-ets",
   "license": "Apache-2.0",
   "main": "dist/index.js",
+  "engines": {
+    "node": ">=18.18"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit && esbuild src/index.ts --bundle --platform=node --format=cjs --target=node18 --outfile=dist/index.js && node scripts/copy-typescript-libs.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",

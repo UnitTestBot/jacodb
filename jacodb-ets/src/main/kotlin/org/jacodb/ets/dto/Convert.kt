@@ -502,7 +502,7 @@ class EtsMethodBuilder(
     }
 }
 
-fun ClassDto.toEtsClass(): EtsClass {
+fun ClassDto.toEtsClass(enclosingFileName: String = signature.declaringFile.fileName): EtsClass {
     val signature = signature.toEtsClassSignature()
     val superClassSignature = superClassName?.takeIf { it != "" }?.let { name ->
         EtsClassSignature(
@@ -517,7 +517,7 @@ fun ClassDto.toEtsClass(): EtsClass {
         )
     }
     val fields = fields.map { it.toEtsField() }
-    val methods = methods.map { it.toEtsMethod() }
+    val methods = methods.map { it.toEtsMethod(enclosingFileName) }
     val category = category.toEtsClassCategory()
     val typeParameters = typeParameters?.map { it.toEtsType() } ?: emptyList()
     val modifiers = EtsModifiers(modifiers)
@@ -545,10 +545,12 @@ fun TypeDto.toEtsType(): EtsType = when (this) {
 
     AnyTypeDto -> EtsAnyType
 
-    is ArrayTypeDto -> EtsArrayType(
-        elementType = elementType.toEtsType(),
-        dimensions = dimensions,
-    )
+    // Nested array types are folded, matching EtsNewArrayExpr.type and NewArrayExprDto:
+    // `T[][]` is ArrayType(T, 2), never ArrayType(ArrayType(T, 1), 1).
+    is ArrayTypeDto -> when (val element = elementType.toEtsType()) {
+        is EtsArrayType -> EtsArrayType(element.elementType, element.dimensions + dimensions)
+        else -> EtsArrayType(element, dimensions)
+    }
 
     BooleanTypeDto -> EtsBooleanType
 
@@ -708,7 +710,9 @@ fun LocalSignatureDto.toEtsLocalSignature(): EtsLocalSignature {
     )
 }
 
-fun MethodDto.toEtsMethod(): EtsMethod {
+fun MethodDto.toEtsMethod(
+    enclosingFileName: String = signature.declaringClass.declaringFile.fileName,
+): EtsMethod {
     val signature = signature.toEtsMethodSignature()
     val typeParameters = typeParameters?.map { it.toEtsType() } ?: emptyList()
     val modifiers = EtsModifiers(modifiers)
@@ -721,7 +725,7 @@ fun MethodDto.toEtsMethod(): EtsMethod {
             decorators = decorators,
             locals = body.locals.map { it.toEtsLocal() },
             stmtOrigins = body.stmtOrigins.associate { origin ->
-                (origin.blockId to origin.stmtIndex) to origin.source.toEtsSourceSpan()
+                (origin.blockId to origin.stmtIndex) to origin.source.toEtsSourceSpan(enclosingFileName)
             },
         )
         return builder.build(body.cfg)
@@ -735,8 +739,13 @@ fun MethodDto.toEtsMethod(): EtsMethod {
     }
 }
 
-fun SourceSpanDto.toEtsSourceSpan(): EtsSourceSpan = EtsSourceSpan(
-    fileName = fileName,
+/**
+ * [fileName] is omitted by frontends for spans of the enclosing file itself
+ * (it would otherwise be repeated in every origin entry), so it falls back to
+ * [enclosingFileName].
+ */
+fun SourceSpanDto.toEtsSourceSpan(enclosingFileName: String = ""): EtsSourceSpan = EtsSourceSpan(
+    fileName = fileName ?: enclosingFileName,
     startOffset = startOffset,
     endOffset = endOffset,
     startLine = startLine,
@@ -759,10 +768,10 @@ fun FieldDto.toEtsField(): EtsField {
     )
 }
 
-fun NamespaceDto.toEtsNamespace(): EtsNamespace {
+fun NamespaceDto.toEtsNamespace(enclosingFileName: String = signature.declaringFile.fileName): EtsNamespace {
     val signature = signature.toEtsNamespaceSignature()
-    val classes = classes.map { it.toEtsClass() }
-    val namespaces = namespaces.map { it.toEtsNamespace() }
+    val classes = classes.map { it.toEtsClass(enclosingFileName) }
+    val namespaces = namespaces.map { it.toEtsNamespace(enclosingFileName) }
     return EtsNamespace(
         signature = signature,
         classes = classes,
@@ -772,8 +781,8 @@ fun NamespaceDto.toEtsNamespace(): EtsNamespace {
 
 fun EtsFileDto.toEtsFile(): EtsFile {
     val signature = signature.toEtsFileSignature()
-    val classes = classes.map { it.toEtsClass() }
-    val namespaces = namespaces.map { it.toEtsNamespace() }
+    val classes = classes.map { it.toEtsClass(signature.fileName) }
+    val namespaces = namespaces.map { it.toEtsNamespace(signature.fileName) }
     val importInfos = importInfos.map { it.toEtsImportInfo() }
     val exportInfos = exportInfos.map { it.toEtsExportInfo() }
     return EtsFile(

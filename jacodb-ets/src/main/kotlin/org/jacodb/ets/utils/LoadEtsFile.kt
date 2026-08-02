@@ -23,6 +23,7 @@ import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsScene
 import java.io.FileNotFoundException
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipInputStream
 import kotlin.io.path.Path
 import kotlin.io.path.PathWalkOption
@@ -38,6 +39,7 @@ import kotlin.io.path.outputStream
 import kotlin.io.path.pathString
 import kotlin.io.path.walk
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 private val logger = KotlinLogging.logger {}
@@ -95,6 +97,9 @@ private val extractedBundledFrontend: Path? by lazy {
     EtsIrProvider::class.java.getResourceAsStream(BUNDLED_ETS_FRONTEND_RUNTIME)?.use { input ->
         val runtimeDir = createTempDirectory("jacodb-ets-frontend-")
         runtimeDir.toFile().deleteOnExit()
+        // `deleteOnExit` does not run on SIGKILL and cannot remove non-empty directories,
+        // so drop the whole tree on a normal shutdown as well.
+        Runtime.getRuntime().addShutdownHook(Thread { runtimeDir.toFile().deleteRecursively() })
         ZipInputStream(input).use { archive ->
             var entry = archive.nextEntry
             while (entry != null) {
@@ -118,19 +123,33 @@ private val extractedBundledFrontend: Path? by lazy {
     }
 }
 
-/** ArkTS remains on the legacy provider; the native frontend owns TS/JS only. */
-internal fun defaultProviderFor(path: Path, isProject: Boolean): EtsIrProvider {
-    val containsEts = if (isProject) {
-        path.exists() && path.walk().any { it.extension.equals("ets", ignoreCase = true) }
-    } else {
-        path.extension.equals("ets", ignoreCase = true)
-    }
-    return if (containsEts) {
-        EtsIrProvider.ARKANALYZER
-    } else {
-        EtsIrProvider.default()
-    }
+// Walking a large project tree (node_modules included) costs seconds of pure I/O,
+// and the same path is probed repeatedly by the `loadEts*AutoConvert` helpers.
+//
+// NB: the cache lives for the whole JVM lifetime and is never evicted, so adding an `.ets`
+// file to an already-probed tree keeps the previously chosen provider. Pass `provider`
+// explicitly (or call [clearDefaultProviderCache]) when a tree changes under a long-lived host.
+private val defaultProviderCache = ConcurrentHashMap<Pair<String, Boolean>, EtsIrProvider>()
+
+/** Drops the memoized [defaultProviderFor] decisions; intended for tests and long-lived hosts. */
+fun clearDefaultProviderCache() {
+    defaultProviderCache.clear()
 }
+
+/** ArkTS remains on the legacy provider; the native frontend owns TS/JS only. */
+internal fun defaultProviderFor(path: Path, isProject: Boolean): EtsIrProvider =
+    defaultProviderCache.computeIfAbsent(path.absolute().normalize().pathString to isProject) {
+        val containsEts = if (isProject) {
+            path.exists() && path.walk().any { it.extension.equals("ets", ignoreCase = true) }
+        } else {
+            path.extension.equals("ets", ignoreCase = true)
+        }
+        if (containsEts) {
+            EtsIrProvider.ARKANALYZER
+        } else {
+            EtsIrProvider.default()
+        }
+    }
 
 /** Location of the serializer script for the chosen [provider]. */
 fun etsIrSerializerScript(provider: EtsIrProvider = EtsIrProvider.default()): Path =
@@ -192,12 +211,37 @@ private fun resolveFrontendScript(frontendDir: Path, scriptPath: String): Path {
 
 class EtsIrGenerationException(message: String) : IllegalStateException(message)
 
+/** Cap on the amount of process output embedded into [EtsIrGenerationException]. */
+private const val MAX_REPORTED_OUTPUT_CHARS = 16 * 1024
+
+private const val ENV_VAR_ETS_IR_GENERATION_TIMEOUT_SEC = "ETS_IR_GENERATION_TIMEOUT_SEC"
+
+/**
+ * Default generation timeout. Ten seconds is only enough for a single file;
+ * project mode on a real project needs minutes, hence the larger default and
+ * the `ETS_IR_GENERATION_TIMEOUT_SEC` override.
+ */
+fun defaultEtsIrGenerationTimeout(isProject: Boolean): Duration {
+    val configured = System.getenv(ENV_VAR_ETS_IR_GENERATION_TIMEOUT_SEC)?.trim()?.toLongOrNull()
+    if (configured != null && configured > 0) {
+        return configured.seconds
+    }
+    return if (isProject) 10.minutes else 60.seconds
+}
+
+private fun String.truncateForReport(): String =
+    if (length <= MAX_REPORTED_OUTPUT_CHARS) {
+        this
+    } else {
+        take(MAX_REPORTED_OUTPUT_CHARS) + "\n... (truncated, ${length - MAX_REPORTED_OUTPUT_CHARS} more chars)"
+    }
+
 fun generateEtsIR(
     projectPath: Path,
     isProject: Boolean = false,
     loadEntrypoints: Boolean = true,
     useArkAnalyzerTypeInference: Int? = null,
-    timeout: Duration? = 10.seconds,
+    timeout: Duration? = defaultEtsIrGenerationTimeout(isProject),
     provider: EtsIrProvider = defaultProviderFor(projectPath, isProject),
 ): Path {
     val script = etsIrSerializerScript(provider)
@@ -214,13 +258,22 @@ fun generateEtsIR(
         if (isProject) add("-p")
         if (loadEntrypoints) add("-e")
         if (useArkAnalyzerTypeInference != null) {
-            add("-t")
-            add(useArkAnalyzerTypeInference.toString())
+            // The legacy `serializeArkIR.js` lives outside this repository and its `--help`
+            // does not even document `-t`, so the historical single-token form is kept for it;
+            // the native frontend accepts both.
+            if (provider == EtsIrProvider.ARKANALYZER) {
+                add("-t $useArkAnalyzerTypeInference")
+            } else {
+                add("-t")
+                add(useArkAnalyzerTypeInference.toString())
+            }
         }
         add(projectPath.pathString)
         add(output.pathString)
-        add("-v")
+        // Verbose mode logs a line per file; only ask for it when it can actually be seen.
+        if (logger.isDebugEnabled) add("-v")
     }
+    logger.debug { "Running EtsIR generation ($provider): ${cmd.joinToString(" ")}" }
     val res = ProcessUtil.run(cmd, timeout = timeout)
     val failure = when {
         res.isTimeout -> "EtsIR generation ($provider) timed out after $timeout"
@@ -228,19 +281,33 @@ fun generateEtsIR(
         else -> null
     }
     if (failure != null) {
-        output.toFile().deleteRecursively()
+        // Keep whatever has already been generated: on a partial failure (or a timeout
+        // on a large project) the produced files are still useful for diagnostics.
+        logger.error { "$failure\nCommand: ${cmd.joinToString(" ")}" }
+        logger.error { "STDOUT:\n${res.stdout}" }
+        logger.error { "STDERR:\n${res.stderr}" }
+        logger.error { "Partial output is kept at '$output'" }
         throw EtsIrGenerationException(
-            "$failure\nCommand: ${cmd.joinToString(" ")}\nSTDOUT:\n${res.stdout}\nSTDERR:\n${res.stderr}"
+            "$failure\nOutput: '$output'" +
+                "\nSTDOUT:\n${res.stdout.truncateForReport()}" +
+                "\nSTDERR:\n${res.stderr.truncateForReport()}"
         )
     }
     return output
 }
 
+/**
+ * Generates EtsIR for an SDK tree (e.g. the OpenHarmony SDK).
+ *
+ * An SDK consists of declaration files only, which the native TS frontend
+ * deliberately skips, so the legacy ArkAnalyzer provider is forced here.
+ */
 fun generateSdkIR(sdkPath: Path): Path = generateEtsIR(
     sdkPath,
     isProject = true,
     loadEntrypoints = false,
     useArkAnalyzerTypeInference = 0,
+    provider = EtsIrProvider.ARKANALYZER,
 )
 
 fun loadEtsFileAutoConvert(
@@ -288,6 +355,10 @@ fun loadEtsProjectFromIR(
     return EtsScene(projectFiles, sdkFiles)
 }
 
+/**
+ * Loads a single [EtsScene] from several already generated EtsIR trees:
+ * [input] holds the project IR directories, [sdkPaths] the SDK ones.
+ */
 fun loadEtsProjectFromMultipleIR(input: List<Path>, sdkPaths: List<Path>): EtsScene {
     val projectFiles = input.flatMap(walker)
     val sdkFiles = sdkPaths.flatMap(walker)

@@ -18,6 +18,7 @@ package org.jacodb.ets.utils
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -26,6 +27,22 @@ import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 
 private val logger = KotlinLogging.logger {}
+
+/**
+ * Cap on the captured stdout/stderr of a single process. Verbose frontends log a
+ * line per file, so an unbounded buffer would grow to megabytes on big projects.
+ */
+private const val MAX_CAPTURED_OUTPUT_CHARS = 1 shl 20 // 1 MiB
+
+private const val OUTPUT_TRUNCATION_NOTICE = "... (output truncated)"
+
+private fun StringBuilder.appendLineBounded(line: String) {
+    if (length >= MAX_CAPTURED_OUTPUT_CHARS) return
+    appendLine(line)
+    if (length >= MAX_CAPTURED_OUTPUT_CHARS) {
+        appendLine(OUTPUT_TRUNCATION_NOTICE)
+    }
+}
 
 object ProcessUtil {
     data class Result(
@@ -62,7 +79,10 @@ object ProcessUtil {
         val stdout = StringBuilder()
         val stderr = StringBuilder()
 
-        val scope = CoroutineScope(Dispatchers.IO)
+        // SupervisorJob: a broken pipe in the stdin writer (typical after `destroy()`)
+        // must not cancel the stdout/stderr readers, otherwise the captured logs
+        // would be empty exactly in the timeout scenario where they matter most.
+        val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
         // Handle process input
         val stdinJob = scope.launch {
@@ -74,12 +94,12 @@ object ProcessUtil {
         // Launch output capture coroutines
         val stdoutJob = scope.launch {
             process.inputStream.bufferedReader().useLines { lines ->
-                lines.forEach { stdout.appendLine(it) }
+                lines.forEach { stdout.appendLineBounded(it) }
             }
         }
         val stderrJob = scope.launch {
             process.errorStream.bufferedReader().useLines { lines ->
-                lines.forEach { stderr.appendLine(it) }
+                lines.forEach { stderr.appendLineBounded(it) }
             }
         }
 

@@ -33,6 +33,10 @@ export const STATIC_INIT_METHOD_NAME = "%statInit";
 export const ANONYMOUS_CLASS_PREFIX = "%AC";
 export const ANONYMOUS_METHOD_PREFIX = "%AM";
 export const TEMP_LOCAL_PREFIX = "%";
+/** Synthetic name of a destructuring (pattern) parameter; the index keeps names distinct. */
+export const PATTERN_PARAMETER_PREFIX = "%pat";
+/** Synthetic name of a computed (non-literal) member. */
+export const COMPUTED_MEMBER_NAME = "%computed";
 
 /**
  * Local names with this prefix are reserved by the Kotlin `Convert.kt`

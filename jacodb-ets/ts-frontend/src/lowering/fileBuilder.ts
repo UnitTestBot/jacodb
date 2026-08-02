@@ -140,10 +140,15 @@ class FileBuilder {
         };
         contents.namespaces.forEach(collectNamespace);
 
+        // Index by key once: `find` with a per-candidate key recomputation is quadratic.
+        const byKey = new Map<string, ClassDto>();
+        for (const candidate of classes) {
+            const key = classSignatureKey(candidate.signature);
+            if (!byKey.has(key)) byKey.set(key, candidate);
+        }
+
         for (const method of this.ctx.anonymous.methods) {
-            const target = classes.find(
-                (candidate) => classSignatureKey(candidate.signature) === classSignatureKey(method.signature.declaringClass),
-            );
+            const target = byKey.get(classSignatureKey(method.signature.declaringClass));
             if (target === undefined) {
                 this.ctx.diagnostics.warn(
                     undefined,
@@ -273,19 +278,8 @@ class FileBuilder {
 
     /** Export type of a re-exported name, resolved through the checker. */
     private exportTypeOfSymbol(node: ts.Node): ExportTypeValue {
-        try {
-            let symbol = this.ctx.checker.getSymbolAtLocation(node);
-            if (symbol !== undefined && (symbol.flags & ts.SymbolFlags.Alias) !== 0) {
-                symbol = this.ctx.checker.getAliasedSymbol(symbol);
-            }
-            const decl = symbol?.declarations?.[0];
-            if (decl !== undefined) {
-                return exportTypeOfDeclaration(decl);
-            }
-        } catch {
-            // fall through
-        }
-        return ExportType.UNKNOWN;
+        const decl = this.ctx.converter.symbolOf(node)?.declarations?.[0];
+        return decl !== undefined ? exportTypeOfDeclaration(decl) : ExportType.UNKNOWN;
     }
 
     /**

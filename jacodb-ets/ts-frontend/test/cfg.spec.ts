@@ -35,7 +35,8 @@ describe("control flow lowering", () => {
         const origins = body.stmtOrigins!;
 
         expect(origins.length).toBeGreaterThan(0);
-        expect(origins.every((origin) => origin.source.fileName === "src/origins.ts")).toBe(true);
+        // `fileName` is omitted for spans of the enclosing file (Kotlin falls back to it).
+        expect(origins.every((origin) => origin.source.fileName === undefined)).toBe(true);
 
         const ifOrigin = origins.find(({ blockId, stmtIndex }) => {
             return body.cfg.blocks[blockId].stmts[stmtIndex]._ === "IfStmt";

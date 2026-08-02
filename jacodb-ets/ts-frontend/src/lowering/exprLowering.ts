@@ -34,6 +34,7 @@ import {
     ANONYMOUS_METHOD_PREFIX,
     CONSTRUCTOR_NAME,
     DEFAULT_ARK_CLASS_NAME,
+    PATTERN_PARAMETER_PREFIX,
 } from "../dto/constants";
 import { FieldDto, MethodDto } from "../dto/model";
 import { buildParameters, memberName, modifiersOf, returnTypeOf } from "./astUtils";
@@ -56,7 +57,6 @@ import {
     UNKNOWN_TYPE,
 } from "../dto/types";
 import {
-    CallExprDto,
     ConditionExprDto,
     ConstantDto,
     ImmediateDto,
@@ -64,7 +64,7 @@ import {
     LocalDto,
     ValueDto,
 } from "../dto/values";
-import { unsupportedValue } from "./diagnostics";
+import { syntaxKindName, unsupportedValue } from "./diagnostics";
 import { MethodContext } from "./methodBuilder";
 
 const RELATION_BY_SYNTAX: Partial<Record<ts.SyntaxKind, RelationOp>> = {
@@ -1078,8 +1078,10 @@ export class ExprLowerer {
             };
         }
 
-        // Arrow functions retain lexical `this`; ordinary function expressions
-        // have their own dynamic `this` and therefore must not inherit staticness.
+        // Arrow functions retain lexical `this`, so a lifted arrow must inherit
+        // `isStaticMethod` — otherwise `this.f` in a static context would produce an
+        // InstanceFieldRef while the enclosing method produces a StaticFieldRef.
+        // Ordinary function expressions have their own dynamic `this` and must not.
         const closureContext = new MethodContext(
             this.m.ctx,
             declaringClass,
@@ -1156,7 +1158,7 @@ export class ExprLowerer {
                 });
             } else {
                 // spread / accessors / computed names degrade the whole literal
-                throw new LoweringError(`object literal member: ${ts.SyntaxKind[property.kind]}`);
+                throw new LoweringError(`object literal member: ${syntaxKindName(property.kind)}`);
             }
         }
 
@@ -1246,25 +1248,17 @@ export class ExprLowerer {
         if (!ts.isIdentifier(node) && !ts.isPropertyAccessExpression(node)) {
             return undefined;
         }
-        try {
-            let symbol = this.m.checker.getSymbolAtLocation(ts.isIdentifier(node) ? node : node.name);
-            if (symbol === undefined) return undefined;
-            if ((symbol.flags & ts.SymbolFlags.Alias) !== 0) {
-                symbol = this.m.checker.getAliasedSymbol(symbol);
-            }
-            const decl = symbol.declarations?.find(
-                (d): d is ts.ClassDeclaration | ts.EnumDeclaration =>
-                    ts.isClassDeclaration(d) || ts.isEnumDeclaration(d),
-            );
-            if (decl === undefined) return undefined;
-            if (isProjectFile(decl)) {
-                return this.m.converter.classSignatureOf(decl);
-            }
-            const name = decl.name !== undefined && ts.isIdentifier(decl.name) ? decl.name.text : "";
-            return { name, declaringFile: UNKNOWN_FILE_SIGNATURE };
-        } catch {
-            return undefined;
+        const symbol = this.m.converter.symbolOf(ts.isIdentifier(node) ? node : node.name);
+        const decl = symbol?.declarations?.find(
+            (d): d is ts.ClassDeclaration | ts.EnumDeclaration =>
+                ts.isClassDeclaration(d) || ts.isEnumDeclaration(d),
+        );
+        if (decl === undefined) return undefined;
+        if (isProjectFile(decl)) {
+            return this.m.converter.classSignatureOf(decl);
         }
+        const name = decl.name !== undefined && ts.isIdentifier(decl.name) ? decl.name.text : "";
+        return { name, declaringFile: UNKNOWN_FILE_SIGNATURE };
     }
 
     private classSignatureFromType(type: TypeDto): ClassSignatureDto {
@@ -1323,9 +1317,9 @@ export class ExprLowerer {
     parametersOfDeclaration(decl: ts.SignatureDeclaration): MethodParameterDto[] {
         return decl.parameters
             .filter((p) => p.name.kind !== ts.SyntaxKind.Identifier || (p.name as ts.Identifier).text !== "this")
-            .map((p) => {
+            .map((p, index) => {
                 const param: MethodParameterDto = {
-                    name: ts.isIdentifier(p.name) ? p.name.text : "%pat",
+                    name: ts.isIdentifier(p.name) ? p.name.text : `${PATTERN_PARAMETER_PREFIX}${index}`,
                     type:
                         p.type !== undefined
                             ? this.m.converter.convertTypeNode(p.type)
@@ -1427,7 +1421,29 @@ function collectCapturedIdentifiers(
 ): ts.Identifier[] {
     if (closure.body === undefined) return [];
     const captures = new Map<ts.Symbol, ts.Identifier>();
+    // Declarations owned by the closure subtree are collected on the way down, so
+    // ownership is a cheap set lookup instead of an O(depth) ancestor walk, and every
+    // node (including nested closures) is visited exactly once.
+    const ownDeclarations = new Set<ts.Declaration>();
+    // The closure's OWN declaration node counts as owned: a `function f` that calls `f`
+    // recursively must not capture itself (it is bound by the enclosing statement that
+    // creates it, so capturing would materialize the slot before the assignment).
+    ownDeclarations.add(closure as ts.Declaration);
+    // The parameters of the closure itself live outside its body but are still its own.
+    const collectOwn = (node: ts.Node): void => {
+        if (isCapturableDeclaration(node as ts.Declaration)) {
+            ownDeclarations.add(node as ts.Declaration);
+        }
+        ts.forEachChild(node, collectOwn);
+    };
+    for (const parameter of closure.parameters) {
+        collectOwn(parameter);
+    }
+    const seen = new Set<ts.Symbol>();
     const visit = (node: ts.Node): void => {
+        if (isCapturableDeclaration(node as ts.Declaration)) {
+            ownDeclarations.add(node as ts.Declaration);
+        }
         if (ts.isIdentifier(node)) {
             let symbol: ts.Symbol | undefined;
             try {
@@ -1438,18 +1454,22 @@ function collectCapturedIdentifiers(
             } catch {
                 // Ignore unresolved names; they remain ordinary ambient locals.
             }
-            if (
-                symbol !== undefined
-                && !captures.has(symbol)
-                && symbol.declarations?.some(isCapturableDeclaration)
-                && !symbol.declarations.some((decl) => isNodeWithin(decl, closure))
-            ) {
-                captures.set(symbol, node);
+            if (symbol !== undefined && !seen.has(symbol)) {
+                seen.add(symbol);
+                if (symbol.declarations?.some(isCapturableDeclaration)) {
+                    captures.set(symbol, node);
+                }
             }
         }
         ts.forEachChild(node, visit);
     };
     visit(closure.body);
+    // Declaration nodes may be visited after their first reference, so filter at the end.
+    for (const symbol of [...captures.keys()]) {
+        if (symbol.declarations!.some((decl) => ownDeclarations.has(decl))) {
+            captures.delete(symbol);
+        }
+    }
     return [...captures.values()];
 }
 
@@ -1460,12 +1480,6 @@ function isCapturableDeclaration(node: ts.Declaration): boolean {
         || ts.isFunctionDeclaration(node);
 }
 
-function isNodeWithin(node: ts.Node, ancestor: ts.Node): boolean {
-    for (let current: ts.Node | undefined = node; current !== undefined; current = current.parent) {
-        if (current === ancestor) return true;
-    }
-    return false;
-}
 
 /** Whether the identifier refers to a value declared somewhere in project code. */
 function isDeclaredLocalValue(m: MethodContext, node: ts.Identifier): boolean {

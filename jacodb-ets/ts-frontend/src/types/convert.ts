@@ -29,6 +29,7 @@
  */
 
 import * as ts from "typescript";
+import { PATTERN_PARAMETER_PREFIX } from "../dto/constants";
 import {
     ClassSignatureDto,
     FileSignatureDto,
@@ -194,14 +195,14 @@ export class TypeConverter {
             return { _: "LiteralType", literal: literal.text };
         }
         if (ts.isNumericLiteral(literal)) {
-            return { _: "LiteralType", literal: Number(literal.text) };
+            return numericLiteralType(Number(literal.text));
         }
         if (
             ts.isPrefixUnaryExpression(literal) &&
             literal.operator === ts.SyntaxKind.MinusToken &&
             ts.isNumericLiteral(literal.operand)
         ) {
-            return { _: "LiteralType", literal: -Number(literal.operand.text) };
+            return numericLiteralType(-Number(literal.operand.text));
         }
         return UNKNOWN_TYPE;
     }
@@ -269,9 +270,9 @@ export class TypeConverter {
     }
 
     private functionSignatureFromTypeNode(node: ts.FunctionTypeNode, depth: number): MethodSignatureDto {
-        const parameters: MethodParameterDto[] = node.parameters.map((p) => {
+        const parameters: MethodParameterDto[] = node.parameters.map((p, index) => {
             const param: MethodParameterDto = {
-                name: ts.isIdentifier(p.name) ? p.name.text : "%pat",
+                name: ts.isIdentifier(p.name) ? p.name.text : `${PATTERN_PARAMETER_PREFIX}${index}`,
                 type: this.convertTypeNode(p.type, depth + 1),
             };
             if (p.questionToken !== undefined) {
@@ -290,16 +291,32 @@ export class TypeConverter {
         };
     }
 
-    private resolveSymbol(name: ts.EntityName): ts.Symbol | undefined {
+    /**
+     * Single implementation of "symbol of a name, with import aliases unwrapped".
+     * Never throws: an unresolved name simply has no symbol.
+     *
+     * The symbol of a shorthand-property name (`{ value }`) belongs to the generated
+     * object field, so it is redirected to the value symbol — that way the shorthand
+     * follows the same storage path as an ordinary read of `value`.
+     */
+    symbolOf(node: ts.Node): ts.Symbol | undefined {
         try {
-            let symbol = this.checker.getSymbolAtLocation(name);
+            let symbol = this.checker.getSymbolAtLocation(node);
+            const parent = node.parent;
+            if (parent !== undefined && ts.isShorthandPropertyAssignment(parent) && parent.name === node) {
+                symbol = this.checker.getShorthandAssignmentValueSymbol(parent) ?? symbol;
+            }
             if (symbol !== undefined && (symbol.flags & ts.SymbolFlags.Alias) !== 0) {
-                symbol = this.checker.getAliasedSymbol(symbol);
+                return this.checker.getAliasedSymbol(symbol);
             }
             return symbol;
         } catch {
             return undefined;
         }
+    }
+
+    private resolveSymbol(name: ts.EntityName): ts.Symbol | undefined {
+        return this.symbolOf(name);
     }
 
     // ------------------------------------------------------------------
@@ -356,7 +373,7 @@ export class TypeConverter {
             return { _: "LiteralType", literal: (type as ts.StringLiteralType).value };
         }
         if (flags & ts.TypeFlags.NumberLiteral) {
-            return { _: "LiteralType", literal: (type as ts.NumberLiteralType).value };
+            return numericLiteralType((type as ts.NumberLiteralType).value);
         }
         if (flags & ts.TypeFlags.BooleanLiteral) {
             const intrinsicName = (type as unknown as { intrinsicName?: string }).intrinsicName;
@@ -511,6 +528,15 @@ export class TypeConverter {
 // ----------------------------------------------------------------------
 // Helpers
 // ----------------------------------------------------------------------
+
+/**
+ * Non-finite numbers have no JSON representation (`JSON.stringify` writes `null`),
+ * which the Kotlin `PrimitiveLiteralSerializer` cannot map back to a number,
+ * so such literal types degrade to a plain `number`.
+ */
+function numericLiteralType(value: number): TypeDto {
+    return Number.isFinite(value) ? { _: "LiteralType", literal: value } : NUMBER_TYPE;
+}
 
 /** `T[][]` folds into ArrayType{T, dimensions: 2}. */
 function foldArray(element: TypeDto): ArrayTypeDto {

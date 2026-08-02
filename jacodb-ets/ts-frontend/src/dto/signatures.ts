@@ -22,6 +22,7 @@
  * so they carry no "_" discriminator.
  */
 
+import { UNKNOWN_CLASS_NAME, UNKNOWN_FILE_NAME, UNKNOWN_PROJECT_NAME } from "./constants";
 import { TypeDto } from "./types";
 
 export interface FileSignatureDto {
@@ -68,11 +69,11 @@ export interface LocalSignatureDto {
 
 /** Signature placeholders mirroring `EtsFileSignature.UNKNOWN` / `EtsClassSignature.UNKNOWN` semantics. */
 export const UNKNOWN_FILE_SIGNATURE: FileSignatureDto = {
-    projectName: "%unk",
-    fileName: "%unk",
+    projectName: UNKNOWN_PROJECT_NAME,
+    fileName: UNKNOWN_FILE_NAME,
 };
 
 export const UNKNOWN_CLASS_SIGNATURE: ClassSignatureDto = {
-    name: "",
+    name: UNKNOWN_CLASS_NAME,
     declaringFile: UNKNOWN_FILE_SIGNATURE,
 };

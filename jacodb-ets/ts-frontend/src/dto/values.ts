@@ -154,7 +154,12 @@ export interface ConditionExprDto {
     op: RelationOp;
     left: ValueDto;
     right: ValueDto;
-    type?: TypeDto; // Kotlin default: UnknownType
+    /**
+     * NB: emitted for wire compatibility with ArkAnalyzer output only — the Kotlin
+     * `Convert.kt` IGNORES it and always builds a boolean-typed `EtsConditionExpr`.
+     * Do not rely on it round-tripping.
+     */
+    type?: TypeDto;
 }
 
 export interface InstanceCallExprDto {

@@ -45,6 +45,29 @@ export class Diagnostics {
     }
 }
 
+/**
+ * Reverse `ts.SyntaxKind` lookup that skips marker aliases.
+ *
+ * `ts.SyntaxKind[kind]` resolves to the LAST enum member with that value, which for
+ * many kinds is a range marker (`VariableStatement` -> `"FirstStatement"`,
+ * `NumericLiteral` -> `"FirstLiteralToken"`). The real names are what consumers match on.
+ */
+const SYNTAX_KIND_NAMES: string[] = (() => {
+    const names: string[] = [];
+    for (const key of Object.keys(ts.SyntaxKind)) {
+        const value = (ts.SyntaxKind as unknown as Record<string, unknown>)[key];
+        if (typeof value !== "number") continue;
+        if (key.startsWith("First") || key.startsWith("Last")) continue;
+        if (names[value] === undefined) names[value] = key;
+    }
+    return names;
+})();
+
+/** Real (non-alias) name of a `ts.SyntaxKind` value. */
+export function syntaxKindName(kind: ts.SyntaxKind): string {
+    return SYNTAX_KIND_NAMES[kind] ?? ts.SyntaxKind[kind] ?? String(kind);
+}
+
 function snippet(node: ts.Node): string {
     try {
         return node.getText().slice(0, 200);
@@ -57,7 +80,7 @@ function snippet(node: ts.Node): string {
 export function unsupportedStmt(node: ts.Node): StmtDto {
     return {
         _: "UnsupportedStmt",
-        kindName: ts.SyntaxKind[node.kind],
+        kindName: syntaxKindName(node.kind),
         text: snippet(node),
     } as unknown as StmtDto;
 }
@@ -66,7 +89,7 @@ export function unsupportedStmt(node: ts.Node): StmtDto {
 export function unsupportedValue(node: ts.Node, type: TypeDto = UNKNOWN_TYPE): ValueDto {
     return {
         _: "UnsupportedValue",
-        kindName: ts.SyntaxKind[node.kind],
+        kindName: syntaxKindName(node.kind),
         text: snippet(node),
         type,
     } as unknown as ValueDto;

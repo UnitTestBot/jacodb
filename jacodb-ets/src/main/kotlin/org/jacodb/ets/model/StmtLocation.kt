@@ -39,8 +39,25 @@ data class EtsSourceSpan(
 data class EtsStmtLocation(
     override val method: EtsMethod,
     var index: Int,
-    val origin: EtsSourceSpan? = null,
 ) : CommonInstLocation {
+    /**
+     * Source origin of the statement, when the frontend provided one.
+     *
+     * Deliberately kept OUT of the primary constructor: it must not participate in
+     * `equals`/`hashCode` of the location (and hence of every `EtsStmt`), which would
+     * make statement equality depend on the frontend in use — ArkAnalyzer emits no
+     * origins at all, the TS frontend does.
+     *
+     * NB: as a consequence, the generated [copy] and `toString` do NOT carry `origin`;
+     * `copy()` always returns a location with `origin == null`. Use the three-argument
+     * secondary constructor (or [stub]) when the origin must be preserved.
+     */
+    var origin: EtsSourceSpan? = null
+
+    constructor(method: EtsMethod, index: Int, origin: EtsSourceSpan?) : this(method, index) {
+        this.origin = origin
+    }
+
     companion object {
         fun stub(method: EtsMethod, origin: EtsSourceSpan? = null): EtsStmtLocation {
             return EtsStmtLocation(method, -1, origin)

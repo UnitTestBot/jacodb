@@ -22,14 +22,28 @@ const frontendDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 const typescriptLibDir = path.join(frontendDir, "node_modules", "typescript", "lib");
 const distDir = path.join(frontendDir, "dist");
 
+const LIB_FILE_PATTERN = /^lib(?:\..+)?\.d\.ts$/;
+
+// Fail BEFORE deleting anything: otherwise a missing/renamed source directory
+// would leave `dist` without any type libraries and still exit successfully.
+if (!fs.existsSync(typescriptLibDir)) {
+    throw new Error(`TypeScript lib directory not found: ${typescriptLibDir}. Did you run 'npm ci'?`);
+}
+const libFiles = fs
+    .readdirSync(typescriptLibDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && LIB_FILE_PATTERN.test(entry.name))
+    .map((entry) => entry.name);
+if (libFiles.length === 0) {
+    throw new Error(`No lib*.d.ts files found in ${typescriptLibDir}`);
+}
+
 fs.mkdirSync(distDir, { recursive: true });
 for (const entry of fs.readdirSync(distDir, { withFileTypes: true })) {
-    if (entry.isFile() && /^lib(?:\..+)?\.d\.ts$/.test(entry.name)) {
+    if (entry.isFile() && LIB_FILE_PATTERN.test(entry.name)) {
         fs.unlinkSync(path.join(distDir, entry.name));
     }
 }
-for (const entry of fs.readdirSync(typescriptLibDir, { withFileTypes: true })) {
-    if (entry.isFile() && /^lib(?:\..+)?\.d\.ts$/.test(entry.name)) {
-        fs.copyFileSync(path.join(typescriptLibDir, entry.name), path.join(distDir, entry.name));
-    }
+for (const name of libFiles) {
+    fs.copyFileSync(path.join(typescriptLibDir, name), path.join(distDir, name));
 }
+console.log(`Copied ${libFiles.length} TypeScript lib files into ${distDir}`);

@@ -26,7 +26,7 @@
 import { FORBIDDEN_LOCAL_PREFIX } from "./dto/constants";
 import { isBinaryOp, isRelationOp, isUnaryOp } from "./dto/ops";
 import { BodyDto, ClassDto, EtsFileDto, MethodDto, NamespaceDto } from "./dto/model";
-import { StmtDto } from "./dto/stmts";
+import { StmtDto, isTerminatorStmt } from "./dto/stmts";
 import { ValueDto } from "./dto/values";
 
 const EXPR_KINDS = new Set([
@@ -60,16 +60,6 @@ const REF_KINDS = new Set([
 const IMMEDIATE_KINDS = new Set(["Local", "Constant"]);
 
 const KNOWN_VALUE_KINDS = new Set([...EXPR_KINDS, ...REF_KINDS, ...IMMEDIATE_KINDS]);
-
-const KNOWN_STMT_KINDS = new Set([
-    "NopStmt",
-    "AssignStmt",
-    "CallStmt",
-    "ReturnVoidStmt",
-    "ReturnStmt",
-    "ThrowStmt",
-    "IfStmt",
-]);
 
 const CALL_EXPR_KINDS = new Set(["InstanceCallExpr", "StaticCallExpr", "PtrCallExpr"]);
 
@@ -152,7 +142,9 @@ function validateBody(body: BodyDto, ctx: string, errors: string[]): void {
 
         block.stmts.forEach((stmt, stmtIndex) => {
             const isLast = stmtIndex === block.stmts.length - 1;
-            if (!isLast && isTerminator(stmt)) {
+            // NB: unknown stmt kinds are NOT an error — `Unsupported*` raw fallbacks are
+            // deliberate and deserialize into RawStmtDto on the Kotlin side.
+            if (!isLast && isTerminatorStmt(stmt)) {
                 err(`${blockCtx}: terminator '${stmt._}' at position ${stmtIndex} is not the last stmt`);
             }
             validateStmt(stmt, `${blockCtx}, stmt ${stmtIndex}`, declaredLocals, err);
@@ -230,9 +222,6 @@ function validateBody(body: BodyDto, ctx: string, errors: string[]): void {
     }
 }
 
-function isTerminator(stmt: StmtDto): boolean {
-    return stmt._ === "ReturnVoidStmt" || stmt._ === "ReturnStmt" || stmt._ === "ThrowStmt" || stmt._ === "IfStmt";
-}
 
 function validateStmt(
     stmt: StmtDto,
