@@ -118,15 +118,17 @@ object ProcessUtil {
             process.waitFor()
             false
         }
-        val pipeCloseJobs = if (isTimeout) {
-            process.destroy()
-            if (!process.waitFor(PROCESS_TERMINATION_GRACE_MILLIS, TimeUnit.MILLISECONDS)) {
-                process.destroyForcibly()
-                process.waitFor(PROCESS_TERMINATION_GRACE_MILLIS, TimeUnit.MILLISECONDS)
-            }
-            // Descendants can retain the direct process's inherited pipe endpoints.
-            // Close concurrently because one endpoint can itself block behind an active I/O job.
+        val timeoutShutdownJobs = if (isTimeout) {
+            // Destroy and close concurrently because either operation can block behind an active
+            // I/O job when a descendant retains one of the direct process's pipe endpoints.
             listOf(
+                scope.launch {
+                    process.destroy()
+                    if (!process.waitFor(PROCESS_TERMINATION_GRACE_MILLIS, TimeUnit.MILLISECONDS)) {
+                        process.destroyForcibly()
+                        process.waitFor(PROCESS_TERMINATION_GRACE_MILLIS, TimeUnit.MILLISECONDS)
+                    }
+                },
                 scope.launch { runCatching { process.outputStream.close() } },
                 scope.launch { runCatching { process.inputStream.close() } },
                 scope.launch { runCatching { process.errorStream.close() } },
@@ -137,7 +139,7 @@ object ProcessUtil {
         runBlocking {
             val communicationJobs = listOf(stdinJob, stdoutJob, stderrJob)
             if (isTimeout) {
-                val shutdownJobs = communicationJobs + pipeCloseJobs
+                val shutdownJobs = communicationJobs + timeoutShutdownJobs
                 val completed = withTimeoutOrNull(COMMUNICATION_SHUTDOWN_TIMEOUT_MILLIS) {
                     shutdownJobs.joinAll()
                     true
