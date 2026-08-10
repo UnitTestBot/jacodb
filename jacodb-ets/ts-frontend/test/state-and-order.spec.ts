@@ -128,3 +128,147 @@ describe("call evaluation order", () => {
         });
     });
 });
+
+describe("expression evaluation snapshots", () => {
+    it("preserves an earlier call argument when a later argument reassigns it", () => {
+        const { file } = lower(`
+            declare function sink(first: number, second: number): void;
+            function f(x: number): void {
+                sink(x, x = 2);
+            }
+        `);
+        const stmts = flattened(methodByName(file, "f"));
+        const snapshot = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name.startsWith("%")
+                && stmt.right._ === "Local"
+                && stmt.right.name === "x",
+        );
+        const mutation = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name === "x"
+                && stmt.right._ === "Constant"
+                && stmt.right.value === "2",
+        );
+        const call = stmts.find(
+            (stmt) => stmt._ === "CallStmt" && stmt.expr._ === "StaticCallExpr" && stmt.expr.method.name === "sink",
+        );
+        expect(snapshot).toBeDefined();
+        expect(stmts.indexOf(snapshot!)).toBeLessThan(stmts.indexOf(mutation!));
+        const args = (call as Extract<StmtDto, { _: "CallStmt" }>).expr.args;
+        expect(args[0]).toEqual((snapshot as Extract<StmtDto, { _: "AssignStmt" }>).left);
+        expect(args[1]).toMatchObject({ _: "Local", name: "x" });
+    });
+
+    it("preserves a binary left operand when the right operand reassigns it", () => {
+        const { file } = lower(`
+            function f(x: number): number {
+                const y = x + (x = 2);
+                return y;
+            }
+        `);
+        const stmts = flattened(methodByName(file, "f"));
+        const snapshot = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name.startsWith("%")
+                && stmt.right._ === "Local"
+                && stmt.right.name === "x",
+        );
+        const mutation = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name === "x"
+                && stmt.right._ === "Constant"
+                && stmt.right.value === "2",
+        );
+        const addition = stmts.find(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "BinopExpr" && stmt.right.op === "+",
+        );
+        expect(snapshot).toBeDefined();
+        expect(stmts.indexOf(snapshot!)).toBeLessThan(stmts.indexOf(mutation!));
+        expect(addition).toMatchObject({
+            right: { left: (snapshot as Extract<StmtDto, { _: "AssignStmt" }>).left, right: { _: "Local", name: "x" } },
+        });
+    });
+
+    it("preserves an array assignment index before the right-hand side reassigns it", () => {
+        const { file } = lower(`
+            function f(a: number[], i: number): void {
+                a[i] = (i = 0);
+            }
+        `);
+        const stmts = flattened(methodByName(file, "f"));
+        const snapshot = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name.startsWith("%")
+                && stmt.right._ === "Local"
+                && stmt.right.name === "i",
+        );
+        const mutation = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name === "i"
+                && stmt.right._ === "Constant"
+                && stmt.right.value === "0",
+        );
+        const store = stmts.find(
+            (stmt) => stmt._ === "AssignStmt" && stmt.left._ === "ArrayRef",
+        );
+        expect(snapshot).toBeDefined();
+        expect(stmts.indexOf(snapshot!)).toBeLessThan(stmts.indexOf(mutation!));
+        expect(store).toMatchObject({
+            left: { index: (snapshot as Extract<StmtDto, { _: "AssignStmt" }>).left },
+        });
+    });
+
+    it("preserves an object assignment base before the right-hand side reassigns it", () => {
+        const { file } = lower(`
+            function f(obj: { x: number }, other: { x: number }): void {
+                obj.x = ((obj = other), 1);
+            }
+        `);
+        const stmts = flattened(methodByName(file, "f"));
+        const snapshot = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name.startsWith("%")
+                && stmt.right._ === "Local"
+                && stmt.right.name === "obj",
+        );
+        const mutation = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name === "obj"
+                && stmt.right._ === "Local"
+                && stmt.right.name === "other",
+        );
+        const store = stmts.find(
+            (stmt) => stmt._ === "AssignStmt" && stmt.left._ === "InstanceFieldRef" && stmt.left.field.name === "x",
+        );
+        expect(snapshot).toBeDefined();
+        expect(stmts.indexOf(snapshot!)).toBeLessThan(stmts.indexOf(mutation!));
+        expect(store).toMatchObject({
+            left: { instance: (snapshot as Extract<StmtDto, { _: "AssignStmt" }>).left },
+        });
+    });
+
+    it("keeps an optional-chain continuation in the guarded branch", () => {
+        const { file } = lower(`
+            function f(a: { b?: { c: number } }): number | undefined {
+                return a?.b.c;
+            }
+        `);
+        const blocks = methodByName(file, "f").body!.cfg.blocks;
+        const cAccessBlock = blocks.find((block) => block.stmts.some(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceFieldRef" && stmt.right.field.name === "c",
+        ));
+        expect(cAccessBlock).toBeDefined();
+        // The continuation belongs to the non-null branch, not the join reached
+        // by both the non-null and nullish paths.
+        expect(cAccessBlock!.predecessors).toHaveLength(1);
+    });
+});

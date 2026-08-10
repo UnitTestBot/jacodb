@@ -303,7 +303,7 @@ export class ExprLowerer {
         const fieldName = node.name.text;
         const fieldType = this.safeTypeOf(node);
 
-        if (node.questionDotToken !== undefined) {
+        if (node.questionDotToken !== undefined || ts.isPropertyAccessChain(node)) {
             // a?.b
             return this.optionalDiamond(node.expression, fieldType, (obj) => ({
                 _: "InstanceFieldRef",
@@ -345,7 +345,7 @@ export class ExprLowerer {
     }
 
     private lowerElementAccess(node: ts.ElementAccessExpression): ValueDto {
-        if (node.questionDotToken !== undefined) {
+        if (node.questionDotToken !== undefined || ts.isElementAccessChain(node)) {
             // a?.[i]
             return this.optionalDiamond(node.expression, this.safeTypeOf(node), (obj) => ({
                 _: "ArrayRef",
@@ -363,9 +363,9 @@ export class ExprLowerer {
     }
 
     /** Assignment target. */
-    lowerLValue(node: ts.Expression): LValueDto {
+    lowerLValue(node: ts.Expression, laterExpression?: ts.Expression): LValueDto {
         if (ts.isParenthesizedExpression(node)) {
-            return this.lowerLValue(node.expression);
+            return this.lowerLValue(node.expression, laterExpression);
         }
         if (ts.isIdentifier(node)) {
             const captured = this.m.capturedRefForIdentifier(node);
@@ -377,14 +377,30 @@ export class ExprLowerer {
         if (ts.isPropertyAccessExpression(node)) {
             const ref = this.lowerPropertyAccess(node);
             if (ref._ === "InstanceFieldRef" || ref._ === "StaticFieldRef") {
-                return ref;
+                return ref._ === "StaticFieldRef" || !this.mayReassign(node.expression, laterExpression)
+                    ? ref
+                    : { ...ref, instance: this.m.snapshotToLocal(ref.instance, ref.instance.type) };
             }
             throw new LoweringError("property access did not produce a field ref");
         }
         if (ts.isElementAccessExpression(node)) {
             const ref = this.lowerElementAccess(node);
             if (ref._ === "ArrayRef") {
-                return ref;
+                return {
+                    ...ref,
+                    array: this.snapshotValueIfReassigned(
+                        ref.array,
+                        node.expression,
+                        laterExpression,
+                        this.safeTypeOf(node.expression),
+                    ),
+                    index: this.snapshotValueIfReassigned(
+                        ref.index,
+                        node.argumentExpression,
+                        laterExpression,
+                        this.safeTypeOf(node.argumentExpression),
+                    ),
+                };
             }
             throw new LoweringError("element access did not produce an array ref");
         }
@@ -423,7 +439,11 @@ export class ExprLowerer {
 
         const relationOp = RELATION_BY_SYNTAX[opKind];
         if (relationOp !== undefined) {
-            return this.relation(relationOp, this.lowerToImmediate(node.left), this.lowerToImmediate(node.right));
+            return this.relation(
+                relationOp,
+                this.lowerImmediateBefore(node.left, node.right),
+                this.lowerToImmediate(node.right),
+            );
         }
 
         const binaryOp = BINARY_BY_SYNTAX[opKind];
@@ -431,7 +451,7 @@ export class ExprLowerer {
             return {
                 _: "BinopExpr",
                 op: binaryOp,
-                left: this.lowerToImmediate(node.left),
+                left: this.lowerImmediateBefore(node.left, node.right),
                 right: this.lowerToImmediate(node.right),
                 type: this.safeTypeOf(node),
             };
@@ -611,7 +631,7 @@ export class ExprLowerer {
     /** `x = e`, `x += e`, obj.f = e, arr[i] = e; returns the assigned value. */
     lowerAssignment(node: ts.BinaryExpression): ValueDto {
         const opKind = node.operatorToken.kind;
-        const target = this.lowerLValue(node.left);
+        const target = this.lowerLValue(node.left, node.right);
 
         if (
             opKind === ts.SyntaxKind.AmpersandAmpersandEqualsToken ||
@@ -767,7 +787,7 @@ export class ExprLowerer {
                     args: this.lowerCallArguments(node),
                 }));
             }
-            const receiver = this.snapshotToLocal(callee.expression);
+            const receiver = this.snapshotToLocal(callee.expression, node.arguments);
             const methodValue = this.materialize(
                 {
                     _: "InstanceFieldRef",
@@ -846,7 +866,7 @@ export class ExprLowerer {
                 };
             }
             // ECMAScript evaluates the receiver before any argument.
-            const instance = this.snapshotToLocal(callee.expression);
+            const instance = this.snapshotToLocal(callee.expression, node.arguments);
             return {
                 _: "InstanceCallExpr",
                 instance,
@@ -888,7 +908,7 @@ export class ExprLowerer {
             }
             // Snapshot a function value before arguments; an argument may mutate
             // the binding but must not change this call's selected callee.
-            const localCallee = this.snapshotToLocal(callee);
+            const localCallee = this.snapshotToLocal(callee, node.arguments);
             return {
                 _: "PtrCallExpr",
                 ptr: localCallee,
@@ -898,7 +918,7 @@ export class ExprLowerer {
         }
 
         // Computed callee is evaluated before arguments.
-        const ptr = this.snapshotToLocal(callee);
+        const ptr = this.snapshotToLocal(callee, node.arguments);
         return {
             _: "PtrCallExpr",
             ptr,
@@ -908,14 +928,72 @@ export class ExprLowerer {
     }
 
     private lowerCallArguments(node: ts.CallExpression): ValueDto[] {
-        return node.arguments.map((argument) =>
-            ts.isSpreadElement(argument) ? this.spreadFallback(argument) : this.lowerToImmediate(argument),
+        return node.arguments.map((argument, index) =>
+            ts.isSpreadElement(argument)
+                ? this.spreadFallback(argument)
+                : this.lowerImmediateBefore(argument, node.arguments.slice(index + 1)),
         );
     }
 
     /** Preserve an already selected receiver/callee even if an argument mutates its source binding. */
-    private snapshotToLocal(node: ts.Expression): LocalDto {
-        return this.materialize(this.lowerExpr(node), this.safeTypeOf(node));
+    private snapshotToLocal(node: ts.Expression, laterExpressions?: readonly ts.Expression[]): LocalDto {
+        const value = this.lowerToLocal(node);
+        return laterExpressions !== undefined && !this.mayReassign(node, laterExpressions)
+            ? value
+            : this.m.snapshotToLocal(value, value.type);
+    }
+
+    /** Preserve a source local while leaving constants and private temporaries immediate. */
+    private snapshotImmediate(value: ImmediateDto): ImmediateDto {
+        return value._ === "Constant" ? value : this.m.snapshotToLocal(value, value.type);
+    }
+
+    private lowerImmediateBefore(node: ts.Expression, later: ts.Node | readonly ts.Node[]): ImmediateDto {
+        return this.snapshotImmediateIfReassigned(this.lowerToImmediate(node), node, later);
+    }
+
+    private snapshotImmediateIfReassigned(
+        value: ImmediateDto,
+        source: ts.Expression,
+        later: ts.Node | readonly ts.Node[] | undefined,
+    ): ImmediateDto {
+        return this.mayReassign(source, later) ? this.snapshotImmediate(value) : value;
+    }
+
+    private snapshotValueIfReassigned(
+        value: ValueDto,
+        source: ts.Expression,
+        later: ts.Node | readonly ts.Node[] | undefined,
+        type: TypeDto,
+    ): ValueDto {
+        if (!this.mayReassign(source, later)) return value;
+        return value._ === "Local" || value._ === "Constant"
+            ? this.snapshotImmediate(value)
+            : this.m.snapshotToLocal(value, type);
+    }
+
+    /** Whether later evaluation can replace the binding denoted by [source]. */
+    private mayReassign(source: ts.Expression, later: ts.Node | readonly ts.Node[] | undefined): boolean {
+        const identifier = bindingIdentifier(source);
+        if (identifier === undefined || later === undefined) return false;
+        const sourceSymbol = this.m.converter.symbolOf(identifier);
+        const nodes = Array.isArray(later) ? later : [later];
+        return nodes.some((node) => this.containsReassignment(node, identifier, sourceSymbol));
+    }
+
+    private containsReassignment(node: ts.Node, source: ts.Identifier, sourceSymbol: ts.Symbol | undefined): boolean {
+        let found = false;
+        const visit = (current: ts.Node): void => {
+            if (found) return;
+            const target = assignmentTarget(current);
+            if (target !== undefined && sameBinding(this.m.converter.symbolOf(target), target, sourceSymbol, source)) {
+                found = true;
+                return;
+            }
+            ts.forEachChild(current, visit);
+        };
+        visit(node);
+        return found;
     }
 
     private lowerNew(node: ts.NewExpression): ValueDto {
@@ -939,8 +1017,8 @@ export class ExprLowerer {
         const temp = this.m.newTemp(classType);
         this.m.cfg.emit({ _: "AssignStmt", left: temp, right: { _: "NewExpr", classType } });
 
-        const loweredArgs = args.map((a) =>
-            ts.isSpreadElement(a) ? this.spreadFallback(a) : this.lowerToImmediate(a),
+        const loweredArgs = args.map((a, index) =>
+            ts.isSpreadElement(a) ? this.spreadFallback(a) : this.lowerImmediateBefore(a, args.slice(index + 1)),
         );
         const ctorSig: MethodSignatureDto = {
             declaringClass: classType._ === "ClassType" ? classType.signature : UNKNOWN_CLASS_SIGNATURE,
@@ -1407,6 +1485,46 @@ function isProjectFile(decl: ts.Node): boolean {
 
 function isScopeFunctionDeclaration(decl: ts.FunctionDeclaration): boolean {
     return ts.isSourceFile(decl.parent) || ts.isModuleBlock(decl.parent);
+}
+
+/** The simple binding whose current value an expression denotes, if any. */
+function bindingIdentifier(node: ts.Expression): ts.Identifier | undefined {
+    while (
+        ts.isParenthesizedExpression(node)
+        || ts.isAsExpression(node)
+        || ts.isTypeAssertionExpression(node)
+        || ts.isNonNullExpression(node)
+        || ts.isSatisfiesExpression(node)
+    ) {
+        node = node.expression;
+    }
+    return ts.isIdentifier(node) ? node : undefined;
+}
+
+/** Identifier binding written by an assignment or an increment/decrement, if any. */
+function assignmentTarget(node: ts.Node): ts.Identifier | undefined {
+    if (ts.isBinaryExpression(node) && (
+        node.operatorToken.kind === ts.SyntaxKind.EqualsToken
+        || COMPOUND_ASSIGN_BY_SYNTAX[node.operatorToken.kind] !== undefined
+    )) {
+        return bindingIdentifier(node.left);
+    }
+    if (
+        (ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node))
+        && (node.operator === ts.SyntaxKind.PlusPlusToken || node.operator === ts.SyntaxKind.MinusMinusToken)
+    ) {
+        return bindingIdentifier(node.operand);
+    }
+    return undefined;
+}
+
+function sameBinding(
+    candidateSymbol: ts.Symbol | undefined,
+    candidate: ts.Identifier,
+    sourceSymbol: ts.Symbol | undefined,
+    source: ts.Identifier,
+): boolean {
+    return sourceSymbol !== undefined ? candidateSymbol === sourceSymbol : candidate.text === source.text;
 }
 
 /**

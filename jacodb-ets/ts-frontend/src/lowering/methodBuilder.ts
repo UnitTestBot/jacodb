@@ -19,7 +19,7 @@ import { DEFAULT_ARK_CLASS_NAME, TEMP_LOCAL_PREFIX } from "../dto/constants";
 import { BodyDto, ClassDto, LocalDeclDto, MethodDto, SourceSpanDto } from "../dto/model";
 import { ClassSignatureDto, FieldSignatureDto, FileSignatureDto } from "../dto/signatures";
 import { ClassTypeDto, LexicalEnvTypeDto, TypeDto, UNKNOWN_TYPE } from "../dto/types";
-import { ClosureFieldRefDto, LocalDto, StaticFieldRefDto } from "../dto/values";
+import { ClosureFieldRefDto, LocalDto, StaticFieldRefDto, ValueDto } from "../dto/values";
 import { TypeConverter } from "../types/convert";
 import { CfgBuilder } from "./cfg";
 import { Diagnostics, syntaxKindName } from "./diagnostics";
@@ -136,6 +136,16 @@ export class MethodContext {
         const local: LocalDto = { _: "Local", name, type };
         this.locals.set(name, local);
         return local;
+    }
+
+    /** Preserve a selected value before later evaluation; private temps are already stable. */
+    snapshotToLocal(value: ValueDto, type: TypeDto): LocalDto {
+        if (value._ === "Local" && value.name.startsWith(TEMP_LOCAL_PREFIX)) {
+            return value;
+        }
+        const snapshot = this.newTemp(type);
+        this.cfg.emit({ _: "AssignStmt", left: snapshot, right: value });
+        return snapshot;
     }
 
     /**

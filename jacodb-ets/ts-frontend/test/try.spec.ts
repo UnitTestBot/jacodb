@@ -135,6 +135,31 @@ describe("try/catch/finally lowering", () => {
         expect(mutateIdx).toBeGreaterThan(copyIdx); // snapshot BEFORE the finally mutation
     });
 
+    it("captures the thrown value before the finally runs", () => {
+        const blocks = blocksOf(`
+            function f(x: number): void {
+                try {
+                    throw x;
+                } finally {
+                    x = 2;
+                }
+            }
+        `);
+        const throwBlock = blocks.find((block) => block.stmts.some((stmt) => stmt._ === "ThrowStmt"))!;
+        const thrown = throwBlock.stmts.find((stmt) => stmt._ === "ThrowStmt") as { arg: { name?: string } };
+        expect(thrown.arg.name).toMatch(/^%/);
+        const copyIdx = throwBlock.stmts.findIndex(
+            (stmt) => stmt._ === "AssignStmt" && (stmt.left as { name?: string }).name === thrown.arg.name,
+        );
+        const mutateIdx = throwBlock.stmts.findIndex(
+            (stmt) => stmt._ === "AssignStmt"
+                && (stmt.left as { name?: string }).name === "x"
+                && (stmt.right as { value?: string }).value === "2",
+        );
+        expect(copyIdx).toBeGreaterThanOrEqual(0);
+        expect(mutateIdx).toBeGreaterThan(copyIdx);
+    });
+
     it("duplicates finally on break out of the try, but not for loops inside the try", () => {
         const stmts = (blocks: { stmts: { _: string }[] }[]) => blocks.flatMap((b) => b.stmts);
 

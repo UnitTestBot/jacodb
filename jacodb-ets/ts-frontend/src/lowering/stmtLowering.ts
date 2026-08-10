@@ -182,7 +182,7 @@ export class StmtLowerer {
             // in a temp so finally-code mutations cannot change what is returned.
             let value = node.expression !== undefined ? this.expr.lowerToImmediate(node.expression) : undefined;
             if (value !== undefined && value._ === "Local" && this.finallyScopes.length > 0) {
-                value = this.expr.materialize(value, value.type);
+                value = this.m.snapshotToLocal(value, value.type);
             }
             this.emitFinallies(0);
             this.m.cfg.ret(value);
@@ -190,7 +190,10 @@ export class StmtLowerer {
         }
         if (ts.isThrowStatement(node)) {
             // Exceptions propagate through finally blocks: run them before the throw.
-            const value = this.expr.lowerToImmediate(node.expression);
+            let value = this.expr.lowerToImmediate(node.expression);
+            if (value._ === "Local" && this.finallyScopes.length > 0) {
+                value = this.m.snapshotToLocal(value, value.type);
+            }
             this.emitFinallies(0);
             this.m.cfg.throwValue(value);
             return;
