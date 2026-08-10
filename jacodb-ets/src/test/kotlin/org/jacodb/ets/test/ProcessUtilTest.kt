@@ -19,11 +19,17 @@ package org.jacodb.ets.test
 import org.jacodb.ets.utils.ProcessUtil
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Test
+import java.nio.file.Path
+import java.util.concurrent.TimeUnit
+import kotlin.io.path.createTempDirectory
 import kotlin.io.path.createTempFile
 import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
 import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.measureTime
@@ -46,6 +52,14 @@ class ProcessUtilTest {
             "try { process.kill($pid, 'SIGKILL'); } catch (error) { " +
                 "if (error.code !== 'ESRCH') throw error; }",
         ).start().waitFor()
+    }
+
+    private fun waitForFile(path: Path) {
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2)
+        while (!path.exists() && System.nanoTime() < deadline) {
+            Thread.sleep(10)
+        }
+        assertTrue(path.exists(), "timed out waiting for $path")
     }
 
     @Test
@@ -75,6 +89,86 @@ class ProcessUtilTest {
 
         assertTrue(result.isTimeout)
         assertTrue(elapsed.inWholeSeconds < 5, "timed-out process took $elapsed to terminate")
+    }
+
+    @Test
+    fun `reader input streams through a process without a timeout`() {
+        val input = "reader-stream-input\n"
+
+        val result = ProcessUtil.run(
+            listOf(node, "-e", "process.stdin.pipe(process.stdout)"),
+            input = input.reader(),
+        )
+
+        assertEquals(0, result.exitCode)
+        assertEquals(input, result.stdout)
+        assertFalse(result.isTimeout)
+    }
+
+    @Test
+    fun `reader input with a timeout is rejected before process start`() {
+        val startedFile = createTempFile("process-util-reader-started")
+        startedFile.deleteIfExists()
+
+        try {
+            assertFailsWith<IllegalArgumentException> {
+                ProcessUtil.run(
+                    listOf(
+                        node,
+                        "-e",
+                        "require('fs').writeFileSync(process.argv[1], 'started')",
+                        startedFile.toString(),
+                    ),
+                    input = "finite reader".reader(),
+                    timeout = 100.milliseconds,
+                )
+            }
+            assertFalse(startedFile.exists(), "timed Reader command started before rejection")
+        } finally {
+            startedFile.deleteIfExists()
+        }
+    }
+
+    @Test
+    fun `timeout closes a descendant inherited output sink after reaping the direct process`() {
+        val testDirectory = createTempDirectory("process-util-descendant-output")
+        val triggerFile = testDirectory.resolve("trigger")
+        val statusFile = testDirectory.resolve("status")
+        val descendantScript =
+            "const fs = require('fs'); " +
+                "const timer = setInterval(() => { " +
+                "if (!fs.existsSync(process.argv[1])) return; " +
+                "clearInterval(timer); " +
+                "let status = 'closed'; " +
+                "try { const chunk = Buffer.alloc(65536, 120); " +
+                "for (let i = 0; i < 64; i++) fs.writeSync(1, chunk); " +
+                "status = 'writable'; } catch (_) {} " +
+                "fs.writeFileSync(process.argv[2], status); " +
+                "}, 10)"
+        val directScript =
+            "const { spawn } = require('child_process'); " +
+                "spawn(process.execPath, ['-e', process.argv[1], process.argv[2], process.argv[3]], " +
+                "{ stdio: ['inherit', 'inherit', 'inherit'] }); " +
+                "process.on('SIGTERM', () => {}); " +
+                "setInterval(() => {}, 1000)"
+
+        try {
+            val result = ProcessUtil.run(
+                listOf(node, "-e", directScript, descendantScript, triggerFile.toString(), statusFile.toString()),
+                timeout = 100.milliseconds,
+            )
+            assertTrue(result.isTimeout)
+
+            triggerFile.writeText("")
+            waitForFile(statusFile)
+            assertEquals(
+                "closed",
+                statusFile.readText(),
+                "descendant could keep writing after the direct process was reaped",
+            )
+        } finally {
+            testDirectory.toFile().deleteRecursively()
+        }
     }
 
     @Test
