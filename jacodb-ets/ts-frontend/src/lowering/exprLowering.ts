@@ -309,6 +309,10 @@ export class ExprLowerer {
         if (optionalRoot !== undefined) {
             // A continuation such as `a?.b.c` shares the root `a` guard;
             // it must not introduce a second null check for `b`.
+            if (ts.isCallExpression(optionalRoot) && optionalRoot.questionDotToken !== undefined
+                && ts.isPropertyAccessExpression(optionalRoot.expression)) {
+                return this.lowerOptionalMethodChain(node, optionalRoot);
+            }
             return this.optionalDiamond(optionalRoot.expression, fieldType, (obj) =>
                 this.lowerOptionalChainAccess(node, optionalRoot, obj));
         }
@@ -344,6 +348,10 @@ export class ExprLowerer {
     private lowerElementAccess(node: ts.ElementAccessExpression): ValueDto {
         const optionalRoot = optionalChainRoot(node);
         if (optionalRoot !== undefined) {
+            if (ts.isCallExpression(optionalRoot) && optionalRoot.questionDotToken !== undefined
+                && ts.isPropertyAccessExpression(optionalRoot.expression)) {
+                return this.lowerOptionalMethodChain(node, optionalRoot);
+            }
             return this.optionalDiamond(optionalRoot.expression, this.safeTypeOf(node), (obj) =>
                 this.lowerOptionalChainAccess(node, optionalRoot, obj));
         }
@@ -360,10 +368,12 @@ export class ExprLowerer {
         node: OptionalChainSegment,
         root: OptionalChainSegment,
         rootInstance: LocalDto,
+        rootMethodReceiver?: LocalDto,
+        rootStaticTarget?: ClassSignatureDto,
     ): ValueDto {
         if (node === root) {
             return ts.isCallExpression(node)
-                ? this.lowerOptionalChainCall(node, root, rootInstance)
+                ? this.lowerOptionalChainCall(node, root, rootInstance, rootMethodReceiver, rootStaticTarget)
                 : this.accessFromInstance(node, rootInstance);
         }
         const parent = node.expression;
@@ -371,9 +381,15 @@ export class ExprLowerer {
             throw new LoweringError("optional-chain continuation lost its root");
         }
         if (ts.isCallExpression(node)) {
-            return this.lowerOptionalChainCall(node, root, rootInstance);
+            return this.lowerOptionalChainCall(node, root, rootInstance, rootMethodReceiver, rootStaticTarget);
         }
-        const parentValue = this.lowerOptionalChainAccess(parent, root, rootInstance);
+        const parentValue = this.lowerOptionalChainAccess(
+            parent,
+            root,
+            rootInstance,
+            rootMethodReceiver,
+            rootStaticTarget,
+        );
         const parentInstance = parentValue._ === "Local"
             ? parentValue
             : this.materialize(parentValue, this.safeTypeOf(parent));
@@ -384,9 +400,30 @@ export class ExprLowerer {
         node: ts.CallExpression,
         root: OptionalChainSegment,
         rootInstance: LocalDto,
+        rootMethodReceiver?: LocalDto,
+        rootStaticTarget?: ClassSignatureDto,
     ): ValueDto {
         const callee = node.expression;
         if (node === root) {
+            if (rootMethodReceiver !== undefined && ts.isPropertyAccessExpression(callee)) {
+                return {
+                    _: "InstanceCallExpr",
+                    instance: rootMethodReceiver,
+                    method: this.methodSignatureForCall(
+                        node,
+                        callee.name.text,
+                        this.classSignatureFromType(rootMethodReceiver.type),
+                    ),
+                    args: this.lowerCallArguments(node),
+                };
+            }
+            if (rootStaticTarget !== undefined && ts.isPropertyAccessExpression(callee)) {
+                return {
+                    _: "StaticCallExpr",
+                    method: this.methodSignatureForCall(node, callee.name.text, rootStaticTarget),
+                    args: this.lowerCallArguments(node),
+                };
+            }
             return {
                 _: "PtrCallExpr",
                 ptr: rootInstance,
@@ -397,7 +434,13 @@ export class ExprLowerer {
         if (ts.isPropertyAccessExpression(callee)) {
             const instance = callee === root
                 ? rootInstance
-                : this.optionalChainContinuationLocal(callee.expression, root, rootInstance);
+                : this.optionalChainContinuationLocal(
+                    callee.expression,
+                    root,
+                    rootInstance,
+                    rootMethodReceiver,
+                    rootStaticTarget,
+                );
             return {
                 _: "InstanceCallExpr",
                 instance,
@@ -405,7 +448,13 @@ export class ExprLowerer {
                 args: this.lowerCallArguments(node),
             };
         }
-        const ptr = this.optionalChainContinuationLocal(callee, root, rootInstance);
+        const ptr = this.optionalChainContinuationLocal(
+            callee,
+            root,
+            rootInstance,
+            rootMethodReceiver,
+            rootStaticTarget,
+        );
         return {
             _: "PtrCallExpr",
             ptr,
@@ -418,14 +467,63 @@ export class ExprLowerer {
         node: ts.Expression,
         root: OptionalChainSegment,
         rootInstance: LocalDto,
+        rootMethodReceiver?: LocalDto,
+        rootStaticTarget?: ClassSignatureDto,
     ): LocalDto {
         if (!isOptionalChainSegment(node)) {
             throw new LoweringError("optional-chain call lost its continuation");
         }
         return this.materialize(
-            this.lowerOptionalChainAccess(node, root, rootInstance),
+            this.lowerOptionalChainAccess(node, root, rootInstance, rootMethodReceiver, rootStaticTarget),
             this.safeTypeOf(node),
         );
+    }
+
+    /** `a.b?.().c`: test the method value, but call it with `a` as the receiver. */
+    private lowerOptionalMethodChain(node: OptionalChainSegment, root: ts.CallExpression): ValueDto {
+        const callee = root.expression as ts.PropertyAccessExpression;
+        if (callee.questionDotToken !== undefined) {
+            // `a?.b?.().c`: the property segment guards `a`; the call segment
+            // separately guards the selected method value, but still uses `a` as `this`.
+            return this.optionalDiamond(callee.expression, this.safeTypeOf(node), (receiver) =>
+                this.lowerOptionalMethodChainFromReceiver(node, root, callee, receiver));
+        }
+        const staticTarget = this.classLikeSignatureOf(callee.expression);
+        if (staticTarget !== undefined) {
+            const methodValue = this.materialize(
+                {
+                    _: "StaticFieldRef",
+                    field: { declaringClass: staticTarget, name: callee.name.text, type: this.safeTypeOf(callee) },
+                },
+                this.safeTypeOf(callee),
+            );
+            return this.optionalEvaluatedDiamond(methodValue, this.safeTypeOf(node), () =>
+                this.lowerOptionalChainAccess(node, root, methodValue, undefined, staticTarget));
+        }
+        const receiver = this.snapshotToLocal(callee.expression, root.arguments);
+        return this.lowerOptionalMethodChainFromReceiver(node, root, callee, receiver);
+    }
+
+    private lowerOptionalMethodChainFromReceiver(
+        node: OptionalChainSegment,
+        root: ts.CallExpression,
+        callee: ts.PropertyAccessExpression,
+        receiver: LocalDto,
+    ): ValueDto {
+        const methodValue = this.materialize(
+            {
+                _: "InstanceFieldRef",
+                instance: receiver,
+                field: {
+                    declaringClass: this.classSignatureFromType(receiver.type),
+                    name: callee.name.text,
+                    type: this.safeTypeOf(callee),
+                },
+            },
+            this.safeTypeOf(callee),
+        );
+        return this.optionalEvaluatedDiamond(methodValue, this.safeTypeOf(node), () =>
+            this.lowerOptionalChainAccess(node, root, methodValue, receiver));
     }
 
     private accessFromInstance(

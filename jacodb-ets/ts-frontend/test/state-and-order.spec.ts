@@ -410,4 +410,68 @@ describe("expression evaluation snapshots", () => {
         expect(guards).toHaveLength(1);
         expect(nullishResults).toHaveLength(1);
     });
+
+    it("keeps the receiver for an optional method call with a continuation", () => {
+        const { file } = lower(`
+            function f(a: { b?: () => { c: number } }): number | undefined {
+                return a.b?.().c;
+            }
+        `);
+        const blocks = methodByName(file, "f").body!.cfg.blocks;
+        const stmts = blocks.flatMap((block) => block.stmts);
+        const methodRead = stmts.find(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceFieldRef" && stmt.right.field.name === "b",
+        ) as Extract<StmtDto, { _: "AssignStmt" }>;
+        const methodCall = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.right._ === "InstanceCallExpr"
+                && stmt.right.method.name === "b",
+        ) as Extract<StmtDto, { _: "AssignStmt" }>;
+        const callBlock = blocks.find((block) => block.stmts.includes(methodCall));
+        const cAccessBlock = blocks.find((block) => block.stmts.some(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceFieldRef" && stmt.right.field.name === "c",
+        ));
+        const guards = stmts.filter((stmt) => stmt._ === "IfStmt");
+        const nullishResults = stmts.filter(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "Constant" && stmt.right.value === "undefined",
+        );
+        expect(methodRead).toBeDefined();
+        expect(methodCall).toBeDefined();
+        expect((methodCall.right as { instance: unknown }).instance)
+            .toEqual((methodRead.right as { instance: unknown }).instance);
+        expect(cAccessBlock).toBe(callBlock);
+        expect(guards).toHaveLength(1);
+        expect(nullishResults).toHaveLength(1);
+    });
+
+    it("keeps the receiver through an optional receiver and optional method call", () => {
+        const { file } = lower(`
+            function f(a: { b?: () => { c: number } } | undefined): number | undefined {
+                return a?.b?.().c;
+            }
+        `);
+        const blocks = methodByName(file, "f").body!.cfg.blocks;
+        const stmts = blocks.flatMap((block) => block.stmts);
+        const call = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.right._ === "InstanceCallExpr"
+                && stmt.right.method.name === "b",
+        ) as Extract<StmtDto, { _: "AssignStmt" }>;
+        const receiver = (call.right as { instance: { name: string } }).instance;
+        const receiverSnapshot = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name === receiver.name
+                && stmt.right._ === "Local"
+                && stmt.right.name === "a",
+        );
+        const guards = stmts.filter((stmt) => stmt._ === "IfStmt");
+        const nullishResults = stmts.filter(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "Constant" && stmt.right.value === "undefined",
+        );
+        expect(receiver.name).toMatch(/^%/);
+        expect(receiverSnapshot).toBeDefined();
+        expect(guards).toHaveLength(2);
+        expect(nullishResults).toHaveLength(2);
+    });
 });
