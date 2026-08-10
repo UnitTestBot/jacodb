@@ -19,8 +19,10 @@ package org.jacodb.ets.utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import mu.KotlinLogging
 import java.io.Reader
 import java.util.concurrent.TimeUnit
@@ -35,6 +37,12 @@ private val logger = KotlinLogging.logger {}
 private const val MAX_CAPTURED_OUTPUT_CHARS = 1 shl 20 // 1 MiB
 
 private const val OUTPUT_TRUNCATION_NOTICE = "... (output truncated)"
+
+private const val PROCESS_TERMINATION_GRACE_MILLIS = 250L
+
+private const val COMMUNICATION_SHUTDOWN_TIMEOUT_MILLIS = 250L
+
+private const val UNKNOWN_EXIT_CODE = -1
 
 private fun StringBuilder.appendLineBounded(line: String) {
     if (length >= MAX_CAPTURED_OUTPUT_CHARS) return
@@ -112,19 +120,33 @@ object ProcessUtil {
         }
         if (isTimeout) {
             process.destroy()
-            if (!process.waitFor(250, TimeUnit.MILLISECONDS)) {
+            if (!process.waitFor(PROCESS_TERMINATION_GRACE_MILLIS, TimeUnit.MILLISECONDS)) {
                 process.destroyForcibly()
-                process.waitFor()
+                process.waitFor(PROCESS_TERMINATION_GRACE_MILLIS, TimeUnit.MILLISECONDS)
             }
+            // Descendants can retain the direct process's inherited pipe endpoints.
+            // Closing our endpoints unblocks communication jobs without waiting for descendants.
+            runCatching { process.outputStream.close() }
+            runCatching { process.inputStream.close() }
+            runCatching { process.errorStream.close() }
         }
         runBlocking {
-            stdinJob.join()
-            stdoutJob.join()
-            stderrJob.join()
+            val communicationJobs = listOf(stdinJob, stdoutJob, stderrJob)
+            if (isTimeout) {
+                val completed = withTimeoutOrNull(COMMUNICATION_SHUTDOWN_TIMEOUT_MILLIS) {
+                    communicationJobs.joinAll()
+                    true
+                } == true
+                if (!completed) {
+                    communicationJobs.forEach { it.cancel() }
+                }
+            } else {
+                communicationJobs.joinAll()
+            }
         }
 
         return Result(
-            exitCode = process.exitValue(),
+            exitCode = if (process.isAlive) UNKNOWN_EXIT_CODE else process.exitValue(),
             stdout = stdout.toString(),
             stderr = stderr.toString(),
             isTimeout = isTimeout,

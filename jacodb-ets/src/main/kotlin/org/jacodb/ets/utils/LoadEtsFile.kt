@@ -140,7 +140,13 @@ fun clearDefaultProviderCache() {
 internal fun defaultProviderFor(path: Path, isProject: Boolean): EtsIrProvider =
     defaultProviderCache.computeIfAbsent(path.absolute().normalize().pathString to isProject) {
         val containsEts = if (isProject) {
-            path.exists() && path.walk().any { it.extension.equals("ets", ignoreCase = true) }
+            val projectRoot = path.toFile()
+            path.exists() && projectRoot.walkTopDown()
+                .onEnter { directory ->
+                    directory == projectRoot ||
+                        (directory.name != "node_modules" && !directory.name.startsWith("."))
+                }
+                .any { file -> file.isFile && file.extension.equals("ets", ignoreCase = true) }
         } else {
             path.extension.equals("ets", ignoreCase = true)
         }
