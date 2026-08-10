@@ -65,11 +65,12 @@ class ProcessUtilTest {
                     "-e",
                     "const { spawn } = require('child_process'); " +
                         "spawn(process.execPath, ['-e', 'setTimeout(() => {}, 5000)'], " +
-                        "{ stdio: ['ignore', 'inherit', 'inherit'] }); " +
+                        "{ stdio: ['inherit', 'inherit', 'inherit'] }); " +
                         "console.log('stdout-before-timeout'); " +
                         "console.error('stderr-before-timeout'); " +
                         "setInterval(() => {}, 1000)",
                 ),
+                input = "x".repeat(1 shl 20),
                 timeout = 100.milliseconds,
             )
         }
