@@ -16,15 +16,11 @@
 
 package org.jacodb.ets.utils
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeoutOrNull
 import mu.KotlinLogging
 import java.io.Reader
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 
@@ -40,15 +36,43 @@ private const val OUTPUT_TRUNCATION_NOTICE = "... (output truncated)"
 
 private const val PROCESS_TERMINATION_GRACE_MILLIS = 250L
 
-private const val COMMUNICATION_SHUTDOWN_TIMEOUT_MILLIS = 250L
+private const val PROCESS_FORCE_TERMINATION_TIMEOUT_MILLIS = 1_000L
 
-private const val UNKNOWN_EXIT_CODE = -1
+private const val OUTPUT_READ_BUFFER_CHARS = 8 * 1024
 
-private fun StringBuilder.appendLineBounded(line: String) {
-    if (length >= MAX_CAPTURED_OUTPUT_CHARS) return
-    appendLine(line)
-    if (length >= MAX_CAPTURED_OUTPUT_CHARS) {
-        appendLine(OUTPUT_TRUNCATION_NOTICE)
+private fun Path.readCapturedOutput(): String =
+    Files.newBufferedReader(this, StandardCharsets.UTF_8).use { reader ->
+        val result = StringBuilder()
+        val buffer = CharArray(OUTPUT_READ_BUFFER_CHARS)
+        while (result.length < MAX_CAPTURED_OUTPUT_CHARS) {
+            val charsRead = reader.read(
+                buffer,
+                0,
+                minOf(buffer.size, MAX_CAPTURED_OUTPUT_CHARS - result.length),
+            )
+            if (charsRead < 0) {
+                return@use result.toString()
+            }
+            result.append(buffer, 0, charsRead)
+        }
+        if (reader.read() >= 0) {
+            if (result.isNotEmpty() && result.last() != '\n') {
+                result.appendLine()
+            }
+            result.append(OUTPUT_TRUNCATION_NOTICE)
+        }
+        result.toString()
+    }
+
+private fun terminateTimedOutProcess(process: Process) {
+    process.destroy()
+    if (process.waitFor(PROCESS_TERMINATION_GRACE_MILLIS, TimeUnit.MILLISECONDS)) {
+        return
+    }
+
+    process.destroyForcibly()
+    check(process.waitFor(PROCESS_FORCE_TERMINATION_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+        "Timed-out process did not terminate after destroyForcibly()"
     }
 }
 
@@ -69,95 +93,55 @@ object ProcessUtil {
         return run(command, reader, timeout)
     }
 
+    /**
+     * Runs [command] after streaming the finite [input] into a temporary file.
+     * The process timeout starts after input reaches EOF and the process starts.
+     */
     fun run(
         command: List<String>,
         input: Reader,
         timeout: Duration? = null,
     ): Result {
         logger.debug { "Running command: $command" }
-        val process = ProcessBuilder(command).start()
-        return communicate(process, input, timeout)
-    }
+        val ioDirectory = Files.createTempDirectory("jacodb-process-")
+        val stdinFile = ioDirectory.resolve("stdin.txt")
+        val stdoutFile = ioDirectory.resolve("stdout.txt")
+        val stderrFile = ioDirectory.resolve("stderr.txt")
+        ioDirectory.toFile().deleteOnExit()
+        listOf(stdinFile, stdoutFile, stderrFile).forEach { it.toFile().deleteOnExit() }
 
-    private fun communicate(
-        process: Process,
-        input: Reader,
-        timeout: Duration? = null,
-    ): Result {
-        val stdout = StringBuilder()
-        val stderr = StringBuilder()
-
-        // SupervisorJob: a broken pipe in the stdin writer (typical after `destroy()`)
-        // must not cancel the stdout/stderr readers, otherwise the captured logs
-        // would be empty exactly in the timeout scenario where they matter most.
-        val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-
-        // Handle process input
-        val stdinJob = scope.launch {
-            process.outputStream.bufferedWriter().use { writer ->
+        try {
+            // A finite Reader is staged before the process starts, without loading it into memory.
+            // Consequently, timeout measures process execution and not production of Reader input.
+            Files.newBufferedWriter(stdinFile, StandardCharsets.UTF_8).use { writer ->
                 input.copyTo(writer)
             }
-        }
 
-        // Launch output capture coroutines
-        val stdoutJob = scope.launch {
-            process.inputStream.bufferedReader().useLines { lines ->
-                lines.forEach { stdout.appendLineBounded(it) }
-            }
-        }
-        val stderrJob = scope.launch {
-            process.errorStream.bufferedReader().useLines { lines ->
-                lines.forEach { stderr.appendLineBounded(it) }
-            }
-        }
+            val process = ProcessBuilder(command)
+                .redirectInput(stdinFile.toFile())
+                .redirectOutput(stdoutFile.toFile())
+                .redirectError(stderrFile.toFile())
+                .start()
 
-        // Wait for completion
-        val isTimeout = if (timeout != null) {
-            !process.waitFor(timeout.inWholeNanoseconds, TimeUnit.NANOSECONDS)
-        } else {
-            process.waitFor()
-            false
-        }
-        val timeoutShutdownJobs = if (isTimeout) {
-            // Destroy and close concurrently because either operation can block behind an active
-            // I/O job when a descendant retains one of the direct process's pipe endpoints.
-            listOf(
-                scope.launch {
-                    process.destroy()
-                    if (!process.waitFor(PROCESS_TERMINATION_GRACE_MILLIS, TimeUnit.MILLISECONDS)) {
-                        process.destroyForcibly()
-                        process.waitFor(PROCESS_TERMINATION_GRACE_MILLIS, TimeUnit.MILLISECONDS)
-                    }
-                },
-                scope.launch { runCatching { process.outputStream.close() } },
-                scope.launch { runCatching { process.inputStream.close() } },
-                scope.launch { runCatching { process.errorStream.close() } },
-            )
-        } else {
-            emptyList()
-        }
-        runBlocking {
-            val communicationJobs = listOf(stdinJob, stdoutJob, stderrJob)
-            if (isTimeout) {
-                val shutdownJobs = communicationJobs + timeoutShutdownJobs
-                val completed = withTimeoutOrNull(COMMUNICATION_SHUTDOWN_TIMEOUT_MILLIS) {
-                    shutdownJobs.joinAll()
-                    true
-                } == true
-                if (!completed) {
-                    shutdownJobs.forEach { it.cancel() }
-                }
+            val isTimeout = if (timeout != null) {
+                !process.waitFor(timeout.inWholeNanoseconds, TimeUnit.NANOSECONDS)
             } else {
-                communicationJobs.joinAll()
+                process.waitFor()
+                false
             }
-        }
+            if (isTimeout) {
+                terminateTimedOutProcess(process)
+            }
 
-        return Result(
-            exitCode = if (process.isAlive) UNKNOWN_EXIT_CODE else process.exitValue(),
-            stdout = stdout.toString(),
-            stderr = stderr.toString(),
-            isTimeout = isTimeout,
-        )
+            return Result(
+                exitCode = process.exitValue(),
+                stdout = stdoutFile.readCapturedOutput(),
+                stderr = stderrFile.readCapturedOutput(),
+                isTimeout = isTimeout,
+            )
+        } finally {
+            ioDirectory.toFile().deleteRecursively()
+        }
     }
 }
 
