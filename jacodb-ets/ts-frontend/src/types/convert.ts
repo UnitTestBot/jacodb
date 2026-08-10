@@ -106,7 +106,11 @@ export class TypeConverter {
     // Syntactic conversion (type annotations)
     // ------------------------------------------------------------------
 
-    convertTypeNode(node: ts.TypeNode | undefined, depth: number = 0): TypeDto {
+    convertTypeNode(
+        node: ts.TypeNode | undefined,
+        depth: number = 0,
+        substitutions?: ReadonlyMap<ts.TypeParameterDeclaration, TypeDto>,
+    ): TypeDto {
         if (node === undefined) {
             return UNKNOWN_TYPE;
         }
@@ -114,13 +118,17 @@ export class TypeConverter {
             return UNKNOWN_TYPE;
         }
         try {
-            return this.convertTypeNodeImpl(node, depth);
+            return this.convertTypeNodeImpl(node, depth, substitutions);
         } catch {
             return UNKNOWN_TYPE;
         }
     }
 
-    private convertTypeNodeImpl(node: ts.TypeNode, depth: number): TypeDto {
+    private convertTypeNodeImpl(
+        node: ts.TypeNode,
+        depth: number,
+        substitutions?: ReadonlyMap<ts.TypeParameterDeclaration, TypeDto>,
+    ): TypeDto {
         switch (node.kind) {
             case ts.SyntaxKind.AnyKeyword:
                 return ANY_TYPE;
@@ -147,31 +155,34 @@ export class TypeConverter {
             return this.convertLiteralTypeNode(node);
         }
         if (ts.isParenthesizedTypeNode(node)) {
-            return this.convertTypeNode(node.type, depth);
+            return this.convertTypeNode(node.type, depth, substitutions);
         }
         if (ts.isArrayTypeNode(node)) {
-            return foldArray(this.convertTypeNode(node.elementType, depth + 1));
+            return foldArray(this.convertTypeNode(node.elementType, depth + 1, substitutions));
         }
         if (ts.isTupleTypeNode(node)) {
             return {
                 _: "TupleType",
-                types: node.elements.map((e) => this.convertTypeNode(unwrapTupleMember(e), depth + 1)),
+                types: node.elements.map((e) => this.convertTypeNode(unwrapTupleMember(e), depth + 1, substitutions)),
             };
         }
         if (ts.isUnionTypeNode(node)) {
-            return { _: "UnionType", types: node.types.map((t) => this.convertTypeNode(t, depth + 1)) };
+            return { _: "UnionType", types: node.types.map((t) => this.convertTypeNode(t, depth + 1, substitutions)) };
         }
         if (ts.isIntersectionTypeNode(node)) {
-            return { _: "IntersectionType", types: node.types.map((t) => this.convertTypeNode(t, depth + 1)) };
+            return {
+                _: "IntersectionType",
+                types: node.types.map((t) => this.convertTypeNode(t, depth + 1, substitutions)),
+            };
         }
         if (ts.isFunctionTypeNode(node)) {
             return {
                 _: "FunctionType",
-                signature: this.functionSignatureFromTypeNode(node, depth),
+                signature: this.functionSignatureFromTypeNode(node, depth, substitutions),
             };
         }
         if (ts.isTypeReferenceNode(node)) {
-            return this.convertTypeReference(node, depth);
+            return this.convertTypeReference(node, depth, substitutions);
         }
         if (ts.isTemplateLiteralTypeNode(node)) {
             return STRING_TYPE;
@@ -207,9 +218,13 @@ export class TypeConverter {
         return UNKNOWN_TYPE;
     }
 
-    private convertTypeReference(node: ts.TypeReferenceNode, depth: number): TypeDto {
+    private convertTypeReference(
+        node: ts.TypeReferenceNode,
+        depth: number,
+        substitutions?: ReadonlyMap<ts.TypeParameterDeclaration, TypeDto>,
+    ): TypeDto {
         const name = entityNameToString(node.typeName);
-        const typeArgs = node.typeArguments?.map((t) => this.convertTypeNode(t, depth + 1));
+        const typeArgs = node.typeArguments?.map((t) => this.convertTypeNode(t, depth + 1, substitutions));
 
         // `Array<T>` is a proper array type.
         if (name === "Array" && typeArgs !== undefined && typeArgs.length === 1) {
@@ -228,6 +243,10 @@ export class TypeConverter {
             }
             const typeParamDecl = symbol.declarations?.find(ts.isTypeParameterDeclaration);
             if (typeParamDecl !== undefined) {
+                const replacement = substitutions?.get(typeParamDecl);
+                if (replacement !== undefined) {
+                    return replacement;
+                }
                 // At USAGE sites a type parameter is just a name;
                 // constraint/default are emitted only in typeParameters declarations.
                 return { _: "GenericType", name: typeParamDecl.name.text };
@@ -236,7 +255,14 @@ export class TypeConverter {
             if (aliasDecl !== undefined && isProjectDeclaration(aliasDecl) && depth < MAX_DEPTH) {
                 // Follow the alias target (AliasType with a LocalSignature would require
                 // the declaring-method context; the resolved target is more useful downstream).
-                return this.convertTypeNode(aliasDecl.type, depth + 1);
+                const aliasSubstitutions = new Map(substitutions);
+                aliasDecl.typeParameters?.forEach((parameter, index) => {
+                    const argument = typeArgs?.[index];
+                    if (argument !== undefined) {
+                        aliasSubstitutions.set(parameter, argument);
+                    }
+                });
+                return this.convertTypeNode(aliasDecl.type, depth + 1, aliasSubstitutions);
             }
         }
 
@@ -269,11 +295,15 @@ export class TypeConverter {
         return decls.map((d) => this.convertTypeParameter(d));
     }
 
-    private functionSignatureFromTypeNode(node: ts.FunctionTypeNode, depth: number): MethodSignatureDto {
+    private functionSignatureFromTypeNode(
+        node: ts.FunctionTypeNode,
+        depth: number,
+        substitutions?: ReadonlyMap<ts.TypeParameterDeclaration, TypeDto>,
+    ): MethodSignatureDto {
         const parameters: MethodParameterDto[] = node.parameters.map((p, index) => {
             const param: MethodParameterDto = {
                 name: ts.isIdentifier(p.name) ? p.name.text : `${PATTERN_PARAMETER_PREFIX}${index}`,
-                type: this.convertTypeNode(p.type, depth + 1),
+                type: this.convertTypeNode(p.type, depth + 1, substitutions),
             };
             if (p.questionToken !== undefined) {
                 param.isOptional = true;
@@ -287,7 +317,7 @@ export class TypeConverter {
             declaringClass: UNKNOWN_CLASS_SIGNATURE,
             name: "",
             parameters,
-            returnType: this.convertTypeNode(node.type, depth + 1),
+            returnType: this.convertTypeNode(node.type, depth + 1, substitutions),
         };
     }
 

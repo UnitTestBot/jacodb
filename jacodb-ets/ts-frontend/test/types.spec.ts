@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { FileSignatureDto } from "../src/dto/signatures";
 import { TypeDto } from "../src/dto/types";
 import { TypeConverter } from "../src/types/convert";
-import { compile, findNode, findVariable } from "./util";
+import { compile, findNode, findVariable, lower, methodByName } from "./util";
 
 const FILE_SIG: FileSignatureDto = { projectName: "proj", fileName: "test.ts" };
 
@@ -123,6 +123,17 @@ describe("convertTypeNode (annotations)", () => {
 
     it("follows type aliases to their target", () => {
         expect(annotationOf("type MyNum = number;\nlet x: MyNum;")).toEqual({ _: "NumberType" });
+    });
+
+    it("instantiates generic aliases in lowered parameter types", () => {
+        const { file } = lower("type Vec<T> = T[];\nfunction sum(values: Vec<number>): number { return values[0]; }");
+
+        expect(methodByName(file, "sum").signature.parameters).toEqual([
+            {
+                name: "values",
+                type: { _: "ArrayType", elementType: { _: "NumberType" }, dimensions: 1 },
+            },
+        ]);
     });
 
     it("converts function types", () => {
