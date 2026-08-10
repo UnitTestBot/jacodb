@@ -136,6 +136,22 @@ describe("convertTypeNode (annotations)", () => {
         ]);
     });
 
+    it("does not inherit arguments on nested aliases without arguments", () => {
+        const { file } = lower(
+            "type Json<T = string> = T | Json[];\nfunction parse(json: Json<number>): void {}",
+        );
+
+        const parameterType = methodByName(file, "parse").signature.parameters[0].type;
+        if (parameterType._ !== "UnionType") throw new Error("expected Json<number> to lower to UnionType");
+        expect(parameterType.types[0]).toEqual({ _: "NumberType" });
+
+        const nestedJson = parameterType.types[1];
+        if (nestedJson._ !== "ArrayType" || nestedJson.elementType._ !== "UnionType") {
+            throw new Error("expected nested Json to lower through ArrayType to UnionType");
+        }
+        expect(nestedJson.elementType.types[0]).toEqual({ _: "GenericType", name: "T" });
+    });
+
     it("converts function types", () => {
         expect(annotationOf("let x: (a: number, b?: string) => boolean;")).toEqual({
             _: "FunctionType",

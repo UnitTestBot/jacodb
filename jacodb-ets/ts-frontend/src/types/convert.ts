@@ -260,6 +260,8 @@ export class TypeConverter {
                     const argument = typeArgs?.[index];
                     if (argument !== undefined) {
                         aliasSubstitutions.set(parameter, argument);
+                    } else {
+                        aliasSubstitutions.delete(parameter);
                     }
                 });
                 return this.convertTypeNode(aliasDecl.type, depth + 1, aliasSubstitutions);
