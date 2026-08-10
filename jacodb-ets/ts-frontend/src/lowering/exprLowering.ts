@@ -124,6 +124,16 @@ export type FunctionBodyLowerer = (m: MethodContext, body: ts.ConciseBody) => vo
 
 type OptionalChainSegment = ts.PropertyAccessExpression | ts.ElementAccessExpression | ts.CallExpression;
 
+interface OptionalChain {
+    segments: OptionalChainSegment[];
+}
+
+interface OptionalChainValue {
+    value: ValueDto;
+    methodReceiver?: LocalDto;
+    staticTarget?: ClassSignatureDto;
+}
+
 export class ExprLowerer {
     constructor(
         private readonly m: MethodContext,
@@ -305,16 +315,9 @@ export class ExprLowerer {
         const fieldName = node.name.text;
         const fieldType = this.safeTypeOf(node);
 
-        const optionalRoot = optionalChainRoot(node);
-        if (optionalRoot !== undefined) {
-            // A continuation such as `a?.b.c` shares the root `a` guard;
-            // it must not introduce a second null check for `b`.
-            if (ts.isCallExpression(optionalRoot) && optionalRoot.questionDotToken !== undefined
-                && ts.isPropertyAccessExpression(optionalRoot.expression)) {
-                return this.lowerOptionalMethodChain(node, optionalRoot);
-            }
-            return this.optionalDiamond(optionalRoot.expression, fieldType, (obj) =>
-                this.lowerOptionalChainAccess(node, optionalRoot, obj));
+        const chain = optionalChain(node);
+        if (chain !== undefined) {
+            return this.lowerOptionalChain(node, chain);
         }
 
         // `this.f` inside a STATIC method addresses a static field of the class.
@@ -346,14 +349,9 @@ export class ExprLowerer {
     }
 
     private lowerElementAccess(node: ts.ElementAccessExpression): ValueDto {
-        const optionalRoot = optionalChainRoot(node);
-        if (optionalRoot !== undefined) {
-            if (ts.isCallExpression(optionalRoot) && optionalRoot.questionDotToken !== undefined
-                && ts.isPropertyAccessExpression(optionalRoot.expression)) {
-                return this.lowerOptionalMethodChain(node, optionalRoot);
-            }
-            return this.optionalDiamond(optionalRoot.expression, this.safeTypeOf(node), (obj) =>
-                this.lowerOptionalChainAccess(node, optionalRoot, obj));
+        const chain = optionalChain(node);
+        if (chain !== undefined) {
+            return this.lowerOptionalChain(node, chain);
         }
         return {
             _: "ArrayRef",
@@ -363,98 +361,94 @@ export class ExprLowerer {
         };
     }
 
-    /** Lower an optional-chain segment and all its non-optional continuations under one root guard. */
-    private lowerOptionalChainAccess(
-        node: OptionalChainSegment,
-        root: OptionalChainSegment,
-        rootInstance: LocalDto,
-        rootMethodReceiver?: LocalDto,
-        rootStaticTarget?: ClassSignatureDto,
-    ): ValueDto {
-        if (node === root) {
-            return ts.isCallExpression(node)
-                ? this.lowerOptionalChainCall(node, root, rootInstance, rootMethodReceiver, rootStaticTarget)
-                : this.accessFromInstance(node, rootInstance);
-        }
-        const parent = node.expression;
-        if (!isOptionalChainSegment(parent)) {
-            throw new LoweringError("optional-chain continuation lost its root");
-        }
-        if (ts.isCallExpression(node)) {
-            return this.lowerOptionalChainCall(node, root, rootInstance, rootMethodReceiver, rootStaticTarget);
-        }
-        const parentValue = this.lowerOptionalChainAccess(
-            parent,
-            root,
-            rootInstance,
-            rootMethodReceiver,
-            rootStaticTarget,
-        );
-        const parentInstance = parentValue._ === "Local"
-            ? parentValue
-            : this.materialize(parentValue, this.safeTypeOf(parent));
-        return this.accessFromInstance(node, parentInstance);
+    /** Lower every segment of one continuous optional chain under its preceding guards. */
+    private lowerOptionalChain(node: OptionalChainSegment, chain: OptionalChain): ValueDto {
+        const root = chain.segments[0];
+        const initial = ts.isCallExpression(root)
+            ? this.lowerOptionalChainCallee(root)
+            : { value: this.snapshotToLocal(root.expression) };
+        return this.lowerOptionalChainSegments(node, chain.segments, 0, initial);
     }
 
-    private lowerOptionalChainCall(
-        node: ts.CallExpression,
-        root: OptionalChainSegment,
-        rootInstance: LocalDto,
-        rootMethodReceiver?: LocalDto,
-        rootStaticTarget?: ClassSignatureDto,
+    private lowerOptionalChainCallee(root: ts.CallExpression): OptionalChainValue {
+        const callee = root.expression;
+        if (ts.isPropertyAccessExpression(callee)) {
+            const staticTarget = this.classLikeSignatureOf(callee.expression);
+            if (staticTarget !== undefined) {
+                return {
+                    value: {
+                        _: "StaticFieldRef",
+                        field: { declaringClass: staticTarget, name: callee.name.text, type: this.safeTypeOf(callee) },
+                    },
+                    staticTarget,
+                };
+            }
+            const methodReceiver = this.snapshotToLocal(callee.expression, root.arguments);
+            return { value: this.accessFromInstance(callee, methodReceiver), methodReceiver };
+        }
+        return { value: this.snapshotToLocal(callee, root.arguments) };
+    }
+
+    private lowerOptionalChainSegments(
+        node: OptionalChainSegment,
+        segments: readonly OptionalChainSegment[],
+        index: number,
+        current: OptionalChainValue,
     ): ValueDto {
-        const callee = node.expression;
-        if (node === root) {
-            if (rootMethodReceiver !== undefined && ts.isPropertyAccessExpression(callee)) {
+        if (index >= segments.length) return current.value;
+
+        const segment = segments[index];
+        if (ts.isCallExpression(segment)) {
+            const continueAfterCall = (callee: OptionalChainValue): ValueDto =>
+                this.lowerOptionalChainSegments(
+                    node,
+                    segments,
+                    index + 1,
+                    { value: this.callOptionalChainSegment(segment, callee) },
+                );
+            if (segment.questionDotToken === undefined) {
+                return continueAfterCall(current);
+            }
+            const methodValue = this.optionalChainLocal(current.value, this.safeTypeOf(segment.expression));
+            return this.optionalEvaluatedDiamond(methodValue, this.safeTypeOf(node), () =>
+                continueAfterCall({ ...current, value: methodValue }));
+        }
+
+        const receiver = this.optionalChainLocal(current.value, this.safeTypeOf(segment.expression));
+        const continueAfterAccess = (): ValueDto => this.lowerOptionalChainSegments(
+            node,
+            segments,
+            index + 1,
+            { value: this.accessFromInstance(segment, receiver), methodReceiver: receiver },
+        );
+        return segment.questionDotToken === undefined
+            ? continueAfterAccess()
+            : this.optionalEvaluatedDiamond(receiver, this.safeTypeOf(node), continueAfterAccess);
+    }
+
+    private callOptionalChainSegment(node: ts.CallExpression, callee: OptionalChainValue): ValueDto {
+        if (ts.isPropertyAccessExpression(node.expression)) {
+            if (callee.staticTarget !== undefined) {
+                return {
+                    _: "StaticCallExpr",
+                    method: this.methodSignatureForCall(node, node.expression.name.text, callee.staticTarget),
+                    args: this.lowerCallArguments(node),
+                };
+            }
+            if (callee.methodReceiver !== undefined) {
                 return {
                     _: "InstanceCallExpr",
-                    instance: rootMethodReceiver,
+                    instance: callee.methodReceiver,
                     method: this.methodSignatureForCall(
                         node,
-                        callee.name.text,
-                        this.classSignatureFromType(rootMethodReceiver.type),
+                        node.expression.name.text,
+                        this.classSignatureFromType(callee.methodReceiver.type),
                     ),
                     args: this.lowerCallArguments(node),
                 };
             }
-            if (rootStaticTarget !== undefined && ts.isPropertyAccessExpression(callee)) {
-                return {
-                    _: "StaticCallExpr",
-                    method: this.methodSignatureForCall(node, callee.name.text, rootStaticTarget),
-                    args: this.lowerCallArguments(node),
-                };
-            }
-            return {
-                _: "PtrCallExpr",
-                ptr: rootInstance,
-                method: this.methodSignatureForCall(node, "%call", UNKNOWN_CLASS_SIGNATURE),
-                args: this.lowerCallArguments(node),
-            };
         }
-        if (ts.isPropertyAccessExpression(callee)) {
-            const instance = callee === root
-                ? rootInstance
-                : this.optionalChainContinuationLocal(
-                    callee.expression,
-                    root,
-                    rootInstance,
-                    rootMethodReceiver,
-                    rootStaticTarget,
-                );
-            return {
-                _: "InstanceCallExpr",
-                instance,
-                method: this.methodSignatureForCall(node, callee.name.text, this.classSignatureFromType(instance.type)),
-                args: this.lowerCallArguments(node),
-            };
-        }
-        const ptr = this.optionalChainContinuationLocal(
-            callee,
-            root,
-            rootInstance,
-            rootMethodReceiver,
-            rootStaticTarget,
-        );
+        const ptr = this.optionalChainLocal(callee.value, this.safeTypeOf(node.expression));
         return {
             _: "PtrCallExpr",
             ptr,
@@ -463,67 +457,8 @@ export class ExprLowerer {
         };
     }
 
-    private optionalChainContinuationLocal(
-        node: ts.Expression,
-        root: OptionalChainSegment,
-        rootInstance: LocalDto,
-        rootMethodReceiver?: LocalDto,
-        rootStaticTarget?: ClassSignatureDto,
-    ): LocalDto {
-        if (!isOptionalChainSegment(node)) {
-            throw new LoweringError("optional-chain call lost its continuation");
-        }
-        return this.materialize(
-            this.lowerOptionalChainAccess(node, root, rootInstance, rootMethodReceiver, rootStaticTarget),
-            this.safeTypeOf(node),
-        );
-    }
-
-    /** `a.b?.().c`: test the method value, but call it with `a` as the receiver. */
-    private lowerOptionalMethodChain(node: OptionalChainSegment, root: ts.CallExpression): ValueDto {
-        const callee = root.expression as ts.PropertyAccessExpression;
-        if (callee.questionDotToken !== undefined) {
-            // `a?.b?.().c`: the property segment guards `a`; the call segment
-            // separately guards the selected method value, but still uses `a` as `this`.
-            return this.optionalDiamond(callee.expression, this.safeTypeOf(node), (receiver) =>
-                this.lowerOptionalMethodChainFromReceiver(node, root, callee, receiver));
-        }
-        const staticTarget = this.classLikeSignatureOf(callee.expression);
-        if (staticTarget !== undefined) {
-            const methodValue = this.materialize(
-                {
-                    _: "StaticFieldRef",
-                    field: { declaringClass: staticTarget, name: callee.name.text, type: this.safeTypeOf(callee) },
-                },
-                this.safeTypeOf(callee),
-            );
-            return this.optionalEvaluatedDiamond(methodValue, this.safeTypeOf(node), () =>
-                this.lowerOptionalChainAccess(node, root, methodValue, undefined, staticTarget));
-        }
-        const receiver = this.snapshotToLocal(callee.expression, root.arguments);
-        return this.lowerOptionalMethodChainFromReceiver(node, root, callee, receiver);
-    }
-
-    private lowerOptionalMethodChainFromReceiver(
-        node: OptionalChainSegment,
-        root: ts.CallExpression,
-        callee: ts.PropertyAccessExpression,
-        receiver: LocalDto,
-    ): ValueDto {
-        const methodValue = this.materialize(
-            {
-                _: "InstanceFieldRef",
-                instance: receiver,
-                field: {
-                    declaringClass: this.classSignatureFromType(receiver.type),
-                    name: callee.name.text,
-                    type: this.safeTypeOf(callee),
-                },
-            },
-            this.safeTypeOf(callee),
-        );
-        return this.optionalEvaluatedDiamond(methodValue, this.safeTypeOf(node), () =>
-            this.lowerOptionalChainAccess(node, root, methodValue, receiver));
+    private optionalChainLocal(value: ValueDto, type: TypeDto): LocalDto {
+        return value._ === "Local" ? value : this.materialize(value, type);
     }
 
     private accessFromInstance(
@@ -947,67 +882,9 @@ export class ExprLowerer {
     lowerCall(node: ts.CallExpression): ValueDto {
         const callee = node.expression;
 
-        // `a?.b(...)`: evaluate/test the receiver before evaluating arguments.
-        if (ts.isPropertyAccessExpression(callee) && callee.questionDotToken !== undefined) {
-            return this.optionalDiamond(callee.expression, this.safeTypeOf(node), (obj) => ({
-                _: "InstanceCallExpr",
-                instance: obj,
-                method: this.methodSignatureForCall(node, callee.name.text, this.classSignatureFromType(obj.type)),
-                args: this.lowerCallArguments(node),
-            }));
-        }
-
-        // `a.b?.(...)`: evaluate receiver and method value exactly once, test
-        // the method value, but retain `a` as the call receiver (`this`).
-        if (node.questionDotToken !== undefined && ts.isPropertyAccessExpression(callee)) {
-            const staticTarget = this.classLikeSignatureOf(callee.expression);
-            if (staticTarget !== undefined) {
-                const methodValue = this.materialize(
-                    {
-                        _: "StaticFieldRef",
-                        field: { declaringClass: staticTarget, name: callee.name.text, type: this.safeTypeOf(callee) },
-                    },
-                    this.safeTypeOf(callee),
-                );
-                return this.optionalEvaluatedDiamond(methodValue, this.safeTypeOf(node), () => ({
-                    _: "StaticCallExpr",
-                    method: this.methodSignatureForCall(node, callee.name.text, staticTarget),
-                    args: this.lowerCallArguments(node),
-                }));
-            }
-            const receiver = this.snapshotToLocal(callee.expression, node.arguments);
-            const methodValue = this.materialize(
-                {
-                    _: "InstanceFieldRef",
-                    instance: receiver,
-                    field: {
-                        declaringClass: this.classSignatureFromType(receiver.type),
-                        name: callee.name.text,
-                        type: this.safeTypeOf(callee),
-                    },
-                },
-                this.safeTypeOf(callee),
-            );
-            return this.optionalEvaluatedDiamond(methodValue, this.safeTypeOf(node), () => ({
-                _: "InstanceCallExpr",
-                instance: receiver,
-                method: this.methodSignatureForCall(
-                    node,
-                    callee.name.text,
-                    this.classSignatureFromType(receiver.type),
-                ),
-                args: this.lowerCallArguments(node),
-            }));
-        }
-
-        // `f?.(...)`: evaluate/test the function value before arguments.
-        if (node.questionDotToken !== undefined) {
-            return this.optionalDiamond(callee, this.safeTypeOf(node), (obj) => ({
-                _: "PtrCallExpr",
-                ptr: obj,
-                method: this.methodSignatureForCall(node, "%call", UNKNOWN_CLASS_SIGNATURE),
-                args: this.lowerCallArguments(node),
-            }));
+        const chain = optionalChain(node);
+        if (chain !== undefined) {
+            return this.lowerOptionalChain(node, chain);
         }
 
         // `super(...)` — call the superclass constructor on `this`.
@@ -1460,21 +1337,7 @@ export class ExprLowerer {
     // Optional chaining
     // ------------------------------------------------------------------
 
-    /**
-     * `obj?.access` -> null-check diamond:
-     *   if (obj != null) %t := <access>; else %t := undefined
-     * (loose `!= null` also covers undefined).
-     */
-    private optionalDiamond(
-        objectNode: ts.Expression,
-        resultType: TypeDto,
-        access: (obj: LocalDto) => ValueDto,
-    ): LocalDto {
-        const obj = this.snapshotToLocal(objectNode);
-        return this.optionalEvaluatedDiamond(obj, resultType, () => access(obj));
-    }
-
-    /** Null-check diamond for a value that has already been evaluated once. */
+    /** Null-check diamond for an evaluated chain value; loose `!= null` also covers undefined. */
     private optionalEvaluatedDiamond(
         tested: LocalDto,
         resultType: TypeDto,
@@ -1676,16 +1539,23 @@ function isScopeFunctionDeclaration(decl: ts.FunctionDeclaration): boolean {
     return ts.isSourceFile(decl.parent) || ts.isModuleBlock(decl.parent);
 }
 
-function optionalChainRoot(node: OptionalChainSegment): OptionalChainSegment | undefined {
+function optionalChain(node: OptionalChainSegment): OptionalChain | undefined {
+    const reversed: OptionalChainSegment[] = [];
     let current = node;
+    let earliestOptionalIndex: number | undefined;
     while (true) {
-        if (current.questionDotToken !== undefined) return current;
+        reversed.push(current);
+        if (current.questionDotToken !== undefined) {
+            earliestOptionalIndex = reversed.length - 1;
+        }
         const parent = current.expression;
         if (!isOptionalChainSegment(parent)) {
-            return undefined;
+            break;
         }
         current = parent;
     }
+    if (earliestOptionalIndex === undefined) return undefined;
+    return { segments: reversed.slice(0, earliestOptionalIndex + 1).reverse() };
 }
 
 function isOptionalChainSegment(node: ts.Node): node is OptionalChainSegment {

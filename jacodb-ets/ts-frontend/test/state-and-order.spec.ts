@@ -474,4 +474,52 @@ describe("expression evaluation snapshots", () => {
         expect(guards).toHaveLength(2);
         expect(nullishResults).toHaveLength(2);
     });
+
+    it("keeps a mixed optional method chain inside its first root guard", () => {
+        const { file } = lower(`
+            function f(a: { b: { c?: () => { d: number } } } | undefined): number | undefined {
+                return a?.b.c?.().d;
+            }
+        `);
+        const blocks = methodByName(file, "f").body!.cfg.blocks;
+        const stmts = blocks.flatMap((block) => block.stmts);
+        const bAccess = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.right._ === "InstanceFieldRef"
+                && stmt.right.field.name === "b",
+        ) as Extract<StmtDto, { _: "AssignStmt" }>;
+        const methodRead = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.right._ === "InstanceFieldRef"
+                && stmt.right.field.name === "c",
+        ) as Extract<StmtDto, { _: "AssignStmt" }>;
+        const methodCall = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.right._ === "InstanceCallExpr"
+                && stmt.right.method.name === "c",
+        ) as Extract<StmtDto, { _: "AssignStmt" }>;
+        const bAccessBlock = blocks.find((block) => block.stmts.includes(bAccess));
+        const methodReadBlock = blocks.find((block) => block.stmts.includes(methodRead));
+        const methodCallBlock = blocks.find((block) => block.stmts.includes(methodCall));
+        const dAccessBlock = blocks.find((block) => block.stmts.some(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.right._ === "InstanceFieldRef"
+                && stmt.right.field.name === "d",
+        ));
+        const guards = stmts.filter((stmt) => stmt._ === "IfStmt");
+        const nullishResults = stmts.filter(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.right._ === "Constant"
+                && stmt.right.value === "undefined",
+        );
+        expect(bAccess).toBeDefined();
+        expect(methodRead).toBeDefined();
+        expect(methodCall).toBeDefined();
+        expect(methodReadBlock).toBe(bAccessBlock);
+        expect((methodCall.right as { instance: unknown }).instance)
+            .toEqual((methodRead.right as { instance: unknown }).instance);
+        expect(dAccessBlock).toBe(methodCallBlock);
+        expect(guards).toHaveLength(2);
+        expect(nullishResults).toHaveLength(2);
+    });
 });
