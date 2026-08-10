@@ -74,7 +74,7 @@ export function parameterType(ctx: LoweringContext, p: ts.ParameterDeclaration):
 
 export interface BuiltParameters {
     parameters: MethodParameterDto[];
-    prologueParams: { name: string; type: TypeDto; identifier?: ts.Identifier }[];
+    prologueParams: { name: string; type: TypeDto; identifier?: ts.Identifier; pattern?: ts.BindingPattern }[];
 }
 
 export function buildParameters(ctx: LoweringContext, decl: ts.SignatureDeclarationBase): BuiltParameters {
@@ -100,6 +100,7 @@ export function buildParameters(ctx: LoweringContext, decl: ts.SignatureDeclarat
             name,
             type,
             identifier: ts.isIdentifier(p.name) ? p.name : undefined,
+            pattern: ts.isObjectBindingPattern(p.name) || ts.isArrayBindingPattern(p.name) ? p.name : undefined,
         });
     }
     return { parameters, prologueParams };

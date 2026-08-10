@@ -211,6 +211,24 @@ describe("class lowering", () => {
         ]);
     });
 
+    it("initializes derived fields after super on every conditional branch", () => {
+        const { file } = lower(`
+            class Derived extends Base {
+                value = 42;
+                constructor(flag: boolean) { if (flag) super(); else super(); }
+            }
+        `);
+        const ctor = methodOf(classByName(file, "Derived"), "constructor");
+        const superBlocks = ctor.body!.cfg.blocks.filter((block) => block.stmts.some((stmt) =>
+            stmt._ === "CallStmt" && stmt.expr.method.name === "constructor",
+        ));
+
+        expect(superBlocks).toHaveLength(2);
+        expect(superBlocks.every((block) => block.stmts.some((stmt) =>
+            stmt._ === "CallStmt" && stmt.expr.method.name === "%instInit",
+        ))).toBe(true);
+    });
+
     it("synthesizes a derived constructor that forwards base parameters before initialization", () => {
         const { file } = lower(`
             class Base { constructor(value: number, label?: string) {} }

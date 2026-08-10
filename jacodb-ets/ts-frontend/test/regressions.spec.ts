@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { AssignStmtDto, StmtDto } from "../src/dto/stmts";
 import { syntaxKindName } from "../src/lowering/diagnostics";
 import * as ts from "typescript";
+import { validateEtsFile } from "../src/validate";
 import { defaultMethod, lower, methodByName, singleBlockStmts } from "./util";
 
 function allStmts(method: { body?: { cfg: { blocks: { stmts: StmtDto[] }[] } } }): StmtDto[] {
@@ -41,6 +42,51 @@ describe("pattern parameters", () => {
         const { file } = lower("function f({ a }: any, [b]: any[]): void {}");
         const names = methodByName(file, "f").signature.parameters.map((p) => p.name);
         expect(new Set(names).size).toBe(names.length);
+    });
+
+    it("unpacks an object pattern parameter from its ParameterRef before the body", () => {
+        const { file } = lower("function g({ x }: { x: number }) { return x; }");
+        const stmts = allStmts(methodByName(file, "g"));
+
+        expect(stmts.some((stmt) =>
+            stmt._ === "AssignStmt"
+            && stmt.left._ === "Local"
+            && stmt.left.name === "%pat0"
+            && stmt.right._ === "ParameterRef"
+            && stmt.right.index === 0,
+        )).toBe(true);
+        expect(stmts.some((stmt) =>
+            stmt._ === "AssignStmt"
+            && stmt.left._ === "Local"
+            && stmt.left.name === "x"
+            && stmt.right._ === "InstanceFieldRef"
+            && stmt.right.instance._ === "Local"
+            && stmt.right.instance.name === "%pat0"
+            && stmt.right.field.name === "x",
+        )).toBe(true);
+    });
+
+    it("unpacks object pattern parameters in closure prologues", () => {
+        const { file } = lower("function wrap() { return ({ x }: { x: number }) => x; }");
+        const stmts = allStmts(methodByName(file, "%AM0$wrap"));
+
+        expect(stmts.some((stmt) =>
+            stmt._ === "AssignStmt"
+            && stmt.left._ === "Local"
+            && stmt.left.name === "x"
+            && stmt.right._ === "InstanceFieldRef"
+            && stmt.right.instance._ === "Local"
+            && stmt.right.instance.name === "%pat0"
+            && stmt.right.field.name === "x",
+        )).toBe(true);
+    });
+});
+
+describe("source local names", () => {
+    it("keeps source parameters out of validator-reserved local prefixes", () => {
+        const { file } = lower("function f(_tmp0: number) { return _tmp0 + 1; }");
+
+        expect(validateEtsFile(file)).toEqual([]);
     });
 });
 

@@ -311,7 +311,9 @@ export class ClassBuilder {
             const isStaticMethod = (modifiersOf(decl) & Modifier.STATIC) !== 0;
             const m = new MethodContext(this.ctx, declaringClass, name, isStaticMethod);
             m.emitPrologue(prologueParams);
-            new StmtLowerer(m).lowerStatements(decl.body.statements);
+            const lowerer = new StmtLowerer(m);
+            this.lowerParameterPatterns(lowerer, m, prologueParams);
+            lowerer.lowerStatements(decl.body.statements);
             method.body = m.build();
         }
         return method;
@@ -341,21 +343,10 @@ export class ClassBuilder {
 
         const m = new MethodContext(this.ctx, declaringClass, CONSTRUCTOR_NAME);
         m.emitPrologue(prologueParams);
+        const lowerer = new StmtLowerer(m);
+        this.lowerParameterPatterns(lowerer, m, prologueParams);
         const thisLocal = m.getOrCreateLocal("this", classType);
-        // `super()` may appear in several branches; the initializers must be emitted once.
-        // NB: this is an approximation — the initializers land on the FIRST super() path only,
-        // so a second branch has none. Emitting a copy per branch would be worse (duplicated
-        // field stores), and a dominance-correct placement needs a join point we do not track.
-        let initializersEmitted = false;
         const emitInitializers = (): void => {
-            if (initializersEmitted) {
-                this.ctx.diagnostics.warn(
-                    decl,
-                    "multiple super() calls: field initializers are emitted on the first path only",
-                );
-                return;
-            }
-            initializersEmitted = true;
             // Parameter properties are initialized at constructor entry (after
             // super() in a derived class), before ordinary instance fields.
             this.emitParameterProperties(m, thisLocal, declaringClass, decl.parameters);
@@ -364,7 +355,7 @@ export class ClassBuilder {
         if (decl.body !== undefined) {
             if (superClass === undefined) {
                 emitInitializers();
-                new StmtLowerer(m).lowerStatements(decl.body.statements);
+                lowerer.lowerStatements(decl.body.statements);
             } else {
                 // In a derived class, JavaScript initializes instance fields and
                 // parameter properties only after the base constructor returns.
@@ -426,6 +417,21 @@ export class ClassBuilder {
             decorators: [],
             body: m.build(),
         };
+    }
+
+    private lowerParameterPatterns(
+        lowerer: StmtLowerer,
+        m: MethodContext,
+        parameters: { name: string; type: TypeDto; pattern?: ts.BindingPattern }[],
+    ): void {
+        for (const parameter of parameters) {
+            if (parameter.pattern !== undefined) {
+                lowerer.lowerParameterBindingPattern(
+                    parameter.pattern,
+                    m.getOrCreateLocal(parameter.name, parameter.type),
+                );
+            }
+        }
     }
 
     private emitParameterProperties(

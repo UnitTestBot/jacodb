@@ -61,8 +61,16 @@ export class StmtLowerer {
     ) {
         // Nested function bodies (closures, object-literal methods) are lowered
         // with a fresh StmtLowerer over their own MethodContext.
-        this.expr = new ExprLowerer(m, (nestedContext, body) => {
+        this.expr = new ExprLowerer(m, (nestedContext, body, parameters) => {
             const nested = new StmtLowerer(nestedContext);
+            parameters?.forEach((parameter) => {
+                if (parameter.pattern !== undefined) {
+                    nested.lowerParameterBindingPattern(
+                        parameter.pattern,
+                        nestedContext.getOrCreateLocal(parameter.name, parameter.type),
+                    );
+                }
+            });
             if (ts.isBlock(body)) {
                 nested.lowerStatements(body.statements);
             } else {
@@ -735,6 +743,11 @@ export class StmtLowerer {
     // ------------------------------------------------------------------
     // Destructuring
     // ------------------------------------------------------------------
+
+    /** Unpack one pattern parameter after its `%patN := ParameterRef(i)` prologue binding. */
+    lowerParameterBindingPattern(pattern: ts.BindingPattern, source: LocalDto): void {
+        this.lowerBindingPattern(pattern, source);
+    }
 
     /** `{a, b: {c}, d = 1}` / `[x, , y]` unpacked from `source` via field/array refs. */
     private lowerBindingPattern(pattern: ts.BindingPattern, source: LocalDto): void {

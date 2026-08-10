@@ -37,7 +37,7 @@ import {
     PATTERN_PARAMETER_PREFIX,
 } from "../dto/constants";
 import { FieldDto, MethodDto } from "../dto/model";
-import { buildParameters, memberName, modifiersOf, returnTypeOf } from "./astUtils";
+import { buildParameters, BuiltParameters, memberName, modifiersOf, returnTypeOf } from "./astUtils";
 import { BinaryOp, RelationOp, UnaryOp } from "../dto/ops";
 import {
     ClassSignatureDto,
@@ -120,7 +120,11 @@ const COMPOUND_ASSIGN_BY_SYNTAX: Partial<Record<ts.SyntaxKind, BinaryOp>> = {
 export class LoweringError extends Error {}
 
 /** Lowers the body of a nested function (closure / object-literal method) into a fresh MethodContext. */
-export type FunctionBodyLowerer = (m: MethodContext, body: ts.ConciseBody) => void;
+export type FunctionBodyLowerer = (
+    m: MethodContext,
+    body: ts.ConciseBody,
+    parameters?: BuiltParameters["prologueParams"],
+) => void;
 
 type OptionalChainSegment = ts.PropertyAccessExpression | ts.ElementAccessExpression | ts.CallExpression;
 
@@ -1237,7 +1241,7 @@ export class ExprLowerer {
         } else {
             closureContext.emitClosurePrologue(environment.name, environment.type, captures, prologueParams);
         }
-        this.lowerFunctionBody(closureContext, node.body);
+        this.lowerFunctionBody(closureContext, node.body, prologueParams);
         registry.methods.push({
             signature,
             modifiers: modifiersOf(node),
@@ -1292,7 +1296,7 @@ export class ExprLowerer {
                 const methodContext = new MethodContext(this.m.ctx, signature, methodName);
                 methodContext.emitPrologue(prologueParams);
                 if (property.body !== undefined) {
-                    this.lowerFunctionBody(methodContext, property.body);
+                    this.lowerFunctionBody(methodContext, property.body, prologueParams);
                 }
                 methods.push({
                     signature: methodSignature,

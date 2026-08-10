@@ -15,7 +15,7 @@
  */
 
 import * as ts from "typescript";
-import { DEFAULT_ARK_CLASS_NAME, TEMP_LOCAL_PREFIX } from "../dto/constants";
+import { DEFAULT_ARK_CLASS_NAME, FORBIDDEN_LOCAL_PREFIX, TEMP_LOCAL_PREFIX } from "../dto/constants";
 import { BodyDto, ClassDto, LocalDeclDto, MethodDto, SourceSpanDto } from "../dto/model";
 import { ClassSignatureDto, FieldSignatureDto, FileSignatureDto } from "../dto/signatures";
 import { ClassTypeDto, LexicalEnvTypeDto, TypeDto, UNKNOWN_TYPE } from "../dto/types";
@@ -249,16 +249,17 @@ export class MethodContext {
     }
 
     private freshSourceLocalName(base: string): string {
-        if (!this.locals.has(base)) {
-            this.localNameCounters.set(base, 1);
-            return base;
+        const safeBase = base.startsWith(FORBIDDEN_LOCAL_PREFIX) ? `$source$${base}` : base;
+        if (!this.locals.has(safeBase)) {
+            this.localNameCounters.set(safeBase, 1);
+            return safeBase;
         }
-        let suffix = this.localNameCounters.get(base) ?? 1;
+        let suffix = this.localNameCounters.get(safeBase) ?? 1;
         let candidate: string;
         do {
-            candidate = `${base}$${suffix++}`;
+            candidate = `${safeBase}$${suffix++}`;
         } while (this.locals.has(candidate));
-        this.localNameCounters.set(base, suffix);
+        this.localNameCounters.set(safeBase, suffix);
         return candidate;
     }
 
