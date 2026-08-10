@@ -122,6 +122,8 @@ export class LoweringError extends Error {}
 /** Lowers the body of a nested function (closure / object-literal method) into a fresh MethodContext. */
 export type FunctionBodyLowerer = (m: MethodContext, body: ts.ConciseBody) => void;
 
+type OptionalChainAccess = ts.PropertyAccessExpression | ts.ElementAccessExpression;
+
 export class ExprLowerer {
     constructor(
         private readonly m: MethodContext,
@@ -303,17 +305,12 @@ export class ExprLowerer {
         const fieldName = node.name.text;
         const fieldType = this.safeTypeOf(node);
 
-        if (node.questionDotToken !== undefined || ts.isPropertyAccessChain(node)) {
-            // a?.b
-            return this.optionalDiamond(node.expression, fieldType, (obj) => ({
-                _: "InstanceFieldRef",
-                instance: obj,
-                field: {
-                    declaringClass: this.classSignatureFromType(obj.type),
-                    name: fieldName,
-                    type: fieldType,
-                },
-            }));
+        const optionalRoot = optionalChainRoot(node);
+        if (optionalRoot !== undefined) {
+            // A continuation such as `a?.b.c` shares the root `a` guard;
+            // it must not introduce a second null check for `b`.
+            return this.optionalDiamond(optionalRoot.expression, fieldType, (obj) =>
+                this.lowerOptionalChainAccess(node, optionalRoot, obj));
         }
 
         // `this.f` inside a STATIC method addresses a static field of the class.
@@ -345,18 +342,55 @@ export class ExprLowerer {
     }
 
     private lowerElementAccess(node: ts.ElementAccessExpression): ValueDto {
-        if (node.questionDotToken !== undefined || ts.isElementAccessChain(node)) {
-            // a?.[i]
-            return this.optionalDiamond(node.expression, this.safeTypeOf(node), (obj) => ({
-                _: "ArrayRef",
-                array: obj,
-                index: this.lowerToImmediate(node.argumentExpression),
-                type: this.safeTypeOf(node),
-            }));
+        const optionalRoot = optionalChainRoot(node);
+        if (optionalRoot !== undefined) {
+            return this.optionalDiamond(optionalRoot.expression, this.safeTypeOf(node), (obj) =>
+                this.lowerOptionalChainAccess(node, optionalRoot, obj));
         }
         return {
             _: "ArrayRef",
             array: this.lowerToImmediate(node.expression),
+            index: this.lowerToImmediate(node.argumentExpression),
+            type: this.safeTypeOf(node),
+        };
+    }
+
+    /** Lower an optional-chain segment and all its non-optional continuations under one root guard. */
+    private lowerOptionalChainAccess(
+        node: OptionalChainAccess,
+        root: OptionalChainAccess,
+        rootInstance: LocalDto,
+    ): ValueDto {
+        if (node === root) {
+            return this.accessFromInstance(node, rootInstance);
+        }
+        const parent = node.expression;
+        if (!ts.isPropertyAccessChain(parent) && !ts.isElementAccessChain(parent)) {
+            throw new LoweringError("optional-chain continuation lost its root");
+        }
+        const parentValue = this.lowerOptionalChainAccess(parent, root, rootInstance);
+        const parentInstance = parentValue._ === "Local"
+            ? parentValue
+            : this.materialize(parentValue, this.safeTypeOf(parent));
+        return this.accessFromInstance(node, parentInstance);
+    }
+
+    private accessFromInstance(node: OptionalChainAccess, instance: LocalDto): ValueDto {
+        if (ts.isPropertyAccessExpression(node)) {
+            const fieldType = this.safeTypeOf(node);
+            return {
+                _: "InstanceFieldRef",
+                instance,
+                field: {
+                    declaringClass: this.classSignatureFromType(instance.type),
+                    name: node.name.text,
+                    type: fieldType,
+                },
+            };
+        }
+        return {
+            _: "ArrayRef",
+            array: instance,
             index: this.lowerToImmediate(node.argumentExpression),
             type: this.safeTypeOf(node),
         };
@@ -978,7 +1012,8 @@ export class ExprLowerer {
         if (identifier === undefined || later === undefined) return false;
         const sourceSymbol = this.m.converter.symbolOf(identifier);
         const nodes = Array.isArray(later) ? later : [later];
-        return nodes.some((node) => this.containsReassignment(node, identifier, sourceSymbol));
+        return nodes.some((node) =>
+            this.containsReassignment(node, identifier, sourceSymbol) || containsPossibleSideEffect(node));
     }
 
     private containsReassignment(node: ts.Node, source: ts.Identifier, sourceSymbol: ts.Symbol | undefined): boolean {
@@ -1485,6 +1520,39 @@ function isProjectFile(decl: ts.Node): boolean {
 
 function isScopeFunctionDeclaration(decl: ts.FunctionDeclaration): boolean {
     return ts.isSourceFile(decl.parent) || ts.isModuleBlock(decl.parent);
+}
+
+function optionalChainRoot(node: OptionalChainAccess): OptionalChainAccess | undefined {
+    let current = node;
+    while (true) {
+        if (current.questionDotToken !== undefined) return current;
+        const parent = current.expression;
+        if (!ts.isPropertyAccessChain(parent) && !ts.isElementAccessChain(parent)) {
+            return undefined;
+        }
+        current = parent;
+    }
+}
+
+/** Calls and suspension can run arbitrary user code, so a later one may mutate any captured binding. */
+function containsPossibleSideEffect(node: ts.Node): boolean {
+    let found = false;
+    const visit = (current: ts.Node): void => {
+        if (found || ts.isFunctionLike(current)) return;
+        if (
+            ts.isCallExpression(current)
+            || ts.isNewExpression(current)
+            || ts.isAwaitExpression(current)
+            || ts.isYieldExpression(current)
+            || ts.isTaggedTemplateExpression(current)
+        ) {
+            found = true;
+            return;
+        }
+        ts.forEachChild(current, visit);
+    };
+    visit(node);
+    return found;
 }
 
 /** The simple binding whose current value an expression denotes, if any. */

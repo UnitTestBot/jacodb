@@ -162,6 +162,30 @@ describe("expression evaluation snapshots", () => {
         expect(args[1]).toMatchObject({ _: "Local", name: "x" });
     });
 
+    it("preserves an earlier call argument before a later call can mutate its capture", () => {
+        const { file } = lower(`
+            declare function sink(first: number, second: number): void;
+            function f(x: number): void {
+                const mutate = (): number => { x = 2; return 0; };
+                sink(x, mutate());
+            }
+        `);
+        const stmts = flattened(methodByName(file, "f"));
+        const call = stmts.find(
+            (stmt) => stmt._ === "CallStmt" && stmt.expr._ === "StaticCallExpr" && stmt.expr.method.name === "sink",
+        ) as Extract<StmtDto, { _: "CallStmt" }>;
+        const firstArgument = call.expr.args[0] as { name: string };
+        const snapshot = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name === firstArgument.name
+                && stmt.right._ === "Local"
+                && stmt.right.name === "x",
+        );
+        expect(firstArgument.name).toMatch(/^%/);
+        expect(snapshot).toBeDefined();
+    });
+
     it("preserves a binary left operand when the right operand reassigns it", () => {
         const { file } = lower(`
             function f(x: number): number {
@@ -192,6 +216,88 @@ describe("expression evaluation snapshots", () => {
         expect(addition).toMatchObject({
             right: { left: (snapshot as Extract<StmtDto, { _: "AssignStmt" }>).left, right: { _: "Local", name: "x" } },
         });
+    });
+
+    it("preserves a binary left operand before a right-hand call can mutate its capture", () => {
+        const { file } = lower(`
+            function f(x: number): number {
+                const mutate = (): number => { x = 2; return 0; };
+                return x + mutate();
+            }
+        `);
+        const stmts = flattened(methodByName(file, "f"));
+        const addition = stmts.find(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "BinopExpr" && stmt.right.op === "+",
+        ) as Extract<StmtDto, { _: "AssignStmt" }>;
+        const left = (addition.right as { left: { name: string } }).left;
+        expect(left.name).toMatch(/^%/);
+        expect(stmts.some(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name === left.name
+                && stmt.right._ === "Local"
+                && stmt.right.name === "x",
+        )).toBe(true);
+    });
+
+    it("preserves receiver, callee, and constructor arguments before later calls", () => {
+        const { file } = lower(`
+            class Pair { constructor(first: number, second: number) {} }
+            class Service { run(value: number): void {} }
+            function receiver(service: Service, replacement: Service): void {
+                const mutate = (): number => { service = replacement; return 0; };
+                service.run(mutate());
+            }
+            function callee(callback: (value: number) => void, replacement: (value: number) => void): void {
+                const mutate = (): number => { callback = replacement; return 0; };
+                callback(mutate());
+            }
+            function ctor(x: number): void {
+                const mutate = (): number => { x = 2; return 0; };
+                new Pair(x, mutate());
+            }
+        `);
+        const receiverStmts = flattened(methodByName(file, "receiver"));
+        const receiverCall = receiverStmts.find(
+            (stmt) => stmt._ === "CallStmt" && stmt.expr._ === "InstanceCallExpr" && stmt.expr.method.name === "run",
+        ) as Extract<StmtDto, { _: "CallStmt" }>;
+        expect(receiverCall.expr.instance.name).toMatch(/^%/);
+        expect(receiverStmts.some(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name === receiverCall.expr.instance.name
+                && stmt.right._ === "Local"
+                && stmt.right.name === "service",
+        )).toBe(true);
+
+        const calleeStmts = flattened(methodByName(file, "callee"));
+        const calleeCall = calleeStmts.find(
+            (stmt) => stmt._ === "CallStmt" && stmt.expr._ === "PtrCallExpr",
+        ) as Extract<StmtDto, { _: "CallStmt" }>;
+        expect(calleeCall.expr.ptr).toMatchObject({ _: "Local", name: expect.stringMatching(/^%/) });
+        expect(calleeStmts.some(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name === (calleeCall.expr.ptr as { name: string }).name
+                && stmt.right._ === "Local"
+                && stmt.right.name === "callback",
+        )).toBe(true);
+
+        const ctorStmts = flattened(methodByName(file, "ctor"));
+        const ctorCall = ctorStmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.right._ === "InstanceCallExpr"
+                && stmt.right.method.name === "constructor",
+        ) as Extract<StmtDto, { _: "AssignStmt" }>;
+        const firstArgument = (ctorCall.right as { args: { name: string }[] }).args[0];
+        expect(firstArgument.name).toMatch(/^%/);
+        expect(ctorStmts.some(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name === firstArgument.name
+                && stmt.right._ === "Local"
+                && stmt.right.name === "x",
+        )).toBe(true);
     });
 
     it("preserves an array assignment index before the right-hand side reassigns it", () => {
@@ -263,12 +369,20 @@ describe("expression evaluation snapshots", () => {
             }
         `);
         const blocks = methodByName(file, "f").body!.cfg.blocks;
+        const bAccessBlock = blocks.find((block) => block.stmts.some(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceFieldRef" && stmt.right.field.name === "b",
+        ));
         const cAccessBlock = blocks.find((block) => block.stmts.some(
             (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceFieldRef" && stmt.right.field.name === "c",
         ));
+        const nullishResults = blocks.flatMap((block) => block.stmts).filter(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "Constant" && stmt.right.value === "undefined",
+        );
+        const guards = blocks.flatMap((block) => block.stmts).filter((stmt) => stmt._ === "IfStmt");
+        expect(bAccessBlock).toBeDefined();
         expect(cAccessBlock).toBeDefined();
-        // The continuation belongs to the non-null branch, not the join reached
-        // by both the non-null and nullish paths.
-        expect(cAccessBlock!.predecessors).toHaveLength(1);
+        expect(cAccessBlock).toBe(bAccessBlock);
+        expect(guards).toHaveLength(1);
+        expect(nullishResults).toHaveLength(1);
     });
 });
