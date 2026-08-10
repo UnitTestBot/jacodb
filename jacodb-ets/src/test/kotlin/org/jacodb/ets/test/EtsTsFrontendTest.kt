@@ -124,6 +124,19 @@ class EtsTsFrontendTest {
     }
 
     @Test
+    fun `dependency and hidden ets files do not switch a TypeScript project to arkanalyzer`() {
+        val project = createTempDirectory("ts-provider-project")
+        project.resolve("src").createDirectories()
+        project.resolve("src/app.ts").writeText("export const answer = 42")
+        project.resolve("node_modules/pkg").createDirectories()
+        project.resolve("node_modules/pkg/index.ets").writeText("")
+        project.resolve(".generated").createDirectories()
+        project.resolve(".generated/cache.ets").writeText("")
+
+        assertEquals(EtsIrProvider.TS_FRONTEND, defaultProviderFor(project, isProject = true))
+    }
+
+    @Test
     fun `straight-line program lowers, converts and linearizes`() {
         val etsFileDto = runFrontend(
             """

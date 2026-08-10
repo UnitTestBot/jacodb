@@ -54,4 +54,29 @@ class ProcessUtilTest {
         assertTrue(result.isTimeout)
         assertTrue(elapsed.inWholeSeconds < 5, "timed-out process took $elapsed to terminate")
     }
+
+    @Test
+    fun `timeout returns before a descendant closes inherited pipes`() {
+        lateinit var result: ProcessUtil.Result
+        val elapsed = measureTime {
+            result = ProcessUtil.run(
+                listOf(
+                    node,
+                    "-e",
+                    "const { spawn } = require('child_process'); " +
+                        "spawn(process.execPath, ['-e', 'setTimeout(() => {}, 5000)'], " +
+                        "{ stdio: ['ignore', 'inherit', 'inherit'] }); " +
+                        "console.log('stdout-before-timeout'); " +
+                        "console.error('stderr-before-timeout'); " +
+                        "setInterval(() => {}, 1000)",
+                ),
+                timeout = 100.milliseconds,
+            )
+        }
+
+        assertTrue(result.isTimeout)
+        assertTrue(result.stdout.contains("stdout-before-timeout"))
+        assertTrue(result.stderr.contains("stderr-before-timeout"))
+        assertTrue(elapsed.inWholeSeconds < 2, "inherited pipes delayed timeout completion by $elapsed")
+    }
 }
