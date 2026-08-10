@@ -16,11 +16,19 @@
 
 package org.jacodb.ets.utils
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.io.Reader
-import java.nio.charset.StandardCharsets
+import java.nio.charset.Charset
 import java.nio.file.Files
-import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 
@@ -30,7 +38,7 @@ private val logger = KotlinLogging.logger {}
  * Cap on the captured stdout/stderr of a single process. Verbose frontends log a
  * line per file, so an unbounded buffer would grow to megabytes on big projects.
  */
-private const val MAX_CAPTURED_OUTPUT_CHARS = 1 shl 20 // 1 MiB
+private const val MAX_CAPTURED_OUTPUT_BYTES = 1 shl 20 // 1 MiB
 
 private const val OUTPUT_TRUNCATION_NOTICE = "... (output truncated)"
 
@@ -38,31 +46,67 @@ private const val PROCESS_TERMINATION_GRACE_MILLIS = 250L
 
 private const val PROCESS_FORCE_TERMINATION_TIMEOUT_MILLIS = 1_000L
 
-private const val OUTPUT_READ_BUFFER_CHARS = 8 * 1024
+private const val OUTPUT_READ_BUFFER_BYTES = 8 * 1024
 
-private fun Path.readCapturedOutput(): String =
-    Files.newBufferedReader(this, StandardCharsets.UTF_8).use { reader ->
-        val result = StringBuilder()
-        val buffer = CharArray(OUTPUT_READ_BUFFER_CHARS)
-        while (result.length < MAX_CAPTURED_OUTPUT_CHARS) {
-            val charsRead = reader.read(
-                buffer,
-                0,
-                minOf(buffer.size, MAX_CAPTURED_OUTPUT_CHARS - result.length),
-            )
-            if (charsRead < 0) {
-                return@use result.toString()
-            }
-            result.append(buffer, 0, charsRead)
+private const val PROCESS_POLL_INTERVAL_MILLIS = 10L
+
+class ProcessTerminationException(
+    /** The caller owns this still-live process and its streams. */
+    val process: Process,
+) : IllegalStateException("Timed-out process did not terminate after destroyForcibly()")
+
+private class BoundedOutput(private val charset: Charset) {
+    private val output = ByteArrayOutputStream()
+    private val buffer = ByteArray(OUTPUT_READ_BUFFER_BYTES)
+    private var truncated = false
+
+    fun append(bytes: ByteArray, length: Int) {
+        val retained = minOf(length, MAX_CAPTURED_OUTPUT_BYTES - output.size())
+        if (retained > 0) {
+            output.write(bytes, 0, retained)
         }
-        if (reader.read() >= 0) {
-            if (result.isNotEmpty() && result.last() != '\n') {
-                result.appendLine()
-            }
-            result.append(OUTPUT_TRUNCATION_NOTICE)
+        if (retained < length) {
+            truncated = true
         }
-        result.toString()
     }
+
+    fun drainAvailable(stream: InputStream) {
+        while (true) {
+            val available = try {
+                stream.available()
+            } catch (_: Exception) {
+                return
+            }
+            if (available <= 0) return
+
+            val bytesRead = try {
+                stream.read(buffer, 0, minOf(buffer.size, available))
+            } catch (_: Exception) {
+                return
+            }
+            if (bytesRead < 0) return
+            append(buffer, bytesRead)
+        }
+    }
+
+    fun drain(stream: InputStream) {
+        while (true) {
+            val bytesRead = stream.read(buffer)
+            if (bytesRead < 0) return
+            append(buffer, bytesRead)
+        }
+    }
+
+    override fun toString(): String {
+        val captured = output.toString(charset.name())
+        if (!truncated) return captured
+        return buildString(captured.length + OUTPUT_TRUNCATION_NOTICE.length + 1) {
+            append(captured)
+            if (isNotEmpty() && last() != '\n') appendLine()
+            append(OUTPUT_TRUNCATION_NOTICE)
+        }
+    }
+}
 
 private fun terminateTimedOutProcess(process: Process) {
     process.destroy()
@@ -71,8 +115,41 @@ private fun terminateTimedOutProcess(process: Process) {
     }
 
     process.destroyForcibly()
-    check(process.waitFor(PROCESS_FORCE_TERMINATION_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
-        "Timed-out process did not terminate after destroyForcibly()"
+    if (!process.waitFor(PROCESS_FORCE_TERMINATION_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+        throw ProcessTerminationException(process)
+    }
+}
+
+private fun waitForProcess(
+    process: Process,
+    timeout: Duration?,
+    stdout: BoundedOutput,
+    stderr: BoundedOutput,
+): Boolean {
+    val started = System.nanoTime()
+    val timeoutNanos = timeout?.inWholeNanoseconds?.coerceAtLeast(0)
+    while (true) {
+        stdout.drainAvailable(process.inputStream)
+        stderr.drainAvailable(process.errorStream)
+
+        if (process.waitFor(0, TimeUnit.NANOSECONDS)) {
+            return false
+        }
+        val elapsed = System.nanoTime() - started
+        if (timeoutNanos != null && elapsed >= timeoutNanos) {
+            return true
+        }
+        val waitNanos = if (timeoutNanos == null) {
+            TimeUnit.MILLISECONDS.toNanos(PROCESS_POLL_INTERVAL_MILLIS)
+        } else {
+            minOf(
+                TimeUnit.MILLISECONDS.toNanos(PROCESS_POLL_INTERVAL_MILLIS),
+                timeoutNanos - elapsed,
+            )
+        }
+        if (process.waitFor(waitNanos, TimeUnit.NANOSECONDS)) {
+            return false
+        }
     }
 }
 
@@ -89,60 +166,99 @@ object ProcessUtil {
         input: String? = null,
         timeout: Duration? = null,
     ): Result {
-        val reader = input?.reader() ?: "".reader()
-        return run(command, reader, timeout)
+        logger.debug { "Running command: $command" }
+        val charset = Charset.defaultCharset()
+        val stdinFile = Files.createTempFile("jacodb-process-stdin-", ".txt")
+        try {
+            Files.newBufferedWriter(stdinFile, charset).use { writer ->
+                writer.write(input ?: "")
+            }
+
+            val process = ProcessBuilder(command)
+                .redirectInput(stdinFile.toFile())
+                .start()
+            val stdout = BoundedOutput(charset)
+            val stderr = BoundedOutput(charset)
+            var callerOwnsProcess = false
+            try {
+                val isTimeout = waitForProcess(process, timeout, stdout, stderr)
+                if (isTimeout) {
+                    try {
+                        terminateTimedOutProcess(process)
+                    } catch (error: ProcessTerminationException) {
+                        callerOwnsProcess = true
+                        throw error
+                    }
+                }
+                stdout.drainAvailable(process.inputStream)
+                stderr.drainAvailable(process.errorStream)
+
+                return Result(
+                    exitCode = process.exitValue(),
+                    stdout = stdout.toString(),
+                    stderr = stderr.toString(),
+                    isTimeout = isTimeout,
+                )
+            } finally {
+                if (!callerOwnsProcess) {
+                    process.inputStream.close()
+                    process.errorStream.close()
+                }
+            }
+        } finally {
+            try {
+                Files.deleteIfExists(stdinFile)
+            } catch (_: Exception) {
+                stdinFile.toFile().deleteOnExit()
+            }
+        }
     }
 
     /**
-     * Runs [command] after streaming the finite [input] into a temporary file.
-     * The process timeout starts after input reaches EOF and the process starts.
+     * Streams [input] through [command]. Timed execution requires finite String input,
+     * because arbitrary Reader I/O cannot be cancelled safely on the JDK 8 baseline.
      */
     fun run(
         command: List<String>,
         input: Reader,
         timeout: Duration? = null,
     ): Result {
+        require(timeout == null) {
+            "ProcessUtil.run with Reader input does not support timeout; use finite String input"
+        }
         logger.debug { "Running command: $command" }
-        val ioDirectory = Files.createTempDirectory("jacodb-process-")
-        val stdinFile = ioDirectory.resolve("stdin.txt")
-        val stdoutFile = ioDirectory.resolve("stdout.txt")
-        val stderrFile = ioDirectory.resolve("stderr.txt")
-
-        try {
-            // A finite Reader is staged before the process starts, without loading it into memory.
-            // Consequently, timeout measures process execution and not production of Reader input.
-            Files.newBufferedWriter(stdinFile, StandardCharsets.UTF_8).use { writer ->
+        val process = ProcessBuilder(command).start()
+        val charset = Charset.defaultCharset()
+        val stdout = BoundedOutput(charset)
+        val stderr = BoundedOutput(charset)
+        val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        val stdinJob = scope.launch {
+            process.outputStream.bufferedWriter(charset).use { writer ->
                 input.copyTo(writer)
             }
-
-            val process = ProcessBuilder(command)
-                .redirectInput(stdinFile.toFile())
-                .redirectOutput(stdoutFile.toFile())
-                .redirectError(stderrFile.toFile())
-                .start()
-
-            val isTimeout = if (timeout != null) {
-                !process.waitFor(timeout.inWholeNanoseconds, TimeUnit.NANOSECONDS)
-            } else {
-                process.waitFor()
-                false
-            }
-            if (isTimeout) {
-                terminateTimedOutProcess(process)
-            }
-
-            return Result(
-                exitCode = process.exitValue(),
-                stdout = stdoutFile.readCapturedOutput(),
-                stderr = stderrFile.readCapturedOutput(),
-                isTimeout = isTimeout,
-            )
-        } finally {
-            val ioDirectoryFile = ioDirectory.toFile()
-            if (!ioDirectoryFile.deleteRecursively()) {
-                ioDirectoryFile.walkBottomUp().forEach { it.deleteOnExit() }
+        }
+        val stdoutJob = scope.launch {
+            process.inputStream.use { stream ->
+                stdout.drain(stream)
             }
         }
+        val stderrJob = scope.launch {
+            process.errorStream.use { stream ->
+                stderr.drain(stream)
+            }
+        }
+
+        process.waitFor()
+        runBlocking {
+            listOf(stdinJob, stdoutJob, stderrJob).joinAll()
+        }
+        scope.cancel()
+        return Result(
+            exitCode = process.exitValue(),
+            stdout = stdout.toString(),
+            stderr = stderr.toString(),
+            isTimeout = false,
+        )
     }
 }
 
