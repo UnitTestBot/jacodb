@@ -385,4 +385,29 @@ describe("expression evaluation snapshots", () => {
         expect(guards).toHaveLength(1);
         expect(nullishResults).toHaveLength(1);
     });
+
+    it("keeps a continuation after an optional call in the root guarded branch", () => {
+        const { file } = lower(`
+            function f(a: { b(): { c: number } } | undefined): number | undefined {
+                return a?.b().c;
+            }
+        `);
+        const blocks = methodByName(file, "f").body!.cfg.blocks;
+        const optionalCallBlock = blocks.find((block) => block.stmts.some(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.right._ === "InstanceCallExpr"
+                && stmt.right.method.name === "b",
+        ));
+        const cAccessBlock = blocks.find((block) => block.stmts.some(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceFieldRef" && stmt.right.field.name === "c",
+        ));
+        const guards = blocks.flatMap((block) => block.stmts).filter((stmt) => stmt._ === "IfStmt");
+        const nullishResults = blocks.flatMap((block) => block.stmts).filter(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "Constant" && stmt.right.value === "undefined",
+        );
+        expect(optionalCallBlock).toBeDefined();
+        expect(cAccessBlock).toBe(optionalCallBlock);
+        expect(guards).toHaveLength(1);
+        expect(nullishResults).toHaveLength(1);
+    });
 });

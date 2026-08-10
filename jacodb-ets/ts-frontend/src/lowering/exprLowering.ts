@@ -122,7 +122,7 @@ export class LoweringError extends Error {}
 /** Lowers the body of a nested function (closure / object-literal method) into a fresh MethodContext. */
 export type FunctionBodyLowerer = (m: MethodContext, body: ts.ConciseBody) => void;
 
-type OptionalChainAccess = ts.PropertyAccessExpression | ts.ElementAccessExpression;
+type OptionalChainSegment = ts.PropertyAccessExpression | ts.ElementAccessExpression | ts.CallExpression;
 
 export class ExprLowerer {
     constructor(
@@ -357,16 +357,21 @@ export class ExprLowerer {
 
     /** Lower an optional-chain segment and all its non-optional continuations under one root guard. */
     private lowerOptionalChainAccess(
-        node: OptionalChainAccess,
-        root: OptionalChainAccess,
+        node: OptionalChainSegment,
+        root: OptionalChainSegment,
         rootInstance: LocalDto,
     ): ValueDto {
         if (node === root) {
-            return this.accessFromInstance(node, rootInstance);
+            return ts.isCallExpression(node)
+                ? this.lowerOptionalChainCall(node, root, rootInstance)
+                : this.accessFromInstance(node, rootInstance);
         }
         const parent = node.expression;
-        if (!ts.isPropertyAccessChain(parent) && !ts.isElementAccessChain(parent)) {
+        if (!isOptionalChainSegment(parent)) {
             throw new LoweringError("optional-chain continuation lost its root");
+        }
+        if (ts.isCallExpression(node)) {
+            return this.lowerOptionalChainCall(node, root, rootInstance);
         }
         const parentValue = this.lowerOptionalChainAccess(parent, root, rootInstance);
         const parentInstance = parentValue._ === "Local"
@@ -375,7 +380,58 @@ export class ExprLowerer {
         return this.accessFromInstance(node, parentInstance);
     }
 
-    private accessFromInstance(node: OptionalChainAccess, instance: LocalDto): ValueDto {
+    private lowerOptionalChainCall(
+        node: ts.CallExpression,
+        root: OptionalChainSegment,
+        rootInstance: LocalDto,
+    ): ValueDto {
+        const callee = node.expression;
+        if (node === root) {
+            return {
+                _: "PtrCallExpr",
+                ptr: rootInstance,
+                method: this.methodSignatureForCall(node, "%call", UNKNOWN_CLASS_SIGNATURE),
+                args: this.lowerCallArguments(node),
+            };
+        }
+        if (ts.isPropertyAccessExpression(callee)) {
+            const instance = callee === root
+                ? rootInstance
+                : this.optionalChainContinuationLocal(callee.expression, root, rootInstance);
+            return {
+                _: "InstanceCallExpr",
+                instance,
+                method: this.methodSignatureForCall(node, callee.name.text, this.classSignatureFromType(instance.type)),
+                args: this.lowerCallArguments(node),
+            };
+        }
+        const ptr = this.optionalChainContinuationLocal(callee, root, rootInstance);
+        return {
+            _: "PtrCallExpr",
+            ptr,
+            method: this.methodSignatureForCall(node, "%call", UNKNOWN_CLASS_SIGNATURE),
+            args: this.lowerCallArguments(node),
+        };
+    }
+
+    private optionalChainContinuationLocal(
+        node: ts.Expression,
+        root: OptionalChainSegment,
+        rootInstance: LocalDto,
+    ): LocalDto {
+        if (!isOptionalChainSegment(node)) {
+            throw new LoweringError("optional-chain call lost its continuation");
+        }
+        return this.materialize(
+            this.lowerOptionalChainAccess(node, root, rootInstance),
+            this.safeTypeOf(node),
+        );
+    }
+
+    private accessFromInstance(
+        node: ts.PropertyAccessExpression | ts.ElementAccessExpression,
+        instance: LocalDto,
+    ): ValueDto {
         if (ts.isPropertyAccessExpression(node)) {
             const fieldType = this.safeTypeOf(node);
             return {
@@ -1522,16 +1578,20 @@ function isScopeFunctionDeclaration(decl: ts.FunctionDeclaration): boolean {
     return ts.isSourceFile(decl.parent) || ts.isModuleBlock(decl.parent);
 }
 
-function optionalChainRoot(node: OptionalChainAccess): OptionalChainAccess | undefined {
+function optionalChainRoot(node: OptionalChainSegment): OptionalChainSegment | undefined {
     let current = node;
     while (true) {
         if (current.questionDotToken !== undefined) return current;
         const parent = current.expression;
-        if (!ts.isPropertyAccessChain(parent) && !ts.isElementAccessChain(parent)) {
+        if (!isOptionalChainSegment(parent)) {
             return undefined;
         }
         current = parent;
     }
+}
+
+function isOptionalChainSegment(node: ts.Node): node is OptionalChainSegment {
+    return ts.isPropertyAccessChain(node) || ts.isElementAccessChain(node) || ts.isCallExpression(node);
 }
 
 /** Calls and suspension can run arbitrary user code, so a later one may mutate any captured binding. */
