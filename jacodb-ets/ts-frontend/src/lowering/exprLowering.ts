@@ -142,6 +142,7 @@ export class ExprLowerer {
     constructor(
         private readonly m: MethodContext,
         private readonly lowerFunctionBody?: FunctionBodyLowerer,
+        private readonly afterDirectSuperCall?: () => void,
     ) {}
 
     // ------------------------------------------------------------------
@@ -895,12 +896,21 @@ export class ExprLowerer {
         if (callee.kind === ts.SyntaxKind.SuperKeyword) {
             const thisLocal = this.m.getOrCreateLocal("this", this.m.thisType());
             const superSignature = this.classSignatureFromType(this.safeTypeOf(callee));
-            return {
+            const superCall: ValueDto = {
                 _: "InstanceCallExpr",
                 instance: thisLocal,
                 method: this.methodSignatureForCall(node, CONSTRUCTOR_NAME, superSignature),
                 args: this.lowerCallArguments(node),
             };
+            if (this.afterDirectSuperCall === undefined) {
+                return superCall;
+            }
+            // A direct super call may be the value of `return`, assignment, or another
+            // expression. Materialize its result here, after its arguments were lowered,
+            // so the constructor callback follows the actual call on every such path.
+            const result = this.materialize(superCall, this.safeTypeOf(node));
+            this.afterDirectSuperCall();
+            return result;
         }
 
         // `super.m(...)` — instance call on `this` with the superclass as declaring class.

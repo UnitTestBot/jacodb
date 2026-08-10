@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { Modifier } from "../src/dto/constants";
 import { ClassDto, EtsFileDto, MethodDto } from "../src/dto/model";
+import { StmtDto } from "../src/dto/stmts";
+import { InstanceCallExprDto } from "../src/dto/values";
 import { lower, singleBlockStmts } from "./util";
 
 const FILE_SIG = { projectName: "proj", fileName: "test.ts" };
@@ -17,6 +19,15 @@ function methodOf(clazz: ClassDto, name: string): MethodDto {
         throw new Error(`method '${name}' not found in ${clazz.signature.name}: ${clazz.methods.map((m) => m.signature.name)}`);
     }
     return method;
+}
+
+function constructorCallOf(stmt: StmtDto): InstanceCallExprDto | undefined {
+    const value = stmt._ === "CallStmt"
+        ? stmt.expr
+        : stmt._ === "AssignStmt"
+          ? stmt.right
+          : undefined;
+    return value?._ === "InstanceCallExpr" && value.method.name === "constructor" ? value : undefined;
 }
 
 describe("class lowering", () => {
@@ -196,7 +207,7 @@ describe("class lowering", () => {
         `);
         const stmts = singleBlockStmts(methodOf(classByName(file, "Derived"), "constructor"));
         const superIndex = stmts.findIndex(
-            (stmt) => stmt._ === "CallStmt" && stmt.expr.method.name === "constructor" && stmt.expr.method.declaringClass.name === "Base",
+            (stmt) => constructorCallOf(stmt)?.method.declaringClass.name === "Base",
         );
         const initIndex = stmts.findIndex(
             (stmt) => stmt._ === "CallStmt" && stmt.expr.method.name === "%instInit",
@@ -206,7 +217,7 @@ describe("class lowering", () => {
         );
         expect(doubledIndex).toBeLessThan(superIndex);
         expect(superIndex).toBeLessThan(initIndex);
-        expect((stmts[superIndex] as Extract<(typeof stmts)[number], { _: "CallStmt" }>).expr.method.parameters).toMatchObject([
+        expect(constructorCallOf(stmts[superIndex])!.method.parameters).toMatchObject([
             { name: "value", type: { _: "NumberType" } },
         ]);
     });
@@ -220,13 +231,37 @@ describe("class lowering", () => {
         `);
         const ctor = methodOf(classByName(file, "Derived"), "constructor");
         const superBlocks = ctor.body!.cfg.blocks.filter((block) => block.stmts.some((stmt) =>
-            stmt._ === "CallStmt" && stmt.expr.method.name === "constructor",
+            constructorCallOf(stmt) !== undefined,
         ));
 
         expect(superBlocks).toHaveLength(2);
         expect(superBlocks.every((block) => block.stmts.some((stmt) =>
             stmt._ === "CallStmt" && stmt.expr.method.name === "%instInit",
         ))).toBe(true);
+    });
+
+    it("initializes derived fields when returning a direct super call", () => {
+        const { file } = lower(`
+            class Base {}
+            class Derived extends Base {
+                value = 42;
+                constructor() { return super(); }
+            }
+        `);
+        const stmts = singleBlockStmts(methodOf(classByName(file, "Derived"), "constructor"));
+        const superIndex = stmts.findIndex((stmt) =>
+            stmt._ === "AssignStmt"
+            && stmt.right._ === "InstanceCallExpr"
+            && stmt.right.method.name === "constructor",
+        );
+        const initIndex = stmts.findIndex((stmt) =>
+            stmt._ === "CallStmt" && stmt.expr.method.name === "%instInit",
+        );
+        const returnIndex = stmts.findIndex((stmt) => stmt._ === "ReturnStmt");
+
+        expect(superIndex).toBeGreaterThanOrEqual(0);
+        expect(superIndex).toBeLessThan(initIndex);
+        expect(initIndex).toBeLessThan(returnIndex);
     });
 
     it("synthesizes a derived constructor that forwards base parameters before initialization", () => {
@@ -241,15 +276,15 @@ describe("class lowering", () => {
         ]);
         const stmts = singleBlockStmts(ctor);
         const superIndex = stmts.findIndex(
-            (stmt) => stmt._ === "CallStmt" && stmt.expr.method.name === "constructor" && stmt.expr.method.declaringClass.name === "Base",
+            (stmt) => constructorCallOf(stmt)?.method.declaringClass.name === "Base",
         );
         const initIndex = stmts.findIndex(
             (stmt) => stmt._ === "CallStmt" && stmt.expr.method.name === "%instInit",
         );
         expect(superIndex).toBeGreaterThanOrEqual(0);
         expect(superIndex).toBeLessThan(initIndex);
-        expect(stmts[superIndex]).toMatchObject({
-            expr: { args: [{ name: "value" }, { name: "label" }] },
+        expect(constructorCallOf(stmts[superIndex])).toMatchObject({
+            args: [{ name: "value" }, { name: "label" }],
         });
     });
 
@@ -262,7 +297,7 @@ describe("class lowering", () => {
             }
         `);
         const stmts = singleBlockStmts(methodOf(classByName(file, "Derived"), "constructor"));
-        const superIndex = stmts.findIndex((stmt) => stmt._ === "CallStmt" && stmt.expr.method.name === "constructor");
+        const superIndex = stmts.findIndex((stmt) => constructorCallOf(stmt) !== undefined);
         const initIndex = stmts.findIndex((stmt) => stmt._ === "CallStmt" && stmt.expr.method.name === "%instInit");
         const propertyIndex = stmts.findIndex(
             (stmt) => stmt._ === "AssignStmt" && stmt.left._ === "InstanceFieldRef" && stmt.left.field.name === "value",
