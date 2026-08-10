@@ -107,8 +107,6 @@ object ProcessUtil {
         val stdinFile = ioDirectory.resolve("stdin.txt")
         val stdoutFile = ioDirectory.resolve("stdout.txt")
         val stderrFile = ioDirectory.resolve("stderr.txt")
-        ioDirectory.toFile().deleteOnExit()
-        listOf(stdinFile, stdoutFile, stderrFile).forEach { it.toFile().deleteOnExit() }
 
         try {
             // A finite Reader is staged before the process starts, without loading it into memory.
@@ -140,7 +138,10 @@ object ProcessUtil {
                 isTimeout = isTimeout,
             )
         } finally {
-            ioDirectory.toFile().deleteRecursively()
+            val ioDirectoryFile = ioDirectory.toFile()
+            if (!ioDirectoryFile.deleteRecursively()) {
+                ioDirectoryFile.walkBottomUp().forEach { it.deleteOnExit() }
+            }
         }
     }
 }
