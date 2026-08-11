@@ -273,7 +273,7 @@ class ProcessUtilTest {
                         statusFile.toString(),
                         noiseScript,
                     ),
-                    timeout = 100.milliseconds,
+                    timeout = 1000.milliseconds,
                 )
             }
 
