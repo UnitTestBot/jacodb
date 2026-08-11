@@ -48,12 +48,15 @@ private const val PROCESS_FORCE_TERMINATION_TIMEOUT_MILLIS = 1_000L
 
 private const val OUTPUT_READ_BUFFER_BYTES = 8 * 1024
 
+private const val OUTPUT_DRAIN_BYTES_PER_PASS = 64 * 1024
+
 private const val PROCESS_POLL_INTERVAL_MILLIS = 10L
 
 class ProcessTerminationException(
     /** The caller owns this still-live process and its streams. */
     val process: Process,
-) : IllegalStateException("Timed-out process did not terminate after destroyForcibly()")
+    cause: Throwable? = null,
+) : IllegalStateException("Timed-out process termination did not complete", cause)
 
 private class BoundedOutput(private val charset: Charset) {
     private val output = ByteArrayOutputStream()
@@ -71,7 +74,8 @@ private class BoundedOutput(private val charset: Charset) {
     }
 
     fun drainAvailable(stream: InputStream) {
-        while (true) {
+        var remaining = OUTPUT_DRAIN_BYTES_PER_PASS
+        while (remaining > 0) {
             val available = try {
                 stream.available()
             } catch (_: Exception) {
@@ -80,12 +84,13 @@ private class BoundedOutput(private val charset: Charset) {
             if (available <= 0) return
 
             val bytesRead = try {
-                stream.read(buffer, 0, minOf(buffer.size, available))
+                stream.read(buffer, 0, minOf(buffer.size, available, remaining))
             } catch (_: Exception) {
                 return
             }
-            if (bytesRead < 0) return
+            if (bytesRead <= 0) return
             append(buffer, bytesRead)
+            remaining -= bytesRead
         }
     }
 
@@ -109,14 +114,21 @@ private class BoundedOutput(private val charset: Charset) {
 }
 
 private fun terminateTimedOutProcess(process: Process) {
-    process.destroy()
-    if (process.waitFor(PROCESS_TERMINATION_GRACE_MILLIS, TimeUnit.MILLISECONDS)) {
-        return
-    }
+    try {
+        process.destroy()
+        if (process.waitFor(PROCESS_TERMINATION_GRACE_MILLIS, TimeUnit.MILLISECONDS)) {
+            return
+        }
 
-    process.destroyForcibly()
-    if (!process.waitFor(PROCESS_FORCE_TERMINATION_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
-        throw ProcessTerminationException(process)
+        process.destroyForcibly()
+        if (!process.waitFor(PROCESS_FORCE_TERMINATION_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+            throw ProcessTerminationException(process)
+        }
+    } catch (error: Exception) {
+        if (error is ProcessTerminationException) throw error
+        if (error is InterruptedException) Thread.currentThread().interrupt()
+        if (process.isAlive) throw ProcessTerminationException(process, error)
+        throw error
     }
 }
 
