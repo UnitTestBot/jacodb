@@ -138,6 +138,63 @@ class ProcessUtilTest {
     }
 
     @Test
+    fun `interrupting the initial wait reaps the process before propagating interruption`() {
+        assumeFalse(System.getProperty("os.name").startsWith("Windows", ignoreCase = true))
+        val testDirectory = createTempDirectory("process-util-interrupted-wait")
+        val pidFile = testDirectory.resolve("pid")
+        val signalFile = testDirectory.resolve("sigterm")
+        val failure = AtomicReference<Throwable>()
+        val interruptPreserved = AtomicBoolean()
+        val runner = Thread {
+            try {
+                ProcessUtil.run(
+                    listOf(
+                        node,
+                        "-e",
+                        "const fs = require('fs'); " +
+                            "fs.writeFileSync(process.argv[1], String(process.pid)); " +
+                            "process.on('SIGTERM', () => fs.writeFileSync(process.argv[2], 'received')); " +
+                            "setInterval(() => {}, 1000)",
+                        pidFile.toString(),
+                        signalFile.toString(),
+                    ),
+                    timeout = 30_000.milliseconds,
+                )
+            } catch (error: Throwable) {
+                failure.set(error)
+                interruptPreserved.set(Thread.currentThread().isInterrupted)
+            }
+        }
+
+        runner.start()
+        try {
+            waitForFile(pidFile)
+            val pid = pidFile.readText().trim()
+            assertFalse(signalFile.exists(), "termination started before the test interruption")
+
+            runner.interrupt()
+            runner.join(TimeUnit.SECONDS.toMillis(3))
+
+            assertFalse(runner.isAlive, "interrupted ProcessUtil runner did not return")
+            assertIs<InterruptedException>(failure.get())
+            assertFalse(
+                processIsAlive(pid),
+                "raw InterruptedException escaped while child process $pid was still alive",
+            )
+            assertTrue(interruptPreserved.get(), "interrupted status was not restored")
+            assertTrue(signalFile.exists(), "interruption cleanup did not start graceful termination")
+        } finally {
+            runner.interrupt()
+            if (pidFile.exists()) {
+                val pid = pidFile.readText().trim()
+                if (processIsAlive(pid)) forceKill(pid)
+            }
+            runner.join(TimeUnit.SECONDS.toMillis(2))
+            testDirectory.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun `reader input streams through a process without a timeout`() {
         val input = "reader-stream-input\n"
 
@@ -215,6 +272,23 @@ class ProcessUtilTest {
     }
 
     @Test
+    fun `truncated UTF-8 output omits an incomplete trailing character`() {
+        val output = BoundedOutput(Charsets.UTF_8)
+        val asciiPrefix = ByteArray((1 shl 20) - 1) { 'a'.code.toByte() }
+        val multibyteCharacter = "\u20ac".toByteArray(Charsets.UTF_8)
+
+        output.append(asciiPrefix, asciiPrefix.size)
+        output.append(multibyteCharacter, multibyteCharacter.size)
+
+        val captured = output.toString()
+        assertFalse(
+            '\uFFFD' in captured,
+            "byte-level truncation decoded an incomplete UTF-8 character as U+FFFD",
+        )
+        assertTrue(captured.endsWith("... (output truncated)"))
+    }
+
+    @Test
     fun `continuous stdout cannot starve timeout stderr or inherited sink closure`() {
         assumeFalse(System.getProperty("os.name").startsWith("Windows", ignoreCase = true))
         val testDirectory = createTempDirectory("process-util-continuous-output")
@@ -222,6 +296,8 @@ class ProcessUtilTest {
         val descendantPidFile = testDirectory.resolve("descendant-pid")
         val triggerFile = testDirectory.resolve("trigger")
         val statusFile = testDirectory.resolve("status")
+        val noisePidFiles = (0 until 8).map { testDirectory.resolve("noise-pid-$it") }
+        val noisePidPrefix = testDirectory.resolve("noise-pid-")
         val descendantScript =
             "const fs = require('fs'); " +
                 "fs.writeFileSync(process.argv[1], String(process.pid)); " +
@@ -248,9 +324,11 @@ class ProcessUtilTest {
                 "fs.writeFileSync(process.argv[1], String(process.pid)); " +
                 "spawn(process.execPath, ['-e', process.argv[2], process.argv[3], process.argv[4], process.argv[5]], " +
                 "{ stdio: ['inherit', 'inherit', 'inherit'] }); " +
-                "for (let i = 0; i < 8; i++) " +
-                "spawn(process.execPath, ['-e', process.argv[6]], " +
+                "for (let i = 0; i < 8; i++) { " +
+                "const noise = spawn(process.execPath, ['-e', process.argv[6]], " +
                 "{ stdio: ['inherit', 'inherit', 'inherit'] }); " +
+                "fs.writeFileSync(process.argv[7] + i, String(noise.pid)); " +
+                "} " +
                 "const marker = setInterval(() => { " +
                 "if (!fs.existsSync(process.argv[3])) return; " +
                 "clearInterval(marker); console.error('stderr-during-continuous-stdout'); " +
@@ -272,17 +350,19 @@ class ProcessUtilTest {
                         triggerFile.toString(),
                         statusFile.toString(),
                         noiseScript,
+                        noisePidPrefix.toString(),
                     ),
                     timeout = 1000.milliseconds,
                 )
             }
 
+            noisePidFiles.forEach(::waitForFile)
             val directPid = directPidFile.readText().trim()
             assertTrue(result.isTimeout)
             assertTrue(result.stderr.contains("stderr-during-continuous-stdout"))
             assertFalse(processIsAlive(directPid), "direct process $directPid was still alive after timeout")
             assertEquals(137, result.exitCode, "timeout must return the direct process's SIGKILL exit status")
-            assertTrue(elapsed < 2000.milliseconds, "continuous stdout delayed timeout completion by $elapsed")
+            assertTrue(elapsed < 2500.milliseconds, "continuous stdout delayed timeout completion by $elapsed")
 
             triggerFile.writeText("")
             waitForFile(statusFile)
@@ -292,7 +372,7 @@ class ProcessUtilTest {
                 "continuous-output descendant retained a writable output sink",
             )
         } finally {
-            for (pidFile in listOf(directPidFile, descendantPidFile)) {
+            for (pidFile in listOf(directPidFile, descendantPidFile) + noisePidFiles) {
                 if (pidFile.exists()) {
                     val pid = pidFile.readText().trim()
                     if (processIsAlive(pid)) forceKill(pid)

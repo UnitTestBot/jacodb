@@ -27,7 +27,10 @@ import mu.KotlinLogging
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.Reader
+import java.nio.ByteBuffer
+import java.nio.CharBuffer
 import java.nio.charset.Charset
+import java.nio.charset.CodingErrorAction
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
@@ -56,7 +59,7 @@ class ProcessTerminationException(
     /** The caller owns this still-live process and its streams. */
     val process: Process,
     cause: Throwable? = null,
-) : IllegalStateException("Timed-out process termination did not complete", cause)
+) : IllegalStateException("Process termination did not complete", cause)
 
 internal class BoundedOutput(private val charset: Charset) {
     private val output = ByteArrayOutputStream()
@@ -103,12 +106,33 @@ internal class BoundedOutput(private val charset: Charset) {
     }
 
     override fun toString(): String {
-        val captured = output.toString(charset.name())
+        val captured = decodeCapturedOutput()
         if (!truncated) return captured
         return buildString(captured.length + OUTPUT_TRUNCATION_NOTICE.length + 1) {
             append(captured)
             if (isNotEmpty() && last() != '\n') appendLine()
             append(OUTPUT_TRUNCATION_NOTICE)
+        }
+    }
+
+    private fun decodeCapturedOutput(): String {
+        if (!truncated) return output.toString(charset.name())
+
+        val decoder = charset.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPLACE)
+            .onUnmappableCharacter(CodingErrorAction.REPLACE)
+        val input = ByteBuffer.wrap(output.toByteArray())
+        val chars = CharBuffer.allocate(OUTPUT_READ_BUFFER_BYTES)
+        return buildString {
+            while (true) {
+                val result = decoder.decode(input, chars, false)
+                chars.flip()
+                append(chars)
+                chars.clear()
+                if (result.isUnderflow) return@buildString
+                if (result.isOverflow) continue
+                result.throwException()
+            }
         }
     }
 }
@@ -193,7 +217,30 @@ object ProcessUtil {
             val stderr = BoundedOutput(charset)
             var callerOwnsProcess = false
             try {
-                val isTimeout = waitForProcess(process, timeout, stdout, stderr)
+                val isTimeout = try {
+                    waitForProcess(process, timeout, stdout, stderr)
+                } catch (interruption: InterruptedException) {
+                    // InterruptedException clears the flag. Keep it clear while the bounded
+                    // graceful/forced waits run, then restore it before returning ownership.
+                    Thread.interrupted()
+                    var terminationFailure: Exception? = null
+                    try {
+                        terminateTimedOutProcess(process)
+                    } catch (error: Exception) {
+                        terminationFailure = error
+                    } finally {
+                        Thread.currentThread().interrupt()
+                    }
+
+                    if (process.isAlive) {
+                        callerOwnsProcess = true
+                        throw ProcessTerminationException(process, interruption).also { ownershipError ->
+                            terminationFailure?.let(ownershipError::addSuppressed)
+                        }
+                    }
+                    terminationFailure?.let(interruption::addSuppressed)
+                    throw interruption
+                }
                 if (isTimeout) {
                     try {
                         terminateTimedOutProcess(process)
