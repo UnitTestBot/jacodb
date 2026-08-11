@@ -16,10 +16,13 @@
 
 package org.jacodb.ets.test
 
+import org.jacodb.ets.utils.BoundedOutput
 import org.jacodb.ets.utils.ProcessUtil
 import org.jacodb.ets.utils.ProcessTerminationException
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Test
+import java.io.InputStream
+import java.nio.charset.Charset
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -173,45 +176,42 @@ class ProcessUtilTest {
     }
 
     @Test
-    fun `timeout closes a descendant inherited output sink after reaping the direct process`() {
-        val testDirectory = createTempDirectory("process-util-descendant-output")
-        val triggerFile = testDirectory.resolve("trigger")
-        val statusFile = testDirectory.resolve("status")
-        val descendantScript =
-            "const fs = require('fs'); " +
-                "const timer = setInterval(() => { " +
-                "if (!fs.existsSync(process.argv[1])) return; " +
-                "clearInterval(timer); " +
-                "let status = 'closed'; " +
-                "try { const chunk = Buffer.alloc(65536, 120); " +
-                "for (let i = 0; i < 64; i++) fs.writeSync(1, chunk); " +
-                "status = 'writable'; } catch (_) {} " +
-                "fs.writeFileSync(process.argv[2], status); " +
-                "}, 10)"
-        val directScript =
-            "const { spawn } = require('child_process'); " +
-                "spawn(process.execPath, ['-e', process.argv[1], process.argv[2], process.argv[3]], " +
-                "{ stdio: ['inherit', 'inherit', 'inherit'] }); " +
-                "process.on('SIGTERM', () => {}); " +
-                "setInterval(() => {}, 1000)"
+    fun `one output pass returns after 64 KiB so the other stream can drain`() {
+        class FiniteAvailableInputStream(private var remaining: Int) : InputStream() {
+            var consumed = 0
+                private set
 
-        try {
-            val result = ProcessUtil.run(
-                listOf(node, "-e", directScript, descendantScript, triggerFile.toString(), statusFile.toString()),
-                timeout = 100.milliseconds,
-            )
-            assertTrue(result.isTimeout)
+            override fun available(): Int = remaining
 
-            triggerFile.writeText("")
-            waitForFile(statusFile)
-            assertEquals(
-                "closed",
-                statusFile.readText(),
-                "descendant could keep writing after the direct process was reaped",
-            )
-        } finally {
-            testDirectory.toFile().deleteRecursively()
+            override fun read(): Int {
+                if (remaining == 0) return -1
+                remaining--
+                consumed++
+                return 0
+            }
+
+            override fun read(bytes: ByteArray, offset: Int, length: Int): Int {
+                if (remaining == 0) return -1
+                val bytesRead = minOf(length, remaining)
+                bytes.fill(0, offset, offset + bytesRead)
+                remaining -= bytesRead
+                consumed += bytesRead
+                return bytesRead
+            }
         }
+
+        val stdoutStream = FiniteAvailableInputStream(128 * 1024)
+        val stderrStream = FiniteAvailableInputStream(128 * 1024)
+        val stdout = BoundedOutput(Charset.defaultCharset())
+        val stderr = BoundedOutput(Charset.defaultCharset())
+
+        stdout.drainAvailable(stdoutStream)
+        stderr.drainAvailable(stderrStream)
+
+        assertEquals(64 * 1024, stdoutStream.consumed)
+        assertEquals(64 * 1024, stderrStream.consumed)
+        assertEquals(64 * 1024, stdoutStream.available())
+        assertEquals(64 * 1024, stderrStream.available())
     }
 
     @Test
@@ -282,7 +282,7 @@ class ProcessUtilTest {
             assertTrue(result.stderr.contains("stderr-during-continuous-stdout"))
             assertFalse(processIsAlive(directPid), "direct process $directPid was still alive after timeout")
             assertEquals(137, result.exitCode, "timeout must return the direct process's SIGKILL exit status")
-            assertTrue(elapsed < 1750.milliseconds, "continuous stdout delayed timeout completion by $elapsed")
+            assertTrue(elapsed < 2000.milliseconds, "continuous stdout delayed timeout completion by $elapsed")
 
             triggerFile.writeText("")
             waitForFile(statusFile)

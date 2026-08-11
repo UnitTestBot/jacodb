@@ -58,7 +58,7 @@ class ProcessTerminationException(
     cause: Throwable? = null,
 ) : IllegalStateException("Timed-out process termination did not complete", cause)
 
-private class BoundedOutput(private val charset: Charset) {
+internal class BoundedOutput(private val charset: Charset) {
     private val output = ByteArrayOutputStream()
     private val buffer = ByteArray(OUTPUT_READ_BUFFER_BYTES)
     private var truncated = false
