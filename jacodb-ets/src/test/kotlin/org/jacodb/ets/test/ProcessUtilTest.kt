@@ -237,10 +237,19 @@ class ProcessUtilTest {
                 "try { fs.writeSync(1, chunk); status = 'writable'; } catch (_) {} " +
                 "fs.writeFileSync(process.argv[3], status); " +
                 "}, 10)"
+        val noiseScript =
+            "const fs = require('fs'); const chunk = Buffer.alloc(65536, 121); " +
+                "const outputDeadline = Date.now() + 3000; " +
+                "while (Date.now() < outputDeadline) { " +
+                "try { fs.writeSync(1, chunk); } catch (_) { break; } " +
+                "}"
         val directScript =
             "const fs = require('fs'); const { spawn } = require('child_process'); " +
                 "fs.writeFileSync(process.argv[1], String(process.pid)); " +
                 "spawn(process.execPath, ['-e', process.argv[2], process.argv[3], process.argv[4], process.argv[5]], " +
+                "{ stdio: ['inherit', 'inherit', 'inherit'] }); " +
+                "for (let i = 0; i < 8; i++) " +
+                "spawn(process.execPath, ['-e', process.argv[6]], " +
                 "{ stdio: ['inherit', 'inherit', 'inherit'] }); " +
                 "const marker = setInterval(() => { " +
                 "if (!fs.existsSync(process.argv[3])) return; " +
@@ -262,6 +271,7 @@ class ProcessUtilTest {
                         descendantPidFile.toString(),
                         triggerFile.toString(),
                         statusFile.toString(),
+                        noiseScript,
                     ),
                     timeout = 100.milliseconds,
                 )
