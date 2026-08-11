@@ -30,40 +30,11 @@ val tsFrontendDir: File = projectDir.resolve("ts-frontend")
 val tsFrontendDist: File = tsFrontendDir.resolve("dist")
 val npmExecutable: String = if (Os.isFamily(Os.FAMILY_WINDOWS)) "npm.cmd" else "npm"
 
-val npmAvailable: Boolean by lazy {
-    try {
-        // NB: `Redirect.DISCARD` is Java 9+, and this script is compiled with JDK 8 in CI,
-        // so the output is redirected into a throwaway temp file instead.
-        val npmVersionSink = File.createTempFile("jacodb-npm-version", ".log").apply { deleteOnExit() }
-        val process = ProcessBuilder(npmExecutable, "--version")
-            .redirectErrorStream(true)
-            .redirectOutput(npmVersionSink)
-            .start()
-        process.outputStream.close()
-        // Never block the whole build on a hung npm.
-        if (!process.waitFor(30, TimeUnit.SECONDS)) {
-            process.destroyForcibly()
-            process.waitFor()
-            false
-        } else {
-            process.exitValue() == 0
-        }
-    } catch (_: Exception) {
-        false
-    }
-}
-
 /**
- * The ts-frontend is built with npm, which is not guaranteed to be present
- * (offline builds, publishing from a machine without Node). Skipping keeps such
- * builds working; a prebuilt `dist` is still packaged if it exists.
+ * Building and publishing jacodb-ets requires Node.js and npm. Artifact-producing
+ * tasks use this toolchain so successful artifacts always contain the bundled
+ * runtime built from the checkout.
  */
-fun Task.onlyIfNpmAvailable() = onlyIf {
-    npmAvailable.also { available ->
-        if (!available) logger.warn("npm is not available; skipping task '$name'")
-    }
-}
-
 val installTsFrontend = tasks.register<Exec>("installTsFrontend") {
     group = "build"
     description = "Installs npm dependencies of the ts-frontend."
@@ -73,7 +44,6 @@ val installTsFrontend = tasks.register<Exec>("installTsFrontend") {
     // `npm ci` wipes node_modules anyway, so snapshotting its tens of thousands of
     // files on every up-to-date check buys nothing; the marker file is enough.
     outputs.file(tsFrontendDir.resolve("node_modules/.package-lock.json"))
-    onlyIfNpmAvailable()
 }
 
 val buildTsFrontend = tasks.register<Exec>("buildTsFrontend") {
@@ -82,7 +52,6 @@ val buildTsFrontend = tasks.register<Exec>("buildTsFrontend") {
     dependsOn(installTsFrontend)
     workingDir = tsFrontendDir
     commandLine(npmExecutable, "run", "build")
-    onlyIfNpmAvailable()
     inputs.dir(tsFrontendDir.resolve("src"))
     inputs.files(
         tsFrontendDir.resolve("package.json"),
@@ -102,13 +71,6 @@ val packageTsFrontendRuntime = tasks.register<Zip>("packageTsFrontendRuntime") {
     }
     archiveFileName.set("runtime.zip")
     destinationDirectory.set(layout.buildDirectory.dir("generated/etsFrontend"))
-    // Without npm and without a prebuilt `dist` there is nothing to package; skipping keeps
-    // offline builds and publishing from a machine without Node working (see onlyIfNpmAvailable).
-    onlyIf {
-        (tsFrontendDist.resolve("index.js").isFile || npmAvailable).also { runnable ->
-            if (!runnable) logger.warn("ts-frontend was not built and npm is unavailable; skipping task '$name'")
-        }
-    }
     // A silently incomplete archive would be published and only fail at runtime:
     // the consumer (LoadEtsFile.kt) checks for index.js but not for the type libraries.
     doFirst {
@@ -153,7 +115,6 @@ val testTsFrontend = tasks.register<Exec>("testTsFrontend") {
         marker.parentFile.mkdirs()
         marker.writeText("ok")
     }
-    onlyIfNpmAvailable()
 }
 
 tasks.test {

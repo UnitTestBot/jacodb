@@ -7,7 +7,8 @@
 - Native TypeScript frontend (`jacodb-ets/ts-frontend`) bundled into the `jacodb-ets` JAR
   and used by default for TS/JS input. ArkTS (`.ets`) and SDK trees keep using the legacy
   ArkAnalyzer provider. The provider can be forced with the `ETS_IR_PROVIDER` environment
-  variable (`ts-frontend` / `arkanalyzer`).
+  variable (`ts-frontend` / `arkanalyzer`). Building or publishing `jacodb-ets` requires
+  Node.js and npm; every successful artifact contains a runtime built from the checkout.
 - `EtsStmtLocation.origin` (`EtsSourceSpan`): the source range a statement was lowered from.
   Only the TS frontend emits origins; with ArkAnalyzer it is always `null`.
   It is a mutable property outside the primary constructor and therefore does NOT participate
