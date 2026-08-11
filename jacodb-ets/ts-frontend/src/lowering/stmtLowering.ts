@@ -511,7 +511,9 @@ export class StmtLowerer {
 
     private lowerSwitch(node: ts.SwitchStatement, label: string | undefined): void {
         const cfg = this.m.cfg;
-        const discriminant = this.expr.lowerToImmediate(node.expression);
+        const caseExpressions = node.caseBlock.clauses.flatMap((clause) =>
+            ts.isCaseClause(clause) ? [clause.expression] : []);
+        const discriminant = this.expr.lowerImmediateBefore(node.expression, caseExpressions);
         const exitLabel = cfg.newLabel();
 
         const clauses = node.caseBlock.clauses;

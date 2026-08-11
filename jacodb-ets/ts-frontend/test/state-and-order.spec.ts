@@ -240,6 +240,113 @@ describe("expression evaluation snapshots", () => {
         )).toBe(true);
     });
 
+    it("preserves a relational condition left operand before the right operand mutates it", () => {
+        const { file } = lower(`
+            function f(x: number): number {
+                if (x < (x = 2)) return 1;
+                return 0;
+            }
+        `);
+        const stmts = flattened(methodByName(file, "f"));
+        const snapshot = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name.startsWith("%")
+                && stmt.right._ === "Local"
+                && stmt.right.name === "x",
+        );
+        const mutation = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name === "x"
+                && stmt.right._ === "Constant"
+                && stmt.right.value === "2",
+        );
+        const branch = stmts.find(
+            (stmt) => stmt._ === "IfStmt" && stmt.condition.op === "<",
+        );
+        expect(snapshot).toBeDefined();
+        expect(stmts.indexOf(snapshot!)).toBeLessThan(stmts.indexOf(mutation!));
+        expect(branch).toMatchObject({
+            condition: {
+                left: (snapshot as Extract<StmtDto, { _: "AssignStmt" }>).left,
+                right: { _: "Local", name: "x" },
+            },
+        });
+    });
+
+    it("preserves an element-access base before the index mutates its binding", () => {
+        const { file } = lower(`
+            function f(array: number[], replacement: number[]): number {
+                return array[(array = replacement, 0)];
+            }
+        `);
+        const stmts = flattened(methodByName(file, "f"));
+        const snapshot = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name.startsWith("%")
+                && stmt.right._ === "Local"
+                && stmt.right.name === "array",
+        );
+        const mutation = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name === "array"
+                && stmt.right._ === "Local"
+                && stmt.right.name === "replacement",
+        );
+        const load = stmts.find(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "ArrayRef",
+        );
+        expect(snapshot).toBeDefined();
+        expect(stmts.indexOf(snapshot!)).toBeLessThan(stmts.indexOf(mutation!));
+        expect(load).toMatchObject({
+            right: {
+                _: "ArrayRef",
+                array: (snapshot as Extract<StmtDto, { _: "AssignStmt" }>).left,
+                index: { _: "Constant", value: "0" },
+            },
+        });
+    });
+
+    it("preserves a switch discriminant before a case expression mutates it", () => {
+        const { file } = lower(`
+            function f(x: number): number {
+                switch (x) {
+                    case (x = 2): return 1;
+                    default: return 0;
+                }
+            }
+        `);
+        const stmts = flattened(methodByName(file, "f"));
+        const snapshot = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name.startsWith("%")
+                && stmt.right._ === "Local"
+                && stmt.right.name === "x",
+        );
+        const mutation = stmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "Local"
+                && stmt.left.name === "x"
+                && stmt.right._ === "Constant"
+                && stmt.right.value === "2",
+        );
+        const branch = stmts.find(
+            (stmt) => stmt._ === "IfStmt" && stmt.condition.op === "===",
+        );
+        expect(snapshot).toBeDefined();
+        expect(stmts.indexOf(snapshot!)).toBeLessThan(stmts.indexOf(mutation!));
+        expect(branch).toMatchObject({
+            condition: {
+                left: (snapshot as Extract<StmtDto, { _: "AssignStmt" }>).left,
+                right: { _: "Local", name: "x" },
+            },
+        });
+    });
+
     it("preserves receiver, callee, and constructor arguments before later calls", () => {
         const { file } = lower(`
             class Pair { constructor(first: number, second: number) {} }

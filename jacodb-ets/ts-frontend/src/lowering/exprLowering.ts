@@ -358,9 +358,15 @@ export class ExprLowerer {
         if (chain !== undefined) {
             return this.lowerOptionalChain(node, chain);
         }
+        const array = this.snapshotValueIfReassigned(
+            this.lowerToImmediate(node.expression),
+            node.expression,
+            node.argumentExpression,
+            this.safeTypeOf(node.expression),
+        );
         return {
             _: "ArrayRef",
-            array: this.lowerToImmediate(node.expression),
+            array,
             index: this.lowerToImmediate(node.argumentExpression),
             type: this.safeTypeOf(node),
         };
@@ -620,7 +626,7 @@ export class ExprLowerer {
             if (relationOp !== undefined) {
                 const condition = this.relation(
                     relationOp,
-                    this.lowerToImmediate(node.left),
+                    this.lowerImmediateBefore(node.left, node.right),
                     this.lowerToImmediate(node.right),
                 );
                 this.m.cfg.branch(condition, trueTarget, falseTarget);
@@ -1027,7 +1033,7 @@ export class ExprLowerer {
         return value._ === "Constant" ? value : this.m.snapshotToLocal(value, value.type);
     }
 
-    private lowerImmediateBefore(node: ts.Expression, later: ts.Node | readonly ts.Node[]): ImmediateDto {
+    lowerImmediateBefore(node: ts.Expression, later: ts.Node | readonly ts.Node[]): ImmediateDto {
         return this.snapshotImmediateIfReassigned(this.lowerToImmediate(node), node, later);
     }
 
