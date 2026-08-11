@@ -1216,10 +1216,7 @@ export class ExprLowerer {
         const baseSignature: MethodSignatureDto = { declaringClass, name, parameters, returnType };
         const captures = collectCapturedIdentifiers(node, this.m.checker)
             .filter((identifier) => this.m.moduleFieldForIdentifier(identifier) === undefined)
-            .map((identifier) => ({
-                identifier,
-                outerLocal: this.m.localForCapture(identifier, this.safeTypeOf(identifier)),
-            }));
+            .map((identifier) => this.m.captureForIdentifier(identifier, this.safeTypeOf(identifier)));
 
         let signature = baseSignature;
         let environment:
@@ -1229,10 +1226,10 @@ export class ExprLowerer {
             const environmentType: Extract<TypeDto, { _: "LexicalEnvType" }> = {
                 _: "LexicalEnvType",
                 method: baseSignature,
-                closures: captures.map((capture) => ({
-                    name: capture.outerLocal.name,
-                    type: capture.outerLocal.type,
-                })),
+                closures: [...new Map(captures.map((capture) => [
+                    capture.outerLocal.name,
+                    { name: capture.outerLocal.name, type: capture.outerLocal.type },
+                ])).values()],
             };
             const environmentLocal = this.m.newClosureEnvironment(environmentType);
             environment = { name: environmentLocal.name, type: environmentType };

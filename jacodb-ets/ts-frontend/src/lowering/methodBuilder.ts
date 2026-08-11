@@ -52,6 +52,8 @@ export interface LoweringContext {
 export interface ClosureCapture {
     identifier: ts.Identifier;
     outerLocal: LocalDto;
+    type: TypeDto;
+    forwardedFieldName?: string;
 }
 
 /**
@@ -192,19 +194,18 @@ export class MethodContext {
         return symbol === undefined ? undefined : this.capturedRefs.get(symbol);
     }
 
-    /**
-     * A nested lexical environment can only list locals. Materialize an outer
-     * captured slot at the closure-creation point so transitive captures are
-     * initialized instead of becoming phantom locals.
-     */
-    localForCapture(node: ts.Identifier, type: TypeDto): LocalDto {
+    /** Preserve the original lexical-environment reference for a transitive capture. */
+    captureForIdentifier(node: ts.Identifier, type: TypeDto): ClosureCapture {
         const captured = this.capturedRefForIdentifier(node);
         if (captured === undefined) {
-            return this.localForIdentifier(node, type);
+            return { identifier: node, outerLocal: this.localForIdentifier(node, type), type };
         }
-        const local = this.localForIdentifier(node, type);
-        this.cfg.emit({ _: "AssignStmt", left: local, right: captured });
-        return local;
+        return {
+            identifier: node,
+            outerLocal: this.getOrCreateLocal(captured.base.name, captured.base.type),
+            type,
+            forwardedFieldName: captured.fieldName,
+        };
     }
 
     private symbolForIdentifier(node: ts.Identifier): ts.Symbol | undefined {
@@ -327,14 +328,39 @@ export class MethodContext {
                 right: { _: "ParameterRef", index: index + 1, type: param.type },
             });
         });
+        const forwardedEnvironments = new Map<string, LocalDto>();
         for (const capture of captures) {
             const symbol = this.symbolForIdentifier(capture.identifier);
             if (symbol !== undefined) {
+                let base: LocalDto = environment;
+                let fieldName = capture.outerLocal.name;
+                if (capture.forwardedFieldName !== undefined) {
+                    let forwardedEnvironment = forwardedEnvironments.get(capture.outerLocal.name);
+                    if (forwardedEnvironment === undefined) {
+                        forwardedEnvironment = this.getOrCreateLocal(
+                            capture.outerLocal.name,
+                            capture.outerLocal.type,
+                        );
+                        this.cfg.emit({
+                            _: "AssignStmt",
+                            left: forwardedEnvironment,
+                            right: {
+                                _: "ClosureFieldRef",
+                                base: { name: environment.name, type: environment.type },
+                                fieldName: capture.outerLocal.name,
+                                type: capture.outerLocal.type,
+                            },
+                        });
+                        forwardedEnvironments.set(capture.outerLocal.name, forwardedEnvironment);
+                    }
+                    base = forwardedEnvironment;
+                    fieldName = capture.forwardedFieldName;
+                }
                 this.capturedRefs.set(symbol, {
                     _: "ClosureFieldRef",
-                    base: { name: environment.name, type: environment.type },
-                    fieldName: capture.outerLocal.name,
-                    type: capture.outerLocal.type,
+                    base: { name: base.name, type: base.type },
+                    fieldName,
+                    type: capture.type,
                 });
             }
         }

@@ -133,19 +133,110 @@ describe("closures", () => {
         `);
         const middle = methodByName(file, "%AM0$outer");
         const inner = methodByName(file, "%AM1$%AM0$outer");
-        for (const closure of [middle, inner]) {
-            expect(closure.signature.parameters[0]).toMatchObject({
-                type: { _: "LexicalEnvType", closures: [{ name: "current" }] },
-            });
-            expect(singleBlockStmts(closure)).toContainEqual(expect.objectContaining({
-                right: expect.objectContaining({ _: "ClosureFieldRef", fieldName: "current" }),
-            }));
-        }
+        expect(middle.signature.parameters[0]).toMatchObject({
+            type: { _: "LexicalEnvType", closures: [{ name: "current" }] },
+        });
+        expect(inner.signature.parameters[0]).toMatchObject({
+            type: {
+                _: "LexicalEnvType",
+                closures: [{
+                    name: "%closures0",
+                    type: { _: "LexicalEnvType", closures: [{ name: "current" }] },
+                }],
+            },
+        });
+        expect(singleBlockStmts(middle)).not.toContainEqual(expect.objectContaining({
+            left: expect.objectContaining({ _: "Local", name: "current" }),
+            right: expect.objectContaining({ _: "ClosureFieldRef", fieldName: "current" }),
+        }));
+        expect(singleBlockStmts(inner)).toContainEqual(expect.objectContaining({
+            left: expect.objectContaining({ _: "Local", name: "%closures0" }),
+            right: expect.objectContaining({ _: "ClosureFieldRef", fieldName: "%closures0" }),
+        }));
+        expect(singleBlockStmts(inner)).toContainEqual(expect.objectContaining({
+            right: expect.objectContaining({
+                _: "ClosureFieldRef",
+                base: expect.objectContaining({ name: "%closures0" }),
+                fieldName: "current",
+            }),
+        }));
         expect(inner.signature.parameters[0].name).toBe("%closures1");
         expect(middle.body!.locals.filter((local) => local.type._ === "LexicalEnvType").map((local) => local.name)).toEqual([
             "%closures0",
             "%closures1",
         ]);
+    });
+
+    it("shares a transitive capture cell between a nested write and enclosing read", () => {
+        const { file } = lower(`
+            function outer(seed: number): () => number {
+                let current = seed;
+                return (): number => {
+                    const update = (): void => { current = current + 1; };
+                    update();
+                    return current;
+                };
+            }
+        `);
+        const middle = methodByName(file, "%AM0$outer");
+        const inner = methodByName(file, "%AM1$%AM0$outer");
+        const middleStmts = singleBlockStmts(middle);
+        const innerStmts = singleBlockStmts(inner);
+
+        expect(inner.signature.parameters[0]).toMatchObject({
+            name: "%closures1",
+            type: {
+                _: "LexicalEnvType",
+                closures: [{
+                    name: "%closures0",
+                    type: { _: "LexicalEnvType", closures: [{ name: "current" }] },
+                }],
+            },
+        });
+        expect(innerStmts).toContainEqual(expect.objectContaining({
+            left: expect.objectContaining({ _: "Local", name: "%closures0" }),
+            right: expect.objectContaining({
+                _: "ClosureFieldRef",
+                base: expect.objectContaining({ name: "%closures1" }),
+                fieldName: "%closures0",
+            }),
+        }));
+
+        const nestedWrite = innerStmts.find(
+            (stmt) => stmt._ === "AssignStmt"
+                && stmt.left._ === "ClosureFieldRef"
+                && stmt.left.fieldName === "current",
+        ) as AssignStmtDto;
+        const updateCallIndex = middleStmts.findIndex(
+            (stmt) => stmt._ === "CallStmt"
+                && stmt.expr._ === "PtrCallExpr"
+                && stmt.expr.ptr._ === "Local"
+                && stmt.expr.ptr.name === "update",
+        );
+        const enclosingReadIndex = middleStmts.findIndex(
+            (stmt, index) => index > updateCallIndex
+                && stmt._ === "AssignStmt"
+                && stmt.right._ === "ClosureFieldRef"
+                && stmt.right.fieldName === "current",
+        );
+        const enclosingRead = middleStmts[enclosingReadIndex] as AssignStmtDto;
+
+        expect(updateCallIndex).toBeGreaterThanOrEqual(0);
+        expect(enclosingReadIndex).toBeGreaterThan(updateCallIndex);
+        expect(nestedWrite.left).toMatchObject({
+            _: "ClosureFieldRef",
+            base: { name: "%closures0" },
+            fieldName: "current",
+        });
+        expect(enclosingRead.right).toMatchObject({
+            _: "ClosureFieldRef",
+            base: { name: "%closures0" },
+            fieldName: "current",
+        });
+        expect(middleStmts).not.toContainEqual(expect.objectContaining({
+            left: expect.objectContaining({ _: "Local", name: "current" }),
+            right: expect.objectContaining({ _: "ClosureFieldRef", fieldName: "current" }),
+        }));
     });
 
     it("hoists nested function declarations and captures their outer bindings", () => {
