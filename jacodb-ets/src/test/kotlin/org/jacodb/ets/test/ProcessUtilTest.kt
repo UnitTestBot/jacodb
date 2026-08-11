@@ -282,7 +282,7 @@ class ProcessUtilTest {
             assertTrue(result.stderr.contains("stderr-during-continuous-stdout"))
             assertFalse(processIsAlive(directPid), "direct process $directPid was still alive after timeout")
             assertEquals(137, result.exitCode, "timeout must return the direct process's SIGKILL exit status")
-            assertTrue(elapsed.inWholeSeconds < 2, "continuous stdout delayed timeout completion by $elapsed")
+            assertTrue(elapsed < 1500.milliseconds, "continuous stdout delayed timeout completion by $elapsed")
 
             triggerFile.writeText("")
             waitForFile(statusFile)
