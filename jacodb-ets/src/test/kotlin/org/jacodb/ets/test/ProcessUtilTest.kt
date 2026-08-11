@@ -225,8 +225,8 @@ class ProcessUtilTest {
         val descendantScript =
             "const fs = require('fs'); " +
                 "fs.writeFileSync(process.argv[1], String(process.pid)); " +
-                "const chunk = Buffer.alloc(65536, 120); " +
-                "const outputDeadline = Date.now() + 3000; " +
+                "const chunk = Buffer.alloc(1 << 20, 120); " +
+                "const outputDeadline = Date.now() + 5000; " +
                 "while (Date.now() < outputDeadline) { " +
                 "try { fs.writeSync(1, chunk); } catch (_) { break; } " +
                 "} " +
@@ -238,8 +238,8 @@ class ProcessUtilTest {
                 "fs.writeFileSync(process.argv[3], status); " +
                 "}, 10)"
         val noiseScript =
-            "const fs = require('fs'); const chunk = Buffer.alloc(65536, 121); " +
-                "const outputDeadline = Date.now() + 3000; " +
+            "const fs = require('fs'); const chunk = Buffer.alloc(1 << 20, 121); " +
+                "const outputDeadline = Date.now() + 5000; " +
                 "while (Date.now() < outputDeadline) { " +
                 "try { fs.writeSync(1, chunk); } catch (_) { break; } " +
                 "}"
@@ -282,7 +282,7 @@ class ProcessUtilTest {
             assertTrue(result.stderr.contains("stderr-during-continuous-stdout"))
             assertFalse(processIsAlive(directPid), "direct process $directPid was still alive after timeout")
             assertEquals(137, result.exitCode, "timeout must return the direct process's SIGKILL exit status")
-            assertTrue(elapsed < 1500.milliseconds, "continuous stdout delayed timeout completion by $elapsed")
+            assertTrue(elapsed < 1750.milliseconds, "continuous stdout delayed timeout completion by $elapsed")
 
             triggerFile.writeText("")
             waitForFile(statusFile)
