@@ -319,7 +319,9 @@ export class ExprLowerer {
     /** Built-in numeric globals are constants, but a project declaration must still shadow them. */
     private builtInNonFiniteNumber(node: ts.Identifier): "Infinity" | "NaN" | undefined {
         const symbol = this.m.converter.symbolOf(node);
-        if (symbol === undefined || symbol.declarations?.some((declaration) => !declaration.getSourceFile().isDeclarationFile)) {
+        if (symbol === undefined || symbol.declarations?.some((declaration) =>
+            this.m.ctx.fileSignatureFor(declaration.getSourceFile()).projectName !== "%unk",
+        )) {
             return undefined;
         }
         switch (symbol.getName()) {

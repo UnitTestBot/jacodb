@@ -3,7 +3,7 @@ import { AssignStmtDto, StmtDto } from "../src/dto/stmts";
 import { syntaxKindName } from "../src/lowering/diagnostics";
 import * as ts from "typescript";
 import { validateEtsFile } from "../src/validate";
-import { defaultMethod, lower, methodByName, singleBlockStmts } from "./util";
+import { defaultMethod, lower, lowerProject, methodByName, singleBlockStmts } from "./util";
 
 function allStmts(method: { body?: { cfg: { blocks: { stmts: StmtDto[] }[] } } }): StmtDto[] {
     return (method.body?.cfg.blocks ?? []).flatMap((block) => block.stmts);
@@ -113,7 +113,7 @@ describe("non-finite numeric literals", () => {
     it("preserves built-in non-finite numbers as numeric constants", () => {
         const { file } = lower(`
             function values() {
-                const huge = 1e999;
+                const huge: 1e999 = 1e999;
                 const infinite = Infinity;
                 const negativeInfinite = -Infinity;
                 const notANumber = NaN;
@@ -132,11 +132,30 @@ describe("non-finite numeric literals", () => {
             { _: "Constant", value: "-Infinity", type: { _: "NumberType" } },
             { _: "Constant", value: "NaN", type: { _: "NumberType" } },
         ]));
+        expect(methodByName(file, "values").body?.locals).toContainEqual({
+            name: "huge",
+            type: { _: "NumberType" },
+        });
     });
 
     it("keeps locally shadowed Infinity and NaN as locals", () => {
         const { file } = lower("function shadow(Infinity: number, NaN: number) { return Infinity + NaN; }");
         const values = allStmts(methodByName(file, "shadow"))
+            .filter((stmt): stmt is AssignStmtDto => stmt._ === "AssignStmt")
+            .flatMap((stmt) => stmt.right._ === "BinopExpr" ? [stmt.right.left, stmt.right.right] : [stmt.right]);
+
+        expect(values).toEqual(expect.arrayContaining([
+            { _: "Local", name: "Infinity", type: { _: "NumberType" } },
+            { _: "Local", name: "NaN", type: { _: "NumberType" } },
+        ]));
+    });
+
+    it("keeps project declaration-file Infinity and NaN as locals", () => {
+        const { file } = lowerProject({
+            "globals.d.ts": "declare var Infinity: number; declare var NaN: number;",
+            "main.ts": "function shadowProjectGlobals() { return Infinity + NaN; }",
+        }, "main.ts");
+        const values = allStmts(methodByName(file, "shadowProjectGlobals"))
             .filter((stmt): stmt is AssignStmtDto => stmt._ === "AssignStmt")
             .flatMap((stmt) => stmt.right._ === "BinopExpr" ? [stmt.right.left, stmt.right.right] : [stmt.right]);
 

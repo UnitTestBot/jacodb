@@ -80,6 +80,43 @@ export function lower(source: string, projectName: string = "proj", fileName: st
     return { file, diagnostics };
 }
 
+/** Lower one source of an in-memory project, including project-owned declaration files. */
+export function lowerProject(sources: Readonly<Record<string, string>>, entryFileName: string): Lowered {
+    const host = ts.createCompilerHost(COMPILER_OPTIONS);
+    const originalGetSourceFile = host.getSourceFile.bind(host);
+    const originalFileExists = host.fileExists.bind(host);
+    const originalReadFile = host.readFile.bind(host);
+    const hasSource = (fileName: string): boolean => Object.prototype.hasOwnProperty.call(sources, fileName);
+
+    host.getSourceFile = (name, languageVersion, onError, shouldCreateNewSourceFile) => {
+        const source = sources[name];
+        return source !== undefined
+            ? ts.createSourceFile(name, source, languageVersion, /* setParentNodes */ true)
+            : originalGetSourceFile(name, languageVersion, onError, shouldCreateNewSourceFile);
+    };
+    host.fileExists = (name) => hasSource(name) || originalFileExists(name);
+    host.readFile = (name) => sources[name] ?? originalReadFile(name);
+
+    const program = ts.createProgram(Object.keys(sources), COMPILER_OPTIONS, host);
+    const sourceFile = program.getSourceFile(entryFileName);
+    if (sourceFile === undefined) {
+        throw new Error(`failed to load in-memory source file: ${entryFileName}`);
+    }
+    const diagnostics = new Diagnostics();
+    const file = buildEtsFile(program, sourceFile, {
+        projectName: "proj",
+        fileName: entryFileName,
+        fileSignatureFor: (sf) => hasSource(sf.fileName)
+            ? { projectName: "proj", fileName: sf.fileName }
+            : { projectName: "%unk", fileName: "%unk" },
+    }, diagnostics);
+    const violations = validateEtsFile(file);
+    if (violations.length > 0) {
+        throw new Error(`invariant violations:\n${violations.join("\n")}`);
+    }
+    return { file, diagnostics };
+}
+
 /** The `%dflt` method of the `%dflt` class. */
 export function defaultMethod(file: EtsFileDto): MethodDto {
     const clazz = file.classes.find((c) => c.signature.name === "%dflt");

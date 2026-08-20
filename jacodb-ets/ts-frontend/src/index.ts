@@ -291,7 +291,11 @@ export function main(argv: string[]): number {
         const relativeOf = (sf: ts.SourceFile): string =>
             path.relative(inputPath, path.resolve(sf.fileName)).split(path.sep).join("/");
         const fileSignatureFor = (sf: ts.SourceFile) => {
-            if (!sf.isDeclarationFile && !path.relative(inputPath, path.resolve(sf.fileName)).startsWith("..")) {
+            const relative = path.relative(inputPath, path.resolve(sf.fileName));
+            const isProjectFile = !relative.startsWith("..")
+                && !path.isAbsolute(relative)
+                && !relative.split(path.sep).includes("node_modules");
+            if (isProjectFile) {
                 return { projectName, fileName: relativeOf(sf) };
             }
             return { projectName: "%unk", fileName: "%unk" };
