@@ -18,6 +18,7 @@ package org.jacodb.ets.model
 
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonInstanceCallExpr
+import org.jacodb.ets.toArrayType
 
 interface EtsExpr : EtsEntity {
     interface Visitor<out R> {
@@ -158,7 +159,7 @@ data class EtsNewArrayExpr(
     val size: EtsEntity,
 ) : EtsExpr {
     override val type: EtsType
-        get() = EtsArrayType(elementType, 1)
+        get() = elementType.toArrayType(dimensions = 1)
 
     override fun toString(): String {
         return "new Array<$elementType>($size)"

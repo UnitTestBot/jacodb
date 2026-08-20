@@ -16,16 +16,43 @@
 
 package org.jacodb.ets.utils
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import java.io.Reader
+import java.nio.charset.Charset
+import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 
 private val logger = KotlinLogging.logger {}
+
+private fun terminateAndReap(
+    process: Process,
+    initialInterruption: InterruptedException? = null,
+) {
+    var interruption = initialInterruption
+    process.destroy()
+    if (process.isAlive) {
+        process.destroyForcibly()
+    }
+    while (true) {
+        try {
+            process.waitFor()
+            break
+        } catch (error: InterruptedException) {
+            if (interruption == null) {
+                interruption = error
+            } else if (interruption !== error) {
+                interruption.addSuppressed(error)
+            }
+            if (process.isAlive) {
+                process.destroyForcibly()
+            }
+        }
+    }
+    if (interruption != null) {
+        Thread.currentThread().interrupt()
+        throw interruption
+    }
+}
 
 object ProcessUtil {
     data class Result(
@@ -40,75 +67,49 @@ object ProcessUtil {
         input: String? = null,
         timeout: Duration? = null,
     ): Result {
-        val reader = input?.reader() ?: "".reader()
-        return run(command, reader, timeout)
-    }
-
-    fun run(
-        command: List<String>,
-        input: Reader,
-        timeout: Duration? = null,
-    ): Result {
         logger.debug { "Running command: $command" }
-        val process = ProcessBuilder(command).start()
-        return communicate(process, input, timeout)
+        val charset = Charset.defaultCharset()
+        val tempDirectory = Files.createTempDirectory("jacodb-process-")
+        try {
+            val stdinFile = tempDirectory.resolve("stdin")
+            val stdoutFile = tempDirectory.resolve("stdout")
+            val stderrFile = tempDirectory.resolve("stderr")
+            Files.newBufferedWriter(stdinFile, charset).use { writer ->
+                writer.write(input ?: "")
+            }
+
+            val process = ProcessBuilder(command)
+                .redirectInput(stdinFile.toFile())
+                .redirectOutput(stdoutFile.toFile())
+                .redirectError(stderrFile.toFile())
+                .start()
+            val isTimeout = try {
+                if (timeout == null) {
+                    process.waitFor()
+                    false
+                } else {
+                    !process.waitFor(
+                        timeout.inWholeNanoseconds.coerceAtLeast(0),
+                        TimeUnit.NANOSECONDS,
+                    )
+                }
+            } catch (error: InterruptedException) {
+                terminateAndReap(process, error)
+                throw error
+            }
+
+            if (isTimeout) {
+                terminateAndReap(process)
+            }
+
+            return Result(
+                exitCode = process.exitValue(),
+                stdout = Files.readAllBytes(stdoutFile).toString(charset),
+                stderr = Files.readAllBytes(stderrFile).toString(charset),
+                isTimeout = isTimeout,
+            )
+        } finally {
+            tempDirectory.toFile().deleteRecursively()
+        }
     }
-
-    private fun communicate(
-        process: Process,
-        input: Reader,
-        timeout: Duration? = null,
-    ): Result {
-        val stdout = StringBuilder()
-        val stderr = StringBuilder()
-
-        val scope = CoroutineScope(Dispatchers.IO)
-
-        // Handle process input
-        val stdinJob = scope.launch {
-            process.outputStream.bufferedWriter().use { writer ->
-                input.copyTo(writer)
-            }
-        }
-
-        // Launch output capture coroutines
-        val stdoutJob = scope.launch {
-            process.inputStream.bufferedReader().useLines { lines ->
-                lines.forEach { stdout.appendLine(it) }
-            }
-        }
-        val stderrJob = scope.launch {
-            process.errorStream.bufferedReader().useLines { lines ->
-                lines.forEach { stderr.appendLine(it) }
-            }
-        }
-
-        // Wait for completion
-        val isTimeout = if (timeout != null) {
-            !process.waitFor(timeout.inWholeNanoseconds, TimeUnit.NANOSECONDS)
-        } else {
-            process.waitFor()
-            false
-        }
-        runBlocking {
-            stdinJob.join()
-            stdoutJob.join()
-            stderrJob.join()
-        }
-
-        return Result(
-            exitCode = process.exitValue(),
-            stdout = stdout.toString(),
-            stderr = stderr.toString(),
-            isTimeout = isTimeout,
-        )
-    }
-}
-
-fun main() {
-    // Note: `ls -l /bin/` has big enough output to demonstrate the necessity
-    //   of separate output capture threads/coroutines.
-    val result = ProcessUtil.run(listOf("ls", "-l", "/bin/"))
-    println("STDOUT: ${result.stdout}")
-    println("STDERR: ${result.stderr}")
 }

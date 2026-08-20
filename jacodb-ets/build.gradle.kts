@@ -1,3 +1,4 @@
+import org.apache.tools.ant.taskdefs.condition.Os
 import java.io.FileNotFoundException
 
 plugins {
@@ -21,44 +22,165 @@ dependencies {
     testFixturesImplementation(Libs.junit_jupiter_api)
 }
 
+// ----------------------------------------------------------------------------
+// Native TypeScript frontend (ts-frontend)
+// ----------------------------------------------------------------------------
+
+val tsFrontendDir: File = projectDir.resolve("ts-frontend")
+val tsFrontendDist: File = tsFrontendDir.resolve("dist")
+val npmExecutable: String = if (Os.isFamily(Os.FAMILY_WINDOWS)) "npm.cmd" else "npm"
+
+/**
+ * Building and publishing jacodb-ets requires Node.js and npm. Artifact-producing
+ * tasks use this toolchain so successful artifacts always contain the bundled
+ * runtime built from the checkout.
+ */
+val installTsFrontend = tasks.register<Exec>("installTsFrontend") {
+    group = "build"
+    description = "Installs npm dependencies of the ts-frontend."
+    workingDir = tsFrontendDir
+    commandLine(npmExecutable, "ci")
+    inputs.files(tsFrontendDir.resolve("package.json"), tsFrontendDir.resolve("package-lock.json"))
+    // `npm ci` wipes node_modules anyway, so snapshotting its tens of thousands of
+    // files on every up-to-date check buys nothing; the marker file is enough.
+    outputs.file(tsFrontendDir.resolve("node_modules/.package-lock.json"))
+}
+
+val buildTsFrontend = tasks.register<Exec>("buildTsFrontend") {
+    group = "build"
+    description = "Type-checks and builds the self-contained ts-frontend runtime."
+    dependsOn(installTsFrontend)
+    workingDir = tsFrontendDir
+    commandLine(npmExecutable, "run", "build")
+    inputs.dir(tsFrontendDir.resolve("src"))
+    inputs.files(
+        tsFrontendDir.resolve("package.json"),
+        tsFrontendDir.resolve("package-lock.json"),
+        tsFrontendDir.resolve("tsconfig.json"),
+    )
+    inputs.dir(tsFrontendDir.resolve("scripts"))
+    outputs.dir(tsFrontendDist)
+}
+
+val packageTsFrontendRuntime = tasks.register<Zip>("packageTsFrontendRuntime") {
+    group = "build"
+    description = "Packages the ts-frontend script and TypeScript standard libraries."
+    dependsOn(buildTsFrontend)
+    from(tsFrontendDist) {
+        include("index.js", "lib*.d.ts")
+    }
+    archiveFileName.set("runtime.zip")
+    destinationDirectory.set(layout.buildDirectory.dir("generated/etsFrontend"))
+    // A silently incomplete archive would be published and only fail at runtime:
+    // the consumer (LoadEtsFile.kt) checks for index.js but not for the type libraries.
+    doFirst {
+        require(tsFrontendDist.resolve("index.js").isFile) {
+            "ts-frontend was not built: '${tsFrontendDist.resolve("index.js")}' is missing"
+        }
+        val libs = tsFrontendDist.listFiles()
+            ?.count { it.isFile && it.name.startsWith("lib") && it.name.endsWith(".d.ts") }
+            ?: 0
+        require(libs > 0) {
+            "ts-frontend dist contains no 'lib*.d.ts' type libraries in '$tsFrontendDist'; " +
+                "the packaged runtime would be silently broken"
+        }
+        logger.info("Packaging ts-frontend runtime: index.js + $libs type libraries")
+    }
+}
+
+tasks.processResources {
+    dependsOn(packageTsFrontendRuntime)
+    from(packageTsFrontendRuntime.flatMap { it.archiveFile }) {
+        into("ets-frontend")
+    }
+}
+
+val testTsFrontend = tasks.register<Exec>("testTsFrontend") {
+    group = "verification"
+    description = "Runs the ts-frontend unit tests (vitest)."
+    dependsOn(installTsFrontend)
+    workingDir = tsFrontendDir
+    commandLine(npmExecutable, "test")
+    inputs.dir(tsFrontendDir.resolve("src"))
+    inputs.dir(tsFrontendDir.resolve("test"))
+    inputs.files(
+        tsFrontendDir.resolve("package.json"),
+        tsFrontendDir.resolve("package-lock.json"),
+        tsFrontendDir.resolve("tsconfig.json"),
+        tsFrontendDir.resolve("vitest.config.ts"),
+    )
+    outputs.file(layout.buildDirectory.file("test-results/testTsFrontend/success.marker"))
+    doLast {
+        val marker = layout.buildDirectory.file("test-results/testTsFrontend/success.marker").get().asFile
+        marker.parentFile.mkdirs()
+        marker.writeText("ok")
+    }
+}
+
+tasks.test {
+    dependsOn(buildTsFrontend)
+}
+
+tasks.check {
+    dependsOn(testTsFrontend)
+}
+
+// ----------------------------------------------------------------------------
+// Test resource generation
+// ----------------------------------------------------------------------------
+
 // Example usage:
 // ```
-// export ARKANALYZER_DIR=~/dev/arkanalyzer
 // ./gradlew generateTestResources
+// # or with the legacy ArkAnalyzer provider:
+// export ARKANALYZER_DIR=~/dev/arkanalyzer
+// ETS_IR_PROVIDER=arkanalyzer ./gradlew generateTestResources
 // ```
 tasks.register("generateTestResources") {
     group = "build"
-    description = "Generates test resources from TypeScript files using ArkAnalyzer."
+    description = "Generates test resources (EtsIR JSON) from TypeScript sample files."
+    dependsOn(buildTsFrontend)
     doLast {
-        println("Generating test resources using ArkAnalyzer...")
+        // NB: keep the accepted aliases in sync with `EtsIrProvider.default()`
+        // (jacodb-ets/src/main/kotlin/org/jacodb/ets/utils/LoadEtsFile.kt); this task
+        // runs before the module is compiled and therefore cannot call it.
+        val provider = when (System.getenv("ETS_IR_PROVIDER")?.trim()?.lowercase()) {
+            "arkanalyzer", "ark-analyzer", "ark_analyzer" -> "arkanalyzer"
+            else -> "ts-frontend"
+        }
+        println("Generating test resources using provider: $provider")
         val startTime = System.currentTimeMillis()
 
-        val envVarName = "ARKANALYZER_DIR"
-        val defaultArkAnalyzerDir = "arkanalyzer"
+        val script: File = when (provider) {
+            "arkanalyzer" -> {
+                val envVarName = "ARKANALYZER_DIR"
+                val arkAnalyzerDir = rootDir.resolve(System.getenv(envVarName) ?: "arkanalyzer")
+                if (!arkAnalyzerDir.exists()) {
+                    throw FileNotFoundException(
+                        "ArkAnalyzer directory does not exist: '${arkAnalyzerDir.absolutePath}'. " +
+                            "Did you forget to set the '$envVarName' environment variable?"
+                    )
+                }
+                arkAnalyzerDir.resolve("out/src/save/serializeArkIR.js").also {
+                    if (!it.exists()) {
+                        throw FileNotFoundException(
+                            "Script file not found: '$it'. " +
+                                "Did you forget to execute 'npm run build' in the arkanalyzer project?"
+                        )
+                    }
+                }
+            }
 
-        val arkAnalyzerDir = rootDir.resolve(System.getenv(envVarName) ?: run {
-            println("Please, set $envVarName environment variable. Using default value: '$defaultArkAnalyzerDir'")
-            defaultArkAnalyzerDir
-        })
-        if (!arkAnalyzerDir.exists()) {
-            throw FileNotFoundException(
-                "ArkAnalyzer directory does not exist: '${arkAnalyzerDir.absolutePath}'. " +
-                    "Did you forget to set the '$envVarName' environment variable? " +
-                    "Current value is '${System.getenv(envVarName)}', " +
-                    "current dir is '${File("").absolutePath}'."
-            )
+            else -> tsFrontendDir.resolve("dist/index.js").also {
+                if (!it.exists()) {
+                    throw FileNotFoundException(
+                        "Script file not found: '$it'. " +
+                            "Did you forget to execute 'npm run build' in ts-frontend?"
+                    )
+                }
+            }
         }
-        println("Using ArkAnalyzer directory: '${arkAnalyzerDir.relativeTo(rootDir)}'")
-
-        val scriptSubPath = "src/save/serializeArkIR"
-        val script = arkAnalyzerDir.resolve("out").resolve("$scriptSubPath.js")
-        if (!script.exists()) {
-            throw FileNotFoundException(
-                "Script file not found: '$script'. " +
-                    "Did you forget to execute 'npm run build' in the arkanalyzer project?"
-            )
-        }
-        println("Using script: '${script.relativeTo(arkAnalyzerDir)}'")
+        println("Using script: '$script'")
 
         val resources = projectDir.resolve("src/test/resources")
         val inputDir = resources.resolve("samples/source")
@@ -66,7 +188,7 @@ tasks.register("generateTestResources") {
         println("Generating test resources in '${outputDir.relativeTo(projectDir)}'...")
 
         val cmd: List<String> = listOf(
-            "node",
+            System.getenv("NODE_EXECUTABLE") ?: "node",
             script.absolutePath,
             "--multi",
             inputDir.relativeTo(resources).path,
@@ -74,21 +196,32 @@ tasks.register("generateTestResources") {
             "-t",
         )
         println("Running: '${cmd.joinToString(" ")}'")
-        val process = ProcessBuilder(cmd).directory(resources).start()
+        val processLog = temporaryDir.resolve("generate-test-resources.log")
+        val process = ProcessBuilder(cmd)
+            .directory(resources)
+            .redirectErrorStream(true)
+            .redirectOutput(processLog)
+            .start()
         val ok = process.waitFor(10, TimeUnit.MINUTES)
 
-        val stdout = process.inputStream.bufferedReader().readText().trim()
-        if (stdout.isNotBlank()) {
-            println("[STDOUT]:\n--------\n$stdout\n--------")
-        }
-        val stderr = process.errorStream.bufferedReader().readText().trim()
-        if (stderr.isNotBlank()) {
-            println("[STDERR]:\n--------\n$stderr\n--------")
-        }
-
         if (!ok) {
-            println("Timeout!")
             process.destroy()
+            if (!process.waitFor(5, TimeUnit.SECONDS)) {
+                process.destroyForcibly()
+                process.waitFor()
+            }
+        }
+        // Print the generator output BEFORE failing: otherwise a timeout leaves
+        // the only diagnostics buried in build/tmp.
+        val processOutput = processLog.readText().trim()
+        if (processOutput.isNotBlank()) {
+            println("[GENERATOR OUTPUT]:\n--------\n$processOutput\n--------")
+        }
+        if (!ok) {
+            throw GradleException("Test resource generation timed out")
+        }
+        if (process.exitValue() != 0) {
+            throw GradleException("Test resource generation failed with exit code ${process.exitValue()}")
         }
 
         println("Done generating test resources in %.1fs".format((System.currentTimeMillis() - startTime) / 1000.0))

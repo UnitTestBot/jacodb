@@ -1,0 +1,24 @@
+{
+  "name": "@jacodb/ets-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Native TypeScript frontend producing EtsIR JSON for jacodb-ets",
+  "license": "Apache-2.0",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=18.18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit && esbuild src/index.ts --bundle --platform=node --format=cjs --target=node18 --outfile=dist/index.js && node scripts/copy-typescript-libs.cjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --testTimeout=15000"
+  },
+  "dependencies": {
+    "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.0",
+    "esbuild": "^0.28.1",
+    "vitest": "^3.2.7"
+  }
+}

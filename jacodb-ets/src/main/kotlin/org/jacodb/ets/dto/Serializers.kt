@@ -16,6 +16,7 @@
 
 package org.jacodb.ets.dto
 
+import mu.KotlinLogging
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -25,14 +26,17 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.json.double
+import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.modules.SerializersModule
+
+private val logger = KotlinLogging.logger {}
 
 internal val stmtModule = SerializersModule {
     polymorphicDefaultDeserializer(StmtDto::class) { RawStmtSerializer }
@@ -60,7 +64,15 @@ object PrimitiveLiteralSerializer : KSerializer<PrimitiveLiteralDto> {
         require(encoder is JsonEncoder)
         when (value) {
             is PrimitiveLiteralDto.StringLiteral -> encoder.encodeString(value.value)
-            is PrimitiveLiteralDto.NumberLiteral -> encoder.encodeDouble(value.value)
+            // Non-finite numbers are not representable as JSON primitives. Reject them
+            // instead of silently losing their numeric kind and value as `null`.
+            is PrimitiveLiteralDto.NumberLiteral -> if (value.value.isFinite()) {
+                encoder.encodeDouble(value.value)
+            } else {
+                throw SerializationException(
+                    "Cannot serialize non-finite number '${value.value}' as a JSON primitive literal"
+                )
+            }
             is PrimitiveLiteralDto.BooleanLiteral -> encoder.encodeBoolean(value.value)
         }
     }
@@ -68,6 +80,11 @@ object PrimitiveLiteralSerializer : KSerializer<PrimitiveLiteralDto> {
     override fun deserialize(decoder: Decoder): PrimitiveLiteralDto {
         require(decoder is JsonDecoder)
         val element = decoder.decodeJsonElement()
+        // JsonNull loses the original primitive kind, so it cannot faithfully represent
+        // a non-finite numeric literal.
+        if (element is JsonNull) {
+            throw SerializationException("Cannot deserialize JsonNull as a primitive literal")
+        }
         if (element !is JsonPrimitive) {
             throw SerializationException("Expected JsonPrimitive, but found $element")
         }
@@ -77,9 +94,15 @@ object PrimitiveLiteralSerializer : KSerializer<PrimitiveLiteralDto> {
         val b = element.booleanOrNull
         if (b != null) {
             return PrimitiveLiteralDto.BooleanLiteral(b)
-        } else {
-            return PrimitiveLiteralDto.NumberLiteral(element.double)
         }
+        val d = element.doubleOrNull
+        if (d != null) {
+            return PrimitiveLiteralDto.NumberLiteral(d)
+        }
+        // An unquoted primitive that is neither a boolean nor a number means the producer
+        // emitted something unexpected; stay resilient, but do not hide the wire-format defect.
+        logger.warn { "Unrecognized primitive literal, treating as a string: '${element.content}'" }
+        return PrimitiveLiteralDto.StringLiteral(element.content)
     }
 }
 

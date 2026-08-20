@@ -89,6 +89,33 @@ data class MethodDto(
 data class BodyDto(
     val locals: List<LocalDto>,
     val cfg: CfgDto,
+    /** Source origins keyed by the pre-conversion DTO block/statement indices. */
+    val stmtOrigins: List<StmtOriginDto> = emptyList(),
+)
+
+/**
+ * A source range produced by a frontend.
+ *
+ * Offsets are UTF-16 offsets. Lines and columns are zero-based.
+ */
+@Serializable
+data class SourceSpanDto(
+    /** Omitted when the span belongs to the enclosing file; see [org.jacodb.ets.dto.toEtsSourceSpan]. */
+    val fileName: String? = null,
+    val startOffset: Int,
+    val endOffset: Int,
+    val startLine: Int,
+    val startColumn: Int,
+    val endLine: Int,
+    val endColumn: Int,
+    val nodeKind: String,
+)
+
+@Serializable
+data class StmtOriginDto(
+    val blockId: Int,
+    val stmtIndex: Int,
+    val source: SourceSpanDto,
 )
 
 @Serializable

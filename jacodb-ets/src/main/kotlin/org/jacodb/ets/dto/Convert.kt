@@ -17,13 +17,13 @@
 package org.jacodb.ets.dto
 
 import mu.KotlinLogging
+import org.jacodb.ets.toArrayType
 import org.jacodb.ets.model.BasicBlock
 import org.jacodb.ets.model.EtsAddExpr
 import org.jacodb.ets.model.EtsAliasType
 import org.jacodb.ets.model.EtsAndExpr
 import org.jacodb.ets.model.EtsAnyType
 import org.jacodb.ets.model.EtsArrayAccess
-import org.jacodb.ets.model.EtsArrayType
 import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsAwaitExpr
 import org.jacodb.ets.model.EtsBitAndExpr
@@ -77,6 +77,7 @@ import org.jacodb.ets.model.EtsIntersectionType
 import org.jacodb.ets.model.EtsLeftShiftExpr
 import org.jacodb.ets.model.EtsLexicalEnvType
 import org.jacodb.ets.model.EtsLocal
+import org.jacodb.ets.model.EtsLValue
 import org.jacodb.ets.model.EtsLocalSignature
 import org.jacodb.ets.model.EtsLtEqExpr
 import org.jacodb.ets.model.EtsLtExpr
@@ -116,6 +117,7 @@ import org.jacodb.ets.model.EtsStaticCallExpr
 import org.jacodb.ets.model.EtsStaticFieldRef
 import org.jacodb.ets.model.EtsStmt
 import org.jacodb.ets.model.EtsStmtLocation
+import org.jacodb.ets.model.EtsSourceSpan
 import org.jacodb.ets.model.EtsStrictEqExpr
 import org.jacodb.ets.model.EtsStrictNotEqExpr
 import org.jacodb.ets.model.EtsStringConstant
@@ -140,12 +142,24 @@ import org.jacodb.ets.model.EtsYieldExpr
 
 private val logger = KotlinLogging.logger {}
 
+private val ClassSignatureDto.declaringFileName: String
+    get() = declaringFile.fileName
+
+private val MethodSignatureDto.declaringFileName: String
+    get() = declaringClass.declaringFileName
+
+private val NamespaceSignatureDto.declaringFileName: String
+    get() = declaringFile.fileName
+
+data class StmtOriginKey(val blockId: Int, val stmtIndex: Int)
+
 class EtsMethodBuilder(
     signature: EtsMethodSignature,
     typeParameters: List<EtsType> = emptyList(),
     modifiers: EtsModifiers = EtsModifiers.EMPTY,
     decorators: List<EtsDecorator> = emptyList(),
     locals: List<EtsLocal> = emptyList(),
+    private val stmtOrigins: Map<StmtOriginKey, EtsSourceSpan> = emptyMap(),
 ) {
     private val locals = locals.toMutableList()
 
@@ -157,6 +171,8 @@ class EtsMethodBuilder(
 
     private var freeTempLocal: Int = 0
 
+    private var currentOrigin: EtsSourceSpan? = null
+
     private fun newTempLocal(): EtsLocal {
         val local = EtsLocal("_tmp${freeTempLocal++}")
         this@EtsMethodBuilder.locals += local
@@ -164,7 +180,19 @@ class EtsMethodBuilder(
     }
 
     private fun loc(): EtsStmtLocation {
-        return EtsStmtLocation.stub(method)
+        return EtsStmtLocation.stub(method, currentOrigin)
+    }
+
+    // Only statements emitted while converting a source statement inherit its origin;
+    // synthetic CFG statements emitted outside this scope remain originless.
+    private inline fun <T> withOrigin(origin: EtsSourceSpan?, action: () -> T): T {
+        val previous = currentOrigin
+        currentOrigin = origin
+        return try {
+            action()
+        } finally {
+            currentOrigin = previous
+        }
     }
 
     private var built: Boolean = false
@@ -218,11 +246,11 @@ class EtsMethodBuilder(
                     it
                 }
             }
-            if (!(lhv is EtsLocal || lhv is EtsFieldRef || lhv is EtsArrayAccess)) {
+            if (lhv !is EtsLValue) {
                 logger.error {
-                    "LHV of AssignStmt should be EtsLocal, EtsFieldRef, or EtsArrayAccess, but got ${lhv::class.java}: $lhv\nMethod: $method\nStmt: $this"
+                    "LHV of AssignStmt should be EtsLValue, but got ${lhv::class.java}: $lhv\nMethod: $method\nStmt: $this"
                 }
-                error("LHV of AssignStmt should be EtsLocal, EtsFieldRef, or EtsArrayAccess, but got ${lhv::class.java}")
+                error("LHV of AssignStmt should be EtsLValue, but got ${lhv::class.java}")
             }
             val rhv = right.toEtsEntity().let { rhv ->
                 if (lhv is EtsLocal) {
@@ -476,8 +504,10 @@ class EtsMethodBuilder(
 
         val blocks = this.blocks.map { block ->
             currentStmts = mutableListOf()
-            for (stmt in block.stmts) {
-                currentStmts += stmt.toEtsStmt()
+            for ((stmtIndex, stmt) in block.stmts.withIndex()) {
+                withOrigin(stmtOrigins[StmtOriginKey(block.id, stmtIndex)]) {
+                    currentStmts += stmt.toEtsStmt()
+                }
             }
             if (currentStmts.isEmpty()) {
                 currentStmts += EtsNopStmt(location = loc())
@@ -495,7 +525,7 @@ class EtsMethodBuilder(
     }
 }
 
-fun ClassDto.toEtsClass(): EtsClass {
+fun ClassDto.toEtsClass(enclosingFileName: String = signature.declaringFileName): EtsClass {
     val signature = signature.toEtsClassSignature()
     val superClassSignature = superClassName?.takeIf { it != "" }?.let { name ->
         EtsClassSignature(
@@ -510,7 +540,7 @@ fun ClassDto.toEtsClass(): EtsClass {
         )
     }
     val fields = fields.map { it.toEtsField() }
-    val methods = methods.map { it.toEtsMethod() }
+    val methods = methods.map { it.toEtsMethod(enclosingFileName) }
     val category = category.toEtsClassCategory()
     val typeParameters = typeParameters?.map { it.toEtsType() } ?: emptyList()
     val modifiers = EtsModifiers(modifiers)
@@ -538,10 +568,9 @@ fun TypeDto.toEtsType(): EtsType = when (this) {
 
     AnyTypeDto -> EtsAnyType
 
-    is ArrayTypeDto -> EtsArrayType(
-        elementType = elementType.toEtsType(),
-        dimensions = dimensions,
-    )
+    // Nested array types are folded, matching EtsNewArrayExpr.type and NewArrayExprDto:
+    // `T[][]` is ArrayType(T, 2), never ArrayType(ArrayType(T, 1), 1).
+    is ArrayTypeDto -> elementType.toEtsType().toArrayType(dimensions)
 
     BooleanTypeDto -> EtsBooleanType
 
@@ -701,7 +730,9 @@ fun LocalSignatureDto.toEtsLocalSignature(): EtsLocalSignature {
     )
 }
 
-fun MethodDto.toEtsMethod(): EtsMethod {
+fun MethodDto.toEtsMethod(
+    enclosingFileName: String = signature.declaringFileName,
+): EtsMethod {
     val signature = signature.toEtsMethodSignature()
     val typeParameters = typeParameters?.map { it.toEtsType() } ?: emptyList()
     val modifiers = EtsModifiers(modifiers)
@@ -713,6 +744,9 @@ fun MethodDto.toEtsMethod(): EtsMethod {
             modifiers = modifiers,
             decorators = decorators,
             locals = body.locals.map { it.toEtsLocal() },
+            stmtOrigins = body.stmtOrigins.associate { origin ->
+                StmtOriginKey(origin.blockId, origin.stmtIndex) to origin.source.toEtsSourceSpan(enclosingFileName)
+            },
         )
         return builder.build(body.cfg)
     } else {
@@ -724,6 +758,22 @@ fun MethodDto.toEtsMethod(): EtsMethod {
         )
     }
 }
+
+/**
+ * [fileName] is omitted by frontends for spans of the enclosing file itself
+ * (it would otherwise be repeated in every origin entry), so it falls back to
+ * [enclosingFileName].
+ */
+fun SourceSpanDto.toEtsSourceSpan(enclosingFileName: String = ""): EtsSourceSpan = EtsSourceSpan(
+    fileName = fileName ?: enclosingFileName,
+    startOffset = startOffset,
+    endOffset = endOffset,
+    startLine = startLine,
+    startColumn = startColumn,
+    endLine = endLine,
+    endColumn = endColumn,
+    nodeKind = nodeKind,
+)
 
 fun FieldDto.toEtsField(): EtsField {
     return EtsFieldImpl(
@@ -738,10 +788,10 @@ fun FieldDto.toEtsField(): EtsField {
     )
 }
 
-fun NamespaceDto.toEtsNamespace(): EtsNamespace {
+fun NamespaceDto.toEtsNamespace(enclosingFileName: String = signature.declaringFileName): EtsNamespace {
     val signature = signature.toEtsNamespaceSignature()
-    val classes = classes.map { it.toEtsClass() }
-    val namespaces = namespaces.map { it.toEtsNamespace() }
+    val classes = classes.map { it.toEtsClass(enclosingFileName) }
+    val namespaces = namespaces.map { it.toEtsNamespace(enclosingFileName) }
     return EtsNamespace(
         signature = signature,
         classes = classes,
@@ -751,8 +801,8 @@ fun NamespaceDto.toEtsNamespace(): EtsNamespace {
 
 fun EtsFileDto.toEtsFile(): EtsFile {
     val signature = signature.toEtsFileSignature()
-    val classes = classes.map { it.toEtsClass() }
-    val namespaces = namespaces.map { it.toEtsNamespace() }
+    val classes = classes.map { it.toEtsClass(signature.fileName) }
+    val namespaces = namespaces.map { it.toEtsNamespace(signature.fileName) }
     val importInfos = importInfos.map { it.toEtsImportInfo() }
     val exportInfos = exportInfos.map { it.toEtsExportInfo() }
     return EtsFile(

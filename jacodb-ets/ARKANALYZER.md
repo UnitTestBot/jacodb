@@ -1,5 +1,11 @@
 # ArkAnalyzer
 
+> **Note:** ArkAnalyzer is now the LEGACY EtsIR provider. The default provider
+> is the native TypeScript frontend in [`ts-frontend`](ts-frontend/README.md),
+> which requires no external checkout. ArkAnalyzer remains fully supported:
+> select it with `ETS_IR_PROVIDER=arkanalyzer` (plus `ARKANALYZER_DIR`) or by
+> passing `EtsIrProvider.ARKANALYZER` to the `loadEts*AutoConvert` functions.
+
 ## Installation
 
 Clone and install the ArkAnalyzer via NPM:
@@ -19,7 +25,8 @@ The `npm run build` command will generate the `out` directory, which contains th
 Most probably, you will have to use our fork of ArkAnalyzer (https://gitcode.com/Lipen/arkanalyzer) and checkout a specific branch that is consistent with the current state of jacodb.
 For this, replace the repo url in the commands above and use `git switch <branch>` to checkout the desired branch.
 
-> Latest supported AA branch is `neo/2025-02-24`.
+The ArkAnalyzer version exercised by CI is branch `neo/2025-09-03`, pinned to
+commit `d9d7d5ffddb1f4081f90a73836c865794ec6a88c` for reproducible builds.
 
 ## Serialize TS to JSON
 

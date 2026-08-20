@@ -22,6 +22,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
 import kotlinx.serialization.json.JsonObject
+import org.jacodb.ets.toArrayType
 
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
@@ -141,7 +142,7 @@ data class NewArrayExprDto(
     val size: ValueDto,
 ) : ExprDto {
     override val type: TypeDto
-        get() = ArrayTypeDto(elementType, 1)
+        get() = elementType.toArrayType(dimensions = 1)
 }
 
 @Serializable

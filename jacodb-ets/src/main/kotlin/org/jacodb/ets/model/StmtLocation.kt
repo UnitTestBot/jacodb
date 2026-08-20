@@ -18,13 +18,49 @@ package org.jacodb.ets.model
 
 import org.jacodb.api.common.cfg.CommonInstLocation
 
+/**
+ * Origin of an EtsIR statement in the source program.
+ *
+ * Offsets are UTF-16 offsets, matching the TypeScript compiler API. Lines and
+ * columns are zero-based. Several normalized EtsIR statements may share the
+ * same origin when one source expression is lowered into three-address code.
+ */
+data class EtsSourceSpan(
+    val fileName: String,
+    val startOffset: Int,
+    val endOffset: Int,
+    val startLine: Int,
+    val startColumn: Int,
+    val endLine: Int,
+    val endColumn: Int,
+    val nodeKind: String,
+)
+
 data class EtsStmtLocation(
     override val method: EtsMethod,
     var index: Int,
 ) : CommonInstLocation {
+    /**
+     * Source origin of the statement, when the frontend provided one.
+     *
+     * Deliberately kept OUT of the primary constructor: it must not participate in
+     * `equals`/`hashCode` of the location (and hence of every `EtsStmt`), which would
+     * make statement equality depend on the frontend in use — ArkAnalyzer emits no
+     * origins at all, the TS frontend does.
+     *
+     * NB: as a consequence, the generated [copy] and `toString` do NOT carry `origin`;
+     * `copy()` always returns a location with `origin == null`. Use the three-argument
+     * secondary constructor (or [stub]) when the origin must be preserved.
+     */
+    var origin: EtsSourceSpan? = null
+
+    constructor(method: EtsMethod, index: Int, origin: EtsSourceSpan?) : this(method, index) {
+        this.origin = origin
+    }
+
     companion object {
-        fun stub(method: EtsMethod): EtsStmtLocation {
-            return EtsStmtLocation(method, -1)
+        fun stub(method: EtsMethod, origin: EtsSourceSpan? = null): EtsStmtLocation {
+            return EtsStmtLocation(method, -1, origin)
         }
     }
 }

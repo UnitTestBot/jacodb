@@ -35,7 +35,7 @@ jobs:
         with:
           # Only write to the cache for builds on the specific branches. (Default is 'main' only.)
           # Builds on other branches will only read existing entries from the cache.
-          cache-read-only: ${{ github.ref != 'refs/heads/develop' && github.ref != 'ref/heads/neo' }}
+          cache-read-only: ${{ github.ref != 'refs/heads/develop' && github.ref != 'refs/heads/neo' }}
 
       - name: Build and run tests
         run: ./gradlew --scan build -x :jacodb-ets:build
@@ -108,31 +108,57 @@ jobs:
         with:
           # Only write to the cache for builds on the specific branches. (Default is 'main' only.)
           # Builds on other branches will only read existing entries from the cache.
-          cache-read-only: ${{ github.ref != 'refs/heads/develop' && github.ref != 'ref/heads/neo' }}
+          cache-read-only: ${{ github.ref != 'refs/heads/develop' && github.ref != 'refs/heads/neo' }}
 
-      - name: Set up ArkAnalyzer
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Single source of truth, shared with the publish workflows.
+          node-version-file: jacodb-ets/ts-frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: jacodb-ets/ts-frontend/package-lock.json
+
+      - name: Build and test ts-frontend
+        working-directory: jacodb-ets/ts-frontend
+        run: |
+          npm ci
+          npm run build
+          npm test
+
+      # The legacy ArkAnalyzer provider stays supported (selectable via
+      # ETS_IR_PROVIDER=arkanalyzer); setting ARKANALYZER_DIR here enables
+      # the provider-parity test in EtsTsFrontendTest.
+      #
+      # This step is BLOCKING on purpose: with `continue-on-error` a failure here
+      # left ARKANALYZER_DIR unset and the parity test silently skipped itself
+      # (assumeTrue), so ts-frontend/ArkAnalyzer regressions went unnoticed.
+      - name: Set up ArkAnalyzer (legacy provider)
         run: |
           REPO_URL="https://gitcode.com/Lipen/arkanalyzer"
           DEST_DIR="arkanalyzer"
           MAX_RETRIES=10
           RETRY_DELAY=3  # Delay between retries in seconds
-          BRANCH="neo/2025-09-03"
+          # Pinned commit of branch neo/2025-09-03: a third-party repository must not be
+          # able to change the code executed on the runner under our feet.
+          COMMIT="d9d7d5ffddb1f4081f90a73836c865794ec6a88c"
+
+          mkdir -p "$DEST_DIR"
+          cd "$DEST_DIR"
+          git init -q
+          git remote add origin "$REPO_URL"
 
           for ((i=1; i<=MAX_RETRIES; i++)); do
-              git clone --depth=1 --branch $BRANCH $REPO_URL $DEST_DIR && break
-              echo "Clone failed, retrying in $RETRY_DELAY seconds..."
+              git fetch --depth=1 origin "$COMMIT" && break
+              echo "Fetch failed, retrying in $RETRY_DELAY seconds..."
               sleep "$RETRY_DELAY"
           done
 
           if [[ $i -gt $MAX_RETRIES ]]; then
-              echo "Failed to clone the repository after $MAX_RETRIES attempts."
+              echo "Failed to fetch the repository after $MAX_RETRIES attempts."
               exit 1
-          else
-              echo "Repository cloned successfully."
           fi
-
-          echo "ARKANALYZER_DIR=$(realpath $DEST_DIR)" >> $GITHUB_ENV
-          cd $DEST_DIR
+          git checkout -q FETCH_HEAD
+          echo "Repository checked out at $COMMIT."
 
           # ArkAnalyzer's bundled TypeScript (ohos-typescript 4.9.5) cannot parse
           # the d.ts files of the latest floating @types/node (e.g. ffi.d.ts uses
@@ -141,9 +167,16 @@ jobs:
           # NB: do not run a second `npm install <pkg>` afterwards — it re-resolves
           # the tree and prunes ohos-typescript, which the postinstall script adds
           # with --no-save (i.e. it is absent from package.json).
+          #
+          # `--ignore-scripts` is NOT usable here for exactly that reason: ohos-typescript
+          # is installed by the postinstall hook and the build fails without it. The
+          # exposure is bounded by the pinned commit fetched above.
           npm pkg set 'devDependencies.@types/node=18'
           npm install
           npm run build
+
+          # Export only after a successful build so a broken checkout is never used.
+          echo "ARKANALYZER_DIR=$(realpath .)" >> $GITHUB_ENV
 
       - name: Run ETS tests
         run: ./gradlew --scan :jacodb-ets:generateTestResources :jacodb-ets:test

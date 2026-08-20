@@ -72,6 +72,4 @@ data class ThrowStmtDto(
 
 @Serializable
 @SerialName("IfStmt")
-data class IfStmtDto(
-    val condition: ConditionExprDto,
-) : StmtDto
+data class IfStmtDto(val condition: ValueDto) : StmtDto

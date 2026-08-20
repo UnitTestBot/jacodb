@@ -16,6 +16,7 @@
 
 package org.jacodb.ets.test
 
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonPrimitive
 import mu.KotlinLogging
@@ -52,6 +53,7 @@ import org.jacodb.ets.model.EtsMethodSignature
 import org.jacodb.ets.model.EtsReturnStmt
 import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.model.EtsStmtLocation
+import org.jacodb.ets.model.EtsSourceSpan
 import org.jacodb.ets.model.EtsUnknownType
 import org.jacodb.ets.test.utils.getResourcePath
 import org.jacodb.ets.test.utils.getResourcePathOrNull
@@ -73,7 +75,9 @@ import kotlin.io.path.name
 import kotlin.io.path.relativeTo
 import kotlin.io.path.walk
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 private val logger = KotlinLogging.logger {}
 
@@ -419,6 +423,54 @@ class EtsFromJsonTest {
     }
 
     @Test
+    fun testStatementSourceOriginFromJson() {
+        val jsonString = """
+            {
+              "signature": {
+                "declaringClass": {
+                  "name": "%dflt",
+                  "declaringFile": { "projectName": "TestProject", "fileName": "test.ts" }
+                },
+                "name": "%dflt",
+                "parameters": [],
+                "returnType": { "_": "UnknownType" }
+              },
+              "modifiers": 0,
+              "decorators": [],
+              "body": {
+                "locals": [],
+                "cfg": {
+                  "blocks": [{
+                    "id": 0,
+                    "successors": [],
+                    "stmts": [{ "_": "ReturnVoidStmt" }]
+                  }]
+                },
+                "stmtOrigins": [{
+                  "blockId": 0,
+                  "stmtIndex": 0,
+                  "source": {
+                    "fileName": "test.ts",
+                    "startOffset": 4,
+                    "endOffset": 11,
+                    "startLine": 1,
+                    "startColumn": 2,
+                    "endLine": 1,
+                    "endColumn": 9,
+                    "nodeKind": "ReturnStatement"
+                  }
+                }]
+              }
+            }
+        """.trimIndent()
+        val method = Json.decodeFromString<MethodDto>(jsonString).toEtsMethod()
+        assertEquals(
+            EtsSourceSpan("test.ts", 4, 11, 1, 2, 1, 9, "ReturnStatement"),
+            method.cfg.stmts.single().location.origin,
+        )
+    }
+
+    @Test
     fun testLoadNumberLiteralTypeFromJson() {
         // TS: `let x: 42 = 42;`
         val jsonString = """
@@ -491,6 +543,21 @@ class EtsFromJsonTest {
         logger.info { "typeDto = $typeDto" }
         assertIs<LiteralTypeDto>(typeDto)
         assertEquals(PrimitiveLiteralDto.BooleanLiteral(false), typeDto.literal)
+    }
+
+    @Test
+    fun testLoadNonFiniteNumericLiteralTypeFromJson() {
+        // A JSON null cannot retain whether the original primitive was a non-finite
+        // number or another unsupported producer value.
+        val jsonString = """
+            {
+              "_": "LiteralType",
+              "literal": null
+            }
+        """.trimIndent()
+        assertFailsWith<SerializationException> {
+            Json.decodeFromString<TypeDto>(jsonString)
+        }
     }
 
     @Test

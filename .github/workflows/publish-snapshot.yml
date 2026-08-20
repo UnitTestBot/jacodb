@@ -29,6 +29,15 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # `publish` builds the bundled ts-frontend runtime via npm, so the Node
+      # version baked into the published artifact must be pinned explicitly.
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: jacodb-ets/ts-frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: jacodb-ets/ts-frontend/package-lock.json
+
       - name: Generate snapshot version
         id: version
         run: |
