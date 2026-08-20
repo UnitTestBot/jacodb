@@ -63,6 +63,9 @@ const KNOWN_VALUE_KINDS = new Set([...EXPR_KINDS, ...REF_KINDS, ...IMMEDIATE_KIN
 
 const CALL_EXPR_KINDS = new Set(["InstanceCallExpr", "StaticCallExpr", "PtrCallExpr"]);
 
+/** LValue kinds accepted by Kotlin Convert as AssignStmt.left after stripping a legacy cast. */
+const LVALUE_KINDS = new Set(["Local", "ClosureFieldRef", "ArrayRef", "InstanceFieldRef", "StaticFieldRef"]);
+
 export function validateEtsFile(file: EtsFileDto): string[] {
     const errors: string[] = [];
     const ctx = file.signature.fileName;
@@ -229,13 +232,20 @@ function validateStmt(
     // Raw fallback values are ONLY legal as the RHS of a Local assignment:
     // Kotlin's ensureOneAddress rejects EtsRawEntity in every other position.
     const rawAllowedFor =
-        stmt._ === "AssignStmt" && stmt.left._ === "Local" ? stmt.right : undefined;
+        stmt._ === "AssignStmt" && effectiveAssignLeft(stmt.left)._ === "Local" ? stmt.right : undefined;
     const values = stmtOperands(stmt);
     for (const value of values) {
         validateValue(value, ctx, declaredLocals, err, value === rawAllowedFor);
     }
 
     switch (stmt._) {
+        case "AssignStmt": {
+            const left = effectiveAssignLeft(stmt.left);
+            if (!LVALUE_KINDS.has(left._)) {
+                err(`${ctx}: AssignStmt.left has kind '${left._}', expected one of ${[...LVALUE_KINDS].join("/")}`);
+            }
+            break;
+        }
         case "CallStmt": {
             if (!CALL_EXPR_KINDS.has(stmt.expr._)) {
                 err(`${ctx}: CallStmt.expr has kind '${stmt.expr._}', expected a call expr`);
@@ -245,6 +255,11 @@ function validateStmt(
         default:
             break;
     }
+}
+
+/** Kotlin Convert accepts legacy CastExpr(LValue) assignment targets by stripping the cast. */
+function effectiveAssignLeft(left: ValueDto): ValueDto {
+    return left._ === "CastExpr" ? left.arg : left;
 }
 
 /** Direct value operands of a statement (non-recursive). */

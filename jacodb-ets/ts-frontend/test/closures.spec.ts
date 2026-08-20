@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AssignStmtDto, StmtDto } from "../src/dto/stmts";
+import { validateEtsFile } from "../src/validate";
 import { defaultMethod, lower, methodByName, singleBlockStmts } from "./util";
 
 function allStmts(source: string): StmtDto[] {
@@ -94,6 +95,7 @@ describe("closures", () => {
                 fieldName: "current",
             }),
         }));
+        expect(validateEtsFile(file)).toEqual([]);
         expect(closure.body!.locals).not.toContainEqual(expect.objectContaining({ name: "current" }));
         const outer = methodByName(file, "outer");
         expect(outer.body!.locals).toContainEqual(expect.objectContaining({

@@ -315,6 +315,21 @@ describe("validateEtsFile", () => {
         );
         expect(ok).toEqual([]);
 
+        // Kotlin strips CastExpr on the LHS, so legacy CastExpr(Local) := <raw>
+        // is a Local assignment too and must remain valid at this boundary.
+        const legacyCastAssign = {
+            _: "AssignStmt",
+            left: { _: "CastExpr", arg: local("x"), type: UNKNOWN_TYPE },
+            right: rawValue,
+        } as unknown as StmtDto;
+        const okCast = violations(
+            bodyWithBlocks(
+                [{ id: 0, successors: [], predecessors: [], stmts: [legacyCastAssign, { _: "ReturnVoidStmt" }] }],
+                ["x"],
+            ),
+        );
+        expect(okCast).toEqual([]);
+
     });
 
     it("requires 'type' on raw fallback values", () => {
@@ -330,6 +345,23 @@ describe("validateEtsFile", () => {
             ], ["x"]),
         );
         expect(errs.some((e) => e.includes("missing required 'type'"))).toBe(true);
+    });
+
+    it("rejects malformed deserialized assignment targets", () => {
+        const malformedAssign = {
+            _: "AssignStmt",
+            left: { _: "BinopExpr", op: "+", left: local("a"), right: local("b"), type: NUMBER_TYPE },
+            right: local("a"),
+        } as unknown as StmtDto;
+
+        const errs = violations(
+            bodyWithBlocks(
+                [{ id: 0, successors: [], predecessors: [], stmts: [malformedAssign, { _: "ReturnVoidStmt" }] }],
+                ["a", "b"],
+            ),
+        );
+
+        expect(errs.some((e) => e.includes("AssignStmt.left has kind 'BinopExpr'"))).toBe(true);
     });
 
     it("checks predecessor/successor consistency", () => {
