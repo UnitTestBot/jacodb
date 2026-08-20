@@ -19,13 +19,13 @@ package org.jacodb.ets.test
 import org.jacodb.ets.utils.ProcessUtil
 import org.junit.jupiter.api.Test
 import java.net.ConnectException
-import java.net.InetAddress
 import java.net.Socket
 import java.nio.file.FileSystems
 import java.nio.file.StandardWatchEventKinds
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
+import kotlin.io.path.createDirectory
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.readText
 import kotlin.test.assertEquals
@@ -97,6 +97,8 @@ class ProcessUtilTest {
     @Test
     fun `interruption terminates and reaps the child before it is propagated`() {
         val testDirectory = createTempDirectory("process-util-interruption")
+        val stagingDirectory = testDirectory.resolve("staging").createDirectory()
+        val stagedReadyFile = stagingDirectory.resolve("ready.tmp")
         val readyFile = testDirectory.resolve("ready")
         val failure = AtomicReference<Throwable>()
         val interruptPreserved = AtomicBoolean()
@@ -112,7 +114,9 @@ class ProcessUtilTest {
                             "const server = net.createServer((socket) => { socket.end(); server.close(); }); " +
                             "process.on('SIGTERM', () => {}); " +
                             "server.listen(0, '127.0.0.1', () => " +
-                            "fs.writeFileSync(process.argv[1], String(server.address().port)));",
+                            "{ fs.writeFileSync(process.argv[1], String(server.address().port)); " +
+                            "fs.renameSync(process.argv[1], process.argv[2]); });",
+                        stagedReadyFile.toString(),
                         readyFile.toString(),
                     ),
                 )
@@ -132,7 +136,7 @@ class ProcessUtilTest {
 
             val port = readyFile.readText().toInt()
             val connection = runCatching {
-                Socket(InetAddress.getLoopbackAddress(), port).use { }
+                Socket("127.0.0.1", port).use { }
             }
             assertIs<InterruptedException>(failure.get())
             assertIs<ConnectException>(
