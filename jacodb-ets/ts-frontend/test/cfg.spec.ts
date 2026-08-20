@@ -73,6 +73,22 @@ describe("control flow lowering", () => {
         expect(lastStmt(blocks[falseTarget])).toMatchObject({ _: "ReturnStmt", arg: { value: "2" } });
     });
 
+    it("keeps distinct body and implicit-return successors for a trailing if without else", () => {
+        const { file } = lower(`
+            function f(a: boolean): void {
+                if (a) { console.log("body"); }
+            }
+        `);
+        const blocks = blocksOf(methodByName(file, "f"));
+        const branch = ifBlocks(blocks)[0];
+        expect(branch.successors).toHaveLength(2);
+        expect(new Set(branch.successors).size).toBe(2);
+
+        const successors = branch.successors.map((id) => blocks[id]);
+        expect(successors.some((block) => block.stmts.some((stmt) => stmt._ === "CallStmt"))).toBe(true);
+        expect(successors.some((block) => lastStmt(block)?._ === "ReturnVoidStmt")).toBe(true);
+    });
+
     it("preserves boolean, number, string, object, and unknown values as branch conditions", () => {
         const { file } = lower(`
             class Box {}

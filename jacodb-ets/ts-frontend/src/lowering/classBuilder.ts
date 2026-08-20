@@ -362,7 +362,7 @@ export class ClassBuilder {
                 new StmtLowerer(m, emitInitializers).lowerStatements(decl.body.statements);
             }
         }
-        if (m.cfg.isOpen()) {
+        if (m.cfg.isUnterminated()) {
             m.cfg.ret(thisLocal);
         }
         return {

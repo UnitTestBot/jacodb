@@ -37,7 +37,7 @@ type Terminator =
     | { kind: "if"; condition: ValueDto; trueTarget: Label; falseTarget: Label; origin?: SourceSpanDto }
     | { kind: "return"; arg?: ValueDto; origin?: SourceSpanDto }
     | { kind: "throw"; arg: ValueDto; origin?: SourceSpanDto }
-    | { kind: "open" }; // fall-through end; finalize() turns it into `return void`
+    | { kind: "unterminated" }; // fall-through end; finalize() turns it into `return void`
 
 interface LocatedStmt {
     stmt: StmtDto;
@@ -78,25 +78,25 @@ export class CfgBuilder {
         if (this.blocks[label] !== undefined) {
             throw new Error(`label ${label} is already placed`);
         }
-        const block: BuilderBlock = { label, stmts: [], terminator: { kind: "open" } };
+        const block: BuilderBlock = { label, stmts: [], terminator: { kind: "unterminated" } };
         this.blocks[label] = block;
         return block;
     }
 
     /**
      * Start emitting into the block for `label`.
-     * If the current block is still open, it falls through (goto) to `label`.
+     * If the current block is still unterminated, it falls through (goto) to `label`.
      */
     placeLabel(label: Label): void {
-        if (this.current.terminator.kind === "open") {
+        if (this.current.terminator.kind === "unterminated") {
             this.current.terminator = { kind: "goto", target: label };
         }
         this.current = this.place(label);
     }
 
     /** Whether the current block is unterminated (still accepts statements). */
-    isOpen(): boolean {
-        return this.current.terminator.kind === "open";
+    isUnterminated(): boolean {
+        return this.current.terminator.kind === "unterminated";
     }
 
     /** Attribute all statements/terminators emitted by [action] to [origin]. */
@@ -114,34 +114,34 @@ export class CfgBuilder {
      * Unreachable code after return/throw/etc: continue in a detached block so
      * lowering can proceed; it is dropped by reachability in `finalize()`.
      */
-    private ensureOpen(): void {
-        if (!this.isOpen()) {
+    private ensureUnterminated(): void {
+        if (!this.isUnterminated()) {
             this.current = this.place(this.newLabel());
         }
     }
 
     emit(stmt: StmtDto): void {
-        this.ensureOpen();
+        this.ensureUnterminated();
         this.current.stmts.push({ stmt, origin: this.currentOrigin });
     }
 
     goto(target: Label): void {
-        this.ensureOpen();
+        this.ensureUnterminated();
         this.current.terminator = { kind: "goto", target };
     }
 
     branch(condition: ValueDto, trueTarget: Label, falseTarget: Label): void {
-        this.ensureOpen();
+        this.ensureUnterminated();
         this.current.terminator = { kind: "if", condition, trueTarget, falseTarget, origin: this.currentOrigin };
     }
 
     ret(arg?: ValueDto): void {
-        this.ensureOpen();
+        this.ensureUnterminated();
         this.current.terminator = { kind: "return", arg, origin: this.currentOrigin };
     }
 
     throwValue(arg: ValueDto): void {
-        this.ensureOpen();
+        this.ensureUnterminated();
         this.current.terminator = { kind: "throw", arg, origin: this.currentOrigin };
     }
 
@@ -184,7 +184,16 @@ export class CfgBuilder {
                 case "if":
                     locatedStmts.push({ stmt: { _: "IfStmt", condition: t.condition }, origin: t.origin });
                     // DTO convention: [false, true].
-                    successors = [idOf.get(t.falseTarget)!, idOf.get(t.trueTarget)!];
+                    const falseSuccessor = idOf.get(t.falseTarget);
+                    const trueSuccessor = idOf.get(t.trueTarget);
+                    if (
+                        falseSuccessor === undefined ||
+                        trueSuccessor === undefined ||
+                        falseSuccessor === trueSuccessor
+                    ) {
+                        throw new Error("if terminator must resolve to two distinct successor ids");
+                    }
+                    successors = [falseSuccessor, trueSuccessor];
                     break;
                 case "return":
                     locatedStmts.push({
@@ -197,7 +206,7 @@ export class CfgBuilder {
                     locatedStmts.push({ stmt: { _: "ThrowStmt", arg: t.arg }, origin: t.origin });
                     successors = [];
                     break;
-                case "open":
+                case "unterminated":
                     // Fall-through method end.
                     locatedStmts.push({ stmt: RETURN_VOID_STMT });
                     successors = [];
