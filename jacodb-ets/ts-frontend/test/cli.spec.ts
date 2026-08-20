@@ -125,4 +125,131 @@ describe("project mode", () => {
             },
         });
     });
+
+    it("keeps an in-root filename beginning with two dots project-owned", () => {
+        const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-dotdot-file-"));
+        tempDirs.push(projectDir);
+        fs.writeFileSync(path.join(projectDir, "..models.ts"), "export let state = 1;");
+        fs.writeFileSync(
+            path.join(projectDir, "main.ts"),
+            'import { state } from "./..models"; export function read(): number { return state; }',
+        );
+
+        const outputDir = path.join(projectDir, "ir");
+        expect(main(["--project", projectDir, outputDir])).toBe(0);
+        const imported = JSON.parse(fs.readFileSync(path.join(outputDir, "main.ts.json"), "utf8"));
+        const readMethod = imported.classes[0].methods.find(
+            (method: { signature: { name: string } }) => method.signature.name === "read",
+        );
+        const fieldRead = readMethod.body.cfg.blocks
+            .flatMap((block: { stmts: unknown[] }) => block.stmts)
+            .find((stmt: { right?: { _?: string } }) => stmt.right?._ === "StaticFieldRef");
+        expect(fieldRead).toMatchObject({
+            right: {
+                field: {
+                    name: "state",
+                    declaringClass: {
+                        name: "%dflt",
+                        declaringFile: { projectName: path.basename(projectDir), fileName: "..models.ts" },
+                    },
+                },
+            },
+        });
+    });
+
+    it("does not treat direct dependency exports named Infinity and NaN as built-ins", () => {
+        const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-number-direct-imports-"));
+        tempDirs.push(projectDir);
+        const dependencyDir = path.join(projectDir, "node_modules", "numeric-globals");
+        fs.mkdirSync(dependencyDir, { recursive: true });
+        fs.writeFileSync(
+            path.join(dependencyDir, "index.d.ts"),
+            "export declare const Infinity: number; export declare const NaN: number;",
+        );
+        fs.writeFileSync(
+            path.join(projectDir, "main.ts"),
+            [
+                'import { Infinity, NaN } from "numeric-globals";',
+                "export function direct() { return Infinity + NaN; }",
+            ].join("\n"),
+        );
+
+        const outputDir = path.join(projectDir, "ir");
+        expect(main(["--project", projectDir, outputDir])).toBe(0);
+        const file = JSON.parse(fs.readFileSync(path.join(outputDir, "main.ts.json"), "utf8"));
+        const method = file.classes[0].methods.find(
+            (candidate: { signature: { name: string } }) => candidate.signature.name === "direct",
+        );
+        const assignment = method.body.cfg.blocks
+            .flatMap((block: { stmts: unknown[] }) => block.stmts)
+            .find((stmt: { right?: { _?: string } }) => stmt.right?._ === "BinopExpr");
+
+        expect([assignment.right.left, assignment.right.right]).toEqual([
+            { _: "Local", name: "Infinity", type: { _: "NumberType" } },
+            { _: "Local", name: "NaN", type: { _: "NumberType" } },
+        ]);
+    });
+
+    it("does not treat dependency aliases for Infinity and NaN as built-ins", () => {
+        const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-number-aliases-"));
+        tempDirs.push(projectDir);
+        const dependencyDir = path.join(projectDir, "node_modules", "numeric-globals");
+        fs.mkdirSync(dependencyDir, { recursive: true });
+        fs.writeFileSync(
+            path.join(dependencyDir, "index.d.ts"),
+            "export declare const Infinity: number; export declare const NaN: number;",
+        );
+        fs.writeFileSync(
+            path.join(projectDir, "main.ts"),
+            [
+                'import { Infinity as dependencyInfinity, NaN as dependencyNaN } from "numeric-globals";',
+                "export function aliases() { return dependencyInfinity + dependencyNaN; }",
+            ].join("\n"),
+        );
+
+        const outputDir = path.join(projectDir, "ir");
+        expect(main(["--project", projectDir, outputDir])).toBe(0);
+        const file = JSON.parse(fs.readFileSync(path.join(outputDir, "main.ts.json"), "utf8"));
+        const method = file.classes[0].methods.find(
+            (candidate: { signature: { name: string } }) => candidate.signature.name === "aliases",
+        );
+        const assignment = method.body.cfg.blocks
+            .flatMap((block: { stmts: unknown[] }) => block.stmts)
+            .find((stmt: { right?: { _?: string } }) => stmt.right?._ === "BinopExpr");
+
+        expect([assignment.right.left, assignment.right.right]).toEqual([
+            { _: "Local", name: "dependencyInfinity", type: { _: "NumberType" } },
+            { _: "Local", name: "dependencyNaN", type: { _: "NumberType" } },
+        ]);
+    });
+
+    it("does not confuse a project named percent-unk with TypeScript default libraries", () => {
+        const workspaceDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-project-name-"));
+        tempDirs.push(workspaceDir);
+        const projectDir = path.join(workspaceDir, "%unk");
+        fs.mkdirSync(projectDir);
+        fs.writeFileSync(
+            path.join(projectDir, "main.ts"),
+            [
+                "declare const Infinity: number;",
+                "declare const NaN: number;",
+                "export function projectGlobals() { return Infinity + NaN; }",
+            ].join("\n"),
+        );
+
+        const outputDir = path.join(workspaceDir, "ir");
+        expect(main(["--project", projectDir, outputDir])).toBe(0);
+        const file = JSON.parse(fs.readFileSync(path.join(outputDir, "main.ts.json"), "utf8"));
+        const method = file.classes[0].methods.find(
+            (candidate: { signature: { name: string } }) => candidate.signature.name === "projectGlobals",
+        );
+        const assignment = method.body.cfg.blocks
+            .flatMap((block: { stmts: unknown[] }) => block.stmts)
+            .find((stmt: { right?: { _?: string } }) => stmt.right?._ === "BinopExpr");
+
+        expect([assignment.right.left, assignment.right.right]).toEqual([
+            expect.objectContaining({ _: "Local", type: { _: "NumberType" } }),
+            expect.objectContaining({ _: "Local", type: { _: "NumberType" } }),
+        ]);
+    });
 });

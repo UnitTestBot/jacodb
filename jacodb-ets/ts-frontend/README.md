@@ -39,9 +39,11 @@ Use `-v` for lowering diagnostics on stderr.
 
 ## Kotlin use and provider selection
 
-TS/JS uses `EtsIrProvider.TS_FRONTEND` by default. A single `.ets` file, or a
-project containing one, uses `EtsIrProvider.ARKANALYZER`; select either provider
-explicitly when required. ArkAnalyzer requires `ARKANALYZER_DIR`.
+TS/JS uses `EtsIrProvider.TS_FRONTEND` by default. Automatic selection switches
+to `EtsIrProvider.ARKANALYZER` for a single `.ets` file, or for a project
+containing a visible `.ets` file outside hidden directories and `node_modules`.
+Select either provider explicitly when required. ArkAnalyzer requires
+`ARKANALYZER_DIR`.
 
 ```kotlin
 import kotlin.io.path.Path

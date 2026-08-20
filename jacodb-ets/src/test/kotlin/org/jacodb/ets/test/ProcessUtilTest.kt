@@ -18,8 +18,20 @@ package org.jacodb.ets.test
 
 import org.jacodb.ets.utils.ProcessUtil
 import org.junit.jupiter.api.Test
+import java.net.ConnectException
+import java.net.InetAddress
+import java.net.Socket
+import java.nio.file.FileSystems
+import java.nio.file.StandardWatchEventKinds
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.concurrent.thread
+import kotlin.io.path.createTempDirectory
+import kotlin.io.path.readText
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 class ProcessUtilTest {
     private val node = System.getenv("NODE_EXECUTABLE") ?: "node"
@@ -80,5 +92,57 @@ class ProcessUtilTest {
         assertEquals(expected, result.stdout)
         assertEquals("", result.stderr)
         assertFalse(result.isTimeout)
+    }
+
+    @Test
+    fun `interruption terminates and reaps the child before it is propagated`() {
+        val testDirectory = createTempDirectory("process-util-interruption")
+        val readyFile = testDirectory.resolve("ready")
+        val failure = AtomicReference<Throwable>()
+        val interruptPreserved = AtomicBoolean()
+        val watcher = FileSystems.getDefault().newWatchService()
+        testDirectory.register(watcher, StandardWatchEventKinds.ENTRY_CREATE)
+        val runner = thread(start = false) {
+            try {
+                ProcessUtil.run(
+                    listOf(
+                        node,
+                        "-e",
+                        "const fs = require('fs'); const net = require('net'); " +
+                            "const server = net.createServer((socket) => { socket.end(); server.close(); }); " +
+                            "process.on('SIGTERM', () => {}); " +
+                            "server.listen(0, '127.0.0.1', () => " +
+                            "fs.writeFileSync(process.argv[1], String(server.address().port)));",
+                        readyFile.toString(),
+                    ),
+                )
+            } catch (error: Throwable) {
+                failure.set(error)
+                interruptPreserved.set(Thread.currentThread().isInterrupted)
+            }
+        }
+
+        try {
+            runner.start()
+            watcher.take()
+            assertTrue(readyFile.toFile().isFile, "child did not publish its listening port")
+
+            runner.interrupt()
+            runner.join()
+
+            val port = readyFile.readText().toInt()
+            val connection = runCatching {
+                Socket(InetAddress.getLoopbackAddress(), port).use { }
+            }
+            assertIs<InterruptedException>(failure.get())
+            assertIs<ConnectException>(
+                connection.exceptionOrNull(),
+                "child still accepted connections after interruption cleanup",
+            )
+            assertTrue(interruptPreserved.get(), "caller interrupt status was not restored")
+        } finally {
+            watcher.close()
+            testDirectory.toFile().deleteRecursively()
+        }
     }
 }

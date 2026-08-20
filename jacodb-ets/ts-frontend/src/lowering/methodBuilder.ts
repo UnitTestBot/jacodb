@@ -43,6 +43,7 @@ export interface LoweringContext {
     checker: ts.TypeChecker;
     converter: TypeConverter;
     fileSignatureFor(sf: ts.SourceFile): FileSignatureDto;
+    isDefaultLibrarySourceFile(sf: ts.SourceFile): boolean;
     diagnostics: Diagnostics;
     anonymous: AnonymousRegistry;
     /** File/namespace variables represented as static fields of the owning %dflt class. */

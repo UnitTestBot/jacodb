@@ -24,6 +24,36 @@ import kotlin.time.Duration
 
 private val logger = KotlinLogging.logger {}
 
+private fun terminateAndReap(
+    process: Process,
+    initialInterruption: InterruptedException? = null,
+) {
+    var interruption = initialInterruption
+    process.destroy()
+    if (process.isAlive) {
+        process.destroyForcibly()
+    }
+    while (true) {
+        try {
+            process.waitFor()
+            break
+        } catch (error: InterruptedException) {
+            if (interruption == null) {
+                interruption = error
+            } else if (interruption !== error) {
+                interruption.addSuppressed(error)
+            }
+            if (process.isAlive) {
+                process.destroyForcibly()
+            }
+        }
+    }
+    if (interruption != null) {
+        Thread.currentThread().interrupt()
+        throw interruption
+    }
+}
+
 object ProcessUtil {
     data class Result(
         val exitCode: Int,
@@ -53,22 +83,23 @@ object ProcessUtil {
                 .redirectOutput(stdoutFile.toFile())
                 .redirectError(stderrFile.toFile())
                 .start()
-            val isTimeout = if (timeout == null) {
-                process.waitFor()
-                false
-            } else {
-                !process.waitFor(
-                    timeout.inWholeNanoseconds.coerceAtLeast(0),
-                    TimeUnit.NANOSECONDS,
-                )
+            val isTimeout = try {
+                if (timeout == null) {
+                    process.waitFor()
+                    false
+                } else {
+                    !process.waitFor(
+                        timeout.inWholeNanoseconds.coerceAtLeast(0),
+                        TimeUnit.NANOSECONDS,
+                    )
+                }
+            } catch (error: InterruptedException) {
+                terminateAndReap(process, error)
+                throw error
             }
 
             if (isTimeout) {
-                process.destroy()
-                if (process.isAlive) {
-                    process.destroyForcibly()
-                }
-                process.waitFor()
+                terminateAndReap(process)
             }
 
             return Result(

@@ -90,6 +90,7 @@ export function buildEtsFile(
         checker,
         converter,
         fileSignatureFor,
+        isDefaultLibrarySourceFile: (sf) => program.isSourceFileDefaultLibrary(sf),
         diagnostics,
         anonymous,
         moduleFields: new Map(),
