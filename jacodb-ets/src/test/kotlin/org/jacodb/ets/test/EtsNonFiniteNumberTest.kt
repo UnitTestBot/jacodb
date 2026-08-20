@@ -18,10 +18,12 @@ package org.jacodb.ets.test
 
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jacodb.ets.dto.ConstantDto
 import org.jacodb.ets.dto.LiteralTypeDto
 import org.jacodb.ets.dto.NumberTypeDto
+import org.jacodb.ets.dto.PrimitiveLiteralDto
 import org.jacodb.ets.dto.dtoModule
 import org.jacodb.ets.dto.toEtsConstant
 import org.jacodb.ets.model.EtsNumberConstant
@@ -50,6 +52,16 @@ class EtsNonFiniteNumberTest {
 
         assertFailsWith<SerializationException> {
             json.decodeFromString<LiteralTypeDto>("""{"literal":null}""")
+        }
+    }
+
+    @Test
+    fun `rejects non-finite primitive literal serialization instead of losing its value`() {
+        val json = Json { serializersModule = dtoModule }
+        val type = LiteralTypeDto(PrimitiveLiteralDto.NumberLiteral(Double.POSITIVE_INFINITY))
+
+        assertFailsWith<SerializationException> {
+            json.encodeToString(type)
         }
     }
 }

@@ -64,12 +64,14 @@ object PrimitiveLiteralSerializer : KSerializer<PrimitiveLiteralDto> {
         require(encoder is JsonEncoder)
         when (value) {
             is PrimitiveLiteralDto.StringLiteral -> encoder.encodeString(value.value)
-            // Non-finite numbers are not representable in JSON; emit `null`,
-            // matching what `JSON.stringify` does on the frontend side.
+            // Non-finite numbers are not representable as JSON primitives. Reject them
+            // instead of silently losing their numeric kind and value as `null`.
             is PrimitiveLiteralDto.NumberLiteral -> if (value.value.isFinite()) {
                 encoder.encodeDouble(value.value)
             } else {
-                encoder.encodeJsonElement(JsonNull)
+                throw SerializationException(
+                    "Cannot serialize non-finite number '${value.value}' as a JSON primitive literal"
+                )
             }
             is PrimitiveLiteralDto.BooleanLiteral -> encoder.encodeBoolean(value.value)
         }

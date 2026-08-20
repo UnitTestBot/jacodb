@@ -22,8 +22,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
 import kotlinx.serialization.json.JsonObject
-import org.jacodb.ets.FlattenedArrayType
-import org.jacodb.ets.flattenArrayType
+import org.jacodb.ets.toArrayType
 
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
@@ -143,9 +142,7 @@ data class NewArrayExprDto(
     val size: ValueDto,
 ) : ExprDto {
     override val type: TypeDto
-        get() = flattenArrayType(elementType, 1) { type ->
-            (type as? ArrayTypeDto)?.let { FlattenedArrayType(it.elementType, it.dimensions) }
-        }.let { ArrayTypeDto(it.elementType, it.dimensions) }
+        get() = elementType.toArrayType(dimensions = 1)
 }
 
 @Serializable

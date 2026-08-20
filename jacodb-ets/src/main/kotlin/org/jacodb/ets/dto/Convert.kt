@@ -17,15 +17,13 @@
 package org.jacodb.ets.dto
 
 import mu.KotlinLogging
-import org.jacodb.ets.FlattenedArrayType
-import org.jacodb.ets.flattenArrayType
+import org.jacodb.ets.toArrayType
 import org.jacodb.ets.model.BasicBlock
 import org.jacodb.ets.model.EtsAddExpr
 import org.jacodb.ets.model.EtsAliasType
 import org.jacodb.ets.model.EtsAndExpr
 import org.jacodb.ets.model.EtsAnyType
 import org.jacodb.ets.model.EtsArrayAccess
-import org.jacodb.ets.model.EtsArrayType
 import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsAwaitExpr
 import org.jacodb.ets.model.EtsBitAndExpr
@@ -143,6 +141,15 @@ import org.jacodb.ets.model.EtsVoidType
 import org.jacodb.ets.model.EtsYieldExpr
 
 private val logger = KotlinLogging.logger {}
+
+private val ClassSignatureDto.declaringFileName: String
+    get() = declaringFile.fileName
+
+private val MethodSignatureDto.declaringFileName: String
+    get() = declaringClass.declaringFileName
+
+private val NamespaceSignatureDto.declaringFileName: String
+    get() = declaringFile.fileName
 
 data class StmtOriginKey(val blockId: Int, val stmtIndex: Int)
 
@@ -518,7 +525,7 @@ class EtsMethodBuilder(
     }
 }
 
-fun ClassDto.toEtsClass(enclosingFileName: String = signature.declaringFile.fileName): EtsClass {
+fun ClassDto.toEtsClass(enclosingFileName: String = signature.declaringFileName): EtsClass {
     val signature = signature.toEtsClassSignature()
     val superClassSignature = superClassName?.takeIf { it != "" }?.let { name ->
         EtsClassSignature(
@@ -563,9 +570,7 @@ fun TypeDto.toEtsType(): EtsType = when (this) {
 
     // Nested array types are folded, matching EtsNewArrayExpr.type and NewArrayExprDto:
     // `T[][]` is ArrayType(T, 2), never ArrayType(ArrayType(T, 1), 1).
-    is ArrayTypeDto -> flattenArrayType(elementType.toEtsType(), dimensions) { type ->
-        (type as? EtsArrayType)?.let { FlattenedArrayType(it.elementType, it.dimensions) }
-    }.let { EtsArrayType(it.elementType, it.dimensions) }
+    is ArrayTypeDto -> elementType.toEtsType().toArrayType(dimensions)
 
     BooleanTypeDto -> EtsBooleanType
 
@@ -726,7 +731,7 @@ fun LocalSignatureDto.toEtsLocalSignature(): EtsLocalSignature {
 }
 
 fun MethodDto.toEtsMethod(
-    enclosingFileName: String = signature.declaringClass.declaringFile.fileName,
+    enclosingFileName: String = signature.declaringFileName,
 ): EtsMethod {
     val signature = signature.toEtsMethodSignature()
     val typeParameters = typeParameters?.map { it.toEtsType() } ?: emptyList()
@@ -783,7 +788,7 @@ fun FieldDto.toEtsField(): EtsField {
     )
 }
 
-fun NamespaceDto.toEtsNamespace(enclosingFileName: String = signature.declaringFile.fileName): EtsNamespace {
+fun NamespaceDto.toEtsNamespace(enclosingFileName: String = signature.declaringFileName): EtsNamespace {
     val signature = signature.toEtsNamespaceSignature()
     val classes = classes.map { it.toEtsClass(enclosingFileName) }
     val namespaces = namespaces.map { it.toEtsNamespace(enclosingFileName) }

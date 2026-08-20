@@ -16,16 +16,25 @@
 
 package org.jacodb.ets
 
-internal data class FlattenedArrayType<T>(
-    val elementType: T,
-    val dimensions: Int,
-)
+import org.jacodb.ets.dto.ArrayTypeDto
+import org.jacodb.ets.dto.TypeDto
+import org.jacodb.ets.model.EtsArrayType
+import org.jacodb.ets.model.EtsType
 
-internal tailrec fun <T> flattenArrayType(
-    elementType: T,
-    dimensions: Int,
-    nestedArray: (T) -> FlattenedArrayType<T>?,
-): FlattenedArrayType<T> {
-    val nested = nestedArray(elementType) ?: return FlattenedArrayType(elementType, dimensions)
-    return flattenArrayType(nested.elementType, dimensions + nested.dimensions, nestedArray)
+/**
+ * Creates the canonical DTO representation of an array type.
+ *
+ * [ArrayTypeDto] itself is a wire-format data class and therefore permits nested array
+ * element types. Conversion and expression code use this helper to preserve the model
+ * invariant: dimensions are accumulated in one outer array type.
+ */
+internal tailrec fun TypeDto.toArrayType(dimensions: Int): ArrayTypeDto = when (this) {
+    is ArrayTypeDto -> elementType.toArrayType(dimensions + this.dimensions)
+    else -> ArrayTypeDto(elementType = this, dimensions = dimensions)
+}
+
+/** Canonical model counterpart of [TypeDto.toArrayType]. */
+internal tailrec fun EtsType.toArrayType(dimensions: Int): EtsArrayType = when (this) {
+    is EtsArrayType -> elementType.toArrayType(dimensions + this.dimensions)
+    else -> EtsArrayType(elementType = this, dimensions = dimensions)
 }
