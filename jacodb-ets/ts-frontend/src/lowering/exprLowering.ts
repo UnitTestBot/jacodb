@@ -32,6 +32,7 @@ import * as ts from "typescript";
 import {
     ANONYMOUS_CLASS_PREFIX,
     ANONYMOUS_METHOD_PREFIX,
+    ClassCategory,
     CONSTRUCTOR_NAME,
     DEFAULT_ARK_CLASS_NAME,
     PATTERN_PARAMETER_PREFIX,
@@ -1253,7 +1254,7 @@ export class ExprLowerer {
             signature,
             modifiers: 0,
             decorators: [],
-            category: 5, // OBJECT
+            category: ClassCategory.OBJECT,
             superClassName: "",
             implementedInterfaceNames: [],
             fields,

@@ -30,6 +30,7 @@ import * as ts from "typescript";
 import {
     DEFAULT_ARK_CLASS_NAME,
     DEFAULT_ARK_METHOD_NAME,
+    ClassCategory,
     ExportType,
     ExportTypeValue,
     ImportType,
@@ -329,7 +330,7 @@ class FileBuilder {
             signature: defaultClassSignature,
             modifiers: 0,
             decorators: [],
-            category: 0,
+            category: ClassCategory.CLASS,
             superClassName: "",
             implementedInterfaceNames: [],
             fields,
