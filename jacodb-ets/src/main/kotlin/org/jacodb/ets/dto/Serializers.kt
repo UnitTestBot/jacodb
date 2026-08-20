@@ -78,10 +78,10 @@ object PrimitiveLiteralSerializer : KSerializer<PrimitiveLiteralDto> {
     override fun deserialize(decoder: Decoder): PrimitiveLiteralDto {
         require(decoder is JsonDecoder)
         val element = decoder.decodeJsonElement()
-        // `JSON.stringify` turns non-finite numbers (e.g. the literal `1e999`) into `null`,
-        // which is a JsonNull, not a JsonPrimitive with a numeric content.
+        // JsonNull loses the original primitive kind, so it cannot faithfully represent
+        // a non-finite numeric literal.
         if (element is JsonNull) {
-            return PrimitiveLiteralDto.NumberLiteral(Double.NaN)
+            throw SerializationException("Cannot deserialize JsonNull as a primitive literal")
         }
         if (element !is JsonPrimitive) {
             throw SerializationException("Expected JsonPrimitive, but found $element")

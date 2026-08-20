@@ -16,6 +16,7 @@
 
 package org.jacodb.ets.test
 
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonPrimitive
 import mu.KotlinLogging
@@ -74,6 +75,7 @@ import kotlin.io.path.name
 import kotlin.io.path.relativeTo
 import kotlin.io.path.walk
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
@@ -545,20 +547,17 @@ class EtsFromJsonTest {
 
     @Test
     fun testLoadNonFiniteNumericLiteralTypeFromJson() {
-        // TS: `let x: 1e999 = 1e999;` — the value overflows to Infinity and
-        // `JSON.stringify` writes it out as `null`, which must not crash the load.
+        // A JSON null cannot retain whether the original primitive was a non-finite
+        // number or another unsupported producer value.
         val jsonString = """
             {
               "_": "LiteralType",
               "literal": null
             }
         """.trimIndent()
-        val typeDto = Json.decodeFromString<TypeDto>(jsonString)
-        logger.info { "typeDto = $typeDto" }
-        assertIs<LiteralTypeDto>(typeDto)
-        val literal = typeDto.literal
-        assertIs<PrimitiveLiteralDto.NumberLiteral>(literal)
-        assertTrue(literal.value.isNaN())
+        assertFailsWith<SerializationException> {
+            Json.decodeFromString<TypeDto>(jsonString)
+        }
     }
 
     @Test

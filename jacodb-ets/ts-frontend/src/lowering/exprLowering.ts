@@ -199,7 +199,7 @@ export class ExprLowerer {
 
     private lowerExprImpl(node: ts.Expression): ValueDto {
         if (ts.isNumericLiteral(node)) {
-            return constant(node.text, NUMBER_TYPE);
+            return constant(numericConstantText(node), NUMBER_TYPE);
         }
         if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
             return constant(node.text, STRING_TYPE);
@@ -300,6 +300,10 @@ export class ExprLowerer {
     // ------------------------------------------------------------------
 
     private lowerIdentifier(node: ts.Identifier): ValueDto {
+        const nonFiniteNumber = this.builtInNonFiniteNumber(node);
+        if (nonFiniteNumber !== undefined) {
+            return constant(nonFiniteNumber, NUMBER_TYPE);
+        }
         if (node.text === "undefined") {
             return constant("undefined", UNDEFINED_TYPE);
         }
@@ -310,6 +314,22 @@ export class ExprLowerer {
         // Other named references are locals; unresolved globals (e.g. console)
         // become locals with UnknownType, same as ArkAnalyzer.
         return this.m.localForIdentifier(node, this.safeTypeOf(node));
+    }
+
+    /** Built-in numeric globals are constants, but a project declaration must still shadow them. */
+    private builtInNonFiniteNumber(node: ts.Identifier): "Infinity" | "NaN" | undefined {
+        const symbol = this.m.converter.symbolOf(node);
+        if (symbol === undefined || symbol.declarations?.some((declaration) => !declaration.getSourceFile().isDeclarationFile)) {
+            return undefined;
+        }
+        switch (symbol.getName()) {
+            case "Infinity":
+                return "Infinity";
+            case "NaN":
+                return "NaN";
+            default:
+                return undefined;
+        }
     }
 
     // ------------------------------------------------------------------
@@ -743,9 +763,13 @@ export class ExprLowerer {
             case ts.SyntaxKind.MinusToken: {
                 // Constant-fold negative literals: -5 => Constant("-5").
                 if (ts.isNumericLiteral(node.operand)) {
-                    return constant(`-${node.operand.text}`, NUMBER_TYPE);
+                    return constant(`-${numericConstantText(node.operand)}`, NUMBER_TYPE);
                 }
-                return { _: "UnopExpr", op: "-", arg: this.lowerToImmediate(node.operand) };
+                const operand = this.lowerToImmediate(node.operand);
+                if (operand._ === "Constant" && operand.value === "Infinity" && operand.type._ === "NumberType") {
+                    return constant("-Infinity", NUMBER_TYPE);
+                }
+                return { _: "UnopExpr", op: "-", arg: operand };
             }
             case ts.SyntaxKind.ExclamationToken:
                 return { _: "UnopExpr", op: "!", arg: this.lowerToImmediate(node.operand) };
@@ -1417,6 +1441,11 @@ export class ExprLowerer {
 
 export function constant(value: string, type: TypeDto): ConstantDto {
     return { _: "Constant", value, type };
+}
+
+/** Preserve the source spelling only when TypeScript normalizes a non-finite literal. */
+function numericConstantText(node: ts.NumericLiteral): string {
+    return Number.isFinite(Number(node.text)) ? node.text : node.getText();
 }
 
 function objectField(declaringClass: ClassSignatureDto, name: string, type: TypeDto): FieldDto {

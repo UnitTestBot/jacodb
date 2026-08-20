@@ -110,10 +110,40 @@ describe("static context", () => {
 });
 
 describe("non-finite numeric literals", () => {
-    it("degrades an overflowing literal type to number", () => {
-        const { file } = lower("const huge: 1e999 = 1e999;");
+    it("preserves built-in non-finite numbers as numeric constants", () => {
+        const { file } = lower(`
+            function values() {
+                const huge = 1e999;
+                const infinite = Infinity;
+                const negativeInfinite = -Infinity;
+                const notANumber = NaN;
+                return [huge, infinite, negativeInfinite, notANumber];
+            }
+        `);
         const json = JSON.stringify(file);
         expect(json).not.toContain('"literal":null');
+
+        const constants = allStmts(methodByName(file, "values"))
+            .filter((stmt): stmt is AssignStmtDto => stmt._ === "AssignStmt" && stmt.right._ === "Constant")
+            .map((stmt) => stmt.right);
+        expect(constants).toEqual(expect.arrayContaining([
+            { _: "Constant", value: "1e999", type: { _: "NumberType" } },
+            { _: "Constant", value: "Infinity", type: { _: "NumberType" } },
+            { _: "Constant", value: "-Infinity", type: { _: "NumberType" } },
+            { _: "Constant", value: "NaN", type: { _: "NumberType" } },
+        ]));
+    });
+
+    it("keeps locally shadowed Infinity and NaN as locals", () => {
+        const { file } = lower("function shadow(Infinity: number, NaN: number) { return Infinity + NaN; }");
+        const values = allStmts(methodByName(file, "shadow"))
+            .filter((stmt): stmt is AssignStmtDto => stmt._ === "AssignStmt")
+            .flatMap((stmt) => stmt.right._ === "BinopExpr" ? [stmt.right.left, stmt.right.right] : [stmt.right]);
+
+        expect(values).toEqual(expect.arrayContaining([
+            { _: "Local", name: "Infinity", type: { _: "NumberType" } },
+            { _: "Local", name: "NaN", type: { _: "NumberType" } },
+        ]));
     });
 });
 
