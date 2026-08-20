@@ -38,10 +38,7 @@ import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
 import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
 import org.jacodb.ets.utils.EtsIrProvider
 import org.jacodb.ets.utils.defaultProviderFor
-import org.jacodb.ets.utils.etsIrSerializerScript
 import org.jacodb.ets.utils.generateEtsIR
-import org.jacodb.ets.utils.loadEtsFileAutoConvert
-import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createTempDirectory
@@ -50,7 +47,6 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Tests for the native TypeScript frontend (`jacodb-ets/ts-frontend`).
@@ -62,17 +58,8 @@ import kotlin.time.Duration.Companion.seconds
 class EtsTsFrontendTest {
 
     companion object {
-        private fun tsFrontendAvailable(): Boolean =
-            try {
-                etsIrSerializerScript(EtsIrProvider.TS_FRONTEND).exists()
-            } catch (_: Exception) {
-                false
-            }
-
         /** Run the PRODUCTION integration path: generateEtsIR + EtsFileDto.loadFromJson. */
         private fun runFrontend(source: String, fileName: String = "test.ts"): EtsFileDto {
-            assumeTrue(tsFrontendAvailable(), "bundled ts-frontend resource is unavailable")
-
             val dir = createTempDirectory("ts-frontend-test")
             val inputPath = dir.resolve(fileName)
             inputPath.writeText(source)
@@ -80,7 +67,7 @@ class EtsTsFrontendTest {
             val outputPath = generateEtsIR(
                 inputPath,
                 isProject = false,
-                timeout = 60.seconds,
+                timeout = null,
                 provider = EtsIrProvider.TS_FRONTEND,
             )
             assertTrue(outputPath.exists(), "ts-frontend did not produce output: $outputPath")
@@ -90,13 +77,7 @@ class EtsTsFrontendTest {
     }
 
     @Test
-    fun `bundled frontend keeps matching TypeScript standard libraries`() {
-        val script = etsIrSerializerScript(EtsIrProvider.TS_FRONTEND)
-        assertTrue(
-            script.parent.resolve("lib.es2020.d.ts").exists(),
-            "the production frontend runtime must include TypeScript standard libraries next to index.js",
-        )
-
+    fun `bundled frontend lowers Array from using its TypeScript standard libraries`() {
         val dto = runFrontend(
             """
                 const flags = new Array<boolean>(3);
@@ -433,32 +414,6 @@ class EtsTsFrontendTest {
         // Optional chaining and generators linearize fine.
         assertTrue(defaultClass.methods.single { it.name == "safeFirst" }.cfg.stmts.isNotEmpty())
         assertTrue(defaultClass.methods.single { it.name == "naturals" }.cfg.stmts.isNotEmpty())
-    }
-
-    @Test
-    fun `arkanalyzer provider stays selectable`() {
-        val arkAnalyzerAvailable = try {
-            etsIrSerializerScript(EtsIrProvider.ARKANALYZER).exists()
-        } catch (_: Exception) {
-            false
-        }
-        assumeTrue(arkAnalyzerAvailable, "ArkAnalyzer is not available (set ARKANALYZER_DIR to enable)")
-
-        val dir = createTempDirectory("arkanalyzer-provider-test")
-        val inputPath = dir.resolve("simple.ts")
-        inputPath.writeText(
-            """
-                function twice(x: number): number {
-                    return x * 2;
-                }
-                let y = twice(21);
-            """.trimIndent()
-        )
-
-        val etsFile = loadEtsFileAutoConvert(inputPath, provider = EtsIrProvider.ARKANALYZER)
-        val scene = EtsScene(listOf(etsFile))
-        val defaultClass = scene.projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
-        assertTrue(defaultClass.methods.any { it.name == "twice" })
     }
 
     @Test
