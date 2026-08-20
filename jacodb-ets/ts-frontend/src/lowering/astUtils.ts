@@ -51,20 +51,22 @@ export function modifiersOf(node: ts.Node): number {
     return result;
 }
 
+function decoratorName(expr: ts.Expression): string {
+    if (ts.isCallExpression(expr)) return decoratorName(expr.expression);
+    if (ts.isIdentifier(expr)) return expr.text;
+    if (ts.isPropertyAccessExpression(expr)) {
+        return `${decoratorName(expr.expression)}.${expr.name.text}`;
+    }
+    return expr.getText();
+}
+
 export function decoratorsOf(node: ts.Node): DecoratorDto[] {
     const decorators = ts.canHaveDecorators(node) ? ts.getDecorators(node) : undefined;
     if (decorators === undefined) {
         return [];
     }
     return decorators.map((d) => {
-        const expr = d.expression;
-        if (ts.isIdentifier(expr)) {
-            return { kind: expr.text };
-        }
-        if (ts.isCallExpression(expr) && ts.isIdentifier(expr.expression)) {
-            return { kind: expr.expression.text };
-        }
-        return { kind: expr.getText().slice(0, 50) };
+        return { kind: decoratorName(d.expression) };
     });
 }
 

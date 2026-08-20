@@ -31,6 +31,22 @@ function constructorCallOf(stmt: StmtDto): InstanceCallExprDto | undefined {
 }
 
 describe("class lowering", () => {
+    it("keeps complete stable names for class decorators", () => {
+        const { file } = lower(`
+            @sealed
+            @factory(1)
+            @ns.decorator
+            @very.long.namespace.decorator(1)
+            class Decorated {}
+        `);
+        expect(classByName(file, "Decorated").decorators.map((decorator) => decorator.kind)).toEqual([
+            "sealed",
+            "factory",
+            "ns.decorator",
+            "very.long.namespace.decorator",
+        ]);
+    });
+
     const source = `
         class Point {
             x: number = 1;
