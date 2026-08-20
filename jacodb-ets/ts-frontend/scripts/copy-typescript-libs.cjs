@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-import * as fs from "node:fs";
-import * as path from "node:path";
-import { fileURLToPath } from "node:url";
+const fs = require("node:fs");
+const path = require("node:path");
 
-const frontendDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const frontendDir = path.resolve(__dirname, "..");
 const typescriptLibDir = path.join(frontendDir, "node_modules", "typescript", "lib");
 const distDir = path.join(frontendDir, "dist");
 
