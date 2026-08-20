@@ -23,7 +23,6 @@ import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsScene
 import java.io.FileNotFoundException
 import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.Path
 import kotlin.io.path.PathWalkOption
 import kotlin.io.path.absolute
@@ -89,39 +88,21 @@ private const val DEFAULT_ETS_FRONTEND_SCRIPT = "dist/index.js"
 private const val ENV_VAR_NODE_EXECUTABLE = "NODE_EXECUTABLE"
 private const val DEFAULT_NODE_EXECUTABLE = "node"
 
-// Walking a large project tree (node_modules included) costs seconds of pure I/O,
-// and the same path is probed repeatedly by the `loadEts*AutoConvert` helpers.
-//
-// NB: the cache lives for the whole JVM lifetime and is never evicted, so adding an `.ets`
-// file to an already-probed tree keeps the previously chosen provider. Pass `provider`
-// explicitly (or call [clearDefaultProviderCache]) when a tree changes under a long-lived host.
-private val defaultProviderCache = ConcurrentHashMap<Pair<String, Boolean>, EtsIrProvider>()
-
-/** Drops the memoized [defaultProviderFor] decisions; intended for tests and long-lived hosts. */
-fun clearDefaultProviderCache() {
-    defaultProviderCache.clear()
-}
-
 /** ArkTS remains on the legacy provider; the native frontend owns TS/JS only. */
-internal fun defaultProviderFor(path: Path, isProject: Boolean): EtsIrProvider =
-    defaultProviderCache.computeIfAbsent(path.absolute().normalize().pathString to isProject) {
-        val containsEts = if (isProject) {
-            val projectRoot = path.toFile()
-            path.exists() && projectRoot.walkTopDown()
-                .onEnter { directory ->
-                    directory == projectRoot ||
-                        (directory.name != "node_modules" && !directory.name.startsWith("."))
-                }
-                .any { file -> file.isFile && file.extension.equals("ets", ignoreCase = true) }
-        } else {
-            path.extension.equals("ets", ignoreCase = true)
-        }
-        if (containsEts) {
-            EtsIrProvider.ARKANALYZER
-        } else {
-            EtsIrProvider.default()
-        }
+internal fun defaultProviderFor(path: Path, isProject: Boolean): EtsIrProvider {
+    val containsEts = if (isProject) {
+        val projectRoot = path.toFile()
+        path.exists() && projectRoot.walkTopDown()
+            .onEnter { directory ->
+                directory == projectRoot ||
+                    (directory.name != "node_modules" && !directory.name.startsWith("."))
+            }
+            .any { file -> file.isFile && file.extension.equals("ets", ignoreCase = true) }
+    } else {
+        path.extension.equals("ets", ignoreCase = true)
     }
+    return if (containsEts) EtsIrProvider.ARKANALYZER else EtsIrProvider.default()
+}
 
 /** Location of the serializer script for the chosen [provider]. */
 fun etsIrSerializerScript(provider: EtsIrProvider = EtsIrProvider.default()): Path =
@@ -186,9 +167,6 @@ private fun resolveFrontendScript(frontendDir: Path, scriptPath: String): Path {
 
 class EtsIrGenerationException(message: String) : IllegalStateException(message)
 
-/** Cap on the amount of process output embedded into [EtsIrGenerationException]. */
-private const val MAX_REPORTED_OUTPUT_CHARS = 16 * 1024
-
 private const val ENV_VAR_ETS_IR_GENERATION_TIMEOUT_SEC = "ETS_IR_GENERATION_TIMEOUT_SEC"
 
 /**
@@ -203,13 +181,6 @@ fun defaultEtsIrGenerationTimeout(isProject: Boolean): Duration {
     }
     return if (isProject) 10.minutes else 60.seconds
 }
-
-private fun String.truncateForReport(): String =
-    if (length <= MAX_REPORTED_OUTPUT_CHARS) {
-        this
-    } else {
-        take(MAX_REPORTED_OUTPUT_CHARS) + "\n... (truncated, ${length - MAX_REPORTED_OUTPUT_CHARS} more chars)"
-    }
 
 fun generateEtsIR(
     projectPath: Path,
@@ -264,8 +235,8 @@ fun generateEtsIR(
         logger.error { "Partial output is kept at '$output'" }
         throw EtsIrGenerationException(
             "$failure\nOutput: '$output'" +
-                "\nSTDOUT:\n${res.stdout.truncateForReport()}" +
-                "\nSTDERR:\n${res.stderr.truncateForReport()}"
+                "\nSTDOUT:\n${res.stdout}" +
+                "\nSTDERR:\n${res.stderr}"
         )
     }
     return output

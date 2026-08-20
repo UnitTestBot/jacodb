@@ -125,6 +125,19 @@ class EtsTsFrontendTest {
     }
 
     @Test
+    fun `visible ets file added to TypeScript project switches provider immediately`() {
+        val project = createTempDirectory("mutable-ts-provider-project")
+        project.resolve("src").createDirectories()
+        project.resolve("src/app.ts").writeText("export const answer = 42")
+
+        assertEquals(EtsIrProvider.TS_FRONTEND, defaultProviderFor(project, isProject = true))
+
+        project.resolve("src/app.ets").writeText("")
+
+        assertEquals(EtsIrProvider.ARKANALYZER, defaultProviderFor(project, isProject = true))
+    }
+
+    @Test
     fun `straight-line program lowers, converts and linearizes`() {
         val etsFileDto = runFrontend(
             """
