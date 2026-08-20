@@ -34,10 +34,17 @@ internal object BundledFrontendRuntime {
      * The extracted entry script, or `null` when this artifact has no bundled runtime.
      * Extraction and its temporary directory are both initialized at most once.
      */
-    val script: Path? by lazy {
+    val script: Path?
+        get() = scriptInitialization.getOrThrow()
+
+    private val scriptInitialization: Result<Path?> by lazy {
+        runCatching(::initializeScript)
+    }
+
+    private fun initializeScript(): Path? {
         val input = BundledFrontendRuntime::class.java.getResourceAsStream(RUNTIME_RESOURCE)
-            ?: return@lazy null
-        input.use {
+            ?: return null
+        return input.use {
             val runtimeDirectory = createTempDirectory("jacodb-ets-frontend-")
             try {
                 val extractedScript = extract(it, runtimeDirectory)

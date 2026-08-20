@@ -21,6 +21,10 @@ import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.FileNotFoundException
+import java.io.InputStream
+import java.lang.reflect.InvocationTargetException
+import java.net.URL
+import java.net.URLClassLoader
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlin.io.path.createTempDirectory
@@ -99,7 +103,34 @@ class BundledFrontendRuntimeTest {
         assertSame(script, BundledFrontendRuntime.script, "the runtime must be extracted only once")
     }
 
+    @Test
+    fun `failed script initialization is memoized without retrying extraction`() {
+        FailingRuntimeClassLoader(
+            BundledFrontendRuntime::class.java.protectionDomain.codeSource.location,
+            BundledFrontendRuntime::class.java.classLoader,
+            archiveBytes("lib.d.ts" to "interface ArrayConstructor {}"),
+        ).use { loader ->
+            val runtimeClass = loader.loadClass(BUNDLED_RUNTIME_CLASS)
+            val runtime = runtimeClass.getField("INSTANCE").get(null)
+            val scriptGetter = runtimeClass.getMethod("getScript")
+
+            val firstFailure = assertFailsWith<InvocationTargetException> {
+                scriptGetter.invoke(runtime)
+            }
+            val secondFailure = assertFailsWith<InvocationTargetException> {
+                scriptGetter.invoke(runtime)
+            }
+
+            assertEquals(1, loader.runtimeResourceRequests, "failed initialization must not retry extraction")
+            assertSame(firstFailure.cause, secondFailure.cause, "the original initialization failure must be memoized")
+        }
+    }
+
     private fun archive(vararg entries: Pair<String, String?>): ByteArrayInputStream {
+        return ByteArrayInputStream(archiveBytes(*entries))
+    }
+
+    private fun archiveBytes(vararg entries: Pair<String, String?>): ByteArray {
         val bytes = ByteArrayOutputStream()
         ZipOutputStream(bytes).use { archive ->
             for ((name, contents) in entries) {
@@ -110,6 +141,41 @@ class BundledFrontendRuntimeTest {
                 archive.closeEntry()
             }
         }
-        return ByteArrayInputStream(bytes.toByteArray())
+        return bytes.toByteArray()
+    }
+
+    private class FailingRuntimeClassLoader(
+        mainClasses: URL,
+        parent: ClassLoader,
+        private val runtimeArchive: ByteArray,
+    ) : URLClassLoader(arrayOf(mainClasses), parent) {
+        var runtimeResourceRequests: Int = 0
+            private set
+
+        override fun loadClass(name: String, resolve: Boolean): Class<*> {
+            if (name != BUNDLED_RUNTIME_CLASS) {
+                return super.loadClass(name, resolve)
+            }
+            return synchronized(getClassLoadingLock(name)) {
+                val loadedClass = findLoadedClass(name) ?: findClass(name)
+                if (resolve) {
+                    resolveClass(loadedClass)
+                }
+                loadedClass
+            }
+        }
+
+        override fun getResourceAsStream(name: String): InputStream? {
+            if (name == BUNDLED_RUNTIME_RESOURCE) {
+                runtimeResourceRequests++
+                return ByteArrayInputStream(runtimeArchive)
+            }
+            return super.getResourceAsStream(name)
+        }
+    }
+
+    companion object {
+        private const val BUNDLED_RUNTIME_CLASS = "org.jacodb.ets.utils.BundledFrontendRuntime"
+        private const val BUNDLED_RUNTIME_RESOURCE = "ets-frontend/runtime.zip"
     }
 }
