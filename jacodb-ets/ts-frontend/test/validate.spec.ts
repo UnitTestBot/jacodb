@@ -315,29 +315,6 @@ describe("validateEtsFile", () => {
         );
         expect(ok).toEqual([]);
 
-        // Kotlin strips CastExpr on the LHS, so CastExpr(Local) := <raw> is a
-        // Local assignment too and must not be flagged.
-        const okCast = violations(
-            bodyWithBlocks(
-                [
-                    {
-                        id: 0,
-                        successors: [],
-                        predecessors: [],
-                        stmts: [
-                            {
-                                _: "AssignStmt",
-                                left: { _: "CastExpr", arg: local("x"), type: UNKNOWN_TYPE },
-                                right: rawValue,
-                            },
-                            { _: "ReturnVoidStmt" },
-                        ],
-                    },
-                ],
-                ["x"],
-            ),
-        );
-        expect(okCast).toEqual([]);
     });
 
     it("requires 'type' on raw fallback values", () => {
@@ -353,30 +330,6 @@ describe("validateEtsFile", () => {
             ], ["x"]),
         );
         expect(errs.some((e) => e.includes("missing required 'type'"))).toBe(true);
-    });
-
-    it("rejects bad assign targets", () => {
-        const errs = violations(
-            bodyWithBlocks(
-                [
-                    {
-                        id: 0,
-                        successors: [],
-                        predecessors: [],
-                        stmts: [
-                            {
-                                _: "AssignStmt",
-                                left: { _: "BinopExpr", op: "+", left: local("a"), right: local("b") },
-                                right: local("a"),
-                            },
-                            { _: "ReturnVoidStmt" },
-                        ],
-                    },
-                ],
-                ["a", "b"],
-            ),
-        );
-        expect(errs.some((e) => e.includes("AssignStmt.left has kind 'BinopExpr'"))).toBe(true);
     });
 
     it("checks predecessor/successor consistency", () => {

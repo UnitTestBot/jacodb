@@ -20,7 +20,10 @@ import org.jacodb.ets.dto.BasicBlockDto
 import org.jacodb.ets.dto.BodyDto
 import org.jacodb.ets.dto.CfgDto
 import org.jacodb.ets.dto.ClassSignatureDto
+import org.jacodb.ets.dto.ClosureFieldRefDto
 import org.jacodb.ets.dto.FileSignatureDto
+import org.jacodb.ets.dto.AssignStmtDto
+import org.jacodb.ets.dto.LocalDto
 import org.jacodb.ets.dto.MethodDto
 import org.jacodb.ets.dto.MethodSignatureDto
 import org.jacodb.ets.dto.NumberTypeDto
@@ -29,6 +32,8 @@ import org.jacodb.ets.dto.SourceSpanDto
 import org.jacodb.ets.dto.StmtOriginDto
 import org.jacodb.ets.dto.StmtOriginKey
 import org.jacodb.ets.dto.toEtsMethod
+import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsClosureFieldRef
 import org.jacodb.ets.model.EtsNopStmt
 import org.jacodb.ets.model.EtsSourceSpan
 import org.junit.jupiter.api.Test
@@ -37,6 +42,48 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 
 class EtsMethodBuilderTest {
+    @Test
+    fun `assignment accepts closure field reference as LHV`() {
+        val methodDto = MethodDto(
+            signature = MethodSignatureDto(
+                declaringClass = ClassSignatureDto(
+                    name = "TestClass",
+                    declaringFile = FileSignatureDto("TestProject", "test.ts"),
+                ),
+                name = "testMethod",
+                parameters = emptyList(),
+                returnType = NumberTypeDto,
+            ),
+            modifiers = 0,
+            decorators = emptyList(),
+            body = BodyDto(
+                locals = emptyList(),
+                cfg = CfgDto(
+                    blocks = listOf(
+                        BasicBlockDto(
+                            0,
+                            successors = emptyList(),
+                            stmts = listOf(
+                                AssignStmtDto(
+                                    left = ClosureFieldRefDto(
+                                        base = LocalDto("%closures0", NumberTypeDto),
+                                        fieldName = "captured",
+                                        type = NumberTypeDto,
+                                    ),
+                                    right = LocalDto("value", NumberTypeDto),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        val statement = assertIs<EtsAssignStmt>(methodDto.toEtsMethod().cfg.blocks.single().statements.single())
+
+        assertIs<EtsClosureFieldRef>(statement.lhv)
+    }
+
     @Test
     fun `source statement origin does not leak to synthetic empty block nop`() {
         val originKey = StmtOriginKey(blockId = 0, stmtIndex = 0)

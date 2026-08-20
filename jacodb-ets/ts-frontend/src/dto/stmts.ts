@@ -22,7 +22,7 @@
  * Unknown discriminators fall back to RawStmtDto on the Kotlin side.
  */
 
-import { CallExprDto, ValueDto } from "./values";
+import { CallExprDto, LValueDto, ValueDto } from "./values";
 
 /**
  * Closed union of the known statement kinds.
@@ -50,7 +50,7 @@ export interface NopStmtDto {
 
 export interface AssignStmtDto {
     readonly _: "AssignStmt";
-    left: ValueDto; // must convert to Local / FieldRef / ArrayRef on the Kotlin side
+    left: LValueDto;
     right: ValueDto;
 }
 
