@@ -19,9 +19,16 @@ package org.jacodb.ets.test
 import org.jacodb.ets.dto.ArrayTypeDto
 import org.jacodb.ets.dto.AssignStmtDto
 import org.jacodb.ets.dto.BooleanTypeDto
+import org.jacodb.ets.dto.ClassTypeDto
 import org.jacodb.ets.dto.EtsFileDto
+import org.jacodb.ets.dto.IfStmtDto
+import org.jacodb.ets.dto.LocalDto
 import org.jacodb.ets.dto.NewArrayExprDto
 import org.jacodb.ets.dto.NumberTypeDto
+import org.jacodb.ets.dto.RelationOperationDto
+import org.jacodb.ets.dto.StringTypeDto
+import org.jacodb.ets.dto.UnaryOperationDto
+import org.jacodb.ets.dto.UnknownTypeDto
 import org.jacodb.ets.dto.toEtsFile
 import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsCaughtExceptionRef
@@ -207,6 +214,52 @@ class EtsTsFrontendTest {
         val stmts = method.cfg.stmts
         assertTrue(stmts.size > 20, "expected a rich linearized body, got ${stmts.size} stmts")
         assertTrue(method.cfg.blocks.size > 10, "expected multiple basic blocks, got ${method.cfg.blocks.size}")
+    }
+
+    @Test
+    fun `native frontend preserves source values in if conditions`() {
+        val etsFileDto = runFrontend(
+            """
+                class Box {}
+
+                function f(u: unknown, n: number, s: string, o: Box, b: boolean): number {
+                    let result = 0;
+                    if (u) result++;
+                    if (n) result++;
+                    if (s) result++;
+                    if (o) result++;
+                    if (!b) result++;
+                    if (n > 0) result++;
+                    return result;
+                }
+            """.trimIndent(),
+        )
+
+        val conditions = etsFileDto.classes
+            .single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "f" }
+            .body!!
+            .cfg
+            .blocks
+            .flatMap { it.stmts }
+            .filterIsInstance<IfStmtDto>()
+            .map { it.condition }
+
+        assertEquals(6, conditions.size)
+        val directValues = conditions.filterIsInstance<LocalDto>().associateBy { it.name }
+        assertEquals(setOf("u", "n", "s", "o"), directValues.keys)
+        assertEquals(UnknownTypeDto, directValues.getValue("u").type)
+        assertEquals(NumberTypeDto, directValues.getValue("n").type)
+        assertEquals(StringTypeDto, directValues.getValue("s").type)
+        assertTrue(directValues.getValue("o").type is ClassTypeDto)
+
+        val unary = conditions.filterIsInstance<UnaryOperationDto>().single()
+        assertEquals("!", unary.op)
+        assertEquals("b", (unary.arg as LocalDto).name)
+
+        val sourceComparison = conditions.filterIsInstance<RelationOperationDto>().single()
+        assertEquals(">", sourceComparison.op)
+        assertEquals("n", (sourceComparison.left as LocalDto).name)
     }
 
     @Test

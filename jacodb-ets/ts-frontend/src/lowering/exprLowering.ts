@@ -602,114 +602,14 @@ export class ExprLowerer {
     // Conditions / branching
     // ------------------------------------------------------------------
 
-    /**
-     * Lower a boolean context expression into a conditional branch.
-     * Direct comparisons branch on the ConditionExpr itself; anything else is
-     * normalized the ArkAnalyzer way: booleans as `v != false`, others as `v != 0`.
-     * `!x` swaps the branch targets.
-     */
+    /** Lower a boolean context expression once and preserve its source value shape. */
     lowerCondition(node: ts.Expression, trueTarget: number, falseTarget: number): void {
         this.m.withOrigin(node, () => this.lowerConditionImpl(node, trueTarget, falseTarget));
     }
 
     private lowerConditionImpl(node: ts.Expression, trueTarget: number, falseTarget: number): void {
-        if (ts.isParenthesizedExpression(node)) {
-            this.lowerCondition(node.expression, trueTarget, falseTarget);
-            return;
-        }
-        if (ts.isPrefixUnaryExpression(node) && node.operator === ts.SyntaxKind.ExclamationToken) {
-            this.lowerCondition(node.operand, falseTarget, trueTarget);
-            return;
-        }
-        if (ts.isBinaryExpression(node)) {
-            const relationOp = RELATION_BY_SYNTAX[node.operatorToken.kind];
-            if (relationOp !== undefined) {
-                const condition = this.relation(
-                    relationOp,
-                    this.lowerImmediateBefore(node.left, node.right),
-                    this.lowerToImmediate(node.right),
-                );
-                this.m.cfg.branch(condition, trueTarget, falseTarget);
-                return;
-            }
-        }
-        const value = this.lowerToImmediate(node);
-        this.branchOnTruthiness(value, trueTarget, falseTarget);
-    }
-
-    /** A single-condition truthiness check for values whose type has a direct representation. */
-    truthyCondition(value: ValueDto): ConditionExprDto {
-        const valueType = value._ === "Local" || value._ === "Constant" ? value.type : UNKNOWN_TYPE;
-        if (valueType._ === "BooleanType") {
-            return this.relation("!=", value, constant("false", BOOLEAN_TYPE));
-        }
-        if (valueType._ === "StringType") {
-            return this.relation("!==", value, constant("", STRING_TYPE));
-        }
-        return this.relation("!=", value, constant("0", NUMBER_TYPE));
-    }
-
-    /** Branch with JavaScript ToBoolean semantics for the representable type cases. */
-    private branchOnTruthiness(value: ImmediateDto, trueTarget: number, falseTarget: number): void {
-        const type = value.type;
-        switch (type._) {
-            case "BooleanType":
-                this.m.cfg.branch(this.relation("!==", value, constant("false", BOOLEAN_TYPE)), trueTarget, falseTarget);
-                return;
-            case "NumberType":
-            case "EnumValueType": {
-                const nonZero = this.m.cfg.newLabel();
-                this.m.cfg.branch(this.relation("!==", value, constant("0", NUMBER_TYPE)), nonZero, falseTarget);
-                this.m.cfg.placeLabel(nonZero);
-                // NaN is the only non-zero falsy number. It is also the only
-                // JavaScript value that is not strictly equal to itself.
-                this.m.cfg.branch(this.relation("===", value, value), trueTarget, falseTarget);
-                return;
-            }
-            case "StringType":
-                this.m.cfg.branch(this.relation("!==", value, constant("", STRING_TYPE)), trueTarget, falseTarget);
-                return;
-            case "NullType":
-            case "UndefinedType":
-            case "VoidType":
-            case "NeverType":
-                this.m.cfg.goto(falseTarget);
-                return;
-            case "ClassType":
-            case "ArrayType":
-            case "TupleType":
-            case "FunctionType":
-                this.m.cfg.goto(trueTarget);
-                return;
-            case "LiteralType": {
-                const literal = type.literal;
-                this.m.cfg.goto(literal === false || literal === 0 || literal === "" ? falseTarget : trueTarget);
-                return;
-            }
-            default:
-                this.branchOnUnknownTruthiness(value, trueTarget, falseTarget);
-        }
-    }
-
-    /**
-     * Unknown/union values need the full falsy set rather than the old `v != 0`
-     * approximation. The final self-equality check rejects NaN.
-     */
-    private branchOnUnknownTruthiness(value: ImmediateDto, trueTarget: number, falseTarget: number): void {
-        const notFalse = this.m.cfg.newLabel();
-        const notZero = this.m.cfg.newLabel();
-        const notEmpty = this.m.cfg.newLabel();
-        this.m.cfg.branch(this.relation("===", value, constant("false", BOOLEAN_TYPE)), falseTarget, notFalse);
-        this.m.cfg.placeLabel(notFalse);
-        this.m.cfg.branch(this.relation("===", value, constant("0", NUMBER_TYPE)), falseTarget, notZero);
-        this.m.cfg.placeLabel(notZero);
-        this.m.cfg.branch(this.relation("===", value, constant("", STRING_TYPE)), falseTarget, notEmpty);
-        this.m.cfg.placeLabel(notEmpty);
-        const notNullish = this.m.cfg.newLabel();
-        // Loose equality intentionally covers both null and undefined.
-        this.m.cfg.branch(this.relation("==", value, constant("null", NULL_TYPE)), falseTarget, notNullish);
-        this.m.cfg.placeLabel(notNullish);
-        this.m.cfg.branch(this.relation("!==", value, value), falseTarget, trueTarget);
+        const condition = this.lowerExpr(node);
+        this.m.cfg.branch(condition, trueTarget, falseTarget);
     }
 
     /** Value-preserving, side-effect-safe lowering for `&&`, `||`, and `??`. */
@@ -723,10 +623,10 @@ export class ExprLowerer {
 
         switch (node.operatorToken.kind) {
             case ts.SyntaxKind.AmpersandAmpersandToken:
-                this.branchOnTruthiness(left, rightLabel, leftLabel);
+                cfg.branch(left, rightLabel, leftLabel);
                 break;
             case ts.SyntaxKind.BarBarToken:
-                this.branchOnTruthiness(left, leftLabel, rightLabel);
+                cfg.branch(left, leftLabel, rightLabel);
                 break;
             case ts.SyntaxKind.QuestionQuestionToken:
                 cfg.branch(this.relation("!=", left, constant("null", NULL_TYPE)), leftLabel, rightLabel);
@@ -810,10 +710,10 @@ export class ExprLowerer {
 
         switch (node.operatorToken.kind) {
             case ts.SyntaxKind.AmpersandAmpersandEqualsToken:
-                this.branchOnTruthiness(oldValue, assignLabel, keepLabel);
+                cfg.branch(oldValue, assignLabel, keepLabel);
                 break;
             case ts.SyntaxKind.BarBarEqualsToken:
-                this.branchOnTruthiness(oldValue, keepLabel, assignLabel);
+                cfg.branch(oldValue, keepLabel, assignLabel);
                 break;
             case ts.SyntaxKind.QuestionQuestionEqualsToken:
                 cfg.branch(this.relation("!=", oldValue, constant("null", NULL_TYPE)), keepLabel, assignLabel);

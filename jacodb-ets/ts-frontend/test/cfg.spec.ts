@@ -56,9 +56,15 @@ describe("control flow lowering", () => {
         const blocks = blocksOf(methodByName(file, "f"));
         const entry = blocks[0];
         const last = lastStmt(entry);
-        expect(last).toMatchObject({
+        expect(last).toEqual({
             _: "IfStmt",
-            condition: { _: "ConditionExpr", op: ">" },
+            condition: {
+                _: "ConditionExpr",
+                op: ">",
+                left: { _: "Local", name: "a", type: { _: "NumberType" } },
+                right: { _: "Constant", value: "0", type: { _: "NumberType" } },
+                type: { _: "BooleanType" },
+            },
         });
         expect(entry.successors).toHaveLength(2);
         const [falseTarget, trueTarget] = entry.successors;
@@ -67,7 +73,7 @@ describe("control flow lowering", () => {
         expect(lastStmt(blocks[falseTarget])).toMatchObject({ _: "ReturnStmt", arg: { value: "2" } });
     });
 
-    it("implements JavaScript truthiness for booleans, numbers, strings, objects, and unknown values", () => {
+    it("preserves boolean, number, string, object, and unknown values as branch conditions", () => {
         const { file } = lower(`
             class Box {}
             function f(b: boolean, n: number, s: string, o: Box, u: unknown): void {
@@ -81,33 +87,16 @@ describe("control flow lowering", () => {
         const conditions = ifBlocks(blocksOf(methodByName(file, "f"))).map(
             (b) => (lastStmt(b) as IfStmtDto).condition,
         );
-        expect(conditions[0]).toMatchObject({
-            op: "!==",
-            left: { _: "Local", name: "b" },
-            right: { _: "Constant", value: "false", type: { _: "BooleanType" } },
-        });
-        expect(conditions.find((c) => c.left._ === "Local" && c.left.name === "n" && c.right._ === "Constant")).toMatchObject({
-            op: "!==",
-            left: { _: "Local", name: "n" },
-            right: { _: "Constant", value: "0", type: { _: "NumberType" } },
-        });
-        expect(conditions).toContainEqual(expect.objectContaining({
-            op: "===",
-            left: expect.objectContaining({ _: "Local", name: "n" }),
-            right: expect.objectContaining({ _: "Local", name: "n" }),
-        }));
-        expect(conditions).toContainEqual(expect.objectContaining({
-            op: "!==",
-            left: expect.objectContaining({ _: "Local", name: "s" }),
-            right: expect.objectContaining({ _: "Constant", value: "" }),
-        }));
-        // Objects are statically always truthy, so their condition needs no IfStmt.
-        expect(conditions.some((c) => c.left._ === "Local" && c.left.name === "o")).toBe(false);
-        // Unknown values cover false, zero, empty string, nullish, and NaN.
-        expect(conditions.filter((c) => c.left._ === "Local" && c.left.name === "u")).toHaveLength(5);
+        expect(conditions).toEqual([
+            { _: "Local", name: "b", type: { _: "BooleanType" } },
+            { _: "Local", name: "n", type: { _: "NumberType" } },
+            { _: "Local", name: "s", type: { _: "StringType" } },
+            expect.objectContaining({ _: "Local", name: "o" }),
+            { _: "Local", name: "u", type: { _: "UnknownType" } },
+        ]);
     });
 
-    it("swaps branches for negated conditions", () => {
+    it("keeps source unary negation as the if condition", () => {
         const { file } = lower(`
             function f(b: boolean): number {
                 if (!b) { return 1; }
@@ -116,10 +105,17 @@ describe("control flow lowering", () => {
         `);
         const blocks = blocksOf(methodByName(file, "f"));
         const entry = blocks[0];
-        // `!b` swaps targets: true branch of the emitted `b != false` goes to `return 2`.
+        expect(lastStmt(entry)).toEqual({
+            _: "IfStmt",
+            condition: {
+                _: "UnopExpr",
+                op: "!",
+                arg: { _: "Local", name: "b", type: { _: "BooleanType" } },
+            },
+        });
         const [falseTarget, trueTarget] = entry.successors;
-        expect(lastStmt(blocks[trueTarget])).toMatchObject({ _: "ReturnStmt", arg: { value: "2" } });
-        expect(lastStmt(blocks[falseTarget])).toMatchObject({ _: "ReturnStmt", arg: { value: "1" } });
+        expect(lastStmt(blocks[trueTarget])).toMatchObject({ _: "ReturnStmt", arg: { value: "1" } });
+        expect(lastStmt(blocks[falseTarget])).toMatchObject({ _: "ReturnStmt", arg: { value: "2" } });
     });
 
     it("lowers while loops with a back edge", () => {
@@ -235,7 +231,8 @@ describe("control flow lowering", () => {
         const method = methodByName(file, "f");
         const stmts = allStmts(method);
         const conditions = stmts.filter(
-            (s): s is IfStmtDto => s._ === "IfStmt" && s.condition.op === "===",
+            (s): s is IfStmtDto =>
+                s._ === "IfStmt" && s.condition._ === "ConditionExpr" && s.condition.op === "===",
         );
         expect(conditions).toHaveLength(3);
         // empty case 1 falls through to case 2's body

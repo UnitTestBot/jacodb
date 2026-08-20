@@ -330,6 +330,7 @@ describe("destructuring", () => {
             stmts.some(
                 (s) =>
                     s._ === "IfStmt" &&
+                    s.condition._ === "ConditionExpr" &&
                     s.condition.op === "===" &&
                     (s.condition.right as { value?: string }).value === "undefined",
             ),
@@ -376,7 +377,10 @@ describe("optional chaining", () => {
             }
         `);
         const nullCheck = stmts.find(
-            (s) => s._ === "IfStmt" && (s.condition.right as { value?: string }).value === "null",
+            (s) =>
+                s._ === "IfStmt" &&
+                s.condition._ === "ConditionExpr" &&
+                (s.condition.right as { value?: string }).value === "null",
         );
         expect(nullCheck).toBeDefined();
         const undefinedAssign = stmts.find(

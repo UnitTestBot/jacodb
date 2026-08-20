@@ -599,7 +599,7 @@ export class StmtLowerer {
      * blocks; we instead keep them analyzable via a synthetic nondeterministic
      * branch on an undefined `%N` local:
      *
-     *   if (%exc != 0) -> catch else -> try
+     *   if (%exc) -> catch else -> try
      *   try:   A; goto join
      *   catch: e := CaughtExceptionRef; B; goto join
      *   join:  C (finally, shared by both paths)
@@ -621,7 +621,7 @@ export class StmtLowerer {
             if (node.catchClause !== undefined) {
                 const catchLabel = cfg.newLabel();
                 const excFlag = this.m.newTemp(BOOLEAN_TYPE);
-                cfg.branch(this.expr.truthyCondition(excFlag), catchLabel, tryLabel);
+                cfg.branch(excFlag, catchLabel, tryLabel);
 
                 cfg.placeLabel(tryLabel);
                 this.lowerStatement(node.tryBlock);

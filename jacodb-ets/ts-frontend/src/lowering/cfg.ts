@@ -28,13 +28,13 @@
 
 import { BasicBlockDto, CfgDto, SourceSpanDto, StmtOriginDto } from "../dto/model";
 import { RETURN_VOID_STMT, StmtDto } from "../dto/stmts";
-import { ConditionExprDto, ValueDto } from "../dto/values";
+import { ValueDto } from "../dto/values";
 
 export type Label = number;
 
 type Terminator =
     | { kind: "goto"; target: Label }
-    | { kind: "if"; condition: ConditionExprDto; trueTarget: Label; falseTarget: Label; origin?: SourceSpanDto }
+    | { kind: "if"; condition: ValueDto; trueTarget: Label; falseTarget: Label; origin?: SourceSpanDto }
     | { kind: "return"; arg?: ValueDto; origin?: SourceSpanDto }
     | { kind: "throw"; arg: ValueDto; origin?: SourceSpanDto }
     | { kind: "open" }; // fall-through end; finalize() turns it into `return void`
@@ -130,7 +130,7 @@ export class CfgBuilder {
         this.current.terminator = { kind: "goto", target };
     }
 
-    branch(condition: ConditionExprDto, trueTarget: Label, falseTarget: Label): void {
+    branch(condition: ValueDto, trueTarget: Label, falseTarget: Label): void {
         this.ensureOpen();
         this.current.terminator = { kind: "if", condition, trueTarget, falseTarget, origin: this.currentOrigin };
     }

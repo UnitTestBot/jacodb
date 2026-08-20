@@ -91,6 +91,39 @@ describe("validateEtsFile", () => {
         expect(errs.some((e) => e.includes("ends with IfStmt but has 1 successors"))).toBe(true);
     });
 
+    it.each([
+        ["Local", local("a")],
+        ["UnopExpr", { _: "UnopExpr", op: "!", arg: local("a") } as const],
+        [
+            "ConditionExpr",
+            {
+                _: "ConditionExpr",
+                op: ">",
+                left: local("a"),
+                right: { _: "Constant", value: "0", type: NUMBER_TYPE },
+                type: { _: "BooleanType" },
+            } as const,
+        ],
+    ])("accepts %s as an IfStmt condition", (_kind, condition) => {
+        const errs = violations(
+            bodyWithBlocks(
+                [
+                    {
+                        id: 0,
+                        successors: [1, 2],
+                        predecessors: [],
+                        stmts: [{ _: "IfStmt", condition }],
+                    },
+                    { id: 1, successors: [], predecessors: [0], stmts: [{ _: "ReturnVoidStmt" }] },
+                    { id: 2, successors: [], predecessors: [0], stmts: [{ _: "ReturnVoidStmt" }] },
+                ],
+                ["a"],
+            ),
+        );
+
+        expect(errs).toEqual([]);
+    });
+
     it("rejects successors on return blocks", () => {
         const errs = violations(
             bodyWithBlocks([

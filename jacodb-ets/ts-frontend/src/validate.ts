@@ -259,12 +259,6 @@ function validateStmt(
             }
             break;
         }
-        case "IfStmt": {
-            if (stmt.condition._ !== "ConditionExpr") {
-                err(`${ctx}: IfStmt.condition has kind '${(stmt.condition as ValueDto)._}', expected ConditionExpr`);
-            }
-            break;
-        }
         default:
             break;
     }

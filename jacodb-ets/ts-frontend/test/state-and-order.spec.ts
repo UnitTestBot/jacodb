@@ -263,7 +263,8 @@ describe("expression evaluation snapshots", () => {
                 && stmt.right.value === "2",
         );
         const branch = stmts.find(
-            (stmt) => stmt._ === "IfStmt" && stmt.condition.op === "<",
+            (stmt) =>
+                stmt._ === "IfStmt" && stmt.condition._ === "ConditionExpr" && stmt.condition.op === "<",
         );
         expect(snapshot).toBeDefined();
         expect(stmts.indexOf(snapshot!)).toBeLessThan(stmts.indexOf(mutation!));
@@ -335,7 +336,8 @@ describe("expression evaluation snapshots", () => {
                 && stmt.right.value === "2",
         );
         const branch = stmts.find(
-            (stmt) => stmt._ === "IfStmt" && stmt.condition.op === "===",
+            (stmt) =>
+                stmt._ === "IfStmt" && stmt.condition._ === "ConditionExpr" && stmt.condition.op === "===",
         );
         expect(snapshot).toBeDefined();
         expect(stmts.indexOf(snapshot!)).toBeLessThan(stmts.indexOf(mutation!));

@@ -22,7 +22,7 @@
  * Unknown discriminators fall back to RawStmtDto on the Kotlin side.
  */
 
-import { CallExprDto, ConditionExprDto, ValueDto } from "./values";
+import { CallExprDto, ValueDto } from "./values";
 
 /**
  * Closed union of the known statement kinds.
@@ -75,7 +75,7 @@ export interface ThrowStmtDto {
 
 export interface IfStmtDto {
     readonly _: "IfStmt";
-    condition: ConditionExprDto;
+    condition: ValueDto;
 }
 
 export const RETURN_VOID_STMT: ReturnVoidStmtDto = { _: "ReturnVoidStmt" };
