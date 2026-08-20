@@ -17,6 +17,8 @@
 package org.jacodb.ets.dto
 
 import mu.KotlinLogging
+import org.jacodb.ets.FlattenedArrayType
+import org.jacodb.ets.flattenArrayType
 import org.jacodb.ets.model.BasicBlock
 import org.jacodb.ets.model.EtsAddExpr
 import org.jacodb.ets.model.EtsAliasType
@@ -561,10 +563,9 @@ fun TypeDto.toEtsType(): EtsType = when (this) {
 
     // Nested array types are folded, matching EtsNewArrayExpr.type and NewArrayExprDto:
     // `T[][]` is ArrayType(T, 2), never ArrayType(ArrayType(T, 1), 1).
-    is ArrayTypeDto -> when (val element = elementType.toEtsType()) {
-        is EtsArrayType -> EtsArrayType(element.elementType, element.dimensions + dimensions)
-        else -> EtsArrayType(element, dimensions)
-    }
+    is ArrayTypeDto -> flattenArrayType(elementType.toEtsType(), dimensions) { type ->
+        (type as? EtsArrayType)?.let { FlattenedArrayType(it.elementType, it.dimensions) }
+    }.let { EtsArrayType(it.elementType, it.dimensions) }
 
     BooleanTypeDto -> EtsBooleanType
 

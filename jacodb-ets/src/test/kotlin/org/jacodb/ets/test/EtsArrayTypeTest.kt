@@ -16,6 +16,11 @@
 
 package org.jacodb.ets.test
 
+import org.jacodb.ets.dto.ArrayTypeDto
+import org.jacodb.ets.dto.ConstantDto
+import org.jacodb.ets.dto.NewArrayExprDto
+import org.jacodb.ets.dto.NumberTypeDto
+import org.jacodb.ets.dto.toEtsType
 import org.jacodb.ets.model.EtsArrayType
 import org.jacodb.ets.model.EtsNewArrayExpr
 import org.jacodb.ets.model.EtsNumberConstant
@@ -25,12 +30,29 @@ import kotlin.test.assertEquals
 
 class EtsArrayTypeTest {
     @Test
-    fun `new array expression flattens nested array dimensions`() {
+    fun `converts deeply nested DTO array dimensions`() {
+        val type = ArrayTypeDto(ArrayTypeDto(ArrayTypeDto(NumberTypeDto, 1), 1), 2)
+
+        assertEquals(EtsArrayType(EtsNumberType, 4), type.toEtsType())
+    }
+
+    @Test
+    fun `DTO new array expression flattens deeply nested array dimensions`() {
+        val expression = NewArrayExprDto(
+            elementType = ArrayTypeDto(ArrayTypeDto(ArrayTypeDto(NumberTypeDto, 1), 1), 1),
+            size = ConstantDto("2", NumberTypeDto),
+        )
+
+        assertEquals(ArrayTypeDto(NumberTypeDto, 4), expression.type)
+    }
+
+    @Test
+    fun `model new array expression flattens deeply nested array dimensions`() {
         val expression = EtsNewArrayExpr(
-            elementType = EtsArrayType(EtsNumberType, 1),
+            elementType = EtsArrayType(EtsArrayType(EtsArrayType(EtsNumberType, 1), 1), 1),
             size = EtsNumberConstant(2.0),
         )
 
-        assertEquals(EtsArrayType(EtsNumberType, 2), expression.type)
+        assertEquals(EtsArrayType(EtsNumberType, 4), expression.type)
     }
 }

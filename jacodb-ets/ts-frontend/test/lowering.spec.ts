@@ -267,6 +267,24 @@ describe("straight-line lowering", () => {
                 elementType: { _: "ArrayType", elementType: { _: "NumberType" }, dimensions: 1 },
             },
         });
+
+        const cube = assigns(bodyStmts("const cube = new Array<number[][]>(3);"));
+        expect(cube.find((stmt) => stmt.right._ === "NewArrayExpr")).toMatchObject({
+            left: { _: "Local", type: { _: "ArrayType", elementType: { _: "NumberType" }, dimensions: 3 } },
+            right: {
+                _: "NewArrayExpr",
+                elementType: { _: "ArrayType", elementType: { _: "NumberType" }, dimensions: 2 },
+            },
+        });
+
+        const hypercube = assigns(bodyStmts("const hypercube = new Array<number[][][]>(3);"));
+        expect(hypercube.find((stmt) => stmt.right._ === "NewArrayExpr")).toMatchObject({
+            left: { _: "Local", type: { _: "ArrayType", elementType: { _: "NumberType" }, dimensions: 4 } },
+            right: {
+                _: "NewArrayExpr",
+                elementType: { _: "ArrayType", elementType: { _: "NumberType" }, dimensions: 3 },
+            },
+        });
     });
 
     it("keeps the one-element Array overload as a constructor call", () => {

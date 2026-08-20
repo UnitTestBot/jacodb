@@ -58,6 +58,16 @@ describe("convertTypeNode (annotations)", () => {
             elementType: { _: "StringType" },
             dimensions: 2,
         });
+        expect(annotationOf("let x: boolean[][][];")).toEqual({
+            _: "ArrayType",
+            elementType: { _: "BooleanType" },
+            dimensions: 3,
+        });
+        expect(annotationOf("let x: number[][][][];")).toEqual({
+            _: "ArrayType",
+            elementType: { _: "NumberType" },
+            dimensions: 4,
+        });
         expect(annotationOf("let x: Array<number>;")).toEqual({
             _: "ArrayType",
             elementType: { _: "NumberType" },

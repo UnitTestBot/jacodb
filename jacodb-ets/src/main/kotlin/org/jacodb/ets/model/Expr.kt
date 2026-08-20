@@ -18,6 +18,8 @@ package org.jacodb.ets.model
 
 import org.jacodb.api.common.cfg.CommonCallExpr
 import org.jacodb.api.common.cfg.CommonInstanceCallExpr
+import org.jacodb.ets.FlattenedArrayType
+import org.jacodb.ets.flattenArrayType
 
 interface EtsExpr : EtsEntity {
     interface Visitor<out R> {
@@ -158,10 +160,9 @@ data class EtsNewArrayExpr(
     val size: EtsEntity,
 ) : EtsExpr {
     override val type: EtsType
-        get() = when (elementType) {
-            is EtsArrayType -> EtsArrayType(elementType.elementType, elementType.dimensions + 1)
-            else -> EtsArrayType(elementType, 1)
-        }
+        get() = flattenArrayType(elementType, 1) { type ->
+            (type as? EtsArrayType)?.let { FlattenedArrayType(it.elementType, it.dimensions) }
+        }.let { EtsArrayType(it.elementType, it.dimensions) }
 
     override fun toString(): String {
         return "new Array<$elementType>($size)"
