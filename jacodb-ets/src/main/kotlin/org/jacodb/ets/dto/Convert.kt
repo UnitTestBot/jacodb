@@ -142,13 +142,15 @@ import org.jacodb.ets.model.EtsYieldExpr
 
 private val logger = KotlinLogging.logger {}
 
+data class StmtOriginKey(val blockId: Int, val stmtIndex: Int)
+
 class EtsMethodBuilder(
     signature: EtsMethodSignature,
     typeParameters: List<EtsType> = emptyList(),
     modifiers: EtsModifiers = EtsModifiers.EMPTY,
     decorators: List<EtsDecorator> = emptyList(),
     locals: List<EtsLocal> = emptyList(),
-    private val stmtOrigins: Map<Pair<Int, Int>, EtsSourceSpan> = emptyMap(),
+    private val stmtOrigins: Map<StmtOriginKey, EtsSourceSpan> = emptyMap(),
 ) {
     private val locals = locals.toMutableList()
 
@@ -170,6 +172,18 @@ class EtsMethodBuilder(
 
     private fun loc(): EtsStmtLocation {
         return EtsStmtLocation.stub(method, currentOrigin)
+    }
+
+    // Only statements emitted while converting a source statement inherit its origin;
+    // synthetic CFG statements emitted outside this scope remain originless.
+    private inline fun <T> withOrigin(origin: EtsSourceSpan?, action: () -> T): T {
+        val previous = currentOrigin
+        currentOrigin = origin
+        return try {
+            action()
+        } finally {
+            currentOrigin = previous
+        }
     }
 
     private var built: Boolean = false
@@ -482,10 +496,10 @@ class EtsMethodBuilder(
         val blocks = this.blocks.map { block ->
             currentStmts = mutableListOf()
             for ((stmtIndex, stmt) in block.stmts.withIndex()) {
-                currentOrigin = stmtOrigins[block.id to stmtIndex]
-                currentStmts += stmt.toEtsStmt()
+                withOrigin(stmtOrigins[StmtOriginKey(block.id, stmtIndex)]) {
+                    currentStmts += stmt.toEtsStmt()
+                }
             }
-            currentOrigin = null
             if (currentStmts.isEmpty()) {
                 currentStmts += EtsNopStmt(location = loc())
             }
@@ -725,7 +739,7 @@ fun MethodDto.toEtsMethod(
             decorators = decorators,
             locals = body.locals.map { it.toEtsLocal() },
             stmtOrigins = body.stmtOrigins.associate { origin ->
-                (origin.blockId to origin.stmtIndex) to origin.source.toEtsSourceSpan(enclosingFileName)
+                StmtOriginKey(origin.blockId, origin.stmtIndex) to origin.source.toEtsSourceSpan(enclosingFileName)
             },
         )
         return builder.build(body.cfg)
