@@ -29,7 +29,8 @@
  */
 
 import * as ts from "typescript";
-import { PATTERN_PARAMETER_PREFIX } from "../dto/constants";
+import { ClassCategory, PATTERN_PARAMETER_PREFIX } from "../dto/constants";
+import { ClassDto, FieldDto } from "../dto/model";
 import {
     ClassSignatureDto,
     FileSignatureDto,
@@ -54,11 +55,15 @@ import {
     UnclearReferenceTypeDto,
     VOID_TYPE,
 } from "../dto/types";
+import { decoratorsOf, memberName, modifiersOf } from "../lowering/astUtils";
 
 /** Guard against deeply nested / self-referential types. */
 const MAX_DEPTH = 8;
 
 export class TypeConverter {
+    readonly structuralClasses: ClassDto[] = [];
+    private readonly structuralClassByNode = new Map<ts.TypeLiteralNode, ClassDto>();
+
     constructor(
         private readonly checker: ts.TypeChecker,
         private readonly fileSignatureFor: (sf: ts.SourceFile) => FileSignatureDto,
@@ -181,6 +186,9 @@ export class TypeConverter {
                 signature: this.functionSignatureFromTypeNode(node, depth, substitutions),
             };
         }
+        if (ts.isTypeLiteralNode(node)) {
+            return this.convertTypeLiteralNode(node, depth, substitutions);
+        }
         if (ts.isTypeReferenceNode(node)) {
             return this.convertTypeReference(node, depth, substitutions);
         }
@@ -189,6 +197,63 @@ export class TypeConverter {
         }
         // keyof/typeof/indexed access/conditional/mapped/type literals etc.
         return UNKNOWN_TYPE;
+    }
+
+    private convertTypeLiteralNode(
+        node: ts.TypeLiteralNode,
+        depth: number,
+        substitutions?: ReadonlyMap<ts.TypeParameterDeclaration, TypeDto>,
+    ): TypeDto {
+        const members: ts.PropertySignature[] = [];
+        for (const member of node.members) {
+            if (
+                !ts.isPropertySignature(member) ||
+                member.name === undefined ||
+                ts.isComputedPropertyName(member.name)
+            ) {
+                return UNKNOWN_TYPE;
+            }
+            members.push(member);
+        }
+
+        const existing = this.structuralClassByNode.get(node);
+        if (existing !== undefined) {
+            return { _: "ClassType", signature: existing.signature };
+        }
+
+        const signature: ClassSignatureDto = {
+            name: `%ST${node.getStart(node.getSourceFile())}`,
+            declaringFile: this.fileSignatureFor(node.getSourceFile()),
+        };
+        const structuralClass: ClassDto = {
+            signature,
+            modifiers: 0,
+            decorators: [],
+            category: ClassCategory.TYPE_LITERAL,
+            superClassName: "",
+            implementedInterfaceNames: [],
+            fields: [],
+            methods: [],
+        };
+
+        // Register the shell before converting fields so recursive aliases such as
+        // `type Node = { next?: Node }` resolve back to the same structural class.
+        this.structuralClassByNode.set(node, structuralClass);
+        this.structuralClasses.push(structuralClass);
+
+        structuralClass.fields = members.map((member): FieldDto => ({
+            signature: {
+                declaringClass: signature,
+                name: memberName(member.name),
+                type: this.convertTypeNode(member.type, depth + 1, substitutions),
+            },
+            modifiers: modifiersOf(member),
+            decorators: decoratorsOf(member),
+            questionToken: member.questionToken !== undefined,
+            exclamationToken: false,
+        }));
+
+        return { _: "ClassType", signature };
     }
 
     private convertLiteralTypeNode(node: ts.LiteralTypeNode): TypeDto {

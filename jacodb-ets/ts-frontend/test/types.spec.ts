@@ -177,6 +177,34 @@ describe("convertTypeNode (annotations)", () => {
         });
     });
 
+    it("materializes object type literals as structural classes", () => {
+        const { file } = lower(`
+            class C {
+                read(value: { required: number; optional?: string }): number {
+                    return value.required;
+                }
+            }
+        `);
+        const parameterType = methodByName(file, "read").signature.parameters[0].type;
+        expect(parameterType._).toBe("ClassType");
+        if (parameterType._ !== "ClassType") throw new Error("expected a structural class type");
+
+        const structuralClass = file.classes.find(
+            (candidate) => candidate.signature.name === parameterType.signature.name,
+        );
+        expect(structuralClass).toBeDefined();
+        expect(structuralClass?.fields).toEqual([
+            expect.objectContaining({
+                signature: expect.objectContaining({ name: "required", type: { _: "NumberType" } }),
+                questionToken: false,
+            }),
+            expect.objectContaining({
+                signature: expect.objectContaining({ name: "optional", type: { _: "StringType" } }),
+                questionToken: true,
+            }),
+        ]);
+    });
+
     it("resolves namespace-qualified names with the namespace chain", () => {
         const type = annotationOf("namespace N { export class C {} }\nlet x: N.C;");
         expect(type).toEqual({
@@ -203,7 +231,6 @@ describe("convertTypeNode (annotations)", () => {
 
     it("degrades exotic types to UnknownType", () => {
         expect(annotationOf("let x: keyof { a: number };")).toEqual({ _: "UnknownType" });
-        expect(annotationOf("let x: { a: number };")).toEqual({ _: "UnknownType" });
         expect(annotationOf("let x;")).toEqual({ _: "UnknownType" });
         expect(annotationOf("let x: `a${string}`;")).toEqual({ _: "StringType" });
     });
