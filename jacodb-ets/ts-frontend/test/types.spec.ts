@@ -1,5 +1,6 @@
 import * as ts from "typescript";
 import { describe, expect, it } from "vitest";
+import { ClassCategory } from "../src/dto/constants";
 import { FileSignatureDto } from "../src/dto/signatures";
 import { TypeDto } from "../src/dto/types";
 import { TypeConverter } from "../src/types/convert";
@@ -203,6 +204,22 @@ describe("convertTypeNode (annotations)", () => {
                 questionToken: true,
             }),
         ]);
+    });
+
+    it("materializes the object keyword as an empty structural class", () => {
+        const { file } = lower("function read(value: object): void {}");
+        const parameterType = methodByName(file, "read").signature.parameters[0].type;
+        expect(parameterType._).toBe("ClassType");
+        if (parameterType._ !== "ClassType") throw new Error("expected a structural class type");
+
+        expect(file.classes).toContainEqual(
+            expect.objectContaining({
+                signature: parameterType.signature,
+                category: ClassCategory.TYPE_LITERAL,
+                fields: [],
+                methods: [],
+            }),
+        );
     });
 
     it("resolves namespace-qualified names with the namespace chain", () => {

@@ -62,7 +62,7 @@ const MAX_DEPTH = 8;
 
 export class TypeConverter {
     readonly structuralClasses: ClassDto[] = [];
-    private readonly structuralClassByNode = new Map<ts.TypeLiteralNode, ClassDto>();
+    private readonly structuralClassByNode = new Map<ts.TypeNode, ClassDto>();
 
     constructor(
         private readonly checker: ts.TypeChecker,
@@ -146,6 +146,8 @@ export class TypeConverter {
                 return NUMBER_TYPE;
             case ts.SyntaxKind.StringKeyword:
                 return STRING_TYPE;
+            case ts.SyntaxKind.ObjectKeyword:
+                return this.materializeStructuralClass(node, [], depth, substitutions);
             case ts.SyntaxKind.VoidKeyword:
                 return VOID_TYPE;
             case ts.SyntaxKind.NeverKeyword:
@@ -216,6 +218,15 @@ export class TypeConverter {
             members.push(member);
         }
 
+        return this.materializeStructuralClass(node, members, depth, substitutions);
+    }
+
+    private materializeStructuralClass(
+        node: ts.TypeNode,
+        members: readonly ts.PropertySignature[],
+        depth: number,
+        substitutions?: ReadonlyMap<ts.TypeParameterDeclaration, TypeDto>,
+    ): ClassTypeDto {
         const existing = this.structuralClassByNode.get(node);
         if (existing !== undefined) {
             return { _: "ClassType", signature: existing.signature };
