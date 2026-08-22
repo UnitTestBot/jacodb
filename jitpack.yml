@@ -1,0 +1,7 @@
+before_install:
+  - curl -fsSLO https://unofficial-builds.nodejs.org/download/release/v22.20.0/node-v22.20.0-linux-x64-glibc-217.tar.xz
+  - echo "1e96035030ea0d03e3c03221db47ff9576f9bbcf9c7f120485dca95ece70ea21  node-v22.20.0-linux-x64-glibc-217.tar.xz" | sha256sum --check
+  - tar -xJf node-v22.20.0-linux-x64-glibc-217.tar.xz
+
+install:
+  - PATH="$PWD/node-v22.20.0-linux-x64-glibc-217/bin:$PATH" ./gradlew clean -Pgroup=$GROUP -Pversion=$VERSION -xtest assemble publishToMavenLocal --console=plain
