@@ -170,6 +170,42 @@ describe("convertTypeNode (annotations)", () => {
         expect(structuralClass?.fields[0].signature.type).toEqual({ _: "GenericType", name: "T" });
     });
 
+    it("keeps generic structural aliases unspecialized through alias wrappers", () => {
+        const { file } = lower(`
+            type Identity<T> = T;
+            type Box<T, U> = Identity<{ second: U; first: T }>;
+            function readNumber(value: Box<number, string>): number { return value.first; }
+            function readString(value: Box<string, number>): string { return value.first; }
+        `);
+
+        const numberBox = methodByName(file, "readNumber").signature.parameters[0].type;
+        const stringBox = methodByName(file, "readString").signature.parameters[0].type;
+        expect(numberBox).toMatchObject({
+            _: "ClassType",
+            typeParameters: [{ _: "NumberType" }, { _: "StringType" }],
+        });
+        expect(stringBox).toMatchObject({
+            _: "ClassType",
+            typeParameters: [{ _: "StringType" }, { _: "NumberType" }],
+        });
+        if (numberBox._ !== "ClassType" || stringBox._ !== "ClassType") {
+            throw new Error("expected structural class types");
+        }
+        expect(numberBox.signature).toEqual(stringBox.signature);
+
+        const structuralClass = file.classes.find(
+            (candidate) => candidate.signature.name === numberBox.signature.name,
+        );
+        expect(structuralClass?.typeParameters).toEqual([
+            { _: "GenericType", name: "T" },
+            { _: "GenericType", name: "U" },
+        ]);
+        expect(structuralClass?.fields.map((field) => field.signature.type)).toEqual([
+            { _: "GenericType", name: "U" },
+            { _: "GenericType", name: "T" },
+        ]);
+    });
+
     it("does not inherit arguments on nested aliases without arguments", () => {
         const { file } = lower(
             "type Json<T = string> = T | Json[];\nfunction parse(json: Json<number>): void {}",

@@ -63,6 +63,10 @@ const MAX_DEPTH = 8;
 export class TypeConverter {
     readonly structuralClasses: ClassDto[] = [];
     private readonly structuralClassByNode = new Map<ts.TypeNode, ClassDto>();
+    private readonly structuralTypeParametersByNode = new Map<
+        ts.TypeNode,
+        readonly ts.TypeParameterDeclaration[]
+    >();
 
     constructor(
         private readonly checker: ts.TypeChecker,
@@ -221,20 +225,16 @@ export class TypeConverter {
         return this.materializeStructuralClass(node, members, depth, substitutions);
     }
 
-    /** Materialize a structural alias in its declaring file before any use-site specialization. */
+    /** Materialize structural nodes in an alias declaration before any use-site specialization. */
     materializeStructuralAlias(decl: ts.TypeAliasDeclaration): void {
-        const target = unwrapParenthesizedType(decl.type);
-        if (!ts.isTypeLiteralNode(target) && target.kind !== ts.SyntaxKind.ObjectKeyword) {
-            return;
-        }
-        const type = this.convertTypeNode(target);
-        if (type._ !== "ClassType") {
-            return;
-        }
-        const structuralClass = this.structuralClassByNode.get(target);
-        if (structuralClass !== undefined) {
-            structuralClass.typeParameters = this.convertTypeParameters(decl.typeParameters);
-        }
+        const visit = (node: ts.Node): void => {
+            if (ts.isTypeLiteralNode(node) || node.kind === ts.SyntaxKind.ObjectKeyword) {
+                this.convertTypeNode(node as ts.TypeNode);
+                return;
+            }
+            ts.forEachChild(node, visit);
+        };
+        visit(decl.type);
     }
 
     private materializeStructuralClass(
@@ -245,9 +245,10 @@ export class TypeConverter {
     ): ClassTypeDto {
         const existing = this.structuralClassByNode.get(node);
         if (existing !== undefined) {
-            return { _: "ClassType", signature: existing.signature };
+            return this.structuralClassType(node, existing, substitutions);
         }
 
+        const typeParameters = this.structuralTypeParameters(node);
         const signature: ClassSignatureDto = {
             name: `%ST${node.getStart(node.getSourceFile())}`,
             declaringFile: this.fileSignatureFor(node.getSourceFile()),
@@ -262,17 +263,23 @@ export class TypeConverter {
             fields: [],
             methods: [],
         };
+        const convertedTypeParameters = this.convertTypeParameters(typeParameters);
+        if (convertedTypeParameters !== undefined) {
+            structuralClass.typeParameters = convertedTypeParameters;
+        }
 
         // Register the shell before converting fields so recursive aliases such as
         // `type Node = { next?: Node }` resolve back to the same structural class.
         this.structuralClassByNode.set(node, structuralClass);
         this.structuralClasses.push(structuralClass);
 
+        const definitionSubstitutions = new Map(substitutions);
+        typeParameters.forEach((parameter) => definitionSubstitutions.delete(parameter));
         structuralClass.fields = members.map((member): FieldDto => ({
             signature: {
                 declaringClass: signature,
                 name: memberName(member.name),
-                type: this.convertTypeNode(member.type, depth + 1, substitutions),
+                type: this.convertTypeNode(member.type, depth + 1, definitionSubstitutions),
             },
             modifiers: modifiersOf(member),
             decorators: decoratorsOf(member),
@@ -280,7 +287,47 @@ export class TypeConverter {
             exclamationToken: false,
         }));
 
-        return { _: "ClassType", signature };
+        return this.structuralClassType(node, structuralClass, substitutions);
+    }
+
+    private structuralClassType(
+        node: ts.TypeNode,
+        structuralClass: ClassDto,
+        substitutions?: ReadonlyMap<ts.TypeParameterDeclaration, TypeDto>,
+    ): ClassTypeDto {
+        const result: ClassTypeDto = { _: "ClassType", signature: structuralClass.signature };
+        const typeParameters = this.structuralTypeParameters(node);
+        if (typeParameters.length > 0) {
+            result.typeParameters = typeParameters.map((parameter) =>
+                substitutions?.get(parameter) ?? { _: "GenericType", name: parameter.name.text },
+            );
+        }
+        return result;
+    }
+
+    private structuralTypeParameters(node: ts.TypeNode): readonly ts.TypeParameterDeclaration[] {
+        const cached = this.structuralTypeParametersByNode.get(node);
+        if (cached !== undefined) {
+            return cached;
+        }
+
+        const result: ts.TypeParameterDeclaration[] = [];
+        const seen = new Set<ts.TypeParameterDeclaration>();
+        const visit = (candidate: ts.Node): void => {
+            if (ts.isTypeReferenceNode(candidate)) {
+                const symbol = this.resolveSymbol(candidate.typeName);
+                const parameter = symbol?.declarations?.find(ts.isTypeParameterDeclaration);
+                if (parameter !== undefined && !isWithin(parameter, node) && !seen.has(parameter)) {
+                    seen.add(parameter);
+                    result.push(parameter);
+                }
+            }
+            ts.forEachChild(candidate, visit);
+        };
+        visit(node);
+        result.sort((left, right) => left.pos - right.pos);
+        this.structuralTypeParametersByNode.set(node, result);
+        return result;
     }
 
     private convertLiteralTypeNode(node: ts.LiteralTypeNode): TypeDto {
@@ -356,22 +403,6 @@ export class TypeConverter {
                         aliasSubstitutions.delete(parameter);
                     }
                 });
-                const structuralTarget = unwrapParenthesizedType(aliasDecl.type);
-                if (ts.isTypeLiteralNode(structuralTarget) || structuralTarget.kind === ts.SyntaxKind.ObjectKeyword) {
-                    const definitionSubstitutions = new Map(substitutions);
-                    aliasDecl.typeParameters?.forEach((parameter) => definitionSubstitutions.delete(parameter));
-                    const result = this.convertTypeNode(structuralTarget, depth + 1, definitionSubstitutions);
-                    if (result._ === "ClassType") {
-                        const structuralClass = this.structuralClassByNode.get(structuralTarget);
-                        if (structuralClass !== undefined) {
-                            structuralClass.typeParameters = this.convertTypeParameters(aliasDecl.typeParameters);
-                        }
-                        if (typeArgs !== undefined && typeArgs.length > 0) {
-                            result.typeParameters = typeArgs;
-                        }
-                    }
-                    return result;
-                }
                 return this.convertTypeNode(aliasDecl.type, depth + 1, aliasSubstitutions);
             }
         }
@@ -693,19 +724,22 @@ function unwrapTupleMember(node: ts.TypeNode): ts.TypeNode {
     return node;
 }
 
-function unwrapParenthesizedType(node: ts.TypeNode): ts.TypeNode {
-    let current = node;
-    while (ts.isParenthesizedTypeNode(current)) {
-        current = current.type;
-    }
-    return current;
-}
-
 function entityNameToString(name: ts.EntityName): string {
     if (ts.isIdentifier(name)) {
         return name.text;
     }
     return `${entityNameToString(name.left)}.${name.right.text}`;
+}
+
+function isWithin(node: ts.Node, ancestor: ts.Node): boolean {
+    let current: ts.Node | undefined = node;
+    while (current !== undefined) {
+        if (current === ancestor) {
+            return true;
+        }
+        current = current.parent;
+    }
+    return false;
 }
 
 /** Class-like declaration of a symbol (class / interface / enum). */

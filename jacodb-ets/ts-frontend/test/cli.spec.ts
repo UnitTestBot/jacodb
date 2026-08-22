@@ -155,6 +155,41 @@ describe("project mode", () => {
         expect(fromB.signature.parameters[0].type.signature).toEqual(structuralClasses[0].signature);
     });
 
+    it("emits an imported generic structural type nested in an alias wrapper", () => {
+        const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-generic-owner-"));
+        tempDirs.push(projectDir);
+        fs.writeFileSync(
+            path.join(projectDir, "a.ts"),
+            "type Identity<T> = T; export type Box<T> = Identity<{ value: T }>;",
+        );
+        fs.writeFileSync(
+            path.join(projectDir, "b.ts"),
+            'import { Box } from "./a"; export function read(value: Box<number>): number { return value.value; }',
+        );
+
+        const outputDir = path.join(projectDir, "ir");
+        expect(main(["--project", projectDir, outputDir])).toBe(0);
+        const declaringFile = JSON.parse(fs.readFileSync(path.join(outputDir, "a.ts.json"), "utf8"));
+        const importingFile = JSON.parse(fs.readFileSync(path.join(outputDir, "b.ts.json"), "utf8"));
+        const structuralClasses = [...declaringFile.classes, ...importingFile.classes].filter(
+            (candidate: { category?: number }) => candidate.category === ClassCategory.TYPE_LITERAL,
+        );
+
+        expect(structuralClasses).toHaveLength(1);
+        expect(structuralClasses[0]).toMatchObject({
+            signature: { declaringFile: { fileName: "a.ts" } },
+            typeParameters: [{ _: "GenericType", name: "T" }],
+            fields: [{ signature: { name: "value", type: { _: "GenericType", name: "T" } } }],
+        });
+        const read = importingFile.classes[0].methods.find(
+            (method: { signature: { name: string } }) => method.signature.name === "read",
+        );
+        expect(read.signature.parameters[0].type).toMatchObject({
+            signature: structuralClasses[0].signature,
+            typeParameters: [{ _: "NumberType" }],
+        });
+    });
+
     it("keeps an in-root filename beginning with two dots project-owned", () => {
         const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-dotdot-file-"));
         tempDirs.push(projectDir);
