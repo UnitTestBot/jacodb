@@ -41,5 +41,7 @@ if [ ! -x "$node_dir/bin/node" ] || [ ! -x "$node_dir/bin/npm" ]; then
     exit 1
 fi
 
-"$node_dir/bin/node" --version
-"$node_dir/bin/npm" --version
+PATH="$node_dir/bin:$PATH"
+export PATH
+node --version
+npm --version
