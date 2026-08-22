@@ -221,6 +221,22 @@ export class TypeConverter {
         return this.materializeStructuralClass(node, members, depth, substitutions);
     }
 
+    /** Materialize a structural alias in its declaring file before any use-site specialization. */
+    materializeStructuralAlias(decl: ts.TypeAliasDeclaration): void {
+        const target = unwrapParenthesizedType(decl.type);
+        if (!ts.isTypeLiteralNode(target) && target.kind !== ts.SyntaxKind.ObjectKeyword) {
+            return;
+        }
+        const type = this.convertTypeNode(target);
+        if (type._ !== "ClassType") {
+            return;
+        }
+        const structuralClass = this.structuralClassByNode.get(target);
+        if (structuralClass !== undefined) {
+            structuralClass.typeParameters = this.convertTypeParameters(decl.typeParameters);
+        }
+    }
+
     private materializeStructuralClass(
         node: ts.TypeNode,
         members: readonly ts.PropertySignature[],
@@ -340,6 +356,22 @@ export class TypeConverter {
                         aliasSubstitutions.delete(parameter);
                     }
                 });
+                const structuralTarget = unwrapParenthesizedType(aliasDecl.type);
+                if (ts.isTypeLiteralNode(structuralTarget) || structuralTarget.kind === ts.SyntaxKind.ObjectKeyword) {
+                    const definitionSubstitutions = new Map(substitutions);
+                    aliasDecl.typeParameters?.forEach((parameter) => definitionSubstitutions.delete(parameter));
+                    const result = this.convertTypeNode(structuralTarget, depth + 1, definitionSubstitutions);
+                    if (result._ === "ClassType") {
+                        const structuralClass = this.structuralClassByNode.get(structuralTarget);
+                        if (structuralClass !== undefined) {
+                            structuralClass.typeParameters = this.convertTypeParameters(aliasDecl.typeParameters);
+                        }
+                        if (typeArgs !== undefined && typeArgs.length > 0) {
+                            result.typeParameters = typeArgs;
+                        }
+                    }
+                    return result;
+                }
                 return this.convertTypeNode(aliasDecl.type, depth + 1, aliasSubstitutions);
             }
         }
@@ -659,6 +691,14 @@ function unwrapTupleMember(node: ts.TypeNode): ts.TypeNode {
         return node.type;
     }
     return node;
+}
+
+function unwrapParenthesizedType(node: ts.TypeNode): ts.TypeNode {
+    let current = node;
+    while (ts.isParenthesizedTypeNode(current)) {
+        current = current.type;
+    }
+    return current;
 }
 
 function entityNameToString(name: ts.EntityName): string {

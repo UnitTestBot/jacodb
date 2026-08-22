@@ -300,6 +300,12 @@ class FileBuilder {
         const classes: ClassDto[] = [];
         const namespaces: NamespaceDto[] = [];
 
+        for (const statement of statements) {
+            if (ts.isTypeAliasDeclaration(statement)) {
+                this.ctx.converter.materializeStructuralAlias(statement);
+            }
+        }
+
         const defaultClassSignature: ClassSignatureDto = {
             name: DEFAULT_ARK_CLASS_NAME,
             declaringFile: this.fileSignature,

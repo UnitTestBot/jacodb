@@ -147,6 +147,29 @@ describe("convertTypeNode (annotations)", () => {
         ]);
     });
 
+    it("keeps generic structural aliases unspecialized and attaches use-site arguments", () => {
+        const { file } = lower(`
+            type Box<T> = { value: T };
+            function readNumber(value: Box<number>): number { return value.value; }
+            function readString(value: Box<string>): string { return value.value; }
+        `);
+
+        const numberBox = methodByName(file, "readNumber").signature.parameters[0].type;
+        const stringBox = methodByName(file, "readString").signature.parameters[0].type;
+        expect(numberBox).toMatchObject({ _: "ClassType", typeParameters: [{ _: "NumberType" }] });
+        expect(stringBox).toMatchObject({ _: "ClassType", typeParameters: [{ _: "StringType" }] });
+        if (numberBox._ !== "ClassType" || stringBox._ !== "ClassType") {
+            throw new Error("expected structural class types");
+        }
+        expect(numberBox.signature).toEqual(stringBox.signature);
+
+        const structuralClass = file.classes.find(
+            (candidate) => candidate.signature.name === numberBox.signature.name,
+        );
+        expect(structuralClass?.typeParameters).toEqual([{ _: "GenericType", name: "T" }]);
+        expect(structuralClass?.fields[0].signature.type).toEqual({ _: "GenericType", name: "T" });
+    });
+
     it("does not inherit arguments on nested aliases without arguments", () => {
         const { file } = lower(
             "type Json<T = string> = T | Json[];\nfunction parse(json: Json<number>): void {}",
