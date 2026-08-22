@@ -29,7 +29,8 @@
  */
 
 import * as ts from "typescript";
-import { PATTERN_PARAMETER_PREFIX } from "../dto/constants";
+import { ClassCategory, PATTERN_PARAMETER_PREFIX } from "../dto/constants";
+import { ClassDto, FieldDto } from "../dto/model";
 import {
     ClassSignatureDto,
     FileSignatureDto,
@@ -54,11 +55,19 @@ import {
     UnclearReferenceTypeDto,
     VOID_TYPE,
 } from "../dto/types";
+import { decoratorsOf, memberName, modifiersOf } from "../lowering/astUtils";
 
 /** Guard against deeply nested / self-referential types. */
 const MAX_DEPTH = 8;
 
 export class TypeConverter {
+    readonly structuralClasses: ClassDto[] = [];
+    private readonly structuralClassByNode = new Map<ts.TypeNode, ClassDto>();
+    private readonly structuralTypeParametersByNode = new Map<
+        ts.TypeNode,
+        readonly ts.TypeParameterDeclaration[]
+    >();
+
     constructor(
         private readonly checker: ts.TypeChecker,
         private readonly fileSignatureFor: (sf: ts.SourceFile) => FileSignatureDto,
@@ -141,6 +150,8 @@ export class TypeConverter {
                 return NUMBER_TYPE;
             case ts.SyntaxKind.StringKeyword:
                 return STRING_TYPE;
+            case ts.SyntaxKind.ObjectKeyword:
+                return this.materializeStructuralClass(node, [], depth, substitutions);
             case ts.SyntaxKind.VoidKeyword:
                 return VOID_TYPE;
             case ts.SyntaxKind.NeverKeyword:
@@ -181,6 +192,9 @@ export class TypeConverter {
                 signature: this.functionSignatureFromTypeNode(node, depth, substitutions),
             };
         }
+        if (ts.isTypeLiteralNode(node)) {
+            return this.convertTypeLiteralNode(node, depth, substitutions);
+        }
         if (ts.isTypeReferenceNode(node)) {
             return this.convertTypeReference(node, depth, substitutions);
         }
@@ -189,6 +203,131 @@ export class TypeConverter {
         }
         // keyof/typeof/indexed access/conditional/mapped/type literals etc.
         return UNKNOWN_TYPE;
+    }
+
+    private convertTypeLiteralNode(
+        node: ts.TypeLiteralNode,
+        depth: number,
+        substitutions?: ReadonlyMap<ts.TypeParameterDeclaration, TypeDto>,
+    ): TypeDto {
+        const members: ts.PropertySignature[] = [];
+        for (const member of node.members) {
+            if (
+                !ts.isPropertySignature(member) ||
+                member.name === undefined ||
+                ts.isComputedPropertyName(member.name)
+            ) {
+                return UNKNOWN_TYPE;
+            }
+            members.push(member);
+        }
+
+        return this.materializeStructuralClass(node, members, depth, substitutions);
+    }
+
+    /** Materialize structural nodes in an alias declaration before any use-site specialization. */
+    materializeStructuralAlias(decl: ts.TypeAliasDeclaration): void {
+        const visit = (node: ts.Node): void => {
+            if (ts.isTypeLiteralNode(node) || node.kind === ts.SyntaxKind.ObjectKeyword) {
+                this.convertTypeNode(node as ts.TypeNode);
+                return;
+            }
+            ts.forEachChild(node, visit);
+        };
+        visit(decl.type);
+    }
+
+    private materializeStructuralClass(
+        node: ts.TypeNode,
+        members: readonly ts.PropertySignature[],
+        depth: number,
+        substitutions?: ReadonlyMap<ts.TypeParameterDeclaration, TypeDto>,
+    ): ClassTypeDto {
+        const existing = this.structuralClassByNode.get(node);
+        if (existing !== undefined) {
+            return this.structuralClassType(node, existing, substitutions);
+        }
+
+        const typeParameters = this.structuralTypeParameters(node);
+        const signature: ClassSignatureDto = {
+            name: `%ST${node.getStart(node.getSourceFile())}`,
+            declaringFile: this.fileSignatureFor(node.getSourceFile()),
+        };
+        const structuralClass: ClassDto = {
+            signature,
+            modifiers: 0,
+            decorators: [],
+            category: ClassCategory.TYPE_LITERAL,
+            superClassName: "",
+            implementedInterfaceNames: [],
+            fields: [],
+            methods: [],
+        };
+        const convertedTypeParameters = this.convertTypeParameters(typeParameters);
+        if (convertedTypeParameters !== undefined) {
+            structuralClass.typeParameters = convertedTypeParameters;
+        }
+
+        // Register the shell before converting fields so recursive aliases such as
+        // `type Node = { next?: Node }` resolve back to the same structural class.
+        this.structuralClassByNode.set(node, structuralClass);
+        this.structuralClasses.push(structuralClass);
+
+        const definitionSubstitutions = new Map(substitutions);
+        typeParameters.forEach((parameter) => definitionSubstitutions.delete(parameter));
+        structuralClass.fields = members.map((member): FieldDto => ({
+            signature: {
+                declaringClass: signature,
+                name: memberName(member.name),
+                type: this.convertTypeNode(member.type, depth + 1, definitionSubstitutions),
+            },
+            modifiers: modifiersOf(member),
+            decorators: decoratorsOf(member),
+            questionToken: member.questionToken !== undefined,
+            exclamationToken: false,
+        }));
+
+        return this.structuralClassType(node, structuralClass, substitutions);
+    }
+
+    private structuralClassType(
+        node: ts.TypeNode,
+        structuralClass: ClassDto,
+        substitutions?: ReadonlyMap<ts.TypeParameterDeclaration, TypeDto>,
+    ): ClassTypeDto {
+        const result: ClassTypeDto = { _: "ClassType", signature: structuralClass.signature };
+        const typeParameters = this.structuralTypeParameters(node);
+        if (typeParameters.length > 0) {
+            result.typeParameters = typeParameters.map((parameter) =>
+                substitutions?.get(parameter) ?? { _: "GenericType", name: parameter.name.text },
+            );
+        }
+        return result;
+    }
+
+    private structuralTypeParameters(node: ts.TypeNode): readonly ts.TypeParameterDeclaration[] {
+        const cached = this.structuralTypeParametersByNode.get(node);
+        if (cached !== undefined) {
+            return cached;
+        }
+
+        const result: ts.TypeParameterDeclaration[] = [];
+        const seen = new Set<ts.TypeParameterDeclaration>();
+        const visit = (candidate: ts.Node): void => {
+            if (ts.isTypeReferenceNode(candidate)) {
+                const symbol = this.resolveSymbol(candidate.typeName);
+                const parameter = symbol?.declarations?.find(ts.isTypeParameterDeclaration);
+                if (parameter !== undefined && !isWithin(parameter, node) && !seen.has(parameter)) {
+                    seen.add(parameter);
+                    result.push(parameter);
+                }
+            }
+            ts.forEachChild(candidate, visit);
+        };
+        visit(node);
+        result.sort((left, right) => left.pos - right.pos);
+        this.structuralTypeParametersByNode.set(node, result);
+        return result;
     }
 
     private convertLiteralTypeNode(node: ts.LiteralTypeNode): TypeDto {
@@ -590,6 +729,17 @@ function entityNameToString(name: ts.EntityName): string {
         return name.text;
     }
     return `${entityNameToString(name.left)}.${name.right.text}`;
+}
+
+function isWithin(node: ts.Node, ancestor: ts.Node): boolean {
+    let current: ts.Node | undefined = node;
+    while (current !== undefined) {
+        if (current === ancestor) {
+            return true;
+        }
+        current = current.parent;
+    }
+    return false;
 }
 
 /** Class-like declaration of a symbol (class / interface / enum). */

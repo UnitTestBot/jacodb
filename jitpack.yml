@@ -1,0 +1,5 @@
+before_install:
+  - ./gradle/jitpack/setup-node.sh
+
+install:
+  - PATH="$PWD/.jitpack/node/bin:$PATH" ./gradlew clean -Pgroup=$GROUP -Pversion=$VERSION -xtest assemble publishToMavenLocal --console=plain

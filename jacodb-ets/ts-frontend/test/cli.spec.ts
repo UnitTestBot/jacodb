@@ -3,6 +3,7 @@ import * as os from "os";
 import * as path from "path";
 import * as ts from "typescript";
 import { afterEach, describe, expect, it } from "vitest";
+import { ClassCategory } from "../src/dto/constants";
 import { main, parseArgs, resolveProjectInputs } from "../src/index";
 
 const tempDirs: string[] = [];
@@ -123,6 +124,69 @@ describe("project mode", () => {
                     declaringClass: { name: "%dflt", declaringFile: { fileName: "a.ts" } },
                 },
             },
+        });
+    });
+
+    it("emits an imported structural type only in its declaring file", () => {
+        const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-structural-owner-"));
+        tempDirs.push(projectDir);
+        fs.writeFileSync(
+            path.join(projectDir, "a.ts"),
+            "export type Shared = { value: number }; export function fromA(value: Shared): number { return value.value; }",
+        );
+        fs.writeFileSync(
+            path.join(projectDir, "b.ts"),
+            'import { Shared } from "./a"; export function fromB(value: Shared): number { return value.value; }',
+        );
+
+        const outputDir = path.join(projectDir, "ir");
+        expect(main(["--project", projectDir, outputDir])).toBe(0);
+        const declaringFile = JSON.parse(fs.readFileSync(path.join(outputDir, "a.ts.json"), "utf8"));
+        const importingFile = JSON.parse(fs.readFileSync(path.join(outputDir, "b.ts.json"), "utf8"));
+        const structuralClasses = [...declaringFile.classes, ...importingFile.classes].filter(
+            (candidate: { category?: number }) => candidate.category === ClassCategory.TYPE_LITERAL,
+        );
+
+        expect(structuralClasses).toHaveLength(1);
+        expect(structuralClasses[0].signature.declaringFile.fileName).toBe("a.ts");
+        const fromB = importingFile.classes[0].methods.find(
+            (method: { signature: { name: string } }) => method.signature.name === "fromB",
+        );
+        expect(fromB.signature.parameters[0].type.signature).toEqual(structuralClasses[0].signature);
+    });
+
+    it("emits an imported generic structural type nested in an alias wrapper", () => {
+        const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-generic-owner-"));
+        tempDirs.push(projectDir);
+        fs.writeFileSync(
+            path.join(projectDir, "a.ts"),
+            "type Identity<T> = T; export type Box<T> = Identity<{ value: T }>;",
+        );
+        fs.writeFileSync(
+            path.join(projectDir, "b.ts"),
+            'import { Box } from "./a"; export function read(value: Box<number>): number { return value.value; }',
+        );
+
+        const outputDir = path.join(projectDir, "ir");
+        expect(main(["--project", projectDir, outputDir])).toBe(0);
+        const declaringFile = JSON.parse(fs.readFileSync(path.join(outputDir, "a.ts.json"), "utf8"));
+        const importingFile = JSON.parse(fs.readFileSync(path.join(outputDir, "b.ts.json"), "utf8"));
+        const structuralClasses = [...declaringFile.classes, ...importingFile.classes].filter(
+            (candidate: { category?: number }) => candidate.category === ClassCategory.TYPE_LITERAL,
+        );
+
+        expect(structuralClasses).toHaveLength(1);
+        expect(structuralClasses[0]).toMatchObject({
+            signature: { declaringFile: { fileName: "a.ts" } },
+            typeParameters: [{ _: "GenericType", name: "T" }],
+            fields: [{ signature: { name: "value", type: { _: "GenericType", name: "T" } } }],
+        });
+        const read = importingFile.classes[0].methods.find(
+            (method: { signature: { name: string } }) => method.signature.name === "read",
+        );
+        expect(read.signature.parameters[0].type).toMatchObject({
+            signature: structuralClasses[0].signature,
+            typeParameters: [{ _: "NumberType" }],
         });
     });
 

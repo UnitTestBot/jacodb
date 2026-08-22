@@ -1,5 +1,6 @@
 import * as ts from "typescript";
 import { describe, expect, it } from "vitest";
+import { ClassCategory } from "../src/dto/constants";
 import { FileSignatureDto } from "../src/dto/signatures";
 import { TypeDto } from "../src/dto/types";
 import { TypeConverter } from "../src/types/convert";
@@ -146,6 +147,65 @@ describe("convertTypeNode (annotations)", () => {
         ]);
     });
 
+    it("keeps generic structural aliases unspecialized and attaches use-site arguments", () => {
+        const { file } = lower(`
+            type Box<T> = { value: T };
+            function readNumber(value: Box<number>): number { return value.value; }
+            function readString(value: Box<string>): string { return value.value; }
+        `);
+
+        const numberBox = methodByName(file, "readNumber").signature.parameters[0].type;
+        const stringBox = methodByName(file, "readString").signature.parameters[0].type;
+        expect(numberBox).toMatchObject({ _: "ClassType", typeParameters: [{ _: "NumberType" }] });
+        expect(stringBox).toMatchObject({ _: "ClassType", typeParameters: [{ _: "StringType" }] });
+        if (numberBox._ !== "ClassType" || stringBox._ !== "ClassType") {
+            throw new Error("expected structural class types");
+        }
+        expect(numberBox.signature).toEqual(stringBox.signature);
+
+        const structuralClass = file.classes.find(
+            (candidate) => candidate.signature.name === numberBox.signature.name,
+        );
+        expect(structuralClass?.typeParameters).toEqual([{ _: "GenericType", name: "T" }]);
+        expect(structuralClass?.fields[0].signature.type).toEqual({ _: "GenericType", name: "T" });
+    });
+
+    it("keeps generic structural aliases unspecialized through alias wrappers", () => {
+        const { file } = lower(`
+            type Identity<T> = T;
+            type Box<T, U> = Identity<{ second: U; first: T }>;
+            function readNumber(value: Box<number, string>): number { return value.first; }
+            function readString(value: Box<string, number>): string { return value.first; }
+        `);
+
+        const numberBox = methodByName(file, "readNumber").signature.parameters[0].type;
+        const stringBox = methodByName(file, "readString").signature.parameters[0].type;
+        expect(numberBox).toMatchObject({
+            _: "ClassType",
+            typeParameters: [{ _: "NumberType" }, { _: "StringType" }],
+        });
+        expect(stringBox).toMatchObject({
+            _: "ClassType",
+            typeParameters: [{ _: "StringType" }, { _: "NumberType" }],
+        });
+        if (numberBox._ !== "ClassType" || stringBox._ !== "ClassType") {
+            throw new Error("expected structural class types");
+        }
+        expect(numberBox.signature).toEqual(stringBox.signature);
+
+        const structuralClass = file.classes.find(
+            (candidate) => candidate.signature.name === numberBox.signature.name,
+        );
+        expect(structuralClass?.typeParameters).toEqual([
+            { _: "GenericType", name: "T" },
+            { _: "GenericType", name: "U" },
+        ]);
+        expect(structuralClass?.fields.map((field) => field.signature.type)).toEqual([
+            { _: "GenericType", name: "U" },
+            { _: "GenericType", name: "T" },
+        ]);
+    });
+
     it("does not inherit arguments on nested aliases without arguments", () => {
         const { file } = lower(
             "type Json<T = string> = T | Json[];\nfunction parse(json: Json<number>): void {}",
@@ -177,6 +237,50 @@ describe("convertTypeNode (annotations)", () => {
         });
     });
 
+    it("materializes object type literals as structural classes", () => {
+        const { file } = lower(`
+            class C {
+                read(value: { required: number; optional?: string }): number {
+                    return value.required;
+                }
+            }
+        `);
+        const parameterType = methodByName(file, "read").signature.parameters[0].type;
+        expect(parameterType._).toBe("ClassType");
+        if (parameterType._ !== "ClassType") throw new Error("expected a structural class type");
+
+        const structuralClass = file.classes.find(
+            (candidate) => candidate.signature.name === parameterType.signature.name,
+        );
+        expect(structuralClass).toBeDefined();
+        expect(structuralClass?.fields).toEqual([
+            expect.objectContaining({
+                signature: expect.objectContaining({ name: "required", type: { _: "NumberType" } }),
+                questionToken: false,
+            }),
+            expect.objectContaining({
+                signature: expect.objectContaining({ name: "optional", type: { _: "StringType" } }),
+                questionToken: true,
+            }),
+        ]);
+    });
+
+    it("materializes the object keyword as an empty structural class", () => {
+        const { file } = lower("function read(value: object): void {}");
+        const parameterType = methodByName(file, "read").signature.parameters[0].type;
+        expect(parameterType._).toBe("ClassType");
+        if (parameterType._ !== "ClassType") throw new Error("expected a structural class type");
+
+        expect(file.classes).toContainEqual(
+            expect.objectContaining({
+                signature: parameterType.signature,
+                category: ClassCategory.TYPE_LITERAL,
+                fields: [],
+                methods: [],
+            }),
+        );
+    });
+
     it("resolves namespace-qualified names with the namespace chain", () => {
         const type = annotationOf("namespace N { export class C {} }\nlet x: N.C;");
         expect(type).toEqual({
@@ -203,7 +307,6 @@ describe("convertTypeNode (annotations)", () => {
 
     it("degrades exotic types to UnknownType", () => {
         expect(annotationOf("let x: keyof { a: number };")).toEqual({ _: "UnknownType" });
-        expect(annotationOf("let x: { a: number };")).toEqual({ _: "UnknownType" });
         expect(annotationOf("let x;")).toEqual({ _: "UnknownType" });
         expect(annotationOf("let x: `a${string}`;")).toEqual({ _: "StringType" });
     });
