@@ -119,7 +119,11 @@ class FileBuilder {
     build(sourceFile: ts.SourceFile): EtsFileDto {
         const contents = this.buildScope(sourceFile.statements, undefined);
 
-        contents.classes.push(...this.ctx.anonymous.classes, ...this.ctx.converter.structuralClasses);
+        const ownedStructuralClasses = this.ctx.converter.structuralClasses.filter(({ signature }) =>
+            signature.declaringFile.projectName === this.fileSignature.projectName
+            && signature.declaringFile.fileName === this.fileSignature.fileName,
+        );
+        contents.classes.push(...this.ctx.anonymous.classes, ...ownedStructuralClasses);
         // Anonymous closure methods retain the enclosing class so lexical
         // `this` has the same type as in the source method. Add anonymous
         // classes first because their methods may themselves contain closures.
