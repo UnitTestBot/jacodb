@@ -134,6 +134,7 @@ export interface ExportInfoDto {
     exportFrom?: string; // Kotlin default: null
     nameBeforeAs?: string; // Kotlin default: null
     modifiers: number;
+    isTypeOnly: boolean;
 }
 
 export interface DecoratorDto {

@@ -852,6 +852,7 @@ fun ExportInfoDto.toEtsExportInfo(): EtsExportInfo {
         from = exportFrom,
         nameBeforeAs = nameBeforeAs,
         modifiers = EtsModifiers(modifiers),
+        isTypeOnly = isTypeOnly,
     )
 }
 

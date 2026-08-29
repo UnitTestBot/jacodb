@@ -16,13 +16,17 @@
 
 package org.jacodb.ets.test
 
+import kotlinx.serialization.json.Json
 import mu.KotlinLogging
+import org.jacodb.ets.dto.ExportInfoDto
+import org.jacodb.ets.dto.toEtsExportInfo
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.test.utils.getResourcePath
 import org.jacodb.ets.utils.loadEtsFileAutoConvert
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -210,6 +214,32 @@ class EtsExportTest {
         assertNotNull(namespaceExport, "Should find MyNamespace export")
         assertEquals("MyNamespace", namespaceExport.name)
         logger.info { "✓ Namespace export test passed: $namespaceExport" }
+    }
+
+    @Test
+    fun testExportInfoTypeOnlyMetadata() {
+        val typeOnlyExport = ExportInfoDto(
+            exportName = "*",
+            exportType = 9,
+            exportFrom = "./types",
+            modifiers = 0,
+            isTypeOnly = true,
+        ).toEtsExportInfo()
+
+        assertTrue(typeOnlyExport.isTypeOnly)
+
+        val legacyExport = Json.decodeFromString<ExportInfoDto>(
+            """
+                {
+                  "exportName": "runtimeValue",
+                  "exportType": 3,
+                  "exportFrom": "./values",
+                  "modifiers": 0
+                }
+            """.trimIndent()
+        ).toEtsExportInfo()
+
+        assertFalse(legacyExport.isTypeOnly)
     }
 
     @Test
