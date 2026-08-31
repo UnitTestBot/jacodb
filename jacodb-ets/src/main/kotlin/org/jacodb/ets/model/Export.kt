@@ -24,6 +24,7 @@ package org.jacodb.ets.model
  * @property from The module or path being exported from (null for direct exports).
  * @property nameBeforeAs The original name before 'as' aliasing (null if no aliasing).
  * @property modifiers Export modifiers.
+ * @property isTypeOnly Whether this export is only available in type positions.
  */
 data class EtsExportInfo(
     val name: String,
@@ -31,6 +32,7 @@ data class EtsExportInfo(
     val from: String? = null,
     val nameBeforeAs: String? = null,
     override val modifiers: EtsModifiers = EtsModifiers.EMPTY,
+    val isTypeOnly: Boolean = false,
 ) : Base {
 
     // Note: Export statements do not have decorators in JS/TS.

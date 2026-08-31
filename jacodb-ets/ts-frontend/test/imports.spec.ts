@@ -57,10 +57,27 @@ describe("export infos", () => {
             export * as bundle from "./bundle";
         `);
         expect(file.exportInfos).toEqual([
-            { exportName: "X", exportType: 9, modifiers: 0, exportFrom: "./other" },
-            { exportName: "Z", exportType: 9, nameBeforeAs: "Y", modifiers: 0, exportFrom: "./other" },
-            { exportName: "*", exportType: 9, modifiers: 0, exportFrom: "./star" },
-            { exportName: "bundle", exportType: 0, nameBeforeAs: "*", modifiers: 0, exportFrom: "./bundle" },
+            { exportName: "X", exportType: 9, modifiers: 0, exportFrom: "./other", isTypeOnly: false },
+            { exportName: "Z", exportType: 9, nameBeforeAs: "Y", modifiers: 0, exportFrom: "./other", isTypeOnly: false },
+            { exportName: "*", exportType: 9, modifiers: 0, exportFrom: "./star", isTypeOnly: false },
+            { exportName: "bundle", exportType: 0, nameBeforeAs: "*", modifiers: 0, exportFrom: "./bundle", isTypeOnly: false },
+        ]);
+    });
+
+    it("preserves type-only metadata for re-exports", () => {
+        const { file } = lower(`
+            export * from "./values";
+            export type * from "./types";
+            export { runtimeValue, type RuntimeType } from "./mixed";
+            export type { DeclaredType } from "./declared";
+        `);
+
+        expect(file.exportInfos).toEqual([
+            { exportName: "*", exportType: 9, modifiers: 0, exportFrom: "./values", isTypeOnly: false },
+            { exportName: "*", exportType: 9, modifiers: 0, exportFrom: "./types", isTypeOnly: true },
+            { exportName: "runtimeValue", exportType: 9, modifiers: 0, exportFrom: "./mixed", isTypeOnly: false },
+            { exportName: "RuntimeType", exportType: 9, modifiers: 0, exportFrom: "./mixed", isTypeOnly: true },
+            { exportName: "DeclaredType", exportType: 9, modifiers: 0, exportFrom: "./declared", isTypeOnly: true },
         ]);
     });
 
@@ -81,7 +98,7 @@ describe("export infos", () => {
             export default Main;
         `);
         expect(file.exportInfos).toEqual([
-            { exportName: "Main", exportType: 1, modifiers: Modifier.DEFAULT },
+            { exportName: "Main", exportType: 1, modifiers: Modifier.DEFAULT, isTypeOnly: false },
         ]);
     });
 
@@ -103,6 +120,7 @@ describe("export infos", () => {
             exportName: "default",
             exportType: 2,
             modifiers: Modifier.EXPORT | Modifier.DEFAULT,
+            isTypeOnly: false,
         });
 
         const anonymousClass = lower(`export default class {}`).file;
@@ -113,6 +131,7 @@ describe("export infos", () => {
             exportName: "default",
             exportType: 1,
             modifiers: Modifier.EXPORT | Modifier.DEFAULT,
+            isTypeOnly: false,
         });
     });
 });

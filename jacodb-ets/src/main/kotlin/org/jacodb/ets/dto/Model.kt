@@ -135,6 +135,7 @@ data class ExportInfoDto(
     val exportFrom: String? = null,
     val nameBeforeAs: String? = null,
     val modifiers: Int,
+    val isTypeOnly: Boolean = false,
     // val decorators: List<DecoratorDto>,
 )
 

@@ -223,11 +223,17 @@ class FileBuilder {
                         exportName: name,
                         exportType: exportTypeOfDeclaration(statement),
                         modifiers,
+                        isTypeOnly: false,
                     });
                 } else if (ts.isVariableStatement(statement)) {
                     for (const decl of statement.declarationList.declarations) {
                         if (ts.isIdentifier(decl.name)) {
-                            infos.push({ exportName: decl.name.text, exportType: ExportType.LOCAL, modifiers });
+                            infos.push({
+                                exportName: decl.name.text,
+                                exportType: ExportType.LOCAL,
+                                modifiers,
+                                isTypeOnly: false,
+                            });
                         }
                     }
                 }
@@ -241,7 +247,12 @@ class FileBuilder {
                         : undefined;
                 if (statement.exportClause === undefined) {
                     // `export * from "module"`.
-                    const info: ExportInfoDto = { exportName: "*", exportType: ExportType.UNKNOWN, modifiers: 0 };
+                    const info: ExportInfoDto = {
+                        exportName: "*",
+                        exportType: ExportType.UNKNOWN,
+                        modifiers: 0,
+                        isTypeOnly: statement.isTypeOnly,
+                    };
                     if (exportFrom !== undefined) info.exportFrom = exportFrom;
                     infos.push(info);
                 } else if (ts.isNamedExports(statement.exportClause)) {
@@ -250,6 +261,7 @@ class FileBuilder {
                             exportName: element.name.text,
                             exportType: this.exportTypeOfSymbol(element.name),
                             modifiers: 0,
+                            isTypeOnly: statement.isTypeOnly || element.isTypeOnly,
                         };
                         if (element.propertyName !== undefined) info.nameBeforeAs = element.propertyName.text;
                         if (exportFrom !== undefined) info.exportFrom = exportFrom;
@@ -263,6 +275,7 @@ class FileBuilder {
                         exportType: ExportType.NAMESPACE,
                         nameBeforeAs: "*",
                         modifiers: 0,
+                        isTypeOnly: statement.isTypeOnly,
                     };
                     if (exportFrom !== undefined) info.exportFrom = exportFrom;
                     infos.push(info);
@@ -276,6 +289,7 @@ class FileBuilder {
                     exportName: name,
                     exportType: this.exportTypeOfSymbol(statement.expression),
                     modifiers: Modifier.DEFAULT,
+                    isTypeOnly: false,
                 });
             }
         }
