@@ -19,7 +19,7 @@ import { DEFAULT_ARK_CLASS_NAME, FORBIDDEN_LOCAL_PREFIX, TEMP_LOCAL_PREFIX } fro
 import { BodyDto, ClassDto, LocalDeclDto, MethodDto, SourceSpanDto } from "../dto/model";
 import { ClassSignatureDto, FieldSignatureDto, FileSignatureDto } from "../dto/signatures";
 import { ClassTypeDto, LexicalEnvTypeDto, TypeDto, UNKNOWN_TYPE } from "../dto/types";
-import { ClosureFieldRefDto, LocalDto, StaticFieldRefDto, ValueDto } from "../dto/values";
+import { BuiltinCallProofDto, ClosureFieldRefDto, LocalDto, StaticFieldRefDto, ValueDto } from "../dto/values";
 import { TypeConverter } from "../types/convert";
 import { CfgBuilder } from "./cfg";
 import { Diagnostics, syntaxKindName } from "./diagnostics";
@@ -57,6 +57,12 @@ export interface ClosureCapture {
     forwardedFieldName?: string;
 }
 
+/** Proofs valid only while lowering one verified direct-entry method. */
+export interface VerifiedBuiltinEntry {
+    calls: ReadonlyMap<ts.CallExpression, BuiltinCallProofDto>;
+    prunableCaptures: ReadonlySet<ts.Symbol>;
+}
+
 /**
  * Per-method lowering state: locals table, temp counter, CFG builder.
  *
@@ -78,6 +84,7 @@ export class MethodContext {
         readonly methodName: string,
         /** In static methods `this` refers to the class itself (static field access). */
         readonly isStaticMethod: boolean = false,
+        readonly verifiedBuiltinEntry?: VerifiedBuiltinEntry,
     ) {}
 
     get checker(): ts.TypeChecker {

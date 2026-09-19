@@ -725,9 +725,24 @@ data class EtsNullishCoalescingExpr(
     }
 }
 
+enum class EtsBuiltin {
+    NUMBER_IS_INTEGER,
+}
+
+enum class EtsBuiltinEntryRequirement {
+    DIRECT_ISOLATED_ENTRY,
+}
+
+data class EtsBuiltinCallProof(
+    val builtin: EtsBuiltin,
+    val entryRequirement: EtsBuiltinEntryRequirement,
+    val entryMethod: EtsMethodSignature,
+)
+
 interface EtsCallExpr : EtsExpr, CommonCallExpr {
     val callee: EtsMethodSignature
     override val args: List<EtsLocal>
+    val builtinProof: EtsBuiltinCallProof?
 }
 
 data class EtsInstanceCallExpr(
@@ -735,6 +750,7 @@ data class EtsInstanceCallExpr(
     override val callee: EtsMethodSignature,
     override val args: List<EtsLocal>,
     override val type: EtsType,
+    override val builtinProof: EtsBuiltinCallProof? = null,
 ) : EtsCallExpr, CommonInstanceCallExpr {
     override fun toString(): String {
         return "call ${instance}.${callee.name}(${args.joinToString()})"
@@ -749,6 +765,7 @@ data class EtsStaticCallExpr(
     override val callee: EtsMethodSignature,
     override val args: List<EtsLocal>,
     override val type: EtsType,
+    override val builtinProof: EtsBuiltinCallProof? = null,
 ) : EtsCallExpr {
     override fun toString(): String {
         return "static_call ${callee.enclosingClass.name}.${callee.name}(${args.joinToString()})"
@@ -764,6 +781,7 @@ data class EtsPtrCallExpr(
     override val callee: EtsMethodSignature,
     override val args: List<EtsLocal>,
     override val type: EtsType,
+    override val builtinProof: EtsBuiltinCallProof? = null,
 ) : EtsCallExpr {
     override fun toString(): String {
         return "ptr_call ${ptr}(${args.joinToString()})"

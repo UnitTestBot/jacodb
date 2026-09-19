@@ -66,6 +66,7 @@ import {
     ValueDto,
 } from "../dto/values";
 import { syntaxKindName, unsupportedValue } from "./diagnostics";
+import { verifiedBuiltinEntryFor } from "./builtinProof";
 import { MethodContext } from "./methodBuilder";
 
 const RELATION_BY_SYNTAX: Partial<Record<ts.SyntaxKind, RelationOp>> = {
@@ -855,6 +856,19 @@ export class ExprLowerer {
 
         if (ts.isPropertyAccessExpression(callee)) {
             const methodName = callee.name.text;
+            const builtinProof = this.m.verifiedBuiltinEntry?.calls.get(node);
+            if (builtinProof !== undefined) {
+                const builtinClass: ClassSignatureDto = {
+                    name: "Number",
+                    declaringFile: UNKNOWN_FILE_SIGNATURE,
+                };
+                return {
+                    _: "StaticCallExpr",
+                    method: this.methodSignatureForCall(node, methodName, builtinClass),
+                    args: this.lowerCallArguments(node),
+                    builtinProof,
+                };
+            }
             // `this.m()` inside a static method targets a static member of the
             // current class, just like `C.m()`.
             if (callee.expression.kind === ts.SyntaxKind.ThisKeyword && this.m.isStaticMethod) {
@@ -1136,8 +1150,13 @@ export class ExprLowerer {
         const { parameters, prologueParams } = buildParameters(this.m.ctx, node);
         const returnType = returnTypeOf(this.m.ctx, node);
         const baseSignature: MethodSignatureDto = { declaringClass, name, parameters, returnType };
+        const verifiedBuiltinEntry = verifiedBuiltinEntryFor(node, this.m, baseSignature);
         const captures = collectCapturedIdentifiers(node, this.m.checker)
             .filter((identifier) => this.m.moduleFieldForIdentifier(identifier) === undefined)
+            .filter((identifier) => {
+                const symbol = this.m.converter.symbolOf(identifier);
+                return symbol === undefined || !verifiedBuiltinEntry?.prunableCaptures.has(symbol);
+            })
             .map((identifier) => this.m.captureForIdentifier(identifier, this.safeTypeOf(identifier)));
 
         let signature = baseSignature;
@@ -1170,6 +1189,7 @@ export class ExprLowerer {
             declaringClass,
             name,
             ts.isArrowFunction(node) && this.m.isStaticMethod,
+            verifiedBuiltinEntry,
         );
         if (environment === undefined) {
             closureContext.emitPrologue(prologueParams);

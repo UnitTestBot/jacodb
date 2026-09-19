@@ -59,6 +59,24 @@ export type ExprDto =
 
 export type CallExprDto = InstanceCallExprDto | StaticCallExprDto | PtrCallExprDto;
 
+/** Builtins whose identity was proven from TypeScript default-library declarations. */
+export type ProvenBuiltinDto = "NUMBER_IS_INTEGER";
+
+/** Runtime context required for a frontend proof to remain valid. */
+export type BuiltinEntryRequirementDto = "DIRECT_ISOLATED_ENTRY";
+
+/**
+ * Source-derived proof attached to one call expression.
+ *
+ * The entry signature prevents the proof from being reused for a different root;
+ * runtimes must also enforce the declared entry requirement in their own scene.
+ */
+export interface BuiltinCallProofDto {
+    builtin: ProvenBuiltinDto;
+    entryRequirement: BuiltinEntryRequirementDto;
+    entryMethod: MethodSignatureDto;
+}
+
 export type RefDto =
     | ThisRefDto
     | ParameterRefDto
@@ -167,12 +185,14 @@ export interface InstanceCallExprDto {
     instance: LocalDto; // Kotlin Convert casts this to LocalDto — MUST be a Local
     method: MethodSignatureDto;
     args: ValueDto[];
+    builtinProof?: BuiltinCallProofDto;
 }
 
 export interface StaticCallExprDto {
     readonly _: "StaticCallExpr";
     method: MethodSignatureDto;
     args: ValueDto[];
+    builtinProof?: BuiltinCallProofDto;
 }
 
 export interface PtrCallExprDto {
@@ -180,6 +200,7 @@ export interface PtrCallExprDto {
     ptr: ValueDto; // Local or FieldRef (must be a value, not an expr)
     method: MethodSignatureDto;
     args: ValueDto[];
+    builtinProof?: BuiltinCallProofDto;
 }
 
 export interface ThisRefDto {

@@ -34,6 +34,9 @@ import org.jacodb.ets.model.EtsBlockCfg
 import org.jacodb.ets.model.EtsBooleanConstant
 import org.jacodb.ets.model.EtsBooleanLiteralType
 import org.jacodb.ets.model.EtsBooleanType
+import org.jacodb.ets.model.EtsBuiltin
+import org.jacodb.ets.model.EtsBuiltinCallProof
+import org.jacodb.ets.model.EtsBuiltinEntryRequirement
 import org.jacodb.ets.model.EtsCallExpr
 import org.jacodb.ets.model.EtsCallStmt
 import org.jacodb.ets.model.EtsCastExpr
@@ -429,12 +432,14 @@ class EtsMethodBuilder(
             callee = method.toEtsMethodSignature(),
             args = args.map { ensureLocal(it.toEtsEntity()) },
             type = type.toEtsType(),
+            builtinProof = builtinProof?.toEtsBuiltinCallProof(),
         )
 
         is StaticCallExprDto -> EtsStaticCallExpr(
             callee = method.toEtsMethodSignature(),
             args = args.map { ensureLocal(it.toEtsEntity()) },
             type = type.toEtsType(),
+            builtinProof = builtinProof?.toEtsBuiltinCallProof(),
         )
 
         is PtrCallExprDto -> EtsPtrCallExpr(
@@ -442,6 +447,7 @@ class EtsMethodBuilder(
             callee = method.toEtsMethodSignature(),
             args = args.map { ensureLocal(it.toEtsEntity()) },
             type = type.toEtsType(),
+            builtinProof = builtinProof?.toEtsBuiltinCallProof(),
         )
 
         is ThisRefDto -> EtsThis(
@@ -722,6 +728,16 @@ fun MethodSignatureDto.toEtsMethodSignature(): EtsMethodSignature {
         returnType = returnType.toEtsType(),
     )
 }
+
+private fun BuiltinCallProofDto.toEtsBuiltinCallProof(): EtsBuiltinCallProof = EtsBuiltinCallProof(
+    builtin = when (builtin) {
+        ProvenBuiltinDto.NUMBER_IS_INTEGER -> EtsBuiltin.NUMBER_IS_INTEGER
+    },
+    entryRequirement = when (entryRequirement) {
+        BuiltinEntryRequirementDto.DIRECT_ISOLATED_ENTRY -> EtsBuiltinEntryRequirement.DIRECT_ISOLATED_ENTRY
+    },
+    entryMethod = entryMethod.toEtsMethodSignature(),
+)
 
 fun LocalSignatureDto.toEtsLocalSignature(): EtsLocalSignature {
     return EtsLocalSignature(

@@ -241,9 +241,27 @@ data class RelationOperationDto(
 ) : ConditionExprDto
 
 @Serializable
+enum class ProvenBuiltinDto {
+    NUMBER_IS_INTEGER,
+}
+
+@Serializable
+enum class BuiltinEntryRequirementDto {
+    DIRECT_ISOLATED_ENTRY,
+}
+
+@Serializable
+data class BuiltinCallProofDto(
+    val builtin: ProvenBuiltinDto,
+    val entryRequirement: BuiltinEntryRequirementDto,
+    val entryMethod: MethodSignatureDto,
+)
+
+@Serializable
 sealed interface CallExprDto : ExprDto {
     val method: MethodSignatureDto
     val args: List<ValueDto>
+    val builtinProof: BuiltinCallProofDto?
 
     override val type: TypeDto
         get() = method.returnType
@@ -255,6 +273,7 @@ data class InstanceCallExprDto(
     val instance: ValueDto, // Local
     override val method: MethodSignatureDto,
     override val args: List<ValueDto>,
+    override val builtinProof: BuiltinCallProofDto? = null,
 ) : CallExprDto
 
 @Serializable
@@ -262,6 +281,7 @@ data class InstanceCallExprDto(
 data class StaticCallExprDto(
     override val method: MethodSignatureDto,
     override val args: List<ValueDto>,
+    override val builtinProof: BuiltinCallProofDto? = null,
 ) : CallExprDto
 
 @Serializable
@@ -270,6 +290,7 @@ data class PtrCallExprDto(
     val ptr: ValueDto, // Local or FieldRef
     override val method: MethodSignatureDto,
     override val args: List<ValueDto>,
+    override val builtinProof: BuiltinCallProofDto? = null,
 ) : CallExprDto
 
 @Serializable
