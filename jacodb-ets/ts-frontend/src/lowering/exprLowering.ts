@@ -1150,9 +1150,10 @@ export class ExprLowerer {
         const { parameters, prologueParams } = buildParameters(this.m.ctx, node);
         const returnType = returnTypeOf(this.m.ctx, node);
         const baseSignature: MethodSignatureDto = { declaringClass, name, parameters, returnType };
-        const verifiedBuiltinEntry = verifiedBuiltinEntryFor(node, this.m, baseSignature);
-        const captures = collectCapturedIdentifiers(node, this.m.checker)
-            .filter((identifier) => this.m.moduleFieldForIdentifier(identifier) === undefined)
+        const capturedIdentifiers = collectCapturedIdentifiers(node, this.m.checker)
+            .filter((identifier) => this.m.moduleFieldForIdentifier(identifier) === undefined);
+        const verifiedBuiltinEntry = verifiedBuiltinEntryFor(node, this.m, baseSignature, capturedIdentifiers);
+        const captures = capturedIdentifiers
             .filter((identifier) => {
                 const symbol = this.m.converter.symbolOf(identifier);
                 return symbol === undefined || !verifiedBuiltinEntry?.prunableCaptures.has(symbol);

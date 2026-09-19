@@ -27,6 +27,7 @@ export function verifiedBuiltinEntryFor(
     closure: ts.ArrowFunction | ts.FunctionExpression | ts.FunctionDeclaration,
     m: MethodContext,
     entryMethod: MethodSignatureDto,
+    captures: readonly ts.Identifier[],
 ): VerifiedBuiltinEntry | undefined {
     if (!isExportedTopLevelScalarClosure(closure, m.checker)) return undefined;
     if (!hasAdmissibleModuleInitialization(closure.getSourceFile(), m.checker)) return undefined;
@@ -68,8 +69,7 @@ export function verifiedBuiltinEntryFor(
         prunableCaptures.add(errorSymbol);
     }
 
-    for (const identifier of collectFreeCaptureIdentifiers(closure, m.checker)) {
-        if (m.moduleFieldForIdentifier(identifier) !== undefined) continue;
+    for (const identifier of captures) {
         const symbol = m.converter.symbolOf(identifier);
         if (symbol === undefined || !prunableCaptures.has(symbol)) {
             return undefined;
@@ -353,44 +353,4 @@ function isPrunableErrorCapture(symbol: ts.Symbol, body: ts.ConciseBody, m: Meth
     });
     return uses.length > 0 && uses.every((identifier) =>
         ts.isNewExpression(identifier.parent) && identifier.parent.expression === identifier);
-}
-
-function collectFreeCaptureIdentifiers(
-    closure: ts.ArrowFunction | ts.FunctionExpression,
-    checker: ts.TypeChecker,
-): ts.Identifier[] {
-    const ownDeclarations = new Set<ts.Declaration>([closure]);
-    const collectOwn = (node: ts.Node): void => {
-        if (isCapturableDeclaration(node)) ownDeclarations.add(node);
-        ts.forEachChild(node, collectOwn);
-    };
-    closure.parameters.forEach(collectOwn);
-    collectOwn(closure.body);
-
-    const result = new Map<ts.Symbol, ts.Identifier>();
-    visit(closure.body, (node) => {
-        if (!ts.isIdentifier(node)) return;
-        let symbol: ts.Symbol | undefined;
-        try {
-            symbol = checker.getSymbolAtLocation(node);
-            if (ts.isShorthandPropertyAssignment(node.parent) && node.parent.name === node) {
-                symbol = checker.getShorthandAssignmentValueSymbol(node.parent) ?? symbol;
-            }
-        } catch {
-            return;
-        }
-        if (symbol === undefined || result.has(symbol)) return;
-        const declarations = symbol.declarations?.filter(isCapturableDeclaration);
-        if (declarations === undefined || declarations.length === 0) return;
-        if (declarations.some((declaration) => ownDeclarations.has(declaration))) return;
-        result.set(symbol, node);
-    });
-    return [...result.values()];
-}
-
-function isCapturableDeclaration(node: ts.Node): node is ts.Declaration {
-    return ts.isVariableDeclaration(node)
-        || ts.isParameter(node)
-        || ts.isBindingElement(node)
-        || ts.isFunctionDeclaration(node);
 }
