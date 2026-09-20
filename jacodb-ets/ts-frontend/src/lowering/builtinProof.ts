@@ -509,12 +509,26 @@ function isSafeEntryScalarIdentifier(
     if (symbol.declarations?.some((declaration) => declarationBelongsToEntry(declaration, closure)) === true) {
         return true;
     }
+    if (isIntrinsicUndefined(identifier, symbol, ctx.checker)) return true;
     if ((identifier.text === "Infinity" || identifier.text === "NaN")
         && isDefaultLibrarySymbol(symbol, ctx)) {
         return true;
     }
 
     return isSafeModuleScalarBinding(symbol, closure.getSourceFile(), ctx);
+}
+
+function isIntrinsicUndefined(
+    identifier: ts.Identifier,
+    symbol: ts.Symbol,
+    checker: ts.TypeChecker,
+): boolean {
+    return identifier.text === "undefined"
+        && symbol.getName() === "undefined"
+        && (symbol.flags & ts.SymbolFlags.Transient) !== 0
+        && (symbol.declarations?.length ?? 0) === 0
+        && symbol.valueDeclaration === undefined
+        && checker.getTypeAtLocation(identifier).flags === ts.TypeFlags.Undefined;
 }
 
 function isSafeModuleScalarBinding(

@@ -338,6 +338,45 @@ describe("verified builtin call proof", () => {
         }
     });
 
+    it("proves optional-parameter guards against intrinsic undefined for declarations and arrows", () => {
+        const { file } = lower(`
+            export function named(value?: number): number {
+                if (value === undefined) value = -1;
+                return Math.abs(value);
+            }
+            export const arrow = (value?: number): number => {
+                if (value === undefined) value = -1;
+                return Math.abs(value);
+            };
+        `);
+        const named = methodWithBodyByName(file, "named");
+        const arrow = methodByName(file, "%AM0$%dflt");
+
+        for (const method of [named, arrow]) {
+            expect(builtinCall(method, "abs")).toMatchObject({
+                method: { declaringClass: { name: "Math" } },
+                builtinProof: {
+                    builtin: "MATH_ABS",
+                    entryMethod: method.signature,
+                },
+            });
+        }
+    });
+
+    it("declines a project-global shadow named undefined", () => {
+        const { file } = lowerProject({
+            "globals.ts": "declare var undefined: undefined;",
+            "entry.ts": `
+                export function f(value?: number): number {
+                    if (value === undefined) value = -1;
+                    return Math.abs(value);
+                }
+            `,
+        }, "entry.ts");
+
+        expect(hasBuiltinProof(file)).toBe(false);
+    });
+
     it("declines ambient scalar reads for declarations and arrows at every evaluated site", () => {
         const entryPairs = [
             [
