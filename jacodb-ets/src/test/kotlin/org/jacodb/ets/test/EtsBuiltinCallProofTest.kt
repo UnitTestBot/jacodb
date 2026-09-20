@@ -61,29 +61,56 @@ class EtsBuiltinCallProofTest {
             parameters = listOf(MethodParameterDto(name = "value", type = NumberTypeDto)),
             returnType = BooleanTypeDto,
         )
-        val builtin = MethodSignatureDto(
-            declaringClass = ClassSignatureDto(
-                name = "Number",
-                declaringFile = FileSignatureDto(projectName = "%unk", fileName = "%unk"),
-            ),
-            name = "isInteger",
-            parameters = emptyList(),
-            returnType = BooleanTypeDto,
-        )
-        val argument = LocalDto(name = "value", type = NumberTypeDto)
-        val builtins = listOf(
-            ProvenBuiltinDto.NUMBER_IS_INTEGER to EtsBuiltin.NUMBER_IS_INTEGER,
-            ProvenBuiltinDto.MATH_ABS to EtsBuiltin.MATH_ABS,
-            ProvenBuiltinDto.MATH_MIN to EtsBuiltin.MATH_MIN,
-            ProvenBuiltinDto.MATH_MAX to EtsBuiltin.MATH_MAX,
+        data class BuiltinCase(
+            val dtoBuiltin: ProvenBuiltinDto,
+            val expectedBuiltin: EtsBuiltin,
+            val ownerName: String,
+            val methodName: String,
         )
 
-        for ((dtoBuiltin, expectedBuiltin) in builtins) {
+        val argument = LocalDto(name = "value", type = NumberTypeDto)
+        val builtins = listOf(
+            BuiltinCase(
+                dtoBuiltin = ProvenBuiltinDto.NUMBER_IS_INTEGER,
+                expectedBuiltin = EtsBuiltin.NUMBER_IS_INTEGER,
+                ownerName = "Number",
+                methodName = "isInteger",
+            ),
+            BuiltinCase(
+                dtoBuiltin = ProvenBuiltinDto.MATH_ABS,
+                expectedBuiltin = EtsBuiltin.MATH_ABS,
+                ownerName = "Math",
+                methodName = "abs",
+            ),
+            BuiltinCase(
+                dtoBuiltin = ProvenBuiltinDto.MATH_MIN,
+                expectedBuiltin = EtsBuiltin.MATH_MIN,
+                ownerName = "Math",
+                methodName = "min",
+            ),
+            BuiltinCase(
+                dtoBuiltin = ProvenBuiltinDto.MATH_MAX,
+                expectedBuiltin = EtsBuiltin.MATH_MAX,
+                ownerName = "Math",
+                methodName = "max",
+            ),
+        )
+
+        for (builtinCase in builtins) {
+            val builtin = MethodSignatureDto(
+                declaringClass = ClassSignatureDto(
+                    name = builtinCase.ownerName,
+                    declaringFile = FileSignatureDto(projectName = "%unk", fileName = "%unk"),
+                ),
+                name = builtinCase.methodName,
+                parameters = emptyList(),
+                returnType = BooleanTypeDto,
+            )
             val call = StaticCallExprDto(
                 method = builtin,
                 args = listOf(argument),
                 builtinProof = BuiltinCallProofDto(
-                    builtin = dtoBuiltin,
+                    builtin = builtinCase.dtoBuiltin,
                     entryRequirement = BuiltinEntryRequirementDto.DIRECT_ISOLATED_ENTRY,
                     entryMethod = entry,
                 ),
@@ -107,7 +134,8 @@ class EtsBuiltinCallProofTest {
             ).toEtsMethod()
 
             val modelCall = assertIs<EtsStaticCallExpr>(assertIs<EtsCallStmt>(method.cfg.stmts.single()).expr)
-            assertEquals(expectedBuiltin, modelCall.builtinProof?.builtin)
+            assertEquals(builtinCase.ownerName, modelCall.callee.enclosingClass.name)
+            assertEquals(builtinCase.expectedBuiltin, modelCall.builtinProof?.builtin)
             assertEquals(EtsBuiltinEntryRequirement.DIRECT_ISOLATED_ENTRY, modelCall.builtinProof?.entryRequirement)
             assertEquals(method.signature, modelCall.builtinProof?.entryMethod)
         }

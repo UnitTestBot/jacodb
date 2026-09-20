@@ -858,8 +858,12 @@ export class ExprLowerer {
             const methodName = callee.name.text;
             const builtinProof = this.m.verifiedBuiltinEntry?.calls.get(node);
             if (builtinProof !== undefined) {
+                const builtinReceiver = callee.expression;
+                if (!ts.isIdentifier(builtinReceiver)) {
+                    throw new LoweringError("proven builtin without an identifier receiver");
+                }
                 const builtinClass: ClassSignatureDto = {
-                    name: "Number",
+                    name: builtinReceiver.text,
                     declaringFile: UNKNOWN_FILE_SIGNATURE,
                 };
                 return {

@@ -42,6 +42,15 @@ function expectNoProof(source: string): void {
     expect(hasBuiltinProof(lower(source).file)).toBe(false);
 }
 
+function expectNoAmbientProjectProof(entrySource: string): void {
+    const { file } = lowerProject({
+        "ambient.d.ts": "declare var trigger: number;",
+        "entry.ts": entrySource,
+    }, "entry.ts");
+
+    expect(hasBuiltinProof(file)).toBe(false);
+}
+
 describe("verified builtin call proof", () => {
     it("proves Number.isInteger for closed exported scalar arrows and prunes builtin captures", () => {
         const { file } = lower(`
@@ -222,10 +231,13 @@ describe("verified builtin call proof", () => {
         const call = builtinCall(method, "abs");
 
         expect(method.body!.locals.some((local) => local.type._ === "LexicalEnvType")).toBe(false);
-        expect(call?.builtinProof).toMatchObject({
-            builtin: "MATH_ABS",
-            entryRequirement: "DIRECT_ISOLATED_ENTRY",
-            entryMethod: method.signature,
+        expect(call).toMatchObject({
+            method: { declaringClass: { name: "Math" } },
+            builtinProof: {
+                builtin: "MATH_ABS",
+                entryRequirement: "DIRECT_ISOLATED_ENTRY",
+                entryMethod: method.signature,
+            },
         });
     });
 
@@ -254,10 +266,13 @@ describe("verified builtin call proof", () => {
         `);
         const method = methodWithBodyByName(file, "range");
 
-        expect(numberIsIntegerCall(method)?.builtinProof).toMatchObject({
-            builtin: "NUMBER_IS_INTEGER",
-            entryRequirement: "DIRECT_ISOLATED_ENTRY",
-            entryMethod: method.signature,
+        expect(numberIsIntegerCall(method)).toMatchObject({
+            method: { declaringClass: { name: "Number" } },
+            builtinProof: {
+                builtin: "NUMBER_IS_INTEGER",
+                entryRequirement: "DIRECT_ISOLATED_ENTRY",
+                entryMethod: method.signature,
+            },
         });
         expect(builtinCall(method, "max")?.builtinProof).toBeUndefined();
     });
@@ -281,14 +296,100 @@ describe("verified builtin call proof", () => {
         const minMethod = methodWithBodyByName(minFile, "dropRight");
         const maxMethod = methodWithBodyByName(maxFile, "drop");
 
-        expect(builtinCall(minMethod, "min")?.builtinProof).toMatchObject({
-            builtin: "MATH_MIN",
-            entryMethod: minMethod.signature,
+        expect(builtinCall(minMethod, "min")).toMatchObject({
+            method: { declaringClass: { name: "Math" } },
+            builtinProof: {
+                builtin: "MATH_MIN",
+                entryMethod: minMethod.signature,
+            },
         });
-        expect(builtinCall(maxMethod, "max")?.builtinProof).toMatchObject({
-            builtin: "MATH_MAX",
-            entryMethod: maxMethod.signature,
+        expect(builtinCall(maxMethod, "max")).toMatchObject({
+            method: { declaringClass: { name: "Math" } },
+            builtinProof: {
+                builtin: "MATH_MAX",
+                entryMethod: maxMethod.signature,
+            },
         });
+    });
+
+    it("admits only entry locals and verified module scalars in evaluated prefixes", () => {
+        const { file } = lower(`
+            const offset = 1;
+            export function named(value: number): number {
+                const adjusted = value + offset;
+                return Math.abs(adjusted);
+            }
+            export const arrow = (value: number): number => {
+                const adjusted = value + offset;
+                return Math.abs(adjusted);
+            };
+        `);
+        const named = methodWithBodyByName(file, "named");
+        const arrow = methodByName(file, "%AM0$%dflt");
+
+        for (const method of [named, arrow]) {
+            expect(builtinCall(method, "abs")).toMatchObject({
+                method: { declaringClass: { name: "Math" } },
+                builtinProof: {
+                    builtin: "MATH_ABS",
+                    entryMethod: method.signature,
+                },
+            });
+        }
+    });
+
+    it("declines ambient scalar reads for declarations and arrows at every evaluated site", () => {
+        const entryPairs = [
+            [
+                `
+                    export function f(value: number): number {
+                        const ignored = trigger;
+                        return Math.abs(value);
+                    }
+                `,
+                `
+                    export const f = (value: number): number => {
+                        const ignored = trigger;
+                        return Math.abs(value);
+                    };
+                `,
+            ],
+            [
+                `
+                    export function f(value: number): number {
+                        return Math.abs(value + trigger);
+                    }
+                `,
+                `
+                    export const f = (value: number): number => Math.abs(value + trigger);
+                `,
+            ],
+            [
+                `
+                    export function f(value: number): number {
+                        let current = value;
+                        while (true) {
+                            if (Math.abs(current) < 1) return current;
+                            current = trigger;
+                        }
+                    }
+                `,
+                `
+                    export const f = (value: number): number => {
+                        let current = value;
+                        while (true) {
+                            if (Math.abs(current) < 1) return current;
+                            current = trigger;
+                        }
+                    };
+                `,
+            ],
+        ];
+
+        for (const [declaration, arrow] of entryPairs) {
+            expectNoAmbientProjectProof(declaration);
+            expectNoAmbientProjectProof(arrow);
+        }
     });
 
     it("declines unsafe numeric builtin prefixes and identities", () => {

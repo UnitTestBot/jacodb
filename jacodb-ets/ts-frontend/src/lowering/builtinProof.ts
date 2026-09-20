@@ -262,11 +262,12 @@ function hasEffectFreePrefix(
     safeCalls: ReadonlySet<ts.CallExpression>,
 ): boolean {
     if (!call.arguments.every((argument) =>
-        !ts.isSpreadElement(argument) && isPureScalarExpression(argument, ctx.checker, safeCalls))) {
+        !ts.isSpreadElement(argument)
+        && isPureEntryScalarExpression(argument, closure, ctx, safeCalls))) {
         return false;
     }
     if (!ts.isBlock(closure.body!)) {
-        return hasPurePrefixWithinExpression(closure.body!, call, ctx.checker, safeCalls);
+        return hasPurePrefixWithinExpression(closure.body!, call, closure, ctx, safeCalls);
     }
 
     return hasSafePrefixInStatements(closure.body.statements, call, closure, ctx, safeCalls);
@@ -301,24 +302,24 @@ function hasSafePrefixWithinStatement(
     }
     if (ts.isExpressionStatement(statement)) {
         return isLocalScalarAssignmentShape(statement.expression, closure, ctx)
-            && hasPurePrefixWithinExpression(statement.expression, target, ctx.checker, safeCalls);
+            && hasPurePrefixWithinExpression(statement.expression, target, closure, ctx, safeCalls);
     }
     if (ts.isVariableStatement(statement)) {
         for (const declaration of statement.declarationList.declarations) {
             if (declaration.initializer !== undefined && containsNode(declaration.initializer, target)) {
-                return isSafeScalarDeclaration(declaration, ctx.checker, safeCalls, false)
-                    && hasPurePrefixWithinExpression(declaration.initializer, target, ctx.checker, safeCalls);
+                return isSafeScalarDeclaration(declaration, closure, ctx, safeCalls, false)
+                    && hasPurePrefixWithinExpression(declaration.initializer, target, closure, ctx, safeCalls);
             }
-            if (!isSafeScalarDeclaration(declaration, ctx.checker, safeCalls, true)) return false;
+            if (!isSafeScalarDeclaration(declaration, closure, ctx, safeCalls, true)) return false;
         }
 
         return false;
     }
     if (ts.isIfStatement(statement)) {
         if (containsNode(statement.expression, target)) {
-            return hasPurePrefixWithinExpression(statement.expression, target, ctx.checker, safeCalls);
+            return hasPurePrefixWithinExpression(statement.expression, target, closure, ctx, safeCalls);
         }
-        if (!isPureScalarExpression(statement.expression, ctx.checker, safeCalls)) return false;
+        if (!isPureEntryScalarExpression(statement.expression, closure, ctx, safeCalls)) return false;
 
         if (containsNode(statement.thenStatement, target)) {
             return (statement.elseStatement === undefined
@@ -334,14 +335,14 @@ function hasSafePrefixWithinStatement(
     }
     if (ts.isWhileStatement(statement)) {
         return containsNode(statement.statement, target)
-            && isPureScalarExpression(statement.expression, ctx.checker, safeCalls)
+            && isPureEntryScalarExpression(statement.expression, closure, ctx, safeCalls)
             && isSafeCompleteStatement(statement.statement, closure, ctx, safeCalls);
     }
     if (ts.isReturnStatement(statement) && statement.expression !== undefined) {
-        return hasPurePrefixWithinExpression(statement.expression, target, ctx.checker, safeCalls);
+        return hasPurePrefixWithinExpression(statement.expression, target, closure, ctx, safeCalls);
     }
     if (ts.isThrowStatement(statement)) {
-        return hasPurePrefixWithinExpression(statement.expression, target, ctx.checker, safeCalls);
+        return hasPurePrefixWithinExpression(statement.expression, target, closure, ctx, safeCalls);
     }
 
     return false;
@@ -359,27 +360,27 @@ function isSafeCompleteStatement(
     }
     if (ts.isVariableStatement(statement)) {
         return statement.declarationList.declarations.every((declaration) =>
-            isSafeScalarDeclaration(declaration, ctx.checker, safeCalls, true));
+            isSafeScalarDeclaration(declaration, closure, ctx, safeCalls, true));
     }
     if (ts.isExpressionStatement(statement)) {
         return isSafeLocalScalarAssignment(statement.expression, closure, ctx, safeCalls);
     }
     if (ts.isIfStatement(statement)) {
-        return isPureScalarExpression(statement.expression, ctx.checker, safeCalls)
+        return isPureEntryScalarExpression(statement.expression, closure, ctx, safeCalls)
             && isSafeCompleteStatement(statement.thenStatement, closure, ctx, safeCalls)
             && (statement.elseStatement === undefined
                 || isSafeCompleteStatement(statement.elseStatement, closure, ctx, safeCalls));
     }
     if (ts.isWhileStatement(statement)) {
-        return isPureScalarExpression(statement.expression, ctx.checker, safeCalls)
+        return isPureEntryScalarExpression(statement.expression, closure, ctx, safeCalls)
             && isSafeCompleteStatement(statement.statement, closure, ctx, safeCalls);
     }
     if (ts.isReturnStatement(statement)) {
         return statement.expression === undefined
-            || isPureScalarExpression(statement.expression, ctx.checker, safeCalls);
+            || isPureEntryScalarExpression(statement.expression, closure, ctx, safeCalls);
     }
     if (ts.isThrowStatement(statement)) {
-        return isSafeThrowExpression(statement.expression, ctx, safeCalls);
+        return isSafeThrowExpression(statement.expression, closure, ctx, safeCalls);
     }
 
     return false;
@@ -387,15 +388,16 @@ function isSafeCompleteStatement(
 
 function isSafeScalarDeclaration(
     declaration: ts.VariableDeclaration,
-    checker: ts.TypeChecker,
+    closure: ts.ArrowFunction | ts.FunctionExpression | ts.FunctionDeclaration,
+    ctx: LoweringContext,
     safeCalls: ReadonlySet<ts.CallExpression>,
     checkInitializer: boolean,
 ): boolean {
     if (!ts.isIdentifier(declaration.name)) return false;
-    if (!isPrimitiveScalarType(checker.getTypeAtLocation(declaration.name))) return false;
+    if (!isPrimitiveScalarType(ctx.checker.getTypeAtLocation(declaration.name))) return false;
     if (!checkInitializer || declaration.initializer === undefined) return true;
 
-    return isPureScalarExpression(declaration.initializer, checker, safeCalls);
+    return isPureEntryScalarExpression(declaration.initializer, closure, ctx, safeCalls);
 }
 
 function isSafeLocalScalarAssignment(
@@ -406,7 +408,7 @@ function isSafeLocalScalarAssignment(
 ): boolean {
     return isLocalScalarAssignmentShape(expression, closure, ctx)
         && ts.isBinaryExpression(expression)
-        && isPureScalarExpression(expression.right, ctx.checker, safeCalls);
+        && isPureEntryScalarExpression(expression.right, closure, ctx, safeCalls);
 }
 
 function isLocalScalarAssignmentShape(
@@ -436,22 +438,25 @@ function declarationBelongsToEntry(
 
 function isSafeThrowExpression(
     expression: ts.Expression,
+    closure: ts.ArrowFunction | ts.FunctionExpression | ts.FunctionDeclaration,
     ctx: LoweringContext,
     safeCalls: ReadonlySet<ts.CallExpression>,
 ): boolean {
-    if (isPureScalarExpression(expression, ctx.checker, safeCalls)) return true;
+    if (isPureEntryScalarExpression(expression, closure, ctx, safeCalls)) return true;
     if (!ts.isNewExpression(expression) || !ts.isIdentifier(expression.expression)) return false;
     if (expression.expression.text !== "Error") return false;
     if (!isDefaultLibrarySymbol(ctx.converter.symbolOf(expression.expression), ctx)) return false;
 
     return (expression.arguments ?? []).every((argument) =>
-        !ts.isSpreadElement(argument) && isPureScalarExpression(argument, ctx.checker, safeCalls));
+        !ts.isSpreadElement(argument)
+        && isPureEntryScalarExpression(argument, closure, ctx, safeCalls));
 }
 
 function hasPurePrefixWithinExpression(
     root: ts.Expression,
     target: ts.CallExpression,
-    checker: ts.TypeChecker,
+    closure: ts.ArrowFunction | ts.FunctionExpression | ts.FunctionDeclaration,
+    ctx: LoweringContext,
     safeCalls: ReadonlySet<ts.CallExpression>,
 ): boolean {
     if (root === target) return true;
@@ -465,9 +470,10 @@ function hasPurePrefixWithinExpression(
         if (!containsNode(child, target)) continue;
 
         const earlierExpressions = children.slice(0, index).filter(ts.isExpression);
-        return earlierExpressions.every((expression) => isPureScalarExpression(expression, checker, safeCalls))
+        return earlierExpressions.every((expression) =>
+            isPureEntryScalarExpression(expression, closure, ctx, safeCalls))
             && ts.isExpression(child)
-            && hasPurePrefixWithinExpression(child, target, checker, safeCalls);
+            && hasPurePrefixWithinExpression(child, target, closure, ctx, safeCalls);
     }
 
     return false;
@@ -478,45 +484,111 @@ enum ScalarIdentifierPolicy {
     REJECT,
 }
 
+function isPureEntryScalarExpression(
+    node: ts.Expression,
+    closure: ts.ArrowFunction | ts.FunctionExpression | ts.FunctionDeclaration,
+    ctx: LoweringContext,
+    safeCalls: ReadonlySet<ts.CallExpression>,
+): boolean {
+    return isPureScalarExpression(
+        node,
+        ctx.checker,
+        safeCalls,
+        ScalarIdentifierPolicy.ALLOW,
+        (identifier) => isSafeEntryScalarIdentifier(identifier, closure, ctx),
+    );
+}
+
+function isSafeEntryScalarIdentifier(
+    identifier: ts.Identifier,
+    closure: ts.ArrowFunction | ts.FunctionExpression | ts.FunctionDeclaration,
+    ctx: LoweringContext,
+): boolean {
+    const symbol = ctx.converter.symbolOf(identifier);
+    if (symbol === undefined) return false;
+    if (symbol.declarations?.some((declaration) => declarationBelongsToEntry(declaration, closure)) === true) {
+        return true;
+    }
+    if ((identifier.text === "Infinity" || identifier.text === "NaN")
+        && isDefaultLibrarySymbol(symbol, ctx)) {
+        return true;
+    }
+
+    return isSafeModuleScalarBinding(symbol, closure.getSourceFile(), ctx);
+}
+
+function isSafeModuleScalarBinding(
+    symbol: ts.Symbol,
+    sourceFile: ts.SourceFile,
+    ctx: LoweringContext,
+): boolean {
+    const declarations = symbol.declarations;
+    if (declarations?.length !== 1) return false;
+
+    const declaration = declarations[0];
+    if (!ts.isVariableDeclaration(declaration) || !ts.isIdentifier(declaration.name)) return false;
+    if (declaration.getSourceFile() !== sourceFile || declaration.initializer === undefined) return false;
+    if (!isPrimitiveScalarType(ctx.checker.getTypeAtLocation(declaration.name))) return false;
+
+    const declarationList = declaration.parent;
+    if (!ts.isVariableDeclarationList(declarationList)
+        || (declarationList.flags & ts.NodeFlags.Const) === 0) {
+        return false;
+    }
+    const statement = declarationList.parent;
+    if (!ts.isVariableStatement(statement) || !ts.isSourceFile(statement.parent)) return false;
+
+    return isPureScalarExpression(
+        declaration.initializer,
+        ctx.checker,
+        new Set(),
+        ScalarIdentifierPolicy.REJECT,
+    );
+}
+
 function isPureScalarExpression(
     node: ts.Expression,
     checker: ts.TypeChecker,
     safeCalls: ReadonlySet<ts.CallExpression>,
     identifierPolicy: ScalarIdentifierPolicy = ScalarIdentifierPolicy.ALLOW,
+    identifierGuard?: (identifier: ts.Identifier) => boolean,
 ): boolean {
     if (!isPrimitiveScalarType(checker.getTypeAtLocation(node))) return false;
-    if (ts.isIdentifier(node)) return identifierPolicy === ScalarIdentifierPolicy.ALLOW;
+    if (ts.isIdentifier(node)) {
+        return identifierPolicy === ScalarIdentifierPolicy.ALLOW
+            && (identifierGuard === undefined || identifierGuard(node));
+    }
     if (ts.isNumericLiteral(node) || ts.isStringLiteral(node)
         || ts.isNoSubstitutionTemplateLiteral(node) || node.kind === ts.SyntaxKind.TrueKeyword
         || node.kind === ts.SyntaxKind.FalseKeyword || node.kind === ts.SyntaxKind.NullKeyword) return true;
     if (ts.isParenthesizedExpression(node) || ts.isAsExpression(node) || ts.isTypeAssertionExpression(node)
         || ts.isNonNullExpression(node) || ts.isSatisfiesExpression(node)) {
-        return isPureScalarExpression(node.expression, checker, safeCalls, identifierPolicy);
+        return isPureScalarExpression(node.expression, checker, safeCalls, identifierPolicy, identifierGuard);
     }
     if (ts.isPrefixUnaryExpression(node)) {
         if (node.operator === ts.SyntaxKind.PlusPlusToken || node.operator === ts.SyntaxKind.MinusMinusToken) {
             return false;
         }
 
-        return isPureScalarExpression(node.operand, checker, safeCalls, identifierPolicy);
+        return isPureScalarExpression(node.operand, checker, safeCalls, identifierPolicy, identifierGuard);
     }
     if (ts.isBinaryExpression(node)) {
         const operator = node.operatorToken.kind;
         if (isAssignmentOperator(operator) || operator === ts.SyntaxKind.CommaToken) return false;
 
-        return isPureScalarExpression(node.left, checker, safeCalls, identifierPolicy)
-            && isPureScalarExpression(node.right, checker, safeCalls, identifierPolicy);
+        return isPureScalarExpression(node.left, checker, safeCalls, identifierPolicy, identifierGuard)
+            && isPureScalarExpression(node.right, checker, safeCalls, identifierPolicy, identifierGuard);
     }
     if (ts.isConditionalExpression(node)) {
-        return isPureScalarExpression(node.condition, checker, safeCalls, identifierPolicy)
-            && isPureScalarExpression(node.whenTrue, checker, safeCalls, identifierPolicy)
-            && isPureScalarExpression(node.whenFalse, checker, safeCalls, identifierPolicy);
+        return isPureScalarExpression(node.condition, checker, safeCalls, identifierPolicy, identifierGuard)
+            && isPureScalarExpression(node.whenTrue, checker, safeCalls, identifierPolicy, identifierGuard)
+            && isPureScalarExpression(node.whenFalse, checker, safeCalls, identifierPolicy, identifierGuard);
     }
     if (ts.isCallExpression(node) && safeCalls.has(node)) {
         return node.questionDotToken === undefined
             && node.arguments.every((argument) =>
                 !ts.isSpreadElement(argument)
-                && isPureScalarExpression(argument, checker, safeCalls, identifierPolicy));
+                && isPureScalarExpression(argument, checker, safeCalls, identifierPolicy, identifierGuard));
     }
 
     return false;
