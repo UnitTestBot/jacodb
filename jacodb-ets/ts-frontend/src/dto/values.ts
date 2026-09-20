@@ -60,7 +60,7 @@ export type ExprDto =
 export type CallExprDto = InstanceCallExprDto | StaticCallExprDto | PtrCallExprDto;
 
 /** Builtins whose identity was proven from TypeScript default-library declarations. */
-export type ProvenBuiltinDto = "NUMBER_IS_INTEGER";
+export type ProvenBuiltinDto = "NUMBER_IS_INTEGER" | "MATH_ABS" | "MATH_MIN" | "MATH_MAX";
 
 /** Runtime context required for a frontend proof to remain valid. */
 export type BuiltinEntryRequirementDto = "DIRECT_ISOLATED_ENTRY";

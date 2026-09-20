@@ -243,6 +243,9 @@ data class RelationOperationDto(
 @Serializable
 enum class ProvenBuiltinDto {
     NUMBER_IS_INTEGER,
+    MATH_ABS,
+    MATH_MIN,
+    MATH_MAX,
 }
 
 @Serializable

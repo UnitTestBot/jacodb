@@ -1152,7 +1152,7 @@ export class ExprLowerer {
         const baseSignature: MethodSignatureDto = { declaringClass, name, parameters, returnType };
         const capturedIdentifiers = collectCapturedIdentifiers(node, this.m.checker)
             .filter((identifier) => this.m.moduleFieldForIdentifier(identifier) === undefined);
-        const verifiedBuiltinEntry = verifiedBuiltinEntryFor(node, this.m, baseSignature, capturedIdentifiers);
+        const verifiedBuiltinEntry = verifiedBuiltinEntryFor(node, this.m.ctx, baseSignature, capturedIdentifiers);
         const captures = capturedIdentifiers
             .filter((identifier) => {
                 const symbol = this.m.converter.symbolOf(identifier);

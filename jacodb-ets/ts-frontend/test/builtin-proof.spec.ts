@@ -14,8 +14,21 @@ function staticCalls(method: MethodDto): StaticCallExprDto[] {
         });
 }
 
+function builtinCall(method: MethodDto, name: string): StaticCallExprDto | undefined {
+    return staticCalls(method).find((call) => call.method.name === name);
+}
+
 function numberIsIntegerCall(method: MethodDto): StaticCallExprDto | undefined {
-    return staticCalls(method).find((call) => call.method.name === "isInteger");
+    return builtinCall(method, "isInteger");
+}
+
+function methodWithBodyByName(file: EtsFileDto, name: string): MethodDto {
+    const method = file.classes
+        .flatMap((clazz) => clazz.methods)
+        .find((candidate) => candidate.signature.name === name && candidate.body !== undefined);
+    if (method === undefined) throw new Error("method '" + name + "' with body not found");
+
+    return method;
 }
 
 function hasBuiltinProof(file: EtsFileDto): boolean {
@@ -181,6 +194,150 @@ describe("verified builtin call proof", () => {
                 export const f = (input: number): boolean => {
                     const object = { input };
                     return Number.isInteger(object.input);
+                };
+            `,
+        ];
+
+        for (const source of cases) expectNoProof(source);
+    });
+
+    it("proves the pinned Math.abs loop with a numeric default and scalar backedge", () => {
+        const { file } = lower(`
+            export const squareRoot = (num: number, precision: number = 1e-15): number => {
+                if (num < 0) throw new Error("number must be non-negative number");
+                if (num === 0) return 0;
+
+                let sqrt: number = num;
+                let curr: number;
+                while (true) {
+                    curr = 0.5 * (sqrt + num / sqrt);
+                    if (Math.abs(curr - sqrt) < precision) {
+                        return sqrt;
+                    }
+                    sqrt = curr;
+                }
+            };
+        `);
+        const method = methodByName(file, "%AM0$%dflt");
+        const call = builtinCall(method, "abs");
+
+        expect(method.body!.locals.some((local) => local.type._ === "LexicalEnvType")).toBe(false);
+        expect(call?.builtinProof).toMatchObject({
+            builtin: "MATH_ABS",
+            entryRequirement: "DIRECT_ISOLATED_ENTRY",
+            entryMethod: method.signature,
+        });
+    });
+
+    it("proves Number.isInteger in the pinned overloaded range declaration", () => {
+        const { file } = lower(`
+            export function range(end: number): number[];
+            export function range(start: number, end: number): number[];
+            export function range(start: number, end: number, step: number): number[];
+            export function range(start: number, end?: number, step = 1): number[] {
+                if (end == null) {
+                    end = start;
+                    start = 0;
+                }
+
+                if (!Number.isInteger(step) || step === 0) {
+                    throw new Error("The step value must be a non-zero integer.");
+                }
+
+                const length = Math.max(Math.ceil((end - start) / step), 0);
+                const result = new Array<number>(length);
+                for (let i = 0; i < length; i++) {
+                    result[i] = start + i * step;
+                }
+                return result;
+            }
+        `);
+        const method = methodWithBodyByName(file, "range");
+
+        expect(numberIsIntegerCall(method)?.builtinProof).toMatchObject({
+            builtin: "NUMBER_IS_INTEGER",
+            entryRequirement: "DIRECT_ISOLATED_ENTRY",
+            entryMethod: method.signature,
+        });
+        expect(builtinCall(method, "max")?.builtinProof).toBeUndefined();
+    });
+
+    it("proves pinned Math.min and Math.max assignments in generic array entries", () => {
+        const minFile = lower(`
+            export function dropRight<T>(arr: readonly T[], itemsCount: number): T[] {
+                itemsCount = Math.min(-itemsCount, 0);
+                if (itemsCount === 0) {
+                    return arr.slice();
+                }
+                return arr.slice(0, itemsCount);
+            }
+        `).file;
+        const maxFile = lower(`
+            export function drop<T>(arr: readonly T[], itemsCount: number): T[] {
+                itemsCount = Math.max(itemsCount, 0);
+                return arr.slice(itemsCount);
+            }
+        `).file;
+        const minMethod = methodWithBodyByName(minFile, "dropRight");
+        const maxMethod = methodWithBodyByName(maxFile, "drop");
+
+        expect(builtinCall(minMethod, "min")?.builtinProof).toMatchObject({
+            builtin: "MATH_MIN",
+            entryMethod: minMethod.signature,
+        });
+        expect(builtinCall(maxMethod, "max")?.builtinProof).toMatchObject({
+            builtin: "MATH_MAX",
+            entryMethod: maxMethod.signature,
+        });
+    });
+
+    it("declines unsafe numeric builtin prefixes and identities", () => {
+        const cases = [
+            `
+                export const f = (Math: { abs(value: number): number }, value: number): number =>
+                    Math.abs(value);
+            `,
+            `
+                export const f = (value: number): number => {
+                    (Math as any).abs = () => 0;
+                    return Math.abs(value);
+                };
+            `,
+            `
+                declare function unknown(): void;
+                export const f = (value: number): number => {
+                    unknown();
+                    return Math.abs(value);
+                };
+            `,
+            `
+                declare function unknown(): number;
+                export const f = (value: number = unknown()): number => Math.abs(value);
+            `,
+            `
+                export const f = (object: { value: number }): number => Math.abs(object.value);
+            `,
+            `
+                export const f = (value: number): number => Math.min(value);
+            `,
+            `
+                export const f = (value: number): number => Math.abs(value, value);
+            `,
+            `
+                export const f = (value: number): number => Math.max(value, value, value);
+            `,
+            `
+                export const f = (value: number): boolean => Number.isInteger(value, value);
+            `,
+            `
+                declare function unknown(): void;
+                export const f = (value: number): number => {
+                    let current = value;
+                    while (true) {
+                        if (Math.abs(current) < 1) return current;
+                        unknown();
+                        current = current / 2;
+                    }
                 };
             `,
         ];

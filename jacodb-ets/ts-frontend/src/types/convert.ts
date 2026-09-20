@@ -168,6 +168,9 @@ export class TypeConverter {
         if (ts.isParenthesizedTypeNode(node)) {
             return this.convertTypeNode(node.type, depth, substitutions);
         }
+        if (ts.isTypeOperatorNode(node) && node.operator === ts.SyntaxKind.ReadonlyKeyword) {
+            return this.convertTypeNode(node.type, depth, substitutions);
+        }
         if (ts.isArrayTypeNode(node)) {
             return foldArray(this.convertTypeNode(node.elementType, depth + 1, substitutions));
         }

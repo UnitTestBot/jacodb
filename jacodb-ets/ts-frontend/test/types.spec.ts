@@ -74,6 +74,11 @@ describe("convertTypeNode (annotations)", () => {
             elementType: { _: "NumberType" },
             dimensions: 1,
         });
+        expect(annotationOf("let x: readonly number[];")).toEqual({
+            _: "ArrayType",
+            elementType: { _: "NumberType" },
+            dimensions: 1,
+        });
     });
 
     it("converts tuples", () => {

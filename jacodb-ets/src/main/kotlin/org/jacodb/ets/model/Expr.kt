@@ -727,6 +727,9 @@ data class EtsNullishCoalescingExpr(
 
 enum class EtsBuiltin {
     NUMBER_IS_INTEGER,
+    MATH_ABS,
+    MATH_MIN,
+    MATH_MAX,
 }
 
 enum class EtsBuiltinEntryRequirement {

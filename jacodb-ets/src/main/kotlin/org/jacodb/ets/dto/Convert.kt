@@ -732,6 +732,9 @@ fun MethodSignatureDto.toEtsMethodSignature(): EtsMethodSignature {
 private fun BuiltinCallProofDto.toEtsBuiltinCallProof(): EtsBuiltinCallProof = EtsBuiltinCallProof(
     builtin = when (builtin) {
         ProvenBuiltinDto.NUMBER_IS_INTEGER -> EtsBuiltin.NUMBER_IS_INTEGER
+        ProvenBuiltinDto.MATH_ABS -> EtsBuiltin.MATH_ABS
+        ProvenBuiltinDto.MATH_MIN -> EtsBuiltin.MATH_MIN
+        ProvenBuiltinDto.MATH_MAX -> EtsBuiltin.MATH_MAX
     },
     entryRequirement = when (entryRequirement) {
         BuiltinEntryRequirementDto.DIRECT_ISOLATED_ENTRY -> EtsBuiltinEntryRequirement.DIRECT_ISOLATED_ENTRY

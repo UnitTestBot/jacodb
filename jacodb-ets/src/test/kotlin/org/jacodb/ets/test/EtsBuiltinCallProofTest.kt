@@ -71,37 +71,46 @@ class EtsBuiltinCallProofTest {
             returnType = BooleanTypeDto,
         )
         val argument = LocalDto(name = "value", type = NumberTypeDto)
-        val call = StaticCallExprDto(
-            method = builtin,
-            args = listOf(argument),
-            builtinProof = BuiltinCallProofDto(
-                builtin = ProvenBuiltinDto.NUMBER_IS_INTEGER,
-                entryRequirement = BuiltinEntryRequirementDto.DIRECT_ISOLATED_ENTRY,
-                entryMethod = entry,
-            ),
+        val builtins = listOf(
+            ProvenBuiltinDto.NUMBER_IS_INTEGER to EtsBuiltin.NUMBER_IS_INTEGER,
+            ProvenBuiltinDto.MATH_ABS to EtsBuiltin.MATH_ABS,
+            ProvenBuiltinDto.MATH_MIN to EtsBuiltin.MATH_MIN,
+            ProvenBuiltinDto.MATH_MAX to EtsBuiltin.MATH_MAX,
         )
-        val method = MethodDto(
-            signature = entry,
-            modifiers = 0,
-            decorators = emptyList(),
-            body = BodyDto(
-                locals = listOf(argument),
-                cfg = CfgDto(
-                    blocks = listOf(
-                        BasicBlockDto(
-                            id = 0,
-                            successors = emptyList(),
-                            stmts = listOf(CallStmtDto(expr = call)),
+
+        for ((dtoBuiltin, expectedBuiltin) in builtins) {
+            val call = StaticCallExprDto(
+                method = builtin,
+                args = listOf(argument),
+                builtinProof = BuiltinCallProofDto(
+                    builtin = dtoBuiltin,
+                    entryRequirement = BuiltinEntryRequirementDto.DIRECT_ISOLATED_ENTRY,
+                    entryMethod = entry,
+                ),
+            )
+            val method = MethodDto(
+                signature = entry,
+                modifiers = 0,
+                decorators = emptyList(),
+                body = BodyDto(
+                    locals = listOf(argument),
+                    cfg = CfgDto(
+                        blocks = listOf(
+                            BasicBlockDto(
+                                id = 0,
+                                successors = emptyList(),
+                                stmts = listOf(CallStmtDto(expr = call)),
+                            ),
                         ),
                     ),
                 ),
-            ),
-        ).toEtsMethod()
+            ).toEtsMethod()
 
-        val modelCall = assertIs<EtsStaticCallExpr>(assertIs<EtsCallStmt>(method.cfg.stmts.single()).expr)
-        assertEquals(EtsBuiltin.NUMBER_IS_INTEGER, modelCall.builtinProof?.builtin)
-        assertEquals(EtsBuiltinEntryRequirement.DIRECT_ISOLATED_ENTRY, modelCall.builtinProof?.entryRequirement)
-        assertEquals(method.signature, modelCall.builtinProof?.entryMethod)
+            val modelCall = assertIs<EtsStaticCallExpr>(assertIs<EtsCallStmt>(method.cfg.stmts.single()).expr)
+            assertEquals(expectedBuiltin, modelCall.builtinProof?.builtin)
+            assertEquals(EtsBuiltinEntryRequirement.DIRECT_ISOLATED_ENTRY, modelCall.builtinProof?.entryRequirement)
+            assertEquals(method.signature, modelCall.builtinProof?.entryMethod)
+        }
     }
 
     @Test

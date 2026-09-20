@@ -40,6 +40,7 @@ import { ClassDto, FieldDto, MethodDto } from "../dto/model";
 import { ClassSignatureDto, UNKNOWN_FILE_SIGNATURE } from "../dto/signatures";
 import { ClassTypeDto, TypeDto, BOOLEAN_TYPE, NUMBER_TYPE, STRING_TYPE, UNKNOWN_TYPE, VOID_TYPE } from "../dto/types";
 import { buildParameters, decoratorsOf, memberName, modifiersOf, parameterType, returnTypeOf } from "./astUtils";
+import { verifiedBuiltinEntryFor } from "./builtinProof";
 import { constant } from "./exprLowering";
 import { LoweringContext, MethodContext } from "./methodBuilder";
 import { StmtLowerer } from "./stmtLowering";
@@ -298,8 +299,9 @@ export class ClassBuilder {
         const { parameters, prologueParams } = buildParameters(this.ctx, decl);
         const returnType = returnTypeOf(this.ctx, decl);
 
+        const signature = { declaringClass, name, parameters, returnType };
         const method: MethodDto = {
-            signature: { declaringClass, name, parameters, returnType },
+            signature,
             modifiers: modifiersOf(decl),
             decorators: decoratorsOf(decl),
         };
@@ -310,7 +312,10 @@ export class ClassBuilder {
 
         if (decl.body !== undefined) {
             const isStaticMethod = (modifiersOf(decl) & Modifier.STATIC) !== 0;
-            const m = new MethodContext(this.ctx, declaringClass, name, isStaticMethod);
+            const builtinEntry = ts.isFunctionDeclaration(decl)
+                ? verifiedBuiltinEntryFor(decl, this.ctx, signature, [])
+                : undefined;
+            const m = new MethodContext(this.ctx, declaringClass, name, isStaticMethod, builtinEntry);
             m.emitPrologue(prologueParams);
             const lowerer = new StmtLowerer(m);
             this.lowerParameterPatterns(lowerer, m, prologueParams);
