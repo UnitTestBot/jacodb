@@ -629,7 +629,11 @@ export class StmtLowerer {
 
                 cfg.placeLabel(catchLabel);
                 const decl = node.catchClause.variableDeclaration;
-                if (decl !== undefined && ts.isIdentifier(decl.name)) {
+                if (
+                    decl !== undefined &&
+                    ts.isIdentifier(decl.name) &&
+                    referencesName(node.catchClause.block, decl.name.text)
+                ) {
                     const caughtType =
                         decl.type !== undefined ? this.m.converter.convertTypeNode(decl.type) : UNKNOWN_TYPE;
                     const caught = this.m.localForIdentifier(decl.name, caughtType);
