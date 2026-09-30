@@ -62,6 +62,47 @@ describe("try/catch/finally lowering", () => {
         expect(returns).toHaveLength(2);
     });
 
+    it("ignores matching property names and shadowed locals in a catch body", () => {
+        const sources = [
+            `function f(obj: { error: number }): number {
+                try { return 0; } catch (error) { return obj.error; }
+            }`,
+            `function f(): number {
+                try { return 0; } catch (error) {
+                    { const error = 1; return error; }
+                }
+            }`,
+            `function f(): number {
+                try { return 0; } catch (error) {
+                    type CaughtType = typeof error;
+                    return 1;
+                }
+            }`,
+        ];
+
+        for (const source of sources) {
+            const stmts = blocksOf(source).flatMap((block) => block.stmts);
+            const catchBindings = stmts.filter(
+                (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "CaughtExceptionRef",
+            );
+
+            expect(catchBindings).toHaveLength(0);
+        }
+    });
+
+    it("keeps a catch binding referenced by a shorthand property", () => {
+        const stmts = blocksOf(`
+            function f(): object {
+                try { return {}; } catch (error) { return { error }; }
+            }
+        `).flatMap((block) => block.stmts);
+        const catchBindings = stmts.filter(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "CaughtExceptionRef",
+        );
+
+        expect(catchBindings).toHaveLength(1);
+    });
+
     it("joins try and catch paths on the finally block", () => {
         const blocks = blocksOf(`
             function f(): void {

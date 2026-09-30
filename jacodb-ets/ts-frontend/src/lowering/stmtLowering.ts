@@ -632,7 +632,7 @@ export class StmtLowerer {
                 if (
                     decl !== undefined &&
                     ts.isIdentifier(decl.name) &&
-                    referencesName(node.catchClause.block, decl.name.text)
+                    this.referencesCatchBinding(node.catchClause.block, decl.name)
                 ) {
                     const caughtType =
                         decl.type !== undefined ? this.m.converter.convertTypeNode(decl.type) : UNKNOWN_TYPE;
@@ -662,6 +662,25 @@ export class StmtLowerer {
         if (node.finallyBlock !== undefined) {
             this.lowerStatement(node.finallyBlock);
         }
+    }
+
+    private referencesCatchBinding(block: ts.Block, name: ts.Identifier): boolean {
+        const bindingSymbol = this.m.converter.symbolOf(name);
+        if (bindingSymbol === undefined) {
+            return referencesName(block, name.text);
+        }
+
+        let found = false;
+        const visit = (node: ts.Node): void => {
+            if (found || ts.isTypeNode(node)) return;
+            if (ts.isIdentifier(node) && this.m.converter.symbolOf(node) === bindingSymbol) {
+                found = true;
+                return;
+            }
+            ts.forEachChild(node, visit);
+        };
+        visit(block);
+        return found;
     }
 
     /**
