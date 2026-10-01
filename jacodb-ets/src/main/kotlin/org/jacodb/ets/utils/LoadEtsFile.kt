@@ -165,7 +165,9 @@ private fun resolveFrontendScript(frontendDir: Path, scriptPath: String): Path {
     return script
 }
 
-class EtsIrGenerationException(message: String) : IllegalStateException(message)
+open class EtsIrGenerationException(message: String) : IllegalStateException(message)
+
+class EtsIrGenerationTimeoutException(message: String) : EtsIrGenerationException(message)
 
 private const val ENV_VAR_ETS_IR_GENERATION_TIMEOUT_SEC = "ETS_IR_GENERATION_TIMEOUT_SEC"
 
@@ -233,11 +235,13 @@ fun generateEtsIR(
         logger.error { "STDOUT:\n${res.stdout}" }
         logger.error { "STDERR:\n${res.stderr}" }
         logger.error { "Partial output is kept at '$output'" }
-        throw EtsIrGenerationException(
-            "$failure\nOutput: '$output'" +
-                "\nSTDOUT:\n${res.stdout}" +
-                "\nSTDERR:\n${res.stderr}"
-        )
+        val message = "$failure\nOutput: '$output'" +
+            "\nSTDOUT:\n${res.stdout}" +
+            "\nSTDERR:\n${res.stderr}"
+        if (res.isTimeout) {
+            throw EtsIrGenerationTimeoutException(message)
+        }
+        throw EtsIrGenerationException(message)
     }
     return output
 }

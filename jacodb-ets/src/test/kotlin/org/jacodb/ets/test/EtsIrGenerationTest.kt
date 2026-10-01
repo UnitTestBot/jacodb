@@ -17,6 +17,7 @@
 package org.jacodb.ets.test
 
 import org.jacodb.ets.utils.EtsIrGenerationException
+import org.jacodb.ets.utils.EtsIrGenerationTimeoutException
 import org.jacodb.ets.utils.EtsIrProvider
 import org.jacodb.ets.utils.generateEtsIR
 import org.junit.jupiter.api.Test
@@ -24,7 +25,9 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.writeText
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 
 class EtsIrGenerationTest {
     @Test
@@ -37,10 +40,34 @@ class EtsIrGenerationTest {
         System.setProperty("ets.frontend.dir", frontend.toString())
         try {
             val error = assertFailsWith<EtsIrGenerationException> {
-                generateEtsIR(source, provider = EtsIrProvider.TS_FRONTEND)
+                generateEtsIR(projectPath = source, provider = EtsIrProvider.TS_FRONTEND)
             }
+            assertFalse(error is EtsIrGenerationTimeoutException)
             assertTrue(error.message.orEmpty().contains("exit code 7"))
             assertTrue(error.message.orEmpty().contains("frontend failed"))
+        } finally {
+            System.clearProperty("ets.frontend.dir")
+        }
+    }
+
+    @Test
+    fun `process deadline has a typed generation failure`() {
+        val frontend = createTempDirectory("slow-ets-frontend")
+        frontend.resolve("dist").createDirectories()
+        frontend.resolve("dist/index.js").writeText("setTimeout(() => {}, 5000);")
+        val source = frontend.resolve("input.ts").also { it.writeText("const value = 1;") }
+
+        System.setProperty("ets.frontend.dir", frontend.toString())
+        try {
+            val error = assertFailsWith<EtsIrGenerationTimeoutException> {
+                generateEtsIR(
+                    projectPath = source,
+                    provider = EtsIrProvider.TS_FRONTEND,
+                    timeout = 200.milliseconds,
+                )
+            }
+
+            assertTrue(error.message.orEmpty().contains("timed out"))
         } finally {
             System.clearProperty("ets.frontend.dir")
         }
