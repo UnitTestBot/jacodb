@@ -22,6 +22,7 @@ import org.jacodb.ets.dto.toEtsFile
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsScene
 import java.io.FileNotFoundException
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.PathWalkOption
@@ -165,7 +166,9 @@ private fun resolveFrontendScript(frontendDir: Path, scriptPath: String): Path {
     return script
 }
 
-class EtsIrGenerationException(message: String) : IllegalStateException(message)
+open class EtsIrGenerationException(message: String) : IllegalStateException(message)
+
+class EtsIrGenerationTimeoutException(message: String) : EtsIrGenerationException(message)
 
 private const val ENV_VAR_ETS_IR_GENERATION_TIMEOUT_SEC = "ETS_IR_GENERATION_TIMEOUT_SEC"
 
@@ -182,7 +185,27 @@ fun defaultEtsIrGenerationTimeout(isProject: Boolean): Duration {
     return if (isProject) 10.minutes else 60.seconds
 }
 
+/** Generates EtsIR and retains partial output on failure for diagnostics. */
 fun generateEtsIR(
+    projectPath: Path,
+    isProject: Boolean = false,
+    loadEntrypoints: Boolean = true,
+    useArkAnalyzerTypeInference: Int? = null,
+    timeout: Duration? = defaultEtsIrGenerationTimeout(isProject),
+    provider: EtsIrProvider = defaultProviderFor(projectPath, isProject),
+): Path = generateEtsIR(
+    keepPartialOutputOnFailure = true,
+    projectPath = projectPath,
+    isProject = isProject,
+    loadEntrypoints = loadEntrypoints,
+    useArkAnalyzerTypeInference = useArkAnalyzerTypeInference,
+    timeout = timeout,
+    provider = provider,
+)
+
+/** Generates EtsIR with caller-selected cleanup of partial output on failure. */
+fun generateEtsIR(
+    keepPartialOutputOnFailure: Boolean,
     projectPath: Path,
     isProject: Boolean = false,
     loadEntrypoints: Boolean = true,
@@ -220,26 +243,44 @@ fun generateEtsIR(
         if (logger.isDebugEnabled) add("-v")
     }
     logger.debug { "Running EtsIR generation ($provider): ${cmd.joinToString(" ")}" }
-    val res = ProcessUtil.run(cmd, timeout = timeout)
-    val failure = when {
-        res.isTimeout -> "EtsIR generation ($provider) timed out after $timeout"
-        res.exitCode != 0 -> "EtsIR generation ($provider) failed with exit code ${res.exitCode}"
-        else -> null
-    }
-    if (failure != null) {
-        // Keep whatever has already been generated: on a partial failure (or a timeout
-        // on a large project) the produced files are still useful for diagnostics.
-        logger.error { "$failure\nCommand: ${cmd.joinToString(" ")}" }
-        logger.error { "STDOUT:\n${res.stdout}" }
-        logger.error { "STDERR:\n${res.stderr}" }
-        logger.error { "Partial output is kept at '$output'" }
-        throw EtsIrGenerationException(
-            "$failure\nOutput: '$output'" +
+    try {
+        val res = ProcessUtil.run(cmd, timeout = timeout)
+        val failure = when {
+            res.isTimeout -> "EtsIR generation ($provider) timed out after $timeout"
+            res.exitCode != 0 -> "EtsIR generation ($provider) failed with exit code ${res.exitCode}"
+            else -> null
+        }
+        if (failure != null) {
+            // Partial output may be useful for diagnostics when the caller keeps it.
+            logger.error { "$failure\nCommand: ${cmd.joinToString(" ")}" }
+            logger.error { "STDOUT:\n${res.stdout}" }
+            logger.error { "STDERR:\n${res.stderr}" }
+            if (keepPartialOutputOnFailure) {
+                logger.error { "Partial output is kept at '$output'" }
+            }
+            val message = "$failure\nOutput: '$output'" +
                 "\nSTDOUT:\n${res.stdout}" +
                 "\nSTDERR:\n${res.stderr}"
-        )
+            if (res.isTimeout) {
+                throw EtsIrGenerationTimeoutException(message)
+            }
+            throw EtsIrGenerationException(message)
+        }
+        return output
+    } catch (failure: Throwable) {
+        if (!keepPartialOutputOnFailure) {
+            try {
+                if (isProject) {
+                    check(output.toFile().deleteRecursively()) { "Could not remove partial EtsIR output '$output'" }
+                } else {
+                    Files.deleteIfExists(output)
+                }
+            } catch (cleanupFailure: Throwable) {
+                failure.addSuppressed(cleanupFailure)
+            }
+        }
+        throw failure
     }
-    return output
 }
 
 /**
