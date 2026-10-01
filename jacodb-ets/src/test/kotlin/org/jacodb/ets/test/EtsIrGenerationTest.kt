@@ -23,9 +23,11 @@ import org.jacodb.ets.utils.generateEtsIR
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createTempDirectory
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -51,7 +53,7 @@ class EtsIrGenerationTest {
                 keepPartialOutputOnFailure = false,
             )
 
-            assertEquals("{}", Files.readString(output))
+            assertEquals("{}", output.readText())
             Files.delete(output)
         } finally {
             System.clearProperty("ets.frontend.dir")
@@ -76,7 +78,7 @@ class EtsIrGenerationTest {
             assertTrue(error.message.orEmpty().contains("exit code 7"))
             assertTrue(error.message.orEmpty().contains("frontend failed"))
             val output = outputPath(error)
-            assertEquals("partial", Files.readString(output))
+            assertEquals("partial", output.readText())
             Files.delete(output)
         } finally {
             System.clearProperty("ets.frontend.dir")
@@ -175,13 +177,13 @@ class EtsIrGenerationTest {
 
             assertFalse(worker.isAlive)
             assertTrue(failure.get() is InterruptedException)
-            assertFalse(Files.exists(Path.of(Files.readString(outputMarker))))
+            assertFalse(Files.exists(Paths.get(outputMarker.readText())))
         } finally {
             System.clearProperty("ets.frontend.dir")
         }
     }
 
-    private fun outputPath(error: Throwable): Path = Path.of(
+    private fun outputPath(error: Throwable): Path = Paths.get(
         error.message.orEmpty().substringAfter("Output: '").substringBefore("'"),
     )
 }
