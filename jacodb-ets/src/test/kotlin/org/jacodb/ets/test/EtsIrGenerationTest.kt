@@ -39,7 +39,7 @@ class EtsIrGenerationTest {
         val frontend = createTempDirectory("successful-ets-frontend")
         frontend.resolve("dist").createDirectories()
         frontend.resolve("dist/index.js").writeText(
-            "require('fs').writeFileSync(process.argv.at(-1), '{}');"
+            "require('fs').writeFileSync(process.argv.at(process.argv.at(-1) === '-v' ? -2 : -1), '{}');"
         )
         val source = frontend.resolve("input.ts").also { it.writeText("const value = 1;") }
 
@@ -63,7 +63,7 @@ class EtsIrGenerationTest {
         val frontend = createTempDirectory("failing-ets-frontend")
         frontend.resolve("dist").createDirectories()
         frontend.resolve("dist/index.js").writeText(
-            "require('fs').writeFileSync(process.argv.at(-1), 'partial'); console.error('frontend failed'); process.exit(7);"
+            "require('fs').writeFileSync(process.argv.at(process.argv.at(-1) === '-v' ? -2 : -1), 'partial'); console.error('frontend failed'); process.exit(7);"
         )
         val source = frontend.resolve("input.ts").also { it.writeText("const value = 1;") }
 
@@ -88,7 +88,7 @@ class EtsIrGenerationTest {
         val frontend = createTempDirectory("slow-ets-frontend")
         frontend.resolve("dist").createDirectories()
         frontend.resolve("dist/index.js").writeText(
-            "require('fs').writeFileSync(process.argv.at(-1), 'partial'); setTimeout(() => {}, 5000);"
+            "require('fs').writeFileSync(process.argv.at(process.argv.at(-1) === '-v' ? -2 : -1), 'partial'); setTimeout(() => {}, 5000);"
         )
         val source = frontend.resolve("input.ts").also { it.writeText("const value = 1;") }
 
@@ -115,7 +115,7 @@ class EtsIrGenerationTest {
         val frontend = createTempDirectory("cleaned-ets-frontend")
         frontend.resolve("dist").createDirectories()
         frontend.resolve("dist/index.js").writeText(
-            "require('fs').writeFileSync(process.argv.at(-1), 'partial'); process.exit(7);"
+            "require('fs').writeFileSync(process.argv.at(process.argv.at(-1) === '-v' ? -2 : -1), 'partial'); process.exit(7);"
         )
         val source = frontend.resolve("input.ts").also { it.writeText("const value = 1;") }
 
@@ -141,8 +141,8 @@ class EtsIrGenerationTest {
         val frontend = createTempDirectory("interrupted-ets-frontend")
         frontend.resolve("dist").createDirectories()
         frontend.resolve("dist/index.js").writeText(
-            "require('fs').writeFileSync(__dirname + '/../output-path', process.argv.at(-1));" +
-                "require('fs').writeFileSync(process.argv.at(-1), 'partial'); setTimeout(() => {}, 5000);"
+            "require('fs').writeFileSync(__dirname + '/../output-path', process.argv.at(process.argv.at(-1) === '-v' ? -2 : -1));" +
+                "require('fs').writeFileSync(process.argv.at(process.argv.at(-1) === '-v' ? -2 : -1), 'partial'); setTimeout(() => {}, 5000);"
         )
         val source = frontend.resolve("input.ts").also { it.writeText("const value = 1;") }
         val outputMarker = frontend.resolve("output-path")
