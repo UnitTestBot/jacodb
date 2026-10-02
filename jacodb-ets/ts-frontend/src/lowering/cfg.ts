@@ -290,10 +290,18 @@ function blockTargets(block: BuilderBlock): Label[] {
 }
 
 function mayThrow(stmt: StmtDto): boolean {
-    if (stmt._ === "CallStmt") return true;
-    if (stmt._ !== "AssignStmt") return false;
-
-    return stmt.left._ !== "Local" || mayThrowValue(stmt.right);
+    switch (stmt._) {
+        case "AssignStmt":
+            return stmt.left._ !== "Local" || mayThrowValue(stmt.right);
+        case "NopStmt":
+        case "ReturnVoidStmt":
+        case "ReturnStmt":
+        case "IfStmt":
+            return false;
+        default:
+            // Raw fallback statements are cast into the closed StmtDto union.
+            return true;
+    }
 }
 
 function mayThrowValue(value: ValueDto): boolean {
