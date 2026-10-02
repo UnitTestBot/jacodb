@@ -502,15 +502,17 @@ class EtsMethodBuilder(
             return EtsBlockCfg.EMPTY
         }
 
-        val convertedStmtIndexes = mutableMapOf<Int, Map<Int, Int>>()
+        val convertedStmtIndexes = mutableMapOf<Int, Map<Int, List<Int>>>()
         val blocks = this.blocks.map { block ->
             currentStmts = mutableListOf()
-            val stmtIndexes = mutableMapOf<Int, Int>()
+            val stmtIndexes = mutableMapOf<Int, List<Int>>()
             for ((stmtIndex, stmt) in block.stmts.withIndex()) {
+                val firstConvertedIndex = currentStmts.size
                 withOrigin(stmtOrigins[StmtOriginKey(block.id, stmtIndex)]) {
                     currentStmts += stmt.toEtsStmt()
                 }
-                stmtIndexes[stmtIndex] = currentStmts.lastIndex
+                stmtIndexes[stmtIndex] = (firstConvertedIndex..currentStmts.lastIndex)
+                    .filter { currentStmts[it].mayThrow() }
             }
             if (currentStmts.isEmpty()) {
                 currentStmts += EtsNopStmt(location = loc())
@@ -522,10 +524,17 @@ class EtsMethodBuilder(
         //       however in all our CFGs we use (true, false) order.
         val successors = this.blocks.associate { it.id to it.successors.asReversed() }
         val exceptionalSuccessors = this.blocks.associate { block ->
-            block.id to block.exceptionalSuccessors.associate {
-                val convertedIndex = convertedStmtIndexes[block.id]?.get(it.stmtIndex)
-                    ?: error("No converted statement ${it.stmtIndex} in block ${block.id}")
-                convertedIndex to it.target
+            block.id to buildMap {
+                for (edge in block.exceptionalSuccessors) {
+                    val convertedIndexes = convertedStmtIndexes[block.id]?.get(edge.stmtIndex)
+                        ?: error("No converted statement ${edge.stmtIndex} in block ${block.id}")
+                    check(convertedIndexes.isNotEmpty()) {
+                        "Exceptional statement ${edge.stmtIndex} in block ${block.id} has no throwing instruction"
+                    }
+                    for (convertedIndex in convertedIndexes) {
+                        put(convertedIndex, edge.target)
+                    }
+                }
             }
         }
 
@@ -534,6 +543,28 @@ class EtsMethodBuilder(
             successors = successors,
             exceptionalSuccessors = exceptionalSuccessors,
         )
+    }
+
+    private fun EtsStmt.mayThrow(): Boolean = when (this) {
+        is EtsAssignStmt -> lhv !is EtsLocal || rhv.mayThrow()
+        is EtsCallStmt, is EtsThrowStmt -> true
+        is EtsRawStmt -> true
+        is EtsIfStmt, is EtsNopStmt, is EtsReturnStmt -> false
+        else -> error("Unknown statement: ${this::class.java}")
+    }
+
+    private fun EtsEntity.mayThrow(): Boolean = when (this) {
+        is EtsLocal, is EtsConstant, is EtsThis, is EtsParameterRef, is EtsCaughtExceptionRef -> false
+        is EtsCastExpr -> arg.mayThrow()
+        is EtsTypeOfExpr -> arg.mayThrow()
+        is EtsNotExpr -> arg.mayThrow()
+        is EtsStrictEqExpr -> left.mayThrow() || right.mayThrow()
+        is EtsStrictNotEqExpr -> left.mayThrow() || right.mayThrow()
+        is EtsAndExpr -> left.mayThrow() || right.mayThrow()
+        is EtsOrExpr -> left.mayThrow() || right.mayThrow()
+        is EtsNullishCoalescingExpr -> left.mayThrow() || right.mayThrow()
+        // Other expressions and references can invoke coercion, getters, proxies, or calls.
+        else -> true
     }
 }
 
