@@ -27,6 +27,13 @@ data class CfgDto(
 data class BasicBlockDto(
     val id: Int,
     val successors: List<Int>,
+    val exceptionalSuccessors: List<ExceptionalSuccessorDto> = emptyList(),
     val predecessors: List<Int>? = null,
     val stmts: List<StmtDto>,
+)
+
+@Serializable
+data class ExceptionalSuccessorDto(
+    val stmtIndex: Int,
+    val target: Int,
 )

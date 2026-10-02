@@ -1,3 +1,5 @@
+import { runInNewContext } from "node:vm";
+import * as ts from "typescript";
 import { describe, expect, it } from "vitest";
 import { BasicBlockDto } from "../src/dto/model";
 import { defaultMethod, lower, methodByName } from "./util";
@@ -9,11 +11,40 @@ function blocksOf(source: string, method: string = "f"): BasicBlockDto[] {
 }
 
 describe("try/catch/finally lowering", () => {
+    it("does not enter catch when the try body cannot throw", () => {
+        const source = `
+            function f(): number {
+                try { return 1; } catch { return 2; }
+            }
+        `;
+        const blocks = blocksOf(source);
+        const javascript = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2020 } }).outputText;
+
+        const returns = blocks.flatMap((block) => block.stmts)
+            .filter((stmt) => stmt._ === "ReturnStmt");
+
+        expect(runInNewContext(`${javascript}\nf();`)).toBe(1);
+        expect(returns).toEqual([{ _: "ReturnStmt", arg: expect.objectContaining({ value: "1" }) }]);
+        expect(blocks.flatMap((block) => block.exceptionalSuccessors ?? [])).toHaveLength(0);
+    });
+
+    it("does not add a catch edge for arithmetic on numbers", () => {
+        const blocks = blocksOf(`
+            function f(x: number): number {
+                try { return x + 1; } catch { return 2; }
+            }
+        `);
+
+        expect(blocks.flatMap((block) => block.exceptionalSuccessors ?? [])).toHaveLength(0);
+        expect(blocks.flatMap((block) => block.stmts).filter((stmt) => stmt._ === "ReturnStmt")).toHaveLength(1);
+    });
+
     it("keeps catch code reachable and binds CaughtExceptionRef", () => {
         const blocks = blocksOf(`
-            function f(): number {
+            function f(fail: boolean): number {
                 let r = 0;
                 try {
+                    if (fail) throw 3;
                     r = 1;
                 } catch (e) {
                     console.log(e);
@@ -37,15 +68,22 @@ describe("try/catch/finally lowering", () => {
             .filter((v) => v !== undefined);
         expect(values).toContain("1");
         expect(values).toContain("2");
-        // entry branches nondeterministically between try and catch
-        expect(blocks[0].successors).toHaveLength(2);
+        const throwBlock = blocks.find((block) => block.stmts.some((stmt) => stmt._ === "ThrowStmt"))!;
+        const throwIndex = throwBlock.stmts.findIndex((stmt) => stmt._ === "ThrowStmt");
+        const catchBlock = blocks.find((block) => block.stmts.some(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "CaughtExceptionRef",
+        ))!;
+
+        expect(throwBlock.successors).toHaveLength(0);
+        expect(throwBlock.exceptionalSuccessors).toContainEqual({ stmtIndex: throwIndex, target: catchBlock.id });
     });
 
     it("omits an unused catch binding while preserving its return", () => {
         const blocks = blocksOf(`
-            function f(): boolean {
+            function f(fail: boolean): boolean {
                 try {
-                    return BUILD_FLAG;
+                    if (fail) throw 1;
+                    return true;
                 } catch (error) {
                     return false;
                 }
@@ -142,7 +180,32 @@ describe("try/catch/finally lowering", () => {
         const logged = stmts
             .filter((s) => s._ === "CallStmt")
             .map((s) => ((s as { expr: { args: { value?: string }[] } }).expr.args[0] ?? {}).value);
-        expect(logged).toEqual(["try", "finally"]);
+        expect(logged).toEqual(["try", "finally", "finally"]);
+        expect(blocks.flatMap((block) => block.exceptionalSuccessors ?? [])).toHaveLength(1);
+    });
+
+    it("runs finally and rethrows when a call fails", () => {
+        const blocks = blocksOf(`
+            function risky(): void { throw 1; }
+            function f(): void {
+                try { risky(); } finally { console.log("finally"); }
+            }
+        `);
+
+        const callBlock = blocks.find((block) => block.stmts.some(
+            (stmt) => stmt._ === "CallStmt" && stmt.expr.method.name === "risky",
+        ))!;
+        const callIndex = callBlock.stmts.findIndex(
+            (stmt) => stmt._ === "CallStmt" && stmt.expr.method.name === "risky",
+        );
+        const handlerId = callBlock.exceptionalSuccessors?.find((edge) => edge.stmtIndex === callIndex)?.target;
+        const handler = blocks[handlerId!];
+
+        expect(handlerId).toBeDefined();
+        expect(handler.stmts[0]).toMatchObject({ _: "AssignStmt", right: { _: "CaughtExceptionRef" } });
+        expect(handler.stmts.some((stmt) => stmt._ === "CallStmt" && stmt.expr.args[0]?._ === "Constant"
+            && stmt.expr.args[0].value === "finally")).toBe(true);
+        expect(handler.stmts.at(-1)?._).toBe("ThrowStmt");
     });
 
     it("duplicates finally before return (finally never drops out of the IR)", () => {
@@ -308,6 +371,74 @@ describe("try/catch/finally lowering", () => {
         expect(stmts.some((s) => s._ === "ThrowStmt")).toBe(true);
         const caught = stmts.filter((s) => s._ === "AssignStmt" && s.right._ === "CaughtExceptionRef");
         expect(caught).toHaveLength(0);
-        expect(stmts.filter((s) => s._ === "ReturnStmt")).toHaveLength(3);
+        expect(stmts.filter((s) => s._ === "ReturnStmt")).toHaveLength(2);
+    });
+
+    it("routes a nested throw to the nearest catch", () => {
+        const blocks = blocksOf(`
+            function f(x: number): number {
+                try {
+                    try { throw x; } catch (inner) { return inner; }
+                } catch (outer) { return outer; }
+            }
+        `);
+
+        const throwBlock = blocks.find((block) => block.stmts.some((stmt) => stmt._ === "ThrowStmt"))!;
+        const innerCatch = blocks.find((block) => block.stmts.some(
+            (stmt) => stmt._ === "AssignStmt" && stmt.left._ === "Local" && stmt.left.name === "inner",
+        ))!;
+        const outerCatch = blocks.find((block) => block.stmts.some(
+            (stmt) => stmt._ === "AssignStmt" && stmt.left._ === "Local" && stmt.left.name === "outer",
+        ));
+
+        expect(throwBlock.exceptionalSuccessors).toContainEqual({
+            stmtIndex: throwBlock.stmts.findIndex((stmt) => stmt._ === "ThrowStmt"),
+            target: innerCatch.id,
+        });
+        expect(outerCatch).toBeUndefined();
+    });
+
+    it("records an exceptional edge for a call without turning it into a normal branch", () => {
+        const blocks = blocksOf(`
+            function risky(): void { throw 1; }
+            function f(): number {
+                try { risky(); return 1; } catch { return 2; }
+            }
+        `);
+
+        const callBlock = blocks.find((block) => block.stmts.some((stmt) => stmt._ === "CallStmt"))!;
+        const callIndex = callBlock.stmts.findIndex((stmt) => stmt._ === "CallStmt");
+        const catcherId = callBlock.exceptionalSuccessors?.find((edge) => edge.stmtIndex === callIndex)?.target;
+
+        expect(catcherId).toBeDefined();
+        expect(blocks[catcherId!].stmts).toContainEqual({
+            _: "ReturnStmt",
+            arg: expect.objectContaining({ value: "2" }),
+        });
+        expect(callBlock.stmts.at(-1)).toMatchObject({ _: "ReturnStmt", arg: { value: "1" } });
+    });
+
+    it("lets an outer catch handle a throw from an inner finally", () => {
+        const blocks = blocksOf(`
+            function f(): number {
+                try {
+                    try { return 1; } catch { return 2; } finally { throw 3; }
+                } catch (outer) { return outer; }
+            }
+        `);
+
+        const throwBlock = blocks.find((block) => block.stmts.some((stmt) => stmt._ === "ThrowStmt"))!;
+        const outerCatch = blocks.find((block) => block.stmts.some(
+            (stmt) => stmt._ === "AssignStmt" && stmt.left._ === "Local" && stmt.left.name === "outer",
+        ))!;
+        const returnedConstants = blocks.flatMap((block) => block.stmts)
+            .filter((stmt) => stmt._ === "ReturnStmt" && stmt.arg._ === "Constant")
+            .map((stmt) => stmt.arg.value);
+
+        expect(throwBlock.exceptionalSuccessors).toContainEqual({
+            stmtIndex: throwBlock.stmts.findIndex((stmt) => stmt._ === "ThrowStmt"),
+            target: outerCatch.id,
+        });
+        expect(returnedConstants).not.toContain("2");
     });
 });
