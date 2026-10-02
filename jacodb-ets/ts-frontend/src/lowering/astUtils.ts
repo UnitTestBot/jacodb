@@ -75,6 +75,22 @@ function declarationSymbol(identifier: ts.Identifier, checker: ts.TypeChecker): 
     return symbol;
 }
 
+/** The exact class/enum receiver syntax recognized by ExprLowerer for static access. */
+export function classLikeDeclarationOf(
+    node: ts.Expression,
+    checker: ts.TypeChecker,
+): ts.ClassDeclaration | ts.EnumDeclaration | undefined {
+    if (!ts.isIdentifier(node) && !ts.isPropertyAccessExpression(node)) return undefined;
+
+    const identifier = ts.isIdentifier(node) ? node : node.name;
+    if (!ts.isIdentifier(identifier)) return undefined;
+
+    return declarationSymbol(identifier, checker)?.declarations?.find(
+        (declaration): declaration is ts.ClassDeclaration | ts.EnumDeclaration =>
+            ts.isClassDeclaration(declaration) || ts.isEnumDeclaration(declaration),
+    );
+}
+
 /** Scope functions, classes, enums, and namespaces have no standalone value reference in EtsIR yet. */
 function isUnmaterializedValue(identifier: ts.Identifier, checker: ts.TypeChecker): boolean {
     const symbol = declarationSymbol(identifier, checker);
@@ -90,17 +106,6 @@ function isUnmaterializedValue(identifier: ts.Identifier, checker: ts.TypeChecke
 
 /** Direct calls and constructors use method/class signatures; other reads need a materialized value. */
 export function usesUnmaterializedDeclarationValue(expression: ts.Expression, checker: ts.TypeChecker): boolean {
-    const staticReceiver = (node: ts.Expression): boolean => {
-        const identifier = bindingIdentifier(node);
-        if (identifier === undefined) return false;
-
-        return declarationSymbol(identifier, checker)?.declarations?.some((declaration) =>
-            ts.isClassDeclaration(declaration)
-            || ts.isEnumDeclaration(declaration)
-            || ts.isModuleDeclaration(declaration),
-        ) ?? false;
-    };
-
     const visit = (node: ts.Node): boolean => {
         if (ts.isTypeNode(node)) return false;
         if (ts.isIdentifier(node)) return isUnmaterializedValue(node, checker);
@@ -112,7 +117,7 @@ export function usesUnmaterializedDeclarationValue(expression: ts.Expression, ch
             return calleeNeedsValue || (node.arguments?.some(visit) ?? false);
         }
         if (ts.isPropertyAccessExpression(node)) {
-            return (node.questionDotToken !== undefined || !staticReceiver(node.expression))
+            return (ts.isOptionalChain(node) || classLikeDeclarationOf(node.expression, checker) === undefined)
                 && visit(node.expression);
         }
         if (ts.isPropertyAssignment(node)) {

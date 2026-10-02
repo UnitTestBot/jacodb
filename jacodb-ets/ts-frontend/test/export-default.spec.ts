@@ -112,9 +112,14 @@ describe("export default expressions", () => {
     it.each([
         "new Box()",
         "Box.count",
+        "Box.getCount()",
+        "Box.getCount?.()",
     ])("keeps supported class uses in default expression %s", (expression) => {
         const { file, stmts } = moduleStatements(`
-            class Box { static count = 1; }
+            class Box {
+                static count = 1;
+                static getCount(): number { return this.count; }
+            }
             export default ${expression};
         `);
 
@@ -122,7 +127,75 @@ describe("export default expressions", () => {
             _: "AssignStmt",
             left: expect.objectContaining({ _: "StaticFieldRef", field: expect.objectContaining({ name: "default" }) }),
         }));
+        if (expression === "Box.count") {
+            expect(stmts).toContainEqual(expect.objectContaining({
+                _: "AssignStmt",
+                right: expect.objectContaining({
+                    _: "StaticFieldRef",
+                    field: expect.objectContaining({ name: "count" }),
+                }),
+            }));
+        }
+        if (expression.includes("getCount")) {
+            expect(stmts).toContainEqual(expect.objectContaining({
+                _: "AssignStmt",
+                right: expect.objectContaining({
+                    _: "StaticCallExpr",
+                    method: expect.objectContaining({ name: "getCount" }),
+                }),
+            }));
+        }
         expect(file.exportInfos).toContainEqual(expect.objectContaining({ exportName: "default" }));
+    });
+
+    it("keeps a class reached through a namespace as a static receiver", () => {
+        const { stmts } = moduleStatements(`
+            namespace N {
+                export class Box { static count = 1; }
+            }
+            export default N.Box.count;
+        `);
+
+        expect(stmts).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            right: expect.objectContaining({
+                _: "StaticFieldRef",
+                field: expect.objectContaining({ name: "count" }),
+            }),
+        }));
+    });
+
+    it.each([
+        "(Box).count",
+        "(Box as typeof Box).count",
+        "Box!.count",
+        "(Box).getCount()",
+        "(Box as typeof Box).getCount()",
+        "Box?.count",
+        "Box?.getCount()",
+        "N?.Box.count",
+        "N.x",
+        "N.f()",
+    ])("reports an unmaterialized receiver in %s", (expression) => {
+        const { file, diagnostics } = lower(`
+            class Box {
+                static count = 1;
+                static getCount(): number { return this.count; }
+            }
+            namespace N {
+                export const x = 1;
+                export function f(): number { return x; }
+                export class Box { static count = 1; }
+            }
+            export default ${expression};
+        `);
+
+        const defaultClass = file.classes.find((clazz) => clazz.signature.name === "%dflt")!;
+        const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
+
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining("has no EtsIR value reference"));
+        expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
+        expect(defaultClass.fields.some((field) => field.signature.name === "default")).toBe(false);
     });
 
     it("marks a bare declaration reference unsupported until EtsIR can represent its value", () => {

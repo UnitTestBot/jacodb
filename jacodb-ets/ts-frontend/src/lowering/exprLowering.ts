@@ -38,7 +38,7 @@ import {
     PATTERN_PARAMETER_PREFIX,
 } from "../dto/constants";
 import { FieldDto, MethodDto } from "../dto/model";
-import { bindingIdentifier, buildParameters, BuiltParameters, memberName, modifiersOf, returnTypeOf } from "./astUtils";
+import { bindingIdentifier, buildParameters, BuiltParameters, classLikeDeclarationOf, memberName, modifiersOf, returnTypeOf } from "./astUtils";
 import { BinaryOp, RelationOp, UnaryOp } from "../dto/ops";
 import {
     ClassSignatureDto,
@@ -1314,14 +1314,7 @@ export class ExprLowerer {
      * ambient ones get the %unk file.
      */
     private classLikeSignatureOf(node: ts.Expression): ClassSignatureDto | undefined {
-        if (!ts.isIdentifier(node) && !ts.isPropertyAccessExpression(node)) {
-            return undefined;
-        }
-        const symbol = this.m.converter.symbolOf(ts.isIdentifier(node) ? node : node.name);
-        const decl = symbol?.declarations?.find(
-            (d): d is ts.ClassDeclaration | ts.EnumDeclaration =>
-                ts.isClassDeclaration(d) || ts.isEnumDeclaration(d),
-        );
+        const decl = classLikeDeclarationOf(node, this.m.checker);
         if (decl === undefined) return undefined;
         if (isProjectFile(decl)) {
             return this.m.converter.classSignatureOf(decl);
