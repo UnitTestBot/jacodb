@@ -79,7 +79,11 @@ export class TypeConverter {
 
     /** Class-like signature (class / interface / enum / struct) with its namespace chain. */
     classSignatureOf(decl: ts.Declaration & { name?: ts.DeclarationName }): ClassSignatureDto {
-        const name = decl.name !== undefined && ts.isIdentifier(decl.name) ? decl.name.text : "";
+        const name = decl.name !== undefined && ts.isIdentifier(decl.name)
+            ? decl.name.text
+            : ts.isClassDeclaration(decl) && (ts.getCombinedModifierFlags(decl) & ts.ModifierFlags.Default) !== 0
+              ? "default"
+              : "";
         const signature: ClassSignatureDto = {
             name,
             declaringFile: this.fileSignatureFor(decl.getSourceFile()),
