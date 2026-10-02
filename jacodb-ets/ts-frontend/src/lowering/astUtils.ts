@@ -102,7 +102,7 @@ export function usesUnmaterializedDeclarationValue(expression: ts.Expression, ch
     };
 
     const visit = (node: ts.Node): boolean => {
-        if (ts.isTypeNode(node) || ts.isArrowFunction(node) || ts.isFunctionExpression(node)) return false;
+        if (ts.isTypeNode(node)) return false;
         if (ts.isIdentifier(node)) return isUnmaterializedValue(node, checker);
 
         if (ts.isCallExpression(node) || ts.isNewExpression(node)) {
@@ -112,7 +112,8 @@ export function usesUnmaterializedDeclarationValue(expression: ts.Expression, ch
             return calleeNeedsValue || (node.arguments?.some(visit) ?? false);
         }
         if (ts.isPropertyAccessExpression(node)) {
-            return !staticReceiver(node.expression) && visit(node.expression);
+            return (node.questionDotToken !== undefined || !staticReceiver(node.expression))
+                && visit(node.expression);
         }
         if (ts.isPropertyAssignment(node)) {
             return (ts.isComputedPropertyName(node.name) && visit(node.name.expression))

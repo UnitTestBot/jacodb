@@ -138,6 +138,49 @@ describe("export default expressions", () => {
             .some((field) => field.signature.name === "default")).toBe(false);
     });
 
+    it("rejects a declaration value captured by an exported closure", () => {
+        const { file, diagnostics } = lower(`
+            function factory(): number { return 1; }
+            export default () => factory;
+        `);
+
+        const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
+
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining("has no EtsIR value reference"));
+        expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
+        expect(file.classes.find((clazz) => clazz.signature.name === "%dflt")!.fields
+            .some((field) => field.signature.name === "default")).toBe(false);
+    });
+
+    it("keeps direct calls inside an exported closure supported", () => {
+        const { file } = moduleStatements(`
+            function factory(): number { return 1; }
+            export default () => factory();
+        `);
+
+        const methods = file.classes.flatMap((clazz) => clazz.methods);
+        expect(methods.flatMap((method) => method.body?.cfg.blocks.flatMap((block) => block.stmts) ?? []))
+            .toContainEqual(expect.objectContaining({
+                _: "AssignStmt",
+                right: expect.objectContaining({ _: "StaticCallExpr", method: expect.objectContaining({ name: "factory" }) }),
+            }));
+        expect(file.exportInfos).toContainEqual(expect.objectContaining({ exportName: "default" }));
+    });
+
+    it("rejects optional static property access that lowers through an uninitialized class value", () => {
+        const { file, diagnostics } = lower(`
+            class Box { static count = 1; }
+            export default Box?.count;
+        `);
+
+        const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
+
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining("has no EtsIR value reference"));
+        expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
+        expect(file.classes.find((clazz) => clazz.signature.name === "%dflt")!.fields
+            .some((field) => field.signature.name === "default")).toBe(false);
+    });
+
     it.each([
         "(factory)",
         "factory as () => number",
