@@ -91,6 +91,32 @@ export function classLikeDeclarationOf(
     );
 }
 
+/** Storage that ClassBuilder actually emits for a direct static class/enum member. */
+function staticMemberStorage(
+    node: ts.PropertyAccessExpression,
+    checker: ts.TypeChecker,
+): "field" | "method" | "unsupported" | undefined {
+    const classDecl = classLikeDeclarationOf(node.expression, checker);
+    if (classDecl === undefined) return undefined;
+    if (!ts.isIdentifier(node.name)) return "unsupported";
+
+    const declarations = declarationSymbol(node.name, checker)?.declarations ?? [];
+    const member = declarations.find((declaration) =>
+        declaration.parent === classDecl
+        && (ts.isPropertyDeclaration(declaration)
+            || ts.isMethodDeclaration(declaration)
+            || ts.isEnumMember(declaration))
+        && memberName(declaration.name) === node.name.text,
+    );
+    if (member === undefined) return "unsupported";
+
+    if (ts.isEnumMember(member) && ts.isEnumDeclaration(classDecl)) return "field";
+    if (ts.isPropertyDeclaration(member) && (modifiersOf(member) & Modifier.STATIC) !== 0) return "field";
+    if (ts.isMethodDeclaration(member) && (modifiersOf(member) & Modifier.STATIC) !== 0) return "method";
+
+    return "unsupported";
+}
+
 /** Scope functions, classes, enums, and namespaces have no standalone value reference in EtsIR yet. */
 function isUnmaterializedValue(identifier: ts.Identifier, checker: ts.TypeChecker): boolean {
     const symbol = declarationSymbol(identifier, checker);
@@ -110,6 +136,15 @@ export function usesUnmaterializedDeclarationValue(expression: ts.Expression, ch
         if (ts.isTypeNode(node)) return false;
         if (ts.isIdentifier(node)) return isUnmaterializedValue(node, checker);
 
+        if (ts.isNewExpression(node) && classLikeDeclarationOf(node.expression, checker) !== undefined) {
+            return node.arguments?.some(visit) ?? false;
+        }
+        if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
+            const storage = staticMemberStorage(node.expression, checker);
+            if (storage !== undefined) {
+                return ts.isOptionalChain(node) || storage !== "method" || (node.arguments?.some(visit) ?? false);
+            }
+        }
         if (ts.isCallExpression(node) || ts.isNewExpression(node)) {
             const directCall = ts.isCallExpression(node) && node.questionDotToken === undefined;
             const calleeNeedsValue = !(ts.isIdentifier(node.expression) && (directCall || ts.isNewExpression(node)))
@@ -117,8 +152,10 @@ export function usesUnmaterializedDeclarationValue(expression: ts.Expression, ch
             return calleeNeedsValue || (node.arguments?.some(visit) ?? false);
         }
         if (ts.isPropertyAccessExpression(node)) {
-            return (ts.isOptionalChain(node) || classLikeDeclarationOf(node.expression, checker) === undefined)
-                && visit(node.expression);
+            const storage = staticMemberStorage(node, checker);
+            if (storage !== undefined) return ts.isOptionalChain(node) || storage !== "field";
+
+            return visit(node.expression);
         }
         if (ts.isPropertyAssignment(node)) {
             return (ts.isComputedPropertyName(node.name) && visit(node.name.expression))

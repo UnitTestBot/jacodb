@@ -112,27 +112,29 @@ describe("export default expressions", () => {
     it.each([
         "new Box()",
         "Box.count",
+        "Box.callback",
         "Box.getCount()",
-        "Box.getCount?.()",
     ])("keeps supported class uses in default expression %s", (expression) => {
-        const { file, stmts } = moduleStatements(`
+        const source = `
             class Box {
                 static count = 1;
+                static callback = (): number => 1;
                 static getCount(): number { return this.count; }
             }
             export default ${expression};
-        `);
+        `;
+        const { file, stmts } = moduleStatements(source);
 
         expect(stmts).toContainEqual(expect.objectContaining({
             _: "AssignStmt",
             left: expect.objectContaining({ _: "StaticFieldRef", field: expect.objectContaining({ name: "default" }) }),
         }));
-        if (expression === "Box.count") {
+        if (expression === "Box.count" || expression === "Box.callback") {
             expect(stmts).toContainEqual(expect.objectContaining({
                 _: "AssignStmt",
                 right: expect.objectContaining({
                     _: "StaticFieldRef",
-                    field: expect.objectContaining({ name: "count" }),
+                    field: expect.objectContaining({ name: expression.split(".")[1] }),
                 }),
             }));
         }
@@ -146,6 +148,19 @@ describe("export default expressions", () => {
             }));
         }
         expect(file.exportInfos).toContainEqual(expect.objectContaining({ exportName: "default" }));
+
+        const output = ts.transpileModule(source, {
+            compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+        }).outputText;
+        const exports: Record<string, unknown> = {};
+        runInNewContext(output, { exports });
+        if (expression === "new Box()") {
+            expect(typeof exports.default).toBe("object");
+        } else if (expression === "Box.callback") {
+            expect(typeof exports.default).toBe("function");
+        } else {
+            expect(exports.default).toBe(1);
+        }
     });
 
     it("keeps a class reached through a namespace as a static receiver", () => {
@@ -165,6 +180,47 @@ describe("export default expressions", () => {
         }));
     });
 
+    it("constructs a class reached through a namespace and stores the instance", () => {
+        const source = `
+            namespace N {
+                export class Box {
+                    constructor(public value: number) {}
+                }
+            }
+            export default new N.Box(7);
+        `;
+        const { stmts } = moduleStatements(source);
+
+        expect(stmts).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            right: expect.objectContaining({
+                _: "NewExpr",
+                classType: expect.objectContaining({
+                    signature: expect.objectContaining({ name: "Box", declaringNamespace: expect.objectContaining({ name: "N" }) }),
+                }),
+            }),
+        }));
+
+        const output = ts.transpileModule(source, {
+            compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+        }).outputText;
+        const exports: Record<string, unknown> = {};
+        runInNewContext(output, { exports });
+        expect(exports.default).toMatchObject({ value: 7 });
+    });
+
+    it("checks constructor arguments for unmaterialized declaration values", () => {
+        const { file, diagnostics } = lower(`
+            namespace N { export class Box { constructor(value: unknown) {} } }
+            function factory(): number { return 1; }
+            export default new N.Box(factory);
+        `);
+
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining("has no EtsIR value reference"));
+        expect(file.classes.find((clazz) => clazz.signature.name === "%dflt")!.fields
+            .some((field) => field.signature.name === "default")).toBe(false);
+    });
+
     it.each([
         "(Box).count",
         "(Box as typeof Box).count",
@@ -173,6 +229,12 @@ describe("export default expressions", () => {
         "(Box as typeof Box).getCount()",
         "Box?.count",
         "Box?.getCount()",
+        "Box.getCount",
+        "Box.getCount?.()",
+        "Box.callback()",
+        "Box.callback?.()",
+        "Box.value",
+        "Box.prototype",
         "N?.Box.count",
         "N.x",
         "N.f()",
@@ -180,7 +242,9 @@ describe("export default expressions", () => {
         const { file, diagnostics } = lower(`
             class Box {
                 static count = 1;
+                static callback = (): number => 1;
                 static getCount(): number { return this.count; }
+                static get value(): number { return 1; }
             }
             namespace N {
                 export const x = 1;

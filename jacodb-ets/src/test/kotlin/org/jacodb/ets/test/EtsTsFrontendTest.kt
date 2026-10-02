@@ -24,7 +24,9 @@ import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.dto.IfStmtDto
 import org.jacodb.ets.dto.LocalDto
 import org.jacodb.ets.dto.NewArrayExprDto
+import org.jacodb.ets.dto.NewExprDto
 import org.jacodb.ets.dto.NumberTypeDto
+import org.jacodb.ets.dto.RawStmtDto
 import org.jacodb.ets.dto.RelationOperationDto
 import org.jacodb.ets.dto.StringTypeDto
 import org.jacodb.ets.dto.StaticCallExprDto
@@ -114,6 +116,45 @@ class EtsTsFrontendTest {
         assertEquals("default", export.name)
         assertEquals("default", export.originalName)
         assertTrue(model.classes.single { it.name == DEFAULT_ARK_CLASS_NAME }.fields.any { it.name == "default" })
+    }
+
+    @Test
+    fun `namespaced constructor in default export survives JSON conversion`() {
+        val dto = runFrontend(
+            """
+                namespace N { export class Box { constructor(public value: number) {} } }
+                export default new N.Box(7);
+            """.trimIndent()
+        )
+
+        val defaultClass = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+        val stmts = defaultClass.methods.single { it.signature.name == DEFAULT_ARK_METHOD_NAME }
+            .body!!.cfg.blocks.flatMap { it.stmts }
+        val allocation = stmts.filterIsInstance<AssignStmtDto>()
+            .map { it.right }.filterIsInstance<NewExprDto>().single()
+        val classType = allocation.classType as ClassTypeDto
+
+        assertEquals("Box", classType.signature.name)
+        assertEquals("N", classType.signature.declaringNamespace?.name)
+        assertTrue(defaultClass.fields.any { it.signature.name == "default" })
+        assertEquals("default", dto.toEtsFile().exportInfos.single { it.isDefaultExport }.name)
+    }
+
+    @Test
+    fun `default export of a static method value remains explicitly unsupported in JSON`() {
+        val dto = runFrontend(
+            """
+                class Box { static getCount(): number { return 1; } }
+                export default Box.getCount;
+            """.trimIndent()
+        )
+
+        val defaultClass = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+        val stmts = defaultClass.methods.single { it.signature.name == DEFAULT_ARK_METHOD_NAME }
+            .body!!.cfg.blocks.flatMap { it.stmts }
+
+        assertTrue(defaultClass.fields.none { it.signature.name == "default" })
+        assertTrue(stmts.any { it is RawStmtDto && it.kind == "UnsupportedStmt" })
     }
 
     @Test
