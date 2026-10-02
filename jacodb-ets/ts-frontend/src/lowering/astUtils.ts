@@ -65,21 +65,67 @@ export function bindingIdentifier(node: ts.Expression): ts.Identifier | undefine
     return ts.isIdentifier(node) ? node : undefined;
 }
 
-/** Class/function/enum/namespace declarations have no standalone value reference in EtsIR yet. */
-export function isUnmaterializedDefaultExportValue(expression: ts.Expression, checker: ts.TypeChecker): boolean {
-    const identifier = bindingIdentifier(expression);
-    if (identifier === undefined) return false;
-
-    let symbol = checker.getSymbolAtLocation(identifier);
-    if (symbol === undefined) return false;
+function declarationSymbol(identifier: ts.Identifier, checker: ts.TypeChecker): ts.Symbol | undefined {
+    let symbol = ts.isShorthandPropertyAssignment(identifier.parent)
+        ? checker.getShorthandAssignmentValueSymbol(identifier.parent)
+        : checker.getSymbolAtLocation(identifier);
+    if (symbol === undefined) return undefined;
     if ((symbol.flags & ts.SymbolFlags.Alias) !== 0) symbol = checker.getAliasedSymbol(symbol);
 
-    return symbol.declarations?.some((declaration) =>
+    return symbol;
+}
+
+/** Scope functions, classes, enums, and namespaces have no standalone value reference in EtsIR yet. */
+function isUnmaterializedValue(identifier: ts.Identifier, checker: ts.TypeChecker): boolean {
+    const symbol = declarationSymbol(identifier, checker);
+
+    return symbol?.declarations?.some((declaration) =>
         ts.isClassDeclaration(declaration)
-        || ts.isFunctionDeclaration(declaration)
+        || (ts.isFunctionDeclaration(declaration)
+            && (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent)))
         || ts.isEnumDeclaration(declaration)
         || ts.isModuleDeclaration(declaration),
     ) ?? false;
+}
+
+/** Direct calls and constructors use method/class signatures; other reads need a materialized value. */
+export function usesUnmaterializedDeclarationValue(expression: ts.Expression, checker: ts.TypeChecker): boolean {
+    const staticReceiver = (node: ts.Expression): boolean => {
+        const identifier = bindingIdentifier(node);
+        if (identifier === undefined) return false;
+
+        return declarationSymbol(identifier, checker)?.declarations?.some((declaration) =>
+            ts.isClassDeclaration(declaration)
+            || ts.isEnumDeclaration(declaration)
+            || ts.isModuleDeclaration(declaration),
+        ) ?? false;
+    };
+
+    const visit = (node: ts.Node): boolean => {
+        if (ts.isTypeNode(node) || ts.isArrowFunction(node) || ts.isFunctionExpression(node)) return false;
+        if (ts.isIdentifier(node)) return isUnmaterializedValue(node, checker);
+
+        if (ts.isCallExpression(node) || ts.isNewExpression(node)) {
+            const directCall = ts.isCallExpression(node) && node.questionDotToken === undefined;
+            const calleeNeedsValue = !(ts.isIdentifier(node.expression) && (directCall || ts.isNewExpression(node)))
+                && visit(node.expression);
+            return calleeNeedsValue || (node.arguments?.some(visit) ?? false);
+        }
+        if (ts.isPropertyAccessExpression(node)) {
+            return !staticReceiver(node.expression) && visit(node.expression);
+        }
+        if (ts.isPropertyAssignment(node)) {
+            return (ts.isComputedPropertyName(node.name) && visit(node.name.expression))
+                || visit(node.initializer);
+        }
+        if (ts.isShorthandPropertyAssignment(node)) return visit(node.name);
+
+        let found = false;
+        ts.forEachChild(node, (child) => { found = visit(child) || found; });
+        return found;
+    };
+
+    return visit(expression);
 }
 
 function decoratorName(expr: ts.Expression): string {

@@ -105,7 +105,7 @@ class EtsExportTest {
 
         // Test: export default defaultValue;
         val defaultExport = file.exportInfos.find {
-            it.isDefaultExport && it.originalName == "defaultValue"
+            it.isDefaultExport && it.originalName == "default" && it.nameBeforeAs == "defaultValue"
         }
         assertNotNull(defaultExport, "Should find direct default export")
         logger.info { "✓ Direct default export test passed: $defaultExport" }

@@ -40,7 +40,7 @@ import { ClassDto, EtsFileDto, ExportInfoDto, FieldDto, ImportInfoDto, MethodDto
 import { ClassSignatureDto, FileSignatureDto, NamespaceSignatureDto } from "../dto/signatures";
 import { VOID_TYPE } from "../dto/types";
 import { TypeConverter } from "../types/convert";
-import { isUnmaterializedDefaultExportValue, modifiersOf } from "./astUtils";
+import { modifiersOf, usesUnmaterializedDeclarationValue } from "./astUtils";
 import { ClassBuilder } from "./classBuilder";
 import { Diagnostics } from "./diagnostics";
 import { AnonymousRegistry, LoweringContext, MethodContext } from "./methodBuilder";
@@ -285,7 +285,7 @@ class FileBuilder {
             // `export default <expr>;` stores a snapshot in `%dflt.default`.
             if (ts.isExportAssignment(statement)) {
                 if (statement.isExportEquals
-                    || isUnmaterializedDefaultExportValue(statement.expression, this.ctx.checker)) {
+                    || usesUnmaterializedDeclarationValue(statement.expression, this.ctx.checker)) {
                     const name = ts.isIdentifier(statement.expression) ? statement.expression.text : "default";
                     infos.push({
                         exportName: name,
@@ -294,12 +294,16 @@ class FileBuilder {
                         isTypeOnly: false,
                     });
                 } else {
-                    infos.push({
+                    const info: ExportInfoDto = {
                         exportName: DEFAULT_EXPORT_BINDING_NAME,
                         exportType: ExportType.LOCAL,
                         modifiers: Modifier.DEFAULT,
                         isTypeOnly: false,
-                    });
+                    };
+                    if (ts.isIdentifier(statement.expression)) {
+                        info.nameBeforeAs = statement.expression.text;
+                    }
+                    infos.push(info);
                 }
             }
         }
@@ -407,7 +411,7 @@ class FileBuilder {
         }
         for (const statement of statements) {
             if (!ts.isExportAssignment(statement) || statement.isExportEquals
-                || isUnmaterializedDefaultExportValue(statement.expression, this.ctx.checker)) continue;
+                || usesUnmaterializedDeclarationValue(statement.expression, this.ctx.checker)) continue;
 
             fields.push({
                 signature: {

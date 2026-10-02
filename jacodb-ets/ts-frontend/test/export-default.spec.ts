@@ -95,6 +95,7 @@ describe("export default expressions", () => {
         expect(stmts.indexOf(exportWrite!)).toBeLessThan(stmts.indexOf(laterWrite!));
         expect(file.exportInfos).toContainEqual({
             exportName: "default",
+            nameBeforeAs: "value",
             exportType: 3,
             modifiers: Modifier.DEFAULT,
             isTypeOnly: false,
@@ -106,6 +107,22 @@ describe("export default expressions", () => {
         const exports: Record<string, unknown> = {};
         runInNewContext(output, { exports });
         expect(exports.default).toBe(1);
+    });
+
+    it.each([
+        "new Box()",
+        "Box.count",
+    ])("keeps supported class uses in default expression %s", (expression) => {
+        const { file, stmts } = moduleStatements(`
+            class Box { static count = 1; }
+            export default ${expression};
+        `);
+
+        expect(stmts).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            left: expect.objectContaining({ _: "StaticFieldRef", field: expect.objectContaining({ name: "default" }) }),
+        }));
+        expect(file.exportInfos).toContainEqual(expect.objectContaining({ exportName: "default" }));
     });
 
     it("marks a bare declaration reference unsupported until EtsIR can represent its value", () => {
@@ -139,5 +156,24 @@ describe("export default expressions", () => {
         expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
         expect(file.classes.find((clazz) => clazz.signature.name === "%dflt")!.fields
             .some((field) => field.signature.name === "default")).toBe(false);
+    });
+
+    it.each([
+        "(0, factory)",
+        "[factory]",
+        "({ factory })",
+        "true ? factory : factory",
+    ])("reports an unsupported declaration value inside %s", (expression) => {
+        const { file, diagnostics } = lower(`
+            function factory(): number { return 1; }
+            export default ${expression};
+        `);
+
+        const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
+
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining("has no EtsIR value reference"));
+        expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt"
+            && stmt.left._ === "StaticFieldRef" && stmt.left.field.name === "default")).toBe(false);
     });
 });

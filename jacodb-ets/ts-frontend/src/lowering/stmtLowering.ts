@@ -25,7 +25,7 @@ import * as ts from "typescript";
 import { MethodSignatureDto, UNKNOWN_CLASS_SIGNATURE, UNKNOWN_FILE_SIGNATURE } from "../dto/signatures";
 import { BOOLEAN_TYPE, NUMBER_TYPE, TypeDto, UNDEFINED_TYPE, UNKNOWN_TYPE } from "../dto/types";
 import { LValueDto, LocalDto, ValueDto } from "../dto/values";
-import { isUnmaterializedDefaultExportValue } from "./astUtils";
+import { usesUnmaterializedDeclarationValue } from "./astUtils";
 import { Label } from "./cfg";
 import { unsupportedStmt } from "./diagnostics";
 import { ExprLowerer, LoweringError, constant } from "./exprLowering";
@@ -184,7 +184,7 @@ export class StmtLowerer {
             return;
         }
         if (ts.isExportAssignment(node) && !node.isExportEquals) {
-            if (isUnmaterializedDefaultExportValue(node.expression, this.m.checker)) {
+            if (usesUnmaterializedDeclarationValue(node.expression, this.m.checker)) {
                 throw new LoweringError(`export default ${node.expression.getText()} has no EtsIR value reference`);
             }
 
