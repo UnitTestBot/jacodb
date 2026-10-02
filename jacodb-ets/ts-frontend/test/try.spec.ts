@@ -2,6 +2,7 @@ import { runInNewContext } from "node:vm";
 import * as ts from "typescript";
 import { describe, expect, it } from "vitest";
 import { BasicBlockDto } from "../src/dto/model";
+import { RawStmtDto } from "../src/dto/stmts";
 import { defaultMethod, lower, methodByName } from "./util";
 
 function blocksOf(source: string, method: string = "f"): BasicBlockDto[] {
@@ -37,6 +38,29 @@ describe("try/catch/finally lowering", () => {
 
         expect(blocks.flatMap((block) => block.exceptionalSuccessors ?? [])).toHaveLength(0);
         expect(blocks.flatMap((block) => block.stmts).filter((stmt) => stmt._ === "ReturnStmt")).toHaveLength(1);
+    });
+
+    it("keeps a catch reachable when an unsupported statement can throw", () => {
+        const source = `
+            function f(obj) {
+                try { with (obj) { x; } } catch { return 1; }
+                return 0;
+            }
+        `;
+        const blocks = blocksOf(source);
+        const rawBlock = blocks.find((block) => block.stmts.some(
+            (stmt) => (stmt as RawStmtDto)._ === "UnsupportedStmt",
+        ))!;
+        const rawIndex = rawBlock.stmts.findIndex((stmt) => (stmt as RawStmtDto)._ === "UnsupportedStmt");
+        const catcherId = rawBlock.exceptionalSuccessors?.find((edge) => edge.stmtIndex === rawIndex)?.target;
+
+        expect(runInNewContext(`${source}\nf({ get x() { throw Error("boom"); } });`)).toBe(1);
+        expect(catcherId).toBeDefined();
+        expect(blocks[catcherId!].stmts).toContainEqual({
+            _: "ReturnStmt",
+            arg: expect.objectContaining({ value: "1" }),
+        });
+        expect(rawBlock.successors).not.toContain(catcherId);
     });
 
     it("keeps catch code reachable and binds CaughtExceptionRef", () => {

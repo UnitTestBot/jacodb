@@ -30,6 +30,7 @@ import org.jacodb.ets.dto.LocalDto
 import org.jacodb.ets.dto.NewArrayExprDto
 import org.jacodb.ets.dto.NumberTypeDto
 import org.jacodb.ets.dto.Ops
+import org.jacodb.ets.dto.RawStmtDto
 import org.jacodb.ets.dto.RelationOperationDto
 import org.jacodb.ets.dto.StringTypeDto
 import org.jacodb.ets.dto.ThrowStmtDto
@@ -44,6 +45,7 @@ import org.jacodb.ets.model.EtsClosureFieldRef
 import org.jacodb.ets.model.EtsEqExpr
 import org.jacodb.ets.model.EtsIfStmt
 import org.jacodb.ets.model.EtsInstanceFieldRef
+import org.jacodb.ets.model.EtsRawStmt
 import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.model.EtsThrowStmt
 import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
@@ -430,6 +432,38 @@ class EtsTsFrontendTest {
         val callCatcher = callMethod.cfg.catchers(callStmt).single()
 
         assertTrue(callMethod.cfg.throwers(callCatcher).contains(callStmt))
+    }
+
+    @Test
+    fun `raw fallback keeps its catch edge through JSON and the Kotlin graph`() {
+        val frontendDto = runFrontend(
+            """
+                function raw(obj) {
+                    try { with (obj) { x; } } catch { return 1; }
+                    return 0;
+                }
+            """.trimIndent(),
+            fileName = "test.js",
+        )
+
+        val methodDto = frontendDto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "raw" }
+        val rawBlock = methodDto.body!!.cfg.blocks.single { block ->
+            block.stmts.any { it is RawStmtDto && it.kind == "UnsupportedStmt" }
+        }
+        val rawIndex = rawBlock.stmts.indexOfFirst { it is RawStmtDto && it.kind == "UnsupportedStmt" }
+        val catcherId = rawBlock.exceptionalSuccessors.single { it.stmtIndex == rawIndex }.target
+
+        assertTrue(methodDto.body!!.cfg.blocks[catcherId].stmts.any { it is org.jacodb.ets.dto.ReturnStmtDto })
+        assertTrue(catcherId !in rawBlock.successors)
+
+        val method = EtsScene(listOf(frontendDto.toEtsFile()))
+            .projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "raw" }
+        val rawStmt = method.cfg.stmts.filterIsInstance<EtsRawStmt>().single()
+        val catchStmt = method.cfg.catchers(rawStmt).single()
+
+        assertTrue(method.cfg.throwers(catchStmt).contains(rawStmt))
     }
 
     @Test
