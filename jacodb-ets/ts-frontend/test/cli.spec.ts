@@ -74,6 +74,28 @@ describe("project mode", () => {
         });
     });
 
+    it("uses the emitted identity of an anonymous default class", () => {
+        const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-default-class-"));
+        tempDirs.push(projectDir);
+        fs.writeFileSync(path.join(projectDir, "a.ts"), "export default class {}");
+        fs.writeFileSync(path.join(projectDir, "b.ts"),
+            'import Anonymous from "./a"; export function read(): typeof Anonymous { return Anonymous; }');
+
+        const outputDir = path.join(projectDir, "ir");
+        expect(main(["--project", projectDir, outputDir])).toBe(0);
+        const declaring = JSON.parse(fs.readFileSync(path.join(outputDir, "a.ts.json"), "utf8"));
+        const importing = JSON.parse(fs.readFileSync(path.join(outputDir, "b.ts.json"), "utf8"));
+        const classSignature = declaring.classes.find((clazz: { signature: { name: string } }) =>
+            clazz.signature.name === "default").signature;
+        const read = importing.classes[0].methods.find(
+            (method: { signature: { name: string } }) => method.signature.name === "read",
+        );
+        const returned = read.body.cfg.blocks.flatMap((block: { stmts: unknown[] }) => block.stmts)
+            .find((stmt: { _?: string }) => stmt._ === "ReturnStmt");
+
+        expect(returned).toMatchObject({ arg: { _: "ClassValueRef", signature: classSignature } });
+    });
+
     it("honors tsconfig include/exclude and compiler options, including TSX", () => {
         const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-project-"));
         tempDirs.push(projectDir);
