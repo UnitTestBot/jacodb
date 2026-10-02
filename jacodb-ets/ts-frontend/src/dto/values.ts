@@ -133,6 +133,7 @@ export interface TypeOfExprDto {
 export interface InstanceOfExprDto {
     readonly _: "InstanceOfExpr";
     arg: ValueDto;
+    checkValue: ValueDto;
     checkType: TypeDto;
 }
 

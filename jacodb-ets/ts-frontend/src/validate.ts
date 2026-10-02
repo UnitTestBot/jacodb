@@ -386,10 +386,11 @@ export function valueOperands(value: ValueDto): ValueDto[] {
         case "AwaitExpr":
         case "YieldExpr":
         case "TypeOfExpr":
-        case "InstanceOfExpr":
         case "CastExpr":
         case "UnopExpr":
             return [value.arg];
+        case "InstanceOfExpr":
+            return [value.arg, value.checkValue];
         case "BinopExpr":
         case "ConditionExpr":
             return [value.left, value.right];

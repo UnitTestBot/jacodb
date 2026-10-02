@@ -28,6 +28,7 @@ import org.jacodb.ets.dto.ClassValueTypeDto
 import org.jacodb.ets.dto.ConstantDto
 import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.dto.IfStmtDto
+import org.jacodb.ets.dto.InstanceOfExprDto
 import org.jacodb.ets.dto.LocalDto
 import org.jacodb.ets.dto.NewArrayExprDto
 import org.jacodb.ets.dto.NumberTypeDto
@@ -36,6 +37,7 @@ import org.jacodb.ets.dto.RawStmtDto
 import org.jacodb.ets.dto.RelationOperationDto
 import org.jacodb.ets.dto.ReturnStmtDto
 import org.jacodb.ets.dto.StringTypeDto
+import org.jacodb.ets.dto.StaticCallExprDto
 import org.jacodb.ets.dto.ThrowStmtDto
 import org.jacodb.ets.dto.UnaryOperationDto
 import org.jacodb.ets.dto.UnknownTypeDto
@@ -51,6 +53,7 @@ import org.jacodb.ets.model.EtsEqExpr
 import org.jacodb.ets.model.EtsIfStmt
 import org.jacodb.ets.model.EtsInstanceFieldRef
 import org.jacodb.ets.model.EtsInstanceOfExpr
+import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsRawStmt
 import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.model.EtsThrowStmt
@@ -133,6 +136,34 @@ class EtsTsFrontendTest {
             .filterIsInstance<EtsAssignStmt>().any { it.rhv is org.jacodb.ets.model.EtsNewExpr })
         assertTrue(modelMethods.single { it.name == "direct" }.cfg.stmts
             .filterIsInstance<EtsAssignStmt>().any { it.rhv is EtsInstanceOfExpr })
+    }
+
+    @Test
+    fun `instanceof constructor call survives frontend JSON and model conversion`() {
+        val dto = runFrontend(
+            """
+                class A {}
+                function choose(): typeof A { return A; }
+                export function check(value: object): boolean {
+                    return value instanceof choose();
+                }
+            """.trimIndent(),
+        )
+        val defaultClass = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+        val checkMethod = defaultClass.methods.single { it.signature.name == "check" }
+        val assignments = checkMethod.body!!.cfg.blocks.flatMap { it.stmts }.filterIsInstance<AssignStmtDto>()
+        val constructorCall = assignments.single { (it.right as? StaticCallExprDto)?.method?.name == "choose" }
+        val instanceCheck = assignments.single { it.right is InstanceOfExprDto }.right as InstanceOfExprDto
+
+        assertEquals(constructorCall.left, instanceCheck.checkValue)
+
+        val model = dto.toEtsFile()
+        val modelMethod = model.classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "check" }
+        val modelCheck = modelMethod.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+            .single { it.rhv is EtsInstanceOfExpr }.rhv as EtsInstanceOfExpr
+
+        assertEquals((constructorCall.left as LocalDto).name, (modelCheck.checkValue as EtsLocal).name)
     }
 
     @Test

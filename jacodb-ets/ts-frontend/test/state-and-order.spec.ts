@@ -55,6 +55,64 @@ describe("shared module state", () => {
 });
 
 describe("call evaluation order", () => {
+    it("evaluates both instanceof operands once in source order", () => {
+        const { file } = lower(`
+            class A {}
+            function left(): object { return new A(); }
+            function choose(): typeof A { return A; }
+            function check(): boolean { return left() instanceof choose(); }
+        `);
+        const stmts = flattened(methodByName(file, "check"));
+        const calls = stmts.flatMap((stmt, index) =>
+            stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+                ? [{ index, name: stmt.right.method.name, result: stmt.left }]
+                : [],
+        );
+        const checkIndex = stmts.findIndex(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr",
+        );
+        const check = stmts[checkIndex];
+
+        expect(calls.map((call) => call.name)).toEqual(["left", "choose"]);
+        expect(calls[1].index).toBeLessThan(checkIndex);
+        expect(check).toMatchObject({
+            right: {
+                _: "InstanceOfExpr",
+                arg: calls[0].result,
+                checkValue: calls[1].result,
+            },
+        });
+    });
+
+    it("snapshots the instanceof left operand before the right operand reassigns it", () => {
+        const { file } = lower(`
+            class A {}
+            function choose(): typeof A { return A; }
+            function check(value: object, replacement: object): boolean {
+                return value instanceof (value = replacement, choose());
+            }
+        `);
+        const stmts = flattened(methodByName(file, "check"));
+        const snapshotIndex = stmts.findIndex(
+            (stmt) => stmt._ === "AssignStmt" && stmt.left._ === "Local"
+                && stmt.left.name.startsWith("%") && stmt.right._ === "Local" && stmt.right.name === "value",
+        );
+        const mutationIndex = stmts.findIndex(
+            (stmt) => stmt._ === "AssignStmt" && stmt.left._ === "Local"
+                && stmt.left.name === "value" && stmt.right._ === "Local"
+                && stmt.right.name === "replacement",
+        );
+        const check = stmts.find(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr",
+        );
+
+        expect(snapshotIndex).toBeGreaterThanOrEqual(0);
+        expect(mutationIndex).toBeGreaterThan(snapshotIndex);
+        expect(check).toMatchObject({
+            right: { arg: (stmts[snapshotIndex] as Extract<StmtDto, { _: "AssignStmt" }>).left },
+        });
+    });
+
     it("evaluates an instance receiver before its arguments", () => {
         const { file } = lower(`
             class Service { run(value: number): void {} }

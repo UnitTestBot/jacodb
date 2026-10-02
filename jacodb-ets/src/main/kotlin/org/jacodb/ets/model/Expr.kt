@@ -186,12 +186,13 @@ data class EtsCastExpr(
 data class EtsInstanceOfExpr(
     val arg: EtsEntity,
     val checkType: EtsType,
+    val checkValue: EtsEntity? = null,
 ) : EtsExpr {
     override val type: EtsType
         get() = EtsBooleanType
 
     override fun toString(): String {
-        return "$arg instanceof $checkType"
+        return "$arg instanceof ${checkValue ?: checkType}"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {

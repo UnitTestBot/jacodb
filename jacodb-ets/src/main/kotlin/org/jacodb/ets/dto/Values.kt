@@ -193,6 +193,7 @@ data class TypeOfExprDto(
 data class InstanceOfExprDto(
     val arg: ValueDto,
     val checkType: TypeDto,
+    val checkValue: ValueDto? = null,
 ) : ExprDto {
     override val type: TypeDto
         get() = BooleanTypeDto
