@@ -74,11 +74,12 @@ describe("export default expressions", () => {
     });
 
     it("captures an identifier's value before a later assignment", () => {
-        const { file, stmts } = moduleStatements(`
+        const source = `
             let value = 1;
             export default value;
             value = 2;
-        `);
+        `;
+        const { file, stmts } = moduleStatements(source);
 
         const valueRead = stmts.find((stmt) => stmt._ === "AssignStmt"
             && stmt.right._ === "StaticFieldRef" && stmt.right.field.name === "value");
@@ -94,11 +95,17 @@ describe("export default expressions", () => {
         expect(stmts.indexOf(exportWrite!)).toBeLessThan(stmts.indexOf(laterWrite!));
         expect(file.exportInfos).toContainEqual({
             exportName: "default",
-            nameBeforeAs: "value",
             exportType: 3,
             modifiers: Modifier.DEFAULT,
             isTypeOnly: false,
         });
+
+        const output = ts.transpileModule(source, {
+            compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+        }).outputText;
+        const exports: Record<string, unknown> = {};
+        runInNewContext(output, { exports });
+        expect(exports.default).toBe(1);
     });
 
     it("marks a bare declaration reference unsupported until EtsIR can represent its value", () => {
@@ -108,6 +115,26 @@ describe("export default expressions", () => {
         `);
 
         const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining("has no EtsIR value reference"));
+        expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
+        expect(file.classes.find((clazz) => clazz.signature.name === "%dflt")!.fields
+            .some((field) => field.signature.name === "default")).toBe(false);
+    });
+
+    it.each([
+        "(factory)",
+        "factory as () => number",
+        "<() => number>factory",
+        "factory!",
+        "factory satisfies () => number",
+    ])("keeps wrapped function reference %s unsupported", (expression) => {
+        const { file, diagnostics } = lower(`
+            function factory(): number { return 1; }
+            export default ${expression};
+        `);
+
+        const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
+
         expect(diagnostics.messages).toContainEqual(expect.stringContaining("has no EtsIR value reference"));
         expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
         expect(file.classes.find((clazz) => clazz.signature.name === "%dflt")!.fields

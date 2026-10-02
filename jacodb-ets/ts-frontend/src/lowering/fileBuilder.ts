@@ -294,16 +294,12 @@ class FileBuilder {
                         isTypeOnly: false,
                     });
                 } else {
-                    const info: ExportInfoDto = {
+                    infos.push({
                         exportName: DEFAULT_EXPORT_BINDING_NAME,
                         exportType: ExportType.LOCAL,
                         modifiers: Modifier.DEFAULT,
                         isTypeOnly: false,
-                    };
-                    if (ts.isIdentifier(statement.expression)) {
-                        info.nameBeforeAs = statement.expression.text;
-                    }
-                    infos.push(info);
+                    });
                 }
             }
         }

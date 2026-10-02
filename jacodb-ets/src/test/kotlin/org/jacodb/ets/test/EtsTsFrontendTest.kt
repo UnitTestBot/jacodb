@@ -112,7 +112,36 @@ class EtsTsFrontendTest {
         val model = dto.toEtsFile()
         val export = model.exportInfos.single { it.isDefaultExport }
         assertEquals("default", export.name)
+        assertEquals("default", export.originalName)
         assertTrue(model.classes.single { it.name == DEFAULT_ARK_CLASS_NAME }.fields.any { it.name == "default" })
+    }
+
+    @Test
+    fun `default export identifier resolves to its snapshot binding`() {
+        val dto = runFrontend(
+            """
+                let value = 1;
+                export default value;
+                value = 2;
+            """.trimIndent()
+        )
+
+        val model = dto.toEtsFile()
+        val export = model.exportInfos.single { it.isDefaultExport }
+        assertEquals("default", export.originalName)
+
+        val stmts = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == DEFAULT_ARK_METHOD_NAME }
+            .body!!.cfg.blocks.flatMap { it.stmts }
+        val exportWrite = stmts.indexOfFirst {
+            it is AssignStmtDto && (it.left as? StaticFieldRefDto)?.field?.name == "default"
+        }
+        val laterWrite = stmts.indexOfLast {
+            it is AssignStmtDto && (it.left as? StaticFieldRefDto)?.field?.name == "value"
+        }
+
+        assertTrue(exportWrite >= 0)
+        assertTrue(laterWrite > exportWrite)
     }
 
     @Test

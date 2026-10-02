@@ -38,7 +38,7 @@ import {
     PATTERN_PARAMETER_PREFIX,
 } from "../dto/constants";
 import { FieldDto, MethodDto } from "../dto/model";
-import { buildParameters, BuiltParameters, memberName, modifiersOf, returnTypeOf } from "./astUtils";
+import { bindingIdentifier, buildParameters, BuiltParameters, memberName, modifiersOf, returnTypeOf } from "./astUtils";
 import { BinaryOp, RelationOp, UnaryOp } from "../dto/ops";
 import {
     ClassSignatureDto,
@@ -1525,20 +1525,6 @@ function containsPossibleSideEffect(node: ts.Node): boolean {
     };
     visit(node);
     return found;
-}
-
-/** The simple binding whose current value an expression denotes, if any. */
-function bindingIdentifier(node: ts.Expression): ts.Identifier | undefined {
-    while (
-        ts.isParenthesizedExpression(node)
-        || ts.isAsExpression(node)
-        || ts.isTypeAssertionExpression(node)
-        || ts.isNonNullExpression(node)
-        || ts.isSatisfiesExpression(node)
-    ) {
-        node = node.expression;
-    }
-    return ts.isIdentifier(node) ? node : undefined;
 }
 
 /** Identifier binding written by an assignment or an increment/decrement, if any. */

@@ -51,11 +51,26 @@ export function modifiersOf(node: ts.Node): number {
     return result;
 }
 
+/** The simple binding whose current value an expression denotes, if any. */
+export function bindingIdentifier(node: ts.Expression): ts.Identifier | undefined {
+    while (
+        ts.isParenthesizedExpression(node)
+        || ts.isAsExpression(node)
+        || ts.isTypeAssertionExpression(node)
+        || ts.isNonNullExpression(node)
+        || ts.isSatisfiesExpression(node)
+    ) {
+        node = node.expression;
+    }
+    return ts.isIdentifier(node) ? node : undefined;
+}
+
 /** Class/function/enum/namespace declarations have no standalone value reference in EtsIR yet. */
 export function isUnmaterializedDefaultExportValue(expression: ts.Expression, checker: ts.TypeChecker): boolean {
-    if (!ts.isIdentifier(expression)) return false;
+    const identifier = bindingIdentifier(expression);
+    if (identifier === undefined) return false;
 
-    let symbol = checker.getSymbolAtLocation(expression);
+    let symbol = checker.getSymbolAtLocation(identifier);
     if (symbol === undefined) return false;
     if ((symbol.flags & ts.SymbolFlags.Alias) !== 0) symbol = checker.getAliasedSymbol(symbol);
 
