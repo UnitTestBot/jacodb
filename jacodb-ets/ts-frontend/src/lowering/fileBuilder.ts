@@ -40,7 +40,7 @@ import { ClassDto, EtsFileDto, ExportInfoDto, FieldDto, ImportInfoDto, MethodDto
 import { ClassSignatureDto, FileSignatureDto, NamespaceSignatureDto } from "../dto/signatures";
 import { VOID_TYPE } from "../dto/types";
 import { TypeConverter } from "../types/convert";
-import { hasUnsupportedComputedObjectKey, modifiersOf, usesModuleLexicalThis, usesUnmaterializedDeclarationValue } from "./astUtils";
+import { exportAssignmentSupport, modifiersOf } from "./astUtils";
 import { ClassBuilder } from "./classBuilder";
 import { Diagnostics } from "./diagnostics";
 import { AnonymousRegistry, LoweringContext, MethodContext } from "./methodBuilder";
@@ -284,10 +284,7 @@ class FileBuilder {
             }
             // `export default <expr>;` stores a snapshot in `%dflt.default`.
             if (ts.isExportAssignment(statement)) {
-                if (statement.isExportEquals
-                    || hasUnsupportedComputedObjectKey(statement.expression)
-                    || usesModuleLexicalThis(statement.expression)
-                    || usesUnmaterializedDeclarationValue(statement.expression, this.ctx.checker)) {
+                if (exportAssignmentSupport(statement, this.ctx.checker) !== "supported") {
                     const name = ts.isIdentifier(statement.expression) ? statement.expression.text : "default";
                     infos.push({
                         exportName: name,
@@ -412,10 +409,8 @@ class FileBuilder {
             }
         }
         for (const statement of statements) {
-            if (!ts.isExportAssignment(statement) || statement.isExportEquals
-                || hasUnsupportedComputedObjectKey(statement.expression)
-                || usesModuleLexicalThis(statement.expression)
-                || usesUnmaterializedDeclarationValue(statement.expression, this.ctx.checker)) continue;
+            if (!ts.isExportAssignment(statement)
+                || exportAssignmentSupport(statement, this.ctx.checker) !== "supported") continue;
 
             fields.push({
                 signature: {

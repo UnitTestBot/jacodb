@@ -65,14 +65,21 @@ export function bindingIdentifier(node: ts.Expression): ts.Identifier | undefine
     return ts.isIdentifier(node) ? node : undefined;
 }
 
-function declarationSymbol(identifier: ts.Identifier, checker: ts.TypeChecker): ts.Symbol | undefined {
-    let symbol = ts.isShorthandPropertyAssignment(identifier.parent)
-        ? checker.getShorthandAssignmentValueSymbol(identifier.parent)
-        : checker.getSymbolAtLocation(identifier);
-    if (symbol === undefined) return undefined;
-    if ((symbol.flags & ts.SymbolFlags.Alias) !== 0) symbol = checker.getAliasedSymbol(symbol);
-
-    return symbol;
+/** Resolve a name through import aliases and shorthand-property value symbols. */
+export function resolvedSymbolOf(node: ts.Node, checker: ts.TypeChecker): ts.Symbol | undefined {
+    try {
+        let symbol = checker.getSymbolAtLocation(node);
+        const parent = node.parent;
+        if (parent !== undefined && ts.isShorthandPropertyAssignment(parent) && parent.name === node) {
+            symbol = checker.getShorthandAssignmentValueSymbol(parent) ?? symbol;
+        }
+        if (symbol !== undefined && (symbol.flags & ts.SymbolFlags.Alias) !== 0) {
+            return checker.getAliasedSymbol(symbol);
+        }
+        return symbol;
+    } catch {
+        return undefined;
+    }
 }
 
 /** The exact class/enum receiver syntax recognized by ExprLowerer for static access. */
@@ -85,7 +92,7 @@ export function classLikeDeclarationOf(
     const identifier = ts.isIdentifier(node) ? node : node.name;
     if (!ts.isIdentifier(identifier)) return undefined;
 
-    return declarationSymbol(identifier, checker)?.declarations?.find(
+    return resolvedSymbolOf(identifier, checker)?.declarations?.find(
         (declaration): declaration is ts.ClassDeclaration | ts.EnumDeclaration =>
             ts.isClassDeclaration(declaration) || ts.isEnumDeclaration(declaration),
     );
@@ -100,7 +107,7 @@ function staticMemberStorage(
     if (classDecl === undefined) return undefined;
     if (!ts.isIdentifier(node.name)) return "unsupported";
 
-    const declarations = declarationSymbol(node.name, checker)?.declarations ?? [];
+    const declarations = resolvedSymbolOf(node.name, checker)?.declarations ?? [];
     const member = declarations.find((declaration) =>
         declaration.parent === classDecl
         && (ts.isPropertyDeclaration(declaration)
@@ -119,7 +126,7 @@ function staticMemberStorage(
 
 /** Scope functions, classes, enums, and namespaces have no standalone value reference in EtsIR yet. */
 function isUnmaterializedValue(identifier: ts.Identifier, checker: ts.TypeChecker): boolean {
-    const symbol = declarationSymbol(identifier, checker);
+    const symbol = resolvedSymbolOf(identifier, checker);
 
     return symbol?.declarations?.some((declaration) =>
         ts.isClassDeclaration(declaration)
@@ -210,6 +217,23 @@ export function hasUnsupportedComputedObjectKey(expression: ts.Expression): bool
     };
 
     return visit(expression);
+}
+
+export type ExportAssignmentSupport =
+    | "supported"
+    | "exportEquals"
+    | "computedObjectKey"
+    | "moduleLexicalThis"
+    | "unmaterializedValue";
+
+/** One decision for default-export metadata, storage, and statement lowering. */
+export function exportAssignmentSupport(node: ts.ExportAssignment, checker: ts.TypeChecker): ExportAssignmentSupport {
+    if (node.isExportEquals) return "exportEquals";
+    if (hasUnsupportedComputedObjectKey(node.expression)) return "computedObjectKey";
+    if (usesModuleLexicalThis(node.expression)) return "moduleLexicalThis";
+    if (usesUnmaterializedDeclarationValue(node.expression, checker)) return "unmaterializedValue";
+
+    return "supported";
 }
 
 function decoratorName(expr: ts.Expression): string {

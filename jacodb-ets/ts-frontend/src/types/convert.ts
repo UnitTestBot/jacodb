@@ -55,7 +55,7 @@ import {
     UnclearReferenceTypeDto,
     VOID_TYPE,
 } from "../dto/types";
-import { decoratorsOf, memberName, modifiersOf } from "../lowering/astUtils";
+import { decoratorsOf, memberName, modifiersOf, resolvedSymbolOf } from "../lowering/astUtils";
 
 /** Guard against deeply nested / self-referential types. */
 const MAX_DEPTH = 8;
@@ -462,28 +462,9 @@ export class TypeConverter {
         };
     }
 
-    /**
-     * Single implementation of "symbol of a name, with import aliases unwrapped".
-     * Never throws: an unresolved name simply has no symbol.
-     *
-     * The symbol of a shorthand-property name (`{ value }`) belongs to the generated
-     * object field, so it is redirected to the value symbol — that way the shorthand
-     * follows the same storage path as an ordinary read of `value`.
-     */
+    /** Resolve the same symbol identity used by lowering guards. */
     symbolOf(node: ts.Node): ts.Symbol | undefined {
-        try {
-            let symbol = this.checker.getSymbolAtLocation(node);
-            const parent = node.parent;
-            if (parent !== undefined && ts.isShorthandPropertyAssignment(parent) && parent.name === node) {
-                symbol = this.checker.getShorthandAssignmentValueSymbol(parent) ?? symbol;
-            }
-            if (symbol !== undefined && (symbol.flags & ts.SymbolFlags.Alias) !== 0) {
-                return this.checker.getAliasedSymbol(symbol);
-            }
-            return symbol;
-        } catch {
-            return undefined;
-        }
+        return resolvedSymbolOf(node, this.checker);
     }
 
     private resolveSymbol(name: ts.EntityName): ts.Symbol | undefined {

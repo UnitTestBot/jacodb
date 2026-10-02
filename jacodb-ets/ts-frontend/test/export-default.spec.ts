@@ -33,6 +33,17 @@ function moduleStatements(source: string): { stmts: StmtDto[]; file: ReturnType<
 }
 
 describe("export default expressions", () => {
+    it("keeps export equals explicitly unsupported across metadata, storage, and statements", () => {
+        const { file, diagnostics } = lower("const value = 1; export = value;");
+        const defaultClass = file.classes.find((clazz) => clazz.signature.name === "%dflt")!;
+        const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
+
+        expect(file.exportInfos).toContainEqual(expect.objectContaining({ exportName: "value" }));
+        expect(defaultClass.fields.some((field) => field.signature.name === "default")).toBe(false);
+        expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining("export ="));
+    });
+
     it.each([
         "this",
         "(this)",
