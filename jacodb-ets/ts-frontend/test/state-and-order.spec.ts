@@ -127,6 +127,38 @@ describe("call evaluation order", () => {
         ]));
     });
 
+    it("marks an instanceof check unsupported when its constructor call contains a spread", () => {
+        const { file, diagnostics } = lower(`
+            class A {}
+            function left(): A { return new A(); }
+            function first(): typeof A { return A; }
+            function choose(candidate: typeof A, ...rest: Array<typeof A>): typeof A { return candidate; }
+            function check(args: Array<typeof A>): boolean {
+                return left() instanceof choose(first(), ...args);
+            }
+        `);
+        const stmts = flattened(methodByName(file, "check"));
+        const calls = stmts.flatMap((stmt, index) =>
+            stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+                ? [{ index, name: stmt.right.method.name }]
+                : [],
+        );
+        const spreadIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "UnsupportedValue" && stmt.right.kindName === "SpreadElement");
+        const checkIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "UnsupportedValue" && stmt.right.kindName === "BinaryExpression");
+
+        expect(calls.map((call) => call.name)).toEqual(["left", "first", "choose"]);
+        expect(calls[1].index).toBeLessThan(spreadIndex);
+        expect(spreadIndex).toBeLessThan(calls[2].index);
+        expect(calls[2].index).toBeLessThan(checkIndex);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr")).toBe(false);
+        expect(diagnostics.messages).toEqual(expect.arrayContaining([
+            expect.stringContaining("spread arguments are not supported"),
+            expect.stringContaining("instanceof constructor value cannot be represented"),
+        ]));
+    });
+
     it("snapshots the instanceof left operand before the right operand reassigns it", () => {
         const { file } = lower(`
             class A {}

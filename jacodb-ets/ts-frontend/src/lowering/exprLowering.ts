@@ -1517,6 +1517,7 @@ export class ExprLowerer {
     }
 
     private spreadFallback(node: ts.SpreadElement): ValueDto {
+        this.unsupportedExpressionCount++;
         this.m.diagnostics.warn(node, "spread arguments are not supported yet");
         // Hoisted for the same reason as in lowerExpr: raw values are only
         // legal as the RHS of a Local assignment.
