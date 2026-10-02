@@ -140,6 +140,8 @@ interface OptionalChainValue {
 }
 
 export class ExprLowerer {
+    private unsupportedExpressionCount = 0;
+
     constructor(
         private readonly m: MethodContext,
         private readonly lowerFunctionBody?: FunctionBodyLowerer,
@@ -157,6 +159,7 @@ export class ExprLowerer {
                 return this.lowerExprImpl(node);
             } catch (e) {
                 if (e instanceof LoweringError) {
+                    this.unsupportedExpressionCount++;
                     this.m.diagnostics.warn(node, `unsupported expression: ${e.message}`);
                     // Raw fallback values are only legal as the RHS of a Local
                     // assignment (Kotlin's ensureOneAddress rejects EtsRawEntity in
@@ -613,7 +616,13 @@ export class ExprLowerer {
         }
         if (opKind === ts.SyntaxKind.InstanceOfKeyword) {
             const arg = this.lowerImmediateBefore(node.left, node.right);
+            const unsupportedBeforeRight = this.unsupportedExpressionCount;
             const checkValue = this.lowerToImmediate(node.right);
+
+            if (this.unsupportedExpressionCount !== unsupportedBeforeRight) {
+                this.m.diagnostics.warn(node, "instanceof constructor value cannot be represented in EtsIR");
+                return this.materialize(unsupportedValue(node, BOOLEAN_TYPE), BOOLEAN_TYPE);
+            }
 
             return {
                 _: "InstanceOfExpr",

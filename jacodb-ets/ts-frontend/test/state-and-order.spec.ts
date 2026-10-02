@@ -56,12 +56,14 @@ describe("shared module state", () => {
 
 describe("call evaluation order", () => {
     it("evaluates both instanceof operands once in source order", () => {
-        const { file } = lower(`
+        const source = `
             class A {}
-            function left(): object { return new A(); }
-            function choose(): typeof A { return A; }
-            function check(): boolean { return left() instanceof choose(); }
-        `);
+            const order = [];
+            function left() { order.push("left"); return new A(); }
+            function choose() { order.push("choose"); return A; }
+            function check() { return left() instanceof choose(); }
+        `;
+        const { file } = lower(source);
         const stmts = flattened(methodByName(file, "check"));
         const calls = stmts.flatMap((stmt, index) =>
             stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
@@ -72,6 +74,10 @@ describe("call evaluation order", () => {
             (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr",
         );
         const check = stmts[checkIndex];
+        const concrete = new Function(`${source}\nreturn { result: check(), order };`)() as {
+            result: boolean;
+            order: string[];
+        };
 
         expect(calls.map((call) => call.name)).toEqual(["left", "choose"]);
         expect(calls[1].index).toBeLessThan(checkIndex);
@@ -82,6 +88,42 @@ describe("call evaluation order", () => {
                 checkValue: calls[1].result,
             },
         });
+        expect(concrete).toEqual({ result: true, order: ["left", "choose"] });
+    });
+
+    it("keeps a direct class value in the instanceof check", () => {
+        const { file } = lower(`
+            class A {}
+            function check(value: object): boolean { return value instanceof A; }
+        `);
+        const stmts = flattened(methodByName(file, "check"));
+
+        expect(stmts).toContainEqual(expect.objectContaining({
+            right: expect.objectContaining({
+                _: "InstanceOfExpr",
+                checkValue: expect.objectContaining({ _: "ClassValueRef", signature: expect.objectContaining({ name: "A" }) }),
+                checkType: expect.objectContaining({ _: "ClassType", signature: expect.objectContaining({ name: "A" }) }),
+            }),
+        }));
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "Local"
+            && stmt.right.name === "A")).toBe(false);
+    });
+
+    it("marks an unrepresented constructor declaration unsupported", () => {
+        const { file, diagnostics } = lower(`
+            function Constructor() {}
+            function check(value: object): boolean { return value instanceof Constructor; }
+        `);
+        const stmts = flattened(methodByName(file, "check"));
+
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr")).toBe(false);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "Local"
+            && stmt.right.name === "Constructor")).toBe(false);
+        expect(diagnostics.messages).toEqual(expect.arrayContaining([
+            expect.stringContaining("runtime value of declaration 'Constructor' is not represented"),
+            expect.stringContaining("instanceof constructor value cannot be represented"),
+        ]));
     });
 
     it("snapshots the instanceof left operand before the right operand reassigns it", () => {
