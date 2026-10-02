@@ -97,7 +97,6 @@ class EtsTsFrontendTest {
     }
 
     @Test
-    @Test
     fun `declared class constructor value survives frontend JSON and model conversion`() {
         val dto = runFrontend(
             """
