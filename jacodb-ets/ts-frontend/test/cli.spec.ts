@@ -50,7 +50,7 @@ describe("parseArgs", () => {
 });
 
 describe("project mode", () => {
-    it("keeps an imported class alias tied to its declaring constructor", () => {
+    it("keeps an imported class alias while rejecting a mutable namespace property", () => {
         const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-class-alias-"));
         tempDirs.push(projectDir);
         fs.writeFileSync(path.join(projectDir, "a.ts"), "export class Original {}");
@@ -71,8 +71,7 @@ describe("project mode", () => {
         const readNamespace = imported.classes[0].methods.find(
             (method: { signature: { name: string } }) => method.signature.name === "readNamespace",
         );
-        const namespaceReturn = readNamespace.body.cfg.blocks.flatMap((block: { stmts: unknown[] }) => block.stmts)
-            .find((stmt: { _?: string }) => stmt._ === "ReturnStmt");
+        const namespaceStmts = readNamespace.body.cfg.blocks.flatMap((block: { stmts: unknown[] }) => block.stmts);
 
         expect(returned).toMatchObject({
             arg: {
@@ -80,7 +79,12 @@ describe("project mode", () => {
                 signature: { name: "Original", declaringFile: { fileName: "a.ts" } },
             },
         });
-        expect(namespaceReturn).toMatchObject({ arg: returned.arg });
+        expect(namespaceStmts).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            right: expect.objectContaining({ _: "UnsupportedValue" }),
+        }));
+        expect(namespaceStmts.some((stmt: { _?: string; arg?: { _?: string } }) =>
+            stmt._ === "ReturnStmt" && stmt.arg?._ === "ClassValueRef")).toBe(false);
     });
 
     it("uses the emitted identity of an anonymous default class", () => {
