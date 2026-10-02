@@ -23,6 +23,8 @@ import org.jacodb.ets.dto.AssignStmtDto
 import org.jacodb.ets.dto.BooleanTypeDto
 import org.jacodb.ets.dto.ClassTypeDto
 import org.jacodb.ets.dto.CaughtExceptionRefDto
+import org.jacodb.ets.dto.ClassValueRefDto
+import org.jacodb.ets.dto.ClassValueTypeDto
 import org.jacodb.ets.dto.ConstantDto
 import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.dto.IfStmtDto
@@ -32,6 +34,7 @@ import org.jacodb.ets.dto.NumberTypeDto
 import org.jacodb.ets.dto.Ops
 import org.jacodb.ets.dto.RawStmtDto
 import org.jacodb.ets.dto.RelationOperationDto
+import org.jacodb.ets.dto.ReturnStmtDto
 import org.jacodb.ets.dto.StringTypeDto
 import org.jacodb.ets.dto.ThrowStmtDto
 import org.jacodb.ets.dto.UnaryOperationDto
@@ -41,10 +44,13 @@ import org.jacodb.ets.dto.toEtsFile
 import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsCaughtExceptionRef
 import org.jacodb.ets.model.EtsCallStmt
+import org.jacodb.ets.model.EtsClassValueRef
+import org.jacodb.ets.model.EtsClassValueType
 import org.jacodb.ets.model.EtsClosureFieldRef
 import org.jacodb.ets.model.EtsEqExpr
 import org.jacodb.ets.model.EtsIfStmt
 import org.jacodb.ets.model.EtsInstanceFieldRef
+import org.jacodb.ets.model.EtsInstanceOfExpr
 import org.jacodb.ets.model.EtsRawStmt
 import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.model.EtsThrowStmt
@@ -88,6 +94,46 @@ class EtsTsFrontendTest {
 
             return EtsFileDto.loadFromJson(outputPath.readText())
         }
+    }
+
+    @Test
+    @Test
+    fun `declared class constructor value survives frontend JSON and model conversion`() {
+        val dto = runFrontend(
+            """
+                class A { static marker = 7; }
+                export function constructorValue(): typeof A { return A; }
+                export function copy(): typeof A { const saved = A; return saved; }
+                export function create(): A { return new A(); }
+                export function direct(value: object): boolean { return value instanceof A; }
+                export function marker(): number { return A.marker; }
+                export default A;
+            """.trimIndent(),
+        )
+        val classSignature = dto.classes.single { it.signature.name == "A" }.signature
+        val methods = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }.methods
+        val constructorValue = methods.single { it.signature.name == "constructorValue" }
+        val copy = methods.single { it.signature.name == "copy" }
+        val returnedClass = constructorValue.body!!.cfg.blocks.flatMap { it.stmts }
+            .filterIsInstance<ReturnStmtDto>().single().arg as ClassValueRefDto
+
+        assertEquals(classSignature, returnedClass.signature)
+        assertEquals(ClassValueTypeDto(classSignature), returnedClass.type)
+        assertEquals(ClassValueTypeDto(classSignature), constructorValue.signature.returnType)
+        assertTrue(copy.body!!.cfg.blocks.flatMap { it.stmts }
+            .filterIsInstance<AssignStmtDto>().any { it.right == returnedClass })
+        assertTrue(dto.exportInfos.any { it.exportName == "A" })
+
+        val model = dto.toEtsFile()
+        val modelMethods = model.classes.single { it.name == DEFAULT_ARK_CLASS_NAME }.methods
+        val modelConstructor = modelMethods.single { it.name == "constructorValue" }
+        assertTrue(modelConstructor.signature.returnType is EtsClassValueType)
+        assertTrue(modelConstructor.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+            .any { it.rhv is EtsClassValueRef })
+        assertTrue(modelMethods.single { it.name == "create" }.cfg.stmts
+            .filterIsInstance<EtsAssignStmt>().any { it.rhv is org.jacodb.ets.model.EtsNewExpr })
+        assertTrue(modelMethods.single { it.name == "direct" }.cfg.stmts
+            .filterIsInstance<EtsAssignStmt>().any { it.rhv is EtsInstanceOfExpr })
     }
 
     @Test

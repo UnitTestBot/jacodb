@@ -58,6 +58,13 @@ data class ConstantDto(
     override val type: TypeDto,
 ) : ImmediateDto
 
+@Serializable
+@SerialName("ClassValueRef")
+data class ClassValueRefDto(
+    val signature: ClassSignatureDto,
+    override val type: TypeDto,
+) : ImmediateDto
+
 // TODO: uncomment and adapt the following code for different constants
 //       Currently, ArkIR stores all constants as strings (see ConstantDto above),
 //       but some day this is going to be fixed.

@@ -57,7 +57,7 @@ const REF_KINDS = new Set([
     "StaticFieldRef",
 ]);
 
-const IMMEDIATE_KINDS = new Set(["Local", "Constant"]);
+const IMMEDIATE_KINDS = new Set(["Local", "Constant", "ClassValueRef"]);
 
 const KNOWN_VALUE_KINDS = new Set([...EXPR_KINDS, ...REF_KINDS, ...IMMEDIATE_KINDS]);
 
@@ -314,6 +314,11 @@ function validateValue(
     }
 
     switch (value._) {
+        case "ClassValueRef":
+            if (JSON.stringify(value.signature) !== JSON.stringify(value.type.signature)) {
+                err(`${ctx}: ClassValueRef signature and type must match`);
+            }
+            break;
         case "Local":
             if (!declaredLocals.has(value.name)) {
                 err(`${ctx}: local '${value.name}' is not declared in body.locals`);

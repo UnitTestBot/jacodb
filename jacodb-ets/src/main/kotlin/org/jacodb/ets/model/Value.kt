@@ -21,6 +21,10 @@ import org.jacodb.api.common.cfg.CommonValue
 interface EtsValue : EtsEntity, CommonValue {
     interface Visitor<out R> {
         fun visit(value: EtsLocal): R
+        fun visit(value: EtsClassValueRef): R {
+            if (this is Default) return defaultVisit(value)
+            error("Cannot handle ${value::class.java.simpleName}: $value")
+        }
 
         // Constant
         fun visit(value: EtsConstant): R
@@ -43,6 +47,7 @@ interface EtsValue : EtsEntity, CommonValue {
 
         interface Default<out R> : Visitor<R> {
             override fun visit(value: EtsLocal): R = defaultVisit(value)
+            override fun visit(value: EtsClassValueRef): R = defaultVisit(value)
 
             override fun visit(value: EtsConstant): R = defaultVisit(value)
             override fun visit(value: EtsStringConstant): R = defaultVisit(value)

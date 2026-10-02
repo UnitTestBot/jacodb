@@ -192,6 +192,13 @@ export class TypeConverter {
                 signature: this.functionSignatureFromTypeNode(node, depth, substitutions),
             };
         }
+        if (ts.isTypeQueryNode(node)) {
+            const symbol = this.symbolOf(node.exprName);
+            const classDecl = symbol?.declarations?.find(ts.isClassDeclaration);
+            if (classDecl !== undefined && isProjectDeclaration(classDecl)) {
+                return { _: "ClassValueType", signature: this.classSignatureOf(classDecl) };
+            }
+        }
         if (ts.isTypeLiteralNode(node)) {
             return this.convertTypeLiteralNode(node, depth, substitutions);
         }
@@ -607,6 +614,9 @@ export class TypeConverter {
         // Instances of project classes/interfaces/enums -> ClassType.
         const classDecl = symbol !== undefined ? findClassLikeDeclaration(symbol) : undefined;
         if (classDecl !== undefined && isProjectDeclaration(classDecl)) {
+            if (ts.isClassDeclaration(classDecl) && type.getConstructSignatures().length > 0) {
+                return { _: "ClassValueType", signature: this.classSignatureOf(classDecl) };
+            }
             const typeArgs =
                 (type.objectFlags & ts.ObjectFlags.Reference) !== 0
                     ? this.checker.getTypeArguments(type as ts.TypeReference)
