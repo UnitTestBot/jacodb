@@ -352,6 +352,10 @@ export class ExprLowerer {
         const fieldName = node.name.text;
         const fieldType = this.safeTypeOf(node);
 
+        if (this.isProjectClassProperty(node.expression)) {
+            throw new LoweringError("member read through a mutable class property is not represented in EtsIR");
+        }
+
         const chain = optionalChain(node);
         if (chain !== undefined) {
             return this.lowerOptionalChain(node, chain);
@@ -365,8 +369,8 @@ export class ExprLowerer {
             };
         }
 
-        // A class exported from a namespace or module is itself a constructor
-        // value. A variable typed as that namespace still needs a field read.
+        // Namespace class properties can be reassigned at runtime (`N.A = B`).
+        // A declaration signature would freeze the original constructor.
         const receiverName = ts.isIdentifier(node.expression)
             ? node.expression
             : ts.isPropertyAccessExpression(node.expression)
@@ -380,8 +384,7 @@ export class ExprLowerer {
             const declaration = this.m.converter.symbolOf(node.name)?.declarations?.find(ts.isClassDeclaration);
             if (declaration !== undefined && isProjectFile(declaration) &&
                 (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent))) {
-                const signature = this.m.converter.classSignatureOf(declaration);
-                return { _: "ClassValueRef", signature, type: { _: "ClassValueType", signature } };
+                throw new LoweringError("mutable namespace class property is not represented in EtsIR");
             }
         }
 
@@ -608,9 +611,14 @@ export class ExprLowerer {
             return this.lowerExprImpl(node.right);
         }
         if (opKind === ts.SyntaxKind.InstanceOfKeyword) {
+            const arg = this.lowerToImmediate(node.left);
+            if (this.isProjectClassProperty(node.right)) {
+                throw new LoweringError("instanceof through a mutable class property is not represented in EtsIR");
+            }
+
             return {
                 _: "InstanceOfExpr",
-                arg: this.lowerToImmediate(node.left),
+                arg,
                 checkType: this.checkTypeOf(node.right),
             };
         }
@@ -849,6 +857,10 @@ export class ExprLowerer {
     lowerCall(node: ts.CallExpression): ValueDto {
         const callee = node.expression;
 
+        if (ts.isPropertyAccessExpression(callee) && this.isProjectClassProperty(callee.expression)) {
+            throw new LoweringError("call through a mutable class property is not represented in EtsIR");
+        }
+
         const chain = optionalChain(node);
         if (chain !== undefined) {
             return this.lowerOptionalChain(node, chain);
@@ -1039,6 +1051,10 @@ export class ExprLowerer {
     }
 
     private lowerNew(node: ts.NewExpression): ValueDto {
+        if (this.isProjectClassProperty(node.expression)) {
+            throw new LoweringError("constructor read from a mutable class property is not represented in EtsIR");
+        }
+
         const inferredType = this.safeTypeOf(node);
         const args = node.arguments ?? ts.factory.createNodeArray();
         const lengthType = args.length === 1 ? this.safeTypeOf(args[0]) : undefined;
@@ -1351,6 +1367,10 @@ export class ExprLowerer {
         if (!ts.isIdentifier(node) && !ts.isPropertyAccessExpression(node)) {
             return undefined;
         }
+        if (this.isProjectClassProperty(node)) {
+            return undefined;
+        }
+
         const symbol = this.m.converter.symbolOf(ts.isIdentifier(node) ? node : node.name);
         const decl = symbol?.declarations?.find(
             (d): d is ts.ClassDeclaration | ts.EnumDeclaration =>
@@ -1362,6 +1382,13 @@ export class ExprLowerer {
         }
         const name = decl.name !== undefined && ts.isIdentifier(decl.name) ? decl.name.text : "";
         return { name, declaringFile: UNKNOWN_FILE_SIGNATURE };
+    }
+
+    private isProjectClassProperty(node: ts.Expression): boolean {
+        return ts.isPropertyAccessExpression(node) &&
+            this.m.converter.symbolOf(node.name)?.declarations?.some(
+                (declaration) => ts.isClassDeclaration(declaration) && isProjectFile(declaration),
+            ) === true;
     }
 
     private classSignatureFromType(type: TypeDto): ClassSignatureDto {
