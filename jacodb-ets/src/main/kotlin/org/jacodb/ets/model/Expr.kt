@@ -185,9 +185,13 @@ data class EtsCastExpr(
 
 data class EtsInstanceOfExpr(
     val arg: EtsEntity,
-    val checkType: EtsType,
+    val checkType: EtsType?,
     val checkValue: EtsEntity? = null,
 ) : EtsExpr {
+    init {
+        require(checkType != null || checkValue != null) { "instanceof requires a type or evaluated constructor" }
+    }
+
     override val type: EtsType
         get() = EtsBooleanType
 

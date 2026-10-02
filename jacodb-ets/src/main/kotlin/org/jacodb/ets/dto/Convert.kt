@@ -369,7 +369,7 @@ class EtsMethodBuilder(
 
         is InstanceOfExprDto -> EtsInstanceOfExpr(
             arg = arg.toEtsEntity(),
-            checkType = checkType.toEtsType(),
+            checkType = checkType?.toEtsType(),
             checkValue = checkValue?.toEtsEntity(),
         )
 

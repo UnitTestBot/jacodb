@@ -86,6 +86,7 @@ describe("call evaluation order", () => {
                 _: "InstanceOfExpr",
                 arg: calls[0].result,
                 checkValue: calls[1].result,
+                checkType: null,
             },
         });
         expect(concrete).toEqual({ result: true, order: ["left", "choose"] });

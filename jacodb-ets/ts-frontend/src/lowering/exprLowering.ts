@@ -628,7 +628,7 @@ export class ExprLowerer {
                 _: "InstanceOfExpr",
                 arg,
                 checkValue,
-                checkType: this.checkTypeOf(node.right),
+                checkType: this.checkTypeOf(checkValue),
             };
         }
 
@@ -1509,15 +1509,11 @@ export class ExprLowerer {
         return [];
     }
 
-    private checkTypeOf(node: ts.Expression): TypeDto {
-        const signature = this.classLikeSignatureOf(node);
-        if (signature !== undefined) {
-            return { _: "ClassType", signature };
+    private checkTypeOf(checkValue: ImmediateDto): TypeDto | null {
+        if (checkValue._ === "ClassValueRef") {
+            return { _: "ClassType", signature: checkValue.signature };
         }
-        if (ts.isIdentifier(node)) {
-            return { _: "UnclearReferenceType", name: node.text };
-        }
-        return UNKNOWN_TYPE;
+        return null;
     }
 
     private spreadFallback(node: ts.SpreadElement): ValueDto {

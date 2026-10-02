@@ -41,6 +41,7 @@ import org.jacodb.ets.dto.StaticCallExprDto
 import org.jacodb.ets.dto.ThrowStmtDto
 import org.jacodb.ets.dto.UnaryOperationDto
 import org.jacodb.ets.dto.UnknownTypeDto
+import org.jacodb.ets.dto.ValueDto
 import org.jacodb.ets.dto.dtoModule
 import org.jacodb.ets.dto.toEtsFile
 import org.jacodb.ets.model.EtsAssignStmt
@@ -156,6 +157,7 @@ class EtsTsFrontendTest {
         val instanceCheck = assignments.single { it.right is InstanceOfExprDto }.right as InstanceOfExprDto
 
         assertEquals(constructorCall.left, instanceCheck.checkValue)
+        assertEquals(null, instanceCheck.checkType)
 
         val model = dto.toEtsFile()
         val modelMethod = model.classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
@@ -164,6 +166,24 @@ class EtsTsFrontendTest {
             .single { it.rhv is EtsInstanceOfExpr }.rhv as EtsInstanceOfExpr
 
         assertEquals((constructorCall.left as LocalDto).name, (modelCheck.checkValue as EtsLocal).name)
+        assertEquals(null, modelCheck.checkType)
+    }
+
+    @Test
+    fun `legacy instanceof JSON keeps its static type without a constructor value`() {
+        val legacyJson = """
+            {
+              "_": "InstanceOfExpr",
+              "arg": { "_": "Constant", "value": "null", "type": { "_": "NullType" } },
+              "checkType": { "_": "UnknownType" }
+            }
+        """.trimIndent()
+
+        val decoded = Json { serializersModule = dtoModule }
+            .decodeFromString(ValueDto.serializer(), legacyJson) as InstanceOfExprDto
+
+        assertEquals(UnknownTypeDto, decoded.checkType)
+        assertEquals(null, decoded.checkValue)
     }
 
     @Test

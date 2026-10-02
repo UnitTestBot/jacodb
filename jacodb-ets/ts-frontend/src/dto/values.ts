@@ -134,7 +134,7 @@ export interface InstanceOfExprDto {
     readonly _: "InstanceOfExpr";
     arg: ValueDto;
     checkValue: ValueDto;
-    checkType: TypeDto;
+    checkType: TypeDto | null;
 }
 
 export interface CastExprDto {
