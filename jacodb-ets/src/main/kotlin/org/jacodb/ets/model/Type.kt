@@ -49,6 +49,10 @@ interface EtsType : TypeName, CommonType {
 
         // Ref
         fun visit(type: EtsClassType): R
+        fun visit(type: EtsClassValueType): R {
+            if (this is Default) return defaultVisit(type)
+            error("Cannot handle ${type::class.java.simpleName}: $type")
+        }
         fun visit(type: EtsUnclearRefType): R
         fun visit(type: EtsArrayType): R
         fun visit(type: EtsTupleType): R
@@ -84,6 +88,7 @@ interface EtsType : TypeName, CommonType {
             override fun visit(type: EtsBooleanLiteralType): R = defaultVisit(type)
 
             override fun visit(type: EtsClassType): R = defaultVisit(type)
+            override fun visit(type: EtsClassValueType): R = defaultVisit(type)
             override fun visit(type: EtsUnclearRefType): R = defaultVisit(type)
             override fun visit(type: EtsArrayType): R = defaultVisit(type)
             override fun visit(type: EtsTupleType): R = defaultVisit(type)
@@ -344,6 +349,17 @@ data class EtsClassType(
     override fun <R> accept(visitor: EtsType.Visitor<R>): R {
         return visitor.visit(this)
     }
+}
+
+/** The constructor object of a declared class; [EtsClassType] denotes an instance. */
+data class EtsClassValueType(
+    val signature: EtsClassSignature,
+) : EtsRefType {
+    override val typeName: String get() = "typeof ${signature.name}"
+
+    override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: EtsType.Visitor<R>): R = visitor.visit(this)
 }
 
 data class EtsUnclearRefType(

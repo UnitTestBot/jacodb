@@ -1,3 +1,4 @@
+import * as ts from "typescript";
 import { describe, expect, it } from "vitest";
 import { Modifier } from "../src/dto/constants";
 import { ClassDto, EtsFileDto, MethodDto } from "../src/dto/model";
@@ -31,6 +32,52 @@ function constructorCallOf(stmt: StmtDto): InstanceCallExprDto | undefined {
 }
 
 describe("class lowering", () => {
+    it("preserves a declared class constructor across reads, assignments, and returns", () => {
+        const source = `
+            class A { static marker = 7; }
+            export function constructorValue(): typeof A { return A; }
+            export function copy(): typeof A { const saved = A; return saved; }
+            export function create(): A { return new A(); }
+            export function direct(value: object): boolean { return value instanceof A; }
+            export function marker(): number { return A.marker; }
+            export default A;
+        `;
+        const { file, diagnostics } = lower(source);
+        const defaultClass = classByName(file, "%dflt");
+        const classSignature = classByName(file, "A").signature;
+        const read = singleBlockStmts(methodOf(defaultClass, "constructorValue"));
+        const copy = singleBlockStmts(methodOf(defaultClass, "copy"));
+        const create = singleBlockStmts(methodOf(defaultClass, "create"));
+        const direct = singleBlockStmts(methodOf(defaultClass, "direct"));
+        const marker = singleBlockStmts(methodOf(defaultClass, "marker"));
+
+        expect(methodOf(defaultClass, "constructorValue").signature.returnType).toEqual({
+            _: "ClassValueType", signature: classSignature,
+        });
+        expect(read).toContainEqual(expect.objectContaining({
+            _: "ReturnStmt", arg: expect.objectContaining({ _: "ClassValueRef", signature: classSignature }),
+        }));
+        expect(copy).toContainEqual(expect.objectContaining({
+            _: "AssignStmt", right: expect.objectContaining({ _: "ClassValueRef", signature: classSignature }),
+        }));
+        expect(copy).toContainEqual(expect.objectContaining({ _: "ReturnStmt", arg: expect.objectContaining({ name: "saved" }) }));
+        expect(create.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(true);
+        expect(direct.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr")).toBe(true);
+        expect(marker.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticFieldRef")).toBe(true);
+        expect(file.exportInfos).toContainEqual(expect.objectContaining({ exportName: "A" }));
+        expect(diagnostics.messages).toEqual([]);
+
+        const js = ts.transpileModule(source, {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+        }).outputText;
+        const concrete = new Function("exports", `${js}\nreturn {
+            same: constructorValue() === A && copy() === A,
+            instance: new (constructorValue())() instanceof A,
+            marker: marker(),
+        };`)({}) as { same: boolean; instance: boolean; marker: number };
+        expect(concrete).toEqual({ same: true, instance: true, marker: 7 });
+    });
+
     it("keeps complete stable names for class decorators", () => {
         const { file } = lower(`
             @sealed

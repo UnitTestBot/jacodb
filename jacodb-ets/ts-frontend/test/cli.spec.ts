@@ -50,6 +50,30 @@ describe("parseArgs", () => {
 });
 
 describe("project mode", () => {
+    it("keeps an imported class alias tied to its declaring constructor", () => {
+        const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-class-alias-"));
+        tempDirs.push(projectDir);
+        fs.writeFileSync(path.join(projectDir, "a.ts"), "export class Original {}");
+        fs.writeFileSync(path.join(projectDir, "b.ts"),
+            'import { Original as Alias } from "./a"; export function read(): typeof Alias { return Alias; }');
+
+        const outputDir = path.join(projectDir, "ir");
+        expect(main(["--project", projectDir, outputDir])).toBe(0);
+        const imported = JSON.parse(fs.readFileSync(path.join(outputDir, "b.ts.json"), "utf8"));
+        const read = imported.classes[0].methods.find(
+            (method: { signature: { name: string } }) => method.signature.name === "read",
+        );
+        const returned = read.body.cfg.blocks.flatMap((block: { stmts: unknown[] }) => block.stmts)
+            .find((stmt: { _?: string }) => stmt._ === "ReturnStmt");
+
+        expect(returned).toMatchObject({
+            arg: {
+                _: "ClassValueRef",
+                signature: { name: "Original", declaringFile: { fileName: "a.ts" } },
+            },
+        });
+    });
+
     it("honors tsconfig include/exclude and compiler options, including TSX", () => {
         const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-project-"));
         tempDirs.push(projectDir);

@@ -169,10 +169,10 @@ export class ExprLowerer {
         });
     }
 
-    /** Lower to an immediate (Local | Constant), hoisting into a temp if needed. */
+    /** Lower to an immediate, hoisting non-immediate expressions into a temp. */
     lowerToImmediate(node: ts.Expression): ImmediateDto {
         const value = this.lowerExpr(node);
-        if (value._ === "Local" || value._ === "Constant") {
+        if (value._ === "Local" || value._ === "Constant" || value._ === "ClassValueRef") {
             return value;
         }
         return this.materialize(value, this.safeTypeOf(node));
@@ -307,6 +307,20 @@ export class ExprLowerer {
         }
         if (node.text === "undefined") {
             return constant("undefined", UNDEFINED_TYPE);
+        }
+        const declaration = this.m.converter.symbolOf(node)?.declarations?.find((candidate) =>
+            ts.isClassDeclaration(candidate) ||
+            (ts.isFunctionDeclaration(candidate) &&
+                (ts.isSourceFile(candidate.parent) || ts.isModuleBlock(candidate.parent))),
+        );
+        if (declaration !== undefined && ts.isClassDeclaration(declaration) &&
+            isProjectFile(declaration) &&
+            (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent))) {
+            const signature = this.m.converter.classSignatureOf(declaration);
+            return { _: "ClassValueRef", signature, type: { _: "ClassValueType", signature } };
+        }
+        if (declaration !== undefined) {
+            throw new LoweringError(`runtime value of declaration '${node.text}' is not represented in EtsIR`);
         }
         const captured = this.m.capturedRefForIdentifier(node);
         if (captured !== undefined) return captured;
@@ -1326,7 +1340,7 @@ export class ExprLowerer {
     }
 
     private classSignatureFromType(type: TypeDto): ClassSignatureDto {
-        if (type._ === "ClassType") {
+        if (type._ === "ClassType" || type._ === "ClassValueType") {
             return type.signature;
         }
         return UNKNOWN_CLASS_SIGNATURE;

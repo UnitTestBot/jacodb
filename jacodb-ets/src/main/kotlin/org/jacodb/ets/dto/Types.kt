@@ -161,6 +161,12 @@ data class ClassTypeDto(
 ) : TypeDto
 
 @Serializable
+@SerialName("ClassValueType")
+data class ClassValueTypeDto(
+    val signature: ClassSignatureDto,
+) : TypeDto
+
+@Serializable
 @SerialName("UnclearReferenceType")
 data class UnclearReferenceTypeDto(
     val name: String,
