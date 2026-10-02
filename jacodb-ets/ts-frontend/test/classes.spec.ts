@@ -505,6 +505,52 @@ describe("enum lowering", () => {
 });
 
 describe("namespace lowering", () => {
+    it("reads a qualified class as the same constructor while keeping dynamic fields and static access", () => {
+        const source = `
+            namespace N {
+                export class A { static marker = 7; }
+                export function direct(): typeof A { return A; }
+            }
+            export function qualified(): typeof N.A { return N.A; }
+            export function dynamic(holder: typeof N): typeof N.A { return holder.A; }
+            export function marker(): number { return N.A.marker; }
+            export function create(): N.A { return new N.A(); }
+        `;
+        const { file, diagnostics } = lower(source);
+        const namespace = file.namespaces[0]!;
+        const classSignature = namespace.classes!.find((clazz) => clazz.signature.name === "A")!.signature;
+        const direct = singleBlockStmts(methodOf(namespace.classes!.find((clazz) => clazz.signature.name === "%dflt")!, "direct"));
+        const defaultClass = classByName(file, "%dflt");
+        const qualified = singleBlockStmts(methodOf(defaultClass, "qualified"));
+        const dynamic = singleBlockStmts(methodOf(defaultClass, "dynamic"));
+        const marker = singleBlockStmts(methodOf(defaultClass, "marker"));
+        const create = singleBlockStmts(methodOf(defaultClass, "create"));
+
+        expect(direct).toContainEqual(expect.objectContaining({
+            _: "ReturnStmt", arg: expect.objectContaining({ _: "ClassValueRef", signature: classSignature }),
+        }));
+        expect(qualified).toContainEqual(expect.objectContaining({
+            _: "ReturnStmt", arg: expect.objectContaining({ _: "ClassValueRef", signature: classSignature }),
+        }));
+        expect(dynamic.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceFieldRef"
+            && stmt.right.field.name === "A")).toBe(true);
+        expect(marker.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticFieldRef"
+            && stmt.right.field.declaringClass.name === "A")).toBe(true);
+        expect(create.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr"
+            && stmt.right.classType.signature.name === "A")).toBe(true);
+        expect(diagnostics.messages).toEqual([]);
+
+        const js = ts.transpileModule(source, {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+        }).outputText;
+        const concrete = new Function("exports", `${js}\nreturn {
+            same: qualified() === N.A && qualified() === N.direct(),
+            instance: create() instanceof N.A,
+            marker: marker(),
+        };`)({}) as { same: boolean; instance: boolean; marker: number };
+        expect(concrete).toEqual({ same: true, instance: true, marker: 7 });
+    });
+
     it("builds NamespaceDto with its own %dflt class and declared classes", () => {
         const { file } = lower(`
             namespace Outer {
