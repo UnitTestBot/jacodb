@@ -502,25 +502,37 @@ class EtsMethodBuilder(
             return EtsBlockCfg.EMPTY
         }
 
+        val convertedStmtIndexes = mutableMapOf<Int, Map<Int, Int>>()
         val blocks = this.blocks.map { block ->
             currentStmts = mutableListOf()
+            val stmtIndexes = mutableMapOf<Int, Int>()
             for ((stmtIndex, stmt) in block.stmts.withIndex()) {
                 withOrigin(stmtOrigins[StmtOriginKey(block.id, stmtIndex)]) {
                     currentStmts += stmt.toEtsStmt()
                 }
+                stmtIndexes[stmtIndex] = currentStmts.lastIndex
             }
             if (currentStmts.isEmpty()) {
                 currentStmts += EtsNopStmt(location = loc())
             }
+            convertedStmtIndexes[block.id] = stmtIndexes
             BasicBlock(block.id, currentStmts)
         }
         // Note: in DTO, successors for IF stmts are (false, true) branches,
         //       however in all our CFGs we use (true, false) order.
         val successors = this.blocks.associate { it.id to it.successors.asReversed() }
+        val exceptionalSuccessors = this.blocks.associate { block ->
+            block.id to block.exceptionalSuccessors.associate {
+                val convertedIndex = convertedStmtIndexes[block.id]?.get(it.stmtIndex)
+                    ?: error("No converted statement ${it.stmtIndex} in block ${block.id}")
+                convertedIndex to it.target
+            }
+        }
 
         return EtsBlockCfg(
             blocks = blocks,
             successors = successors,
+            exceptionalSuccessors = exceptionalSuccessors,
         )
     }
 }

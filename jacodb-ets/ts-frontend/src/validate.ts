@@ -139,6 +139,19 @@ function validateBody(body: BodyDto, ctx: string, errors: string[]): void {
                 err(`${blockCtx}: predecessor ${pred} out of range [0, ${blockCount})`);
             }
         }
+        const exceptionalSources = new Set<number>();
+        for (const edge of block.exceptionalSuccessors ?? []) {
+            if (edge.stmtIndex < 0 || edge.stmtIndex >= block.stmts.length) {
+                err(`${blockCtx}: exceptional source ${edge.stmtIndex} out of range`);
+            }
+            if (edge.target < 0 || edge.target >= blockCount) {
+                err(`${blockCtx}: exceptional target ${edge.target} out of range`);
+            }
+            if (exceptionalSources.has(edge.stmtIndex)) {
+                err(`${blockCtx}: duplicate exceptional source ${edge.stmtIndex}`);
+            }
+            exceptionalSources.add(edge.stmtIndex);
+        }
 
         block.stmts.forEach((stmt, stmtIndex) => {
             const isLast = stmtIndex === block.stmts.length - 1;

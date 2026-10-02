@@ -30,6 +30,7 @@ data class BasicBlock(
 class EtsBlockCfg(
     val blocks: List<BasicBlock>,
     val successors: Map<Int, List<Int>>, // for 'if-stmt' block, successors are (true, false) branches
+    val exceptionalSuccessors: Map<Int, Map<Int, Int>> = emptyMap(), // block id -> stmt index -> catcher block id
 ) : EtsBytecodeGraph<EtsStmt> {
     init {
         for (block in blocks) {
@@ -42,6 +43,15 @@ class EtsBlockCfg(
             require(id in 0..blocks.size) { "Block id $id is out of bounds" }
             for (s in successorIds) {
                 require(s in 0..blocks.size) { "Successor $s is out of bounds" }
+            }
+        }
+        for ((blockId, stmtTargets) in exceptionalSuccessors) {
+            require(blockId in blocks.indices) { "Exceptional source block $blockId is out of bounds" }
+            for ((stmtIndex, target) in stmtTargets) {
+                require(stmtIndex in blocks[blockId].statements.indices) {
+                    "Exceptional source statement $stmtIndex in block $blockId is out of bounds"
+                }
+                require(target in blocks.indices) { "Exceptional target $target is out of bounds" }
             }
         }
     }
