@@ -93,13 +93,14 @@ describe("export infos", () => {
     });
 
     it("handles export default", () => {
-        const { file } = lower(`
+        const { file, diagnostics } = lower(`
             class Main {}
             export default Main;
         `);
         expect(file.exportInfos).toEqual([
             { exportName: "Main", exportType: 1, modifiers: Modifier.DEFAULT, isTypeOnly: false },
         ]);
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining("has no EtsIR value reference"));
     });
 
     it("handles export default declarations", () => {

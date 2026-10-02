@@ -40,13 +40,13 @@ import { ClassDto, EtsFileDto, ExportInfoDto, FieldDto, ImportInfoDto, MethodDto
 import { ClassSignatureDto, FileSignatureDto, NamespaceSignatureDto } from "../dto/signatures";
 import { VOID_TYPE } from "../dto/types";
 import { TypeConverter } from "../types/convert";
-import { modifiersOf } from "./astUtils";
+import { isUnmaterializedDefaultExportValue, modifiersOf } from "./astUtils";
 import { ClassBuilder } from "./classBuilder";
 import { Diagnostics } from "./diagnostics";
 import { AnonymousRegistry, LoweringContext, MethodContext } from "./methodBuilder";
 import { StmtLowerer } from "./stmtLowering";
 
-/** Stable IR binding for anonymous `export default class/function` declarations. */
+/** Stable IR binding for default exports. */
 const DEFAULT_EXPORT_BINDING_NAME = "default";
 
 export interface BuildFileOptions {
@@ -282,15 +282,29 @@ class FileBuilder {
                 }
                 continue;
             }
-            // `export default <expr>;` / `export = <expr>;`
+            // `export default <expr>;` stores a snapshot in `%dflt.default`.
             if (ts.isExportAssignment(statement)) {
-                const name = ts.isIdentifier(statement.expression) ? statement.expression.text : "default";
-                infos.push({
-                    exportName: name,
-                    exportType: this.exportTypeOfSymbol(statement.expression),
-                    modifiers: Modifier.DEFAULT,
-                    isTypeOnly: false,
-                });
+                if (statement.isExportEquals
+                    || isUnmaterializedDefaultExportValue(statement.expression, this.ctx.checker)) {
+                    const name = ts.isIdentifier(statement.expression) ? statement.expression.text : "default";
+                    infos.push({
+                        exportName: name,
+                        exportType: this.exportTypeOfSymbol(statement.expression),
+                        modifiers: Modifier.DEFAULT,
+                        isTypeOnly: false,
+                    });
+                } else {
+                    const info: ExportInfoDto = {
+                        exportName: DEFAULT_EXPORT_BINDING_NAME,
+                        exportType: ExportType.LOCAL,
+                        modifiers: Modifier.DEFAULT,
+                        isTypeOnly: false,
+                    };
+                    if (ts.isIdentifier(statement.expression)) {
+                        info.nameBeforeAs = statement.expression.text;
+                    }
+                    infos.push(info);
+                }
             }
         }
         return infos;
@@ -394,6 +408,22 @@ class FileBuilder {
                     exclamationToken: false,
                 });
             }
+        }
+        for (const statement of statements) {
+            if (!ts.isExportAssignment(statement) || statement.isExportEquals
+                || isUnmaterializedDefaultExportValue(statement.expression, this.ctx.checker)) continue;
+
+            fields.push({
+                signature: {
+                    declaringClass,
+                    name: DEFAULT_EXPORT_BINDING_NAME,
+                    type: this.ctx.converter.typeOfNode(statement.expression),
+                },
+                modifiers: Modifier.STATIC | Modifier.CONST,
+                decorators: [],
+                questionToken: false,
+                exclamationToken: false,
+            });
         }
         return fields;
     }

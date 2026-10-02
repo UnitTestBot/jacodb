@@ -27,6 +27,8 @@ import org.jacodb.ets.dto.NewArrayExprDto
 import org.jacodb.ets.dto.NumberTypeDto
 import org.jacodb.ets.dto.RelationOperationDto
 import org.jacodb.ets.dto.StringTypeDto
+import org.jacodb.ets.dto.StaticCallExprDto
+import org.jacodb.ets.dto.StaticFieldRefDto
 import org.jacodb.ets.dto.UnaryOperationDto
 import org.jacodb.ets.dto.UnknownTypeDto
 import org.jacodb.ets.dto.toEtsFile
@@ -74,6 +76,43 @@ class EtsTsFrontendTest {
 
             return EtsFileDto.loadFromJson(outputPath.readText())
         }
+    }
+
+    @Test
+    fun `default export expression executes during module initialization and survives JSON conversion`() {
+        val dto = runFrontend(
+            """
+                export let count = 0;
+                function sideEffect(): number { count++; return count; }
+                export default sideEffect();
+                export const after = count;
+            """.trimIndent()
+        )
+
+        val defaultClass = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+        assertEquals(NumberTypeDto, defaultClass.fields.single { it.signature.name == "default" }.signature.type)
+
+        val stmts = defaultClass.methods.single { it.signature.name == DEFAULT_ARK_METHOD_NAME }
+            .body!!.cfg.blocks.flatMap { it.stmts }
+        val callIndex = stmts.indexOfFirst {
+            it is AssignStmtDto && (it.right as? StaticCallExprDto)?.method?.name == "sideEffect"
+        }
+        val exportIndex = stmts.indexOfFirst {
+            it is AssignStmtDto && (it.left as? StaticFieldRefDto)?.field?.name == "default"
+        }
+        val afterIndex = stmts.indexOfFirst {
+            it is AssignStmtDto && (it.left as? StaticFieldRefDto)?.field?.name == "after"
+        }
+
+        assertTrue(callIndex >= 0)
+        assertTrue(exportIndex > callIndex)
+        assertTrue(afterIndex > exportIndex)
+        assertEquals("default", dto.exportInfos.single { it.exportName == "default" }.exportName)
+
+        val model = dto.toEtsFile()
+        val export = model.exportInfos.single { it.isDefaultExport }
+        assertEquals("default", export.name)
+        assertTrue(model.classes.single { it.name == DEFAULT_ARK_CLASS_NAME }.fields.any { it.name == "default" })
     }
 
     @Test

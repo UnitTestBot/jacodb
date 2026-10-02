@@ -51,6 +51,22 @@ export function modifiersOf(node: ts.Node): number {
     return result;
 }
 
+/** Class/function/enum/namespace declarations have no standalone value reference in EtsIR yet. */
+export function isUnmaterializedDefaultExportValue(expression: ts.Expression, checker: ts.TypeChecker): boolean {
+    if (!ts.isIdentifier(expression)) return false;
+
+    let symbol = checker.getSymbolAtLocation(expression);
+    if (symbol === undefined) return false;
+    if ((symbol.flags & ts.SymbolFlags.Alias) !== 0) symbol = checker.getAliasedSymbol(symbol);
+
+    return symbol.declarations?.some((declaration) =>
+        ts.isClassDeclaration(declaration)
+        || ts.isFunctionDeclaration(declaration)
+        || ts.isEnumDeclaration(declaration)
+        || ts.isModuleDeclaration(declaration),
+    ) ?? false;
+}
+
 function decoratorName(expr: ts.Expression): string {
     if (ts.isCallExpression(expr)) return decoratorName(expr.expression);
     if (ts.isIdentifier(expr)) return expr.text;
