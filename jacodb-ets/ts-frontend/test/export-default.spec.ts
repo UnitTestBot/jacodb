@@ -76,6 +76,56 @@ describe("export default expressions", () => {
         expect(oracle).toBe("true");
     });
 
+    it("keeps this inside a nested ordinary function separate from module this", () => {
+        const source = `export default () => { function inner() { return this; } return 1; };`;
+        const { file, stmts } = moduleStatements(source);
+
+        expect(stmts).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            left: expect.objectContaining({ _: "StaticFieldRef", field: expect.objectContaining({ name: "default" }) }),
+        }));
+        expect(file.exportInfos).toContainEqual(expect.objectContaining({ exportName: "default" }));
+
+        const moduleUrl = `data:text/javascript,${encodeURIComponent(source)}`;
+        const oracle = execFileSync(process.execPath, [
+            "--input-type=module",
+            "-e",
+            `const module = await import(${JSON.stringify(moduleUrl)}); process.stdout.write(String(module.default() === 1));`,
+        ], { encoding: "utf8" });
+        expect(oracle).toBe("true");
+    });
+
+    it.each([
+        "({ [this]() { return 1; } })",
+        "({ [this]: 1 })",
+        "({ [key]() { return 1; } })",
+        "({ [key]: 1 })",
+    ])("rejects a computed object key in %s", (expression) => {
+        const { file, diagnostics } = lower(`
+            const key = "name";
+            export default ${expression};
+        `);
+
+        const defaultClass = file.classes.find((clazz) => clazz.signature.name === "%dflt")!;
+        const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
+
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining("computed object key"));
+        expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
+        expect(defaultClass.fields.some((field) => field.signature.name === "default")).toBe(false);
+    });
+
+    it("matches the ES-module evaluation of a computed method name", () => {
+        const source = `export default ({ [this]() { return 1; } });`;
+        const moduleUrl = `data:text/javascript,${encodeURIComponent(source)}`;
+        const oracle = execFileSync(process.execPath, [
+            "--input-type=module",
+            "-e",
+            `const module = await import(${JSON.stringify(moduleUrl)}); process.stdout.write(String(module.default.undefined() === 1));`,
+        ], { encoding: "utf8" });
+
+        expect(oracle).toBe("true");
+    });
+
     it("evaluates a call at its source position and stores the result in the default binding", () => {
         const source = `
             let count = 0;

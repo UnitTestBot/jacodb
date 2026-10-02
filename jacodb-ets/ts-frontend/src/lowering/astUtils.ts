@@ -176,11 +176,33 @@ export function usesModuleLexicalThis(expression: ts.Expression): boolean {
     const visit = (node: ts.Node): boolean => {
         if (node.kind === ts.SyntaxKind.ThisKeyword) return true;
         if (ts.isFunctionExpression(node)
-            || ts.isMethodDeclaration(node)
+            || ts.isFunctionDeclaration(node)
             || ts.isConstructorDeclaration(node)
-            || ts.isGetAccessorDeclaration(node)
-            || ts.isSetAccessorDeclaration(node)
             || ts.isClassExpression(node)) return false;
+        if (ts.isMethodDeclaration(node)
+            || ts.isGetAccessorDeclaration(node)
+            || ts.isSetAccessorDeclaration(node)) {
+            return ts.isComputedPropertyName(node.name) && visit(node.name.expression);
+        }
+
+        let found = false;
+        ts.forEachChild(node, (child) => { found = visit(child) || found; });
+        return found;
+    };
+
+    return visit(expression);
+}
+
+/** Object-literal lowering currently emits `%computed` without evaluating the key. */
+export function hasUnsupportedComputedObjectKey(expression: ts.Expression): boolean {
+    const visit = (node: ts.Node): boolean => {
+        if (ts.isObjectLiteralExpression(node) && node.properties.some((property) =>
+            (ts.isPropertyAssignment(property)
+                || ts.isMethodDeclaration(property)
+                || ts.isGetAccessorDeclaration(property)
+                || ts.isSetAccessorDeclaration(property))
+            && ts.isComputedPropertyName(property.name),
+        )) return true;
 
         let found = false;
         ts.forEachChild(node, (child) => { found = visit(child) || found; });

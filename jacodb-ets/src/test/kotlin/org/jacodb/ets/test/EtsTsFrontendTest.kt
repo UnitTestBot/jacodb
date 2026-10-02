@@ -170,6 +170,32 @@ class EtsTsFrontendTest {
     }
 
     @Test
+    fun `computed object method name in default export remains unsupported in JSON`() {
+        val dto = runFrontend("export default ({ [this]() { return 1; } });")
+
+        val defaultClass = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+        val stmts = defaultClass.methods.single { it.signature.name == DEFAULT_ARK_METHOD_NAME }
+            .body!!.cfg.blocks.flatMap { it.stmts }
+
+        assertTrue(defaultClass.fields.none { it.signature.name == "default" })
+        assertTrue(stmts.any { it is RawStmtDto && it.kind == "UnsupportedStmt" })
+    }
+
+    @Test
+    fun `nested ordinary function this does not suppress default export in JSON`() {
+        val dto = runFrontend(
+            "export default () => { function inner() { return this; } return 1; };"
+        )
+
+        val defaultClass = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+        val stmts = defaultClass.methods.single { it.signature.name == DEFAULT_ARK_METHOD_NAME }
+            .body!!.cfg.blocks.flatMap { it.stmts }
+
+        assertTrue(defaultClass.fields.any { it.signature.name == "default" })
+        assertTrue(stmts.none { it is RawStmtDto && it.kind == "UnsupportedStmt" })
+    }
+
+    @Test
     fun `default export identifier resolves to its snapshot binding`() {
         val dto = runFrontend(
             """
