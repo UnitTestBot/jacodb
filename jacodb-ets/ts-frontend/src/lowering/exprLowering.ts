@@ -365,6 +365,26 @@ export class ExprLowerer {
             };
         }
 
+        // A class exported from a namespace or module is itself a constructor
+        // value. A variable typed as that namespace still needs a field read.
+        const receiverName = ts.isIdentifier(node.expression)
+            ? node.expression
+            : ts.isPropertyAccessExpression(node.expression)
+              ? node.expression.name
+              : undefined;
+        const receiverIsNamespace = receiverName !== undefined &&
+            this.m.converter.symbolOf(receiverName)?.declarations?.some(
+                (declaration) => ts.isModuleDeclaration(declaration) || ts.isSourceFile(declaration),
+            );
+        if (receiverIsNamespace) {
+            const declaration = this.m.converter.symbolOf(node.name)?.declarations?.find(ts.isClassDeclaration);
+            if (declaration !== undefined && isProjectFile(declaration) &&
+                (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent))) {
+                const signature = this.m.converter.classSignatureOf(declaration);
+                return { _: "ClassValueRef", signature, type: { _: "ClassValueType", signature } };
+            }
+        }
+
         const staticTarget = this.classLikeSignatureOf(node.expression);
         if (staticTarget !== undefined) {
             return {

@@ -55,7 +55,10 @@ describe("project mode", () => {
         tempDirs.push(projectDir);
         fs.writeFileSync(path.join(projectDir, "a.ts"), "export class Original {}");
         fs.writeFileSync(path.join(projectDir, "b.ts"),
-            'import { Original as Alias } from "./a"; export function read(): typeof Alias { return Alias; }');
+            `import { Original as Alias } from "./a";
+             import * as ns from "./a";
+             export function read(): typeof Alias { return Alias; }
+             export function readNamespace(): typeof ns.Original { return ns.Original; }`);
 
         const outputDir = path.join(projectDir, "ir");
         expect(main(["--project", projectDir, outputDir])).toBe(0);
@@ -65,6 +68,11 @@ describe("project mode", () => {
         );
         const returned = read.body.cfg.blocks.flatMap((block: { stmts: unknown[] }) => block.stmts)
             .find((stmt: { _?: string }) => stmt._ === "ReturnStmt");
+        const readNamespace = imported.classes[0].methods.find(
+            (method: { signature: { name: string } }) => method.signature.name === "readNamespace",
+        );
+        const namespaceReturn = readNamespace.body.cfg.blocks.flatMap((block: { stmts: unknown[] }) => block.stmts)
+            .find((stmt: { _?: string }) => stmt._ === "ReturnStmt");
 
         expect(returned).toMatchObject({
             arg: {
@@ -72,6 +80,7 @@ describe("project mode", () => {
                 signature: { name: "Original", declaringFile: { fileName: "a.ts" } },
             },
         });
+        expect(namespaceReturn).toMatchObject({ arg: returned.arg });
     });
 
     it("uses the emitted identity of an anonymous default class", () => {
