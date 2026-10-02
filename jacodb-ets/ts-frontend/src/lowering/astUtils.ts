@@ -171,6 +171,25 @@ export function usesUnmaterializedDeclarationValue(expression: ts.Expression, ch
     return visit(expression);
 }
 
+/** `export default` is a module statement; its lexical `this` is not `%dflt`'s synthetic receiver. */
+export function usesModuleLexicalThis(expression: ts.Expression): boolean {
+    const visit = (node: ts.Node): boolean => {
+        if (node.kind === ts.SyntaxKind.ThisKeyword) return true;
+        if (ts.isFunctionExpression(node)
+            || ts.isMethodDeclaration(node)
+            || ts.isConstructorDeclaration(node)
+            || ts.isGetAccessorDeclaration(node)
+            || ts.isSetAccessorDeclaration(node)
+            || ts.isClassExpression(node)) return false;
+
+        let found = false;
+        ts.forEachChild(node, (child) => { found = visit(child) || found; });
+        return found;
+    };
+
+    return visit(expression);
+}
+
 function decoratorName(expr: ts.Expression): string {
     if (ts.isCallExpression(expr)) return decoratorName(expr.expression);
     if (ts.isIdentifier(expr)) return expr.text;

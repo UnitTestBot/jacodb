@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
+import { execFileSync } from "node:child_process";
 import { runInNewContext } from "node:vm";
 import * as ts from "typescript";
 import { describe, expect, it } from "vitest";
@@ -32,6 +33,49 @@ function moduleStatements(source: string): { stmts: StmtDto[]; file: ReturnType<
 }
 
 describe("export default expressions", () => {
+    it.each([
+        "this",
+        "(this)",
+        "() => this",
+    ])("reports module-level lexical this in %s", (expression) => {
+        const source = `export default ${expression};`;
+        const { file, diagnostics } = lower(source);
+        const defaultClass = file.classes.find((clazz) => clazz.signature.name === "%dflt")!;
+        const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
+
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining("module-level lexical this"));
+        expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
+        expect(defaultClass.fields.some((field) => field.signature.name === "default")).toBe(false);
+
+        const moduleUrl = `data:text/javascript,${encodeURIComponent(source)}`;
+        const exportedValue = expression.includes("=>") ? "module.default()" : "module.default";
+        const oracle = execFileSync(process.execPath, [
+            "--input-type=module",
+            "-e",
+            `const module = await import(${JSON.stringify(moduleUrl)}); process.stdout.write(String(${exportedValue} === undefined));`,
+        ], { encoding: "utf8" });
+        expect(oracle).toBe("true");
+    });
+
+    it("keeps this inside an object method bound to its ordinary receiver", () => {
+        const source = `export default ({ read() { return this; } });`;
+        const { file, stmts } = moduleStatements(source);
+
+        expect(stmts).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            left: expect.objectContaining({ _: "StaticFieldRef", field: expect.objectContaining({ name: "default" }) }),
+        }));
+        expect(file.exportInfos).toContainEqual(expect.objectContaining({ exportName: "default" }));
+
+        const moduleUrl = `data:text/javascript,${encodeURIComponent(source)}`;
+        const oracle = execFileSync(process.execPath, [
+            "--input-type=module",
+            "-e",
+            `const module = await import(${JSON.stringify(moduleUrl)}); process.stdout.write(String(module.default.read() === module.default));`,
+        ], { encoding: "utf8" });
+        expect(oracle).toBe("true");
+    });
+
     it("evaluates a call at its source position and stores the result in the default binding", () => {
         const source = `
             let count = 0;

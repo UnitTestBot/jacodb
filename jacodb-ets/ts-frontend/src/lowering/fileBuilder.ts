@@ -40,7 +40,7 @@ import { ClassDto, EtsFileDto, ExportInfoDto, FieldDto, ImportInfoDto, MethodDto
 import { ClassSignatureDto, FileSignatureDto, NamespaceSignatureDto } from "../dto/signatures";
 import { VOID_TYPE } from "../dto/types";
 import { TypeConverter } from "../types/convert";
-import { modifiersOf, usesUnmaterializedDeclarationValue } from "./astUtils";
+import { modifiersOf, usesModuleLexicalThis, usesUnmaterializedDeclarationValue } from "./astUtils";
 import { ClassBuilder } from "./classBuilder";
 import { Diagnostics } from "./diagnostics";
 import { AnonymousRegistry, LoweringContext, MethodContext } from "./methodBuilder";
@@ -285,6 +285,7 @@ class FileBuilder {
             // `export default <expr>;` stores a snapshot in `%dflt.default`.
             if (ts.isExportAssignment(statement)) {
                 if (statement.isExportEquals
+                    || usesModuleLexicalThis(statement.expression)
                     || usesUnmaterializedDeclarationValue(statement.expression, this.ctx.checker)) {
                     const name = ts.isIdentifier(statement.expression) ? statement.expression.text : "default";
                     infos.push({
@@ -411,6 +412,7 @@ class FileBuilder {
         }
         for (const statement of statements) {
             if (!ts.isExportAssignment(statement) || statement.isExportEquals
+                || usesModuleLexicalThis(statement.expression)
                 || usesUnmaterializedDeclarationValue(statement.expression, this.ctx.checker)) continue;
 
             fields.push({

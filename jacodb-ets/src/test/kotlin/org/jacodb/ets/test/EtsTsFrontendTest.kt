@@ -158,6 +158,18 @@ class EtsTsFrontendTest {
     }
 
     @Test
+    fun `module lexical this in default export remains explicitly unsupported in JSON`() {
+        val dto = runFrontend("export default (() => this);")
+
+        val defaultClass = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+        val stmts = defaultClass.methods.single { it.signature.name == DEFAULT_ARK_METHOD_NAME }
+            .body!!.cfg.blocks.flatMap { it.stmts }
+
+        assertTrue(defaultClass.fields.none { it.signature.name == "default" })
+        assertTrue(stmts.any { it is RawStmtDto && it.kind == "UnsupportedStmt" })
+    }
+
+    @Test
     fun `default export identifier resolves to its snapshot binding`() {
         val dto = runFrontend(
             """
