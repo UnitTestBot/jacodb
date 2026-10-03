@@ -36,6 +36,7 @@ import org.jacodb.ets.dto.NewExprDto
 import org.jacodb.ets.dto.NumberTypeDto
 import org.jacodb.ets.dto.Ops
 import org.jacodb.ets.dto.RawStmtDto
+import org.jacodb.ets.dto.RawValueDto
 import org.jacodb.ets.dto.RelationOperationDto
 import org.jacodb.ets.dto.ReturnStmtDto
 import org.jacodb.ets.dto.StringTypeDto
@@ -59,6 +60,8 @@ import org.jacodb.ets.model.EtsIfStmt
 import org.jacodb.ets.model.EtsInstanceFieldRef
 import org.jacodb.ets.model.EtsInstanceOfExpr
 import org.jacodb.ets.model.EtsLocal
+import org.jacodb.ets.model.EtsNewExpr
+import org.jacodb.ets.model.EtsRawEntity
 import org.jacodb.ets.model.EtsRawStmt
 import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.model.EtsNewArrayExpr
@@ -69,6 +72,7 @@ import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
 import org.jacodb.ets.utils.EtsIrProvider
 import org.jacodb.ets.utils.defaultProviderFor
 import org.jacodb.ets.utils.generateEtsIR
+import org.jacodb.ets.utils.getOperands
 import org.junit.jupiter.api.Test
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createTempDirectory
@@ -289,6 +293,84 @@ class EtsTsFrontendTest {
             .filterIsInstance<EtsAssignStmt>().any { it.rhv is org.jacodb.ets.model.EtsNewExpr })
         assertTrue(modelMethods.single { it.name == "direct" }.cfg.stmts
             .filterIsInstance<EtsAssignStmt>().any { it.rhv is EtsInstanceOfExpr })
+    }
+
+    @Test
+    fun `dynamic new retains evaluated constructor after JSON and model conversion`() {
+        val frontendDto = runFrontend(
+            """
+                class A { constructor(value: number) {} }
+                class B { constructor(value: number) {} }
+                let selected: typeof A | typeof B = A;
+                function pick(): typeof A | typeof B { return selected; }
+                function argument(): number { selected = B; return 7; }
+                export function check(): A | B { return new (pick())(argument()); }
+            """.trimIndent(),
+        )
+        val roundTripped = EtsFileDto.loadFromJson(
+            Json { serializersModule = dtoModule }.encodeToString(frontendDto),
+        )
+        val methodDto = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "check" }
+        val assignments = methodDto.body!!.cfg.blocks.flatMap { it.stmts }.filterIsInstance<AssignStmtDto>()
+        val pickCall = assignments.single { (it.right as? StaticCallExprDto)?.method?.name == "pick" }
+        val argumentCall = assignments.single { (it.right as? StaticCallExprDto)?.method?.name == "argument" }
+        val allocation = assignments.single { it.right is NewExprDto }
+        val allocationValue = allocation.right as NewExprDto
+
+        assertEquals(pickCall.left as LocalDto, allocationValue.constructorValue as LocalDto)
+        assertTrue(assignments.indexOf(pickCall) < assignments.indexOf(argumentCall))
+        assertTrue(assignments.indexOf(argumentCall) < assignments.indexOf(allocation))
+
+        val modelMethod = roundTripped.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "check" }
+        val modelAllocation = modelMethod.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+            .single { it.rhv is EtsNewExpr }.rhv as EtsNewExpr
+        val constructorValue = modelAllocation.constructorValue as EtsLocal
+
+        assertEquals((pickCall.left as LocalDto).name, constructorValue.name)
+        assertEquals(constructorValue, modelAllocation.getOperands().single())
+    }
+
+    @Test
+    fun `computed constructor access stays unsupported through JSON and model conversion`() {
+        val frontendDto = runFrontend(
+            """
+                class A {}
+                export function make(holder: { Ctor: typeof A }): A {
+                    return new holder["Ctor"]();
+                }
+            """.trimIndent(),
+        )
+        val methodDto = frontendDto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "make" }
+        val assignments = methodDto.body!!.cfg.blocks.flatMap { it.stmts }.filterIsInstance<AssignStmtDto>()
+
+        assertTrue(assignments.any { (it.right as? RawValueDto)?.kind == "UnsupportedValue" })
+        assertTrue(assignments.none { it.right is ArrayRefDto || it.right is NewExprDto })
+
+        val modelMethod = frontendDto.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "make" }
+        val modelAssignments = modelMethod.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+
+        assertTrue(modelAssignments.any { it.rhv is EtsRawEntity })
+        assertTrue(modelAssignments.none { it.rhv is EtsNewExpr })
+    }
+
+    @Test
+    fun `legacy new JSON keeps its static type without a constructor value`() {
+        val legacyJson = """
+            {
+              "_": "NewExpr",
+              "classType": { "_": "UnknownType" }
+            }
+        """.trimIndent()
+
+        val decoded = Json { serializersModule = dtoModule }
+            .decodeFromString(ValueDto.serializer(), legacyJson) as NewExprDto
+
+        assertEquals(UnknownTypeDto, decoded.classType)
+        assertEquals(null, decoded.constructorValue)
     }
 
     @Test

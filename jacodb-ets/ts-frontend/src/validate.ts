@@ -380,6 +380,8 @@ function validateValue(
 /** Direct value operands of a value (non-recursive). */
 export function valueOperands(value: ValueDto): ValueDto[] {
     switch (value._) {
+        case "NewExpr":
+            return value.constructorValue !== undefined ? [value.constructorValue] : [];
         case "NewArrayExpr":
             return [value.size];
         case "DeleteExpr":

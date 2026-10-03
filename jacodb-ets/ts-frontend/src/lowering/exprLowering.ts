@@ -23,7 +23,7 @@
  *    (Local | Constant), hoisted into `%N` temps;
  *  - call instances are strictly Locals;
  *  - full exprs appear only as AssignStmt.right / CallStmt.expr;
- *  - `new C(args)` becomes `%t := NewExpr(C); %t := %t.constructor(args)`;
+ *  - `new C(args)` evaluates C and args before `%t := NewExpr(C); %t := %t.constructor(args)`;
  *  - unresolved identifiers become Locals with UnknownType (e.g. `console`);
  *  - unresolved callees get a method signature with the UNKNOWN class.
  */
@@ -141,6 +141,7 @@ interface OptionalChainValue {
 
 export class ExprLowerer {
     private unsupportedExpressionCount = 0;
+    private computedConstructorCalleeDepth = 0;
 
     constructor(
         private readonly m: MethodContext,
@@ -413,6 +414,12 @@ export class ExprLowerer {
     }
 
     private lowerElementAccess(node: ts.ElementAccessExpression): ValueDto {
+        if (this.computedConstructorCalleeDepth > 0) {
+            this.lowerToImmediate(node.expression);
+            this.lowerToImmediate(node.argumentExpression);
+            throw new LoweringError("computed constructor access is not represented in EtsIR");
+        }
+
         const chain = optionalChain(node);
         if (chain !== undefined) {
             return this.lowerOptionalChain(node, chain);
@@ -1066,6 +1073,12 @@ export class ExprLowerer {
     }
 
     private lowerNew(node: ts.NewExpression): ValueDto {
+        const args = node.arguments ?? ts.factory.createNodeArray();
+        if (containsElementAccess(node.expression)) {
+            this.lowerDynamicConstructorValue(node.expression, args);
+            throw new LoweringError("computed constructor access is not represented in EtsIR");
+        }
+
         if (this.isProjectClassProperty(node.expression)) {
             this.evaluateProjectClassPropertyReceiver(node.expression);
             throw new LoweringError("constructor read from a mutable class property is not represented in EtsIR");
@@ -1080,17 +1093,13 @@ export class ExprLowerer {
         const standardLibraryIdentifier = declarations?.some(
             (declaration) => this.m.ctx.isDefaultLibrarySourceFile(declaration.getSourceFile()),
         ) === true;
-        if (this.classLikeSignatureOf(node.expression) === undefined && !standardLibraryIdentifier) {
-            this.lowerToImmediate(node.expression);
-            throw new LoweringError("new through a runtime constructor value is not represented in EtsIR");
-        }
+        const staticConstructor = this.classLikeSignatureOf(node.expression) !== undefined || standardLibraryIdentifier;
 
         const inferredType = this.safeTypeOf(node);
-        const args = node.arguments ?? ts.factory.createNodeArray();
         const lengthType = args.length === 1 ? this.safeTypeOf(args[0]) : undefined;
         const numericLength = lengthType?._ === "NumberType"
             || (lengthType?._ === "LiteralType" && typeof lengthType.literal === "number");
-        if (inferredType._ === "ArrayType" && (args.length === 0 || numericLength)) {
+        if (standardLibraryIdentifier && inferredType._ === "ArrayType" && (args.length === 0 || numericLength)) {
             const size = args.length === 0 ? constant("0", NUMBER_TYPE) : this.lowerToImmediate(args[0]);
             const temp = this.m.newTemp(inferredType);
             this.m.cfg.emit({
@@ -1101,13 +1110,23 @@ export class ExprLowerer {
             return temp;
         }
 
-        const classType = this.newTargetClassType(node.expression);
-        const temp = this.m.newTemp(classType);
-        this.m.cfg.emit({ _: "AssignStmt", left: temp, right: { _: "NewExpr", classType } });
+        const unsupportedBeforeConstructor = this.unsupportedExpressionCount;
+        const constructorValue = staticConstructor
+            ? undefined
+            : this.lowerDynamicConstructorValue(node.expression, args);
+        if (this.unsupportedExpressionCount !== unsupportedBeforeConstructor) {
+            throw new LoweringError("new constructor value cannot be represented in EtsIR");
+        }
 
         const loweredArgs = args.map((a, index) =>
             ts.isSpreadElement(a) ? this.spreadFallback(a) : this.lowerImmediateBefore(a, args.slice(index + 1)),
         );
+        const classType = staticConstructor ? this.newTargetClassType(node.expression) : inferredType;
+        const temp = this.m.newTemp(classType);
+        const allocation = constructorValue === undefined
+            ? { _: "NewExpr" as const, classType }
+            : { _: "NewExpr" as const, classType, constructorValue };
+        this.m.cfg.emit({ _: "AssignStmt", left: temp, right: allocation });
         const ctorSig: MethodSignatureDto = {
             declaringClass: classType._ === "ClassType" ? classType.signature : UNKNOWN_CLASS_SIGNATURE,
             name: CONSTRUCTOR_NAME,
@@ -1120,6 +1139,15 @@ export class ExprLowerer {
             right: { _: "InstanceCallExpr", instance: temp, method: ctorSig, args: loweredArgs },
         });
         return temp;
+    }
+
+    private lowerDynamicConstructorValue(node: ts.Expression, args: readonly ts.Expression[]): ImmediateDto {
+        this.computedConstructorCalleeDepth++;
+        try {
+            return this.lowerImmediateBefore(node, args);
+        } finally {
+            this.computedConstructorCalleeDepth--;
+        }
     }
 
     private lowerArrayLiteral(node: ts.ArrayLiteralExpression): ValueDto {
@@ -1611,6 +1639,20 @@ function containsPossibleSideEffect(node: ts.Node): boolean {
             || ts.isYieldExpression(current)
             || ts.isTaggedTemplateExpression(current)
         ) {
+            found = true;
+            return;
+        }
+        ts.forEachChild(current, visit);
+    };
+    visit(node);
+    return found;
+}
+
+function containsElementAccess(node: ts.Node): boolean {
+    let found = false;
+    const visit = (current: ts.Node): void => {
+        if (found) return;
+        if (ts.isElementAccessExpression(current)) {
             found = true;
             return;
         }
