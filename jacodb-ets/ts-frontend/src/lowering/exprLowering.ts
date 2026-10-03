@@ -140,6 +140,8 @@ interface OptionalChainValue {
 }
 
 export class ExprLowerer {
+    private unsupportedExpressionCount = 0;
+
     constructor(
         private readonly m: MethodContext,
         private readonly lowerFunctionBody?: FunctionBodyLowerer,
@@ -157,6 +159,7 @@ export class ExprLowerer {
                 return this.lowerExprImpl(node);
             } catch (e) {
                 if (e instanceof LoweringError) {
+                    this.unsupportedExpressionCount++;
                     this.m.diagnostics.warn(node, `unsupported expression: ${e.message}`);
                     // Raw fallback values are only legal as the RHS of a Local
                     // assignment (Kotlin's ensureOneAddress rejects EtsRawEntity in
@@ -612,15 +615,25 @@ export class ExprLowerer {
             return this.lowerExprImpl(node.right);
         }
         if (opKind === ts.SyntaxKind.InstanceOfKeyword) {
-            const arg = this.lowerToImmediate(node.left);
+            const arg = this.lowerImmediateBefore(node.left, node.right);
             if (this.isProjectClassProperty(node.right)) {
+                this.evaluateProjectClassPropertyReceiver(node.right);
                 throw new LoweringError("instanceof through a mutable class property is not represented in EtsIR");
+            }
+
+            const unsupportedBeforeRight = this.unsupportedExpressionCount;
+            const checkValue = this.lowerToImmediate(node.right);
+
+            if (this.unsupportedExpressionCount !== unsupportedBeforeRight) {
+                this.m.diagnostics.warn(node, "instanceof constructor value cannot be represented in EtsIR");
+                return this.materialize(unsupportedValue(node, BOOLEAN_TYPE), BOOLEAN_TYPE);
             }
 
             return {
                 _: "InstanceOfExpr",
                 arg,
-                checkType: this.checkTypeOf(node.right),
+                checkValue,
+                checkType: this.checkTypeOf(checkValue),
             };
         }
 
@@ -1496,18 +1509,15 @@ export class ExprLowerer {
         return [];
     }
 
-    private checkTypeOf(node: ts.Expression): TypeDto {
-        const signature = this.classLikeSignatureOf(node);
-        if (signature !== undefined) {
-            return { _: "ClassType", signature };
+    private checkTypeOf(checkValue: ImmediateDto): TypeDto | null {
+        if (checkValue._ === "ClassValueRef") {
+            return { _: "ClassType", signature: checkValue.signature };
         }
-        if (ts.isIdentifier(node)) {
-            return { _: "UnclearReferenceType", name: node.text };
-        }
-        return UNKNOWN_TYPE;
+        return null;
     }
 
     private spreadFallback(node: ts.SpreadElement): ValueDto {
+        this.unsupportedExpressionCount++;
         this.m.diagnostics.warn(node, "spread arguments are not supported yet");
         // Hoisted for the same reason as in lowerExpr: raw values are only
         // legal as the RHS of a Local assignment.

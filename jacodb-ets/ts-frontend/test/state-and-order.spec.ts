@@ -1,7 +1,8 @@
+import * as ts from "typescript";
 import { describe, expect, it } from "vitest";
 import { Modifier } from "../src/dto/constants";
 import { StmtDto } from "../src/dto/stmts";
-import { defaultMethod, lower, methodByName } from "./util";
+import { compile, defaultMethod, lower, methodByName } from "./util";
 
 function flattened(method: ReturnType<typeof defaultMethod>): StmtDto[] {
     return method.body!.cfg.blocks.flatMap((block) => block.stmts);
@@ -55,6 +56,174 @@ describe("shared module state", () => {
 });
 
 describe("call evaluation order", () => {
+    it("evaluates a mutable instanceof constructor receiver before unsupported", () => {
+        const source = `
+            namespace N { export class A {} }
+            let reads = 0;
+            function getN(): typeof N { reads++; return N; }
+            export function check(value: object): boolean { return value instanceof getN().A; }
+            export function readCount(): number { return reads; }
+        `;
+        const compiled = compile(source);
+        expect(compiled.program.getSemanticDiagnostics(compiled.sourceFile)).toEqual([]);
+
+        const { file } = lower(source);
+        const stmts = flattened(methodByName(file, "check"));
+        const getNIndices = stmts.flatMap((stmt, index) =>
+            stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+                && stmt.right.method.name === "getN" ? [index] : [],
+        );
+        const unsupportedIndex = stmts.findIndex(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue",
+        );
+
+        expect(getNIndices).toHaveLength(1);
+        expect(getNIndices[0]).toBeLessThan(unsupportedIndex);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr")).toBe(false);
+
+        const js = ts.transpileModule(source, {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+        }).outputText;
+        const concrete = new Function("exports", `${js}\nreturn {
+            result: check(new N.A()),
+            reads: readCount(),
+        };`)({}) as { result: boolean; reads: number };
+        expect(concrete).toEqual({ result: true, reads: 1 });
+    });
+
+    it("evaluates both instanceof operands once in source order", () => {
+        const source = `
+            class A {}
+            const order = [];
+            function left() { order.push("left"); return new A(); }
+            function choose() { order.push("choose"); return A; }
+            function check() { return left() instanceof choose(); }
+        `;
+        const { file } = lower(source);
+        const stmts = flattened(methodByName(file, "check"));
+        const calls = stmts.flatMap((stmt, index) =>
+            stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+                ? [{ index, name: stmt.right.method.name, result: stmt.left }]
+                : [],
+        );
+        const checkIndex = stmts.findIndex(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr",
+        );
+        const check = stmts[checkIndex];
+        const concrete = new Function(`${source}\nreturn { result: check(), order };`)() as {
+            result: boolean;
+            order: string[];
+        };
+
+        expect(calls.map((call) => call.name)).toEqual(["left", "choose"]);
+        expect(calls[1].index).toBeLessThan(checkIndex);
+        expect(check).toMatchObject({
+            right: {
+                _: "InstanceOfExpr",
+                arg: calls[0].result,
+                checkValue: calls[1].result,
+                checkType: null,
+            },
+        });
+        expect(concrete).toEqual({ result: true, order: ["left", "choose"] });
+    });
+
+    it("keeps a direct class value in the instanceof check", () => {
+        const { file } = lower(`
+            class A {}
+            function check(value: object): boolean { return value instanceof A; }
+        `);
+        const stmts = flattened(methodByName(file, "check"));
+
+        expect(stmts).toContainEqual(expect.objectContaining({
+            right: expect.objectContaining({
+                _: "InstanceOfExpr",
+                checkValue: expect.objectContaining({ _: "ClassValueRef", signature: expect.objectContaining({ name: "A" }) }),
+                checkType: expect.objectContaining({ _: "ClassType", signature: expect.objectContaining({ name: "A" }) }),
+            }),
+        }));
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "Local"
+            && stmt.right.name === "A")).toBe(false);
+    });
+
+    it("marks an unrepresented constructor declaration unsupported", () => {
+        const { file, diagnostics } = lower(`
+            function Constructor() {}
+            function check(value: object): boolean { return value instanceof Constructor; }
+        `);
+        const stmts = flattened(methodByName(file, "check"));
+
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr")).toBe(false);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "Local"
+            && stmt.right.name === "Constructor")).toBe(false);
+        expect(diagnostics.messages).toEqual(expect.arrayContaining([
+            expect.stringContaining("runtime value of declaration 'Constructor' is not represented"),
+            expect.stringContaining("instanceof constructor value cannot be represented"),
+        ]));
+    });
+
+    it("marks an instanceof check unsupported when its constructor call contains a spread", () => {
+        const { file, diagnostics } = lower(`
+            class A {}
+            function left(): A { return new A(); }
+            function first(): typeof A { return A; }
+            function choose(candidate: typeof A, ...rest: Array<typeof A>): typeof A { return candidate; }
+            function check(args: Array<typeof A>): boolean {
+                return left() instanceof choose(first(), ...args);
+            }
+        `);
+        const stmts = flattened(methodByName(file, "check"));
+        const calls = stmts.flatMap((stmt, index) =>
+            stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+                ? [{ index, name: stmt.right.method.name }]
+                : [],
+        );
+        const spreadIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "UnsupportedValue" && stmt.right.kindName === "SpreadElement");
+        const checkIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "UnsupportedValue" && stmt.right.kindName === "BinaryExpression");
+
+        expect(calls.map((call) => call.name)).toEqual(["left", "first", "choose"]);
+        expect(calls[1].index).toBeLessThan(spreadIndex);
+        expect(spreadIndex).toBeLessThan(calls[2].index);
+        expect(calls[2].index).toBeLessThan(checkIndex);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr")).toBe(false);
+        expect(diagnostics.messages).toEqual(expect.arrayContaining([
+            expect.stringContaining("spread arguments are not supported"),
+            expect.stringContaining("instanceof constructor value cannot be represented"),
+        ]));
+    });
+
+    it("snapshots the instanceof left operand before the right operand reassigns it", () => {
+        const { file } = lower(`
+            class A {}
+            function choose(): typeof A { return A; }
+            function check(value: object, replacement: object): boolean {
+                return value instanceof (value = replacement, choose());
+            }
+        `);
+        const stmts = flattened(methodByName(file, "check"));
+        const snapshotIndex = stmts.findIndex(
+            (stmt) => stmt._ === "AssignStmt" && stmt.left._ === "Local"
+                && stmt.left.name.startsWith("%") && stmt.right._ === "Local" && stmt.right.name === "value",
+        );
+        const mutationIndex = stmts.findIndex(
+            (stmt) => stmt._ === "AssignStmt" && stmt.left._ === "Local"
+                && stmt.left.name === "value" && stmt.right._ === "Local"
+                && stmt.right.name === "replacement",
+        );
+        const check = stmts.find(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr",
+        );
+
+        expect(snapshotIndex).toBeGreaterThanOrEqual(0);
+        expect(mutationIndex).toBeGreaterThan(snapshotIndex);
+        expect(check).toMatchObject({
+            right: { arg: (stmts[snapshotIndex] as Extract<StmtDto, { _: "AssignStmt" }>).left },
+        });
+    });
+
     it("evaluates an instance receiver before its arguments", () => {
         const { file } = lower(`
             class Service { run(value: number): void {} }

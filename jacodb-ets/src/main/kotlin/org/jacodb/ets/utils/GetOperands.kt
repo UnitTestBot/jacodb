@@ -179,7 +179,7 @@ private object EntityGetOperands : EtsEntity.Visitor<Sequence<EtsEntity>> {
         sequenceOf(expr.arg)
 
     override fun visit(expr: EtsInstanceOfExpr): Sequence<EtsEntity> =
-        sequenceOf(expr.arg)
+        listOfNotNull(expr.arg, expr.checkValue).asSequence()
 
     override fun visit(expr: EtsDeleteExpr): Sequence<EtsEntity> =
         sequenceOf(expr.arg)

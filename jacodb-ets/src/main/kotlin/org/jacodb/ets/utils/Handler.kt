@@ -237,6 +237,7 @@ abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> 
     final override fun visit(expr: EtsInstanceOfExpr) {
         handle(expr)
         expr.arg.accept(this)
+        expr.checkValue?.accept(this)
     }
 
     final override fun visit(expr: EtsDeleteExpr) {
