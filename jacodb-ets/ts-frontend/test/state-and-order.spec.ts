@@ -1,7 +1,8 @@
+import * as ts from "typescript";
 import { describe, expect, it } from "vitest";
 import { Modifier } from "../src/dto/constants";
 import { StmtDto } from "../src/dto/stmts";
-import { defaultMethod, lower, methodByName } from "./util";
+import { compile, defaultMethod, lower, methodByName } from "./util";
 
 function flattened(method: ReturnType<typeof defaultMethod>): StmtDto[] {
     return method.body!.cfg.blocks.flatMap((block) => block.stmts);
@@ -55,6 +56,41 @@ describe("shared module state", () => {
 });
 
 describe("call evaluation order", () => {
+    it("evaluates a mutable instanceof constructor receiver before unsupported", () => {
+        const source = `
+            namespace N { export class A {} }
+            let reads = 0;
+            function getN(): typeof N { reads++; return N; }
+            export function check(value: object): boolean { return value instanceof getN().A; }
+            export function readCount(): number { return reads; }
+        `;
+        const compiled = compile(source);
+        expect(compiled.program.getSemanticDiagnostics(compiled.sourceFile)).toEqual([]);
+
+        const { file } = lower(source);
+        const stmts = flattened(methodByName(file, "check"));
+        const getNIndices = stmts.flatMap((stmt, index) =>
+            stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+                && stmt.right.method.name === "getN" ? [index] : [],
+        );
+        const unsupportedIndex = stmts.findIndex(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue",
+        );
+
+        expect(getNIndices).toHaveLength(1);
+        expect(getNIndices[0]).toBeLessThan(unsupportedIndex);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr")).toBe(false);
+
+        const js = ts.transpileModule(source, {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+        }).outputText;
+        const concrete = new Function("exports", `${js}\nreturn {
+            result: check(new N.A()),
+            reads: readCount(),
+        };`)({}) as { result: boolean; reads: number };
+        expect(concrete).toEqual({ result: true, reads: 1 });
+    });
+
     it("evaluates both instanceof operands once in source order", () => {
         const source = `
             class A {}

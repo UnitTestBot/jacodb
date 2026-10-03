@@ -617,6 +617,7 @@ export class ExprLowerer {
         if (opKind === ts.SyntaxKind.InstanceOfKeyword) {
             const arg = this.lowerImmediateBefore(node.left, node.right);
             if (this.isProjectClassProperty(node.right)) {
+                this.evaluateProjectClassPropertyReceiver(node.right);
                 throw new LoweringError("instanceof through a mutable class property is not represented in EtsIR");
             }
 
