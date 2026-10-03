@@ -38,6 +38,8 @@ describe("class lowering", () => {
             export function constructorValue(): typeof A { return A; }
             export function copy(): typeof A { const saved = A; return saved; }
             export function create(): A { return new A(); }
+            export function createParenthesized(): A { return new (A)(); }
+            export function createWrapped(): A { return new ((A as typeof A)!)(); }
             export function direct(value: object): boolean { return value instanceof A; }
             export function marker(): number { return A.marker; }
             export default A;
@@ -48,6 +50,8 @@ describe("class lowering", () => {
         const read = singleBlockStmts(methodOf(defaultClass, "constructorValue"));
         const copy = singleBlockStmts(methodOf(defaultClass, "copy"));
         const create = singleBlockStmts(methodOf(defaultClass, "create"));
+        const createParenthesized = singleBlockStmts(methodOf(defaultClass, "createParenthesized"));
+        const createWrapped = singleBlockStmts(methodOf(defaultClass, "createWrapped"));
         const direct = singleBlockStmts(methodOf(defaultClass, "direct"));
         const marker = singleBlockStmts(methodOf(defaultClass, "marker"));
 
@@ -62,6 +66,12 @@ describe("class lowering", () => {
         }));
         expect(copy).toContainEqual(expect.objectContaining({ _: "ReturnStmt", arg: expect.objectContaining({ name: "saved" }) }));
         expect(create.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(true);
+        for (const stmts of [createParenthesized, createWrapped]) {
+            expect(stmts).toContainEqual(expect.objectContaining({
+                _: "AssignStmt",
+                right: { _: "NewExpr", classType: { _: "ClassType", signature: classSignature } },
+            }));
+        }
         expect(direct.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr")).toBe(true);
         expect(marker.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticFieldRef")).toBe(true);
         expect(file.exportInfos).toContainEqual(expect.objectContaining({ exportName: "A" }));
@@ -73,9 +83,11 @@ describe("class lowering", () => {
         const concrete = new Function("exports", `${js}\nreturn {
             same: constructorValue() === A && copy() === A,
             instance: new (constructorValue())() instanceof A,
+            parenthesized: createParenthesized() instanceof A,
+            wrapped: createWrapped() instanceof A,
             marker: marker(),
-        };`)({}) as { same: boolean; instance: boolean; marker: number };
-        expect(concrete).toEqual({ same: true, instance: true, marker: 7 });
+        };`)({}) as { same: boolean; instance: boolean; parenthesized: boolean; wrapped: boolean; marker: number };
+        expect(concrete).toEqual({ same: true, instance: true, parenthesized: true, wrapped: true, marker: 7 });
     });
 
     it("keeps complete stable names for class decorators", () => {

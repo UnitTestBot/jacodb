@@ -1364,14 +1364,15 @@ export class ExprLowerer {
      * ambient ones get the %unk file.
      */
     private classLikeSignatureOf(node: ts.Expression): ClassSignatureDto | undefined {
-        if (!ts.isIdentifier(node) && !ts.isPropertyAccessExpression(node)) {
+        const value = unwrapTransparentExpression(node);
+        if (!ts.isIdentifier(value) && !ts.isPropertyAccessExpression(value)) {
             return undefined;
         }
-        if (this.isProjectClassProperty(node)) {
+        if (this.isProjectClassProperty(value)) {
             return undefined;
         }
 
-        const symbol = this.m.converter.symbolOf(ts.isIdentifier(node) ? node : node.name);
+        const symbol = this.m.converter.symbolOf(ts.isIdentifier(value) ? value : value.name);
         const decl = symbol?.declarations?.find(
             (d): d is ts.ClassDeclaration | ts.EnumDeclaration =>
                 ts.isClassDeclaration(d) || ts.isEnumDeclaration(d),
