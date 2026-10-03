@@ -98,9 +98,9 @@ describe("export infos", () => {
             export default Main;
         `);
         expect(file.exportInfos).toEqual([
-            { exportName: "Main", exportType: 1, modifiers: Modifier.DEFAULT, isTypeOnly: false },
+            { exportName: "default", exportType: 3, modifiers: Modifier.DEFAULT, isTypeOnly: false, nameBeforeAs: "Main" },
         ]);
-        expect(diagnostics.messages).toContainEqual(expect.stringContaining("has no EtsIR value reference"));
+        expect(diagnostics.messages).toEqual([]);
     });
 
     it("handles export default declarations", () => {

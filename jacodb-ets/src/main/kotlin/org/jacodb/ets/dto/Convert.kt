@@ -43,6 +43,8 @@ import org.jacodb.ets.model.EtsClassCategory
 import org.jacodb.ets.model.EtsClassImpl
 import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsClassType
+import org.jacodb.ets.model.EtsClassValueRef
+import org.jacodb.ets.model.EtsClassValueType
 import org.jacodb.ets.model.EtsClosureFieldRef
 import org.jacodb.ets.model.EtsConstant
 import org.jacodb.ets.model.EtsDecorator
@@ -329,6 +331,13 @@ class EtsMethodBuilder(
     private fun ValueDto.toEtsEntity(): EtsEntity = when (this) {
         is LocalDto -> toEtsLocal()
 
+        is ClassValueRefDto -> {
+            require(type is ClassValueTypeDto && signature == type.signature) {
+                "ClassValueRef signature and type must match"
+            }
+            EtsClassValueRef(signature.toEtsClassSignature())
+        }
+
         is ConstantDto -> toEtsConstant()
 
         is NewExprDto -> EtsNewExpr(
@@ -360,7 +369,8 @@ class EtsMethodBuilder(
 
         is InstanceOfExprDto -> EtsInstanceOfExpr(
             arg = arg.toEtsEntity(),
-            checkType = checkType.toEtsType(),
+            checkType = checkType?.toEtsType(),
+            checkValue = checkValue?.toEtsEntity(),
         )
 
         is CastExprDto -> EtsCastExpr(
@@ -618,6 +628,8 @@ fun TypeDto.toEtsType(): EtsType = when (this) {
     BooleanTypeDto -> EtsBooleanType
 
     is ClassTypeDto -> toEtsClassType()
+
+    is ClassValueTypeDto -> EtsClassValueType(signature.toEtsClassSignature())
 
     is EnumValueTypeDto -> EtsEnumValueType(
         signature = signature.toEtsClassSignature(),

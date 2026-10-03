@@ -23,6 +23,17 @@ import org.jacodb.api.common.cfg.CommonThis
 
 interface EtsRef : EtsValue
 
+/** A stable reference to the runtime constructor object of a declared class. */
+data class EtsClassValueRef(
+    val signature: EtsClassSignature,
+) : EtsRef, EtsImmediate {
+    override val type: EtsClassValueType get() = EtsClassValueType(signature)
+
+    override fun toString(): String = "class ${signature.name}"
+
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R = visitor.visit(this)
+}
+
 data class EtsThis(
     override val type: EtsType,
 ) : EtsRef, EtsImmediate, CommonThis {

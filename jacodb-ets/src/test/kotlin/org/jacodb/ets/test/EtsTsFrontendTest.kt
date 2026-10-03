@@ -24,9 +24,12 @@ import org.jacodb.ets.dto.AssignStmtDto
 import org.jacodb.ets.dto.BooleanTypeDto
 import org.jacodb.ets.dto.CaughtExceptionRefDto
 import org.jacodb.ets.dto.ClassTypeDto
+import org.jacodb.ets.dto.ClassValueRefDto
+import org.jacodb.ets.dto.ClassValueTypeDto
 import org.jacodb.ets.dto.ConstantDto
 import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.dto.IfStmtDto
+import org.jacodb.ets.dto.InstanceOfExprDto
 import org.jacodb.ets.dto.LocalDto
 import org.jacodb.ets.dto.NewArrayExprDto
 import org.jacodb.ets.dto.NewExprDto
@@ -34,22 +37,28 @@ import org.jacodb.ets.dto.NumberTypeDto
 import org.jacodb.ets.dto.Ops
 import org.jacodb.ets.dto.RawStmtDto
 import org.jacodb.ets.dto.RelationOperationDto
+import org.jacodb.ets.dto.ReturnStmtDto
 import org.jacodb.ets.dto.StringTypeDto
 import org.jacodb.ets.dto.StaticCallExprDto
 import org.jacodb.ets.dto.StaticFieldRefDto
 import org.jacodb.ets.dto.ThrowStmtDto
 import org.jacodb.ets.dto.UnaryOperationDto
 import org.jacodb.ets.dto.UnknownTypeDto
+import org.jacodb.ets.dto.ValueDto
 import org.jacodb.ets.dto.dtoModule
 import org.jacodb.ets.dto.toEtsFile
 import org.jacodb.ets.model.EtsArrayAccess
 import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsCaughtExceptionRef
 import org.jacodb.ets.model.EtsCallStmt
+import org.jacodb.ets.model.EtsClassValueRef
+import org.jacodb.ets.model.EtsClassValueType
 import org.jacodb.ets.model.EtsClosureFieldRef
 import org.jacodb.ets.model.EtsEqExpr
 import org.jacodb.ets.model.EtsIfStmt
 import org.jacodb.ets.model.EtsInstanceFieldRef
+import org.jacodb.ets.model.EtsInstanceOfExpr
+import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsRawStmt
 import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.model.EtsNewArrayExpr
@@ -136,7 +145,7 @@ class EtsTsFrontendTest {
     }
 
     @Test
-    fun `namespaced constructor in default export survives JSON conversion`() {
+    fun `mutable namespaced constructor in default export remains unsupported in JSON`() {
         val dto = runFrontend(
             """
                 namespace N { export class Box { constructor(public value: number) {} } }
@@ -147,14 +156,11 @@ class EtsTsFrontendTest {
         val defaultClass = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
         val stmts = defaultClass.methods.single { it.signature.name == DEFAULT_ARK_METHOD_NAME }
             .body!!.cfg.blocks.flatMap { it.stmts }
-        val allocation = stmts.filterIsInstance<AssignStmtDto>()
-            .map { it.right }.filterIsInstance<NewExprDto>().single()
-        val classType = allocation.classType as ClassTypeDto
 
-        assertEquals("Box", classType.signature.name)
-        assertEquals("N", classType.signature.declaringNamespace?.name)
-        assertTrue(defaultClass.fields.any { it.signature.name == "default" })
-        assertEquals("default", dto.toEtsFile().exportInfos.single { it.isDefaultExport }.name)
+        assertTrue(stmts.any { it is RawStmtDto && it.kind == "UnsupportedStmt" })
+        assertTrue(stmts.filterIsInstance<AssignStmtDto>().none { it.right is NewExprDto })
+        assertTrue(defaultClass.fields.none { it.signature.name == "default" })
+        assertTrue(dto.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }.fields.none { it.name == "default" })
     }
 
     @Test
@@ -238,6 +244,98 @@ class EtsTsFrontendTest {
 
         assertTrue(exportWrite >= 0)
         assertTrue(laterWrite > exportWrite)
+    }
+
+    @Test
+    fun `declared class constructor value survives frontend JSON and model conversion`() {
+        val dto = runFrontend(
+            """
+                class A { static marker = 7; }
+                export function constructorValue(): typeof A { return A; }
+                export function copy(): typeof A { const saved = A; return saved; }
+                export function create(): A { return new A(); }
+                export function direct(value: object): boolean { return value instanceof A; }
+                export function marker(): number { return A.marker; }
+                export default A;
+            """.trimIndent(),
+        )
+        val classSignature = dto.classes.single { it.signature.name == "A" }.signature
+        val methods = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }.methods
+        val constructorValue = methods.single { it.signature.name == "constructorValue" }
+        val copy = methods.single { it.signature.name == "copy" }
+        val returnedClass = constructorValue.body!!.cfg.blocks.flatMap { it.stmts }
+            .filterIsInstance<ReturnStmtDto>().single().arg as ClassValueRefDto
+
+        assertEquals(classSignature, returnedClass.signature)
+        assertEquals(ClassValueTypeDto(classSignature), returnedClass.type)
+        assertEquals(ClassValueTypeDto(classSignature), constructorValue.signature.returnType)
+        assertTrue(copy.body!!.cfg.blocks.flatMap { it.stmts }
+            .filterIsInstance<AssignStmtDto>().any { it.right == returnedClass })
+        assertTrue(dto.exportInfos.any { it.exportName == "default" && it.nameBeforeAs == "A" })
+        val defaultClass = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+        assertEquals(ClassValueTypeDto(classSignature), defaultClass.fields.single { it.signature.name == "default" }.signature.type)
+        assertTrue(defaultClass.methods.single { it.signature.name == DEFAULT_ARK_METHOD_NAME }
+            .body!!.cfg.blocks.flatMap { it.stmts }.filterIsInstance<AssignStmtDto>()
+            .any { (it.left as? StaticFieldRefDto)?.field?.name == "default" && it.right == returnedClass })
+
+        val model = dto.toEtsFile()
+        assertEquals("default", model.exportInfos.single { it.isDefaultExport }.name)
+        val modelMethods = model.classes.single { it.name == DEFAULT_ARK_CLASS_NAME }.methods
+        val modelConstructor = modelMethods.single { it.name == "constructorValue" }
+        assertTrue(modelConstructor.signature.returnType is EtsClassValueType)
+        assertTrue(modelConstructor.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+            .any { it.rhv is EtsClassValueRef })
+        assertTrue(modelMethods.single { it.name == "create" }.cfg.stmts
+            .filterIsInstance<EtsAssignStmt>().any { it.rhv is org.jacodb.ets.model.EtsNewExpr })
+        assertTrue(modelMethods.single { it.name == "direct" }.cfg.stmts
+            .filterIsInstance<EtsAssignStmt>().any { it.rhv is EtsInstanceOfExpr })
+    }
+
+    @Test
+    fun `instanceof constructor call survives frontend JSON and model conversion`() {
+        val dto = runFrontend(
+            """
+                class A {}
+                function choose(): typeof A { return A; }
+                export function check(value: object): boolean {
+                    return value instanceof choose();
+                }
+            """.trimIndent(),
+        )
+        val defaultClass = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+        val checkMethod = defaultClass.methods.single { it.signature.name == "check" }
+        val assignments = checkMethod.body!!.cfg.blocks.flatMap { it.stmts }.filterIsInstance<AssignStmtDto>()
+        val constructorCall = assignments.single { (it.right as? StaticCallExprDto)?.method?.name == "choose" }
+        val instanceCheck = assignments.single { it.right is InstanceOfExprDto }.right as InstanceOfExprDto
+
+        assertEquals(constructorCall.left, instanceCheck.checkValue)
+        assertEquals(null, instanceCheck.checkType)
+
+        val model = dto.toEtsFile()
+        val modelMethod = model.classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "check" }
+        val modelCheck = modelMethod.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+            .single { it.rhv is EtsInstanceOfExpr }.rhv as EtsInstanceOfExpr
+
+        assertEquals((constructorCall.left as LocalDto).name, (modelCheck.checkValue as EtsLocal).name)
+        assertEquals(null, modelCheck.checkType)
+    }
+
+    @Test
+    fun `legacy instanceof JSON keeps its static type without a constructor value`() {
+        val legacyJson = """
+            {
+              "_": "InstanceOfExpr",
+              "arg": { "_": "Constant", "value": "null", "type": { "_": "NullType" } },
+              "checkType": { "_": "UnknownType" }
+            }
+        """.trimIndent()
+
+        val decoded = Json { serializersModule = dtoModule }
+            .decodeFromString(ValueDto.serializer(), legacyJson) as InstanceOfExprDto
+
+        assertEquals(UnknownTypeDto, decoded.checkType)
+        assertEquals(null, decoded.checkValue)
     }
 
     @Test

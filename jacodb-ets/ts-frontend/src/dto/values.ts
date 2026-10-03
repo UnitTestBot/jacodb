@@ -28,8 +28,8 @@
  */
 
 import { BinaryOp, RelationOp, UnaryOp } from "./ops";
-import { FieldSignatureDto, MethodSignatureDto } from "./signatures";
-import { TypeDto } from "./types";
+import { ClassSignatureDto, FieldSignatureDto, MethodSignatureDto } from "./signatures";
+import { ClassValueTypeDto, TypeDto } from "./types";
 
 /**
  * Closed union of the known value kinds.
@@ -39,7 +39,7 @@ import { TypeDto } from "./types";
  */
 export type ValueDto = ImmediateDto | ExprDto | RefDto;
 
-export type ImmediateDto = LocalDto | ConstantDto;
+export type ImmediateDto = LocalDto | ConstantDto | ClassValueRefDto;
 
 export type ExprDto =
     | NewExprDto
@@ -92,6 +92,13 @@ export interface ConstantDto {
     type: TypeDto;
 }
 
+/** A declared class's stable runtime constructor identity. */
+export interface ClassValueRefDto {
+    readonly _: "ClassValueRef";
+    signature: ClassSignatureDto;
+    type: ClassValueTypeDto;
+}
+
 export interface NewExprDto {
     readonly _: "NewExpr";
     classType: TypeDto; // ClassType
@@ -126,7 +133,8 @@ export interface TypeOfExprDto {
 export interface InstanceOfExprDto {
     readonly _: "InstanceOfExpr";
     arg: ValueDto;
-    checkType: TypeDto;
+    checkValue: ValueDto;
+    checkType: TypeDto | null;
 }
 
 export interface CastExprDto {

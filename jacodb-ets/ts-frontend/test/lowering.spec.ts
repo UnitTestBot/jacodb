@@ -567,6 +567,7 @@ describe("straight-line lowering", () => {
         expect(check.right).toMatchObject({
             _: "InstanceOfExpr",
             arg: { _: "Local" },
+            checkValue: { _: "ClassValueRef", signature: { name: "C" } },
             checkType: { _: "ClassType", signature: { name: "C" } },
         });
     });

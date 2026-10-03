@@ -26,6 +26,7 @@ import org.jacodb.ets.model.EtsBitNotExpr
 import org.jacodb.ets.model.EtsBitOrExpr
 import org.jacodb.ets.model.EtsBitXorExpr
 import org.jacodb.ets.model.EtsBooleanConstant
+import org.jacodb.ets.model.EtsClassValueRef
 import org.jacodb.ets.model.EtsCallStmt
 import org.jacodb.ets.model.EtsCastExpr
 import org.jacodb.ets.model.EtsCaughtExceptionRef
@@ -123,6 +124,9 @@ private object EntityGetOperands : EtsEntity.Visitor<Sequence<EtsEntity>> {
     override fun visit(value: EtsLocal): Sequence<EtsEntity> =
         emptySequence()
 
+    override fun visit(value: EtsClassValueRef): Sequence<EtsEntity> =
+        emptySequence()
+
     override fun visit(value: EtsConstant): Sequence<EtsEntity> =
         emptySequence()
 
@@ -175,7 +179,7 @@ private object EntityGetOperands : EtsEntity.Visitor<Sequence<EtsEntity>> {
         sequenceOf(expr.arg)
 
     override fun visit(expr: EtsInstanceOfExpr): Sequence<EtsEntity> =
-        sequenceOf(expr.arg)
+        listOfNotNull(expr.arg, expr.checkValue).asSequence()
 
     override fun visit(expr: EtsDeleteExpr): Sequence<EtsEntity> =
         sequenceOf(expr.arg)

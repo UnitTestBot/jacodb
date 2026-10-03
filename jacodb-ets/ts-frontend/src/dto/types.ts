@@ -45,6 +45,7 @@ export type TypeDto =
     | UndefinedTypeDto
     | LiteralTypeDto
     | ClassTypeDto
+    | ClassValueTypeDto
     | UnclearReferenceTypeDto
     | ArrayTypeDto
     | TupleTypeDto
@@ -139,6 +140,12 @@ export interface ClassTypeDto {
     readonly _: "ClassType";
     signature: ClassSignatureDto;
     typeParameters?: TypeDto[]; // Kotlin default: empty list
+}
+
+/** The runtime constructor object of a declared class, distinct from its instances. */
+export interface ClassValueTypeDto {
+    readonly _: "ClassValueType";
+    signature: ClassSignatureDto;
 }
 
 export interface UnclearReferenceTypeDto {

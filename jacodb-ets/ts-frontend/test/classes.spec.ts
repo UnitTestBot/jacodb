@@ -1,9 +1,10 @@
+import * as ts from "typescript";
 import { describe, expect, it } from "vitest";
 import { Modifier } from "../src/dto/constants";
 import { ClassDto, EtsFileDto, MethodDto } from "../src/dto/model";
 import { StmtDto } from "../src/dto/stmts";
 import { InstanceCallExprDto } from "../src/dto/values";
-import { lower, singleBlockStmts } from "./util";
+import { compile, lower, singleBlockStmts } from "./util";
 
 const FILE_SIG = { projectName: "proj", fileName: "test.ts" };
 
@@ -31,6 +32,134 @@ function constructorCallOf(stmt: StmtDto): InstanceCallExprDto | undefined {
 }
 
 describe("class lowering", () => {
+    it("preserves a declared class constructor across reads, assignments, and returns", () => {
+        const source = `
+            class A { static marker = 7; }
+            export function constructorValue(): typeof A { return A; }
+            export function copy(): typeof A { const saved = A; return saved; }
+            export function create(): A { return new A(); }
+            export function createParenthesized(): A { return new (A)(); }
+            export function createWrapped(): A { return new ((A as typeof A)!)(); }
+            export function direct(value: object): boolean { return value instanceof A; }
+            export function marker(): number { return A.marker; }
+            export default A;
+        `;
+        const { file, diagnostics } = lower(source);
+        const defaultClass = classByName(file, "%dflt");
+        const classSignature = classByName(file, "A").signature;
+        const read = singleBlockStmts(methodOf(defaultClass, "constructorValue"));
+        const copy = singleBlockStmts(methodOf(defaultClass, "copy"));
+        const create = singleBlockStmts(methodOf(defaultClass, "create"));
+        const createParenthesized = singleBlockStmts(methodOf(defaultClass, "createParenthesized"));
+        const createWrapped = singleBlockStmts(methodOf(defaultClass, "createWrapped"));
+        const direct = singleBlockStmts(methodOf(defaultClass, "direct"));
+        const marker = singleBlockStmts(methodOf(defaultClass, "marker"));
+
+        expect(methodOf(defaultClass, "constructorValue").signature.returnType).toEqual({
+            _: "ClassValueType", signature: classSignature,
+        });
+        expect(read).toContainEqual(expect.objectContaining({
+            _: "ReturnStmt", arg: expect.objectContaining({ _: "ClassValueRef", signature: classSignature }),
+        }));
+        expect(copy).toContainEqual(expect.objectContaining({
+            _: "AssignStmt", right: expect.objectContaining({ _: "ClassValueRef", signature: classSignature }),
+        }));
+        expect(copy).toContainEqual(expect.objectContaining({ _: "ReturnStmt", arg: expect.objectContaining({ name: "saved" }) }));
+        expect(create.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(true);
+        for (const stmts of [createParenthesized, createWrapped]) {
+            expect(stmts).toContainEqual(expect.objectContaining({
+                _: "AssignStmt",
+                right: { _: "NewExpr", classType: { _: "ClassType", signature: classSignature } },
+            }));
+        }
+        expect(direct.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr")).toBe(true);
+        expect(marker.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticFieldRef")).toBe(true);
+        expect(defaultClass.fields).toContainEqual(expect.objectContaining({
+            signature: expect.objectContaining({ name: "default", type: { _: "ClassValueType", signature: classSignature } }),
+        }));
+        expect(methodOf(defaultClass, "%dflt").body!.cfg.blocks.flatMap((block) => block.stmts)).toContainEqual(
+            expect.objectContaining({
+                _: "AssignStmt",
+                left: expect.objectContaining({ _: "StaticFieldRef", field: expect.objectContaining({ name: "default" }) }),
+                right: expect.objectContaining({ _: "ClassValueRef", signature: classSignature }),
+            }),
+        );
+        expect(file.exportInfos).toContainEqual(expect.objectContaining({ exportName: "default", nameBeforeAs: "A" }));
+        expect(diagnostics.messages).toEqual([]);
+
+        const js = ts.transpileModule(source, {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+        }).outputText;
+        const concrete = new Function("exports", `${js}\nreturn {
+            same: constructorValue() === A && copy() === A,
+            instance: new (constructorValue())() instanceof A,
+            parenthesized: createParenthesized() instanceof A,
+            wrapped: createWrapped() instanceof A,
+            marker: marker(),
+        };`)({}) as { same: boolean; instance: boolean; parenthesized: boolean; wrapped: boolean; marker: number };
+        expect(concrete).toEqual({ same: true, instance: true, parenthesized: true, wrapped: true, marker: 7 });
+    });
+
+    it("keeps dynamic new explicit unsupported after evaluating its constructor", () => {
+        const source = `
+            class A {}
+            let reads = 0;
+            function constructorValue(): typeof A { reads++; return A; }
+            function constructorBySignature(): new () => A { reads++; return A; }
+            export function create(): A { return new (constructorValue())(); }
+            export function createAlias(): A {
+                const ctor = constructorValue();
+                return new ctor();
+            }
+            export function createBySignature(): A { return new (constructorBySignature())(); }
+            export function createSignatureAlias(): A {
+                const ctor: new () => A = constructorBySignature();
+                return new ctor();
+            }
+            export function readCount(): number { return reads; }
+        `;
+        const { file, diagnostics } = lower(source);
+        const defaultClass = classByName(file, "%dflt");
+        const stmts = singleBlockStmts(methodOf(defaultClass, "create"));
+        const aliasStmts = singleBlockStmts(methodOf(defaultClass, "createAlias"));
+        const signatureStmts = singleBlockStmts(methodOf(defaultClass, "createBySignature"));
+        const signatureAliasStmts = singleBlockStmts(methodOf(defaultClass, "createSignatureAlias"));
+
+        expect(stmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+            && stmt.right.method.name === "constructorValue")).toHaveLength(1);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
+        expect(aliasStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
+        expect(aliasStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
+        expect(signatureStmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+            && stmt.right.method.name === "constructorBySignature")).toHaveLength(1);
+        for (const methodStmts of [signatureStmts, signatureAliasStmts]) {
+            expect(methodStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
+            expect(methodStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
+        }
+        expect(diagnostics.messages).toEqual(expect.arrayContaining([
+            expect.stringContaining("new through a runtime constructor value"),
+        ]));
+
+        const js = ts.transpileModule(source, {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+        }).outputText;
+        const concrete = new Function("exports", `${js}\nreturn {
+            instance: create() instanceof A,
+            aliasInstance: createAlias() instanceof A,
+            signatureInstance: createBySignature() instanceof A,
+            signatureAliasInstance: createSignatureAlias() instanceof A,
+            reads: readCount(),
+        };`)({}) as {
+            instance: boolean; aliasInstance: boolean;
+            signatureInstance: boolean; signatureAliasInstance: boolean; reads: number;
+        };
+        expect(concrete).toEqual({
+            instance: true, aliasInstance: true,
+            signatureInstance: true, signatureAliasInstance: true, reads: 4,
+        });
+    });
+
     it("keeps complete stable names for class decorators", () => {
         const { file } = lower(`
             @sealed
@@ -458,6 +587,135 @@ describe("enum lowering", () => {
 });
 
 describe("namespace lowering", () => {
+    it("evaluates a mutable class property's receiver before unsupported uses", () => {
+        const source = `
+            namespace N {
+                export class A {
+                    static marker = 7;
+                    static read(): number { return 9; }
+                }
+            }
+            let reads = 0;
+            function getN(): typeof N { reads++; return N; }
+            export function create(): N.A { return new (getN().A)(); }
+            export function marker(): number { return getN().A.marker; }
+            export function invoke(): number { return getN().A.read(); }
+            export function readCount(): number { return reads; }
+        `;
+        const compiled = compile(source);
+        expect(compiled.program.getSemanticDiagnostics(compiled.sourceFile)).toEqual([]);
+
+        const { file } = lower(source);
+        const defaultClass = classByName(file, "%dflt");
+        for (const methodName of ["create", "marker", "invoke"]) {
+            const stmts = singleBlockStmts(methodOf(defaultClass, methodName));
+            const callIndices = stmts.flatMap((stmt, index) =>
+                stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+                    && stmt.right.method.name === "getN" ? [index] : [],
+            );
+            const unsupportedIndex = stmts.findIndex(
+                (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue",
+            );
+
+            expect(callIndices).toHaveLength(1);
+            expect(callIndices[0]).toBeLessThan(unsupportedIndex);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticFieldRef"
+                && stmt.right.field.name === "marker")).toBe(false);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+                && stmt.right.method.name === "read")).toBe(false);
+        }
+
+        const js = ts.transpileModule(source, {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+        }).outputText;
+        const concrete = new Function("exports", `${js}\nreturn {
+            created: create() instanceof N.A,
+            marker: marker(),
+            invoked: invoke(),
+            reads: readCount(),
+        };`)({}) as { created: boolean; marker: number; invoked: number; reads: number };
+        expect(concrete).toEqual({ created: true, marker: 7, invoked: 9, reads: 3 });
+    });
+
+    it("keeps lexical class values but rejects mutable qualified constructor reads", () => {
+        const source = `
+            namespace N {
+                export class A { static marker = 7; }
+                export function direct(): typeof A { return A; }
+            }
+            class B { static marker = 8; }
+            export function qualified(): typeof N.A { return N.A; }
+            export function dynamic(holder: typeof N): typeof N.A { return holder.A; }
+            export function marker(): number { return N.A.marker; }
+            export function create(): N.A { return new N.A(); }
+            export function createParenthesized(): N.A { return new (N.A)(); }
+            export function createAsserted(): N.A { return new ((N.A as typeof N.A)!)(); }
+            export function replace(): void { N.A = B; }
+            export function check(value: object): boolean { return value instanceof N.A; }
+            export function checkParenthesized(value: object): boolean { return value instanceof (N.A); }
+            export function checkSatisfies(value: object): boolean {
+                return value instanceof (N.A satisfies typeof N.A);
+            }
+        `;
+        const { file, diagnostics } = lower(source);
+        const namespace = file.namespaces[0]!;
+        const classSignature = namespace.classes!.find((clazz) => clazz.signature.name === "A")!.signature;
+        const direct = singleBlockStmts(methodOf(namespace.classes!.find((clazz) => clazz.signature.name === "%dflt")!, "direct"));
+        const defaultClass = classByName(file, "%dflt");
+        const qualified = singleBlockStmts(methodOf(defaultClass, "qualified"));
+        const dynamic = singleBlockStmts(methodOf(defaultClass, "dynamic"));
+        const marker = singleBlockStmts(methodOf(defaultClass, "marker"));
+        const create = singleBlockStmts(methodOf(defaultClass, "create"));
+        const createParenthesized = singleBlockStmts(methodOf(defaultClass, "createParenthesized"));
+        const createAsserted = singleBlockStmts(methodOf(defaultClass, "createAsserted"));
+        const replace = singleBlockStmts(methodOf(defaultClass, "replace"));
+        const check = singleBlockStmts(methodOf(defaultClass, "check"));
+        const checkParenthesized = singleBlockStmts(methodOf(defaultClass, "checkParenthesized"));
+        const checkSatisfies = singleBlockStmts(methodOf(defaultClass, "checkSatisfies"));
+
+        expect(direct).toContainEqual(expect.objectContaining({
+            _: "ReturnStmt", arg: expect.objectContaining({ _: "ClassValueRef", signature: classSignature }),
+        }));
+        expect(dynamic.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceFieldRef"
+            && stmt.right.field.name === "A")).toBe(true);
+        for (const stmts of [
+            qualified, marker, create, createParenthesized, createAsserted, replace,
+            check, checkParenthesized, checkSatisfies,
+        ]) {
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
+        }
+        for (const stmts of [createParenthesized, createAsserted]) {
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
+        }
+        for (const stmts of [check, checkParenthesized, checkSatisfies]) {
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr")).toBe(false);
+        }
+        expect(diagnostics.messages).toEqual(expect.arrayContaining([
+            expect.stringContaining("mutable namespace class property"),
+            expect.stringContaining("instanceof through a mutable class property"),
+        ]));
+
+        const js = ts.transpileModule(source, {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+        }).outputText;
+        const concrete = new Function("exports", `${js}\nreturn {
+            before: qualified() === N.direct(),
+            after: (replace(), qualified() === B),
+            acceptsB: check(new B()),
+            rejectsA: check(new (N.direct())()),
+            parenthesized: createParenthesized() instanceof B && checkParenthesized(new B()),
+            asserted: createAsserted() instanceof B && checkSatisfies(new B()),
+        };`)({}) as {
+            before: boolean; after: boolean; acceptsB: boolean; rejectsA: boolean;
+            parenthesized: boolean; asserted: boolean;
+        };
+        expect(concrete).toEqual({
+            before: true, after: true, acceptsB: true, rejectsA: false,
+            parenthesized: true, asserted: true,
+        });
+    });
+
     it("builds NamespaceDto with its own %dflt class and declared classes", () => {
         const { file } = lower(`
             namespace Outer {

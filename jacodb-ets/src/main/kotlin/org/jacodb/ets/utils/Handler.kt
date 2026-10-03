@@ -26,6 +26,7 @@ import org.jacodb.ets.model.EtsBitNotExpr
 import org.jacodb.ets.model.EtsBitOrExpr
 import org.jacodb.ets.model.EtsBitXorExpr
 import org.jacodb.ets.model.EtsBooleanConstant
+import org.jacodb.ets.model.EtsClassValueRef
 import org.jacodb.ets.model.EtsCallStmt
 import org.jacodb.ets.model.EtsCastExpr
 import org.jacodb.ets.model.EtsCaughtExceptionRef
@@ -210,6 +211,10 @@ abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> 
         value.ref?.accept(this)
     }
 
+    final override fun visit(value: EtsClassValueRef) {
+        handle(value)
+    }
+
     final override fun visit(value: EtsClosureFieldRef) {
         handle(value)
         value.base.accept(this)
@@ -232,6 +237,7 @@ abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> 
     final override fun visit(expr: EtsInstanceOfExpr) {
         handle(expr)
         expr.arg.accept(this)
+        expr.checkValue?.accept(this)
     }
 
     final override fun visit(expr: EtsDeleteExpr) {

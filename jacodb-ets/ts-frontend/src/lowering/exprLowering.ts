@@ -140,6 +140,8 @@ interface OptionalChainValue {
 }
 
 export class ExprLowerer {
+    private unsupportedExpressionCount = 0;
+
     constructor(
         private readonly m: MethodContext,
         private readonly lowerFunctionBody?: FunctionBodyLowerer,
@@ -157,6 +159,7 @@ export class ExprLowerer {
                 return this.lowerExprImpl(node);
             } catch (e) {
                 if (e instanceof LoweringError) {
+                    this.unsupportedExpressionCount++;
                     this.m.diagnostics.warn(node, `unsupported expression: ${e.message}`);
                     // Raw fallback values are only legal as the RHS of a Local
                     // assignment (Kotlin's ensureOneAddress rejects EtsRawEntity in
@@ -169,10 +172,10 @@ export class ExprLowerer {
         });
     }
 
-    /** Lower to an immediate (Local | Constant), hoisting into a temp if needed. */
+    /** Lower to an immediate, hoisting non-immediate expressions into a temp. */
     lowerToImmediate(node: ts.Expression): ImmediateDto {
         const value = this.lowerExpr(node);
-        if (value._ === "Local" || value._ === "Constant") {
+        if (value._ === "Local" || value._ === "Constant" || value._ === "ClassValueRef") {
             return value;
         }
         return this.materialize(value, this.safeTypeOf(node));
@@ -308,6 +311,20 @@ export class ExprLowerer {
         if (node.text === "undefined") {
             return constant("undefined", UNDEFINED_TYPE);
         }
+        const declaration = this.m.converter.symbolOf(node)?.declarations?.find((candidate) =>
+            ts.isClassDeclaration(candidate) ||
+            (ts.isFunctionDeclaration(candidate) &&
+                (ts.isSourceFile(candidate.parent) || ts.isModuleBlock(candidate.parent))),
+        );
+        if (declaration !== undefined && ts.isClassDeclaration(declaration) &&
+            isProjectFile(declaration) &&
+            (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent))) {
+            const signature = this.m.converter.classSignatureOf(declaration);
+            return { _: "ClassValueRef", signature, type: { _: "ClassValueType", signature } };
+        }
+        if (declaration !== undefined) {
+            throw new LoweringError(`runtime value of declaration '${node.text}' is not represented in EtsIR`);
+        }
         const captured = this.m.capturedRefForIdentifier(node);
         if (captured !== undefined) return captured;
         const moduleField = this.m.moduleFieldForIdentifier(node);
@@ -338,6 +355,11 @@ export class ExprLowerer {
         const fieldName = node.name.text;
         const fieldType = this.safeTypeOf(node);
 
+        if (this.isProjectClassProperty(node.expression)) {
+            this.evaluateProjectClassPropertyReceiver(node.expression);
+            throw new LoweringError("member read through a mutable class property is not represented in EtsIR");
+        }
+
         const chain = optionalChain(node);
         if (chain !== undefined) {
             return this.lowerOptionalChain(node, chain);
@@ -349,6 +371,25 @@ export class ExprLowerer {
                 _: "StaticFieldRef",
                 field: { declaringClass: this.m.declaringClass, name: fieldName, type: fieldType },
             };
+        }
+
+        // Namespace class properties can be reassigned at runtime (`N.A = B`).
+        // A declaration signature would freeze the original constructor.
+        const receiverName = ts.isIdentifier(node.expression)
+            ? node.expression
+            : ts.isPropertyAccessExpression(node.expression)
+              ? node.expression.name
+              : undefined;
+        const receiverIsNamespace = receiverName !== undefined &&
+            this.m.converter.symbolOf(receiverName)?.declarations?.some(
+                (declaration) => ts.isModuleDeclaration(declaration) || ts.isSourceFile(declaration),
+            );
+        if (receiverIsNamespace) {
+            const declaration = this.m.converter.symbolOf(node.name)?.declarations?.find(ts.isClassDeclaration);
+            if (declaration !== undefined && isProjectFile(declaration) &&
+                (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent))) {
+                throw new LoweringError("mutable namespace class property is not represented in EtsIR");
+            }
         }
 
         const staticTarget = this.classLikeSignatureOf(node.expression);
@@ -574,10 +615,25 @@ export class ExprLowerer {
             return this.lowerExprImpl(node.right);
         }
         if (opKind === ts.SyntaxKind.InstanceOfKeyword) {
+            const arg = this.lowerImmediateBefore(node.left, node.right);
+            if (this.isProjectClassProperty(node.right)) {
+                this.evaluateProjectClassPropertyReceiver(node.right);
+                throw new LoweringError("instanceof through a mutable class property is not represented in EtsIR");
+            }
+
+            const unsupportedBeforeRight = this.unsupportedExpressionCount;
+            const checkValue = this.lowerToImmediate(node.right);
+
+            if (this.unsupportedExpressionCount !== unsupportedBeforeRight) {
+                this.m.diagnostics.warn(node, "instanceof constructor value cannot be represented in EtsIR");
+                return this.materialize(unsupportedValue(node, BOOLEAN_TYPE), BOOLEAN_TYPE);
+            }
+
             return {
                 _: "InstanceOfExpr",
-                arg: this.lowerToImmediate(node.left),
-                checkType: this.checkTypeOf(node.right),
+                arg,
+                checkValue,
+                checkType: this.checkTypeOf(checkValue),
             };
         }
 
@@ -815,6 +871,11 @@ export class ExprLowerer {
     lowerCall(node: ts.CallExpression): ValueDto {
         const callee = node.expression;
 
+        if (ts.isPropertyAccessExpression(callee) && this.isProjectClassProperty(callee.expression)) {
+            this.evaluateProjectClassPropertyReceiver(callee.expression);
+            throw new LoweringError("call through a mutable class property is not represented in EtsIR");
+        }
+
         const chain = optionalChain(node);
         if (chain !== undefined) {
             return this.lowerOptionalChain(node, chain);
@@ -1005,6 +1066,25 @@ export class ExprLowerer {
     }
 
     private lowerNew(node: ts.NewExpression): ValueDto {
+        if (this.isProjectClassProperty(node.expression)) {
+            this.evaluateProjectClassPropertyReceiver(node.expression);
+            throw new LoweringError("constructor read from a mutable class property is not represented in EtsIR");
+        }
+
+        const target = unwrapTransparentExpression(node.expression);
+        const declarations = ts.isIdentifier(target)
+            ? this.m.converter.symbolOf(target)?.declarations
+            : undefined;
+        // Keep the existing static lowering for built-in globals such as Date and Array.
+        // Their symbols may also contain declarations from library augmentations.
+        const standardLibraryIdentifier = declarations?.some(
+            (declaration) => this.m.ctx.isDefaultLibrarySourceFile(declaration.getSourceFile()),
+        ) === true;
+        if (this.classLikeSignatureOf(node.expression) === undefined && !standardLibraryIdentifier) {
+            this.lowerToImmediate(node.expression);
+            throw new LoweringError("new through a runtime constructor value is not represented in EtsIR");
+        }
+
         const inferredType = this.safeTypeOf(node);
         const args = node.arguments ?? ts.factory.createNodeArray();
         const lengthType = args.length === 1 ? this.safeTypeOf(args[0]) : undefined;
@@ -1316,7 +1396,12 @@ export class ExprLowerer {
      * ambient ones get the %unk file.
      */
     private classLikeSignatureOf(node: ts.Expression): ClassSignatureDto | undefined {
-        const decl = classLikeDeclarationOf(node, this.m.checker);
+        const value = unwrapTransparentExpression(node);
+        if (this.isProjectClassProperty(value)) {
+            return undefined;
+        }
+
+        const decl = classLikeDeclarationOf(value, this.m.checker);
         if (decl === undefined) return undefined;
         if (isProjectFile(decl)) {
             return this.m.converter.classSignatureOf(decl);
@@ -1325,8 +1410,24 @@ export class ExprLowerer {
         return { name, declaringFile: UNKNOWN_FILE_SIGNATURE };
     }
 
+    private isProjectClassProperty(node: ts.Expression): boolean {
+        const value = unwrapTransparentExpression(node);
+        return ts.isPropertyAccessExpression(value) &&
+            this.m.converter.symbolOf(value.name)?.declarations?.some(
+                (declaration) => ts.isClassDeclaration(declaration) && isProjectFile(declaration),
+            ) === true;
+    }
+
+    private evaluateProjectClassPropertyReceiver(node: ts.Expression): void {
+        const property = unwrapTransparentExpression(node);
+        if (ts.isPropertyAccessExpression(property)) {
+            // Preserve receiver effects without materializing the mutable class property.
+            this.lowerToImmediate(property.expression);
+        }
+    }
+
     private classSignatureFromType(type: TypeDto): ClassSignatureDto {
-        if (type._ === "ClassType") {
+        if (type._ === "ClassType" || type._ === "ClassValueType") {
             return type.signature;
         }
         return UNKNOWN_CLASS_SIGNATURE;
@@ -1408,18 +1509,15 @@ export class ExprLowerer {
         return [];
     }
 
-    private checkTypeOf(node: ts.Expression): TypeDto {
-        const signature = this.classLikeSignatureOf(node);
-        if (signature !== undefined) {
-            return { _: "ClassType", signature };
+    private checkTypeOf(checkValue: ImmediateDto): TypeDto | null {
+        if (checkValue._ === "ClassValueRef") {
+            return { _: "ClassType", signature: checkValue.signature };
         }
-        if (ts.isIdentifier(node)) {
-            return { _: "UnclearReferenceType", name: node.text };
-        }
-        return UNKNOWN_TYPE;
+        return null;
     }
 
     private spreadFallback(node: ts.SpreadElement): ValueDto {
+        this.unsupportedExpressionCount++;
         this.m.diagnostics.warn(node, "spread arguments are not supported yet");
         // Hoisted for the same reason as in lowerExpr: raw values are only
         // legal as the RHS of a Local assignment.
@@ -1520,6 +1618,20 @@ function containsPossibleSideEffect(node: ts.Node): boolean {
     };
     visit(node);
     return found;
+}
+
+/** Erase syntax that leaves an expression's runtime value unchanged. */
+function unwrapTransparentExpression(node: ts.Expression): ts.Expression {
+    while (
+        ts.isParenthesizedExpression(node)
+        || ts.isAsExpression(node)
+        || ts.isTypeAssertionExpression(node)
+        || ts.isNonNullExpression(node)
+        || ts.isSatisfiesExpression(node)
+    ) {
+        node = node.expression;
+    }
+    return node;
 }
 
 /** Identifier binding written by an assignment or an increment/decrement, if any. */

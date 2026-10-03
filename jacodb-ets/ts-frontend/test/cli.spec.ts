@@ -50,6 +50,65 @@ describe("parseArgs", () => {
 });
 
 describe("project mode", () => {
+    it("keeps an imported class alias while rejecting a mutable namespace property", () => {
+        const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-class-alias-"));
+        tempDirs.push(projectDir);
+        fs.writeFileSync(path.join(projectDir, "a.ts"), "export class Original {}");
+        fs.writeFileSync(path.join(projectDir, "b.ts"),
+            `import { Original as Alias } from "./a";
+             import * as ns from "./a";
+             export function read(): typeof Alias { return Alias; }
+             export function readNamespace(): typeof ns.Original { return ns.Original; }`);
+
+        const outputDir = path.join(projectDir, "ir");
+        expect(main(["--project", projectDir, outputDir])).toBe(0);
+        const imported = JSON.parse(fs.readFileSync(path.join(outputDir, "b.ts.json"), "utf8"));
+        const read = imported.classes[0].methods.find(
+            (method: { signature: { name: string } }) => method.signature.name === "read",
+        );
+        const returned = read.body.cfg.blocks.flatMap((block: { stmts: unknown[] }) => block.stmts)
+            .find((stmt: { _?: string }) => stmt._ === "ReturnStmt");
+        const readNamespace = imported.classes[0].methods.find(
+            (method: { signature: { name: string } }) => method.signature.name === "readNamespace",
+        );
+        const namespaceStmts = readNamespace.body.cfg.blocks.flatMap((block: { stmts: unknown[] }) => block.stmts);
+
+        expect(returned).toMatchObject({
+            arg: {
+                _: "ClassValueRef",
+                signature: { name: "Original", declaringFile: { fileName: "a.ts" } },
+            },
+        });
+        expect(namespaceStmts).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            right: expect.objectContaining({ _: "UnsupportedValue" }),
+        }));
+        expect(namespaceStmts.some((stmt: { _?: string; arg?: { _?: string } }) =>
+            stmt._ === "ReturnStmt" && stmt.arg?._ === "ClassValueRef")).toBe(false);
+    });
+
+    it("uses the emitted identity of an anonymous default class", () => {
+        const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-default-class-"));
+        tempDirs.push(projectDir);
+        fs.writeFileSync(path.join(projectDir, "a.ts"), "export default class {}");
+        fs.writeFileSync(path.join(projectDir, "b.ts"),
+            'import Anonymous from "./a"; export function read(): typeof Anonymous { return Anonymous; }');
+
+        const outputDir = path.join(projectDir, "ir");
+        expect(main(["--project", projectDir, outputDir])).toBe(0);
+        const declaring = JSON.parse(fs.readFileSync(path.join(outputDir, "a.ts.json"), "utf8"));
+        const importing = JSON.parse(fs.readFileSync(path.join(outputDir, "b.ts.json"), "utf8"));
+        const classSignature = declaring.classes.find((clazz: { signature: { name: string } }) =>
+            clazz.signature.name === "default").signature;
+        const read = importing.classes[0].methods.find(
+            (method: { signature: { name: string } }) => method.signature.name === "read",
+        );
+        const returned = read.body.cfg.blocks.flatMap((block: { stmts: unknown[] }) => block.stmts)
+            .find((stmt: { _?: string }) => stmt._ === "ReturnStmt");
+
+        expect(returned).toMatchObject({ arg: { _: "ClassValueRef", signature: classSignature } });
+    });
+
     it("honors tsconfig include/exclude and compiler options, including TSX", () => {
         const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-project-"));
         tempDirs.push(projectDir);

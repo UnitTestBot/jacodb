@@ -268,24 +268,22 @@ describe("export default expressions", () => {
         }
     });
 
-    it("keeps a class reached through a namespace as a static receiver", () => {
-        const { stmts } = moduleStatements(`
+    it("keeps a mutable namespace class receiver explicitly unsupported", () => {
+        const { file, diagnostics } = lower(`
             namespace N {
                 export class Box { static count = 1; }
             }
             export default N.Box.count;
         `);
+        const defaultClass = file.classes.find((clazz) => clazz.signature.name === "%dflt")!;
+        const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
 
-        expect(stmts).toContainEqual(expect.objectContaining({
-            _: "AssignStmt",
-            right: expect.objectContaining({
-                _: "StaticFieldRef",
-                field: expect.objectContaining({ name: "count" }),
-            }),
-        }));
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining("mutable class property"));
+        expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
+        expect(defaultClass.fields.some((field) => field.signature.name === "default")).toBe(false);
     });
 
-    it("constructs a class reached through a namespace and stores the instance", () => {
+    it("keeps construction through a mutable namespace class property explicitly unsupported", () => {
         const source = `
             namespace N {
                 export class Box {
@@ -294,17 +292,14 @@ describe("export default expressions", () => {
             }
             export default new N.Box(7);
         `;
-        const { stmts } = moduleStatements(source);
+        const { file, diagnostics } = lower(source);
+        const defaultClass = file.classes.find((clazz) => clazz.signature.name === "%dflt")!;
+        const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
 
-        expect(stmts).toContainEqual(expect.objectContaining({
-            _: "AssignStmt",
-            right: expect.objectContaining({
-                _: "NewExpr",
-                classType: expect.objectContaining({
-                    signature: expect.objectContaining({ name: "Box", declaringNamespace: expect.objectContaining({ name: "N" }) }),
-                }),
-            }),
-        }));
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining("mutable class property"));
+        expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
+        expect(defaultClass.fields.some((field) => field.signature.name === "default")).toBe(false);
 
         const output = ts.transpileModule(source, {
             compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
@@ -316,9 +311,9 @@ describe("export default expressions", () => {
 
     it("checks constructor arguments for unmaterialized declaration values", () => {
         const { file, diagnostics } = lower(`
-            namespace N { export class Box { constructor(value: unknown) {} } }
+            class Box { constructor(value: unknown) {} }
             function factory(): number { return 1; }
-            export default new N.Box(factory);
+            export default new Box(factory);
         `);
 
         expect(diagnostics.messages).toContainEqual(expect.stringContaining("has no EtsIR value reference"));
@@ -327,11 +322,26 @@ describe("export default expressions", () => {
     });
 
     it.each([
-        "(Box).count",
-        "(Box as typeof Box).count",
-        "Box!.count",
-        "(Box).getCount()",
-        "(Box as typeof Box).getCount()",
+        ["(Box).count", "StaticFieldRef"],
+        ["(Box as typeof Box).count", "StaticFieldRef"],
+        ["Box!.count", "StaticFieldRef"],
+        ["(Box).getCount()", "StaticCallExpr"],
+        ["(Box as typeof Box).getCount()", "StaticCallExpr"],
+    ])("preserves a wrapped class's static access in %s", (expression, rightKind) => {
+        const { file, stmts } = moduleStatements(`
+            class Box {
+                static count = 1;
+                static getCount(): number { return this.count; }
+            }
+            export default ${expression};
+        `);
+
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === rightKind)).toBe(true);
+        expect(file.classes.find((clazz) => clazz.signature.name === "%dflt")!.fields
+            .some((field) => field.signature.name === "default")).toBe(true);
+    });
+
+    it.each([
         "Box?.count",
         "Box?.getCount()",
         "Box.getCount",
@@ -362,7 +372,10 @@ describe("export default expressions", () => {
         const defaultClass = file.classes.find((clazz) => clazz.signature.name === "%dflt")!;
         const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
 
-        expect(diagnostics.messages).toContainEqual(expect.stringContaining("has no EtsIR value reference"));
+        const reason = expression === "N?.Box.count"
+            ? "mutable class property"
+            : "has no EtsIR value reference";
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining(reason));
         expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
         expect(defaultClass.fields.some((field) => field.signature.name === "default")).toBe(false);
     });

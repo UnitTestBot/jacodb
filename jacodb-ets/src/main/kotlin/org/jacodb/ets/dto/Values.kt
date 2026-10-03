@@ -58,6 +58,13 @@ data class ConstantDto(
     override val type: TypeDto,
 ) : ImmediateDto
 
+@Serializable
+@SerialName("ClassValueRef")
+data class ClassValueRefDto(
+    val signature: ClassSignatureDto,
+    override val type: TypeDto,
+) : ValueDto
+
 // TODO: uncomment and adapt the following code for different constants
 //       Currently, ArkIR stores all constants as strings (see ConstantDto above),
 //       but some day this is going to be fixed.
@@ -185,7 +192,8 @@ data class TypeOfExprDto(
 @SerialName("InstanceOfExpr")
 data class InstanceOfExprDto(
     val arg: ValueDto,
-    val checkType: TypeDto,
+    val checkType: TypeDto? = null,
+    val checkValue: ValueDto? = null,
 ) : ExprDto {
     override val type: TypeDto
         get() = BooleanTypeDto
