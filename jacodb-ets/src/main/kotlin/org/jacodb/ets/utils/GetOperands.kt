@@ -170,7 +170,7 @@ private object EntityGetOperands : EtsEntity.Visitor<Sequence<EtsEntity>> {
         sequenceOf(value.base)
 
     override fun visit(expr: EtsNewExpr): Sequence<EtsEntity> =
-        emptySequence()
+        listOfNotNull(expr.constructorValue).asSequence()
 
     override fun visit(expr: EtsNewArrayExpr): Sequence<EtsEntity> =
         sequenceOf(expr.size)

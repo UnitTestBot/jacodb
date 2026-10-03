@@ -144,9 +144,10 @@ interface EtsExpr : EtsEntity {
 
 data class EtsNewExpr(
     override val type: EtsType,
+    val constructorValue: EtsValue? = null,
 ) : EtsExpr {
     override fun toString(): String {
-        return "new $type"
+        return "new ${constructorValue ?: type}"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {

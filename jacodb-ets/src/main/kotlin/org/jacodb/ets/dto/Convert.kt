@@ -342,6 +342,7 @@ class EtsMethodBuilder(
 
         is NewExprDto -> EtsNewExpr(
             type = classType.toEtsType(),
+            constructorValue = constructorValue?.toEtsEntity() as EtsValue?,
         )
 
         is NewArrayExprDto -> EtsNewArrayExpr(

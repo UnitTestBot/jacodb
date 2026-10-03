@@ -101,7 +101,8 @@ export interface ClassValueRefDto {
 
 export interface NewExprDto {
     readonly _: "NewExpr";
-    classType: TypeDto; // ClassType
+    classType: TypeDto; // Result type hint; may be a union for a dynamic constructor.
+    constructorValue?: ImmediateDto; // Evaluated constructor, absent for legacy/static allocation.
 }
 
 export interface NewArrayExprDto {

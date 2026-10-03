@@ -222,6 +222,7 @@ abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> 
 
     final override fun visit(expr: EtsNewExpr) {
         handle(expr)
+        expr.constructorValue?.accept(this)
     }
 
     final override fun visit(expr: EtsNewArrayExpr) {

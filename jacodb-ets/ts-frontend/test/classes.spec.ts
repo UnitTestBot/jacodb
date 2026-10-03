@@ -100,7 +100,7 @@ describe("class lowering", () => {
         expect(concrete).toEqual({ same: true, instance: true, parenthesized: true, wrapped: true, marker: 7 });
     });
 
-    it("keeps dynamic new explicit unsupported after evaluating its constructor", () => {
+    it("preserves a constructor local or call result in dynamic new", () => {
         const source = `
             class A {}
             let reads = 0;
@@ -127,19 +127,21 @@ describe("class lowering", () => {
 
         expect(stmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
             && stmt.right.method.name === "constructorValue")).toHaveLength(1);
-        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
-        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
-        expect(aliasStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
-        expect(aliasStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(false);
+        expect(aliasStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(false);
         expect(signatureStmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
             && stmt.right.method.name === "constructorBySignature")).toHaveLength(1);
         for (const methodStmts of [signatureStmts, signatureAliasStmts]) {
-            expect(methodStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
-            expect(methodStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
+            expect(methodStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(false);
         }
-        expect(diagnostics.messages).toEqual(expect.arrayContaining([
-            expect.stringContaining("new through a runtime constructor value"),
-        ]));
+        for (const methodStmts of [stmts, aliasStmts, signatureStmts, signatureAliasStmts]) {
+            const allocations = methodStmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr");
+            expect(allocations).toHaveLength(1);
+            expect(allocations[0]!.right).toEqual(expect.objectContaining({
+                constructorValue: expect.objectContaining({ _: "Local" }),
+            }));
+        }
+        expect(diagnostics.messages).toEqual([]);
 
         const js = ts.transpileModule(source, {
             compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
@@ -158,6 +160,94 @@ describe("class lowering", () => {
             instance: true, aliasInstance: true,
             signatureInstance: true, signatureAliasInstance: true, reads: 4,
         });
+    });
+
+    it("snapshots the selected constructor before an argument changes its binding", () => {
+        const source = `
+            class A { value: number; constructor(value: number) { this.value = value; } }
+            class B { value: number; constructor(value: number) { this.value = value; } }
+            let selected: typeof A | typeof B = A;
+            function pick(): typeof A | typeof B { return selected; }
+            function argument(): number { selected = B; return 7; }
+            export function check(): boolean {
+                const value = new (pick())(argument());
+                return value instanceof A && value.value === 7;
+            }
+            export function choose(flag: boolean): A | B {
+                return new (flag ? A : B)(7);
+            }
+            export function localMutation(): boolean {
+                let ctor: typeof A | typeof B = A;
+                const value = new ctor((ctor = B) as unknown as number);
+                return value instanceof A;
+            }
+            export function constructArray(ctor: new (length: number) => number[]): number[] {
+                return new ctor(3);
+            }
+        `;
+        const { file, diagnostics } = lower(source);
+        const defaultClass = classByName(file, "%dflt");
+        const check = methodOf(defaultClass, "check");
+        const block = check.body!.cfg.blocks.find((candidate) => candidate.stmts.some(
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr",
+        ))!;
+        const stmts = block.stmts;
+        const pickIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+            && stmt.right.method.name === "pick");
+        const argumentIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+            && stmt.right.method.name === "argument");
+        const allocationIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr");
+        const pickCall = stmts[pickIndex]!;
+        const allocation = stmts[allocationIndex]!;
+
+        expect(pickIndex).toBeGreaterThanOrEqual(0);
+        expect(argumentIndex).toBeGreaterThan(pickIndex);
+        expect(allocationIndex).toBeGreaterThan(argumentIndex);
+        expect(pickCall._).toBe("AssignStmt");
+        expect(allocation._).toBe("AssignStmt");
+        if (pickCall._ === "AssignStmt" && allocation._ === "AssignStmt" && allocation.right._ === "NewExpr") {
+            expect(allocation.right.constructorValue).toEqual(pickCall.left);
+        }
+
+        const choiceAllocations = methodOf(defaultClass, "choose").body!.cfg.blocks.flatMap((choiceBlock) =>
+            choiceBlock.stmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr"),
+        );
+        expect(choiceAllocations).toHaveLength(1);
+        expect(choiceAllocations[0]!.right).toEqual(expect.objectContaining({
+            constructorValue: expect.objectContaining({ _: "Local" }),
+        }));
+        const mutationStmts = methodOf(defaultClass, "localMutation").body!.cfg.blocks.flatMap(
+            (mutationBlock) => mutationBlock.stmts,
+        );
+        const mutationAllocation = mutationStmts.find((stmt) =>
+            stmt._ === "AssignStmt" && stmt.right._ === "NewExpr",
+        );
+        const snapshot = mutationStmts.find((stmt) =>
+            stmt._ === "AssignStmt" && stmt.right._ === "Local" && stmt.right.name === "ctor",
+        );
+        expect(snapshot).toBeDefined();
+        if (mutationAllocation?._ === "AssignStmt" && mutationAllocation.right._ === "NewExpr"
+            && snapshot?._ === "AssignStmt") {
+            expect(mutationAllocation.right.constructorValue).toEqual(snapshot.left);
+        }
+
+        const arrayStmts = singleBlockStmts(methodOf(defaultClass, "constructArray"));
+        expect(arrayStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewArrayExpr")).toBe(false);
+        expect(arrayStmts).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            right: expect.objectContaining({ _: "NewExpr", constructorValue: expect.objectContaining({ _: "Local" }) }),
+        }));
+        expect(diagnostics.messages).toEqual([]);
+
+        const js = ts.transpileModule(source, {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+        }).outputText;
+        const concrete = new Function("exports", `${js}\nreturn {
+            result: check(), selectedIsB: selected === B, localMutation: localMutation(),
+        };`)({}) as {
+            result: boolean; selectedIsB: boolean; localMutation: boolean;
+        };
+        expect(concrete).toEqual({ result: true, selectedIsB: true, localMutation: true });
     });
 
     it("keeps complete stable names for class decorators", () => {

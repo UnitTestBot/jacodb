@@ -23,7 +23,7 @@
  *    (Local | Constant), hoisted into `%N` temps;
  *  - call instances are strictly Locals;
  *  - full exprs appear only as AssignStmt.right / CallStmt.expr;
- *  - `new C(args)` becomes `%t := NewExpr(C); %t := %t.constructor(args)`;
+ *  - `new C(args)` evaluates C and args before `%t := NewExpr(C); %t := %t.constructor(args)`;
  *  - unresolved identifiers become Locals with UnknownType (e.g. `console`);
  *  - unresolved callees get a method signature with the UNKNOWN class.
  */
@@ -1080,17 +1080,14 @@ export class ExprLowerer {
         const standardLibraryIdentifier = declarations?.some(
             (declaration) => this.m.ctx.isDefaultLibrarySourceFile(declaration.getSourceFile()),
         ) === true;
-        if (this.classLikeSignatureOf(node.expression) === undefined && !standardLibraryIdentifier) {
-            this.lowerToImmediate(node.expression);
-            throw new LoweringError("new through a runtime constructor value is not represented in EtsIR");
-        }
+        const staticConstructor = this.classLikeSignatureOf(node.expression) !== undefined || standardLibraryIdentifier;
 
         const inferredType = this.safeTypeOf(node);
         const args = node.arguments ?? ts.factory.createNodeArray();
         const lengthType = args.length === 1 ? this.safeTypeOf(args[0]) : undefined;
         const numericLength = lengthType?._ === "NumberType"
             || (lengthType?._ === "LiteralType" && typeof lengthType.literal === "number");
-        if (inferredType._ === "ArrayType" && (args.length === 0 || numericLength)) {
+        if (standardLibraryIdentifier && inferredType._ === "ArrayType" && (args.length === 0 || numericLength)) {
             const size = args.length === 0 ? constant("0", NUMBER_TYPE) : this.lowerToImmediate(args[0]);
             const temp = this.m.newTemp(inferredType);
             this.m.cfg.emit({
@@ -1101,13 +1098,23 @@ export class ExprLowerer {
             return temp;
         }
 
-        const classType = this.newTargetClassType(node.expression);
-        const temp = this.m.newTemp(classType);
-        this.m.cfg.emit({ _: "AssignStmt", left: temp, right: { _: "NewExpr", classType } });
+        const unsupportedBeforeConstructor = this.unsupportedExpressionCount;
+        const constructorValue = staticConstructor
+            ? undefined
+            : this.lowerImmediateBefore(node.expression, args);
+        if (this.unsupportedExpressionCount !== unsupportedBeforeConstructor) {
+            throw new LoweringError("new constructor value cannot be represented in EtsIR");
+        }
 
         const loweredArgs = args.map((a, index) =>
             ts.isSpreadElement(a) ? this.spreadFallback(a) : this.lowerImmediateBefore(a, args.slice(index + 1)),
         );
+        const classType = staticConstructor ? this.newTargetClassType(node.expression) : inferredType;
+        const temp = this.m.newTemp(classType);
+        const allocation = constructorValue === undefined
+            ? { _: "NewExpr" as const, classType }
+            : { _: "NewExpr" as const, classType, constructorValue };
+        this.m.cfg.emit({ _: "AssignStmt", left: temp, right: allocation });
         const ctorSig: MethodSignatureDto = {
             declaringClass: classType._ === "ClassType" ? classType.signature : UNKNOWN_CLASS_SIGNATURE,
             name: CONSTRUCTOR_NAME,

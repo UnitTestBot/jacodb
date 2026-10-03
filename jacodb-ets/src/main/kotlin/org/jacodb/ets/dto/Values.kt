@@ -136,7 +136,8 @@ sealed interface ExprDto : ValueDto
 @Serializable
 @SerialName("NewExpr")
 data class NewExprDto(
-    val classType: TypeDto, // ClassType
+    val classType: TypeDto,
+    val constructorValue: ImmediateDto? = null,
 ) : ExprDto {
     override val type: TypeDto
         get() = classType
