@@ -353,6 +353,7 @@ export class ExprLowerer {
         const fieldType = this.safeTypeOf(node);
 
         if (this.isProjectClassProperty(node.expression)) {
+            this.evaluateProjectClassPropertyReceiver(node.expression);
             throw new LoweringError("member read through a mutable class property is not represented in EtsIR");
         }
 
@@ -858,6 +859,7 @@ export class ExprLowerer {
         const callee = node.expression;
 
         if (ts.isPropertyAccessExpression(callee) && this.isProjectClassProperty(callee.expression)) {
+            this.evaluateProjectClassPropertyReceiver(callee.expression);
             throw new LoweringError("call through a mutable class property is not represented in EtsIR");
         }
 
@@ -1052,6 +1054,7 @@ export class ExprLowerer {
 
     private lowerNew(node: ts.NewExpression): ValueDto {
         if (this.isProjectClassProperty(node.expression)) {
+            this.evaluateProjectClassPropertyReceiver(node.expression);
             throw new LoweringError("constructor read from a mutable class property is not represented in EtsIR");
         }
 
@@ -1405,6 +1408,14 @@ export class ExprLowerer {
             this.m.converter.symbolOf(value.name)?.declarations?.some(
                 (declaration) => ts.isClassDeclaration(declaration) && isProjectFile(declaration),
             ) === true;
+    }
+
+    private evaluateProjectClassPropertyReceiver(node: ts.Expression): void {
+        const property = unwrapTransparentExpression(node);
+        if (ts.isPropertyAccessExpression(property)) {
+            // Preserve receiver effects without materializing the mutable class property.
+            this.lowerToImmediate(property.expression);
+        }
     }
 
     private classSignatureFromType(type: TypeDto): ClassSignatureDto {

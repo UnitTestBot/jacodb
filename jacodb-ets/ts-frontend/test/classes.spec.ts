@@ -4,7 +4,7 @@ import { Modifier } from "../src/dto/constants";
 import { ClassDto, EtsFileDto, MethodDto } from "../src/dto/model";
 import { StmtDto } from "../src/dto/stmts";
 import { InstanceCallExprDto } from "../src/dto/values";
-import { lower, singleBlockStmts } from "./util";
+import { compile, lower, singleBlockStmts } from "./util";
 
 const FILE_SIG = { projectName: "proj", fileName: "test.ts" };
 
@@ -577,6 +577,57 @@ describe("enum lowering", () => {
 });
 
 describe("namespace lowering", () => {
+    it("evaluates a mutable class property's receiver before unsupported uses", () => {
+        const source = `
+            namespace N {
+                export class A {
+                    static marker = 7;
+                    static read(): number { return 9; }
+                }
+            }
+            let reads = 0;
+            function getN(): typeof N { reads++; return N; }
+            export function create(): N.A { return new (getN().A)(); }
+            export function marker(): number { return getN().A.marker; }
+            export function invoke(): number { return getN().A.read(); }
+            export function readCount(): number { return reads; }
+        `;
+        const compiled = compile(source);
+        expect(compiled.program.getSemanticDiagnostics(compiled.sourceFile)).toEqual([]);
+
+        const { file } = lower(source);
+        const defaultClass = classByName(file, "%dflt");
+        for (const methodName of ["create", "marker", "invoke"]) {
+            const stmts = singleBlockStmts(methodOf(defaultClass, methodName));
+            const callIndices = stmts.flatMap((stmt, index) =>
+                stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+                    && stmt.right.method.name === "getN" ? [index] : [],
+            );
+            const unsupportedIndex = stmts.findIndex(
+                (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue",
+            );
+
+            expect(callIndices).toHaveLength(1);
+            expect(callIndices[0]).toBeLessThan(unsupportedIndex);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticFieldRef"
+                && stmt.right.field.name === "marker")).toBe(false);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+                && stmt.right.method.name === "read")).toBe(false);
+        }
+
+        const js = ts.transpileModule(source, {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+        }).outputText;
+        const concrete = new Function("exports", `${js}\nreturn {
+            created: create() instanceof N.A,
+            marker: marker(),
+            invoked: invoke(),
+            reads: readCount(),
+        };`)({}) as { created: boolean; marker: number; invoked: number; reads: number };
+        expect(concrete).toEqual({ created: true, marker: 7, invoked: 9, reads: 3 });
+    });
+
     it("keeps lexical class values but rejects mutable qualified constructor reads", () => {
         const source = `
             namespace N {
