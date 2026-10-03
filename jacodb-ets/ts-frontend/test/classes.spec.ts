@@ -90,6 +90,41 @@ describe("class lowering", () => {
         expect(concrete).toEqual({ same: true, instance: true, parenthesized: true, wrapped: true, marker: 7 });
     });
 
+    it("keeps dynamic new explicit unsupported after evaluating its constructor", () => {
+        const source = `
+            class A {}
+            let reads = 0;
+            function constructorValue(): typeof A { reads++; return A; }
+            export function create(): A { return new (constructorValue())(); }
+            export function createAlias(): A {
+                const ctor = constructorValue();
+                return new ctor();
+            }
+            export function readCount(): number { return reads; }
+        `;
+        const { file } = lower(source);
+        const defaultClass = classByName(file, "%dflt");
+        const stmts = singleBlockStmts(methodOf(defaultClass, "create"));
+        const aliasStmts = singleBlockStmts(methodOf(defaultClass, "createAlias"));
+
+        expect(stmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+            && stmt.right.method.name === "constructorValue")).toHaveLength(1);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
+        expect(aliasStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
+        expect(aliasStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
+
+        const js = ts.transpileModule(source, {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+        }).outputText;
+        const concrete = new Function("exports", `${js}\nreturn {
+            instance: create() instanceof A,
+            aliasInstance: createAlias() instanceof A,
+            reads: readCount(),
+        };`)({}) as { instance: boolean; aliasInstance: boolean; reads: number };
+        expect(concrete).toEqual({ instance: true, aliasInstance: true, reads: 2 });
+    });
+
     it("keeps complete stable names for class decorators", () => {
         const { file } = lower(`
             @sealed
