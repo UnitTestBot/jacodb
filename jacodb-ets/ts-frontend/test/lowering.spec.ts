@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { StmtDto, AssignStmtDto, CallStmtDto } from "../src/dto/stmts";
+import { serializeEtsFile } from "../src/serialize";
 import { defaultMethod, lower, methodByName, singleBlockStmts } from "./util";
 
 const FILE_SIG = { projectName: "proj", fileName: "test.ts" };
@@ -215,6 +216,35 @@ describe("straight-line lowering", () => {
             right: { _: "Constant", value: "20" },
         });
         expect(all[3]).toMatchObject({ left: { _: "StaticFieldRef", field: { name: "arr" } } });
+    });
+
+    it("preserves array holes separately from stored undefined through JSON", () => {
+        const { file, diagnostics } = lower("const sparse = [, undefined, 3, ,]; const dense = [undefined, undefined, 3, undefined];");
+        const roundTrip = JSON.parse(serializeEtsFile(file));
+        const stmts = singleBlockStmts(defaultMethod(roundTrip));
+        const allocations = assigns(stmts).filter((stmt) => stmt.right._ === "NewArrayExpr");
+        const nativeArrays = [[, undefined, 3, ,], [undefined, undefined, 3, undefined]];
+
+        expect(allocations).toHaveLength(nativeArrays.length);
+        expect(diagnostics.messages).toEqual([]);
+
+        allocations.forEach((allocation, arrayIndex) => {
+            expect(allocation.left._).toBe("Local");
+            if (allocation.left._ !== "Local" || allocation.right._ !== "NewArrayExpr") return;
+
+            const arrayName = allocation.left.name;
+            const stores = assigns(stmts).filter((stmt) =>
+                stmt.left._ === "ArrayRef"
+                && stmt.left.array._ === "Local"
+                && stmt.left.array.name === arrayName,
+            );
+            const storedIndices = stores.map((stmt) =>
+                stmt.left._ === "ArrayRef" && stmt.left.index._ === "Constant" ? stmt.left.index.value : "invalid",
+            );
+
+            expect(allocation.right.size).toMatchObject({ _: "Constant", value: String(nativeArrays[arrayIndex].length) });
+            expect(storedIndices).toEqual(Object.keys(nativeArrays[arrayIndex]));
+        });
     });
 
     it("uses the contextual element type for an empty array literal", () => {

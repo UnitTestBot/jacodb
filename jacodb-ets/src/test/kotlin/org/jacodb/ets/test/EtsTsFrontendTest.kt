@@ -16,10 +16,12 @@
 
 package org.jacodb.ets.test
 
+import org.jacodb.ets.dto.ArrayRefDto
 import org.jacodb.ets.dto.ArrayTypeDto
 import org.jacodb.ets.dto.AssignStmtDto
 import org.jacodb.ets.dto.BooleanTypeDto
 import org.jacodb.ets.dto.ClassTypeDto
+import org.jacodb.ets.dto.ConstantDto
 import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.dto.IfStmtDto
 import org.jacodb.ets.dto.LocalDto
@@ -30,10 +32,13 @@ import org.jacodb.ets.dto.StringTypeDto
 import org.jacodb.ets.dto.UnaryOperationDto
 import org.jacodb.ets.dto.UnknownTypeDto
 import org.jacodb.ets.dto.toEtsFile
+import org.jacodb.ets.model.EtsArrayAccess
 import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsCaughtExceptionRef
 import org.jacodb.ets.model.EtsClosureFieldRef
 import org.jacodb.ets.model.EtsScene
+import org.jacodb.ets.model.EtsNewArrayExpr
+import org.jacodb.ets.model.EtsNumberConstant
 import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
 import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
 import org.jacodb.ets.utils.EtsIrProvider
@@ -99,6 +104,35 @@ class EtsTsFrontendTest {
             .filterIsInstance<NewArrayExprDto>()
             .single { it.elementType == BooleanTypeDto }
         assertEquals(BooleanTypeDto, allocation.elementType)
+    }
+
+    @Test
+    fun `array literal holes survive frontend JSON and model conversion`() {
+        val dto = runFrontend(
+            source = "const values = [, undefined, 3, ,];",
+        )
+        val dtoStmts = dto.classes
+            .single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == DEFAULT_ARK_METHOD_NAME }
+            .body!!.cfg.blocks.flatMap { it.stmts }
+            .filterIsInstance<AssignStmtDto>()
+        val allocation = dtoStmts.map { it.right }.filterIsInstance<NewArrayExprDto>().single()
+        val stores = dtoStmts.filter { it.left is ArrayRefDto }
+
+        assertEquals("4", (allocation.size as ConstantDto).value)
+        assertEquals(listOf("1", "2"), stores.map { ((it.left as ArrayRefDto).index as ConstantDto).value })
+        assertEquals("undefined", (stores.first().right as ConstantDto).value)
+
+        val scene = EtsScene(listOf(dto.toEtsFile()))
+        val modelStmts = scene.projectClasses
+            .single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == DEFAULT_ARK_METHOD_NAME }
+            .cfg.stmts.filterIsInstance<EtsAssignStmt>()
+        val modelAllocation = modelStmts.map { it.rhv }.filterIsInstance<EtsNewArrayExpr>().single()
+        val modelStores = modelStmts.mapNotNull { it.lhv as? EtsArrayAccess }
+
+        assertEquals(EtsNumberConstant(4.0), modelAllocation.size)
+        assertEquals(listOf(EtsNumberConstant(1.0), EtsNumberConstant(2.0)), modelStores.map { it.index })
     }
 
     @Test

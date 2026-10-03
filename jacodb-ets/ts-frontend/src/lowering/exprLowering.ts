@@ -1064,6 +1064,8 @@ export class ExprLowerer {
             },
         });
         node.elements.forEach((element, index) => {
+            if (ts.isOmittedExpression(element)) return;
+
             const value = ts.isSpreadElement(element) ? this.spreadFallback(element) : this.lowerToImmediate(element);
             this.m.cfg.emit({
                 _: "AssignStmt",
