@@ -516,8 +516,14 @@ describe("namespace lowering", () => {
             export function dynamic(holder: typeof N): typeof N.A { return holder.A; }
             export function marker(): number { return N.A.marker; }
             export function create(): N.A { return new N.A(); }
+            export function createParenthesized(): N.A { return new (N.A)(); }
+            export function createAsserted(): N.A { return new ((N.A as typeof N.A)!)(); }
             export function replace(): void { N.A = B; }
             export function check(value: object): boolean { return value instanceof N.A; }
+            export function checkParenthesized(value: object): boolean { return value instanceof (N.A); }
+            export function checkSatisfies(value: object): boolean {
+                return value instanceof (N.A satisfies typeof N.A);
+            }
         `;
         const { file, diagnostics } = lower(source);
         const namespace = file.namespaces[0]!;
@@ -528,18 +534,30 @@ describe("namespace lowering", () => {
         const dynamic = singleBlockStmts(methodOf(defaultClass, "dynamic"));
         const marker = singleBlockStmts(methodOf(defaultClass, "marker"));
         const create = singleBlockStmts(methodOf(defaultClass, "create"));
+        const createParenthesized = singleBlockStmts(methodOf(defaultClass, "createParenthesized"));
+        const createAsserted = singleBlockStmts(methodOf(defaultClass, "createAsserted"));
         const replace = singleBlockStmts(methodOf(defaultClass, "replace"));
         const check = singleBlockStmts(methodOf(defaultClass, "check"));
+        const checkParenthesized = singleBlockStmts(methodOf(defaultClass, "checkParenthesized"));
+        const checkSatisfies = singleBlockStmts(methodOf(defaultClass, "checkSatisfies"));
 
         expect(direct).toContainEqual(expect.objectContaining({
             _: "ReturnStmt", arg: expect.objectContaining({ _: "ClassValueRef", signature: classSignature }),
         }));
         expect(dynamic.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceFieldRef"
             && stmt.right.field.name === "A")).toBe(true);
-        for (const stmts of [qualified, marker, create, replace, check]) {
+        for (const stmts of [
+            qualified, marker, create, createParenthesized, createAsserted, replace,
+            check, checkParenthesized, checkSatisfies,
+        ]) {
             expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
         }
-        expect(check.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr")).toBe(false);
+        for (const stmts of [createParenthesized, createAsserted]) {
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
+        }
+        for (const stmts of [check, checkParenthesized, checkSatisfies]) {
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr")).toBe(false);
+        }
         expect(diagnostics.messages).toEqual(expect.arrayContaining([
             expect.stringContaining("mutable namespace class property"),
             expect.stringContaining("instanceof through a mutable class property"),
@@ -553,8 +571,16 @@ describe("namespace lowering", () => {
             after: (replace(), qualified() === B),
             acceptsB: check(new B()),
             rejectsA: check(new (N.direct())()),
-        };`)({}) as { before: boolean; after: boolean; acceptsB: boolean; rejectsA: boolean };
-        expect(concrete).toEqual({ before: true, after: true, acceptsB: true, rejectsA: false });
+            parenthesized: createParenthesized() instanceof B && checkParenthesized(new B()),
+            asserted: createAsserted() instanceof B && checkSatisfies(new B()),
+        };`)({}) as {
+            before: boolean; after: boolean; acceptsB: boolean; rejectsA: boolean;
+            parenthesized: boolean; asserted: boolean;
+        };
+        expect(concrete).toEqual({
+            before: true, after: true, acceptsB: true, rejectsA: false,
+            parenthesized: true, asserted: true,
+        });
     });
 
     it("builds NamespaceDto with its own %dflt class and declared classes", () => {

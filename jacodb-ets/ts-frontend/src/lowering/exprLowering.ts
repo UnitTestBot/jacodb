@@ -1380,8 +1380,9 @@ export class ExprLowerer {
     }
 
     private isProjectClassProperty(node: ts.Expression): boolean {
-        return ts.isPropertyAccessExpression(node) &&
-            this.m.converter.symbolOf(node.name)?.declarations?.some(
+        const value = unwrapTransparentExpression(node);
+        return ts.isPropertyAccessExpression(value) &&
+            this.m.converter.symbolOf(value.name)?.declarations?.some(
                 (declaration) => ts.isClassDeclaration(declaration) && isProjectFile(declaration),
             ) === true;
     }
@@ -1581,6 +1582,26 @@ function containsPossibleSideEffect(node: ts.Node): boolean {
     };
     visit(node);
     return found;
+}
+
+/** Erase syntax that leaves an expression's runtime value unchanged. */
+function unwrapTransparentExpression(node: ts.Expression): ts.Expression {
+    while (
+        ts.isParenthesizedExpression(node)
+        || ts.isAsExpression(node)
+        || ts.isTypeAssertionExpression(node)
+        || ts.isNonNullExpression(node)
+        || ts.isSatisfiesExpression(node)
+    ) {
+        node = node.expression;
+    }
+    return node;
+}
+
+/** The simple binding whose current value an expression denotes, if any. */
+function bindingIdentifier(node: ts.Expression): ts.Identifier | undefined {
+    const value = unwrapTransparentExpression(node);
+    return ts.isIdentifier(value) ? value : undefined;
 }
 
 /** Identifier binding written by an assignment or an increment/decrement, if any. */
