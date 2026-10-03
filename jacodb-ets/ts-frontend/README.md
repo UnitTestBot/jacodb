@@ -76,10 +76,10 @@ rewritten to a comparison with `true`; interpreters must apply TypeScript
 truthiness when choosing the successor.
 
 The native frontend owns TS/JS, not ArkTS. Unsupported source constructs may be
-represented as `RawStmt` or `RawValue` and reported with `-v`. Exception CFGs
-also approximate `try`/`catch` reachability because EtsIR has no trap table or
-exceptional-successor edges. Consumers that need exact behavior should account
-for these approximations.
+represented as `RawStmt` or `RawValue` and reported with `-v`. The frontend
+records per-statement exceptional-successor edges for `try`/`catch`. Raw
+constructs remain opaque and are treated conservatively as potentially
+throwing; EtsIR has no trap table for precise exception semantics.
 
 ## Development
 

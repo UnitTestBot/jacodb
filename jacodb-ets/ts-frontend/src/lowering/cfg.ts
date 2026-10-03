@@ -26,7 +26,7 @@
  *   - any other block has at most one successor.
  */
 
-import { BasicBlockDto, CfgDto, SourceSpanDto, StmtOriginDto } from "../dto/model";
+import { BasicBlockDto, CfgDto, ExceptionalSuccessorDto, SourceSpanDto, StmtOriginDto } from "../dto/model";
 import { RETURN_VOID_STMT, StmtDto } from "../dto/stmts";
 import { ValueDto } from "../dto/values";
 
@@ -34,14 +34,15 @@ export type Label = number;
 
 type Terminator =
     | { kind: "goto"; target: Label }
-    | { kind: "if"; condition: ValueDto; trueTarget: Label; falseTarget: Label; origin?: SourceSpanDto }
+    | { kind: "if"; condition: ValueDto; trueTarget: Label; falseTarget: Label; origin?: SourceSpanDto; exceptionTarget?: Label }
     | { kind: "return"; arg?: ValueDto; origin?: SourceSpanDto }
-    | { kind: "throw"; arg: ValueDto; origin?: SourceSpanDto }
+    | { kind: "throw"; arg: ValueDto; origin?: SourceSpanDto; exceptionTarget?: Label }
     | { kind: "unterminated" }; // fall-through end; finalize() turns it into `return void`
 
 interface LocatedStmt {
     stmt: StmtDto;
     origin?: SourceSpanDto;
+    exceptionTarget?: Label;
 }
 
 interface BuilderBlock {
@@ -61,6 +62,7 @@ export class CfgBuilder {
     private nextLabel: Label = 0;
     private readonly entry: Label;
     private currentOrigin: SourceSpanDto | undefined;
+    private exceptionTarget: Label | undefined;
 
     constructor() {
         this.entry = this.newLabel();
@@ -110,6 +112,16 @@ export class CfgBuilder {
         }
     }
 
+    withExceptionTarget<T>(target: Label | undefined, action: () => T): T {
+        const previous = this.exceptionTarget;
+        this.exceptionTarget = target;
+        try {
+            return action();
+        } finally {
+            this.exceptionTarget = previous;
+        }
+    }
+
     /**
      * Unreachable code after return/throw/etc: continue in a detached block so
      * lowering can proceed; it is dropped by reachability in `finalize()`.
@@ -122,7 +134,11 @@ export class CfgBuilder {
 
     emit(stmt: StmtDto): void {
         this.ensureUnterminated();
-        this.current.stmts.push({ stmt, origin: this.currentOrigin });
+        this.current.stmts.push({
+            stmt,
+            origin: this.currentOrigin,
+            exceptionTarget: mayThrow(stmt) ? this.exceptionTarget : undefined,
+        });
     }
 
     goto(target: Label): void {
@@ -132,7 +148,14 @@ export class CfgBuilder {
 
     branch(condition: ValueDto, trueTarget: Label, falseTarget: Label): void {
         this.ensureUnterminated();
-        this.current.terminator = { kind: "if", condition, trueTarget, falseTarget, origin: this.currentOrigin };
+        this.current.terminator = {
+            kind: "if",
+            condition,
+            trueTarget,
+            falseTarget,
+            origin: this.currentOrigin,
+            exceptionTarget: mayThrowValue(condition) ? this.exceptionTarget : undefined,
+        };
     }
 
     ret(arg?: ValueDto): void {
@@ -142,7 +165,12 @@ export class CfgBuilder {
 
     throwValue(arg: ValueDto): void {
         this.ensureUnterminated();
-        this.current.terminator = { kind: "throw", arg, origin: this.currentOrigin };
+        this.current.terminator = {
+            kind: "throw",
+            arg,
+            origin: this.currentOrigin,
+            exceptionTarget: this.exceptionTarget,
+        };
     }
 
     /**
@@ -166,7 +194,7 @@ export class CfgBuilder {
             const block = placed[label];
             idOf.set(label, order.length);
             order.push(block);
-            for (const succ of terminatorTargets(block.terminator)) {
+            for (const succ of blockTargets(block)) {
                 visit(succ);
             }
         };
@@ -176,13 +204,18 @@ export class CfgBuilder {
         const result: BasicBlockDto[] = order.map((block, id) => {
             const locatedStmts = [...block.stmts];
             let successors: number[];
+            const exceptionalSuccessors: ExceptionalSuccessorDto[] = [];
             const t = block.terminator;
             switch (t.kind) {
                 case "goto":
                     successors = [idOf.get(t.target)!];
                     break;
                 case "if":
-                    locatedStmts.push({ stmt: { _: "IfStmt", condition: t.condition }, origin: t.origin });
+                    locatedStmts.push({
+                        stmt: { _: "IfStmt", condition: t.condition },
+                        origin: t.origin,
+                        exceptionTarget: t.exceptionTarget,
+                    });
                     // DTO convention: [false, true].
                     const falseSuccessor = idOf.get(t.falseTarget);
                     const trueSuccessor = idOf.get(t.trueTarget);
@@ -203,7 +236,11 @@ export class CfgBuilder {
                     successors = [];
                     break;
                 case "throw":
-                    locatedStmts.push({ stmt: { _: "ThrowStmt", arg: t.arg }, origin: t.origin });
+                    locatedStmts.push({
+                        stmt: { _: "ThrowStmt", arg: t.arg },
+                        origin: t.origin,
+                        exceptionTarget: t.exceptionTarget,
+                    });
                     successors = [];
                     break;
                 case "unterminated":
@@ -213,12 +250,21 @@ export class CfgBuilder {
                     break;
             }
             const stmts = locatedStmts.map(({ stmt }) => stmt);
-            locatedStmts.forEach(({ origin }, stmtIndex) => {
+            locatedStmts.forEach(({ origin, exceptionTarget }, stmtIndex) => {
                 if (origin !== undefined) {
                     stmtOrigins.push({ blockId: id, stmtIndex, source: origin });
                 }
+                if (exceptionTarget !== undefined) {
+                    exceptionalSuccessors.push({ stmtIndex, target: idOf.get(exceptionTarget)! });
+                }
             });
-            return { id, successors, predecessors: [], stmts };
+            return {
+                id,
+                successors,
+                ...(exceptionalSuccessors.length > 0 ? { exceptionalSuccessors } : {}),
+                predecessors: [],
+                stmts,
+            };
         });
 
         // Predecessors.
@@ -230,6 +276,65 @@ export class CfgBuilder {
 
         return { cfg: { blocks: result }, stmtOrigins };
     }
+}
+
+function blockTargets(block: BuilderBlock): Label[] {
+    return [
+        ...terminatorTargets(block.terminator),
+        ...block.stmts.flatMap((stmt) => stmt.exceptionTarget === undefined ? [] : [stmt.exceptionTarget]),
+        ...((block.terminator.kind === "throw" || block.terminator.kind === "if") &&
+            block.terminator.exceptionTarget !== undefined
+            ? [block.terminator.exceptionTarget]
+            : []),
+    ];
+}
+
+function mayThrow(stmt: StmtDto): boolean {
+    switch (stmt._) {
+        case "AssignStmt":
+            return stmt.left._ !== "Local" || mayThrowValue(stmt.right);
+        case "NopStmt":
+        case "ReturnVoidStmt":
+        case "ReturnStmt":
+        case "IfStmt":
+            return false;
+        default:
+            // Raw fallback statements are cast into the closed StmtDto union.
+            return true;
+    }
+}
+
+function mayThrowValue(value: ValueDto): boolean {
+    switch (value._) {
+        case "Local":
+        case "Constant":
+        case "ThisRef":
+        case "ParameterRef":
+        case "CaughtExceptionRef":
+            return false;
+        case "ConditionExpr":
+            return value.op === "in" ||
+                (!["===", "!=="].includes(value.op) &&
+                    (!isPrimitive(value.left) || !isPrimitive(value.right)));
+        case "BinopExpr":
+            return !["&&", "||", "??"].includes(value.op) &&
+                (!isPrimitive(value.left) || !isPrimitive(value.right));
+        case "UnopExpr":
+            return value.op !== "!" && !isPrimitive(value.arg);
+        case "TypeOfExpr":
+        case "CastExpr":
+            return mayThrowValue(value.arg);
+        default:
+            return true;
+    }
+}
+
+function isPrimitive(value: ValueDto): boolean {
+    if (value._ !== "Local" && value._ !== "Constant") return false;
+
+    const type = value.type;
+    if (type._ === "LiteralType") return true;
+    return ["BooleanType", "NumberType", "StringType", "NullType", "UndefinedType"].includes(type._);
 }
 
 function terminatorTargets(t: Terminator): Label[] {

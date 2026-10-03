@@ -45,9 +45,14 @@ fun EtsBlockCfg.linearize(): EtsLinearCfg {
             val next = blocks[id]
             queue.addFirst(next) // DFS
         }
+
+        for (id in exceptionalSuccessors[block.id].orEmpty().values.toSet()) {
+            queue.addLast(blocks[id])
+        }
     }
 
     val linearSuccessors = arrayOfNulls<List<Int>>(linearized.size)
+    val linearExceptionalSuccessors = MutableList(linearized.size) { emptySet<Int>() }
 
     for (id in visited) {
         val block = blocks[id]
@@ -65,6 +70,12 @@ fun EtsBlockCfg.linearize(): EtsLinearCfg {
         linearSuccessors[last.location.index] = successors.map {
             blocks[it].statements.first().location.index
         }
+
+        for ((stmtIndex, catcherId) in exceptionalSuccessors[block.id].orEmpty()) {
+            val thrower = block.statements[stmtIndex]
+            val catcher = blocks[catcherId].statements.first()
+            linearExceptionalSuccessors[thrower.location.index] = setOf(catcher.location.index)
+        }
     }
 
     for (s in linearSuccessors) {
@@ -75,6 +86,7 @@ fun EtsBlockCfg.linearize(): EtsLinearCfg {
 
     return EtsLinearCfg(
         stmts = linearized,
-        successors = linearSuccessors.asList()
+        successors = linearSuccessors.asList(),
+        exceptionalSuccessors = linearExceptionalSuccessors,
     )
 }

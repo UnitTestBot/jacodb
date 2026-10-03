@@ -116,8 +116,14 @@ export interface CfgDto {
 export interface BasicBlockDto {
     id: number; // must equal its index in `blocks`; entry block has id 0
     successors: number[]; // for a block ending with IfStmt: [falseBranch, trueBranch]
+    exceptionalSuccessors?: ExceptionalSuccessorDto[];
     predecessors?: number[]; // Kotlin default: null (unused by Convert); we emit it for parity with ArkAnalyzer
     stmts: StmtDto[];
+}
+
+export interface ExceptionalSuccessorDto {
+    stmtIndex: number;
+    target: number;
 }
 
 export interface ImportInfoDto {

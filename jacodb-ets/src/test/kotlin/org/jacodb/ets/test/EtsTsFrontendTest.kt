@@ -16,10 +16,13 @@
 
 package org.jacodb.ets.test
 
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jacodb.ets.dto.ArrayRefDto
 import org.jacodb.ets.dto.ArrayTypeDto
 import org.jacodb.ets.dto.AssignStmtDto
 import org.jacodb.ets.dto.BooleanTypeDto
+import org.jacodb.ets.dto.CaughtExceptionRefDto
 import org.jacodb.ets.dto.ClassTypeDto
 import org.jacodb.ets.dto.ConstantDto
 import org.jacodb.ets.dto.EtsFileDto
@@ -28,21 +31,30 @@ import org.jacodb.ets.dto.LocalDto
 import org.jacodb.ets.dto.NewArrayExprDto
 import org.jacodb.ets.dto.NewExprDto
 import org.jacodb.ets.dto.NumberTypeDto
+import org.jacodb.ets.dto.Ops
 import org.jacodb.ets.dto.RawStmtDto
 import org.jacodb.ets.dto.RelationOperationDto
 import org.jacodb.ets.dto.StringTypeDto
 import org.jacodb.ets.dto.StaticCallExprDto
 import org.jacodb.ets.dto.StaticFieldRefDto
+import org.jacodb.ets.dto.ThrowStmtDto
 import org.jacodb.ets.dto.UnaryOperationDto
 import org.jacodb.ets.dto.UnknownTypeDto
+import org.jacodb.ets.dto.dtoModule
 import org.jacodb.ets.dto.toEtsFile
 import org.jacodb.ets.model.EtsArrayAccess
 import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsCaughtExceptionRef
+import org.jacodb.ets.model.EtsCallStmt
 import org.jacodb.ets.model.EtsClosureFieldRef
+import org.jacodb.ets.model.EtsEqExpr
+import org.jacodb.ets.model.EtsIfStmt
+import org.jacodb.ets.model.EtsInstanceFieldRef
+import org.jacodb.ets.model.EtsRawStmt
 import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.model.EtsNewArrayExpr
 import org.jacodb.ets.model.EtsNumberConstant
+import org.jacodb.ets.model.EtsThrowStmt
 import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
 import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
 import org.jacodb.ets.utils.EtsIrProvider
@@ -541,6 +553,194 @@ class EtsTsFrontendTest {
             stmts.filterIsInstance<EtsAssignStmt>().any { it.rhv is EtsCaughtExceptionRef },
             "expected a caught-exception binding in:\n${stmts.joinToString("\n")}"
         )
+    }
+
+    @Test
+    fun `catch edges survive JSON and reach the Kotlin graph only for throws`() {
+        val frontendDto = runFrontend(
+            """
+                export function noThrow(): number {
+                    try { return 1; } catch { return 2; }
+                }
+
+                export function mayThrow(fail: boolean): number {
+                    try {
+                        if (fail) throw 3;
+                        return 1;
+                    } catch (error) {
+                        return error;
+                    }
+                }
+
+                export function risky(): void { throw 3; }
+
+                export function callThrow(): number {
+                    try { risky(); return 1; } catch { return 2; }
+                }
+            """.trimIndent(),
+        )
+
+        val serialized = Json { serializersModule = dtoModule }.encodeToString(frontendDto)
+        val roundTripped = EtsFileDto.loadFromJson(serialized)
+        val dtoMethods = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }.methods
+        val noThrowBlocks = dtoMethods.single { it.signature.name == "noThrow" }.body!!.cfg.blocks
+        val throwingBlocks = dtoMethods.single { it.signature.name == "mayThrow" }.body!!.cfg.blocks
+        val throwBlock = throwingBlocks.single { block -> block.stmts.any { it is ThrowStmtDto } }
+        val edge = throwBlock.exceptionalSuccessors.single {
+            throwBlock.stmts[it.stmtIndex] is ThrowStmtDto
+        }
+
+        assertTrue(noThrowBlocks.all { it.exceptionalSuccessors.isEmpty() })
+        assertEquals(1, noThrowBlocks.flatMap { it.stmts }.count { it is org.jacodb.ets.dto.ReturnStmtDto })
+        assertTrue(throwingBlocks[edge.target].stmts.any {
+            it is AssignStmtDto && it.right is CaughtExceptionRefDto
+        })
+
+        val scene = EtsScene(listOf(roundTripped.toEtsFile()))
+        val method = scene.projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "mayThrow" }
+        val throwStmt = method.cfg.stmts.filterIsInstance<EtsThrowStmt>().single()
+        val catchStmt = method.cfg.catchers(throwStmt).single()
+
+        assertTrue(catchStmt is EtsAssignStmt && catchStmt.rhv is EtsCaughtExceptionRef)
+        assertTrue(method.cfg.throwers(catchStmt).contains(throwStmt))
+
+        val callMethod = scene.projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "callThrow" }
+        val callStmt = callMethod.cfg.stmts.filterIsInstance<EtsCallStmt>().single()
+        val callCatcher = callMethod.cfg.catchers(callStmt).single()
+
+        assertTrue(callMethod.cfg.throwers(callCatcher).contains(callStmt))
+    }
+
+    @Test
+    fun `raw fallback keeps its catch edge through JSON and the Kotlin graph`() {
+        val frontendDto = runFrontend(
+            """
+                function raw(obj) {
+                    try { with (obj) { x; } } catch { return 1; }
+                    return 0;
+                }
+            """.trimIndent(),
+            fileName = "test.js",
+        )
+
+        val methodDto = frontendDto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "raw" }
+        val rawBlock = methodDto.body!!.cfg.blocks.single { block ->
+            block.stmts.any { it is RawStmtDto && it.kind == "UnsupportedStmt" }
+        }
+        val rawIndex = rawBlock.stmts.indexOfFirst { it is RawStmtDto && it.kind == "UnsupportedStmt" }
+        val catcherId = rawBlock.exceptionalSuccessors.single { it.stmtIndex == rawIndex }.target
+
+        assertTrue(methodDto.body!!.cfg.blocks[catcherId].stmts.any { it is org.jacodb.ets.dto.ReturnStmtDto })
+        assertTrue(catcherId !in rawBlock.successors)
+
+        val method = EtsScene(listOf(frontendDto.toEtsFile()))
+            .projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "raw" }
+        val rawStmt = method.cfg.stmts.filterIsInstance<EtsRawStmt>().single()
+        val catchStmt = method.cfg.catchers(rawStmt).single()
+
+        assertTrue(method.cfg.throwers(catchStmt).contains(rawStmt))
+    }
+
+    @Test
+    fun `catch edge follows the instruction evaluating an if condition`() {
+        val frontendDto = runFrontend(
+            """
+                export function risky(x: any): number {
+                    try {
+                        if (x == 1) return 1;
+                        return 2;
+                    } catch {
+                        return 3;
+                    }
+                }
+            """.trimIndent(),
+        )
+
+        val roundTripped = EtsFileDto.loadFromJson(Json { serializersModule = dtoModule }.encodeToString(frontendDto))
+        val methodDto = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "risky" }
+        val ifBlockDto = methodDto.body!!.cfg.blocks.single { block -> block.stmts.any { it is IfStmtDto } }
+        assertTrue(ifBlockDto.exceptionalSuccessors.any { edge -> ifBlockDto.stmts[edge.stmtIndex] is IfStmtDto })
+
+        val method = EtsScene(listOf(roundTripped.toEtsFile()))
+            .projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "risky" }
+        val conditionEvaluation = method.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+            .single { it.rhv is EtsEqExpr }
+        val ifStmt = method.cfg.stmts.filterIsInstance<EtsIfStmt>().single()
+
+        assertEquals(1, method.cfg.catchers(conditionEvaluation).size)
+        assertTrue(method.cfg.catchers(ifStmt).isEmpty())
+        assertTrue(method.cfg.throwers(method.cfg.catchers(conditionEvaluation).single()).contains(conditionEvaluation))
+    }
+
+    @Test
+    fun `catch edge covers both generated instructions of a field assignment`() {
+        val frontendDto = runFrontend(
+            """
+                export function assign(obj: any, x: any): number {
+                    try {
+                        obj.value = x;
+                        return 1;
+                    } catch {
+                        return 2;
+                    }
+                }
+            """.trimIndent(),
+        )
+
+        val originalClass = frontendDto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+        val originalMethod = originalClass.methods.single { it.signature.name == "assign" }
+        val originalBody = originalMethod.body!!
+        val originalBlock = originalBody.cfg.blocks.single { block ->
+            block.stmts.any { it is AssignStmtDto && it.left !is LocalDto }
+        }
+        val storeIndex = originalBlock.stmts.indexOfFirst { it is AssignStmtDto && it.left !is LocalDto }
+        assertTrue(originalBlock.exceptionalSuccessors.any { it.stmtIndex == storeIndex })
+
+        // A single DTO assignment can carry a compound RHS even though the native frontend
+        // usually lowers it to a separate DTO statement first.
+        val store = originalBlock.stmts[storeIndex] as AssignStmtDto
+        val x = originalBody.locals.single { it.name == "x" }
+        val compoundStore = store.copy(
+            right = RelationOperationDto(
+                op = Ops.Relational.EQ,
+                left = x,
+                right = ConstantDto(value = "1", type = NumberTypeDto),
+                type = BooleanTypeDto,
+            ),
+        )
+        val modifiedBlock = originalBlock.copy(
+            stmts = originalBlock.stmts.toMutableList().also { it[storeIndex] = compoundStore },
+        )
+        val modifiedMethod = originalMethod.copy(
+            body = originalBody.copy(
+                cfg = originalBody.cfg.copy(
+                    blocks = originalBody.cfg.blocks.map { if (it.id == originalBlock.id) modifiedBlock else it },
+                ),
+            ),
+        )
+        val modifiedClass = originalClass.copy(
+            methods = originalClass.methods.map { if (it.signature.name == "assign") modifiedMethod else it },
+        )
+        val modifiedDto = frontendDto.copy(
+            classes = frontendDto.classes.map { if (it.signature.name == DEFAULT_ARK_CLASS_NAME) modifiedClass else it },
+        )
+
+        val method = EtsScene(listOf(modifiedDto.toEtsFile()))
+            .projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "assign" }
+        val comparison = method.cfg.stmts.filterIsInstance<EtsAssignStmt>().single { it.rhv is EtsEqExpr }
+        val fieldStore = method.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+            .single { it.lhv is EtsInstanceFieldRef }
+        val catcher = method.cfg.catchers(comparison).single()
+
+        assertEquals(setOf(catcher), method.cfg.catchers(fieldStore))
+        assertTrue(method.cfg.throwers(catcher).containsAll(listOf(comparison, fieldStore)))
     }
 
     @Test
