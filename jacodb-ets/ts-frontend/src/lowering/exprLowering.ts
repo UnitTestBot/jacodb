@@ -1366,11 +1366,12 @@ export class ExprLowerer {
      * ambient ones get the %unk file.
      */
     private classLikeSignatureOf(node: ts.Expression): ClassSignatureDto | undefined {
-        if (this.isProjectClassProperty(node)) {
+        const value = unwrapTransparentExpression(node);
+        if (this.isProjectClassProperty(value)) {
             return undefined;
         }
 
-        const decl = classLikeDeclarationOf(node, this.m.checker);
+        const decl = classLikeDeclarationOf(value, this.m.checker);
         if (decl === undefined) return undefined;
         if (isProjectFile(decl)) {
             return this.m.converter.classSignatureOf(decl);
