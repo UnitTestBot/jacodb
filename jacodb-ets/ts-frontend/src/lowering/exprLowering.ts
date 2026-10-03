@@ -38,7 +38,7 @@ import {
     PATTERN_PARAMETER_PREFIX,
 } from "../dto/constants";
 import { FieldDto, MethodDto } from "../dto/model";
-import { buildParameters, BuiltParameters, memberName, modifiersOf, returnTypeOf } from "./astUtils";
+import { bindingIdentifier, buildParameters, BuiltParameters, classLikeDeclarationOf, memberName, modifiersOf, returnTypeOf } from "./astUtils";
 import { BinaryOp, RelationOp, UnaryOp } from "../dto/ops";
 import {
     ClassSignatureDto,
@@ -1316,14 +1316,7 @@ export class ExprLowerer {
      * ambient ones get the %unk file.
      */
     private classLikeSignatureOf(node: ts.Expression): ClassSignatureDto | undefined {
-        if (!ts.isIdentifier(node) && !ts.isPropertyAccessExpression(node)) {
-            return undefined;
-        }
-        const symbol = this.m.converter.symbolOf(ts.isIdentifier(node) ? node : node.name);
-        const decl = symbol?.declarations?.find(
-            (d): d is ts.ClassDeclaration | ts.EnumDeclaration =>
-                ts.isClassDeclaration(d) || ts.isEnumDeclaration(d),
-        );
+        const decl = classLikeDeclarationOf(node, this.m.checker);
         if (decl === undefined) return undefined;
         if (isProjectFile(decl)) {
             return this.m.converter.classSignatureOf(decl);
@@ -1527,20 +1520,6 @@ function containsPossibleSideEffect(node: ts.Node): boolean {
     };
     visit(node);
     return found;
-}
-
-/** The simple binding whose current value an expression denotes, if any. */
-function bindingIdentifier(node: ts.Expression): ts.Identifier | undefined {
-    while (
-        ts.isParenthesizedExpression(node)
-        || ts.isAsExpression(node)
-        || ts.isTypeAssertionExpression(node)
-        || ts.isNonNullExpression(node)
-        || ts.isSatisfiesExpression(node)
-    ) {
-        node = node.expression;
-    }
-    return ts.isIdentifier(node) ? node : undefined;
 }
 
 /** Identifier binding written by an assignment or an increment/decrement, if any. */

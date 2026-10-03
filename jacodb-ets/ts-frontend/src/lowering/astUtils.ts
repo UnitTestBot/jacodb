@@ -51,6 +51,191 @@ export function modifiersOf(node: ts.Node): number {
     return result;
 }
 
+/** The simple binding whose current value an expression denotes, if any. */
+export function bindingIdentifier(node: ts.Expression): ts.Identifier | undefined {
+    while (
+        ts.isParenthesizedExpression(node)
+        || ts.isAsExpression(node)
+        || ts.isTypeAssertionExpression(node)
+        || ts.isNonNullExpression(node)
+        || ts.isSatisfiesExpression(node)
+    ) {
+        node = node.expression;
+    }
+    return ts.isIdentifier(node) ? node : undefined;
+}
+
+/** Resolve a name through import aliases and shorthand-property value symbols. */
+export function resolvedSymbolOf(node: ts.Node, checker: ts.TypeChecker): ts.Symbol | undefined {
+    try {
+        let symbol = checker.getSymbolAtLocation(node);
+        const parent = node.parent;
+        if (parent !== undefined && ts.isShorthandPropertyAssignment(parent) && parent.name === node) {
+            symbol = checker.getShorthandAssignmentValueSymbol(parent) ?? symbol;
+        }
+        if (symbol !== undefined && (symbol.flags & ts.SymbolFlags.Alias) !== 0) {
+            return checker.getAliasedSymbol(symbol);
+        }
+        return symbol;
+    } catch {
+        return undefined;
+    }
+}
+
+/** The exact class/enum receiver syntax recognized by ExprLowerer for static access. */
+export function classLikeDeclarationOf(
+    node: ts.Expression,
+    checker: ts.TypeChecker,
+): ts.ClassDeclaration | ts.EnumDeclaration | undefined {
+    if (!ts.isIdentifier(node) && !ts.isPropertyAccessExpression(node)) return undefined;
+
+    const identifier = ts.isIdentifier(node) ? node : node.name;
+    if (!ts.isIdentifier(identifier)) return undefined;
+
+    return resolvedSymbolOf(identifier, checker)?.declarations?.find(
+        (declaration): declaration is ts.ClassDeclaration | ts.EnumDeclaration =>
+            ts.isClassDeclaration(declaration) || ts.isEnumDeclaration(declaration),
+    );
+}
+
+/** Storage that ClassBuilder actually emits for a direct static class/enum member. */
+function staticMemberStorage(
+    node: ts.PropertyAccessExpression,
+    checker: ts.TypeChecker,
+): "field" | "method" | "unsupported" | undefined {
+    const classDecl = classLikeDeclarationOf(node.expression, checker);
+    if (classDecl === undefined) return undefined;
+    if (!ts.isIdentifier(node.name)) return "unsupported";
+
+    const declarations = resolvedSymbolOf(node.name, checker)?.declarations ?? [];
+    const member = declarations.find((declaration) =>
+        declaration.parent === classDecl
+        && (ts.isPropertyDeclaration(declaration)
+            || ts.isMethodDeclaration(declaration)
+            || ts.isEnumMember(declaration))
+        && memberName(declaration.name) === node.name.text,
+    );
+    if (member === undefined) return "unsupported";
+
+    if (ts.isEnumMember(member) && ts.isEnumDeclaration(classDecl)) return "field";
+    if (ts.isPropertyDeclaration(member) && (modifiersOf(member) & Modifier.STATIC) !== 0) return "field";
+    if (ts.isMethodDeclaration(member) && (modifiersOf(member) & Modifier.STATIC) !== 0) return "method";
+
+    return "unsupported";
+}
+
+/** Scope functions, classes, enums, and namespaces have no standalone value reference in EtsIR yet. */
+function isUnmaterializedValue(identifier: ts.Identifier, checker: ts.TypeChecker): boolean {
+    const symbol = resolvedSymbolOf(identifier, checker);
+
+    return symbol?.declarations?.some((declaration) =>
+        ts.isClassDeclaration(declaration)
+        || (ts.isFunctionDeclaration(declaration)
+            && (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent)))
+        || ts.isEnumDeclaration(declaration)
+        || ts.isModuleDeclaration(declaration),
+    ) ?? false;
+}
+
+/** Direct calls and constructors use method/class signatures; other reads need a materialized value. */
+export function usesUnmaterializedDeclarationValue(expression: ts.Expression, checker: ts.TypeChecker): boolean {
+    const visit = (node: ts.Node): boolean => {
+        if (ts.isTypeNode(node)) return false;
+        if (ts.isIdentifier(node)) return isUnmaterializedValue(node, checker);
+
+        if (ts.isNewExpression(node) && classLikeDeclarationOf(node.expression, checker) !== undefined) {
+            return node.arguments?.some(visit) ?? false;
+        }
+        if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
+            const storage = staticMemberStorage(node.expression, checker);
+            if (storage !== undefined) {
+                return ts.isOptionalChain(node) || storage !== "method" || (node.arguments?.some(visit) ?? false);
+            }
+        }
+        if (ts.isCallExpression(node) || ts.isNewExpression(node)) {
+            const directCall = ts.isCallExpression(node) && node.questionDotToken === undefined;
+            const calleeNeedsValue = !(ts.isIdentifier(node.expression) && (directCall || ts.isNewExpression(node)))
+                && visit(node.expression);
+            return calleeNeedsValue || (node.arguments?.some(visit) ?? false);
+        }
+        if (ts.isPropertyAccessExpression(node)) {
+            const storage = staticMemberStorage(node, checker);
+            if (storage !== undefined) return ts.isOptionalChain(node) || storage !== "field";
+
+            return visit(node.expression);
+        }
+        if (ts.isPropertyAssignment(node)) {
+            return (ts.isComputedPropertyName(node.name) && visit(node.name.expression))
+                || visit(node.initializer);
+        }
+        if (ts.isShorthandPropertyAssignment(node)) return visit(node.name);
+
+        let found = false;
+        ts.forEachChild(node, (child) => { found = visit(child) || found; });
+        return found;
+    };
+
+    return visit(expression);
+}
+
+/** `export default` is a module statement; its lexical `this` is not `%dflt`'s synthetic receiver. */
+export function usesModuleLexicalThis(expression: ts.Expression): boolean {
+    const visit = (node: ts.Node): boolean => {
+        if (node.kind === ts.SyntaxKind.ThisKeyword) return true;
+        if (ts.isFunctionExpression(node)
+            || ts.isFunctionDeclaration(node)
+            || ts.isConstructorDeclaration(node)
+            || ts.isClassExpression(node)) return false;
+        if (ts.isMethodDeclaration(node)
+            || ts.isGetAccessorDeclaration(node)
+            || ts.isSetAccessorDeclaration(node)) {
+            return ts.isComputedPropertyName(node.name) && visit(node.name.expression);
+        }
+
+        let found = false;
+        ts.forEachChild(node, (child) => { found = visit(child) || found; });
+        return found;
+    };
+
+    return visit(expression);
+}
+
+/** Object-literal lowering currently emits `%computed` without evaluating the key. */
+export function hasUnsupportedComputedObjectKey(expression: ts.Expression): boolean {
+    const visit = (node: ts.Node): boolean => {
+        if (ts.isObjectLiteralExpression(node) && node.properties.some((property) =>
+            (ts.isPropertyAssignment(property)
+                || ts.isMethodDeclaration(property)
+                || ts.isGetAccessorDeclaration(property)
+                || ts.isSetAccessorDeclaration(property))
+            && ts.isComputedPropertyName(property.name),
+        )) return true;
+
+        let found = false;
+        ts.forEachChild(node, (child) => { found = visit(child) || found; });
+        return found;
+    };
+
+    return visit(expression);
+}
+
+export type ExportAssignmentSupport =
+    | "supported"
+    | "exportEquals"
+    | "computedObjectKey"
+    | "moduleLexicalThis"
+    | "unmaterializedValue";
+
+/** One decision for default-export metadata, storage, and statement lowering. */
+export function exportAssignmentSupport(node: ts.ExportAssignment, checker: ts.TypeChecker): ExportAssignmentSupport {
+    if (node.isExportEquals) return "exportEquals";
+    if (hasUnsupportedComputedObjectKey(node.expression)) return "computedObjectKey";
+    if (usesModuleLexicalThis(node.expression)) return "moduleLexicalThis";
+    if (usesUnmaterializedDeclarationValue(node.expression, checker)) return "unmaterializedValue";
+
+    return "supported";
+}
+
 function decoratorName(expr: ts.Expression): string {
     if (ts.isCallExpression(expr)) return decoratorName(expr.expression);
     if (ts.isIdentifier(expr)) return expr.text;

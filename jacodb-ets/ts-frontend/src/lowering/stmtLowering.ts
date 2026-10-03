@@ -25,6 +25,7 @@ import * as ts from "typescript";
 import { MethodSignatureDto, UNKNOWN_CLASS_SIGNATURE, UNKNOWN_FILE_SIGNATURE } from "../dto/signatures";
 import { BOOLEAN_TYPE, NUMBER_TYPE, TypeDto, UNDEFINED_TYPE, UNKNOWN_TYPE } from "../dto/types";
 import { LValueDto, LocalDto, ValueDto } from "../dto/values";
+import { exportAssignmentSupport } from "./astUtils";
 import { Label } from "./cfg";
 import { unsupportedStmt } from "./diagnostics";
 import { ExprLowerer, LoweringError, constant } from "./exprLowering";
@@ -180,6 +181,35 @@ export class StmtLowerer {
         }
         if (ts.isExpressionStatement(node)) {
             this.expr.lowerDiscarded(node.expression);
+            return;
+        }
+        if (ts.isExportAssignment(node)) {
+            switch (exportAssignmentSupport(node, this.m.checker)) {
+                case "exportEquals":
+                    throw new LoweringError("export = has no EtsIR default binding");
+                case "computedObjectKey":
+                    throw new LoweringError("export default contains a computed object key without EtsIR lowering");
+                case "moduleLexicalThis":
+                    throw new LoweringError("export default reads module-level lexical this");
+                case "unmaterializedValue":
+                    throw new LoweringError(`export default ${node.expression.getText()} has no EtsIR value reference`);
+                case "supported":
+                    break;
+            }
+
+            const value = this.expr.lowerToImmediate(node.expression);
+            this.m.cfg.emit({
+                _: "AssignStmt",
+                left: {
+                    _: "StaticFieldRef",
+                    field: {
+                        declaringClass: this.m.declaringClass,
+                        name: "default",
+                        type: this.m.converter.typeOfNode(node.expression),
+                    },
+                },
+                right: value,
+            });
             return;
         }
         if (ts.isReturnStatement(node)) {

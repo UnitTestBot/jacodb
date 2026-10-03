@@ -22,7 +22,7 @@ package org.jacodb.ets.model
  * @property name The name of the exported entity.
  * @property type The [type][EtsExportType] of export.
  * @property from The module or path being exported from (null for direct exports).
- * @property nameBeforeAs The original name before 'as' aliasing (null if no aliasing).
+ * @property nameBeforeAs The original name before 'as' aliasing, or the source identifier of a snapshot default export.
  * @property modifiers Export modifiers.
  * @property isTypeOnly Whether this export is only available in type positions.
  */
@@ -38,11 +38,9 @@ data class EtsExportInfo(
     // Note: Export statements do not have decorators in JS/TS.
     override val decorators: List<EtsDecorator> get() = emptyList()
 
-    /**
-     * Export clause name without any aliasing.
-     */
+    /** The storage name used to resolve an export, before any aliasing. */
     val originalName: String
-        get() = nameBeforeAs ?: name
+        get() = if (from == null && name == "default" && super.isDefault) name else nameBeforeAs ?: name
 
     /**
      * Whether this export is a default export.
@@ -115,7 +113,7 @@ data class EtsExportInfo(
 
             // Direct default export
             isDefaultExport -> {
-                "export default $originalName"
+                "export default ${nameBeforeAs ?: originalName}"
             }
 
             // Direct named export
