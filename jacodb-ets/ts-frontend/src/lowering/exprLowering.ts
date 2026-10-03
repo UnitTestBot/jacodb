@@ -1071,6 +1071,11 @@ export class ExprLowerer {
             throw new LoweringError("constructor read from a mutable class property is not represented in EtsIR");
         }
 
+        if (this.isNamespaceElementAccess(node.expression)) {
+            this.evaluateNamespaceElementAccess(node.expression);
+            throw new LoweringError("computed namespace constructor read is not represented in EtsIR");
+        }
+
         const target = unwrapTransparentExpression(node.expression);
         const declarations = ts.isIdentifier(target)
             ? this.m.converter.symbolOf(target)?.declarations
@@ -1431,6 +1436,27 @@ export class ExprLowerer {
             // Preserve receiver effects without materializing the mutable class property.
             this.lowerToImmediate(property.expression);
         }
+    }
+
+    private isNamespaceElementAccess(node: ts.Expression): boolean {
+        const value = unwrapTransparentExpression(node);
+        if (!ts.isElementAccessExpression(value)) return false;
+
+        const receiver = unwrapTransparentExpression(value.expression);
+        const receiverType = this.m.checker.getTypeAtLocation(receiver);
+        return receiverType.symbol?.declarations?.some((declaration) =>
+            ts.isModuleDeclaration(declaration) || ts.isSourceFile(declaration),
+        ) === true;
+    }
+
+    private evaluateNamespaceElementAccess(node: ts.Expression): void {
+        const element = unwrapTransparentExpression(node);
+        if (!ts.isElementAccessExpression(element)) return;
+
+        // The namespace object has no runtime representation in EtsIR. Retain
+        // receiver and key effects without emitting an invalid ArrayRef.
+        this.lowerToImmediate(element.expression);
+        this.lowerToImmediate(element.argumentExpression);
     }
 
     private classSignatureFromType(type: TypeDto): ClassSignatureDto {

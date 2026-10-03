@@ -806,6 +806,76 @@ describe("namespace lowering", () => {
         });
     });
 
+    it("rejects computed namespace constructors after evaluating receiver and key once", () => {
+        const source = `
+            namespace N { export class A { kind = "A"; } }
+            class B { kind = "B"; }
+            let receiverReads = 0;
+            let keyReads = 0;
+            function getN(): typeof N { receiverReads++; return N; }
+            function getKey(): "A" { keyReads++; return "A"; }
+            export function computed(): N.A { return new N["A"](); }
+            export function wrapped(): N.A { return new ((N["A"] as typeof N.A)!)(); }
+            export function castReceiver(): N.A { return new ((N as any)["A"])(); }
+            export function throughParameter(holder: typeof N): N.A { return new holder["A"](); }
+            export function withEffects(): N.A { return new (getN()[getKey()])(); }
+            export function replace(): void { N.A = B; }
+            export function readCounts(): number[] { return [receiverReads, keyReads]; }
+        `;
+        const compiled = compile(source);
+        expect(compiled.program.getSemanticDiagnostics(compiled.sourceFile)).toEqual([]);
+
+        const { file, diagnostics } = lower(source);
+        const defaultClass = classByName(file, "%dflt");
+        for (const name of ["computed", "wrapped", "castReceiver", "throughParameter", "withEffects"]) {
+            const stmts = singleBlockStmts(methodOf(defaultClass, name));
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "ArrayRef")).toBe(false);
+        }
+
+        const effectStmts = singleBlockStmts(methodOf(defaultClass, "withEffects"));
+        const receiverIndex = effectStmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "getN");
+        const keyIndex = effectStmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "getKey");
+        const unsupportedIndex = effectStmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "UnsupportedValue");
+        expect(receiverIndex).toBeGreaterThanOrEqual(0);
+        expect(keyIndex).toBeGreaterThan(receiverIndex);
+        expect(unsupportedIndex).toBeGreaterThan(keyIndex);
+        expect(diagnostics.messages).toEqual(expect.arrayContaining([
+            expect.stringContaining("computed namespace constructor"),
+        ]));
+
+        const js = ts.transpileModule(source, {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+        }).outputText;
+        const concrete = new Function("exports", `${js}\nconst before = {
+            computed: computed().kind,
+            wrapped: wrapped().kind,
+            castReceiver: castReceiver().kind,
+            parameter: throughParameter(N).kind,
+            effects: withEffects().kind,
+        };
+        replace();
+        const after = {
+            computed: computed().kind,
+            wrapped: wrapped().kind,
+            castReceiver: castReceiver().kind,
+            parameter: throughParameter(N).kind,
+            effects: withEffects().kind,
+        };
+        return { before, after, counts: readCounts() };`)({}) as {
+            before: Record<string, string>; after: Record<string, string>; counts: number[];
+        };
+        expect(concrete).toEqual({
+            before: { computed: "A", wrapped: "A", castReceiver: "A", parameter: "A", effects: "A" },
+            after: { computed: "B", wrapped: "B", castReceiver: "B", parameter: "B", effects: "B" },
+            counts: [2, 2],
+        });
+    });
+
     it("builds NamespaceDto with its own %dflt class and declared classes", () => {
         const { file } = lower(`
             namespace Outer {
