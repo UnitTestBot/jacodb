@@ -1055,6 +1055,12 @@ export class ExprLowerer {
             throw new LoweringError("constructor read from a mutable class property is not represented in EtsIR");
         }
 
+        if (this.classLikeSignatureOf(node.expression) === undefined
+            && this.safeTypeOf(node.expression)._ === "ClassValueType") {
+            this.lowerToImmediate(node.expression);
+            throw new LoweringError("new through a runtime constructor value is not represented in EtsIR");
+        }
+
         const inferredType = this.safeTypeOf(node);
         const args = node.arguments ?? ts.factory.createNodeArray();
         const lengthType = args.length === 1 ? this.safeTypeOf(args[0]) : undefined;
