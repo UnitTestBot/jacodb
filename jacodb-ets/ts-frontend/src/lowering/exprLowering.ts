@@ -1634,12 +1634,6 @@ function unwrapTransparentExpression(node: ts.Expression): ts.Expression {
     return node;
 }
 
-/** The simple binding whose current value an expression denotes, if any. */
-function bindingIdentifier(node: ts.Expression): ts.Identifier | undefined {
-    const value = unwrapTransparentExpression(node);
-    return ts.isIdentifier(value) ? value : undefined;
-}
-
 /** Identifier binding written by an assignment or an increment/decrement, if any. */
 function assignmentTarget(node: ts.Node): ts.Identifier | undefined {
     if (ts.isBinaryExpression(node) && (

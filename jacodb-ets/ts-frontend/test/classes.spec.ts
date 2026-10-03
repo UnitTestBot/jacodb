@@ -74,7 +74,17 @@ describe("class lowering", () => {
         }
         expect(direct.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr")).toBe(true);
         expect(marker.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticFieldRef")).toBe(true);
-        expect(file.exportInfos).toContainEqual(expect.objectContaining({ exportName: "A" }));
+        expect(defaultClass.fields).toContainEqual(expect.objectContaining({
+            signature: expect.objectContaining({ name: "default", type: { _: "ClassValueType", signature: classSignature } }),
+        }));
+        expect(methodOf(defaultClass, "%dflt").body!.cfg.blocks.flatMap((block) => block.stmts)).toContainEqual(
+            expect.objectContaining({
+                _: "AssignStmt",
+                left: expect.objectContaining({ _: "StaticFieldRef", field: expect.objectContaining({ name: "default" }) }),
+                right: expect.objectContaining({ _: "ClassValueRef", signature: classSignature }),
+            }),
+        );
+        expect(file.exportInfos).toContainEqual(expect.objectContaining({ exportName: "default", nameBeforeAs: "A" }));
         expect(diagnostics.messages).toEqual([]);
 
         const js = ts.transpileModule(source, {

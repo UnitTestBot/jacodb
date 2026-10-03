@@ -63,7 +63,7 @@ data class ConstantDto(
 data class ClassValueRefDto(
     val signature: ClassSignatureDto,
     override val type: TypeDto,
-) : ImmediateDto
+) : ValueDto
 
 // TODO: uncomment and adapt the following code for different constants
 //       Currently, ArkIR stores all constants as strings (see ConstantDto above),

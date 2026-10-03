@@ -145,7 +145,7 @@ class EtsTsFrontendTest {
     }
 
     @Test
-    fun `namespaced constructor in default export survives JSON conversion`() {
+    fun `mutable namespaced constructor in default export remains unsupported in JSON`() {
         val dto = runFrontend(
             """
                 namespace N { export class Box { constructor(public value: number) {} } }
@@ -156,14 +156,11 @@ class EtsTsFrontendTest {
         val defaultClass = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
         val stmts = defaultClass.methods.single { it.signature.name == DEFAULT_ARK_METHOD_NAME }
             .body!!.cfg.blocks.flatMap { it.stmts }
-        val allocation = stmts.filterIsInstance<AssignStmtDto>()
-            .map { it.right }.filterIsInstance<NewExprDto>().single()
-        val classType = allocation.classType as ClassTypeDto
 
-        assertEquals("Box", classType.signature.name)
-        assertEquals("N", classType.signature.declaringNamespace?.name)
-        assertTrue(defaultClass.fields.any { it.signature.name == "default" })
-        assertEquals("default", dto.toEtsFile().exportInfos.single { it.isDefaultExport }.name)
+        assertTrue(stmts.any { it is RawStmtDto && it.kind == "UnsupportedStmt" })
+        assertTrue(stmts.filterIsInstance<AssignStmtDto>().none { it.right is NewExprDto })
+        assertTrue(defaultClass.fields.none { it.signature.name == "default" })
+        assertTrue(dto.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }.fields.none { it.name == "default" })
     }
 
     @Test
@@ -274,9 +271,15 @@ class EtsTsFrontendTest {
         assertEquals(ClassValueTypeDto(classSignature), constructorValue.signature.returnType)
         assertTrue(copy.body!!.cfg.blocks.flatMap { it.stmts }
             .filterIsInstance<AssignStmtDto>().any { it.right == returnedClass })
-        assertTrue(dto.exportInfos.any { it.exportName == "A" })
+        assertTrue(dto.exportInfos.any { it.exportName == "default" && it.nameBeforeAs == "A" })
+        val defaultClass = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+        assertEquals(ClassValueTypeDto(classSignature), defaultClass.fields.single { it.signature.name == "default" }.signature.type)
+        assertTrue(defaultClass.methods.single { it.signature.name == DEFAULT_ARK_METHOD_NAME }
+            .body!!.cfg.blocks.flatMap { it.stmts }.filterIsInstance<AssignStmtDto>()
+            .any { (it.left as? StaticFieldRefDto)?.field?.name == "default" && it.right == returnedClass })
 
         val model = dto.toEtsFile()
+        assertEquals("default", model.exportInfos.single { it.isDefaultExport }.name)
         val modelMethods = model.classes.single { it.name == DEFAULT_ARK_CLASS_NAME }.methods
         val modelConstructor = modelMethods.single { it.name == "constructorValue" }
         assertTrue(modelConstructor.signature.returnType is EtsClassValueType)

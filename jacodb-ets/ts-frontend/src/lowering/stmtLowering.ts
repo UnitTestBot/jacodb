@@ -198,6 +198,8 @@ export class StmtLowerer {
                     throw new LoweringError("export default contains a computed object key without EtsIR lowering");
                 case "moduleLexicalThis":
                     throw new LoweringError("export default reads module-level lexical this");
+                case "mutableClassProperty":
+                    throw new LoweringError("export default reads a mutable class property without an EtsIR runtime value");
                 case "unmaterializedValue":
                     throw new LoweringError(`export default ${node.expression.getText()} has no EtsIR value reference`);
                 case "supported":
@@ -212,7 +214,7 @@ export class StmtLowerer {
                     field: {
                         declaringClass: this.m.declaringClass,
                         name: "default",
-                        type: this.m.converter.typeOfNode(node.expression),
+                        type: value.type,
                     },
                 },
                 right: value,

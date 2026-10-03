@@ -40,7 +40,7 @@ import { ClassDto, EtsFileDto, ExportInfoDto, FieldDto, ImportInfoDto, MethodDto
 import { ClassSignatureDto, FileSignatureDto, NamespaceSignatureDto } from "../dto/signatures";
 import { VOID_TYPE } from "../dto/types";
 import { TypeConverter } from "../types/convert";
-import { exportAssignmentSupport, modifiersOf } from "./astUtils";
+import { classValueDeclarationOf, exportAssignmentSupport, modifiersOf } from "./astUtils";
 import { ClassBuilder } from "./classBuilder";
 import { Diagnostics } from "./diagnostics";
 import { AnonymousRegistry, LoweringContext, MethodContext } from "./methodBuilder";
@@ -412,11 +412,16 @@ class FileBuilder {
             if (!ts.isExportAssignment(statement)
                 || exportAssignmentSupport(statement, this.ctx.checker) !== "supported") continue;
 
+            const classDeclaration = classValueDeclarationOf(statement.expression, this.ctx.checker);
+            const type = classDeclaration === undefined
+                ? this.ctx.converter.typeOfNode(statement.expression)
+                : { _: "ClassValueType" as const, signature: this.ctx.converter.classSignatureOf(classDeclaration) };
+
             fields.push({
                 signature: {
                     declaringClass,
                     name: DEFAULT_EXPORT_BINDING_NAME,
-                    type: this.ctx.converter.typeOfNode(statement.expression),
+                    type,
                 },
                 modifiers: Modifier.STATIC | Modifier.CONST,
                 decorators: [],

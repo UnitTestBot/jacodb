@@ -65,6 +65,19 @@ export function bindingIdentifier(node: ts.Expression): ts.Identifier | undefine
     return ts.isIdentifier(node) ? node : undefined;
 }
 
+/** A directly referenced project class has a runtime constructor value. */
+export function classValueDeclarationOf(node: ts.Expression, checker: ts.TypeChecker): ts.ClassDeclaration | undefined {
+    const identifier = bindingIdentifier(node);
+    if (identifier === undefined) return undefined;
+
+    return resolvedSymbolOf(identifier, checker)?.declarations?.find(
+        (declaration): declaration is ts.ClassDeclaration =>
+            ts.isClassDeclaration(declaration)
+            && !declaration.getSourceFile().isDeclarationFile
+            && (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent)),
+    );
+}
+
 /** Resolve a name through import aliases and shorthand-property value symbols. */
 export function resolvedSymbolOf(node: ts.Node, checker: ts.TypeChecker): ts.Symbol | undefined {
     try {
@@ -124,17 +137,33 @@ function staticMemberStorage(
     return "unsupported";
 }
 
-/** Scope functions, classes, enums, and namespaces have no standalone value reference in EtsIR yet. */
+/** Scope functions, ambient classes, enums, and namespaces have no standalone value reference in EtsIR yet. */
 function isUnmaterializedValue(identifier: ts.Identifier, checker: ts.TypeChecker): boolean {
     const symbol = resolvedSymbolOf(identifier, checker);
 
     return symbol?.declarations?.some((declaration) =>
-        ts.isClassDeclaration(declaration)
+        (ts.isClassDeclaration(declaration) && declaration.getSourceFile().isDeclarationFile)
         || (ts.isFunctionDeclaration(declaration)
             && (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent)))
         || ts.isEnumDeclaration(declaration)
         || ts.isModuleDeclaration(declaration),
     ) ?? false;
+}
+
+/** A qualified project class is a mutable object property, not the declared class's stable value. */
+function usesMutableClassProperty(expression: ts.Expression, checker: ts.TypeChecker): boolean {
+    const visit = (node: ts.Node): boolean => {
+        if (ts.isTypeNode(node)) return false;
+        if (ts.isPropertyAccessExpression(node) && resolvedSymbolOf(node.name, checker)?.declarations?.some(
+            (declaration) => ts.isClassDeclaration(declaration) && !declaration.getSourceFile().isDeclarationFile,
+        )) return true;
+
+        let found = false;
+        ts.forEachChild(node, (child) => { found = visit(child) || found; });
+        return found;
+    };
+
+    return visit(expression);
 }
 
 /** Direct calls and constructors use method/class signatures; other reads need a materialized value. */
@@ -224,6 +253,7 @@ export type ExportAssignmentSupport =
     | "exportEquals"
     | "computedObjectKey"
     | "moduleLexicalThis"
+    | "mutableClassProperty"
     | "unmaterializedValue";
 
 /** One decision for default-export metadata, storage, and statement lowering. */
@@ -231,6 +261,7 @@ export function exportAssignmentSupport(node: ts.ExportAssignment, checker: ts.T
     if (node.isExportEquals) return "exportEquals";
     if (hasUnsupportedComputedObjectKey(node.expression)) return "computedObjectKey";
     if (usesModuleLexicalThis(node.expression)) return "moduleLexicalThis";
+    if (usesMutableClassProperty(node.expression, checker)) return "mutableClassProperty";
     if (usesUnmaterializedDeclarationValue(node.expression, checker)) return "unmaterializedValue";
 
     return "supported";
