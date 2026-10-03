@@ -184,6 +184,9 @@ describe("class lowering", () => {
             export function constructArray(ctor: new (length: number) => number[]): number[] {
                 return new ctor(3);
             }
+            export function indexArgument(ctor: typeof A | typeof B, values: number[]): A | B {
+                return new ctor(values[0]);
+            }
         `;
         const { file, diagnostics } = lower(source);
         const defaultClass = classByName(file, "%dflt");
@@ -237,6 +240,10 @@ describe("class lowering", () => {
             _: "AssignStmt",
             right: expect.objectContaining({ _: "NewExpr", constructorValue: expect.objectContaining({ _: "Local" }) }),
         }));
+        const indexedArgumentStmts = singleBlockStmts(methodOf(defaultClass, "indexArgument"));
+        expect(indexedArgumentStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "ArrayRef")).toBe(true);
+        expect(indexedArgumentStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(true);
+        expect(indexedArgumentStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(false);
         expect(diagnostics.messages).toEqual([]);
 
         const js = ts.transpileModule(source, {
@@ -244,10 +251,11 @@ describe("class lowering", () => {
         }).outputText;
         const concrete = new Function("exports", `${js}\nreturn {
             result: check(), selectedIsB: selected === B, localMutation: localMutation(),
+            indexedArgument: indexArgument(A, [7]).value,
         };`)({}) as {
-            result: boolean; selectedIsB: boolean; localMutation: boolean;
+            result: boolean; selectedIsB: boolean; localMutation: boolean; indexedArgument: number;
         };
-        expect(concrete).toEqual({ result: true, selectedIsB: true, localMutation: true });
+        expect(concrete).toEqual({ result: true, selectedIsB: true, localMutation: true, indexedArgument: 7 });
     });
 
     it("keeps complete stable names for class decorators", () => {
@@ -808,7 +816,10 @@ describe("namespace lowering", () => {
 
     it("rejects computed namespace constructors after evaluating receiver and key once", () => {
         const source = `
-            namespace N { export class A { kind = "A"; } }
+            namespace N {
+                export class A { kind = "A"; }
+                export namespace Inner { export class C { kind = "A"; } }
+            }
             class B { kind = "B"; }
             let receiverReads = 0;
             let keyReads = 0;
@@ -817,6 +828,7 @@ describe("namespace lowering", () => {
             export function computed(): N.A { return new N["A"](); }
             export function wrapped(): N.A { return new ((N["A"] as typeof N.A)!)(); }
             export function castReceiver(): N.A { return new ((N as any)["A"])(); }
+            export function nestedClass(): N.Inner.C { return new (N["Inner"].C)(); }
             export function throughParameter(holder: typeof N): N.A { return new holder["A"](); }
             export function withEffects(): N.A { return new (getN()[getKey()])(); }
             export function replace(): void { N.A = B; }
@@ -827,7 +839,7 @@ describe("namespace lowering", () => {
 
         const { file, diagnostics } = lower(source);
         const defaultClass = classByName(file, "%dflt");
-        for (const name of ["computed", "wrapped", "castReceiver", "throughParameter", "withEffects"]) {
+        for (const name of ["computed", "wrapped", "castReceiver", "nestedClass", "throughParameter", "withEffects"]) {
             const stmts = singleBlockStmts(methodOf(defaultClass, name));
             expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
             expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
@@ -845,7 +857,7 @@ describe("namespace lowering", () => {
         expect(keyIndex).toBeGreaterThan(receiverIndex);
         expect(unsupportedIndex).toBeGreaterThan(keyIndex);
         expect(diagnostics.messages).toEqual(expect.arrayContaining([
-            expect.stringContaining("computed namespace constructor"),
+            expect.stringContaining("computed constructor access"),
         ]));
 
         const js = ts.transpileModule(source, {
@@ -855,6 +867,7 @@ describe("namespace lowering", () => {
             computed: computed().kind,
             wrapped: wrapped().kind,
             castReceiver: castReceiver().kind,
+            nestedClass: nestedClass().kind,
             parameter: throughParameter(N).kind,
             effects: withEffects().kind,
         };
@@ -863,6 +876,7 @@ describe("namespace lowering", () => {
             computed: computed().kind,
             wrapped: wrapped().kind,
             castReceiver: castReceiver().kind,
+            nestedClass: nestedClass().kind,
             parameter: throughParameter(N).kind,
             effects: withEffects().kind,
         };
@@ -870,8 +884,78 @@ describe("namespace lowering", () => {
             before: Record<string, string>; after: Record<string, string>; counts: number[];
         };
         expect(concrete).toEqual({
-            before: { computed: "A", wrapped: "A", castReceiver: "A", parameter: "A", effects: "A" },
-            after: { computed: "B", wrapped: "B", castReceiver: "B", parameter: "B", effects: "B" },
+            before: { computed: "A", wrapped: "A", castReceiver: "A", nestedClass: "A", parameter: "A", effects: "A" },
+            after: { computed: "B", wrapped: "B", castReceiver: "B", nestedClass: "A", parameter: "B", effects: "B" },
+            counts: [2, 2],
+        });
+    });
+
+    it("rejects computed constructor callees without treating property reads as array reads", () => {
+        const source = `
+            class A { kind = "A"; }
+            class B { kind = "B"; }
+            let holder: { Ctor: typeof A | typeof B } = { Ctor: A };
+            let nestedHolder: { slot: typeof holder } = { slot: holder };
+            let receiverReads = 0;
+            let keyReads = 0;
+            function getHolder(): typeof holder { receiverReads++; return holder; }
+            function getKey(): "Ctor" { keyReads++; return "Ctor"; }
+            function pick(ctor: typeof A | typeof B): typeof A | typeof B { return ctor; }
+            export function computed(): A | B { return new (getHolder()[getKey()])(); }
+            export function wrapped(): A | B { return new ((holder["Ctor"] as typeof A | typeof B)!)(); }
+            export function nested(): A | B { return new (nestedHolder["slot"]["Ctor"])(); }
+            export function conditional(flag: boolean): A | B { return new (flag ? A : holder["Ctor"])(); }
+            export function throughCall(): A | B { return new (pick(holder["Ctor"]))(); }
+            export function array(constructors: Array<typeof A | typeof B>): A | B {
+                return new constructors[0]();
+            }
+            export function replace(): void { holder.Ctor = B; }
+            export function readCounts(): number[] { return [receiverReads, keyReads]; }
+        `;
+        const compiled = compile(source);
+        expect(compiled.program.getSemanticDiagnostics(compiled.sourceFile)).toEqual([]);
+
+        const { file, diagnostics } = lower(source);
+        const defaultClass = classByName(file, "%dflt");
+        for (const name of ["computed", "wrapped", "nested", "conditional", "throughCall", "array"]) {
+            const stmts = methodOf(defaultClass, name).body!.cfg.blocks.flatMap((block) => block.stmts);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "ArrayRef")).toBe(false);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
+        }
+
+        const computedStmts = singleBlockStmts(methodOf(defaultClass, "computed"));
+        const receiverIndex = computedStmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "getHolder");
+        const keyIndex = computedStmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "getKey");
+        const unsupportedIndex = computedStmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "UnsupportedValue");
+        expect(receiverIndex).toBeGreaterThanOrEqual(0);
+        expect(keyIndex).toBeGreaterThan(receiverIndex);
+        expect(unsupportedIndex).toBeGreaterThan(keyIndex);
+        expect(diagnostics.messages).toEqual(expect.arrayContaining([
+            expect.stringContaining("computed constructor access"),
+        ]));
+
+        const js = ts.transpileModule(source, {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+        }).outputText;
+        const concrete = new Function("exports", `${js}\nconst before = [
+            computed().kind, wrapped().kind, nested().kind,
+            conditional(false).kind, throughCall().kind, array([A, B]).kind,
+        ];
+        replace();
+        const after = [
+            computed().kind, wrapped().kind, nested().kind,
+            conditional(false).kind, throughCall().kind, array([B, A]).kind,
+        ];
+        return { before, after, counts: readCounts() };`)({}) as {
+            before: string[]; after: string[]; counts: number[];
+        };
+        expect(concrete).toEqual({
+            before: ["A", "A", "A", "A", "A", "A"],
+            after: ["B", "B", "B", "B", "B", "B"],
             counts: [2, 2],
         });
     });

@@ -141,6 +141,7 @@ interface OptionalChainValue {
 
 export class ExprLowerer {
     private unsupportedExpressionCount = 0;
+    private computedConstructorCalleeDepth = 0;
 
     constructor(
         private readonly m: MethodContext,
@@ -413,6 +414,12 @@ export class ExprLowerer {
     }
 
     private lowerElementAccess(node: ts.ElementAccessExpression): ValueDto {
+        if (this.computedConstructorCalleeDepth > 0) {
+            this.lowerToImmediate(node.expression);
+            this.lowerToImmediate(node.argumentExpression);
+            throw new LoweringError("computed constructor access is not represented in EtsIR");
+        }
+
         const chain = optionalChain(node);
         if (chain !== undefined) {
             return this.lowerOptionalChain(node, chain);
@@ -1066,14 +1073,15 @@ export class ExprLowerer {
     }
 
     private lowerNew(node: ts.NewExpression): ValueDto {
+        const args = node.arguments ?? ts.factory.createNodeArray();
+        if (containsElementAccess(node.expression)) {
+            this.lowerDynamicConstructorValue(node.expression, args);
+            throw new LoweringError("computed constructor access is not represented in EtsIR");
+        }
+
         if (this.isProjectClassProperty(node.expression)) {
             this.evaluateProjectClassPropertyReceiver(node.expression);
             throw new LoweringError("constructor read from a mutable class property is not represented in EtsIR");
-        }
-
-        if (this.isNamespaceElementAccess(node.expression)) {
-            this.evaluateNamespaceElementAccess(node.expression);
-            throw new LoweringError("computed namespace constructor read is not represented in EtsIR");
         }
 
         const target = unwrapTransparentExpression(node.expression);
@@ -1088,7 +1096,6 @@ export class ExprLowerer {
         const staticConstructor = this.classLikeSignatureOf(node.expression) !== undefined || standardLibraryIdentifier;
 
         const inferredType = this.safeTypeOf(node);
-        const args = node.arguments ?? ts.factory.createNodeArray();
         const lengthType = args.length === 1 ? this.safeTypeOf(args[0]) : undefined;
         const numericLength = lengthType?._ === "NumberType"
             || (lengthType?._ === "LiteralType" && typeof lengthType.literal === "number");
@@ -1106,7 +1113,7 @@ export class ExprLowerer {
         const unsupportedBeforeConstructor = this.unsupportedExpressionCount;
         const constructorValue = staticConstructor
             ? undefined
-            : this.lowerImmediateBefore(node.expression, args);
+            : this.lowerDynamicConstructorValue(node.expression, args);
         if (this.unsupportedExpressionCount !== unsupportedBeforeConstructor) {
             throw new LoweringError("new constructor value cannot be represented in EtsIR");
         }
@@ -1132,6 +1139,15 @@ export class ExprLowerer {
             right: { _: "InstanceCallExpr", instance: temp, method: ctorSig, args: loweredArgs },
         });
         return temp;
+    }
+
+    private lowerDynamicConstructorValue(node: ts.Expression, args: readonly ts.Expression[]): ImmediateDto {
+        this.computedConstructorCalleeDepth++;
+        try {
+            return this.lowerImmediateBefore(node, args);
+        } finally {
+            this.computedConstructorCalleeDepth--;
+        }
     }
 
     private lowerArrayLiteral(node: ts.ArrayLiteralExpression): ValueDto {
@@ -1438,27 +1454,6 @@ export class ExprLowerer {
         }
     }
 
-    private isNamespaceElementAccess(node: ts.Expression): boolean {
-        const value = unwrapTransparentExpression(node);
-        if (!ts.isElementAccessExpression(value)) return false;
-
-        const receiver = unwrapTransparentExpression(value.expression);
-        const receiverType = this.m.checker.getTypeAtLocation(receiver);
-        return receiverType.symbol?.declarations?.some((declaration) =>
-            ts.isModuleDeclaration(declaration) || ts.isSourceFile(declaration),
-        ) === true;
-    }
-
-    private evaluateNamespaceElementAccess(node: ts.Expression): void {
-        const element = unwrapTransparentExpression(node);
-        if (!ts.isElementAccessExpression(element)) return;
-
-        // The namespace object has no runtime representation in EtsIR. Retain
-        // receiver and key effects without emitting an invalid ArrayRef.
-        this.lowerToImmediate(element.expression);
-        this.lowerToImmediate(element.argumentExpression);
-    }
-
     private classSignatureFromType(type: TypeDto): ClassSignatureDto {
         if (type._ === "ClassType" || type._ === "ClassValueType") {
             return type.signature;
@@ -1644,6 +1639,20 @@ function containsPossibleSideEffect(node: ts.Node): boolean {
             || ts.isYieldExpression(current)
             || ts.isTaggedTemplateExpression(current)
         ) {
+            found = true;
+            return;
+        }
+        ts.forEachChild(current, visit);
+    };
+    visit(node);
+    return found;
+}
+
+function containsElementAccess(node: ts.Node): boolean {
+    let found = false;
+    const visit = (current: ts.Node): void => {
+        if (found) return;
+        if (ts.isElementAccessExpression(current)) {
             found = true;
             return;
         }

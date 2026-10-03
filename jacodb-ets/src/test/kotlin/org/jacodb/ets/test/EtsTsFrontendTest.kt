@@ -36,6 +36,7 @@ import org.jacodb.ets.dto.NewExprDto
 import org.jacodb.ets.dto.NumberTypeDto
 import org.jacodb.ets.dto.Ops
 import org.jacodb.ets.dto.RawStmtDto
+import org.jacodb.ets.dto.RawValueDto
 import org.jacodb.ets.dto.RelationOperationDto
 import org.jacodb.ets.dto.ReturnStmtDto
 import org.jacodb.ets.dto.StringTypeDto
@@ -60,6 +61,7 @@ import org.jacodb.ets.model.EtsInstanceFieldRef
 import org.jacodb.ets.model.EtsInstanceOfExpr
 import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsNewExpr
+import org.jacodb.ets.model.EtsRawEntity
 import org.jacodb.ets.model.EtsRawStmt
 import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.model.EtsNewArrayExpr
@@ -328,6 +330,31 @@ class EtsTsFrontendTest {
 
         assertEquals((pickCall.left as LocalDto).name, constructorValue.name)
         assertEquals(constructorValue, modelAllocation.getOperands().single())
+    }
+
+    @Test
+    fun `computed constructor access stays unsupported through JSON and model conversion`() {
+        val frontendDto = runFrontend(
+            """
+                class A {}
+                export function make(holder: { Ctor: typeof A }): A {
+                    return new holder["Ctor"]();
+                }
+            """.trimIndent(),
+        )
+        val methodDto = frontendDto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "make" }
+        val assignments = methodDto.body!!.cfg.blocks.flatMap { it.stmts }.filterIsInstance<AssignStmtDto>()
+
+        assertTrue(assignments.any { (it.right as? RawValueDto)?.kind == "UnsupportedValue" })
+        assertTrue(assignments.none { it.right is ArrayRefDto || it.right is NewExprDto })
+
+        val modelMethod = frontendDto.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "make" }
+        val modelAssignments = modelMethod.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+
+        assertTrue(modelAssignments.any { it.rhv is EtsRawEntity })
+        assertTrue(modelAssignments.none { it.rhv is EtsNewExpr })
     }
 
     @Test
