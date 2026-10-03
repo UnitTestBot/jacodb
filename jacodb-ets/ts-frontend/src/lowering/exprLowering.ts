@@ -1055,8 +1055,16 @@ export class ExprLowerer {
             throw new LoweringError("constructor read from a mutable class property is not represented in EtsIR");
         }
 
-        if (this.classLikeSignatureOf(node.expression) === undefined
-            && this.safeTypeOf(node.expression)._ === "ClassValueType") {
+        const target = unwrapTransparentExpression(node.expression);
+        const declarations = ts.isIdentifier(target)
+            ? this.m.converter.symbolOf(target)?.declarations
+            : undefined;
+        // Keep the existing static lowering for built-in globals such as Date and Array.
+        // Their symbols may also contain declarations from library augmentations.
+        const standardLibraryIdentifier = declarations?.some(
+            (declaration) => this.m.ctx.isDefaultLibrarySourceFile(declaration.getSourceFile()),
+        ) === true;
+        if (this.classLikeSignatureOf(node.expression) === undefined && !standardLibraryIdentifier) {
             this.lowerToImmediate(node.expression);
             throw new LoweringError("new through a runtime constructor value is not represented in EtsIR");
         }
