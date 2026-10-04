@@ -178,6 +178,15 @@ data class NewClassExprDto(
 }
 
 @Serializable
+@SerialName("TemplateObjectExpr")
+data class TemplateObjectExprDto(
+    val siteId: String,
+    val cooked: List<String?>,
+    val raw: List<String>,
+    override val type: TypeDto,
+) : ExprDto
+
+@Serializable
 @SerialName("NewArrayExpr")
 data class NewArrayExprDto(
     val elementType: TypeDto,

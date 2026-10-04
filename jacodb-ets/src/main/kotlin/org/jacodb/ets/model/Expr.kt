@@ -23,6 +23,10 @@ import org.jacodb.ets.toArrayType
 interface EtsExpr : EtsEntity {
     interface Visitor<out R> {
         fun visit(expr: EtsNewExpr): R
+        fun visit(expr: EtsTemplateObjectExpr): R {
+            if (this is Default) return defaultVisit(expr)
+            error("Cannot handle ${expr::class.java.simpleName}: $expr")
+        }
         fun visit(expr: EtsNewClassExpr): R {
             if (this is Default) return defaultVisit(expr)
             error("Cannot handle ${expr::class.java.simpleName}: $expr")
@@ -93,6 +97,7 @@ interface EtsExpr : EtsEntity {
 
         interface Default<out R> : Visitor<R> {
             override fun visit(expr: EtsNewExpr): R = defaultVisit(expr)
+            override fun visit(expr: EtsTemplateObjectExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsNewClassExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsSpreadExpansionExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsToPropertyKeyExpr): R = defaultVisit(expr)
@@ -210,6 +215,26 @@ data class EtsNewClassExpr(
     override val type: EtsType get() = EtsClassValueType(signature)
 
     override fun toString(): String = "class ${signature.name}"
+
+    override fun <R> accept(visitor: EtsExpr.Visitor<R>): R = visitor.visit(this)
+}
+
+/**
+ * ECMAScript GetTemplateObject. Evaluation returns the same cooked array for this [siteId]
+ * within one execution realm. Both arrays are frozen; the cooked array's non-enumerable,
+ * non-writable `raw` property points to the raw array. A null cooked entry means undefined.
+ */
+data class EtsTemplateObjectExpr(
+    val siteId: String,
+    val cooked: List<String?>,
+    val raw: List<String>,
+    override val type: EtsType,
+) : EtsExpr {
+    init {
+        require(cooked.size == raw.size) { "Template cooked and raw arrays must have the same length" }
+    }
+
+    override fun toString(): String = "templateObject($siteId)"
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R = visitor.visit(this)
 }

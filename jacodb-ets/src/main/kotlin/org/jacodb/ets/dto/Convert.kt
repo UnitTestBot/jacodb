@@ -98,6 +98,7 @@ import org.jacodb.ets.model.EtsNegExpr
 import org.jacodb.ets.model.EtsNeverType
 import org.jacodb.ets.model.EtsNewArrayExpr
 import org.jacodb.ets.model.EtsNewExpr
+import org.jacodb.ets.model.EtsTemplateObjectExpr
 import org.jacodb.ets.model.EtsNewClassExpr
 import org.jacodb.ets.model.EtsSpreadExpansionExpr
 import org.jacodb.ets.model.EtsNopStmt
@@ -373,6 +374,13 @@ class EtsMethodBuilder(
         )
 
         is NewClassExprDto -> EtsNewClassExpr(signature.toEtsClassSignature())
+
+        is TemplateObjectExprDto -> EtsTemplateObjectExpr(
+            siteId = siteId,
+            cooked = cooked,
+            raw = raw,
+            type = type.toEtsType(),
+        )
 
         is NewArrayExprDto -> EtsNewArrayExpr(
             elementType = elementType.toEtsType(),
