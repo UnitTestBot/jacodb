@@ -28,6 +28,7 @@ import org.jacodb.ets.model.EtsAndExpr
 import org.jacodb.ets.model.EtsAnyType
 import org.jacodb.ets.model.EtsArrayAccess
 import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsDefineAccessorStmt
 import org.jacodb.ets.model.EtsCopyDataPropertiesStmt
 import org.jacodb.ets.model.EtsAwaitExpr
 import org.jacodb.ets.model.EtsBitAndExpr
@@ -299,6 +300,13 @@ class EtsMethodBuilder(
                 throwOnNullishSource = throwOnNullishSource,
             )
         }
+
+        is DefineAccessorStmtDto -> EtsDefineAccessorStmt(
+            location = loc(),
+            target = (target as LocalDto).toEtsLocal(),
+            key = ensureOneAddress(key.toEtsEntity()),
+            getter = ensureOneAddress(getter.toEtsEntity()),
+        )
 
         is CallStmtDto -> {
             val expr = expr.toEtsEntity()
@@ -609,7 +617,7 @@ class EtsMethodBuilder(
 
     private fun EtsStmt.mayThrow(): Boolean = when (this) {
         is EtsAssignStmt -> lhv !is EtsLocal || rhv.mayThrow()
-        is EtsDefineDataPropertyStmt, is EtsCopyDataPropertiesStmt, is EtsCallStmt, is EtsThrowStmt -> true
+        is EtsDefineDataPropertyStmt, is EtsCopyDataPropertiesStmt, is EtsDefineAccessorStmt, is EtsCallStmt, is EtsThrowStmt -> true
         is EtsRawStmt -> true
         is EtsIfStmt, is EtsNopStmt, is EtsReturnStmt -> false
         else -> error("Unknown statement: ${this::class.java}")

@@ -32,6 +32,7 @@ import { CallExprDto, ImmediateDto, LocalDto, LValueDto, ValueDto } from "./valu
 export type StmtDto =
     | NopStmtDto
     | AssignStmtDto
+    | DefineAccessorStmtDto
     | CopyDataPropertiesStmtDto
     | DefineDataPropertyStmtDto
     | CallStmtDto
@@ -71,6 +72,14 @@ export interface CopyDataPropertiesStmtDto {
     source: ImmediateDto;
     excludedKeys: ImmediateDto[];
     throwOnNullishSource: boolean;
+}
+
+/** Define an own enumerable configurable getter descriptor, without invoking an existing setter. */
+export interface DefineAccessorStmtDto {
+    readonly _: "DefineAccessorStmt";
+    target: LocalDto;
+    key: ImmediateDto;
+    getter: ImmediateDto;
 }
 
 export interface CallStmtDto {

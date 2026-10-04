@@ -416,6 +416,11 @@ export class ExprLowerer {
         }
 
         const instance = this.lowerToLocal(node.expression);
+        if (this.m.converter.symbolOf(node.name)?.declarations?.some((declaration) =>
+            ts.isGetAccessorDeclaration(declaration) && ts.isObjectLiteralExpression(declaration.parent),
+        )) {
+            return { _: "PropertyRef", instance, key: constant(fieldName, STRING_TYPE), type: fieldType };
+        }
         return {
             _: "InstanceFieldRef",
             instance,
@@ -471,19 +476,38 @@ export class ExprLowerer {
     }
 
     /** Lower every segment of one continuous optional chain under its preceding guards. */
-    private lowerOptionalChain(node: OptionalChainSegment, chain: OptionalChain): ValueDto {
+    private lowerOptionalChain(
+        node: OptionalChainSegment,
+        chain: OptionalChain,
+        complete: (current: OptionalChainValue) => ValueDto = (current) => current.value,
+    ): ValueDto {
         const root = chain.segments[0];
         const initial = ts.isCallExpression(root)
             ? this.lowerOptionalChainCallee(root)
             : { value: this.snapshotToLocal(root.expression) };
-        return this.lowerOptionalChainSegments(node, chain.segments, 0, initial);
+        return this.lowerOptionalChainSegments(node, chain.segments, 0, initial, complete);
     }
 
     private lowerOptionalChainCallee(root: ts.CallExpression): OptionalChainValue {
-        const callee = root.expression;
-        if (ts.isPropertyAccessExpression(callee)) {
-            const staticTarget = this.classLikeSignatureOf(callee.expression);
-            if (staticTarget !== undefined) {
+        const callee = unwrapTransparentExpression(root.expression);
+        if (ts.isPropertyAccessExpression(callee) || ts.isElementAccessExpression(callee)) {
+            const chain = optionalChain(callee);
+            if (chain !== undefined) {
+                // A grouped chain completes before the outer call; carry its receiver through the joins.
+                const methodReceiver = this.materialize(constant("undefined", UNDEFINED_TYPE), this.safeTypeOf(callee.expression));
+                const value = this.lowerOptionalChain(callee, chain, (current) => {
+                    if (current.methodReceiver !== undefined) {
+                        this.m.cfg.emit({ _: "AssignStmt", left: methodReceiver, right: current.methodReceiver });
+                    }
+                    return current.value;
+                });
+                return { value, methodReceiver };
+            }
+
+            const staticTarget = ts.isPropertyAccessExpression(callee)
+                ? this.classLikeSignatureOf(callee.expression)
+                : undefined;
+            if (staticTarget !== undefined && ts.isPropertyAccessExpression(callee)) {
                 return {
                     value: {
                         _: "StaticFieldRef",
@@ -492,7 +516,7 @@ export class ExprLowerer {
                     staticTarget,
                 };
             }
-            const methodReceiver = this.snapshotToLocal(callee.expression, root.arguments);
+            const methodReceiver = this.snapshotToLocal(callee.expression);
             return { value: this.accessFromInstance(callee, methodReceiver), methodReceiver };
         }
         return { value: this.snapshotToLocal(callee, root.arguments) };
@@ -503,8 +527,9 @@ export class ExprLowerer {
         segments: readonly OptionalChainSegment[],
         index: number,
         current: OptionalChainValue,
+        complete: (current: OptionalChainValue) => ValueDto,
     ): ValueDto {
-        if (index >= segments.length) return current.value;
+        if (index >= segments.length) return complete(current);
 
         const segment = segments[index];
         if (ts.isCallExpression(segment)) {
@@ -514,6 +539,7 @@ export class ExprLowerer {
                     segments,
                     index + 1,
                     { value: this.callOptionalChainSegment(segment, callee) },
+                    complete,
                 );
             if (segment.questionDotToken === undefined) {
                 return continueAfterCall(current);
@@ -529,6 +555,7 @@ export class ExprLowerer {
             segments,
             index + 1,
             { value: this.accessFromInstance(segment, receiver), methodReceiver: receiver },
+            complete,
         );
         return segment.questionDotToken === undefined
             ? continueAfterAccess()
@@ -536,23 +563,12 @@ export class ExprLowerer {
     }
 
     private callOptionalChainSegment(node: ts.CallExpression, callee: OptionalChainValue): ValueDto {
-        if (ts.isPropertyAccessExpression(node.expression)) {
+        const expression = unwrapTransparentExpression(node.expression);
+        if (ts.isPropertyAccessExpression(expression)) {
             if (callee.staticTarget !== undefined) {
                 return {
                     _: "StaticCallExpr",
-                    method: this.methodSignatureForCall(node, node.expression.name.text, callee.staticTarget),
-                    args: this.lowerCallArguments(node),
-                };
-            }
-            if (callee.methodReceiver !== undefined) {
-                return {
-                    _: "InstanceCallExpr",
-                    instance: callee.methodReceiver,
-                    method: this.methodSignatureForCall(
-                        node,
-                        node.expression.name.text,
-                        this.classSignatureFromType(callee.methodReceiver.type),
-                    ),
+                    method: this.methodSignatureForCall(node, expression.name.text, callee.staticTarget),
                     args: this.lowerCallArguments(node),
                 };
             }
@@ -561,6 +577,7 @@ export class ExprLowerer {
         return {
             _: "PtrCallExpr",
             ptr,
+            ...(callee.methodReceiver === undefined ? {} : { receiver: callee.methodReceiver }),
             method: this.methodSignatureForCall(node, "%call", UNKNOWN_CLASS_SIGNATURE),
             args: this.lowerCallArguments(node),
         };
@@ -576,6 +593,11 @@ export class ExprLowerer {
     ): ValueDto {
         if (ts.isPropertyAccessExpression(node)) {
             const fieldType = this.safeTypeOf(node);
+            if (this.m.converter.symbolOf(node.name)?.declarations?.some((declaration) =>
+                ts.isGetAccessorDeclaration(declaration) && ts.isObjectLiteralExpression(declaration.parent),
+            )) {
+                return { _: "PropertyRef", instance, key: constant(node.name.text, STRING_TYPE), type: fieldType };
+            }
             return {
                 _: "InstanceFieldRef",
                 instance,
@@ -621,6 +643,11 @@ export class ExprLowerer {
         }
         if (ts.isPropertyAccessExpression(node)) {
             const ref = this.lowerPropertyAccess(node);
+            if (ref._ === "PropertyRef") {
+                return this.mayReassign(node.expression, laterExpression)
+                    ? { ...ref, instance: this.m.snapshotToLocal(ref.instance, ref.instance.type) }
+                    : ref;
+            }
             if (ref._ === "InstanceFieldRef" || ref._ === "StaticFieldRef") {
                 return ref._ === "StaticFieldRef" || !this.mayReassign(node.expression, laterExpression)
                     ? ref
@@ -926,7 +953,7 @@ export class ExprLowerer {
     // ------------------------------------------------------------------
 
     lowerCall(node: ts.CallExpression): ValueDto {
-        const callee = node.expression;
+        const callee = unwrapTransparentExpression(node.expression);
 
         if (ts.isPropertyAccessExpression(callee) && this.isProjectClassProperty(callee.expression)) {
             this.evaluateProjectClassPropertyReceiver(callee.expression);
@@ -936,6 +963,11 @@ export class ExprLowerer {
         const chain = optionalChain(node);
         if (chain !== undefined) {
             return this.lowerOptionalChain(node, chain);
+        }
+
+        if ((ts.isPropertyAccessExpression(callee) || ts.isElementAccessExpression(callee))
+            && optionalChain(callee) !== undefined) {
+            return this.callOptionalChainSegment(node, this.lowerOptionalChainCallee(node));
         }
 
         // `super(...)` — call the superclass constructor on `this`.
@@ -990,11 +1022,13 @@ export class ExprLowerer {
                     args: this.lowerCallArguments(node),
                 };
             }
-            // ECMAScript evaluates the receiver before any argument.
-            const instance = this.snapshotToLocal(callee.expression, node.arguments);
+            // A property getter runs before arguments and may replace the receiver binding.
+            const instance = this.snapshotToLocal(callee.expression);
+            const ptr = this.materialize(this.accessFromInstance(callee, instance), this.safeTypeOf(callee));
             return {
-                _: "InstanceCallExpr",
-                instance,
+                _: "PtrCallExpr",
+                ptr,
+                receiver: instance,
                 method: this.methodSignatureForCall(node, methodName, this.classSignatureFromType(instance.type)),
                 args: this.lowerCallArguments(node),
             };
@@ -1038,6 +1072,23 @@ export class ExprLowerer {
                 _: "PtrCallExpr",
                 ptr: localCallee,
                 method: this.methodSignatureForCall(node, callee.text, UNKNOWN_CLASS_SIGNATURE),
+                args: this.lowerCallArguments(node),
+            };
+        }
+
+        if (ts.isElementAccessExpression(callee)) {
+            const receiver = this.snapshotToLocal(callee.expression);
+            const ptr = this.materialize({
+                _: "PropertyRef",
+                instance: receiver,
+                key: this.lowerPropertyKey(callee.argumentExpression),
+                type: this.safeTypeOf(callee),
+            }, this.safeTypeOf(callee));
+            return {
+                _: "PtrCallExpr",
+                ptr,
+                receiver,
+                method: this.methodSignatureForCall(node, "%call", UNKNOWN_CLASS_SIGNATURE),
                 args: this.lowerCallArguments(node),
             };
         }
@@ -1497,7 +1548,7 @@ export class ExprLowerer {
         return this.lowerClosure(node);
     }
 
-    private lowerClosure(node: ts.ArrowFunction | ts.FunctionExpression | ts.FunctionDeclaration): LocalDto {
+    private lowerClosure(node: ts.ArrowFunction | ts.FunctionExpression | ts.FunctionDeclaration | ts.GetAccessorDeclaration): LocalDto {
         if (this.lowerFunctionBody === undefined) {
             throw new LoweringError("closure in a context without a body lowerer");
         }
@@ -1619,6 +1670,12 @@ export class ExprLowerer {
                     excludedKeys: [],
                     throwOnNullishSource: false,
                 });
+            } else if (ts.isGetAccessorDeclaration(property)) {
+                const key = ts.isComputedPropertyName(property.name)
+                    ? this.lowerPropertyKey(property.name.expression)
+                    : constant(memberName(property.name), STRING_TYPE);
+                const getter = this.lowerClosure(property);
+                this.m.cfg.emit({ _: "DefineAccessorStmt", target: temp, key, getter });
             } else if (ts.isMethodDeclaration(property)) {
                 if (ts.isComputedPropertyName(property.name)) {
                     throw new LoweringError("computed object method name is not represented in EtsIR");
@@ -1643,7 +1700,7 @@ export class ExprLowerer {
                     body: methodContext.build(),
                 });
             } else {
-                // Accessors remain separately unsupported.
+                // Setters remain separately unsupported.
                 throw new LoweringError(`object literal member: ${syntaxKindName(property.kind)}`);
             }
         }
@@ -1915,7 +1972,10 @@ function optionalChain(node: OptionalChainSegment): OptionalChain | undefined {
         if (current.questionDotToken !== undefined) {
             earliestOptionalIndex = reversed.length - 1;
         }
-        const parent = current.expression;
+        let parent: ts.Expression = current.expression;
+        while (ts.isNonNullExpression(parent) && ts.isNonNullChain(parent)) {
+            parent = parent.expression;
+        }
         if (!isOptionalChainSegment(parent)) {
             break;
         }
@@ -1929,17 +1989,31 @@ function isOptionalChainSegment(node: ts.Node): node is OptionalChainSegment {
     return ts.isPropertyAccessChain(node) || ts.isElementAccessChain(node) || ts.isCallExpression(node);
 }
 
-/** Calls and suspension can run arbitrary user code, so a later one may mutate any captured binding. */
+/** Calls, getters and implicit coercions can mutate any captured binding. */
 function containsPossibleSideEffect(node: ts.Node): boolean {
     let found = false;
     const visit = (current: ts.Node): void => {
-        if (found || ts.isFunctionLike(current)) return;
+        if (found) return;
+        if (ts.isFunctionLike(current)) {
+            // Method/accessor names run at creation; their bodies run only when invoked.
+            found = current.name !== undefined && ts.isComputedPropertyName(current.name);
+            return;
+        }
         if (
             ts.isCallExpression(current)
             || ts.isNewExpression(current)
             || ts.isAwaitExpression(current)
             || ts.isYieldExpression(current)
             || ts.isTaggedTemplateExpression(current)
+            || ts.isSpreadElement(current)
+            || ts.isSpreadAssignment(current)
+            || ts.isPropertyAccessExpression(current)
+            || ts.isElementAccessExpression(current)
+            || ts.isComputedPropertyName(current)
+            || ts.isBinaryExpression(current)
+            || ts.isPrefixUnaryExpression(current)
+            || ts.isPostfixUnaryExpression(current)
+            || ts.isTemplateExpression(current)
         ) {
             found = true;
             return;
@@ -1998,7 +2072,7 @@ function sameBinding(
  * are excluded.
  */
 function collectCapturedIdentifiers(
-    closure: ts.ArrowFunction | ts.FunctionExpression | ts.FunctionDeclaration,
+    closure: ts.ArrowFunction | ts.FunctionExpression | ts.FunctionDeclaration | ts.GetAccessorDeclaration,
     checker: ts.TypeChecker,
 ): ts.Identifier[] {
     if (closure.body === undefined) return [];

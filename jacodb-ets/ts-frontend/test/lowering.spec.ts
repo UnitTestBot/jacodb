@@ -79,13 +79,14 @@ describe("straight-line lowering", () => {
         });
     });
 
-    it("lowers method calls on values to InstanceCallExpr with a Local instance", () => {
+    it("captures callable properties before invoking them with their receiver", () => {
         const stmts = bodyStmts(`console.log("hello");`);
         const call = stmts.find((s): s is CallStmtDto => s._ === "CallStmt");
         expect(call).toBeDefined();
         expect(call!.expr).toMatchObject({
-            _: "InstanceCallExpr",
-            instance: { _: "Local" },
+            _: "PtrCallExpr",
+            ptr: { _: "Local" },
+            receiver: { _: "Local" },
             method: { name: "log" },
             args: [{ _: "Constant", value: "hello", type: { _: "StringType" } }],
         });

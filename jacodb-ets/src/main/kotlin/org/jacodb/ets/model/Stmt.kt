@@ -36,6 +36,10 @@ interface EtsStmt : CommonInst {
             if (this is Default) return defaultVisit(stmt)
             error("Cannot handle ${stmt::class.java.simpleName}: $stmt")
         }
+        fun visit(stmt: EtsDefineAccessorStmt): R {
+            if (this is Default) return defaultVisit(stmt)
+            error("Cannot handle ${stmt::class.java.simpleName}: $stmt")
+        }
         fun visit(stmt: EtsReturnStmt): R
         fun visit(stmt: EtsThrowStmt): R
         fun visit(stmt: EtsIfStmt): R
@@ -53,6 +57,7 @@ interface EtsStmt : CommonInst {
             override fun visit(stmt: EtsAssignStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsDefineDataPropertyStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsCopyDataPropertiesStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: EtsDefineAccessorStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsReturnStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsThrowStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsIfStmt): R = defaultVisit(stmt)
@@ -136,6 +141,23 @@ data class EtsCopyDataPropertiesStmt(
 ) : EtsStmt {
     override fun toString(): String =
         "copyDataProperties($target, $source, ${excludedKeys.joinToString(prefix = "[", postfix = "]")})"
+
+    override fun <R> accept(visitor: EtsStmt.Visitor<R>): R = visitor.visit(this)
+}
+
+/**
+ * Define an own enumerable, configurable getter descriptor. Property Get invokes
+ * [getter] with [target] as its dynamic receiver. Creating it does not invoke the body;
+ * an existing setter component is retained, while a data descriptor is replaced.
+ * [key] has already been converted by ToPropertyKey.
+ */
+data class EtsDefineAccessorStmt(
+    override val location: EtsStmtLocation,
+    val target: EtsLocal,
+    val key: EtsValue,
+    val getter: EtsValue,
+) : EtsStmt {
+    override fun toString(): String = "defineAccessor($target, $key, $getter)"
 
     override fun <R> accept(visitor: EtsStmt.Visitor<R>): R = visitor.visit(this)
 }

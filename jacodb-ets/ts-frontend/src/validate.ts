@@ -289,6 +289,8 @@ function stmtOperands(stmt: StmtDto): ValueDto[] {
             return [stmt.target, stmt.key, stmt.value];
         case "CopyDataPropertiesStmt":
             return [stmt.target, stmt.source, ...stmt.excludedKeys];
+        case "DefineAccessorStmt":
+            return [stmt.target, stmt.key, stmt.getter];
         case "CallStmt":
             return [stmt.expr];
         case "ReturnStmt":
