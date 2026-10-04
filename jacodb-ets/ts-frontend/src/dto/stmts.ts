@@ -32,6 +32,7 @@ import { CallExprDto, ImmediateDto, LocalDto, LValueDto, ValueDto } from "./valu
 export type StmtDto =
     | NopStmtDto
     | AssignStmtDto
+    | CopyDataPropertiesStmtDto
     | DefineDataPropertyStmtDto
     | CallStmtDto
     | ReturnVoidStmtDto
@@ -61,6 +62,15 @@ export interface DefineDataPropertyStmtDto {
     target: LocalDto;
     key: ImmediateDto;
     value: ImmediateDto;
+}
+
+/** ECMAScript CopyDataProperties: own enumerable keys in source enumeration order. */
+export interface CopyDataPropertiesStmtDto {
+    readonly _: "CopyDataPropertiesStmt";
+    target: LocalDto;
+    source: ImmediateDto;
+    excludedKeys: ImmediateDto[];
+    throwOnNullishSource: boolean;
 }
 
 export interface CallStmtDto {

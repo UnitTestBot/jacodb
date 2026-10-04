@@ -28,6 +28,7 @@ import org.jacodb.ets.model.EtsAndExpr
 import org.jacodb.ets.model.EtsAnyType
 import org.jacodb.ets.model.EtsArrayAccess
 import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsCopyDataPropertiesStmt
 import org.jacodb.ets.model.EtsAwaitExpr
 import org.jacodb.ets.model.EtsBitAndExpr
 import org.jacodb.ets.model.EtsBitNotExpr
@@ -286,6 +287,18 @@ class EtsMethodBuilder(
             key = ensureOneAddress(key.toEtsEntity()),
             value = ensureOneAddress(value.toEtsEntity()),
         )
+
+        is CopyDataPropertiesStmtDto -> {
+            val targetLocal = target as? LocalDto
+                ?: error("CopyDataPropertiesStmt target must be LocalDto")
+            EtsCopyDataPropertiesStmt(
+                location = loc(),
+                target = targetLocal.toEtsLocal(),
+                source = ensureOneAddress(source.toEtsEntity()),
+                excludedKeys = excludedKeys.map { ensureOneAddress(it.toEtsEntity()) },
+                throwOnNullishSource = throwOnNullishSource,
+            )
+        }
 
         is CallStmtDto -> {
             val expr = expr.toEtsEntity()
@@ -596,7 +609,7 @@ class EtsMethodBuilder(
 
     private fun EtsStmt.mayThrow(): Boolean = when (this) {
         is EtsAssignStmt -> lhv !is EtsLocal || rhv.mayThrow()
-        is EtsDefineDataPropertyStmt, is EtsCallStmt, is EtsThrowStmt -> true
+        is EtsDefineDataPropertyStmt, is EtsCopyDataPropertiesStmt, is EtsCallStmt, is EtsThrowStmt -> true
         is EtsRawStmt -> true
         is EtsIfStmt, is EtsNopStmt, is EtsReturnStmt -> false
         else -> error("Unknown statement: ${this::class.java}")

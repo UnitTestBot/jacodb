@@ -1610,6 +1610,15 @@ export class ExprLowerer {
                 const value = this.lowerToImmediate(property.name);
                 fields.push(objectField(signature, propName, value.type));
                 this.emitObjectPropertyStore(temp, propName, value);
+            } else if (ts.isSpreadAssignment(property)) {
+                const source = this.lowerToImmediate(property.expression);
+                this.m.cfg.emit({
+                    _: "CopyDataPropertiesStmt",
+                    target: temp,
+                    source,
+                    excludedKeys: [],
+                    throwOnNullishSource: false,
+                });
             } else if (ts.isMethodDeclaration(property)) {
                 if (ts.isComputedPropertyName(property.name)) {
                     throw new LoweringError("computed object method name is not represented in EtsIR");
@@ -1634,7 +1643,7 @@ export class ExprLowerer {
                     body: methodContext.build(),
                 });
             } else {
-                // Spread and accessors remain separately unsupported.
+                // Accessors remain separately unsupported.
                 throw new LoweringError(`object literal member: ${syntaxKindName(property.kind)}`);
             }
         }

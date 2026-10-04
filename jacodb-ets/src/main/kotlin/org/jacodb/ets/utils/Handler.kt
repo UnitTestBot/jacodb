@@ -20,6 +20,7 @@ import org.jacodb.ets.model.EtsAddExpr
 import org.jacodb.ets.model.EtsAndExpr
 import org.jacodb.ets.model.EtsArrayAccess
 import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsCopyDataPropertiesStmt
 import org.jacodb.ets.model.EtsAwaitExpr
 import org.jacodb.ets.model.EtsBitAndExpr
 import org.jacodb.ets.model.EtsBitNotExpr
@@ -138,6 +139,13 @@ abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> 
         stmt.target.accept(this)
         stmt.key.accept(this)
         stmt.value.accept(this)
+    }
+
+    final override fun visit(stmt: EtsCopyDataPropertiesStmt) {
+        handle(stmt)
+        stmt.target.accept(this)
+        stmt.source.accept(this)
+        stmt.excludedKeys.forEach { it.accept(this) }
     }
 
     final override fun visit(stmt: EtsCallStmt) {
