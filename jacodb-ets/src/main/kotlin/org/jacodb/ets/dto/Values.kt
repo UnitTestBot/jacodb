@@ -153,6 +153,22 @@ data class SpreadExpansionExprDto(
 }
 
 @Serializable
+@SerialName("ToPropertyKeyExpr")
+data class ToPropertyKeyExprDto(
+    val arg: ValueDto,
+) : ExprDto {
+    override val type: TypeDto get() = UnknownTypeDto
+}
+
+@Serializable
+@SerialName("PropertyRef")
+data class PropertyRefDto(
+    val instance: ValueDto, // Local; polymorphic discriminator is required.
+    val key: ValueDto,
+    override val type: TypeDto,
+) : RefDto
+
+@Serializable
 @SerialName("NewArrayExpr")
 data class NewArrayExprDto(
     val elementType: TypeDto,

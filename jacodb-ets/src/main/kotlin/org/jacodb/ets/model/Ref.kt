@@ -71,6 +71,19 @@ data class EtsArrayAccess(
     }
 }
 
+/** ECMAScript property Get/Set, including prototypes and getter/setter invocation.
+ * [key] is the result of ToPropertyKey and must not be converted a second time.
+ */
+data class EtsPropertyRef(
+    val instance: EtsLocal,
+    val key: EtsValue,
+    override val type: EtsType,
+) : EtsRef, EtsLValue {
+    override fun toString(): String = "$instance[$key]"
+
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R = visitor.visit(this)
+}
+
 interface EtsFieldRef : EtsRef, EtsLValue, CommonFieldRef {
     override val instance: EtsLocal?
     val field: EtsFieldSignature

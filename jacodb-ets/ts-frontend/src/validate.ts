@@ -32,6 +32,7 @@ import { ValueDto } from "./dto/values";
 const EXPR_KINDS = new Set([
     "NewExpr",
     "SpreadExpansionExpr",
+    "ToPropertyKeyExpr",
     "NewArrayExpr",
     "DeleteExpr",
     "AwaitExpr",
@@ -54,6 +55,7 @@ const REF_KINDS = new Set([
     "GlobalRef",
     "ClosureFieldRef",
     "ArrayRef",
+    "PropertyRef",
     "InstanceFieldRef",
     "StaticFieldRef",
 ]);
@@ -65,7 +67,7 @@ const KNOWN_VALUE_KINDS = new Set([...EXPR_KINDS, ...REF_KINDS, ...IMMEDIATE_KIN
 const CALL_EXPR_KINDS = new Set(["InstanceCallExpr", "StaticCallExpr", "PtrCallExpr"]);
 
 /** LValue kinds accepted by Kotlin Convert as AssignStmt.left after stripping a legacy cast. */
-const LVALUE_KINDS = new Set(["Local", "ClosureFieldRef", "ArrayRef", "InstanceFieldRef", "StaticFieldRef"]);
+const LVALUE_KINDS = new Set(["Local", "ClosureFieldRef", "ArrayRef", "PropertyRef", "InstanceFieldRef", "StaticFieldRef"]);
 
 export function validateEtsFile(file: EtsFileDto): string[] {
     const errors: string[] = [];
@@ -281,6 +283,8 @@ function stmtOperands(stmt: StmtDto): ValueDto[] {
     switch (stmt._) {
         case "AssignStmt":
             return [stmt.left, stmt.right];
+        case "DefineDataPropertyStmt":
+            return [stmt.target, stmt.key, stmt.value];
         case "CallStmt":
             return [stmt.expr];
         case "ReturnStmt":
@@ -348,6 +352,7 @@ function validateValue(
                 err(`${ctx}: InstanceCallExpr.instance has kind '${value.instance._}', must be Local`);
             }
             break;
+        case "PropertyRef":
         case "InstanceFieldRef":
             if (value.instance._ !== "Local") {
                 err(`${ctx}: InstanceFieldRef.instance has kind '${value.instance._}', must be Local`);
@@ -400,6 +405,7 @@ export function valueOperands(value: ValueDto): ValueDto[] {
         case "YieldExpr":
         case "TypeOfExpr":
         case "CastExpr":
+        case "ToPropertyKeyExpr":
         case "UnopExpr":
             return [value.arg];
         case "InstanceOfExpr":
@@ -421,6 +427,8 @@ export function valueOperands(value: ValueDto): ValueDto[] {
             return [];
         case "ArrayRef":
             return [value.array, value.index];
+        case "PropertyRef":
+            return [value.instance, value.key];
         case "InstanceFieldRef":
             return [value.instance];
         default:

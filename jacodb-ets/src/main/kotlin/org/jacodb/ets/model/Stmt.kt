@@ -28,6 +28,10 @@ interface EtsStmt : CommonInst {
     interface Visitor<out R> {
         fun visit(stmt: EtsNopStmt): R
         fun visit(stmt: EtsAssignStmt): R
+        fun visit(stmt: EtsDefineDataPropertyStmt): R {
+            if (this is Default) return defaultVisit(stmt)
+            error("Cannot handle ${stmt::class.java.simpleName}: $stmt")
+        }
         fun visit(stmt: EtsReturnStmt): R
         fun visit(stmt: EtsThrowStmt): R
         fun visit(stmt: EtsIfStmt): R
@@ -43,6 +47,7 @@ interface EtsStmt : CommonInst {
         interface Default<out R> : Visitor<R> {
             override fun visit(stmt: EtsNopStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsAssignStmt): R = defaultVisit(stmt)
+            override fun visit(stmt: EtsDefineDataPropertyStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsReturnStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsThrowStmt): R = defaultVisit(stmt)
             override fun visit(stmt: EtsIfStmt): R = defaultVisit(stmt)
@@ -92,6 +97,22 @@ data class EtsAssignStmt(
     override fun <R> accept(visitor: EtsStmt.Visitor<R>): R {
         return visitor.visit(this)
     }
+}
+
+/**
+ * CreateDataPropertyOrThrow: an own writable, enumerable, configurable data property.
+ * Replaces an existing accessor descriptor without invoking its setter.
+ * [key] has already been converted by ToPropertyKey.
+ */
+data class EtsDefineDataPropertyStmt(
+    override val location: EtsStmtLocation,
+    val target: EtsLocal,
+    val key: EtsValue,
+    val value: EtsValue,
+) : EtsStmt {
+    override fun toString(): String = "defineDataProperty($target, $key, $value)"
+
+    override fun <R> accept(visitor: EtsStmt.Visitor<R>): R = visitor.visit(this)
 }
 
 interface EtsTerminatingStmt : EtsStmt

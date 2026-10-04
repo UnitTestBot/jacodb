@@ -108,9 +108,7 @@ describe("export default expressions", () => {
 
     it.each([
         "({ [this]() { return 1; } })",
-        "({ [this]: 1 })",
         "({ [key]() { return 1; } })",
-        "({ [key]: 1 })",
     ])("rejects a computed object key in %s", (expression) => {
         const { file, diagnostics } = lower(`
             const key = "name";
@@ -123,6 +121,18 @@ describe("export default expressions", () => {
         expect(diagnostics.messages).toContainEqual(expect.stringContaining("computed object key"));
         expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
         expect(defaultClass.fields.some((field) => field.signature.name === "default")).toBe(false);
+    });
+
+    it("exports an object with a computed data property", () => {
+        const { file, diagnostics } = lower(`
+            const key = "name";
+            export default { [key]: 1 };
+        `);
+        const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
+
+        expect(stmts.some((stmt) => stmt._ === "DefineDataPropertyStmt")).toBe(true);
+        expect(stmts.some((stmt) => stmt._ === "UnsupportedStmt")).toBe(false);
+        expect(diagnostics.messages).toEqual([]);
     });
 
     it("matches the ES-module evaluation of a computed method name", () => {

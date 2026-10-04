@@ -281,7 +281,7 @@ describe("object literals", () => {
         );
         expect(newExpr).toBeDefined();
         const fieldStores = stmts.filter(
-            (s) => s._ === "AssignStmt" && s.left._ === "InstanceFieldRef",
+            (s) => s._ === "DefineDataPropertyStmt",
         );
         expect(fieldStores).toHaveLength(2);
         expect(stmts).toContainEqual(expect.objectContaining({

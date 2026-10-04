@@ -49,6 +49,14 @@ data class AssignStmtDto(
 ) : StmtDto
 
 @Serializable
+@SerialName("DefineDataPropertyStmt")
+data class DefineDataPropertyStmtDto(
+    val target: ValueDto,
+    val key: ValueDto,
+    val value: ValueDto,
+) : StmtDto
+
+@Serializable
 @SerialName("CallStmt")
 data class CallStmtDto(
     val expr: CallExprDto,

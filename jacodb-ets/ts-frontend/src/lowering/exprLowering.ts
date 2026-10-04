@@ -191,6 +191,11 @@ export class ExprLowerer {
         return this.materialize(value, this.safeTypeOf(node));
     }
 
+    /** Convert at the source key's evaluation point, before value/default side effects. */
+    lowerPropertyKey(node: ts.Expression): ImmediateDto {
+        return this.materialize({ _: "ToPropertyKeyExpr", arg: this.lowerToImmediate(node) }, UNKNOWN_TYPE);
+    }
+
     /** Hoist a value into a fresh temp: `%t := value`. */
     materialize(value: ValueDto, type: TypeDto = UNKNOWN_TYPE): LocalDto {
         const temp = this.m.newTemp(type);
@@ -427,6 +432,18 @@ export class ExprLowerer {
         if (chain !== undefined) {
             return this.lowerOptionalChain(node, chain);
         }
+        const receiverType = this.m.checker.getTypeAtLocation(node.expression);
+        if (!this.m.checker.isArrayType(receiverType)
+            && !this.m.checker.isTupleType(receiverType)) {
+            const instance = this.snapshotToLocal(node.expression);
+            return {
+                _: "PropertyRef",
+                instance,
+                key: this.lowerPropertyKey(node.argumentExpression),
+                type: this.safeTypeOf(node),
+            };
+        }
+
         const array = this.snapshotValueIfReassigned(
             this.lowerToImmediate(node.expression),
             node.expression,
@@ -557,6 +574,15 @@ export class ExprLowerer {
                 },
             };
         }
+        const receiverType = this.m.checker.getTypeAtLocation(node.expression);
+        if (!this.m.checker.isArrayType(receiverType) && !this.m.checker.isTupleType(receiverType)) {
+            return {
+                _: "PropertyRef",
+                instance,
+                key: this.lowerPropertyKey(node.argumentExpression),
+                type: this.safeTypeOf(node),
+            };
+        }
         return {
             _: "ArrayRef",
             array: instance,
@@ -588,6 +614,11 @@ export class ExprLowerer {
         }
         if (ts.isElementAccessExpression(node)) {
             const ref = this.lowerElementAccess(node);
+            if (ref._ === "PropertyRef") {
+                return this.mayReassign(node.expression, laterExpression)
+                    ? { ...ref, instance: this.m.snapshotToLocal(ref.instance, ref.instance.type) }
+                    : ref;
+            }
             if (ref._ === "ArrayRef") {
                 return {
                     ...ref,
@@ -1400,22 +1431,41 @@ export class ExprLowerer {
         };
         const classType: ClassTypeDto = { _: "ClassType", signature };
 
-        // Evaluate property values BEFORE instantiation (source evaluation order).
-        const stores: { name: string; type: TypeDto; value: ValueDto }[] = [];
         const fields: FieldDto[] = [];
         const methods: MethodDto[] = [];
+        const temp = this.m.newTemp(classType);
+        this.m.cfg.emit({ _: "AssignStmt", left: temp, right: { _: "NewExpr", classType } });
+
         for (const property of node.properties) {
             if (ts.isPropertyAssignment(property)) {
-                const propName = memberName(property.name);
                 const propType = this.safeTypeOf(property.initializer);
-                fields.push(objectField(signature, propName, propType));
-                stores.push({ name: propName, type: propType, value: this.lowerToImmediate(property.initializer) });
+                if (ts.isComputedPropertyName(property.name)) {
+                    const key = this.lowerPropertyKey(property.name.expression);
+                    const value = this.lowerToImmediate(property.initializer);
+                    this.m.cfg.emit({
+                        _: "DefineDataPropertyStmt",
+                        target: temp,
+                        key,
+                        value,
+                    });
+                } else {
+                    const propName = memberName(property.name);
+                    if (propName === "__proto__") {
+                        throw new LoweringError("object literal prototype setter is not represented in EtsIR");
+                    }
+                    fields.push(objectField(signature, propName, propType));
+                    const value = this.lowerToImmediate(property.initializer);
+                    this.emitObjectPropertyStore(temp, propName, value);
+                }
             } else if (ts.isShorthandPropertyAssignment(property)) {
                 const propName = property.name.text;
                 const value = this.lowerToImmediate(property.name);
                 fields.push(objectField(signature, propName, value.type));
-                stores.push({ name: propName, type: value.type, value });
+                this.emitObjectPropertyStore(temp, propName, value);
             } else if (ts.isMethodDeclaration(property)) {
+                if (ts.isComputedPropertyName(property.name)) {
+                    throw new LoweringError("computed object method name is not represented in EtsIR");
+                }
                 const methodName = memberName(property.name);
                 const { parameters, prologueParams } = buildParameters(this.m.ctx, property);
                 const methodSignature: MethodSignatureDto = {
@@ -1436,7 +1486,7 @@ export class ExprLowerer {
                     body: methodContext.build(),
                 });
             } else {
-                // spread / accessors / computed names degrade the whole literal
+                // Spread and accessors remain separately unsupported.
                 throw new LoweringError(`object literal member: ${syntaxKindName(property.kind)}`);
             }
         }
@@ -1452,20 +1502,20 @@ export class ExprLowerer {
             methods,
         });
 
-        const temp = this.m.newTemp(classType);
-        this.m.cfg.emit({ _: "AssignStmt", left: temp, right: { _: "NewExpr", classType } });
-        for (const store of stores) {
-            this.m.cfg.emit({
-                _: "AssignStmt",
-                left: {
-                    _: "InstanceFieldRef",
-                    instance: temp,
-                    field: { declaringClass: signature, name: store.name, type: store.type },
-                },
-                right: store.value,
-            });
-        }
         return temp;
+    }
+
+    private emitObjectPropertyStore(
+        instance: LocalDto,
+        name: string,
+        value: ImmediateDto,
+    ): void {
+        this.m.cfg.emit({
+            _: "DefineDataPropertyStmt",
+            target: instance,
+            key: constant(name, STRING_TYPE),
+            value,
+        });
     }
 
     // ------------------------------------------------------------------
@@ -1668,6 +1718,7 @@ function lvalueType(target: LValueDto): TypeDto {
         case "Local":
         case "ClosureFieldRef":
         case "ArrayRef":
+        case "PropertyRef":
             return target.type;
         case "InstanceFieldRef":
         case "StaticFieldRef":
