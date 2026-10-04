@@ -17,6 +17,9 @@
 package org.jacodb.ets.dto
 
 import mu.KotlinLogging
+import org.jacodb.ets.model.EtsDefineDataPropertyStmt
+import org.jacodb.ets.model.EtsPropertyRef
+import org.jacodb.ets.model.EtsToPropertyKeyExpr
 import org.jacodb.ets.toArrayType
 import org.jacodb.ets.model.BasicBlock
 import org.jacodb.ets.model.EtsAddExpr
@@ -222,7 +225,7 @@ class EtsMethodBuilder(
     }
 
     private fun ensureOneAddress(entity: EtsEntity): EtsValue {
-        if (entity is EtsExpr || entity is EtsFieldRef || entity is EtsArrayAccess) {
+        if (entity is EtsExpr || entity is EtsFieldRef || entity is EtsArrayAccess || entity is EtsPropertyRef) {
             return ensureLocal(entity)
         } else {
             if (entity !is EtsValue) {
@@ -274,6 +277,13 @@ class EtsMethodBuilder(
                 rhv = rhv,
             )
         }
+
+        is DefineDataPropertyStmtDto -> EtsDefineDataPropertyStmt(
+            location = loc(),
+            target = (target as LocalDto).toEtsLocal(),
+            key = ensureOneAddress(key.toEtsEntity()),
+            value = ensureOneAddress(value.toEtsEntity()),
+        )
 
         is CallStmtDto -> {
             val expr = expr.toEtsEntity()
@@ -349,6 +359,16 @@ class EtsMethodBuilder(
         is SpreadExpansionExprDto -> EtsSpreadExpansionExpr(
             iterable = ensureOneAddress(iterable.toEtsEntity()),
             expectedCount = expectedCount,
+        )
+
+        is ToPropertyKeyExprDto -> EtsToPropertyKeyExpr(
+            arg = ensureOneAddress(arg.toEtsEntity()),
+        )
+
+        is PropertyRefDto -> EtsPropertyRef(
+            instance = (instance as LocalDto).toEtsLocal(),
+            key = ensureOneAddress(key.toEtsEntity()),
+            type = type.toEtsType(),
         )
 
         is NewArrayExprDto -> EtsNewArrayExpr(
@@ -565,7 +585,7 @@ class EtsMethodBuilder(
 
     private fun EtsStmt.mayThrow(): Boolean = when (this) {
         is EtsAssignStmt -> lhv !is EtsLocal || rhv.mayThrow()
-        is EtsCallStmt, is EtsThrowStmt -> true
+        is EtsDefineDataPropertyStmt, is EtsCallStmt, is EtsThrowStmt -> true
         is EtsRawStmt -> true
         is EtsIfStmt, is EtsNopStmt, is EtsReturnStmt -> false
         else -> error("Unknown statement: ${this::class.java}")

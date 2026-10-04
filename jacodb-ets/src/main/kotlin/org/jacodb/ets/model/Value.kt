@@ -38,6 +38,10 @@ interface EtsValue : EtsEntity, CommonValue {
         fun visit(value: EtsThis): R
         fun visit(value: EtsParameterRef): R
         fun visit(value: EtsArrayAccess): R
+        fun visit(value: EtsPropertyRef): R {
+            if (this is Default) return defaultVisit(value)
+            error("Cannot handle ${value::class.java.simpleName}: $value")
+        }
         fun visit(value: EtsInstanceFieldRef): R
         fun visit(value: EtsStaticFieldRef): R
 
@@ -59,6 +63,7 @@ interface EtsValue : EtsEntity, CommonValue {
             override fun visit(value: EtsThis): R = defaultVisit(value)
             override fun visit(value: EtsParameterRef): R = defaultVisit(value)
             override fun visit(value: EtsArrayAccess): R = defaultVisit(value)
+            override fun visit(value: EtsPropertyRef): R = defaultVisit(value)
             override fun visit(value: EtsInstanceFieldRef): R = defaultVisit(value)
             override fun visit(value: EtsStaticFieldRef): R = defaultVisit(value)
 

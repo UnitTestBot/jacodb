@@ -32,6 +32,7 @@ import org.jacodb.ets.model.EtsCastExpr
 import org.jacodb.ets.model.EtsCaughtExceptionRef
 import org.jacodb.ets.model.EtsClosureFieldRef
 import org.jacodb.ets.model.EtsConstant
+import org.jacodb.ets.model.EtsDefineDataPropertyStmt
 import org.jacodb.ets.model.EtsDeleteExpr
 import org.jacodb.ets.model.EtsDivExpr
 import org.jacodb.ets.model.EtsEntity
@@ -66,6 +67,7 @@ import org.jacodb.ets.model.EtsPostDecExpr
 import org.jacodb.ets.model.EtsPostIncExpr
 import org.jacodb.ets.model.EtsPreDecExpr
 import org.jacodb.ets.model.EtsPreIncExpr
+import org.jacodb.ets.model.EtsPropertyRef
 import org.jacodb.ets.model.EtsPtrCallExpr
 import org.jacodb.ets.model.EtsRawEntity
 import org.jacodb.ets.model.EtsRawStmt
@@ -81,6 +83,7 @@ import org.jacodb.ets.model.EtsStringConstant
 import org.jacodb.ets.model.EtsSubExpr
 import org.jacodb.ets.model.EtsThis
 import org.jacodb.ets.model.EtsThrowStmt
+import org.jacodb.ets.model.EtsToPropertyKeyExpr
 import org.jacodb.ets.model.EtsTypeOfExpr
 import org.jacodb.ets.model.EtsUnaryPlusExpr
 import org.jacodb.ets.model.EtsUndefinedConstant
@@ -126,6 +129,13 @@ abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> 
         handle(stmt)
         stmt.lhv.accept(this)
         stmt.rhv.accept(this)
+    }
+
+    final override fun visit(stmt: EtsDefineDataPropertyStmt) {
+        handle(stmt)
+        stmt.target.accept(this)
+        stmt.key.accept(this)
+        stmt.value.accept(this)
     }
 
     final override fun visit(stmt: EtsCallStmt) {
@@ -224,6 +234,17 @@ abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> 
     final override fun visit(expr: EtsNewExpr) {
         handle(expr)
         expr.constructorValue?.accept(this)
+    }
+
+    final override fun visit(expr: EtsToPropertyKeyExpr) {
+        handle(expr)
+        expr.arg.accept(this)
+    }
+
+    final override fun visit(value: EtsPropertyRef) {
+        handle(value)
+        value.instance.accept(this)
+        value.key.accept(this)
     }
 
     final override fun visit(expr: EtsNewArrayExpr) {
