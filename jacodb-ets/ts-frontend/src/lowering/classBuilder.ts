@@ -53,7 +53,7 @@ export class ClassBuilder {
     // Classes
     // ------------------------------------------------------------------
 
-    buildClass(decl: ts.ClassDeclaration, nameOverride?: string): ClassDto {
+    buildClass(decl: ts.ClassLikeDeclaration, nameOverride?: string): ClassDto {
         const convertedSignature = this.ctx.converter.classSignatureOf(decl);
         const signature = nameOverride === undefined
             ? convertedSignature
@@ -458,7 +458,7 @@ export class ClassBuilder {
     }
 
     private superClassInfo(
-        decl: ts.ClassDeclaration,
+        decl: ts.ClassLikeDeclaration,
     ): { signature: ClassSignatureDto; constructorDecl?: ts.ConstructorDeclaration } | undefined {
         const extended = decl.heritageClauses
             ?.find((clause) => clause.token === ts.SyntaxKind.ExtendsKeyword)
@@ -627,7 +627,7 @@ function hasParameterPropertyModifier(p: ts.ParameterDeclaration): boolean {
     );
 }
 
-function superClassNameOf(decl: ts.ClassDeclaration): string | undefined {
+function superClassNameOf(decl: ts.ClassLikeDeclaration): string | undefined {
     for (const clause of decl.heritageClauses ?? []) {
         if (clause.token === ts.SyntaxKind.ExtendsKeyword && clause.types.length > 0) {
             return clause.types[0].expression.getText();
@@ -636,7 +636,7 @@ function superClassNameOf(decl: ts.ClassDeclaration): string | undefined {
     return undefined;
 }
 
-function implementedInterfacesOf(decl: ts.ClassDeclaration): string[] {
+function implementedInterfacesOf(decl: ts.ClassLikeDeclaration): string[] {
     for (const clause of decl.heritageClauses ?? []) {
         if (clause.token === ts.SyntaxKind.ImplementsKeyword) {
             return clause.types.map((t) => t.expression.getText());

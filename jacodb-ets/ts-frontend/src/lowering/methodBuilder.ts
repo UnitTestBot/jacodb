@@ -46,6 +46,7 @@ export interface LoweringContext {
     isDefaultLibrarySourceFile(sf: ts.SourceFile): boolean;
     diagnostics: Diagnostics;
     anonymous: AnonymousRegistry;
+    buildClassExpression?: (node: ts.ClassExpression, name: string) => ClassDto;
     /** File/namespace variables represented as static fields of the owning %dflt class. */
     moduleFields: Map<ts.Symbol, FieldSignatureDto>;
 }

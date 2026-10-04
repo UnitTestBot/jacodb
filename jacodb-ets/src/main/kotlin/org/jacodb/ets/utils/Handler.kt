@@ -54,6 +54,7 @@ import org.jacodb.ets.model.EtsMulExpr
 import org.jacodb.ets.model.EtsNegExpr
 import org.jacodb.ets.model.EtsNewArrayExpr
 import org.jacodb.ets.model.EtsNewExpr
+import org.jacodb.ets.model.EtsNewClassExpr
 import org.jacodb.ets.model.EtsSpreadExpansionExpr
 import org.jacodb.ets.model.EtsNopStmt
 import org.jacodb.ets.model.EtsNotEqExpr
@@ -492,6 +493,10 @@ abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> 
     final override fun visit(expr: EtsSpreadExpansionExpr) {
         handle(expr)
         expr.iterable.accept(this)
+    }
+
+    final override fun visit(expr: EtsNewClassExpr) {
+        handle(expr)
     }
 
 }

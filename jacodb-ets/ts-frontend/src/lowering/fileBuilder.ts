@@ -114,6 +114,7 @@ class FileBuilder {
         private readonly fileSignature: FileSignatureDto,
     ) {
         this.classBuilder = new ClassBuilder(ctx);
+        this.ctx.buildClassExpression = (node, name) => this.classBuilder.buildClass(node, name);
     }
 
     build(sourceFile: ts.SourceFile): EtsFileDto {

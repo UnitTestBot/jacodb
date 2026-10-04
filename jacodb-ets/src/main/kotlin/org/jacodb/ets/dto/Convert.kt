@@ -98,6 +98,7 @@ import org.jacodb.ets.model.EtsNegExpr
 import org.jacodb.ets.model.EtsNeverType
 import org.jacodb.ets.model.EtsNewArrayExpr
 import org.jacodb.ets.model.EtsNewExpr
+import org.jacodb.ets.model.EtsNewClassExpr
 import org.jacodb.ets.model.EtsSpreadExpansionExpr
 import org.jacodb.ets.model.EtsNopStmt
 import org.jacodb.ets.model.EtsNotEqExpr
@@ -370,6 +371,8 @@ class EtsMethodBuilder(
             key = ensureOneAddress(key.toEtsEntity()),
             type = type.toEtsType(),
         )
+
+        is NewClassExprDto -> EtsNewClassExpr(signature.toEtsClassSignature())
 
         is NewArrayExprDto -> EtsNewArrayExpr(
             elementType = elementType.toEtsType(),

@@ -43,6 +43,7 @@ export type ImmediateDto = LocalDto | ConstantDto | ClassValueRefDto;
 
 export type ExprDto =
     | NewExprDto
+    | NewClassExprDto
     | SpreadExpansionExprDto
     | ToPropertyKeyExprDto
     | NewArrayExprDto
@@ -112,6 +113,11 @@ export interface SpreadExpansionExprDto {
     readonly _: "SpreadExpansionExpr";
     iterable: ImmediateDto;
     expectedCount: number;
+}
+
+export interface NewClassExprDto {
+    readonly _: "NewClassExpr";
+    signature: ClassSignatureDto;
 }
 
 export interface NewArrayExprDto {
