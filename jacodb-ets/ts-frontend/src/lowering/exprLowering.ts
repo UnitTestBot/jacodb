@@ -264,6 +264,9 @@ export class ExprLowerer {
         if (ts.isArrayLiteralExpression(node)) {
             return this.lowerArrayLiteral(node);
         }
+        if (ts.isRegularExpressionLiteral(node)) {
+            return this.lowerRegularExpressionLiteral(node);
+        }
         if (ts.isTemplateExpression(node)) {
             return this.lowerTemplate(node);
         }
@@ -1187,6 +1190,42 @@ export class ExprLowerer {
             });
         });
         return temp;
+    }
+
+    private lowerRegularExpressionLiteral(node: ts.RegularExpressionLiteral): LocalDto {
+        const text = node.text;
+        const closingSlash = text.lastIndexOf("/");
+        if (!text.startsWith("/") || closingSlash <= 0) {
+            throw new LoweringError("invalid regular-expression literal");
+        }
+
+        const pattern = text.slice(1, closingSlash);
+        const flags = text.slice(closingSlash + 1);
+        // A literal uses the intrinsic RegExp constructor, even when a source binding shadows it.
+        const classType: ClassTypeDto = {
+            _: "ClassType", signature: { name: "RegExp", declaringFile: UNKNOWN_FILE_SIGNATURE },
+        };
+        const value = this.m.newTemp(classType);
+        this.m.cfg.emit({ _: "AssignStmt", left: value, right: { _: "NewExpr", classType } });
+        this.m.cfg.emit({
+            _: "AssignStmt",
+            left: value,
+            right: {
+                _: "InstanceCallExpr",
+                instance: value,
+                method: {
+                    declaringClass: classType._ === "ClassType" ? classType.signature : UNKNOWN_CLASS_SIGNATURE,
+                    name: CONSTRUCTOR_NAME,
+                    parameters: [
+                        { name: "pattern", type: STRING_TYPE },
+                        { name: "flags", type: STRING_TYPE },
+                    ],
+                    returnType: classType,
+                },
+                args: [constant(pattern, STRING_TYPE), constant(flags, STRING_TYPE)],
+            },
+        });
+        return value;
     }
 
     /** `a${x}b` -> chain of string `+` binops. */
