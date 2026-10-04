@@ -23,6 +23,10 @@ import org.jacodb.ets.toArrayType
 interface EtsExpr : EtsEntity {
     interface Visitor<out R> {
         fun visit(expr: EtsNewExpr): R
+        fun visit(expr: EtsSpreadExpansionExpr): R {
+            if (this is Default) return defaultVisit(expr)
+            error("Cannot handle ${expr::class.java.simpleName}: $expr")
+        }
         fun visit(expr: EtsNewArrayExpr): R
         fun visit(expr: EtsCastExpr): R
         fun visit(expr: EtsInstanceOfExpr): R
@@ -81,6 +85,7 @@ interface EtsExpr : EtsEntity {
 
         interface Default<out R> : Visitor<R> {
             override fun visit(expr: EtsNewExpr): R = defaultVisit(expr)
+            override fun visit(expr: EtsSpreadExpansionExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsNewArrayExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsCastExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsInstanceOfExpr): R = defaultVisit(expr)
@@ -153,6 +158,29 @@ data class EtsNewExpr(
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {
         return visitor.visit(this)
     }
+}
+
+/**
+ * Expands a spread operand with ECMAScript GetIterator/IteratorStep/IteratorValue,
+ * observing the runtime iterator (including a replaced Symbol.iterator) exactly once.
+ * The result is a fresh dense array. The iterator is consumed through completion before
+ * the next argument is evaluated. A count different from [expectedCount] is an explicit
+ * unsupported consuming-model outcome; it must never truncate, pad, or call the target.
+ * Exceptions from obtaining or advancing the iterator retain their JavaScript behavior.
+ */
+data class EtsSpreadExpansionExpr(
+    val iterable: EtsValue,
+    val expectedCount: Int,
+) : EtsExpr {
+    init {
+        require(expectedCount >= 0) { "Spread element count must not be negative" }
+    }
+
+    override val type: EtsType get() = EtsUnknownType.toArrayType(dimensions = 1)
+
+    override fun toString(): String = "expandSpread($iterable, $expectedCount)"
+
+    override fun <R> accept(visitor: EtsExpr.Visitor<R>): R = visitor.visit(this)
 }
 
 data class EtsNewArrayExpr(

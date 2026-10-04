@@ -31,6 +31,7 @@ import { ValueDto } from "./dto/values";
 
 const EXPR_KINDS = new Set([
     "NewExpr",
+    "SpreadExpansionExpr",
     "NewArrayExpr",
     "DeleteExpr",
     "AwaitExpr",
@@ -368,6 +369,11 @@ function validateValue(
                 err(`${ctx}: PtrCallExpr.ptr has expr kind '${value.ptr._}', must be an immediate or ref`);
             }
             break;
+        case "SpreadExpansionExpr":
+            if (!Number.isInteger(value.expectedCount) || value.expectedCount < 0) {
+                err(`${ctx}: spread expectedCount must be a non-negative integer`);
+            }
+            break;
         default:
             break;
     }
@@ -382,6 +388,8 @@ export function valueOperands(value: ValueDto): ValueDto[] {
     switch (value._) {
         case "NewExpr":
             return value.constructorValue !== undefined ? [value.constructorValue] : [];
+        case "SpreadExpansionExpr":
+            return [value.iterable];
         case "NewArrayExpr":
             return [value.size];
         case "DeleteExpr":

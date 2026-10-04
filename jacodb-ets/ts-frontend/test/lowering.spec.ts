@@ -532,10 +532,15 @@ describe("straight-line lowering", () => {
 
     it("hoists raw fallbacks out of ref stores and call arguments", () => {
         const { file } = lower(`
-            let parts = [1, ...[2, 3]];
-            console.log(...parts);
+            let holder: { ctor?: unknown } = {};
+            holder.ctor = class { static x = 1; };
+            console.log(class { static y = 2; });
         `);
-        const stmts = singleBlockStmts(defaultMethod(file));
+        const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
+
+        expect(stmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue"))
+            .toHaveLength(2);
+
         for (const s of stmts) {
             if (s._ === "AssignStmt" && s.left._ !== "Local") {
                 expect((s.right as { _: string })._).not.toMatch(/^Unsupported/);
