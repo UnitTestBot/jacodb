@@ -14,7 +14,6 @@ describe("unsupported loop bindings do not break the whole file", () => {
     const cases: Record<string, string> = {
         "array pattern with rest": "declare const xs: any[]; for (const [a, ...rest] of xs) { console.log(a); }",
         "member expression target": "declare const xs: any[]; const obj: any = {}; for (obj.x of xs) { console.log(obj.x); }",
-        "computed property pattern": "declare const xs: any[]; const k = 'a'; for (const { [k]: v } of xs) { console.log(v); }",
         "rest in for-in": "declare const o: any; for (const [a, ...rest] in o) { console.log(a); }",
     };
 
@@ -27,6 +26,19 @@ describe("unsupported loop bindings do not break the whole file", () => {
             expect(diagnostics.messages.some((msg) => msg.includes("unsupported loop binding"))).toBe(true);
         });
     }
+});
+
+it("lowers a computed object key in a for-of binding", () => {
+    const { file, diagnostics } = lower(`
+        const xs = [{ a: 1 }];
+        const key = "a";
+        for (const { [key]: value } of xs) { console.log(value); }
+    `);
+    const stmts = file.classes.flatMap((clazz) => clazz.methods.flatMap((method) => allStmts(method)));
+
+    expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PropertyRef")).toBe(true);
+    expect(stmts.some((stmt) => stmt._ === "UnsupportedStmt")).toBe(false);
+    expect(diagnostics.messages).toEqual([]);
 });
 
 describe("SyntaxKind names", () => {

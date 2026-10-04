@@ -858,6 +858,19 @@ export class StmtLowerer {
                     this.bindDestructured(element.name, rest, element.initializer);
                     continue;
                 }
+                if (element.propertyName !== undefined && ts.isComputedPropertyName(element.propertyName)) {
+                    const key = this.expr.lowerPropertyKey(element.propertyName.expression);
+                    const ref: ValueDto = {
+                        _: "PropertyRef",
+                        instance: stableSource,
+                        key,
+                        type: this.bindingType(element.name),
+                    };
+                    excludedKeys.push(key);
+                    this.bindDestructured(element.name, ref, element.initializer);
+                    continue;
+                }
+
                 const propName =
                     element.propertyName !== undefined
                         ? propertyNameText(element.propertyName)
