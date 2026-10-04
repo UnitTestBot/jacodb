@@ -42,6 +42,7 @@ export type TypeDto =
     | NumberTypeDto
     | BigIntTypeDto
     | StringTypeDto
+    | SymbolTypeDto
     | NullTypeDto
     | UndefinedTypeDto
     | LiteralTypeDto
@@ -127,6 +128,10 @@ export interface StringTypeDto {
     readonly _: "StringType";
 }
 
+export interface SymbolTypeDto {
+    readonly _: "SymbolType";
+}
+
 export interface NullTypeDto {
     readonly _: "NullType";
 }
@@ -185,5 +190,6 @@ export const BOOLEAN_TYPE: BooleanTypeDto = { _: "BooleanType" };
 export const NUMBER_TYPE: NumberTypeDto = { _: "NumberType" };
 export const BIGINT_TYPE: BigIntTypeDto = { _: "BigIntType" };
 export const STRING_TYPE: StringTypeDto = { _: "StringType" };
+export const SYMBOL_TYPE: SymbolTypeDto = { _: "SymbolType" };
 export const NULL_TYPE: NullTypeDto = { _: "NullType" };
 export const UNDEFINED_TYPE: UndefinedTypeDto = { _: "UndefinedType" };

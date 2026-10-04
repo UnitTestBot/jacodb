@@ -51,6 +51,7 @@ internal val valueModule = SerializersModule {
 internal val typeModule = SerializersModule {
     polymorphic(TypeDto::class) {
         subclass(BigIntTypeDto::class, BigIntTypeDto.serializer())
+        subclass(SymbolTypeDto::class, SymbolTypeDto.serializer())
     }
     polymorphicDefaultDeserializer(TypeDto::class) { RawTypeSerializer }
 }

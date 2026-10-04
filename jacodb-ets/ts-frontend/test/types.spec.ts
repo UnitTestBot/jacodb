@@ -39,6 +39,7 @@ describe("convertTypeNode (annotations)", () => {
         expect(annotationOf("let x: undefined;")).toEqual({ _: "UndefinedType" });
         expect(annotationOf("let x: never;")).toEqual({ _: "NeverType" });
         expect(annotationOf("let x: bigint;")).toEqual({ _: "BigIntType" });
+        expect(annotationOf("let x: symbol;")).toEqual({ _: "SymbolType" });
     });
 
     it("converts literal types with bare JSON primitives", () => {
@@ -342,6 +343,7 @@ describe("typeOfNode (inference)", () => {
         expect(inferredOf(`let x = "s";`)).toEqual({ _: "StringType" });
         expect(inferredOf("let x = true;")).toEqual({ _: "BooleanType" });
         expect(inferredOf("let x = 1n;")).toEqual({ _: "BigIntType" });
+        expect(inferredOf("let x = Symbol();")).toEqual({ _: "SymbolType" });
     });
 
     it("keeps literal types for const-declarations", () => {
