@@ -986,7 +986,22 @@ export class ExprLowerer {
         returnOld: boolean,
     ): ValueDto {
         const op: UnaryOp = operator === ts.SyntaxKind.PlusPlusToken ? "++" : "--";
-        const target = this.lowerLValue(operand);
+        let target = this.lowerLValue(operand);
+
+        // Get and ToNumeric can replace source bindings. Keep the selected
+        // receiver and raw index for Put, without converting the index early.
+        if (target._ === "InstanceFieldRef" || target._ === "PropertyRef") {
+            target = { ...target, instance: this.m.snapshotToLocal(target.instance, target.instance.type) };
+        } else if (target._ === "ArrayRef") {
+            const array = target.array;
+            const index = target.index;
+            target = {
+                ...target,
+                array: array._ === "Local" ? this.m.snapshotToLocal(array, array.type) : array,
+                index: index._ === "Local" ? this.m.snapshotToLocal(index, index.type) : index,
+            };
+        }
+
         const rawValue = target._ === "Local"
             ? target
             : this.materialize(this.propertyReferenceForOperation(target), lvalueType(target));
