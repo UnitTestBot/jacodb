@@ -149,6 +149,7 @@ export interface AwaitExprDto {
 export interface YieldExprDto {
     readonly _: "YieldExpr";
     arg: ValueDto;
+    isDelegating?: boolean; // Kotlin default: false
 }
 
 export interface TypeOfExprDto {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { serializeEtsFile } from "../src/serialize";
 import { AssignStmtDto, StmtDto } from "../src/dto/stmts";
 import { validateEtsFile } from "../src/validate";
 import { defaultMethod, lower, methodByName, singleBlockStmts } from "./util";
@@ -416,5 +417,19 @@ describe("generators", () => {
         const stmts = gen.body!.cfg.blocks.flatMap((b) => b.stmts);
         const yields = stmts.filter((s) => s._ === "AssignStmt" && s.right._ === "YieldExpr");
         expect(yields).toHaveLength(2);
+    });
+
+    it("preserves yield-star delegation through JSON", () => {
+        const source = "function* values() { yield* [1, 2]; yield [3]; }";
+        const { file, diagnostics } = lower(source);
+        const roundTripped = JSON.parse(serializeEtsFile(file));
+        const statements = methodByName(roundTripped, "values").body!.cfg.blocks.flatMap((block) => block.stmts);
+        const yields = statements.filter((statement) => statement._ === "AssignStmt" && statement.right._ === "YieldExpr");
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(yields.map((statement) => statement.right.isDelegating)).toEqual([true, false]);
+
+        const concrete = new Function(`${source}; return [...values()];`)();
+        expect(concrete).toEqual([1, 2, [3]]);
     });
 });
