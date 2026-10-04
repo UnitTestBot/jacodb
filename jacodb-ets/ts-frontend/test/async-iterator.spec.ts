@@ -29,6 +29,7 @@ async function execute(method: MethodDto, input: unknown): Promise<unknown> {
                     case "UndefinedType": return undefined;
                     case "NullType": return null;
                     case "NumberType": return Number(value.value);
+                    case "BigIntType": return BigInt(value.value);
                     case "BooleanType": return value.value === "true";
                     default: return value.value;
                 }
@@ -38,9 +39,14 @@ async function execute(method: MethodDto, input: unknown): Promise<unknown> {
             case "InstanceFieldRef": return read(value.instance)[value.field.name];
             case "PropertyRef": return read(value.instance)[read(value.key)];
             case "TypeOfExpr": return typeof read(value.arg);
-            case "UnopExpr":
-                if (value.op !== "!") throw new Error(`Unexpected unary op ${value.op}`);
-                return !read(value.arg);
+            case "ToNumericExpr": return -(-read(value.arg));
+            case "UnopExpr": {
+                if (value.op === "!") return !read(value.arg);
+                let numeric = read(value.arg);
+                if (value.op === "++") return ++numeric;
+                if (value.op === "--") return --numeric;
+                throw new Error(`Unexpected unary op ${value.op}`);
+            }
             case "BinopExpr":
             case "ConditionExpr": {
                 const left = read(value.left);

@@ -161,6 +161,13 @@ data class ToPropertyKeyExprDto(
 }
 
 @Serializable
+@SerialName("ToNumericExpr")
+data class ToNumericExprDto(
+    val arg: ValueDto,
+    override val type: TypeDto,
+) : ExprDto
+
+@Serializable
 @SerialName("PropertyRef")
 data class PropertyRefDto(
     val instance: ValueDto, // Local; polymorphic discriminator is required.

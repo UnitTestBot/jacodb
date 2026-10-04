@@ -35,6 +35,7 @@ const EXPR_KINDS = new Set([
     "NewClassExpr",
     "SpreadExpansionExpr",
     "ToPropertyKeyExpr",
+    "ToNumericExpr",
     "RequireObjectCoercibleExpr",
     "NewArrayExpr",
     "DeleteExpr",
@@ -422,6 +423,7 @@ export function valueOperands(value: ValueDto): ValueDto[] {
         case "TypeOfExpr":
         case "CastExpr":
         case "ToPropertyKeyExpr":
+        case "ToNumericExpr":
         case "RequireObjectCoercibleExpr":
         case "UnopExpr":
             return [value.arg];

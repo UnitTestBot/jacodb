@@ -987,18 +987,18 @@ export class ExprLowerer {
     ): ValueDto {
         const op: UnaryOp = operator === ts.SyntaxKind.PlusPlusToken ? "++" : "--";
         const target = this.lowerLValue(operand);
+        const rawValue = target._ === "Local"
+            ? target
+            : this.materialize(this.propertyReferenceForOperation(target), lvalueType(target));
+        const numericType = toNumericType(lvalueType(target));
+        const oldValue = this.materialize({ _: "ToNumericExpr", arg: rawValue, type: numericType }, numericType);
 
         if (target._ === "Local") {
-            // Postfix needs a copy of the old value BEFORE the update.
-            const saved = returnOld ? this.materialize(target, target.type) : undefined;
-            this.m.cfg.emit({ _: "AssignStmt", left: target, right: { _: "UnopExpr", op, arg: target } });
-            return saved ?? target;
+            this.m.cfg.emit({ _: "AssignStmt", left: target, right: { _: "UnopExpr", op, arg: oldValue } });
+            return returnOld ? oldValue : target;
         }
 
-        // Field/array target: load old, compute updated, store back.
-        //   %old := ref; %new := %old ++; ref := %new
-        const oldValue = this.materialize(this.propertyReferenceForOperation(target), lvalueType(target));
-        const updated = this.materialize({ _: "UnopExpr", op, arg: oldValue }, lvalueType(target));
+        const updated = this.materialize({ _: "UnopExpr", op, arg: oldValue }, numericType);
         this.m.cfg.emit({ _: "AssignStmt", left: this.propertyReferenceForOperation(target), right: updated });
         return returnOld ? oldValue : updated;
     }
@@ -2110,6 +2110,30 @@ function lvalueType(target: LValueDto): TypeDto {
         case "StaticFieldRef":
             return target.field.type;
     }
+}
+
+/** Type hint for the converted primitive; opaque objects can produce either numeric kind. */
+function toNumericType(type: TypeDto): TypeDto {
+    switch (type._) {
+        case "BigIntType":
+            return BIGINT_TYPE;
+        case "NumberType":
+        case "StringType":
+        case "BooleanType":
+        case "NullType":
+        case "UndefinedType":
+        case "LiteralType":
+            return NUMBER_TYPE;
+        case "AliasType":
+            return toNumericType(type.originalType);
+        case "UnionType": {
+            const numericTypes = type.types.map(toNumericType);
+            if (numericTypes.every((numeric) => numeric._ === "NumberType")) return NUMBER_TYPE;
+            if (numericTypes.every((numeric) => numeric._ === "BigIntType")) return BIGINT_TYPE;
+            break;
+        }
+    }
+    return { _: "UnionType", types: [NUMBER_TYPE, BIGINT_TYPE] };
 }
 
 export function arrayElementType(array: Extract<TypeDto, { _: "ArrayType" }>): TypeDto {

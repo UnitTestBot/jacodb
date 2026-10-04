@@ -50,6 +50,26 @@ function violations(body: BodyDto): string[] {
 }
 
 describe("validateEtsFile", () => {
+    it("checks the operand of ToNumeric instead of accepting it as a raw fallback", () => {
+        const body = bodyWithBlocks([
+            {
+                id: 0,
+                successors: [],
+                predecessors: [],
+                stmts: [
+                    { _: "AssignStmt", left: local("result"), right: {
+                        _: "ToNumericExpr", arg: local("ghost"), type: NUMBER_TYPE,
+                    } },
+                    { _: "ReturnVoidStmt" },
+                ],
+            },
+        ], ["result"]);
+
+        expect(violations(body)).toEqual([
+            expect.stringContaining("local 'ghost' is not declared in body.locals"),
+        ]);
+    });
+
     it("accepts an empty cfg", () => {
         expect(violations(bodyWithBlocks([]))).toEqual([]);
     });

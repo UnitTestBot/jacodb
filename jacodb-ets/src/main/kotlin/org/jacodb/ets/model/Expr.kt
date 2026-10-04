@@ -39,6 +39,10 @@ interface EtsExpr : EtsEntity {
             if (this is Default) return defaultVisit(expr)
             error("Cannot handle ${expr::class.java.simpleName}: $expr")
         }
+        fun visit(expr: EtsToNumericExpr): R {
+            if (this is Default) return defaultVisit(expr)
+            error("Cannot handle ${expr::class.java.simpleName}: $expr")
+        }
         fun visit(expr: EtsRequireObjectCoercibleExpr): R {
             if (this is Default) return defaultVisit(expr)
             error("Cannot handle ${expr::class.java.simpleName}: $expr")
@@ -105,6 +109,7 @@ interface EtsExpr : EtsEntity {
             override fun visit(expr: EtsNewClassExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsSpreadExpansionExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsToPropertyKeyExpr): R = defaultVisit(expr)
+            override fun visit(expr: EtsToNumericExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsRequireObjectCoercibleExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsNewArrayExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsCastExpr): R = defaultVisit(expr)
@@ -209,6 +214,16 @@ data class EtsToPropertyKeyExpr(val arg: EtsValue) : EtsExpr {
     override val type: EtsType get() = EtsUnknownType
 
     override fun toString(): String = "toPropertyKey($arg)"
+
+    override fun <R> accept(visitor: EtsExpr.Visitor<R>): R = visitor.visit(this)
+}
+
+/** ECMAScript ToNumeric: ToPrimitive with a number hint, then Number or unchanged BigInt. */
+data class EtsToNumericExpr(
+    val arg: EtsValue,
+    override val type: EtsType,
+) : EtsExpr {
+    override fun toString(): String = "toNumeric($arg)"
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R = visitor.visit(this)
 }
