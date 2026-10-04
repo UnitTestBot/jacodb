@@ -1,4 +1,4 @@
-/** Iterator protocol for eager array spread. */
+/** Shared iterator protocol for eager array spread and array-rest bindings. */
 import { CONSTRUCTOR_NAME } from "../dto/constants";
 import { UNKNOWN_CLASS_SIGNATURE, UNKNOWN_FILE_SIGNATURE } from "../dto/signatures";
 import { BOOLEAN_TYPE, NUMBER_TYPE, STRING_TYPE, TypeDto, UNKNOWN_TYPE } from "../dto/types";
@@ -48,6 +48,27 @@ export class IteratorLowerer {
         m.cfg.emit({ _: "AssignStmt", left: this.exhausted, right: bool(false) });
     }
 
+    /** Yield undefined after exhaustion without calling next again. */
+    take(type: TypeDto, options: { readValue?: boolean } = {}): LocalDto {
+        const cfg = this.m.cfg;
+        const value = this.m.newTemp(type);
+        cfg.emit({ _: "AssignStmt", left: value, right: { _: "Constant", value: "undefined", type: { _: "UndefinedType" } } });
+        const step = cfg.newLabel();
+        const read = cfg.newLabel();
+        const done = cfg.newLabel();
+        cfg.branch(this.isExhausted(), done, step);
+        cfg.placeLabel(step);
+        const result = this.advance();
+        cfg.branch(this.isExhausted(), done, read);
+        cfg.placeLabel(read);
+        if (options.readValue !== false) {
+            cfg.emit({ _: "AssignStmt", left: value, right: this.fieldRef(result, "value", type) });
+        }
+        cfg.goto(done);
+        cfg.placeLabel(done);
+        return value;
+    }
+
     /** Drain into a fresh or partially built array in iteration order. */
     appendTo(target: LocalDto, offset: LocalDto, elementType: TypeDto): void {
         const cfg = this.m.cfg;
@@ -66,6 +87,39 @@ export class IteratorLowerer {
         cfg.emit({ _: "AssignStmt", left: offset, right: { _: "BinopExpr", op: "+", left: offset, right: number(1), type: NUMBER_TYPE } });
         cfg.goto(head);
         cfg.placeLabel(done);
+    }
+
+    /** Abrupt binding initialization closes the iterator; the original throw wins. */
+    closeOnException(action: () => void): void {
+        const cfg = this.m.cfg;
+        const close = cfg.newLabel();
+        const lookup = cfg.newLabel();
+        const invoke = cfg.newLabel();
+        const rethrow = cfg.newLabel();
+        const continuation = cfg.newLabel();
+        cfg.withExceptionTarget(close, action);
+        cfg.goto(continuation);
+        cfg.placeLabel(close);
+        const original = this.m.newTemp(UNKNOWN_TYPE);
+        cfg.emit({ _: "AssignStmt", left: original, right: { _: "CaughtExceptionRef", type: UNKNOWN_TYPE } });
+        cfg.branch(this.isExhausted(), rethrow, lookup);
+        cfg.placeLabel(lookup);
+        cfg.withExceptionTarget(rethrow, () => {
+            const method = this.field(this.iterator, "return", UNKNOWN_TYPE);
+            cfg.branch({ _: "ConditionExpr", op: "==", left: method, right: { _: "Constant", value: "null", type: { _: "NullType" } } }, rethrow, invoke);
+            cfg.placeLabel(invoke);
+            cfg.emit({
+                _: "CallStmt",
+                expr: {
+                    _: "PtrCallExpr", ptr: method, receiver: this.iterator,
+                    method: { declaringClass: UNKNOWN_CLASS_SIGNATURE, name: "return", parameters: [], returnType: UNKNOWN_TYPE }, args: [],
+                },
+            });
+            cfg.goto(rethrow);
+        });
+        cfg.placeLabel(rethrow);
+        cfg.throwValue(original);
+        cfg.placeLabel(continuation);
     }
 
     private advance(): LocalDto {

@@ -27,8 +27,9 @@ import { BOOLEAN_TYPE, NUMBER_TYPE, STRING_TYPE, TypeDto, UNDEFINED_TYPE, UNKNOW
 import { ImmediateDto, LValueDto, LocalDto, ValueDto } from "../dto/values";
 import { exportAssignmentSupport } from "./astUtils";
 import { Label } from "./cfg";
+import { IteratorLowerer } from "./iteratorLowering";
 import { unsupportedStmt } from "./diagnostics";
-import { ExprLowerer, LoweringError, constant } from "./exprLowering";
+import { ExprLowerer, LoweringError, arrayElementType, constant } from "./exprLowering";
 import { MethodContext } from "./methodBuilder";
 
 /** The lowered loop variable of a for-of/for-in statement. */
@@ -891,7 +892,34 @@ export class StmtLowerer {
             }
             return;
         }
-        // Array pattern.
+        // Array patterns with rest consume the iterator, including omitted elements.
+        if (pattern.elements.some((element) => ts.isBindingElement(element) && element.dotDotDotToken !== undefined)) {
+            if (pattern.elements.some((element) => ts.isBindingElement(element)
+                && !ts.isIdentifier(element.name))) {
+                throw new LoweringError("nested bindings in array rest are not represented with iterator semantics");
+            }
+            const iterator = new IteratorLowerer(this.m, source);
+            for (const element of pattern.elements) {
+                if (ts.isOmittedExpression(element)) {
+                    iterator.take(UNKNOWN_TYPE, { readValue: false });
+                    continue;
+                }
+                if (element.dotDotDotToken === undefined) {
+                    const value = iterator.take(this.bindingType(element.name));
+                    iterator.closeOnException(() => this.bindDestructured(element.name, value, element.initializer));
+                    continue;
+                }
+                const type = this.bindingType(element.name);
+                const elementType = type._ === "ArrayType" ? arrayElementType(type) : UNKNOWN_TYPE;
+                const rest = this.m.newTemp(type._ === "ArrayType" ? type : { _: "ArrayType", elementType, dimensions: 1 });
+                this.m.cfg.emit({ _: "AssignStmt", left: rest, right: { _: "NewArrayExpr", elementType, size: constant("0", NUMBER_TYPE) } });
+                const offset = this.m.newTemp(NUMBER_TYPE);
+                this.m.cfg.emit({ _: "AssignStmt", left: offset, right: constant("0", NUMBER_TYPE) });
+                iterator.appendTo(rest, offset, elementType);
+                this.bindDestructured(element.name, rest, undefined);
+            }
+            return;
+        }
         pattern.elements.forEach((element, index) => {
             if (ts.isOmittedExpression(element)) {
                 return;
