@@ -144,6 +144,15 @@ data class NewExprDto(
 }
 
 @Serializable
+@SerialName("SpreadExpansionExpr")
+data class SpreadExpansionExprDto(
+    val iterable: ValueDto,
+    val expectedCount: Int,
+) : ExprDto {
+    override val type: TypeDto get() = UnknownTypeDto.toArrayType(dimensions = 1)
+}
+
+@Serializable
 @SerialName("NewArrayExpr")
 data class NewArrayExprDto(
     val elementType: TypeDto,
