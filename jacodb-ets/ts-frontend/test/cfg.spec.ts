@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { serializeEtsFile } from "../src/serialize";
 import { BasicBlockDto, MethodDto } from "../src/dto/model";
 import { IfStmtDto, StmtDto } from "../src/dto/stmts";
 import { defaultMethod, lower, methodByName } from "./util";
@@ -276,6 +277,32 @@ describe("control flow lowering", () => {
         expect(fieldReads).toContain("value");
         // loop variable is bound
         expect(method.body!.locals.some((l) => l.name === "v")).toBe(true);
+    });
+
+    it("preserves async iteration and awaits each next result through JSON", async () => {
+        const source = `
+            async function first(input) {
+                for await (const value of input) return value;
+                return -1;
+            }
+        `;
+        const { file, diagnostics } = lower(source);
+        const roundTripped = JSON.parse(serializeEtsFile(file));
+        const statements = allStmts(methodByName(roundTripped, "first"));
+        const calls = statements.filter((statement) => statement._ === "AssignStmt"
+            && statement.right._ === "PtrCallExpr");
+        const awaits = statements.filter((statement) => statement._ === "AssignStmt"
+            && statement.right._ === "AwaitExpr");
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(calls.map((statement) => statement.right.method.name)).toContain("Symbol.asyncIterator");
+        expect(calls.map((statement) => statement.right.method.name)).toContain("Symbol.iterator");
+        expect(awaits).toHaveLength(2);
+        expect(awaits.map((statement) => statement.right.arg))
+            .toContainEqual(calls.find((statement) => statement.right.method.name === "next")?.left);
+
+        const concrete = await new Function(`${source}; return first({ async *[Symbol.asyncIterator]() { yield 7; } });`)();
+        expect(concrete).toBe(7);
     });
 
     it("lowers for-in via Object.keys indexing", () => {

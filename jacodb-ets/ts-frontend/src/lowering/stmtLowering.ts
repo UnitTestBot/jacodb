@@ -23,12 +23,12 @@
 
 import * as ts from "typescript";
 import { MethodSignatureDto, UNKNOWN_CLASS_SIGNATURE, UNKNOWN_FILE_SIGNATURE } from "../dto/signatures";
-import { BOOLEAN_TYPE, NUMBER_TYPE, STRING_TYPE, TypeDto, UNDEFINED_TYPE, UNKNOWN_TYPE } from "../dto/types";
+import { BOOLEAN_TYPE, NUMBER_TYPE, STRING_TYPE, SYMBOL_TYPE, TypeDto, UNDEFINED_TYPE, UNKNOWN_TYPE } from "../dto/types";
 import { ImmediateDto, LValueDto, LocalDto, ValueDto } from "../dto/values";
 import { exportAssignmentSupport } from "./astUtils";
 import type { BuiltParameters } from "./astUtils";
 import { Label } from "./cfg";
-import { IteratorLowerer } from "./iteratorLowering";
+import { IteratorLowerer, throwRuntimeError } from "./iteratorLowering";
 import { unsupportedStmt } from "./diagnostics";
 import { ExprLowerer, LoweringError, arrayElementType, constant } from "./exprLowering";
 import { MethodContext } from "./methodBuilder";
@@ -365,27 +365,20 @@ export class StmtLowerer {
         cfg.placeLabel(exitLabel);
     }
 
-    /**
-     * `for (const v of iterable)` — iterator protocol, ArkAnalyzer-shaped:
-     *   %it := iterable.Symbol.iterator()
-     *   head: %res := %it.next(); %done := %res.done
-     *         if (%done == true) exit else body
-     *   body: v := %res.value; ...
-     */
+    /** Lower iterator reads, including Async-from-Sync value unwrapping for `for await`. */
     private lowerForOf(node: ts.ForOfStatement, label: string | undefined): void {
         const cfg = this.m.cfg;
-        const iterable = this.expr.lowerToLocal(node.expression);
+        const source = this.expr.lowerToLocal(node.expression);
+        const isAsync = node.awaitModifier !== undefined;
+        // GetMethod may invoke a getter that reassigns the source binding.
+        const iterable = isAsync ? this.m.snapshotToLocal(source, source.type) : source;
+        const asyncIterator = isAsync ? this.lowerAsyncIterator(iterable) : undefined;
 
-        const iterator = this.m.newTemp(UNKNOWN_TYPE);
-        cfg.emit({
-            _: "AssignStmt",
-            left: iterator,
-            right: {
-                _: "InstanceCallExpr",
-                instance: iterable,
-                method: unknownMethod("Symbol.iterator"),
-                args: [],
-            },
+        const iterator = asyncIterator?.iterator ?? this.expr.materialize({
+            _: "InstanceCallExpr",
+            instance: iterable,
+            method: unknownMethod("Symbol.iterator"),
+            args: [],
         });
 
         const headLabel = cfg.newLabel();
@@ -394,35 +387,129 @@ export class StmtLowerer {
 
         cfg.placeLabel(headLabel);
         const result = this.m.newTemp(UNKNOWN_TYPE);
+        const nextResult = isAsync ? this.m.newTemp(UNKNOWN_TYPE) : result;
         cfg.emit({
             _: "AssignStmt",
-            left: result,
-            right: { _: "InstanceCallExpr", instance: iterator, method: unknownMethod("next"), args: [] },
+            left: nextResult,
+            right: asyncIterator === undefined
+                ? { _: "InstanceCallExpr", instance: iterator, method: unknownMethod("next"), args: [] }
+                : { _: "PtrCallExpr", ptr: asyncIterator.next, receiver: iterator, method: unknownMethod("next"), args: [] },
         });
-        const done = this.m.newTemp(BOOLEAN_TYPE);
-        cfg.emit({
-            _: "AssignStmt",
-            left: done,
-            right: {
-                _: "InstanceFieldRef",
-                instance: result,
-                field: { declaringClass: UNKNOWN_CLASS_SIGNATURE, name: "done", type: BOOLEAN_TYPE },
-            },
-        });
+        if (asyncIterator !== undefined) {
+            const syncResult = cfg.newLabel();
+            const asyncResult = cfg.newLabel();
+            const resultReady = cfg.newLabel();
+            cfg.branch(asyncIterator.fromSync, syncResult, asyncResult);
+
+            cfg.placeLabel(syncResult);
+            cfg.emit({ _: "AssignStmt", left: result, right: nextResult });
+            cfg.goto(resultReady);
+
+            cfg.placeLabel(asyncResult);
+            cfg.emit({ _: "AssignStmt", left: result, right: { _: "AwaitExpr", arg: nextResult } });
+            cfg.placeLabel(resultReady);
+            this.requireIteratorObject(result);
+        }
+
+        const doneType = asyncIterator === undefined ? BOOLEAN_TYPE : UNKNOWN_TYPE;
+        const rawDone = this.expr.materialize(this.iteratorField(result, "done", doneType), doneType);
+        // IteratorComplete uses ToBoolean, including non-boolean truthy done values.
+        const notDone = asyncIterator === undefined ? undefined
+            : this.expr.materialize({ _: "UnopExpr", op: "!", arg: rawDone }, BOOLEAN_TYPE);
+        const done = notDone === undefined ? rawDone
+            : this.expr.materialize({ _: "UnopExpr", op: "!", arg: notDone }, BOOLEAN_TYPE);
+
+        const value = asyncIterator === undefined ? undefined : this.m.newTemp(UNKNOWN_TYPE);
+        if (asyncIterator !== undefined && value !== undefined) {
+            const unwrap = cfg.newLabel();
+            const valueReady = cfg.newLabel();
+            cfg.branch(asyncIterator.fromSync, unwrap, valueReady);
+            cfg.placeLabel(unwrap);
+            // Async-from-Sync reads done and value before awaiting value, even when done is true.
+            // Awaiting the result object would incorrectly assimilate a user-defined then method.
+            cfg.emit({ _: "AssignStmt", left: value, right: this.iteratorField(result, "value") });
+            cfg.emit({ _: "AssignStmt", left: value, right: { _: "AwaitExpr", arg: value } });
+            cfg.placeLabel(valueReady);
+        }
+
         // if (done == true) -> exit, else -> body
         cfg.branch(this.expr.relation("==", done, constant("true", BOOLEAN_TYPE)), exitLabel, bodyLabel);
 
         cfg.placeLabel(bodyLabel);
-        this.emitLoopBinding(node.initializer, (binding) => ({
-            _: "InstanceFieldRef",
-            instance: result,
-            field: { declaringClass: UNKNOWN_CLASS_SIGNATURE, name: "value", type: binding.type },
-        }));
+        if (asyncIterator !== undefined && value !== undefined) {
+            const asyncValue = cfg.newLabel();
+            const valueReady = cfg.newLabel();
+            cfg.branch(asyncIterator.fromSync, valueReady, asyncValue);
+            cfg.placeLabel(asyncValue);
+            cfg.emit({ _: "AssignStmt", left: value, right: this.iteratorField(result, "value") });
+            cfg.placeLabel(valueReady);
+        }
+        this.emitLoopBinding(node.initializer, (binding) => value ?? this.iteratorField(result, "value", binding.type));
         this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: headLabel, label }, () => {
             this.lowerStatement(node.statement);
         });
         cfg.goto(headLabel);
         cfg.placeLabel(exitLabel);
+    }
+
+    /** GetAsyncIterator chooses the async method first and caches the chosen iterator's next. */
+    private lowerAsyncIterator(iterable: LocalDto): { iterator: LocalDto; next: LocalDto; fromSync: LocalDto } {
+        const cfg = this.m.cfg;
+        const method = this.iteratorMethod(iterable, "asyncIterator");
+        const iterator = this.m.newTemp(UNKNOWN_TYPE);
+        const fromSync = this.m.newTemp(BOOLEAN_TYPE);
+        const sync = cfg.newLabel();
+        const async = cfg.newLabel();
+        const acquired = cfg.newLabel();
+        cfg.branch(this.expr.relation("==", method, constant("null", { _: "NullType" })), sync, async);
+
+        cfg.placeLabel(sync);
+        const syncMethod = this.iteratorMethod(iterable, "iterator");
+        cfg.emit({ _: "AssignStmt", left: iterator, right: {
+            _: "PtrCallExpr", ptr: syncMethod, receiver: iterable, method: unknownMethod("Symbol.iterator"), args: [],
+        } });
+        cfg.emit({ _: "AssignStmt", left: fromSync, right: constant("true", BOOLEAN_TYPE) });
+        cfg.goto(acquired);
+
+        cfg.placeLabel(async);
+        // A present non-callable async method throws at the call; it must never select the fallback.
+        cfg.emit({ _: "AssignStmt", left: iterator, right: {
+            _: "PtrCallExpr", ptr: method, receiver: iterable, method: unknownMethod("Symbol.asyncIterator"), args: [],
+        } });
+        cfg.emit({ _: "AssignStmt", left: fromSync, right: constant("false", BOOLEAN_TYPE) });
+        cfg.placeLabel(acquired);
+        this.requireIteratorObject(iterator);
+        const next = this.expr.materialize(this.iteratorField(iterator, "next"));
+        return { iterator, next, fromSync };
+    }
+
+    private iteratorMethod(iterable: LocalDto, name: "iterator" | "asyncIterator"): LocalDto {
+        const key = this.expr.materialize({
+            _: "StaticFieldRef",
+            field: { declaringClass: { name: "Symbol", declaringFile: UNKNOWN_FILE_SIGNATURE }, name, type: SYMBOL_TYPE },
+        }, SYMBOL_TYPE);
+        return this.expr.materialize({ _: "PropertyRef", instance: iterable, key, type: UNKNOWN_TYPE });
+    }
+
+    private iteratorField(instance: LocalDto, name: string, type: TypeDto = UNKNOWN_TYPE): ValueDto {
+        return { _: "InstanceFieldRef", instance, field: { declaringClass: UNKNOWN_CLASS_SIGNATURE, name, type } };
+    }
+
+    private requireIteratorObject(value: LocalDto): void {
+        const cfg = this.m.cfg;
+        const kind = this.expr.materialize({ _: "TypeOfExpr", arg: value }, STRING_TYPE);
+        const object = cfg.newLabel();
+        const functionCheck = cfg.newLabel();
+        const valid = cfg.newLabel();
+        const invalid = cfg.newLabel();
+        cfg.branch(this.expr.relation("===", kind, constant("object", STRING_TYPE)), object, functionCheck);
+        cfg.placeLabel(object);
+        cfg.branch(this.expr.relation("===", value, constant("null", { _: "NullType" })), invalid, valid);
+        cfg.placeLabel(functionCheck);
+        cfg.branch(this.expr.relation("===", kind, constant("function", STRING_TYPE)), valid, invalid);
+        cfg.placeLabel(invalid);
+        throwRuntimeError(this.m, "TypeError", "Iterator protocol requires an object");
+        cfg.placeLabel(valid);
     }
 
     /**
