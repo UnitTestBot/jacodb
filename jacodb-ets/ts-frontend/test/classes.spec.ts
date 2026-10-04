@@ -4,6 +4,7 @@ import { Modifier } from "../src/dto/constants";
 import { ClassDto, EtsFileDto, MethodDto } from "../src/dto/model";
 import { StmtDto } from "../src/dto/stmts";
 import { InstanceCallExprDto } from "../src/dto/values";
+import { serializeEtsFile } from "../src/serialize";
 import { compile, lower, singleBlockStmts } from "./util";
 
 const FILE_SIG = { projectName: "proj", fileName: "test.ts" };
@@ -857,7 +858,7 @@ describe("namespace lowering", () => {
         expect(keyIndex).toBeGreaterThan(receiverIndex);
         expect(unsupportedIndex).toBeGreaterThan(keyIndex);
         expect(diagnostics.messages).toEqual(expect.arrayContaining([
-            expect.stringContaining("computed constructor access"),
+            expect.stringContaining("computed namespace constructor access"),
         ]));
 
         const js = ts.transpileModule(source, {
@@ -890,7 +891,7 @@ describe("namespace lowering", () => {
         });
     });
 
-    it("rejects computed constructor callees without treating property reads as array reads", () => {
+    it("preserves computed constructor callees as property reads rather than array reads", () => {
         const source = `
             class A { kind = "A"; }
             class B { kind = "B"; }
@@ -909,6 +910,9 @@ describe("namespace lowering", () => {
             export function array(constructors: Array<typeof A | typeof B>): A | B {
                 return new constructors[0]();
             }
+            export function tuple(constructors: [typeof A, typeof B]): A | B {
+                return new constructors[0]();
+            }
             export function replace(): void { holder.Ctor = B; }
             export function readCounts(): number[] { return [receiverReads, keyReads]; }
         `;
@@ -917,11 +921,22 @@ describe("namespace lowering", () => {
 
         const { file, diagnostics } = lower(source);
         const defaultClass = classByName(file, "%dflt");
-        for (const name of ["computed", "wrapped", "nested", "conditional", "throughCall", "array"]) {
+        for (const name of ["computed", "wrapped", "nested", "conditional", "throughCall"]) {
             const stmts = methodOf(defaultClass, name).body!.cfg.blocks.flatMap((block) => block.stmts);
-            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(false);
             expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "ArrayRef")).toBe(false);
-            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PropertyRef")).toBe(true);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr"
+                && stmt.right.constructorValue?._ === "Local")).toBe(true);
+        }
+
+        for (const name of ["array", "tuple"]) {
+            const stmts = singleBlockStmts(methodOf(defaultClass, name));
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(false);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PropertyRef")).toBe(false);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "ArrayRef")).toBe(true);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr"
+                && stmt.right.constructorValue?._ === "Local")).toBe(true);
         }
 
         const computedStmts = singleBlockStmts(methodOf(defaultClass, "computed"));
@@ -929,14 +944,15 @@ describe("namespace lowering", () => {
             && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "getHolder");
         const keyIndex = computedStmts.findIndex((stmt) => stmt._ === "AssignStmt"
             && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "getKey");
-        const unsupportedIndex = computedStmts.findIndex((stmt) => stmt._ === "AssignStmt"
-            && stmt.right._ === "UnsupportedValue");
+        const propertyIndex = computedStmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "PropertyRef");
+        const conversionIndex = computedStmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "ToPropertyKeyExpr");
         expect(receiverIndex).toBeGreaterThanOrEqual(0);
         expect(keyIndex).toBeGreaterThan(receiverIndex);
-        expect(unsupportedIndex).toBeGreaterThan(keyIndex);
-        expect(diagnostics.messages).toEqual(expect.arrayContaining([
-            expect.stringContaining("computed constructor access"),
-        ]));
+        expect(conversionIndex).toBeGreaterThan(keyIndex);
+        expect(propertyIndex).toBeGreaterThan(conversionIndex);
+        expect(diagnostics.messages).toEqual([]);
 
         const js = ts.transpileModule(source, {
             compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
