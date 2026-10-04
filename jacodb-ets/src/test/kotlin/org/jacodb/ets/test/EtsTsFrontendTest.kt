@@ -16,78 +16,7 @@
 
 package org.jacodb.ets.test
 
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import org.jacodb.ets.dto.ArrayRefDto
-import org.jacodb.ets.dto.ArrayTypeDto
-import org.jacodb.ets.dto.AssignStmtDto
-import org.jacodb.ets.dto.LexicalEnvTypeDto
-import org.jacodb.ets.dto.FunctionTypeDto
-import org.jacodb.ets.dto.DefineAccessorStmtDto
-import org.jacodb.ets.dto.CopyDataPropertiesStmtDto
-import org.jacodb.ets.dto.BooleanTypeDto
-import org.jacodb.ets.dto.CaughtExceptionRefDto
-import org.jacodb.ets.dto.ClassTypeDto
-import org.jacodb.ets.dto.ClassValueRefDto
-import org.jacodb.ets.dto.ClassValueTypeDto
-import org.jacodb.ets.dto.ConstantDto
-import org.jacodb.ets.dto.DefineDataPropertyStmtDto
-import org.jacodb.ets.dto.EtsFileDto
-import org.jacodb.ets.dto.IfStmtDto
-import org.jacodb.ets.dto.InstanceOfExprDto
-import org.jacodb.ets.dto.LocalDto
-import org.jacodb.ets.dto.NewArrayExprDto
-import org.jacodb.ets.dto.NewExprDto
-import org.jacodb.ets.dto.NumberTypeDto
-import org.jacodb.ets.dto.Ops
-import org.jacodb.ets.dto.PropertyRefDto
-import org.jacodb.ets.dto.RawStmtDto
-import org.jacodb.ets.dto.RawValueDto
-import org.jacodb.ets.dto.RelationOperationDto
-import org.jacodb.ets.dto.ReturnStmtDto
-import org.jacodb.ets.dto.RequireObjectCoercibleExprDto
-import org.jacodb.ets.dto.StringTypeDto
-import org.jacodb.ets.dto.StaticCallExprDto
-import org.jacodb.ets.dto.StaticFieldRefDto
-import org.jacodb.ets.dto.ThrowStmtDto
-import org.jacodb.ets.dto.ToPropertyKeyExprDto
-import org.jacodb.ets.dto.UnaryOperationDto
-import org.jacodb.ets.dto.UnknownTypeDto
-import org.jacodb.ets.dto.ValueDto
-import org.jacodb.ets.dto.dtoModule
-import org.jacodb.ets.dto.toEtsFile
-import org.jacodb.ets.model.EtsArrayAccess
-import org.jacodb.ets.model.EtsAssignStmt
-import org.jacodb.ets.model.EtsStringConstant
-import org.jacodb.ets.model.EtsDefineAccessorStmt
-import org.jacodb.ets.model.EtsCopyDataPropertiesStmt
-import org.jacodb.ets.model.EtsCaughtExceptionRef
-import org.jacodb.ets.model.EtsCallStmt
-import org.jacodb.ets.model.EtsClassValueRef
-import org.jacodb.ets.model.EtsClassValueType
-import org.jacodb.ets.model.EtsClosureFieldRef
-import org.jacodb.ets.model.EtsDefineDataPropertyStmt
-import org.jacodb.ets.model.EtsEqExpr
-import org.jacodb.ets.model.EtsIfStmt
-import org.jacodb.ets.model.EtsInstanceFieldRef
-import org.jacodb.ets.model.EtsInstanceOfExpr
-import org.jacodb.ets.model.EtsLocal
-import org.jacodb.ets.model.EtsNewExpr
-import org.jacodb.ets.model.EtsPropertyRef
-import org.jacodb.ets.model.EtsRawEntity
-import org.jacodb.ets.model.EtsRawStmt
-import org.jacodb.ets.model.EtsScene
-import org.jacodb.ets.model.EtsNewArrayExpr
-import org.jacodb.ets.model.EtsNumberConstant
-import org.jacodb.ets.model.EtsThrowStmt
-import org.jacodb.ets.model.EtsToPropertyKeyExpr
-import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
-import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
-import org.jacodb.ets.utils.EtsIrProvider
-import org.jacodb.ets.utils.defaultProviderFor
-import org.jacodb.ets.utils.generateEtsIR
-import org.jacodb.ets.utils.getOperands
-import org.junit.jupiter.api.Test
+import java.math.BigInteger
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.exists
@@ -96,6 +25,91 @@ import kotlin.io.path.writeText
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import org.jacodb.ets.dto.ArrayRefDto
+import org.jacodb.ets.dto.ArrayTypeDto
+import org.jacodb.ets.dto.AssignStmtDto
+import org.jacodb.ets.dto.AwaitExprDto
+import org.jacodb.ets.dto.BigIntTypeDto
+import org.jacodb.ets.dto.BooleanTypeDto
+import org.jacodb.ets.dto.CaughtExceptionRefDto
+import org.jacodb.ets.dto.ClassTypeDto
+import org.jacodb.ets.dto.ClassValueRefDto
+import org.jacodb.ets.dto.ClassValueTypeDto
+import org.jacodb.ets.dto.ConstantDto
+import org.jacodb.ets.dto.CopyDataPropertiesStmtDto
+import org.jacodb.ets.dto.DefineAccessorStmtDto
+import org.jacodb.ets.dto.DefineDataPropertyStmtDto
+import org.jacodb.ets.dto.EtsFileDto
+import org.jacodb.ets.dto.FunctionTypeDto
+import org.jacodb.ets.dto.IfStmtDto
+import org.jacodb.ets.dto.InstanceCallExprDto
+import org.jacodb.ets.dto.InstanceOfExprDto
+import org.jacodb.ets.dto.LexicalEnvTypeDto
+import org.jacodb.ets.dto.LocalDto
+import org.jacodb.ets.dto.NewArrayExprDto
+import org.jacodb.ets.dto.NewExprDto
+import org.jacodb.ets.dto.NumberTypeDto
+import org.jacodb.ets.dto.Ops
+import org.jacodb.ets.dto.PropertyRefDto
+import org.jacodb.ets.dto.PtrCallExprDto
+import org.jacodb.ets.dto.RawStmtDto
+import org.jacodb.ets.dto.RawValueDto
+import org.jacodb.ets.dto.RelationOperationDto
+import org.jacodb.ets.dto.RequireObjectCoercibleExprDto
+import org.jacodb.ets.dto.ReturnStmtDto
+import org.jacodb.ets.dto.StaticCallExprDto
+import org.jacodb.ets.dto.StaticFieldRefDto
+import org.jacodb.ets.dto.StringTypeDto
+import org.jacodb.ets.dto.SymbolTypeDto
+import org.jacodb.ets.dto.ThrowStmtDto
+import org.jacodb.ets.dto.ToPropertyKeyExprDto
+import org.jacodb.ets.dto.UnaryOperationDto
+import org.jacodb.ets.dto.UnknownTypeDto
+import org.jacodb.ets.dto.ValueDto
+import org.jacodb.ets.dto.YieldExprDto
+import org.jacodb.ets.dto.dtoModule
+import org.jacodb.ets.dto.toEtsFile
+import org.jacodb.ets.model.EtsArrayAccess
+import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsAwaitExpr
+import org.jacodb.ets.model.EtsBigIntConstant
+import org.jacodb.ets.model.EtsBigIntType
+import org.jacodb.ets.model.EtsCallStmt
+import org.jacodb.ets.model.EtsCaughtExceptionRef
+import org.jacodb.ets.model.EtsClassValueRef
+import org.jacodb.ets.model.EtsClassValueType
+import org.jacodb.ets.model.EtsClosureFieldRef
+import org.jacodb.ets.model.EtsCopyDataPropertiesStmt
+import org.jacodb.ets.model.EtsDefineAccessorStmt
+import org.jacodb.ets.model.EtsDefineDataPropertyStmt
+import org.jacodb.ets.model.EtsEqExpr
+import org.jacodb.ets.model.EtsFunctionType
+import org.jacodb.ets.model.EtsIfStmt
+import org.jacodb.ets.model.EtsInstanceFieldRef
+import org.jacodb.ets.model.EtsInstanceOfExpr
+import org.jacodb.ets.model.EtsLocal
+import org.jacodb.ets.model.EtsNewArrayExpr
+import org.jacodb.ets.model.EtsNewExpr
+import org.jacodb.ets.model.EtsNumberConstant
+import org.jacodb.ets.model.EtsPropertyRef
+import org.jacodb.ets.model.EtsPtrCallExpr
+import org.jacodb.ets.model.EtsRawEntity
+import org.jacodb.ets.model.EtsRawStmt
+import org.jacodb.ets.model.EtsScene
+import org.jacodb.ets.model.EtsStringConstant
+import org.jacodb.ets.model.EtsSymbolType
+import org.jacodb.ets.model.EtsThrowStmt
+import org.jacodb.ets.model.EtsToPropertyKeyExpr
+import org.jacodb.ets.model.EtsYieldExpr
+import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
+import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
+import org.jacodb.ets.utils.EtsIrProvider
+import org.jacodb.ets.utils.defaultProviderFor
+import org.jacodb.ets.utils.generateEtsIR
+import org.jacodb.ets.utils.getOperands
+import org.junit.jupiter.api.Test
 
 /**
  * Tests for the native TypeScript frontend (`jacodb-ets/ts-frontend`).
@@ -126,43 +140,175 @@ class EtsTsFrontendTest {
     }
 
     @Test
-    fun `computed object binding reuses its normalized key in rest through JSON conversion`() {
-        val frontendDto = runFrontend(
-            """
-                export function pick(input: any, key: any): number {
-                    const { [key]: value, ...rest } = input;
-                    return value + rest.y;
-                }
-            """.trimIndent(),
+    fun `symbol parameter and return types survive frontend JSON and model conversion`() {
+        val frontendDto = runFrontend("export function same(value: symbol): symbol { return value; }")
+        val roundTripped = EtsFileDto.loadFromJson(
+            Json { serializersModule = dtoModule }.encodeToString(frontendDto),
         )
-        val serialized = Json { serializersModule = dtoModule }.encodeToString(frontendDto)
-        val roundTripped = EtsFileDto.loadFromJson(serialized)
-        val dtoStmts = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
-            .methods.single { it.signature.name == "pick" }.body!!.cfg.blocks.flatMap { it.stmts }
-        val assignments = dtoStmts.filterIsInstance<AssignStmtDto>()
-        val read = assignments.mapNotNull { it.right as? PropertyRefDto }.single()
-        val copy = dtoStmts.filterIsInstance<CopyDataPropertiesStmtDto>().single()
+        val methodDto = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "same" }
 
-        assertEquals(expected = 1, actual = assignments.count { it.right is ToPropertyKeyExprDto })
-        assertEquals(expected = read.key, actual = copy.excludedKeys.single())
-        assertTrue(assignments.none { it.right is RawValueDto })
+        assertEquals(SymbolTypeDto, methodDto.signature.parameters.single().type)
+        assertEquals(SymbolTypeDto, methodDto.signature.returnType)
 
-        val method = roundTripped.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
-            .methods.single { it.name == "pick" }
-        val converted = method.cfg.stmts.filterIsInstance<EtsAssignStmt>()
-        val modelRead = converted.mapNotNull { it.rhv as? EtsPropertyRef }.single()
-        val modelCopy = method.cfg.stmts.filterIsInstance<EtsCopyDataPropertiesStmt>().single()
+        val modelMethod = roundTripped.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "same" }
 
-        assertEquals(expected = 1, actual = converted.count { it.rhv is EtsToPropertyKeyExpr })
-        assertEquals(expected = modelRead.key, actual = modelCopy.excludedKeys.single())
+        assertEquals(EtsSymbolType, modelMethod.signature.parameters.single().type)
+        assertEquals(EtsSymbolType, modelMethod.signature.returnType)
     }
 
     @Test
-    fun `object rest preserves excluded keys through JSON conversion`() {
+    fun `stored arrow lexical receiver survives JSON and model conversion`() {
+        val frontendDto = runFrontend(
+            """
+                class Box {
+                    offset = 11;
+                    installOn(target: Box) {
+                        target.callback = (value: number) => this.offset + value;
+                    }
+                    installOrdinaryOn(target: Box) {
+                        target.callback = function(value: number) { return this.offset + value; };
+                    }
+                }
+            """.trimIndent(),
+        )
+        val roundTripped = EtsFileDto.loadFromJson(
+            Json { serializersModule = dtoModule }.encodeToString(frontendDto),
+        )
+        val box = roundTripped.toEtsFile().classes.single { it.name == "Box" }
+        val install = box.methods.single { it.name == "installOn" }
+        val arrowValue = install.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+            .map { it.rhv }
+            .filterIsInstance<EtsLocal>()
+            .single { it.name.startsWith("%AM") }
+        val arrow = box.methods.single { it.name == arrowValue.name }
+        val ordinary = box.methods.single { it.name.endsWith("\$installOrdinaryOn") }
+
+        assertTrue((arrowValue.type as EtsFunctionType).isArrow)
+        val receiver = arrow.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+            .single { (it.lhv as? EtsLocal)?.name == "this" }.rhv
+        assertTrue(receiver is EtsClosureFieldRef)
+        assertEquals("this", receiver.fieldName)
+        assertTrue(ordinary.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+            .single { (it.lhv as? EtsLocal)?.name == "this" }.rhv is org.jacodb.ets.model.EtsThis)
+    }
+
+    @Test
+    fun `bigint types and exact constants survive frontend JSON and model conversion`() {
+        val frontendDto = runFrontend(
+            """
+                export function increment(x: bigint): bigint { return x + 1n; }
+                export const large = 9007199254740993n;
+                export const negative = -0x20n;
+            """.trimIndent(),
+        )
+        val roundTripped = EtsFileDto.loadFromJson(
+            Json { serializersModule = dtoModule }.encodeToString(frontendDto),
+        )
+        val defaultClass = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+        val incrementDto = defaultClass.methods.single { it.signature.name == "increment" }
+        val constantsDto = defaultClass.methods.flatMap { it.body?.cfg?.blocks.orEmpty() }
+            .flatMap { it.stmts }
+            .filterIsInstance<AssignStmtDto>()
+            .mapNotNull { it.right as? ConstantDto }
+            .filter { it.type == BigIntTypeDto }
+
+        assertEquals(BigIntTypeDto, incrementDto.signature.parameters.single().type)
+        assertEquals(BigIntTypeDto, incrementDto.signature.returnType)
+        assertTrue(constantsDto.any { it.value == "9007199254740993" })
+        assertTrue(constantsDto.any { it.value == "-32" })
+
+        val modelClass = roundTripped.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
+        val incrementModel = modelClass.methods.single { it.name == "increment" }
+        val bigInts = modelClass.methods.flatMap { it.cfg.stmts }
+            .filterIsInstance<EtsAssignStmt>()
+            .mapNotNull { it.rhv as? EtsBigIntConstant }
+
+        assertEquals(EtsBigIntType, incrementModel.signature.parameters.single().type)
+        assertEquals(EtsBigIntType, incrementModel.signature.returnType)
+        assertTrue(bigInts.any { it.value == BigInteger("9007199254740993") })
+        assertTrue(bigInts.any { it.value == BigInteger("-32") })
+    }
+
+    @Test
+    fun `for await preserves async acquisition and sync value unwrapping`() {
+        val frontendDto = runFrontend(
+            """
+                export async function first(input: AsyncIterable<number>): Promise<number> {
+                    for await (const value of input) return value;
+                    return -1;
+                }
+                export async function fromArray(input: number[]): Promise<number> {
+                    for await (const value of input) return value;
+                    return -1;
+                }
+            """.trimIndent(),
+        )
+        val roundTripped = EtsFileDto.loadFromJson(
+            Json { serializersModule = dtoModule }.encodeToString(frontendDto),
+        )
+        for (name in listOf("first", "fromArray")) {
+            val methodDto = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+                .methods.single { it.signature.name == name }
+            val assignments = methodDto.body!!.cfg.blocks.flatMap { it.stmts }.filterIsInstance<AssignStmtDto>()
+            val calls = assignments.mapNotNull { it.right as? PtrCallExprDto }
+            val awaits = assignments.mapNotNull { it.right as? AwaitExprDto }
+            val next = assignments.single { (it.right as? PtrCallExprDto)?.method?.name == "next" }
+
+            assertTrue(calls.any { it.method.name == "Symbol.asyncIterator" && it.receiver != null })
+            assertTrue(calls.any { it.method.name == "Symbol.iterator" && it.receiver != null })
+            assertEquals(2, awaits.size)
+            assertTrue(awaits.any { it.arg == next.left })
+            assertTrue(assignments.none { it.right is RawValueDto })
+
+            val modelMethod = roundTripped.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
+                .methods.single { it.name == name }
+            assertEquals(2, modelMethod.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+                .count { it.rhv is EtsAwaitExpr })
+        }
+    }
+
+    @Test
+    fun `computed object keys survive the frontend JSON round trip`() {
+        val frontendDto = runFrontend(
+            """
+                export function read(key: string): number {
+                    const object = { [key]: 1 };
+                    const { [key]: value } = object;
+                    return value;
+                }
+            """.trimIndent(),
+        )
+
+        val serialized = Json { serializersModule = dtoModule }.encodeToString(frontendDto)
+        val roundTripped = EtsFileDto.loadFromJson(serialized)
+        val dtoStmts = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "read" }
+            .body!!.cfg.blocks.flatMap { it.stmts }
+        val assignments = dtoStmts.filterIsInstance<AssignStmtDto>()
+
+        assertEquals(1, dtoStmts.filterIsInstance<DefineDataPropertyStmtDto>().size)
+        assertTrue(assignments.any { it.right is PropertyRefDto })
+        assertEquals(2, assignments.count { it.right is ToPropertyKeyExprDto })
+        assertTrue(assignments.none { it.right is RawValueDto })
+
+        val scene = EtsScene(listOf(roundTripped.toEtsFile()))
+        val method = scene.projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "read" }
+        val converted = method.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+        assertEquals(1, method.cfg.stmts.filterIsInstance<EtsDefineDataPropertyStmt>().size)
+        assertTrue(converted.any { it.rhv is EtsPropertyRef })
+        assertEquals(2, converted.count { it.rhv is EtsToPropertyKeyExpr })
+    }
+
+    @Test
+    fun `object spread and rest preserve copy operations through JSON conversion`() {
         val frontendDto = runFrontend(
             """
                 export function copy(input: { x: number; y: number }): number {
-                    const { x, ...rest } = input;
+                    const object = { ...input, y: 7 };
+                    const { x, ...rest } = object;
                     return rest.y + x;
                 }
             """.trimIndent(),
@@ -175,17 +321,17 @@ class EtsTsFrontendTest {
             .body!!.cfg.blocks.flatMap { it.stmts }
         val copies = dtoStmts.filterIsInstance<CopyDataPropertiesStmtDto>()
 
-        assertTrue(dtoStmts.filterIsInstance<AssignStmtDto>().any { it.right is RequireObjectCoercibleExprDto })
-        assertEquals(1, copies.size)
-        assertTrue(copies[0].throwOnNullishSource)
-        assertEquals("x", (copies[0].excludedKeys.single() as ConstantDto).value)
+        assertEquals(2, copies.size)
+        assertFalse(copies[0].throwOnNullishSource)
+        assertTrue(copies[1].throwOnNullishSource)
+        assertEquals("x", (copies[1].excludedKeys.single() as ConstantDto).value)
 
         val scene = EtsScene(listOf(roundTripped.toEtsFile()))
         val method = scene.projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
             .methods.single { it.name == "copy" }
         val converted = method.cfg.stmts.filterIsInstance<EtsCopyDataPropertiesStmt>()
-        assertEquals(1, converted.size)
-        assertEquals("x", (converted[0].excludedKeys.single() as EtsStringConstant).value)
+        assertEquals(2, converted.size)
+        assertEquals("x", (converted[1].excludedKeys.single() as EtsStringConstant).value)
     }
 
     @Test
@@ -219,65 +365,59 @@ class EtsTsFrontendTest {
     }
 
     @Test
-    fun `object spread preserves ordered copy operations through JSON conversion`() {
-        val frontendDto = runFrontend(
+    fun `array expansion and parameter defaults survive frontend JSON conversion`() {
+        val dto = runFrontend(
             """
-                export function copy(input: { x: number; y: number }): number {
-                    const object = { ...input, y: 7 };
-                    return object.y + object.x;
-                }
+            export function defaults(x = 3): number { return x; }
+            export function spread(input: number[]): number[] { return [0, ...input]; }
+            export function tail(input: number[]): number[] { const [first, ...rest] = input; return rest; }
+            export function count(...values: number[]): number { return values.length; }
             """.trimIndent(),
         )
-
-        val serialized = Json { serializersModule = dtoModule }.encodeToString(frontendDto)
+        val serialized = Json { serializersModule = dtoModule }.encodeToString(dto)
         val roundTripped = EtsFileDto.loadFromJson(serialized)
-        val dtoStmts = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
-            .methods.single { it.signature.name == "copy" }
-            .body!!.cfg.blocks.flatMap { it.stmts }
-        val copies = dtoStmts.filterIsInstance<CopyDataPropertiesStmtDto>()
+        val defaultClass = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+        val modelClass = roundTripped.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
 
-        assertEquals(1, copies.size)
-        assertFalse(copies[0].throwOnNullishSource)
-        assertTrue(copies[0].excludedKeys.isEmpty())
+        assertTrue(defaultClass.methods.single { it.signature.name == "count" }.signature.parameters.single().isRest)
+        assertTrue(modelClass.methods.single { it.name == "defaults" }.cfg.stmts.any { it is EtsIfStmt })
+        assertTrue(modelClass.methods.single { it.name == "spread" }.cfg.stmts.any {
+            it is EtsAssignStmt && it.rhv is EtsNewArrayExpr
+        })
+        assertTrue(modelClass.methods.single { it.name == "tail" }.cfg.stmts.any {
+            it is EtsAssignStmt && it.rhv is EtsNewArrayExpr
+        })
+        val spreadCalls = defaultClass.methods.single { it.signature.name == "spread" }.body!!.cfg.blocks
+            .flatMap { it.stmts }.filterIsInstance<AssignStmtDto>().mapNotNull { it.right as? PtrCallExprDto }
+        val modelCalls = modelClass.methods.single { it.name == "spread" }.cfg.stmts
+            .filterIsInstance<EtsAssignStmt>().mapNotNull { it.rhv as? EtsPtrCallExpr }
 
-        val scene = EtsScene(listOf(roundTripped.toEtsFile()))
-        val method = scene.projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
-            .methods.single { it.name == "copy" }
-        val converted = method.cfg.stmts.filterIsInstance<EtsCopyDataPropertiesStmt>()
-        assertEquals(1, converted.size)
-        assertTrue(converted[0].excludedKeys.isEmpty())
+        assertEquals(1, spreadCalls.size)
+        assertEquals(1, modelCalls.size)
+        assertTrue(spreadCalls.single().receiver is LocalDto)
+        assertEquals((spreadCalls.single().receiver as LocalDto).name, modelCalls.single().receiver!!.name)
+        assertTrue(modelCalls.single().getOperands().any { it == modelCalls.single().receiver })
     }
 
     @Test
-    fun `computed object keys survive the frontend JSON round trip`() {
-        val frontendDto = runFrontend(
-            """
-                export function read(key: string): number {
-                    const object = { [key]: 1 };
-                    return object[key];
-                }
-            """.trimIndent(),
-        )
-
-        val serialized = Json { serializersModule = dtoModule }.encodeToString(frontendDto)
+    fun `regular expression literal preserves pattern and flags through JSON conversion`() {
+        val dto = runFrontend("export function containsX(value: string): boolean { return /x+/gi.test(value); }")
+        val serialized = Json { serializersModule = dtoModule }.encodeToString(dto)
         val roundTripped = EtsFileDto.loadFromJson(serialized)
-        val dtoStmts = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
-            .methods.single { it.signature.name == "read" }
-            .body!!.cfg.blocks.flatMap { it.stmts }
-        val assignments = dtoStmts.filterIsInstance<AssignStmtDto>()
+        val method = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "containsX" }
+        val assignments = method.body!!.cfg.blocks.flatMap { it.stmts }.filterIsInstance<AssignStmtDto>()
+        val constructor = assignments.mapNotNull { it.right as? InstanceCallExprDto }
+            .single { it.method.name == "constructor" }
+        val testCall = assignments.mapNotNull { it.right as? PtrCallExprDto }
+            .single { it.method.name == "test" }
 
-        assertEquals(1, dtoStmts.filterIsInstance<DefineDataPropertyStmtDto>().size)
-        assertTrue(assignments.any { it.right is PropertyRefDto })
-        assertEquals(2, assignments.count { it.right is ToPropertyKeyExprDto })
-        assertTrue(assignments.none { it.right is RawValueDto })
-
-        val scene = EtsScene(listOf(roundTripped.toEtsFile()))
-        val method = scene.projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
-            .methods.single { it.name == "read" }
-        val converted = method.cfg.stmts.filterIsInstance<EtsAssignStmt>()
-        assertEquals(1, method.cfg.stmts.filterIsInstance<EtsDefineDataPropertyStmt>().size)
-        assertTrue(converted.any { it.rhv is EtsPropertyRef })
-        assertEquals(2, converted.count { it.rhv is EtsToPropertyKeyExpr })
+        assertEquals(listOf("x+", "gi"), constructor.args.map { (it as ConstantDto).value })
+        assertTrue(testCall.receiver is LocalDto)
+        assertTrue(roundTripped.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "containsX" }.cfg.stmts.any {
+                it is EtsAssignStmt && it.rhv is EtsNewExpr
+            })
     }
 
     @Test
@@ -503,7 +643,7 @@ class EtsTsFrontendTest {
     }
 
     @Test
-    fun `computed constructor access stays unsupported through JSON and model conversion`() {
+    fun `computed constructor access keeps property semantics through JSON and model conversion`() {
         val frontendDto = runFrontend(
             """
                 class A {}
@@ -516,15 +656,18 @@ class EtsTsFrontendTest {
             .methods.single { it.signature.name == "make" }
         val assignments = methodDto.body!!.cfg.blocks.flatMap { it.stmts }.filterIsInstance<AssignStmtDto>()
 
-        assertTrue(assignments.any { (it.right as? RawValueDto)?.kind == "UnsupportedValue" })
-        assertTrue(assignments.none { it.right is ArrayRefDto || it.right is NewExprDto })
+        val property = assignments.single { it.right is org.jacodb.ets.dto.PropertyRefDto }
+        val allocation = assignments.single { it.right is NewExprDto }.right as NewExprDto
+        assertEquals(property.left as LocalDto, allocation.constructorValue as LocalDto)
+        assertTrue(assignments.none { it.right is ArrayRefDto || it.right is RawValueDto })
 
         val modelMethod = frontendDto.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
             .methods.single { it.name == "make" }
         val modelAssignments = modelMethod.cfg.stmts.filterIsInstance<EtsAssignStmt>()
 
-        assertTrue(modelAssignments.any { it.rhv is EtsRawEntity })
-        assertTrue(modelAssignments.none { it.rhv is EtsNewExpr })
+        assertTrue(modelAssignments.any { it.rhv is org.jacodb.ets.model.EtsPropertyRef })
+        assertTrue(modelAssignments.any { it.rhv is EtsNewExpr })
+        assertTrue(modelAssignments.none { it.rhv is EtsRawEntity })
     }
 
     @Test
@@ -1094,6 +1237,37 @@ class EtsTsFrontendTest {
     }
 
     @Test
+    fun `yield delegation survives frontend JSON and model conversion`() {
+        val frontendDto = runFrontend(
+            """
+                export function* values() {
+                    yield* [1, 2];
+                    yield [3];
+                }
+            """.trimIndent(),
+        )
+        val roundTripped = EtsFileDto.loadFromJson(
+            Json { serializersModule = dtoModule }.encodeToString(frontendDto),
+        )
+        val methodDto = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "values" }
+        val yieldsDto = methodDto.body!!.cfg.blocks.flatMap { it.stmts }
+            .filterIsInstance<AssignStmtDto>()
+            .mapNotNull { it.right as? YieldExprDto }
+
+        assertEquals(listOf(true, false), yieldsDto.map { it.isDelegating })
+
+        val modelMethod = roundTripped.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "values" }
+        val modelYields = modelMethod.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+            .mapNotNull { it.rhv as? EtsYieldExpr }
+
+        assertEquals(listOf(true, false), modelYields.map { it.isDelegating })
+        assertTrue(modelYields[0].toString().startsWith("yield* "))
+        assertTrue(modelYields[1].toString().startsWith("yield "))
+    }
+
+    @Test
     fun `closures, destructuring and object literals convert to the model`() {
         val etsFileDto = runFrontend(
             """
@@ -1173,5 +1347,98 @@ class EtsTsFrontendTest {
         val clazz = scene.projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
         val method = clazz.methods.single { it.name == DEFAULT_ARK_METHOD_NAME }
         assertTrue(method.cfg.stmts.isNotEmpty(), "default method must have a non-empty body")
+    }
+
+    @Test
+    fun `computed object binding reuses its normalized key in rest through JSON conversion`() {
+        val frontendDto = runFrontend(
+            """
+                export function pick(input: any, key: any): number {
+                    const { [key]: value, ...rest } = input;
+                    return value + rest.y;
+                }
+            """.trimIndent(),
+        )
+        val serialized = Json { serializersModule = dtoModule }.encodeToString(frontendDto)
+        val roundTripped = EtsFileDto.loadFromJson(serialized)
+        val dtoStmts = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "pick" }.body!!.cfg.blocks.flatMap { it.stmts }
+        val assignments = dtoStmts.filterIsInstance<AssignStmtDto>()
+        val read = assignments.mapNotNull { it.right as? PropertyRefDto }.single()
+        val copy = dtoStmts.filterIsInstance<CopyDataPropertiesStmtDto>().single()
+
+        assertEquals(expected = 1, actual = assignments.count { it.right is ToPropertyKeyExprDto })
+        assertEquals(expected = read.key, actual = copy.excludedKeys.single())
+        assertTrue(assignments.none { it.right is RawValueDto })
+
+        val method = roundTripped.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "pick" }
+        val converted = method.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+        val modelRead = converted.mapNotNull { it.rhv as? EtsPropertyRef }.single()
+        val modelCopy = method.cfg.stmts.filterIsInstance<EtsCopyDataPropertiesStmt>().single()
+
+        assertEquals(expected = 1, actual = converted.count { it.rhv is EtsToPropertyKeyExpr })
+        assertEquals(expected = modelRead.key, actual = modelCopy.excludedKeys.single())
+    }
+
+    @Test
+    fun `object rest preserves excluded keys through JSON conversion`() {
+        val frontendDto = runFrontend(
+            """
+                export function copy(input: { x: number; y: number }): number {
+                    const { x, ...rest } = input;
+                    return rest.y + x;
+                }
+            """.trimIndent(),
+        )
+
+        val serialized = Json { serializersModule = dtoModule }.encodeToString(frontendDto)
+        val roundTripped = EtsFileDto.loadFromJson(serialized)
+        val dtoStmts = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "copy" }
+            .body!!.cfg.blocks.flatMap { it.stmts }
+        val copies = dtoStmts.filterIsInstance<CopyDataPropertiesStmtDto>()
+
+        assertTrue(dtoStmts.filterIsInstance<AssignStmtDto>().any { it.right is RequireObjectCoercibleExprDto })
+        assertEquals(1, copies.size)
+        assertTrue(copies[0].throwOnNullishSource)
+        assertEquals("x", (copies[0].excludedKeys.single() as ConstantDto).value)
+
+        val scene = EtsScene(listOf(roundTripped.toEtsFile()))
+        val method = scene.projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "copy" }
+        val converted = method.cfg.stmts.filterIsInstance<EtsCopyDataPropertiesStmt>()
+        assertEquals(1, converted.size)
+        assertEquals("x", (converted[0].excludedKeys.single() as EtsStringConstant).value)
+    }
+
+    @Test
+    fun `object spread preserves ordered copy operations through JSON conversion`() {
+        val frontendDto = runFrontend(
+            """
+                export function copy(input: { x: number; y: number }): number {
+                    const object = { ...input, y: 7 };
+                    return object.y + object.x;
+                }
+            """.trimIndent(),
+        )
+
+        val serialized = Json { serializersModule = dtoModule }.encodeToString(frontendDto)
+        val roundTripped = EtsFileDto.loadFromJson(serialized)
+        val dtoStmts = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "copy" }
+            .body!!.cfg.blocks.flatMap { it.stmts }
+        val copies = dtoStmts.filterIsInstance<CopyDataPropertiesStmtDto>()
+
+        assertEquals(1, copies.size)
+        assertFalse(copies[0].throwOnNullishSource)
+        assertTrue(copies[0].excludedKeys.isEmpty())
+
+        val scene = EtsScene(listOf(roundTripped.toEtsFile()))
+        val method = scene.projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "copy" }
+        val converted = method.cfg.stmts.filterIsInstance<EtsCopyDataPropertiesStmt>()
+        assertEquals(1, converted.size)
+        assertTrue(converted[0].excludedKeys.isEmpty())
     }
 }

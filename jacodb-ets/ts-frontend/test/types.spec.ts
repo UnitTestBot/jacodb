@@ -342,8 +342,8 @@ describe("typeOfNode (inference)", () => {
         expect(inferredOf("let x = 42;")).toEqual({ _: "NumberType" });
         expect(inferredOf(`let x = "s";`)).toEqual({ _: "StringType" });
         expect(inferredOf("let x = true;")).toEqual({ _: "BooleanType" });
-        expect(inferredOf("let x = 1n;")).toEqual({ _: "BigIntType" });
         expect(inferredOf("let x = Symbol();")).toEqual({ _: "SymbolType" });
+        expect(inferredOf("let x = 1n;")).toEqual({ _: "BigIntType" });
     });
 
     it("keeps literal types for const-declarations", () => {

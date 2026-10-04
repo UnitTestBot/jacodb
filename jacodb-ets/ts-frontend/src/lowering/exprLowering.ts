@@ -1486,7 +1486,6 @@ export class ExprLowerer {
             : { _: "PtrCallExpr", ptr, receiver, method, args };
     }
 
-    /** `a${x}b` -> chain of string `+` binops. */
     private lowerArrayLiteralWithSpread(
         node: ts.ArrayLiteralExpression,
         arrayType: TypeDto,
@@ -1528,6 +1527,7 @@ export class ExprLowerer {
         return result;
     }
 
+    /** `a${x}b` -> chain of string `+` binops. */
     private lowerTemplate(node: ts.TemplateExpression): ValueDto {
         let acc: ImmediateDto = constant(node.head.text, STRING_TYPE);
         for (const span of node.templateSpans) {

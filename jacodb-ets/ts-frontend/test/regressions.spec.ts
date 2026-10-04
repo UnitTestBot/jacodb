@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { executor } from "./execute";
 import { AssignStmtDto, StmtDto } from "../src/dto/stmts";
+import { serializeEtsFile } from "../src/serialize";
 import { syntaxKindName } from "../src/lowering/diagnostics";
 import * as ts from "typescript";
 import { validateEtsFile } from "../src/validate";
@@ -12,9 +14,9 @@ function allStmts(method: { body?: { cfg: { blocks: { stmts: StmtDto[] }[] } } }
 describe("unsupported loop bindings do not break the whole file", () => {
     // `lower()` throws on unplaced labels via finalize(), so merely lowering is the assertion.
     const cases: Record<string, string> = {
-        "array pattern with rest": "declare const xs: any[]; for (const [a, ...rest] of xs) { console.log(a); }",
+        "array pattern with rest": "declare const xs: any[]; for (const [[a], ...rest] of xs) { console.log(a); }",
         "member expression target": "declare const xs: any[]; const obj: any = {}; for (obj.x of xs) { console.log(obj.x); }",
-        "rest in for-in": "declare const o: any; for (const [a, ...rest] in o) { console.log(a); }",
+        "rest in for-in": "declare const o: any; for (const [[a], ...rest] in o) { console.log(a); }",
     };
 
     for (const [name, source] of Object.entries(cases)) {
@@ -91,6 +93,203 @@ describe("pattern parameters", () => {
             && stmt.right.key._ === "Constant"
             && stmt.right.key.value === "x",
         )).toBe(true);
+    });
+});
+
+describe("default parameter initializers", () => {
+    it("captures outer values referenced only by a closure's parameter default", () => {
+        const { file, diagnostics } = lower("function wrap(seed: number) { return (value = seed) => value; }");
+        const closure = methodByName(file, "%AM0$wrap");
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(allStmts(closure).some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "ClosureFieldRef"
+            && stmt.right.fieldName === "seed")).toBe(true);
+    });
+
+    it("keeps delayed temporal-dead-zone captures explicitly unsupported", () => {
+        const { file, diagnostics } = lower("function f(a = () => b, b = a()) { return b; }");
+
+        expect(diagnostics.messages.some((message) => message.includes("runtime temporal-dead-zone cell"))).toBe(true);
+        expect(allStmts(methodByName(file, "f")).some((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "UnsupportedValue")).toBe(true);
+    });
+
+    it("guards defaults after their own argument reads in source order through JSON", () => {
+        const source = `
+            const order: string[] = [];
+            function record(label: string, value: number): number { order.push(label); return value; }
+            function value(x = record("x", 3), y = record("y", 4)): number { return x + y; }
+        `;
+        const { file, diagnostics } = lower(source);
+        const roundTrip = JSON.parse(serializeEtsFile(file));
+        const body = methodByName(roundTrip, "value").body!;
+        const stmts = allStmts({ body });
+        const argumentReads = stmts.flatMap((stmt, index) =>
+            stmt._ === "AssignStmt" && stmt.right._ === "ParameterRef"
+                ? [{ index, parameterIndex: stmt.right.index }]
+                : [],
+        );
+        const defaults = stmts.flatMap((stmt, index) =>
+            stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "record"
+                ? [{ index, label: stmt.right.args[0] }]
+                : [],
+        );
+        const conditions = stmts.filter((stmt) => stmt._ === "IfStmt").map((stmt) => stmt.condition);
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(argumentReads.map((read) => read.parameterIndex)).toEqual([0, 1]);
+        expect(defaults.map((call) => call.label)).toMatchObject([
+            { _: "Constant", value: "x" },
+            { _: "Constant", value: "y" },
+        ]);
+        expect(argumentReads[0].index).toBeLessThan(defaults[0].index);
+        expect(defaults[0].index).toBeLessThan(argumentReads[1].index);
+        expect(argumentReads[1].index).toBeLessThan(defaults[1].index);
+        expect(conditions).toEqual([
+            expect.objectContaining({ _: "ConditionExpr", op: "===", right: { _: "Constant", value: "undefined", type: { _: "UndefinedType" } } }),
+            expect.objectContaining({ _: "ConditionExpr", op: "===", right: { _: "Constant", value: "undefined", type: { _: "UndefinedType" } } }),
+        ]);
+
+        const js = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2020 } }).outputText;
+        const concrete = new Function(`${js}\nreturn {
+            missing: value(),
+            undefinedValue: value(undefined, undefined),
+            zero: value(0, 1),
+            order,
+        };`)() as { missing: number; undefinedValue: number; zero: number; order: string[] };
+        expect(concrete).toEqual({ missing: 7, undefinedValue: 7, zero: 1, order: ["x", "y", "x", "y"] });
+        const ir = executor(roundTrip);
+        ir.initialize();
+        expect([ir.call("value"), ir.call("value", undefined, undefined), ir.call("value", 0, 1)]).toEqual([7, 7, 1]);
+    });
+});
+
+describe("rest parameter calls", () => {
+    it("preserves the rest signature and array-valued argument slot through JSON", () => {
+        const source = `
+            function count(...values: number[]): number { return values.length; }
+            function sample(): number { return count() + count(1, 2); }
+        `;
+        const { file, diagnostics } = lower(source);
+        const roundTrip = JSON.parse(serializeEtsFile(file));
+        const method = methodByName(roundTrip, "count");
+        const stmts = allStmts(method);
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(method.signature.parameters).toMatchObject([
+            { name: "values", type: { _: "ArrayType" }, isRest: true },
+        ]);
+        expect(stmts).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            left: expect.objectContaining({ _: "Local", name: "values", type: expect.objectContaining({ _: "ArrayType" }) }),
+            right: expect.objectContaining({ _: "ParameterRef", index: 0, type: expect.objectContaining({ _: "ArrayType" }) }),
+        }));
+        const callArgs = allStmts(methodByName(roundTrip, "sample"))
+            .filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+                && stmt.right.method.name === "count")
+            .map((stmt) => stmt.right.args.length);
+        expect(callArgs).toEqual([0, 2]);
+
+        const js = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2020 } }).outputText;
+        const concrete = new Function(`${js}\nreturn [count(), count(1, 2), sample()];`)() as number[];
+        expect(concrete).toEqual([0, 2, 2]);
+        const ir = executor(roundTrip);
+        expect([ir.call("count"), ir.call("count", 1, 2), ir.call("sample")]).toEqual(concrete);
+    });
+});
+
+describe("array rest bindings", () => {
+    it("copies the tail into a fresh array for empty, short, and long inputs through JSON", () => {
+        const source = `
+            function tail(input: number[]): number[] {
+                const [first, ...rest] = input;
+                return rest;
+            }
+        `;
+        const { file, diagnostics } = lower(source);
+        const roundTrip = JSON.parse(serializeEtsFile(file));
+        const stmts = allStmts(methodByName(roundTrip, "tail"));
+        const allocations = stmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewArrayExpr");
+        const iteratorCalls = stmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceCallExpr"
+            && stmt.right.method.name === "Symbol.iterator");
+        const tailStores = stmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.left._ === "ArrayRef"
+            && stmt.left.array._ === "Local" && stmt.left.array.name !== "input");
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(allocations).toHaveLength(1);
+        expect(allocations[0]).toMatchObject({ right: { _: "NewArrayExpr", size: { _: "Constant", value: "0" } } });
+        expect(iteratorCalls).toHaveLength(1);
+        expect(tailStores).toHaveLength(1);
+        expect(stmts.filter((stmt) => stmt._ === "IfStmt").length).toBeGreaterThan(2);
+        expect(stmts.some((stmt) => stmt._ === "UnsupportedStmt")).toBe(false);
+
+        const js = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2020 } }).outputText;
+        const concrete = new Function(`${js}\nreturn [tail([]), tail([1]), tail([1, 2, 3])];`)() as number[][];
+        expect(concrete).toEqual([[], [], [2, 3]]);
+        const ir = executor(roundTrip);
+        expect([ir.call("tail", []), ir.call("tail", [1]), ir.call("tail", [1, 2, 3])]).toEqual(concrete);
+    });
+});
+
+describe("array spread literals", () => {
+    it("copies a variable-length input in order through JSON", () => {
+        const source = `
+            function copy(input: number[]): number[] { return [0, ...input, 9]; }
+        `;
+        const { file, diagnostics } = lower(source);
+        const roundTrip = JSON.parse(serializeEtsFile(file));
+        const stmts = allStmts(methodByName(roundTrip, "copy"));
+        const allocations = stmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewArrayExpr");
+        const lengthRead = stmts.find((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceFieldRef"
+            && stmt.right.field.name === "length");
+        const sourceRead = stmts.find((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "ArrayRef"
+            && stmt.right.array._ === "Local" && stmt.right.array.name !== "input");
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(allocations).toHaveLength(1);
+        expect(allocations[0]).toMatchObject({ right: { _: "NewArrayExpr", size: { _: "Constant", value: "0" } } });
+        expect(lengthRead).toBeUndefined();
+        expect(sourceRead).toBeUndefined();
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceCallExpr"
+            && stmt.right.method.name === "Symbol.iterator")).toBe(true);
+        expect(stmts.some((stmt) => stmt._ === "UnsupportedValue")).toBe(false);
+
+        const js = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2020 } }).outputText;
+        const concrete = new Function(`${js}\nreturn [copy([]), copy([1]), copy([1, 2, 3])];`)() as number[][];
+        expect(concrete).toEqual([[0, 9], [0, 1, 9], [0, 1, 2, 3, 9]]);
+        const ir = executor(roundTrip);
+        expect([ir.call("copy", []), ir.call("copy", [1]), ir.call("copy", [1, 2, 3])]).toEqual(concrete);
+    });
+});
+
+describe("regular-expression literals", () => {
+    it("retains pattern, flags, allocation, and test call through JSON", () => {
+        const source = `function containsX(value: string): boolean { return /x+/gi.test(value); }`;
+        const { file, diagnostics } = lower(source);
+        const roundTrip = JSON.parse(serializeEtsFile(file));
+        const stmts = allStmts(methodByName(roundTrip, "containsX"));
+        const allocations = stmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr");
+        const calls = stmts.filter((stmt) => stmt._ === "AssignStmt"
+            && (stmt.right._ === "InstanceCallExpr" || stmt.right._ === "PtrCallExpr"));
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(allocations).toHaveLength(1);
+        expect(calls).toHaveLength(2);
+        expect(calls[0]).toMatchObject({
+            right: {
+                method: { name: "constructor" },
+                args: [{ _: "Constant", value: "x+" }, { _: "Constant", value: "gi" }],
+            },
+        });
+        expect(calls[1]).toMatchObject({
+            right: { _: "PtrCallExpr", method: { name: "test" }, receiver: { _: "Local" }, ptr: { _: "Local" } },
+        });
+
+        const js = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2020 } }).outputText;
+        const concrete = new Function(`${js}\nreturn [containsX("XX"), containsX("ab")];`)() as boolean[];
+        expect(concrete).toEqual([true, false]);
+        const ir = executor(roundTrip);
+        expect([ir.call("containsX", "XX"), ir.call("containsX", "ab")]).toEqual(concrete);
     });
 });
 

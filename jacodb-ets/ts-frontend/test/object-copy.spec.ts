@@ -1,6 +1,7 @@
 import { runInNewContext } from "node:vm";
 import * as ts from "typescript";
 import { describe, expect, it } from "vitest";
+import { AssignStmtDto } from "../src/dto/stmts";
 import { compile, lower, methodByName } from "./util";
 import { executeObjectIr } from "./object-runtime";
 
@@ -62,6 +63,77 @@ describe("object property copying", () => {
         })()`)).toBe(71);
     });
 
+    it("builds object rest by excluding bound keys", () => {
+        const source = `
+            export function remainder(input: { x: number; y: number }): number {
+                const { x, ...rest } = input;
+                return rest.y;
+            }
+        `;
+        const compiled = compile(source);
+        expect(compiled.program.getSemanticDiagnostics(compiled.sourceFile)).toEqual([]);
+
+        const { file, diagnostics } = lower(source);
+        const stmts = methodByName(file, "remainder").body!.cfg.blocks.flatMap((block) => block.stmts);
+        const xReadIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "PropertyRef" && stmt.right.key._ === "Constant" && stmt.right.key.value === "x");
+        const copyIndex = stmts.findIndex((stmt) => stmt._ === "CopyDataPropertiesStmt");
+
+        expect(xReadIndex).toBeGreaterThanOrEqual(0);
+        expect(copyIndex).toBeGreaterThan(xReadIndex);
+        expect(stmts[copyIndex]).toMatchObject({
+            _: "CopyDataPropertiesStmt",
+            excludedKeys: [{ _: "Constant", value: "x" }],
+            throwOnNullishSource: true,
+        });
+        expect(diagnostics.messages).toEqual([]);
+        expect(evaluate(source, `exports.remainder({ x: 1, y: 2 })`)).toBe(2);
+        expect(executeObjectIr(JSON.parse(JSON.stringify(file)), "remainder", [{ x: 1, y: 2 }])).toBe(2);
+    });
+
+    it("reuses one evaluated computed key for both binding and rest exclusion", () => {
+        const source = `
+            export function remainder(input: Record<string, number>, key: string): number {
+                const { [key]: value, ...rest } = input;
+                return value + rest.y;
+            }
+        `;
+        const { file, diagnostics } = lower(source);
+        const stmts = methodByName(file, "remainder").body!.cfg.blocks.flatMap((block) => block.stmts);
+        const read = stmts.find((stmt): stmt is AssignStmtDto => stmt._ === "AssignStmt"
+            && stmt.right._ === "PropertyRef");
+        const copy = stmts.find((stmt) => stmt._ === "CopyDataPropertiesStmt");
+
+        expect(read?.right).toMatchObject({ _: "PropertyRef", key: { _: "Local" } });
+        expect(copy).toMatchObject({
+            _: "CopyDataPropertiesStmt",
+            excludedKeys: [(read?.right as { key: unknown }).key],
+        });
+        expect(diagnostics.messages).toEqual([]);
+        expect(evaluate(source, `exports.remainder({ x: 3, y: 2 }, "x")`)).toBe(5);
+        expect(executeObjectIr(JSON.parse(JSON.stringify(file)), "remainder", [{ x: 3, y: 2 }, "x"])).toBe(5);
+    });
+    it("normalizes a computed key once before reading and excluding it from rest", () => {
+        const source = `
+            export function remainder(input: any, key: any): number {
+                const { [key]: value, ...rest } = input;
+                return value + rest.y;
+            }
+        `;
+        const { file, diagnostics } = lower(source);
+        let conversions = 0;
+        const key = { toString() { conversions++; return conversions === 1 ? "x" : "y"; } };
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(executeObjectIr(JSON.parse(JSON.stringify(file)), "remainder", [{ x: 3, y: 2 }, key])).toBe(5);
+        expect(conversions).toBe(1);
+        expect(evaluate(source, `(() => {
+            let conversions = 0;
+            const key = { toString() { conversions++; return conversions === 1 ? "x" : "y"; } };
+            return exports.remainder({ x: 3, y: 2 }, key) * 10 + conversions;
+        })()`)).toBe(51);
+    });
+
     it("copies enumerable symbols and excludes inherited and non-enumerable properties", () => {
         const source = `export function copy(input: any): any { return { ...input }; }`;
         const { file, diagnostics } = lower(source);
@@ -87,13 +159,21 @@ describe("object property copying", () => {
             return Reflect.ownKeys(result).length * 10 + result[symbol] + (result.x === input.x ? 1 : 0);
         })()`)).toBe(25);
     });
-    it("skips nullish spread sources", () => {
-        const source = `export function spread(input: any): number { return { ...input, x: 7 }.x; }`;
+
+    it("skips nullish spread but rejects nullish rest", () => {
+        const source = `
+            export function spread(input: any): number { return { ...input, x: 7 }.x; }
+            export function rest(input: any): any { const { ...result } = input; return result; }
+        `;
         const { file, diagnostics } = lower(source);
+        const serialized = JSON.parse(JSON.stringify(file));
 
         expect(diagnostics.messages).toEqual([]);
-        expect(executeObjectIr(JSON.parse(JSON.stringify(file)), "spread", [null])).toBe(7);
-        expect(executeObjectIr(JSON.parse(JSON.stringify(file)), "spread", [undefined])).toBe(7);
+        expect(executeObjectIr(serialized, "spread", [null])).toBe(7);
+        expect(executeObjectIr(serialized, "spread", [undefined])).toBe(7);
+        expect(() => executeObjectIr(serialized, "rest", [undefined])).toThrow(TypeError);
         expect(evaluate(source, `exports.spread(null)`)).toBe(7);
+        expect(evaluate(source, `(() => { try { exports.rest(undefined); } catch (error) { return error instanceof TypeError; } })()`)).toBe(true);
     });
+
 });

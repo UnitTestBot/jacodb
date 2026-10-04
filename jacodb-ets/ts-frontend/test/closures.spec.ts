@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { serializeEtsFile } from "../src/serialize";
 import { AssignStmtDto, StmtDto } from "../src/dto/stmts";
+import { serializeEtsFile } from "../src/serialize";
 import { validateEtsFile } from "../src/validate";
 import { defaultMethod, lower, methodByName, singleBlockStmts } from "./util";
 
