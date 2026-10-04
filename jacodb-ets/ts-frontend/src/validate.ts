@@ -31,6 +31,7 @@ import { ValueDto } from "./dto/values";
 
 const EXPR_KINDS = new Set([
     "NewExpr",
+    "TemplateObjectExpr",
     "NewClassExpr",
     "SpreadExpansionExpr",
     "ToPropertyKeyExpr",
@@ -383,6 +384,11 @@ function validateValue(
                 err(`${ctx}: spread expectedCount must be a non-negative integer`);
             }
             break;
+        case "TemplateObjectExpr":
+            if (value.cooked.length !== value.raw.length) {
+                err(`${ctx}: template cooked and raw arrays have different lengths`);
+            }
+            break;
         default:
             break;
     }
@@ -400,6 +406,8 @@ export function valueOperands(value: ValueDto): ValueDto[] {
         case "SpreadExpansionExpr":
             return [value.iterable];
         case "NewClassExpr":
+            return [];
+        case "TemplateObjectExpr":
             return [];
         case "NewArrayExpr":
             return [value.size];
