@@ -196,6 +196,7 @@ export interface PtrCallExprDto {
     ptr: ValueDto; // Local or FieldRef (must be a value, not an expr)
     method: MethodSignatureDto;
     args: ValueDto[];
+    receiver?: LocalDto; // Receiver of a captured property callable.
 }
 
 export interface ThisRefDto {

@@ -288,6 +288,7 @@ data class PtrCallExprDto(
     val ptr: ValueDto, // Local or FieldRef
     override val method: MethodSignatureDto,
     override val args: List<ValueDto>,
+    val receiver: ValueDto? = null,
 ) : CallExprDto
 
 @Serializable

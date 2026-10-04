@@ -300,7 +300,7 @@ private object EntityGetOperands : EtsEntity.Visitor<Sequence<EtsEntity>> {
         expr.args.asSequence()
 
     override fun visit(expr: EtsPtrCallExpr): Sequence<EtsEntity> =
-        sequenceOf(expr.ptr) + expr.args.asSequence()
+        sequenceOf(expr.ptr) + listOfNotNull(expr.receiver).asSequence() + expr.args.asSequence()
 
     override fun visit(value: EtsRawEntity): Sequence<EtsEntity> =
         emptySequence()

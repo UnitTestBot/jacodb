@@ -798,6 +798,7 @@ data class EtsPtrCallExpr(
     override val callee: EtsMethodSignature,
     override val args: List<EtsLocal>,
     override val type: EtsType,
+    val receiver: EtsLocal? = null,
 ) : EtsCallExpr {
     override fun toString(): String {
         return "ptr_call ${ptr}(${args.joinToString()})"

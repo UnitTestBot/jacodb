@@ -459,6 +459,7 @@ class EtsMethodBuilder(
             callee = method.toEtsMethodSignature(),
             args = args.map { ensureLocal(it.toEtsEntity()) },
             type = type.toEtsType(),
+            receiver = receiver?.let { ensureLocal(it.toEtsEntity()) },
         )
 
         is ThisRefDto -> EtsThis(
