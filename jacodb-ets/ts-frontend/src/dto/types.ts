@@ -179,6 +179,8 @@ export interface FunctionTypeDto {
     readonly _: "FunctionType";
     signature: MethodSignatureDto;
     typeParameters?: TypeDto[]; // Kotlin default: empty list
+    /** Arrow values use the receiver saved in their lexical environment. */
+    isArrow?: boolean; // Kotlin default: false
 }
 
 // Singletons for field-less types.

@@ -1574,18 +1574,28 @@ export class ExprLowerer {
             .filter((identifier) => this.m.moduleFieldForIdentifier(identifier) === undefined)
             .map((identifier) => this.m.captureForIdentifier(identifier, this.safeTypeOf(identifier)));
 
+        const isArrow = ts.isArrowFunction(node);
+        const lexicalThis = isArrow && usesLexicalThis(node)
+            ? this.m.getOrCreateLocal("this", this.m.thisType())
+            : undefined;
+
         let signature = baseSignature;
         let environment:
             | { name: string; type: Extract<TypeDto, { _: "LexicalEnvType" }> }
             | undefined;
-        if (captures.length > 0) {
+        if (captures.length > 0 || lexicalThis !== undefined) {
+            const capturedLocals = captures.map((capture) => ({
+                name: capture.outerLocal.name,
+                type: capture.outerLocal.type,
+            }));
+            if (lexicalThis !== undefined) {
+                capturedLocals.push({ name: lexicalThis.name, type: lexicalThis.type });
+            }
+
             const environmentType: Extract<TypeDto, { _: "LexicalEnvType" }> = {
                 _: "LexicalEnvType",
                 method: baseSignature,
-                closures: [...new Map(captures.map((capture) => [
-                    capture.outerLocal.name,
-                    { name: capture.outerLocal.name, type: capture.outerLocal.type },
-                ])).values()],
+                closures: [...new Map(capturedLocals.map((local) => [local.name, local])).values()],
             };
             const environmentLocal = this.m.newClosureEnvironment(environmentType);
             environment = { name: environmentLocal.name, type: environmentType };
@@ -1608,7 +1618,7 @@ export class ExprLowerer {
         if (environment === undefined) {
             closureContext.emitPrologue(prologueParams);
         } else {
-            closureContext.emitClosurePrologue(environment.name, environment.type, captures, prologueParams);
+            closureContext.emitClosurePrologue(environment.name, environment.type, captures, prologueParams, lexicalThis);
         }
         this.lowerFunctionBody(closureContext, node.body, prologueParams);
         registry.methods.push({
@@ -1618,7 +1628,7 @@ export class ExprLowerer {
             body: closureContext.build(),
         });
 
-        return this.m.getOrCreateLocal(name, { _: "FunctionType", signature });
+        return this.m.getOrCreateLocal(name, { _: "FunctionType", signature, ...(isArrow ? { isArrow } : {}) });
     }
 
     /**
@@ -1957,6 +1967,24 @@ function numericConstantText(node: ts.NumericLiteral): string {
     return Number.isFinite(Number(node.text)) ? node.text : node.getText();
 }
 
+/** Nested arrows share the receiver; ordinary functions and class members introduce their own. */
+function usesLexicalThis(arrow: ts.ArrowFunction): boolean {
+    let found = false;
+    const visit = (node: ts.Node): void => {
+        if (found) return;
+        if (node.kind === ts.SyntaxKind.ThisKeyword) {
+            found = true;
+            return;
+        }
+        if (!ts.isArrowFunction(node) && (ts.isFunctionLike(node) || ts.isClassLike(node))) return;
+        ts.forEachChild(node, visit);
+    };
+
+    for (const parameter of arrow.parameters) visit(parameter);
+    visit(arrow.body);
+    return found;
+}
+
 function bigIntConstantText(node: ts.BigIntLiteral): string {
     return BigInt(node.text.replace(/_/g, "").replace(/n$/, "")).toString();
 }
@@ -2136,7 +2164,7 @@ function collectCapturedIdentifiers(
         if (isCapturableDeclaration(node as ts.Declaration)) {
             ownDeclarations.add(node as ts.Declaration);
         }
-        if (ts.isIdentifier(node)) {
+        if (ts.isIdentifier(node) && !(ts.isPropertyAccessExpression(node.parent) && node.parent.name === node)) {
             let symbol: ts.Symbol | undefined;
             try {
                 symbol = checker.getSymbolAtLocation(node);

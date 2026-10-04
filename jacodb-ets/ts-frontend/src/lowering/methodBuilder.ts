@@ -313,6 +313,7 @@ export class MethodContext {
         environmentType: LexicalEnvTypeDto,
         captures: ClosureCapture[],
         parameters: { name: string; type: TypeDto; identifier?: ts.Identifier }[],
+        lexicalThis?: LocalDto,
     ): void {
         const environment = this.getOrCreateLocal(environmentName, environmentType);
         this.cfg.emit({
@@ -366,16 +367,22 @@ export class MethodContext {
                 });
             }
         }
-        this.emitThisAssignment();
+        const receiver: ClosureFieldRefDto | undefined = lexicalThis === undefined ? undefined : {
+            _: "ClosureFieldRef",
+            base: { name: environment.name, type: environment.type },
+            fieldName: lexicalThis.name,
+            type: lexicalThis.type,
+        };
+        this.emitThisAssignment(receiver);
     }
 
-    private emitThisAssignment(): void {
+    private emitThisAssignment(receiver?: ClosureFieldRefDto): void {
         const thisType = this.thisType();
         const thisLocal = this.getOrCreateLocal("this", thisType);
         this.cfg.emit({
             _: "AssignStmt",
             left: thisLocal,
-            right: { _: "ThisRef", type: thisType },
+            right: receiver ?? { _: "ThisRef", type: thisType },
         });
     }
 

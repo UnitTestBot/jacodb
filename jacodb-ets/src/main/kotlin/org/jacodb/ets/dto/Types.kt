@@ -205,4 +205,5 @@ data class TupleTypeDto(
 data class FunctionTypeDto(
     val signature: MethodSignatureDto,
     val typeParameters: List<TypeDto> = emptyList(),
+    val isArrow: Boolean = false,
 ) : TypeDto

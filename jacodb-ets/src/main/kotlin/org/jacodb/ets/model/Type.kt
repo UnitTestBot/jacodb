@@ -443,6 +443,7 @@ data class EtsTupleType(
 data class EtsFunctionType(
     val signature: EtsMethodSignature,
     val typeParameters: List<EtsType> = emptyList(),
+    val isArrow: Boolean = false,
 ) : EtsRefType {
     override val typeName: String
         get() = if (typeParameters.isNotEmpty()) {
