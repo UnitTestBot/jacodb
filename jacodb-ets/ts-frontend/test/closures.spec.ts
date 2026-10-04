@@ -314,7 +314,7 @@ describe("destructuring", () => {
             const { host, port: p, missing = 42 } = config;
         `);
         const fieldReads = stmts.filter(
-            (s): s is AssignStmtDto => s._ === "AssignStmt" && s.right._ === "InstanceFieldRef",
+            (s): s is AssignStmtDto => s._ === "AssignStmt" && s.right._ === "PropertyRef",
         );
         const bound = fieldReads.map((s) => ({
             local: s.left._ === "Local"
@@ -322,7 +322,7 @@ describe("destructuring", () => {
                 : s.left._ === "StaticFieldRef"
                   ? s.left.field.name
                   : undefined,
-            field: (s.right as { field: { name: string } }).field.name,
+            field: (s.right as { key: { value: string } }).key.value,
         }));
         expect(bound).toContainEqual({ local: "host", field: "host" });
         expect(bound).toContainEqual({ local: "p", field: "port" });

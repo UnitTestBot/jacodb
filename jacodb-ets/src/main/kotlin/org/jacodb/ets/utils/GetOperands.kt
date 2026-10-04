@@ -20,6 +20,7 @@ import org.jacodb.ets.model.EtsAddExpr
 import org.jacodb.ets.model.EtsAndExpr
 import org.jacodb.ets.model.EtsArrayAccess
 import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsRequireObjectCoercibleExpr
 import org.jacodb.ets.model.EtsDefineAccessorStmt
 import org.jacodb.ets.model.EtsCopyDataPropertiesStmt
 import org.jacodb.ets.model.EtsAwaitExpr
@@ -194,6 +195,9 @@ private object EntityGetOperands : EtsEntity.Visitor<Sequence<EtsEntity>> {
 
     override fun visit(value: EtsPropertyRef): Sequence<EtsEntity> =
         sequenceOf(value.instance, value.key)
+
+    override fun visit(expr: EtsRequireObjectCoercibleExpr): Sequence<EtsEntity> =
+        sequenceOf(expr.arg)
 
     override fun visit(expr: EtsNewArrayExpr): Sequence<EtsEntity> =
         sequenceOf(expr.size)

@@ -47,6 +47,7 @@ export type ExprDto =
     | NewClassExprDto
     | SpreadExpansionExprDto
     | ToPropertyKeyExprDto
+    | RequireObjectCoercibleExprDto
     | NewArrayExprDto
     | DeleteExprDto
     | AwaitExprDto
@@ -179,6 +180,13 @@ export interface PropertyRefDto {
     readonly _: "PropertyRef";
     instance: LocalDto;
     key: ImmediateDto;
+    type: TypeDto;
+}
+
+/** RequireObjectCoercible; throws for null/undefined and otherwise returns arg. */
+export interface RequireObjectCoercibleExprDto {
+    readonly _: "RequireObjectCoercibleExpr";
+    arg: ImmediateDto;
     type: TypeDto;
 }
 
