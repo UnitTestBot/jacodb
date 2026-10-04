@@ -23,8 +23,8 @@
 
 import * as ts from "typescript";
 import { MethodSignatureDto, UNKNOWN_CLASS_SIGNATURE, UNKNOWN_FILE_SIGNATURE } from "../dto/signatures";
-import { BOOLEAN_TYPE, NUMBER_TYPE, TypeDto, UNDEFINED_TYPE, UNKNOWN_TYPE } from "../dto/types";
-import { LValueDto, LocalDto, ValueDto } from "../dto/values";
+import { BOOLEAN_TYPE, NUMBER_TYPE, STRING_TYPE, TypeDto, UNDEFINED_TYPE, UNKNOWN_TYPE } from "../dto/types";
+import { ImmediateDto, LValueDto, LocalDto, ValueDto } from "../dto/values";
 import { exportAssignmentSupport } from "./astUtils";
 import { Label } from "./cfg";
 import { unsupportedStmt } from "./diagnostics";
@@ -834,9 +834,29 @@ export class StmtLowerer {
     /** `{a, b: {c}, d = 1}` / `[x, , y]` unpacked from `source` via field/array refs. */
     private lowerBindingPattern(pattern: ts.BindingPattern, source: LocalDto): void {
         if (ts.isObjectBindingPattern(pattern)) {
+            const stableSource = this.expr.materialize({
+                _: "RequireObjectCoercibleExpr",
+                arg: source,
+                type: source.type,
+            }, source.type);
+            const excludedKeys: ImmediateDto[] = [];
+
             for (const element of pattern.elements) {
                 if (element.dotDotDotToken !== undefined) {
-                    throw new LoweringError("rest element in object destructuring");
+                    if (!ts.isIdentifier(element.name)) {
+                        throw new LoweringError("nested object-rest target");
+                    }
+
+                    const rest = this.expr.newEmptyObject();
+                    this.m.cfg.emit({
+                        _: "CopyDataPropertiesStmt",
+                        target: rest,
+                        source: stableSource,
+                        excludedKeys,
+                        throwOnNullishSource: true,
+                    });
+                    this.bindDestructured(element.name, rest, element.initializer);
+                    continue;
                 }
                 const propName =
                     element.propertyName !== undefined
@@ -847,15 +867,12 @@ export class StmtLowerer {
                 if (propName === undefined) {
                     throw new LoweringError("computed property in destructuring");
                 }
+                excludedKeys.push(constant(propName, STRING_TYPE));
                 const ref: ValueDto = {
-                    _: "InstanceFieldRef",
-                    instance: source,
-                    field: {
-                        declaringClass:
-                            source.type._ === "ClassType" ? source.type.signature : UNKNOWN_CLASS_SIGNATURE,
-                        name: propName,
-                        type: this.bindingType(element.name),
-                    },
+                    _: "PropertyRef",
+                    instance: stableSource,
+                    key: constant(propName, STRING_TYPE),
+                    type: this.bindingType(element.name),
                 };
                 this.bindDestructured(element.name, ref, element.initializer);
             }

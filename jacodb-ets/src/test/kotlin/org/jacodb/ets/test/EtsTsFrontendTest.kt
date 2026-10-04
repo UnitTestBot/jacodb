@@ -45,6 +45,7 @@ import org.jacodb.ets.dto.RawStmtDto
 import org.jacodb.ets.dto.RawValueDto
 import org.jacodb.ets.dto.RelationOperationDto
 import org.jacodb.ets.dto.ReturnStmtDto
+import org.jacodb.ets.dto.RequireObjectCoercibleExprDto
 import org.jacodb.ets.dto.StringTypeDto
 import org.jacodb.ets.dto.StaticCallExprDto
 import org.jacodb.ets.dto.StaticFieldRefDto
@@ -122,6 +123,37 @@ class EtsTsFrontendTest {
 
             return EtsFileDto.loadFromJson(outputPath.readText())
         }
+    }
+
+    @Test
+    fun `object rest preserves excluded keys through JSON conversion`() {
+        val frontendDto = runFrontend(
+            """
+                export function copy(input: { x: number; y: number }): number {
+                    const { x, ...rest } = input;
+                    return rest.y + x;
+                }
+            """.trimIndent(),
+        )
+
+        val serialized = Json { serializersModule = dtoModule }.encodeToString(frontendDto)
+        val roundTripped = EtsFileDto.loadFromJson(serialized)
+        val dtoStmts = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "copy" }
+            .body!!.cfg.blocks.flatMap { it.stmts }
+        val copies = dtoStmts.filterIsInstance<CopyDataPropertiesStmtDto>()
+
+        assertTrue(dtoStmts.filterIsInstance<AssignStmtDto>().any { it.right is RequireObjectCoercibleExprDto })
+        assertEquals(1, copies.size)
+        assertTrue(copies[0].throwOnNullishSource)
+        assertEquals("x", (copies[0].excludedKeys.single() as ConstantDto).value)
+
+        val scene = EtsScene(listOf(roundTripped.toEtsFile()))
+        val method = scene.projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "copy" }
+        val converted = method.cfg.stmts.filterIsInstance<EtsCopyDataPropertiesStmt>()
+        assertEquals(1, converted.size)
+        assertEquals("x", (converted[0].excludedKeys.single() as EtsStringConstant).value)
     }
 
     @Test

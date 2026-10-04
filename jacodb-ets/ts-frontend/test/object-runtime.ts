@@ -85,6 +85,12 @@ export function executeObjectIr(file: EtsFileDto, name: string, args: unknown[] 
                 case "PropertyRef": return read(value.instance)[read(value.key)];
                 case "ArrayRef": return read(value.array)[read(value.index)];
                 case "ToPropertyKeyExpr": return Reflect.ownKeys({ [read(value.arg)]: 0 })[0];
+                case "RequireObjectCoercibleExpr": {
+                    const source = read(value.arg);
+                    if (source === null || source === undefined) throw new TypeError("nullish object binding");
+                    return source;
+                }
+
                 case "StaticCallExpr": return invoke(lookup(value.method), value.args.map(read), undefined);
                 case "InstanceCallExpr": {
                     const object = read(value.instance);

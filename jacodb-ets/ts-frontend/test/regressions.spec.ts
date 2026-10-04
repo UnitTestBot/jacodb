@@ -59,10 +59,10 @@ describe("pattern parameters", () => {
             stmt._ === "AssignStmt"
             && stmt.left._ === "Local"
             && stmt.left.name === "x"
-            && stmt.right._ === "InstanceFieldRef"
+            && stmt.right._ === "PropertyRef"
             && stmt.right.instance._ === "Local"
-            && stmt.right.instance.name === "%pat0"
-            && stmt.right.field.name === "x",
+            && stmt.right.key._ === "Constant"
+            && stmt.right.key.value === "x",
         )).toBe(true);
     });
 
@@ -74,10 +74,10 @@ describe("pattern parameters", () => {
             stmt._ === "AssignStmt"
             && stmt.left._ === "Local"
             && stmt.left.name === "x"
-            && stmt.right._ === "InstanceFieldRef"
+            && stmt.right._ === "PropertyRef"
             && stmt.right.instance._ === "Local"
-            && stmt.right.instance.name === "%pat0"
-            && stmt.right.field.name === "x",
+            && stmt.right.key._ === "Constant"
+            && stmt.right.key.value === "x",
         )).toBe(true);
     });
 });
