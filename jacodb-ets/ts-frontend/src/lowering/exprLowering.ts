@@ -68,7 +68,7 @@ import {
 } from "../dto/values";
 import { syntaxKindName, unsupportedValue } from "./diagnostics";
 import { MethodContext } from "./methodBuilder";
-import { IteratorLowerer } from "./iteratorLowering";
+import { IteratorLowerer, throwRuntimeError } from "./iteratorLowering";
 
 const RELATION_BY_SYNTAX: Partial<Record<ts.SyntaxKind, RelationOp>> = {
     [ts.SyntaxKind.EqualsEqualsToken]: "==",
@@ -126,7 +126,10 @@ export class LoweringError extends Error {}
 export type FunctionBodyLowerer = (
     m: MethodContext,
     body: ts.ConciseBody,
-    parameters?: BuiltParameters["prologueParams"],
+    emitPrologue: (afterParameter: (
+        parameter: BuiltParameters["prologueParams"][number],
+        local: LocalDto,
+    ) => void) => void,
 ) => void;
 
 type OptionalChainSegment = ts.PropertyAccessExpression | ts.ElementAccessExpression | ts.CallExpression;
@@ -325,6 +328,10 @@ export class ExprLowerer {
     // ------------------------------------------------------------------
 
     private lowerIdentifier(node: ts.Identifier): ValueDto {
+        if (this.m.isUninitializedParameter(node)) {
+            throwRuntimeError(this.m, "ReferenceError", `Cannot access '${node.text}' before initialization`);
+            return constant("undefined", UNDEFINED_TYPE);
+        }
         const nonFiniteNumber = this.builtInNonFiniteNumber(node);
         if (nonFiniteNumber !== undefined) {
             return constant(nonFiniteNumber, NUMBER_TYPE);
@@ -637,6 +644,9 @@ export class ExprLowerer {
 
     /** Assignment target. */
     lowerLValue(node: ts.Expression, laterExpression?: ts.Expression): LValueDto {
+        if (ts.isIdentifier(node) && this.m.isUninitializedParameter(node)) {
+            throwRuntimeError(this.m, "ReferenceError", `Cannot access '${node.text}' before initialization`);
+        }
         if (ts.isParenthesizedExpression(node)) {
             return this.lowerLValue(node.expression, laterExpression);
         }
@@ -1616,7 +1626,11 @@ export class ExprLowerer {
         const { parameters, prologueParams } = buildParameters(this.m.ctx, node);
         const returnType = returnTypeOf(this.m.ctx, node);
         const baseSignature: MethodSignatureDto = { declaringClass, name, parameters, returnType };
-        const captures = collectCapturedIdentifiers(node, this.m.checker)
+        const capturedIdentifiers = collectCapturedIdentifiers(node, this.m.checker);
+        if (capturedIdentifiers.some((identifier) => this.m.isUninitializedParameter(identifier))) {
+            throw new LoweringError("closure capturing an uninitialized parameter requires a runtime temporal-dead-zone cell");
+        }
+        const captures = capturedIdentifiers
             .filter((identifier) => this.m.moduleFieldForIdentifier(identifier) === undefined)
             .map((identifier) => this.m.captureForIdentifier(identifier, this.safeTypeOf(identifier)));
 
@@ -1661,12 +1675,15 @@ export class ExprLowerer {
             name,
             ts.isArrowFunction(node) && this.m.isStaticMethod,
         );
-        if (environment === undefined) {
-            closureContext.emitPrologue(prologueParams);
-        } else {
-            closureContext.emitClosurePrologue(environment.name, environment.type, captures, prologueParams, lexicalThis);
-        }
-        this.lowerFunctionBody(closureContext, node.body, prologueParams);
+        this.lowerFunctionBody(closureContext, node.body, (afterParameter) => {
+            if (environment === undefined) {
+                closureContext.emitPrologue(prologueParams, afterParameter);
+            } else {
+                closureContext.emitClosurePrologue(
+                    environment.name, environment.type, captures, prologueParams, afterParameter, lexicalThis,
+                );
+            }
+        });
         registry.methods.push({
             signature,
             modifiers: modifiersOf(node),
@@ -1753,9 +1770,10 @@ export class ExprLowerer {
                     returnType: returnTypeOf(this.m.ctx, property),
                 };
                 const methodContext = new MethodContext(this.m.ctx, signature, methodName);
-                methodContext.emitPrologue(prologueParams);
                 if (property.body !== undefined) {
-                    this.lowerFunctionBody(methodContext, property.body, prologueParams);
+                    this.lowerFunctionBody(methodContext, property.body, (afterParameter) =>
+                        methodContext.emitPrologue(prologueParams, afterParameter),
+                    );
                 }
                 methods.push({
                     signature: methodSignature,
@@ -2229,6 +2247,7 @@ function collectCapturedIdentifiers(
         }
         ts.forEachChild(node, visit);
     };
+    for (const parameter of closure.parameters) visit(parameter);
     visit(closure.body);
     // Declaration nodes may be visited after their first reference, so filter at the end.
     for (const symbol of [...captures.keys()]) {

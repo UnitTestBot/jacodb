@@ -289,7 +289,13 @@ export function parameterType(ctx: LoweringContext, p: ts.ParameterDeclaration):
 
 export interface BuiltParameters {
     parameters: MethodParameterDto[];
-    prologueParams: { name: string; type: TypeDto; identifier?: ts.Identifier; pattern?: ts.BindingPattern }[];
+    prologueParams: {
+        name: string;
+        type: TypeDto;
+        identifier?: ts.Identifier;
+        pattern?: ts.BindingPattern;
+        initializer?: ts.Expression;
+    }[];
 }
 
 export function buildParameters(ctx: LoweringContext, decl: ts.SignatureDeclarationBase): BuiltParameters {
@@ -316,6 +322,7 @@ export function buildParameters(ctx: LoweringContext, decl: ts.SignatureDeclarat
             type,
             identifier: ts.isIdentifier(p.name) ? p.name : undefined,
             pattern: ts.isObjectBindingPattern(p.name) || ts.isArrayBindingPattern(p.name) ? p.name : undefined,
+            initializer: p.initializer,
         });
     }
     return { parameters, prologueParams };

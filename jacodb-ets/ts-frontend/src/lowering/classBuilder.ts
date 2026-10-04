@@ -311,9 +311,10 @@ export class ClassBuilder {
         if (decl.body !== undefined) {
             const isStaticMethod = (modifiersOf(decl) & Modifier.STATIC) !== 0;
             const m = new MethodContext(this.ctx, declaringClass, name, isStaticMethod);
-            m.emitPrologue(prologueParams);
             const lowerer = new StmtLowerer(m);
-            this.lowerParameterPatterns(lowerer, m, prologueParams);
+            m.emitPrologue(prologueParams, (parameter, local) =>
+                lowerer.lowerParameterBinding(parameter, local),
+            );
             lowerer.lowerStatements(decl.body.statements);
             method.body = m.build();
         }
@@ -343,9 +344,10 @@ export class ClassBuilder {
         const classType: ClassTypeDto = { _: "ClassType", signature: declaringClass };
 
         const m = new MethodContext(this.ctx, declaringClass, CONSTRUCTOR_NAME);
-        m.emitPrologue(prologueParams);
         const lowerer = new StmtLowerer(m);
-        this.lowerParameterPatterns(lowerer, m, prologueParams);
+        m.emitPrologue(prologueParams, (parameter, local) =>
+            lowerer.lowerParameterBinding(parameter, local),
+        );
         const thisLocal = m.getOrCreateLocal("this", classType);
         const emitInitializers = (): void => {
             // Parameter properties are initialized at constructor entry (after
@@ -418,21 +420,6 @@ export class ClassBuilder {
             decorators: [],
             body: m.build(),
         };
-    }
-
-    private lowerParameterPatterns(
-        lowerer: StmtLowerer,
-        m: MethodContext,
-        parameters: { name: string; type: TypeDto; pattern?: ts.BindingPattern }[],
-    ): void {
-        for (const parameter of parameters) {
-            if (parameter.pattern !== undefined) {
-                lowerer.lowerParameterBindingPattern(
-                    parameter.pattern,
-                    m.getOrCreateLocal(parameter.name, parameter.type),
-                );
-            }
-        }
     }
 
     private emitParameterProperties(
