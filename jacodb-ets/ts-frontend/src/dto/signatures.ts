@@ -52,6 +52,7 @@ export interface MethodParameterDto {
     name: string;
     type: TypeDto;
     isOptional?: boolean; // Kotlin default: false
+    /** Call consumers pack trailing raw arguments into the array read by ParameterRef. */
     isRest?: boolean; // Kotlin default: false
 }
 

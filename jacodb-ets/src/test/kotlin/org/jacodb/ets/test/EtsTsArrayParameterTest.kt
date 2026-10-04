@@ -73,4 +73,15 @@ class EtsTsArrayParameterTest {
 
         assertTrue(method.cfg.stmts.any { it is EtsIfStmt })
     }
+
+    @Test
+    fun `rest parameter metadata survives frontend JSON and model conversion`() {
+        val dto = roundTrip("export function count(...values: number[]): number { return values.length; }")
+
+        val dtoMethod = dto.classes.flatMap { it.methods }.single { it.signature.name == "count" }
+        val method = dto.toEtsFile().classes.flatMap { it.methods }.single { it.name == "count" }
+
+        assertTrue(dtoMethod.signature.parameters.single().isRest)
+        assertTrue(method.signature.parameters.single().isRest)
+    }
 }
