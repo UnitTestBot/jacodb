@@ -16,6 +16,8 @@
 
 package org.jacodb.ets.dto
 
+import java.math.BigInteger
+
 import mu.KotlinLogging
 import org.jacodb.ets.model.EtsDefineDataPropertyStmt
 import org.jacodb.ets.model.EtsPropertyRef
@@ -38,6 +40,8 @@ import org.jacodb.ets.model.EtsBitOrExpr
 import org.jacodb.ets.model.EtsBitXorExpr
 import org.jacodb.ets.model.EtsBlockCfg
 import org.jacodb.ets.model.EtsBooleanConstant
+import org.jacodb.ets.model.EtsBigIntConstant
+import org.jacodb.ets.model.EtsBigIntType
 import org.jacodb.ets.model.EtsBooleanLiteralType
 import org.jacodb.ets.model.EtsBooleanType
 import org.jacodb.ets.model.EtsCallExpr
@@ -693,6 +697,8 @@ fun TypeDto.toEtsType(): EtsType = when (this) {
 
     BooleanTypeDto -> EtsBooleanType
 
+    BigIntTypeDto -> EtsBigIntType
+
     is ClassTypeDto -> toEtsClassType()
 
     is ClassValueTypeDto -> EtsClassValueType(signature.toEtsClassSignature())
@@ -775,6 +781,8 @@ fun ConstantDto.toEtsConstant(): EtsConstant {
         EtsBooleanType -> EtsBooleanConstant(value = value.toBoolean())
 
         EtsNumberType -> EtsNumberConstant(value = value.toDouble())
+
+        EtsBigIntType -> EtsBigIntConstant(value = BigInteger(value))
 
         EtsNullType -> EtsNullConstant
 

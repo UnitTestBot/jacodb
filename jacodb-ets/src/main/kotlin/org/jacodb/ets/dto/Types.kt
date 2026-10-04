@@ -115,6 +115,13 @@ data object NumberTypeDto : PrimitiveTypeDto {
 }
 
 @Serializable
+@SerialName("BigIntType")
+data object BigIntTypeDto : PrimitiveTypeDto {
+    override val name: String
+        get() = "bigint"
+}
+
+@Serializable
 @SerialName("StringType")
 data object StringTypeDto : PrimitiveTypeDto {
     override val name: String

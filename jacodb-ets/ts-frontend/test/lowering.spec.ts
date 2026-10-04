@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import * as ts from "typescript";
 import { StmtDto, AssignStmtDto, CallStmtDto } from "../src/dto/stmts";
 import { serializeEtsFile } from "../src/serialize";
 import { defaultMethod, lower, methodByName, singleBlockStmts } from "./util";
@@ -25,6 +26,44 @@ function assignmentTo(stmts: StmtDto[], name: string): AssignStmtDto | undefined
 }
 
 describe("straight-line lowering", () => {
+    it("preserves bigint operations and exact literals through JSON", () => {
+        const source = `
+            export function increment(x: bigint): bigint { return x + 1n; }
+            export const large = 9007199254740993n;
+            export const negative = -0x20n;
+        `;
+        const { file, diagnostics } = lower(source);
+        const roundTripped = JSON.parse(serializeEtsFile(file));
+        const increment = methodByName(roundTripped, "increment");
+        const defaultStatements = singleBlockStmts(defaultMethod(roundTripped));
+        const incrementStatements = singleBlockStmts(increment);
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(increment.signature.parameters[0].type).toEqual({ _: "BigIntType" });
+        expect(increment.signature.returnType).toEqual({ _: "BigIntType" });
+        expect(incrementStatements).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            right: expect.objectContaining({
+                _: "BinopExpr",
+                op: "+",
+                right: { _: "Constant", value: "1", type: { _: "BigIntType" } },
+                type: { _: "BigIntType" },
+            }),
+        }));
+        expect(assignmentTo(defaultStatements, "large")?.right).toEqual({
+            _: "Constant", value: "9007199254740993", type: { _: "BigIntType" },
+        });
+        expect(assignmentTo(defaultStatements, "negative")?.right).toEqual({
+            _: "Constant", value: "-32", type: { _: "BigIntType" },
+        });
+
+        const javascript = ts.transpileModule(source, {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+        }).outputText;
+        const concrete = new Function("exports", `${javascript}\nreturn [exports.increment(1n), exports.large, exports.negative];`)({});
+        expect(concrete).toEqual([2n, 9007199254740993n, -32n]);
+    });
+
     it("lowers literal initializers to constants", () => {
         const stmts = bodyStmts(`let x = 42; let s = "hi"; let b = true; let n = null; let u = undefined;`);
         expect(stmts).toEqual([

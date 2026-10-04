@@ -40,6 +40,7 @@ export type TypeDto =
     | IntersectionTypeDto
     | BooleanTypeDto
     | NumberTypeDto
+    | BigIntTypeDto
     | StringTypeDto
     | NullTypeDto
     | UndefinedTypeDto
@@ -118,6 +119,10 @@ export interface NumberTypeDto {
     readonly _: "NumberType";
 }
 
+export interface BigIntTypeDto {
+    readonly _: "BigIntType";
+}
+
 export interface StringTypeDto {
     readonly _: "StringType";
 }
@@ -178,6 +183,7 @@ export const VOID_TYPE: VoidTypeDto = { _: "VoidType" };
 export const NEVER_TYPE: NeverTypeDto = { _: "NeverType" };
 export const BOOLEAN_TYPE: BooleanTypeDto = { _: "BooleanType" };
 export const NUMBER_TYPE: NumberTypeDto = { _: "NumberType" };
+export const BIGINT_TYPE: BigIntTypeDto = { _: "BigIntType" };
 export const STRING_TYPE: StringTypeDto = { _: "StringType" };
 export const NULL_TYPE: NullTypeDto = { _: "NullType" };
 export const UNDEFINED_TYPE: UndefinedTypeDto = { _: "UndefinedType" };

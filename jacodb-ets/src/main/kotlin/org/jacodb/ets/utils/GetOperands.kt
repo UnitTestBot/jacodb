@@ -66,6 +66,7 @@ import org.jacodb.ets.model.EtsNotExpr
 import org.jacodb.ets.model.EtsNullConstant
 import org.jacodb.ets.model.EtsNullishCoalescingExpr
 import org.jacodb.ets.model.EtsNumberConstant
+import org.jacodb.ets.model.EtsBigIntConstant
 import org.jacodb.ets.model.EtsOrExpr
 import org.jacodb.ets.model.EtsParameterRef
 import org.jacodb.ets.model.EtsPostDecExpr
@@ -155,6 +156,9 @@ private object EntityGetOperands : EtsEntity.Visitor<Sequence<EtsEntity>> {
         emptySequence()
 
     override fun visit(value: EtsNumberConstant): Sequence<EtsEntity> =
+        emptySequence()
+
+    override fun visit(value: EtsBigIntConstant): Sequence<EtsEntity> =
         emptySequence()
 
     override fun visit(value: EtsNullConstant): Sequence<EtsEntity> =
