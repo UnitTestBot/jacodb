@@ -201,6 +201,18 @@ export class ExprLowerer {
         return this.materialize({ _: "ToPropertyKeyExpr", arg: this.lowerToImmediate(node) }, UNKNOWN_TYPE);
     }
 
+    /** Get/Put rejects a nullish base before converting the already evaluated key. */
+    private propertyAccessKey(key: ImmediateDto, instance: LocalDto): ImmediateDto {
+        this.materialize({ _: "RequireObjectCoercibleExpr", arg: instance, type: instance.type }, instance.type);
+        return this.materialize({ _: "ToPropertyKeyExpr", arg: key }, UNKNOWN_TYPE);
+    }
+
+    private propertyReferenceForOperation(target: LValueDto): LValueDto {
+        return target._ === "PropertyRef"
+            ? { ...target, key: this.propertyAccessKey(target.key, target.instance) }
+            : target;
+    }
+
     /** Hoist a value into a fresh temp: `%t := value`. */
     materialize(value: ValueDto, type: TypeDto = UNKNOWN_TYPE): LocalDto {
         const temp = this.m.newTemp(type);
@@ -469,7 +481,7 @@ export class ExprLowerer {
             return {
                 _: "PropertyRef",
                 instance,
-                key: this.lowerPropertyKey(node.argumentExpression),
+                key: this.propertyAccessKey(this.lowerToImmediate(node.argumentExpression), instance),
                 type: this.safeTypeOf(node),
             };
         }
@@ -630,7 +642,7 @@ export class ExprLowerer {
             return {
                 _: "PropertyRef",
                 instance,
-                key: this.lowerPropertyKey(node.argumentExpression),
+                key: this.propertyAccessKey(this.lowerToImmediate(node.argumentExpression), instance),
                 type: this.safeTypeOf(node),
             };
         }
@@ -672,12 +684,15 @@ export class ExprLowerer {
             throw new LoweringError("property access did not produce a field ref");
         }
         if (ts.isElementAccessExpression(node)) {
-            const ref = this.lowerElementAccess(node);
-            if (ref._ === "PropertyRef") {
-                return this.mayReassign(node.expression, laterExpression)
-                    ? { ...ref, instance: this.m.snapshotToLocal(ref.instance, ref.instance.type) }
-                    : ref;
+            const receiverType = this.m.checker.getTypeAtLocation(node.expression);
+            if (!this.m.checker.isArrayType(receiverType) && !this.m.checker.isTupleType(receiverType)) {
+                const instance = this.snapshotToLocal(node.expression);
+                const key = this.snapshotToLocal(node.argumentExpression);
+
+                // Reference evaluation retains the raw key; Get and Put each convert it.
+                return { _: "PropertyRef", instance, key, type: this.safeTypeOf(node) };
             }
+            const ref = this.lowerElementAccess(node);
             if (ref._ === "ArrayRef") {
                 return {
                     ...ref,
@@ -862,7 +877,9 @@ export class ExprLowerer {
         const compoundOp = COMPOUND_ASSIGN_BY_SYNTAX[opKind];
         if (compoundOp !== undefined) {
             // load-op-store (note: no short-circuit for &&= / ||= / ??= — approximation)
-            const oldValue = target._ === "Local" ? target : this.materialize(target, lvalueType(target));
+            const oldValue = target._ === "Local"
+                ? target
+                : this.materialize(this.propertyReferenceForOperation(target), lvalueType(target));
             rhs = {
                 _: "BinopExpr",
                 op: compoundOp,
@@ -879,13 +896,19 @@ export class ExprLowerer {
         if (target._ !== "Local" && rhs._ !== "Local" && rhs._ !== "Constant") {
             rhs = this.materialize(rhs, lvalueType(target));
         }
-        this.m.cfg.emit({ _: "AssignStmt", left: target, right: rhs });
+        if (target._ === "PropertyRef" && rhs._ === "Local") {
+            rhs = this.materialize(rhs, rhs.type);
+        }
+
+        this.m.cfg.emit({ _: "AssignStmt", left: this.propertyReferenceForOperation(target), right: rhs });
         return target._ === "Local" ? target : (rhs as ImmediateDto);
     }
 
     private lowerLogicalAssignment(node: ts.BinaryExpression, target: LValueDto): LocalDto {
         const cfg = this.m.cfg;
-        const oldValue = target._ === "Local" ? target : this.materialize(target, lvalueType(target));
+        const oldValue = target._ === "Local"
+            ? target
+            : this.materialize(this.propertyReferenceForOperation(target), lvalueType(target));
         const result = this.m.newTemp(this.safeTypeOf(node));
         const assignLabel = cfg.newLabel();
         const keepLabel = cfg.newLabel();
@@ -911,7 +934,11 @@ export class ExprLowerer {
         if (target._ !== "Local" && rhs._ !== "Local" && rhs._ !== "Constant") {
             rhs = this.materialize(rhs, lvalueType(target));
         }
-        cfg.emit({ _: "AssignStmt", left: target, right: rhs });
+        if (target._ === "PropertyRef" && rhs._ === "Local") {
+            rhs = this.materialize(rhs, rhs.type);
+        }
+
+        cfg.emit({ _: "AssignStmt", left: this.propertyReferenceForOperation(target), right: rhs });
         const assigned = rhs._ === "Local" || rhs._ === "Constant" ? rhs : target;
         cfg.emit({ _: "AssignStmt", left: result, right: assigned });
         cfg.goto(joinLabel);
@@ -970,9 +997,9 @@ export class ExprLowerer {
 
         // Field/array target: load old, compute updated, store back.
         //   %old := ref; %new := %old ++; ref := %new
-        const oldValue = this.materialize(target, lvalueType(target));
+        const oldValue = this.materialize(this.propertyReferenceForOperation(target), lvalueType(target));
         const updated = this.materialize({ _: "UnopExpr", op, arg: oldValue }, lvalueType(target));
-        this.m.cfg.emit({ _: "AssignStmt", left: target, right: updated });
+        this.m.cfg.emit({ _: "AssignStmt", left: this.propertyReferenceForOperation(target), right: updated });
         return returnOld ? oldValue : updated;
     }
 
@@ -1109,7 +1136,7 @@ export class ExprLowerer {
             const ptr = this.materialize({
                 _: "PropertyRef",
                 instance: receiver,
-                key: this.lowerPropertyKey(callee.argumentExpression),
+                key: this.propertyAccessKey(this.lowerToImmediate(callee.argumentExpression), receiver),
                 type: this.safeTypeOf(callee),
             }, this.safeTypeOf(callee));
             return {
@@ -1419,7 +1446,7 @@ export class ExprLowerer {
             receiver = this.snapshotToLocal(tag.expression);
             const key = ts.isPropertyAccessExpression(tag)
                 ? constant(tag.name.text, STRING_TYPE)
-                : this.lowerPropertyKey(tag.argumentExpression);
+                : this.propertyAccessKey(this.lowerToImmediate(tag.argumentExpression), receiver);
             ptr = this.materialize({
                 _: "PropertyRef",
                 instance: receiver,
