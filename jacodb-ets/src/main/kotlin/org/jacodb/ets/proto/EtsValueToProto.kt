@@ -125,6 +125,6 @@ fun EtsLocal.toProto(): ProtoLocal = ProtoLocal(
 )
 
 fun EtsConstant.toProto(): ProtoConstant = ProtoConstant(
-    value_ = this.toString(),
+    value_ = if (this is EtsStringConstant) value else toString(),
     type = this.type.toProto()
 )

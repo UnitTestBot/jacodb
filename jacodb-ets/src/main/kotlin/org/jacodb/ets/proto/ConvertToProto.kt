@@ -155,7 +155,7 @@ fun EtsBlockCfg.toProto(): ProtoBlockCfg {
             ProtoBlock(
                 id = block.id,
                 statements = block.statements.map { stmt -> stmt.toProto() },
-                successors = successors.getValue(block.id),
+                successors = successors.getValue(block.id).asReversed(),
                 // Note: predecessors are omitted
             )
         },

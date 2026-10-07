@@ -76,25 +76,63 @@ object ProcessUtil {
             }
         }
 
-        // Wait for completion
-        val isTimeout = if (timeout != null) {
-            !process.waitFor(timeout.inWholeNanoseconds, TimeUnit.NANOSECONDS)
-        } else {
-            process.waitFor()
-            false
-        }
+        return try {
+            val isTimeout = if (timeout != null) {
+                !process.waitFor(timeout.inWholeNanoseconds, TimeUnit.NANOSECONDS)
+            } else {
+                process.waitFor()
+                false
+            }
 
-        // Wait for all coroutines to finish
-        runBlocking {
-            joinAll(stdinJob, stdoutJob, stderrJob)
-        }
+            if (isTimeout) {
+                terminateAndReap(process)
+            }
 
-        return Result(
-            exitCode = process.exitValue(),
-            stdout = stdout.toString(),
-            stderr = stderr.toString(),
-            isTimeout = isTimeout,
-        )
+            runBlocking {
+                joinAll(stdinJob, stdoutJob, stderrJob)
+            }
+
+            Result(
+                exitCode = process.exitValue(),
+                stdout = stdout.toString(),
+                stderr = stderr.toString(),
+                isTimeout = isTimeout,
+            )
+        } catch (interrupted: InterruptedException) {
+            try {
+                terminateAndReap(process)
+            } catch (cleanupFailure: Throwable) {
+                interrupted.addSuppressed(cleanupFailure)
+            } finally {
+                Thread.currentThread().interrupt()
+            }
+            throw interrupted
+        }
+    }
+
+    internal fun terminateAndReap(process: Process) {
+        try {
+            process.toHandle().descendants().use { children ->
+                children.forEach { child -> child.destroyForcibly() }
+            }
+        } finally {
+            process.destroyForcibly()
+            var interrupted = false
+            try {
+                while (true) {
+                    try {
+                        process.waitFor()
+                        break
+                    } catch (_: InterruptedException) {
+                        interrupted = true
+                    }
+                }
+            } finally {
+                if (interrupted) {
+                    Thread.currentThread().interrupt()
+                }
+            }
+        }
     }
 }
 
