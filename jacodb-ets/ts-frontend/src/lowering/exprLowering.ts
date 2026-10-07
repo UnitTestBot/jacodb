@@ -839,6 +839,15 @@ export class ExprLowerer {
     /** `x = e`, `x += e`, obj.f = e, arr[i] = e; returns the assigned value. */
     lowerAssignment(node: ts.BinaryExpression): ValueDto {
         const opKind = node.operatorToken.kind;
+        const targetNode = unwrapTransparentExpression(node.left);
+        if (opKind === ts.SyntaxKind.EqualsToken
+            && ts.isIdentifier(targetNode) && this.m.isUninitializedParameter(targetNode)) {
+            // Resolving the binding is allowed; PutValue checks the TDZ after the RHS.
+            const rhs = this.lowerToImmediate(node.right);
+            throwRuntimeError(this.m, "ReferenceError", `Cannot access '${targetNode.text}' before initialization`);
+            return rhs;
+        }
+
         const target = this.lowerLValue(node.left, node.right);
 
         if (

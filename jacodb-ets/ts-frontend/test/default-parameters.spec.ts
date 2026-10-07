@@ -60,4 +60,45 @@ describe("default parameter observable behavior", () => {
         expect(ir()).toBe(7);
     });
 
+    for (const source of [
+        "function f(a = (b = mark()), b = 1) { return a; }",
+        "function f(a = (a = mark())) { return a; }",
+        "function f(a = ((b) = mark()), b = 1) { return a; }",
+    ]) {
+        it(`evaluates assignment RHS before the TDZ write fails: ${source}`, () => {
+            let calls = 0;
+            const { ir, native } = consumers(source, "f", { mark: () => ++calls });
+
+            expect(() => native()).toThrow(ReferenceError);
+            expect(calls).toBe(1);
+
+            calls = 0;
+            expect(() => ir()).toThrow(ReferenceError);
+            expect(calls).toBe(1);
+        });
+    }
+
+    it("preserves an assignment RHS throw before the TDZ write", () => {
+        const failure = new Error("RHS failure");
+        const { ir, native } = consumers("function f(a = (b = mark()), b = 1) { return a; }", "f", {
+            mark: () => { throw failure; },
+        });
+
+        expect(() => native()).toThrow(failure);
+        expect(() => ir()).toThrow(failure);
+    });
+
+    for (const operator of ["+=", "&&=", "||=", "??="]) {
+        it(`checks the TDZ read before the RHS of ${operator}`, () => {
+            let calls = 0;
+            const source = `function f(a = (b ${operator} mark()), b = 1) { return a; }`;
+            const { ir, native } = consumers(source, "f", { mark: () => ++calls });
+
+            expect(() => native()).toThrow(ReferenceError);
+            expect(calls).toBe(0);
+            expect(() => ir()).toThrow(ReferenceError);
+            expect(calls).toBe(0);
+        });
+    }
+
 });
