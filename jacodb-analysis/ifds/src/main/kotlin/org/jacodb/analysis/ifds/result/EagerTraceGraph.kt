@@ -129,7 +129,7 @@ fun <Stmt, Fact> IfdsComputationData<Stmt, Fact, *>.buildTraceGraph(
                 is Reason.ExitToReturnSite -> {
                     val predEdge = reason.callerEdge
                     val summaryEdge = reason.edge
-                    addEdge(summaryEdge.from, lastVertex)
+                    addEdge(summaryEdge.to, lastVertex)
                     addEdge(predEdge.to, summaryEdge.from)
                     dfs(summaryEdge, summaryEdge.to, true)
                     dfs(predEdge, predEdge.to, stopAtMethodStart)
