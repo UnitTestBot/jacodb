@@ -15,12 +15,15 @@
  */
 
 import java.nio.file.Files
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 class ProcessTimeoutTest {
@@ -75,6 +78,59 @@ class ProcessTimeoutTest {
             }
             result.cancel(true)
             executor.shutdownNow()
+            Files.deleteIfExists(pidFile)
+        }
+    }
+
+    @Test
+    fun `interrupting an unbounded wait terminates and reaps the process tree`() {
+        assertInterruptCleanup(timeout = null)
+    }
+
+    @Test
+    fun `interrupting a bounded wait terminates and reaps the process tree`() {
+        assertInterruptCleanup(timeout = 30_000.milliseconds)
+    }
+
+    private fun assertInterruptCleanup(timeout: Duration?) {
+        val pidFile = Files.createTempFile("process-tree-interruption-test-", ".pid")
+        val outcome = CompletableFuture<Pair<Throwable?, Boolean>>()
+        val worker = Thread {
+            try {
+                ProcessUtil.run(
+                    command = listOf("/bin/sh", "-c", "echo $$ > '$pidFile'; sleep 30 & echo $! >> '$pidFile'; wait"),
+                    timeout = timeout,
+                )
+                outcome.complete(null to Thread.currentThread().isInterrupted)
+            } catch (failure: Throwable) {
+                outcome.complete(failure to Thread.currentThread().isInterrupted)
+            }
+        }
+        worker.start()
+
+        try {
+            val startDeadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3)
+            while (Files.readAllLines(pidFile).size < 2 && System.nanoTime() < startDeadline) {
+                Thread.sleep(10)
+            }
+            val pids = Files.readAllLines(pidFile).map(String::toLong)
+            assertEquals(expected = 2, actual = pids.size)
+
+            worker.interrupt()
+            val (failure, interruptRestored) = outcome.get(3, TimeUnit.SECONDS)
+
+            assertIs<InterruptedException>(failure)
+            assertTrue(
+                pids.all { pid -> !ProcessHandle.of(pid).map { process -> process.isAlive }.orElse(false) },
+                "Interrupted wait must terminate both the parent and its child",
+            )
+            assertTrue(interruptRestored)
+        } finally {
+            Files.readAllLines(pidFile).mapNotNull(String::toLongOrNull).forEach { pid ->
+                ProcessHandle.of(pid).ifPresent { process -> process.destroyForcibly() }
+            }
+            worker.interrupt()
+            worker.join(1_000)
             Files.deleteIfExists(pidFile)
         }
     }
