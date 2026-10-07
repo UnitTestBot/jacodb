@@ -49,6 +49,8 @@ interface BreakableContext {
     label?: string;
     /** finallyScopes depth at the moment this breakable was entered. */
     finallyDepth?: number;
+    /** Iterator cleanup also runs on break from this loop, but not on continue. */
+    breakFinallyDepth?: number;
 }
 
 interface CatchContext {
@@ -59,8 +61,8 @@ interface CatchContext {
 export class StmtLowerer {
     readonly expr: ExprLowerer;
     private readonly breakables: BreakableContext[] = [];
-    /** finally blocks of the enclosing try statements (outermost first). */
-    private readonly finallyScopes: ts.Block[] = [];
+    /** Finally blocks and iterator cleanup of enclosing statements (outermost first). */
+    private readonly finallyScopes: (ts.Block | (() => void))[] = [];
     private readonly finallyExceptionTargets: Label[] = [];
     private readonly catchScopes: CatchContext[] = [];
     private pendingLabel: string | undefined;
@@ -444,12 +446,80 @@ export class StmtLowerer {
             cfg.emit({ _: "AssignStmt", left: value, right: this.iteratorField(result, "value") });
             cfg.placeLabel(valueReady);
         }
-        this.emitLoopBinding(node.initializer, (binding) => value ?? this.iteratorField(result, "value", binding.type));
-        this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: headLabel, label }, () => {
-            this.lowerStatement(node.statement);
-        });
-        cfg.goto(headLabel);
+        const lowerBody = (breakFinallyDepth?: number) => {
+            this.emitLoopBinding(node.initializer, (binding) => value ?? this.iteratorField(result, "value", binding.type));
+            this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: headLabel, label, breakFinallyDepth }, () => {
+                this.lowerStatement(node.statement);
+            });
+        };
+        if (asyncIterator === undefined) {
+            lowerBody();
+            cfg.goto(headLabel);
+        } else {
+            const closeOnThrow = cfg.newLabel();
+            const rethrow = cfg.newLabel();
+            const outerFinallyDepth = this.finallyScopes.length;
+            this.finallyScopes.push(() => this.lowerAsyncIteratorClose(asyncIterator));
+            this.finallyExceptionTargets.push(closeOnThrow);
+            this.catchScopes.push({ target: closeOnThrow, finallyDepth: this.finallyScopes.length });
+            try {
+                cfg.withExceptionTarget(closeOnThrow, () => lowerBody(outerFinallyDepth));
+            } finally {
+                this.catchScopes.pop();
+                this.finallyScopes.pop();
+                this.finallyExceptionTargets.pop();
+            }
+            cfg.goto(headLabel);
+
+            cfg.placeLabel(closeOnThrow);
+            const original = this.m.newTemp(UNKNOWN_TYPE);
+            cfg.emit({ _: "AssignStmt", left: original, right: { _: "CaughtExceptionRef", type: UNKNOWN_TYPE } });
+            // AsyncIteratorClose preserves an existing throw over any cleanup failure.
+            cfg.withExceptionTarget(rethrow, () => this.lowerAsyncIteratorClose(asyncIterator));
+            cfg.goto(rethrow);
+            cfg.placeLabel(rethrow);
+            cfg.throwValue(original);
+        }
         cfg.placeLabel(exitLabel);
+    }
+
+    private lowerAsyncIteratorClose(record: { iterator: LocalDto; fromSync: LocalDto }): void {
+        const cfg = this.m.cfg;
+        const method = this.expr.materialize(this.iteratorField(record.iterator, "return"));
+        const missing = cfg.newLabel();
+        const invoke = cfg.newLabel();
+        const sync = cfg.newLabel();
+        const async = cfg.newLabel();
+        const done = cfg.newLabel();
+        cfg.branch(this.expr.relation("==", method, constant("null", { _: "NullType" })), missing, invoke);
+
+        cfg.placeLabel(missing);
+        const missingSync = cfg.newLabel();
+        cfg.branch(record.fromSync, missingSync, done);
+        cfg.placeLabel(missingSync);
+        // Async-from-Sync still returns a resolved Promise when its return is absent.
+        const unused = this.m.newTemp(UNKNOWN_TYPE);
+        cfg.emit({ _: "AssignStmt", left: unused, right: { _: "AwaitExpr", arg: constant("undefined", UNDEFINED_TYPE) } });
+        cfg.goto(done);
+
+        cfg.placeLabel(invoke);
+        const result = this.expr.materialize({
+            _: "PtrCallExpr", ptr: method, receiver: record.iterator, method: unknownMethod("return"), args: [],
+        });
+        cfg.branch(record.fromSync, sync, async);
+
+        cfg.placeLabel(sync);
+        // The wrapper validates the raw result and reads done before awaiting value.
+        this.requireIteratorObject(result);
+        this.expr.materialize(this.iteratorField(result, "done"));
+        const value = this.expr.materialize(this.iteratorField(result, "value"));
+        cfg.emit({ _: "AssignStmt", left: unused, right: { _: "AwaitExpr", arg: value } });
+        cfg.goto(done);
+
+        cfg.placeLabel(async);
+        cfg.emit({ _: "AssignStmt", left: result, right: { _: "AwaitExpr", arg: result } });
+        this.requireIteratorObject(result);
+        cfg.placeLabel(done);
     }
 
     /** GetAsyncIterator chooses the async method first and caches the chosen iterator's next. */
@@ -678,8 +748,8 @@ export class StmtLowerer {
         if (target === undefined) {
             throw new LoweringError(`break outside of a breakable context`);
         }
-        // Run finally blocks of try statements entered INSIDE the target breakable.
-        this.emitFinallies(target.finallyDepth ?? 0);
+        // Run nested finally blocks, plus this loop's iterator cleanup when present.
+        this.emitFinallies(target.breakFinallyDepth ?? target.finallyDepth ?? 0);
         this.m.cfg.goto(target.breakTarget);
     }
 
@@ -816,7 +886,7 @@ export class StmtLowerer {
     }
 
     /**
-     * Emit copies of the enclosing finally blocks with stack depth > `downTo`,
+     * Emit enclosing finally blocks and cleanup callbacks with stack depth >= `downTo`,
      * innermost first — used before abrupt exits (return/throw/break/continue).
      * While a finally body is being emitted, its own scope (and deeper ones) is
      * masked so a nested abrupt exit only re-runs the OUTER finallies.
@@ -833,7 +903,11 @@ export class StmtLowerer {
                 const target = outerCatch !== undefined && outerCatch.finallyDepth >= i
                     ? outerCatch.target
                     : outerFinally ?? outerCatch?.target;
-                this.m.cfg.withExceptionTarget(target, () => this.lowerStatement(masked[0]));
+                this.m.cfg.withExceptionTarget(target, () => {
+                    const scope = masked[0];
+                    if (typeof scope === "function") scope();
+                    else this.lowerStatement(scope);
+                });
             } finally {
                 this.finallyScopes.push(...masked);
                 this.finallyExceptionTargets.push(...maskedTargets);

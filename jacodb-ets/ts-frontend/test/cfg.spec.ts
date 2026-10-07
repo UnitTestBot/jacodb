@@ -297,7 +297,7 @@ describe("control flow lowering", () => {
         expect(diagnostics.messages).toEqual([]);
         expect(calls.map((statement) => statement.right.method.name)).toContain("Symbol.asyncIterator");
         expect(calls.map((statement) => statement.right.method.name)).toContain("Symbol.iterator");
-        expect(awaits).toHaveLength(2);
+        expect(calls.map((statement) => statement.right.method.name)).toContain("return");
         expect(awaits.map((statement) => statement.right.arg))
             .toContainEqual(calls.find((statement) => statement.right.method.name === "next")?.left);
 

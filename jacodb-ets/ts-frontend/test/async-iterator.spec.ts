@@ -12,11 +12,18 @@ import { lower, methodByName } from "./util";
 async function execute(method: MethodDto, input: unknown): Promise<unknown> {
     const body = method.body!;
     const locals = new Map<string, any>();
+    let caught: unknown;
     const read = (value: ValueDto): any => {
         switch (value._) {
             case "Local": return locals.get(value.name);
             case "ParameterRef": return input;
             case "ThisRef": return undefined;
+            case "CaughtExceptionRef": return caught;
+            case "RequireObjectCoercibleExpr": {
+                const source = read(value.arg);
+                if (source === null || source === undefined) throw new TypeError("nullish binding");
+                return source;
+            }
             case "Constant":
                 switch (value.type._) {
                     case "UndefinedType": return undefined;
@@ -68,19 +75,29 @@ async function execute(method: MethodDto, input: unknown): Promise<unknown> {
     for (let steps = 0; steps < 10_000; steps++) {
         const block = body.cfg.blocks[blockId];
         let next = block.successors[0];
-        for (const statement of block.stmts) {
-            switch (statement._) {
-                case "AssignStmt":
-                    if (statement.left._ !== "Local") throw new Error("Unexpected assignment target");
-                    locals.set(statement.left.name, statement.right._ === "AwaitExpr"
-                        ? await read(statement.right.arg) : read(statement.right));
-                    break;
-                case "IfStmt": next = block.successors[read(statement.condition) ? 1 : 0]; break;
-                case "ReturnStmt": return read(statement.arg);
-                case "ReturnVoidStmt": return undefined;
-                case "ThrowStmt": throw read(statement.arg);
-                case "NopStmt": break;
-                default: throw new Error(`Unexpected protocol statement ${statement._}`);
+        for (let index = 0; index < block.stmts.length; index++) {
+            const statement = block.stmts[index];
+            try {
+                switch (statement._) {
+                    case "AssignStmt":
+                        if (statement.left._ !== "Local") throw new Error("Unexpected assignment target");
+                        locals.set(statement.left.name, statement.right._ === "AwaitExpr"
+                            ? await read(statement.right.arg) : read(statement.right));
+                        break;
+                    case "CallStmt": read(statement.expr); break;
+                    case "IfStmt": next = block.successors[read(statement.condition) ? 1 : 0]; break;
+                    case "ReturnStmt": return read(statement.arg);
+                    case "ReturnVoidStmt": return undefined;
+                    case "ThrowStmt": throw read(statement.arg);
+                    case "NopStmt": break;
+                    default: throw new Error(`Unexpected protocol statement ${statement._}`);
+                }
+            } catch (error) {
+                const handler = block.exceptionalSuccessors?.find((edge) => edge.stmtIndex === index);
+                if (handler === undefined) throw error;
+                caught = error;
+                next = handler.target;
+                break;
             }
         }
         if (next === undefined) throw new Error("Missing successor");
@@ -273,4 +290,274 @@ describe("for-await iterator acquisition and Async-from-Sync values", () => {
         await expect(run.ir(input())).rejects.toBe(failure);
         await expect(run.native(input())).rejects.toBe(failure);
     });
+});
+
+
+const breakSource = "async function run(input) { for await (const value of input) break; return 9; }";
+
+function closingInput(events: string[], options: {
+    sync?: boolean;
+    value?: unknown;
+    close?: () => unknown;
+    getterFailure?: unknown;
+} = {}) {
+    const iterator = {
+        next: () => ({ value: Object.prototype.hasOwnProperty.call(options, "value") ? options.value : 1, done: false }),
+        get return() {
+            events.push("return lookup");
+            if (options.getterFailure !== undefined) throw options.getterFailure;
+            return function () {
+                expect(this).toBe(iterator);
+                events.push("return call");
+                return options.close === undefined ? { done: true } : options.close();
+            };
+        },
+    };
+    return { [options.sync ? Symbol.iterator : Symbol.asyncIterator]: () => iterator };
+}
+
+describe("for-await abrupt completion closes its iterator", () => {
+    for (const completion of ["break;", "return value;", "throw value;"]) {
+        it(`awaits async iterator cleanup for ${completion}`, async () => {
+            const run = program(`async function run(input) { for await (const value of input) { ${completion} } return 9; }`);
+            const failure = new Error("body failure");
+            const outcomes: unknown[] = [];
+            const logs: string[][] = [];
+
+            for (const consume of [run.native, run.ir]) {
+                const events: string[] = [];
+                const input = closingInput(events, {
+                    value: completion.startsWith("throw") ? failure : 7,
+                    close: () => ({ then(resolve: (result: object) => void) {
+                        events.push("return awaited");
+                        resolve({ done: true });
+                    } }),
+                });
+
+                try { outcomes.push(await consume(input)); } catch (error) { outcomes.push(error); }
+                logs.push(events);
+            }
+
+            expect(outcomes[1]).toBe(outcomes[0]);
+            expect(logs[1]).toEqual(logs[0]);
+            expect(logs[1]).toEqual(["return lookup", "return call", "return awaited"]);
+        });
+    }
+
+    it("closes on a runtime body failure and a binding initialization failure", async () => {
+        const failure = new Error("body call failure");
+        const cases = [
+            { source: "async function run(input) { for await (const value of input) value.fail(); }", value: { fail() { throw failure; } } },
+            { source: "async function run(input) { for await (const {field} of input) return field; }", value: null },
+        ];
+
+        for (const scenario of cases) {
+            const run = program(scenario.source);
+            for (const consume of [run.native, run.ir]) {
+                const events: string[] = [];
+                const input = closingInput(events, { value: scenario.value });
+
+                if (scenario.value === null) await expect(consume(input)).rejects.toBeInstanceOf(TypeError);
+                else await expect(consume(input)).rejects.toBe(failure);
+                expect(events).toEqual(["return lookup", "return call"]);
+            }
+        }
+    });
+
+    it("preserves a body throw over return getter, call, await and result failures", async () => {
+        const bodyFailure = new Error("body failure");
+        const closeFailure = new Error("close failure");
+        const run = program("async function run(input) { for await (const value of input) throw value; }");
+        const closes = [
+            { getterFailure: closeFailure },
+            { close: () => { throw closeFailure; } },
+            { close: () => Promise.reject(closeFailure) },
+            { close: () => 1 },
+        ];
+
+        for (const options of closes) {
+            for (const consume of [run.native, run.ir]) {
+                await expect(consume(closingInput([], { ...options, value: bodyFailure }))).rejects.toBe(bodyFailure);
+            }
+        }
+    });
+
+    it("propagates cleanup failures for break and return", async () => {
+        const closeFailure = new Error("close failure");
+        for (const completion of ["break;", "return value;"]) {
+            const run = program(`async function run(input) { for await (const value of input) { ${completion} } }`);
+            for (const consume of [run.native, run.ir]) {
+                await expect(consume(closingInput([], { getterFailure: closeFailure }))).rejects.toBe(closeFailure);
+                await expect(consume(closingInput([], { close: () => Promise.reject(closeFailure) }))).rejects.toBe(closeFailure);
+                await expect(consume(closingInput([], { close: () => 1 }))).rejects.toBeInstanceOf(TypeError);
+            }
+        }
+    });
+
+    it("closes the sync fallback without assimilating its IteratorResult", async () => {
+        const run = program(breakSource);
+        const logs: string[][] = [];
+        for (const consume of [run.native, run.ir]) {
+            const events: string[] = [];
+            const input = closingInput(events, { sync: true, close: () => ({
+                get done() { events.push("close done"); return true; },
+                get value() { events.push("close value"); return { then(resolve: (value: number) => void) {
+                    events.push("close value awaited"); resolve(0);
+                } }; },
+                then() { throw new Error("must not await sync IteratorResult"); },
+            }) });
+
+            expect(await consume(input)).toBe(9);
+            logs.push(events);
+        }
+
+        expect(logs[1]).toEqual(logs[0]);
+        expect(logs[1]).toEqual(["return lookup", "return call", "close done", "close value", "close value awaited"]);
+    });
+
+    it("does not close on exhaustion, same-loop continue or next rejection", async () => {
+        const run = program("async function run(input) { for await (const value of input) continue; return 9; }");
+        const failure = new Error("next failure");
+        for (const rejectNext of [false, true]) {
+            for (const consume of [run.native, run.ir]) {
+                const events: string[] = [];
+                let step = 0;
+                const input = closingInput(events);
+                input[Symbol.asyncIterator]().next = () => {
+                    if (rejectNext) throw failure;
+                    return { value: 1, done: step++ > 0 };
+                };
+
+                if (rejectNext) await expect(consume(input)).rejects.toBe(failure);
+                else expect(await consume(input)).toBe(9);
+                expect(events).toEqual([]);
+            }
+        }
+    });
+
+    it("runs inner finally before iterator cleanup and outer finally after cleanup", async () => {
+        const run = program(`async function run(input) {
+            try { for await (const value of input) {
+                try { return value; } finally { input.inner(); }
+            } } finally { input.outer(); }
+        }`);
+        const logs: string[][] = [];
+        for (const consume of [run.native, run.ir]) {
+            const events: string[] = [];
+            const input = Object.assign(closingInput(events), {
+                inner: () => events.push("inner finally"),
+                outer: () => events.push("outer finally"),
+            });
+
+            expect(await consume(input)).toBe(1);
+            logs.push(events);
+        }
+
+        expect(logs[1]).toEqual(logs[0]);
+        expect(logs[1]).toEqual(["inner finally", "return lookup", "return call", "outer finally"]);
+    });
+
+    it("closes nested iterators in order on a labeled outer continue", async () => {
+        const run = program(`async function run(input) {
+            outer: for await (const value of input) {
+                for await (const other of input) continue outer;
+            }
+            return 9;
+        }`);
+        const logs: string[][] = [];
+        for (const consume of [run.native, run.ir]) {
+            const events: string[] = [];
+            let acquired = 0;
+            const input = { [Symbol.asyncIterator]() {
+                const id = acquired++;
+                let step = 0;
+                return {
+                    next: () => ({ value: 1, done: id === 0 && step++ > 0 }),
+                    return() { events.push(`close ${id}`); return { done: true }; },
+                };
+            } };
+
+            expect(await consume(input)).toBe(9);
+            logs.push(events);
+        }
+
+        expect(logs[1]).toEqual(logs[0]);
+        expect(logs[1]).toEqual(["close 1"]);
+    });
+
+    it("closes both iterators from inner to outer on a labeled break", async () => {
+        const run = program(`async function run(input) {
+            outer: for await (const value of input) {
+                for await (const other of input) break outer;
+            }
+            return 9;
+        }`);
+        for (const consume of [run.native, run.ir]) {
+            const events: number[] = [];
+            let acquired = 0;
+            const input = { [Symbol.asyncIterator]() {
+                const id = acquired++;
+                return {
+                    next: () => ({ value: 1, done: false }),
+                    return() { events.push(id); return { done: true }; },
+                };
+            } };
+
+            expect(await consume(input)).toBe(9);
+            expect(events).toEqual([1, 0]);
+        }
+    });
+
+    it("routes a cleanup failure to the enclosing catch without closing twice", async () => {
+        const run = program(`async function run(input) {
+            try { for await (const value of input) break; }
+            catch (failure) { return failure; }
+        }`);
+        const failure = new Error("close failure");
+        for (const consume of [run.native, run.ir]) {
+            const events: string[] = [];
+            const input = closingInput(events, { close: () => { throw failure; } });
+
+            expect(await consume(input)).toBe(failure);
+            expect(events).toEqual(["return lookup", "return call"]);
+        }
+    });
+
+    it("captures the return expression before cleanup changes its source", async () => {
+        const run = program("async function run(input) { for await (const value of input) return input.marker; }");
+        for (const consume of [run.native, run.ir]) {
+            const input = Object.assign(closingInput([], { close: () => {
+                input.marker = 2;
+                return { done: true };
+            } }), { marker: 1 });
+
+            expect(await consume(input)).toBe(1);
+            expect(input.marker).toBe(2);
+        }
+    });
+
+    it("accepts a missing return method on async and synchronous iterators", async () => {
+        const run = program(breakSource);
+        for (const key of [Symbol.iterator, Symbol.asyncIterator]) {
+            for (const consume of [run.native, run.ir]) {
+                expect(await consume({ [key]: () => ({ next: () => ({ value: 1, done: false }) }) })).toBe(9);
+            }
+        }
+    });
+
+    it("does not close when reading the async iterator value fails before binding", async () => {
+        const run = program(breakSource);
+        const failure = new Error("value getter failure");
+        for (const consume of [run.native, run.ir]) {
+            let closes = 0;
+            const input = { [Symbol.asyncIterator]: () => ({
+                next: () => ({ done: false, get value() { throw failure; } }),
+                return() { closes++; return { done: true }; },
+            }) };
+
+            await expect(consume(input)).rejects.toBe(failure);
+            expect(closes).toBe(0);
+        }
+    });
+
 });
