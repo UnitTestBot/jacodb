@@ -17,6 +17,7 @@
 package org.jacodb.ets.test
 
 import org.jacodb.ets.utils.ProcessUtil
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import java.net.ConnectException
 import java.net.Socket
@@ -163,6 +164,10 @@ class ProcessUtilTest {
     }
 
     private fun checkDescendantCleanup(interrupt: Boolean) {
+        assumeTrue(
+            runCatching { Class.forName("java.lang.ProcessHandle") }.isSuccess,
+            "Java 8 supports parent-only cleanup; descendant cleanup requires Java 9 or later",
+        )
         val directory = createTempDirectory("process-util-descendant")
         val ready = directory.resolve("ready")
         val failure = AtomicReference<Throwable>()
@@ -207,7 +212,11 @@ class ProcessUtilTest {
         } finally {
             runner.interrupt()
             runner.join(5000)
-            pid?.let { ProcessHandle.of(it).ifPresent { child -> child.destroyForcibly() } }
+            pid?.let { childPid ->
+                ProcessBuilder(node, "-e", "try { process.kill(Number(process.argv[1]), 'SIGKILL'); } catch {}", "$childPid")
+                    .start()
+                    .waitFor()
+            }
             watcher.close()
             directory.toFile().deleteRecursively()
         }

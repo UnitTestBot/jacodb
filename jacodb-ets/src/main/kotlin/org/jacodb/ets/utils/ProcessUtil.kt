@@ -17,12 +17,38 @@
 package org.jacodb.ets.utils
 
 import mu.KotlinLogging
+import java.lang.reflect.InvocationTargetException
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
+import java.util.stream.Stream
 import kotlin.time.Duration
 
 private val logger = KotlinLogging.logger {}
+
+/** Java 8 exposes parent cleanup only; process-tree cleanup is available on Java 9 and later. */
+private fun destroyDescendantsIfSupported(process: Process) {
+    val handleClass = try {
+        Class.forName("java.lang.ProcessHandle")
+    } catch (_: ClassNotFoundException) {
+        return
+    }
+
+    try {
+        val handle = Process::class.java.getMethod("toHandle").invoke(process)
+        val descendants = handleClass.getMethod("descendants").invoke(handle) as Stream<*>
+        val destroy = handleClass.getMethod("destroyForcibly")
+        descendants.use { children ->
+            children.forEach { child -> destroy.invoke(child) }
+        }
+    } catch (error: InvocationTargetException) {
+        val cause = error.targetException
+        if (cause is RuntimeException) throw cause
+        throw IllegalStateException("Failed to terminate process descendants", cause)
+    } catch (error: ReflectiveOperationException) {
+        throw IllegalStateException("Cannot access process-tree cleanup on this runtime", error)
+    }
+}
 
 private fun terminateAndReap(
     process: Process,
@@ -31,9 +57,7 @@ private fun terminateAndReap(
     var interruption = initialInterruption
     var cleanupFailure: RuntimeException? = null
     try {
-        process.toHandle().descendants().use { descendants ->
-            descendants.forEach { child -> child.destroyForcibly() }
-        }
+        destroyDescendantsIfSupported(process)
     } catch (error: RuntimeException) {
         cleanupFailure = error
     }
