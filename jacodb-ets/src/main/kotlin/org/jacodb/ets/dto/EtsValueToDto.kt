@@ -38,7 +38,7 @@ fun EtsLocal.toDto(): LocalDto = LocalDto(
 )
 
 fun EtsConstant.toDto(): ConstantDto = ConstantDto(
-    value = toString(),
+    value = if (this is EtsStringConstant) value else toString(),
     type = type.toDto(),
 )
 

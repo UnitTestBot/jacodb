@@ -161,8 +161,10 @@ import model.Value as ProtoValue
 // region model
 
 fun ProtoScene.toEts(): EtsScene {
-    val files = files.map { it.toEts() }
-    return EtsScene(files)
+    return EtsScene(
+        projectFiles = files.map { it.toEts() },
+        sdkFiles = sdkFiles.map { it.toEts() },
+    )
 }
 
 fun ProtoFile.toEts(): EtsFile {

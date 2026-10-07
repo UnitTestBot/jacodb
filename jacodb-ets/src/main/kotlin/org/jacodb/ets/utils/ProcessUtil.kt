@@ -84,6 +84,15 @@ object ProcessUtil {
             false
         }
 
+        if (isTimeout) {
+            try {
+                process.toHandle().descendants().forEach { child -> child.destroyForcibly() }
+            } finally {
+                process.destroyForcibly()
+                process.waitFor()
+            }
+        }
+
         // Wait for all coroutines to finish
         runBlocking {
             joinAll(stdinJob, stdoutJob, stderrJob)
