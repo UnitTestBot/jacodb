@@ -29,6 +29,14 @@ private fun terminateAndReap(
     initialInterruption: InterruptedException? = null,
 ) {
     var interruption = initialInterruption
+    var cleanupFailure: RuntimeException? = null
+    try {
+        process.toHandle().descendants().use { descendants ->
+            descendants.forEach { child -> child.destroyForcibly() }
+        }
+    } catch (error: RuntimeException) {
+        cleanupFailure = error
+    }
     process.destroy()
     if (process.isAlive) {
         process.destroyForcibly()
@@ -49,9 +57,11 @@ private fun terminateAndReap(
         }
     }
     if (interruption != null) {
+        cleanupFailure?.let { interruption.addSuppressed(it) }
         Thread.currentThread().interrupt()
         throw interruption
     }
+    cleanupFailure?.let { throw it }
 }
 
 object ProcessUtil {
