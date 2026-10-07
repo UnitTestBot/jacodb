@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
+import org.junit.Assume.assumeTrue
 import java.nio.file.Files
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
@@ -27,6 +28,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 class ProcessTimeoutTest {
+    private val supportsDescendants = runCatching { Class.forName("java.lang.ProcessHandle") }.isSuccess
+
     @Test
     fun `timeout terminates and reaps the process before pipe readers finish`() {
         val pidFile = Files.createTempFile("process-timeout-test-", ".pid")
@@ -40,13 +43,13 @@ class ProcessTimeoutTest {
 
         try {
             val completed = result.get(3, TimeUnit.SECONDS)
-            val pid = Files.readString(pidFile).trim().toLong()
+            val pid = Files.readAllLines(pidFile).joinToString(separator = "\n").trim().toLong()
 
             assertTrue(completed.isTimeout)
-            assertFalse(ProcessHandle.of(pid).map { process -> process.isAlive }.orElse(false))
+            assertFalse(isProcessAlive(pid))
         } finally {
-            Files.readString(pidFile).trim().toLongOrNull()?.let { pid ->
-                ProcessHandle.of(pid).ifPresent { process -> process.destroyForcibly() }
+            Files.readAllLines(pidFile).joinToString(separator = "\n").trim().toLongOrNull()?.let { pid ->
+                terminateTestProcess(pid)
             }
             result.cancel(true)
             executor.shutdownNow()
@@ -56,6 +59,10 @@ class ProcessTimeoutTest {
 
     @Test
     fun `timeout also terminates a child holding inherited stdout and stderr`() {
+        assumeTrue(
+            "Java 8 supports parent-only cleanup; descendant cleanup requires Java 9 or later",
+            supportsDescendants,
+        )
         val pidFile = Files.createTempFile("process-tree-timeout-test-", ".pid")
         val executor = Executors.newSingleThreadExecutor()
         val result = executor.submit<ProcessUtil.Result> {
@@ -71,10 +78,10 @@ class ProcessTimeoutTest {
 
             assertEquals(expected = 2, actual = pids.size)
             assertTrue(completed.isTimeout)
-            assertTrue(pids.all { pid -> !ProcessHandle.of(pid).map { process -> process.isAlive }.orElse(false) })
+            assertTrue(pids.all { pid -> !isProcessAlive(pid) })
         } finally {
             Files.readAllLines(pidFile).mapNotNull(String::toLongOrNull).forEach { pid ->
-                ProcessHandle.of(pid).ifPresent { process -> process.destroyForcibly() }
+                terminateTestProcess(pid)
             }
             result.cancel(true)
             executor.shutdownNow()
@@ -95,10 +102,16 @@ class ProcessTimeoutTest {
     private fun assertInterruptCleanup(timeout: Duration?) {
         val pidFile = Files.createTempFile("process-tree-interruption-test-", ".pid")
         val outcome = CompletableFuture<Pair<Throwable?, Boolean>>()
+        val command = if (supportsDescendants) {
+            "echo $$ > '$pidFile'; sleep 30 & echo $! >> '$pidFile'; wait"
+        } else {
+            "echo $$ > '$pidFile'; exec sleep 30"
+        }
+        val expectedPidCount = if (supportsDescendants) 2 else 1
         val worker = Thread {
             try {
                 ProcessUtil.run(
-                    command = listOf("/bin/sh", "-c", "echo $$ > '$pidFile'; sleep 30 & echo $! >> '$pidFile'; wait"),
+                    command = listOf("/bin/sh", "-c", command),
                     timeout = timeout,
                 )
                 outcome.complete(null to Thread.currentThread().isInterrupted)
@@ -110,29 +123,49 @@ class ProcessTimeoutTest {
 
         try {
             val startDeadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3)
-            while (Files.readAllLines(pidFile).size < 2 && System.nanoTime() < startDeadline) {
+            while (Files.readAllLines(pidFile).size < expectedPidCount && System.nanoTime() < startDeadline) {
                 Thread.sleep(10)
             }
             val pids = Files.readAllLines(pidFile).map(String::toLong)
-            assertEquals(expected = 2, actual = pids.size)
+            assertEquals(expected = expectedPidCount, actual = pids.size)
 
             worker.interrupt()
             val (failure, interruptRestored) = outcome.get(3, TimeUnit.SECONDS)
 
             assertIs<InterruptedException>(failure)
             assertTrue(
-                pids.all { pid -> !ProcessHandle.of(pid).map { process -> process.isAlive }.orElse(false) },
-                "Interrupted wait must terminate both the parent and its child",
+                pids.all { pid -> !isProcessAlive(pid) },
+                "Interrupted wait must terminate the parent and any supported descendant",
             )
             assertTrue(interruptRestored)
         } finally {
             Files.readAllLines(pidFile).mapNotNull(String::toLongOrNull).forEach { pid ->
-                ProcessHandle.of(pid).ifPresent { process -> process.destroyForcibly() }
+                terminateTestProcess(pid)
             }
             worker.interrupt()
             worker.join(1_000)
             Files.deleteIfExists(pidFile)
         }
+    }
+
+    private fun isProcessAlive(pid: Long): Boolean {
+        if (supportsDescendants) {
+            val handleClass = Class.forName("java.lang.ProcessHandle")
+            val optionalHandle = handleClass.getMethod("of", Long::class.javaPrimitiveType)
+                .invoke(null, pid) as java.util.Optional<*>
+            val handle = optionalHandle.orElse(null) ?: return false
+            return handleClass.getMethod("isAlive").invoke(handle) as Boolean
+        }
+
+        val process = ProcessBuilder("/bin/kill", "-0", pid.toString()).redirectErrorStream(true).start()
+        process.inputStream.close()
+        return process.waitFor() == 0
+    }
+
+    private fun terminateTestProcess(pid: Long) {
+        val process = ProcessBuilder("/bin/kill", "-9", pid.toString()).redirectErrorStream(true).start()
+        process.inputStream.close()
+        process.waitFor()
     }
 
     @Test

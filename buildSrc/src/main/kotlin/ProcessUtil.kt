@@ -4,8 +4,34 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.Reader
+import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.TimeUnit
+import java.util.stream.Stream
 import kotlin.time.Duration
+
+/** Java 8 exposes parent cleanup only; process-tree cleanup is available on Java 9 and later. */
+private fun destroyDescendantsIfSupported(process: Process) {
+    val handleClass = try {
+        Class.forName("java.lang.ProcessHandle")
+    } catch (_: ClassNotFoundException) {
+        return
+    }
+
+    try {
+        val handle = Process::class.java.getMethod("toHandle").invoke(process)
+        val descendants = handleClass.getMethod("descendants").invoke(handle) as Stream<*>
+        val destroy = handleClass.getMethod("destroyForcibly")
+        descendants.use { children ->
+            children.forEach { child -> destroy.invoke(child) }
+        }
+    } catch (error: InvocationTargetException) {
+        val cause = error.targetException
+        if (cause is RuntimeException) throw cause
+        throw IllegalStateException("Failed to terminate process descendants", cause)
+    } catch (error: ReflectiveOperationException) {
+        throw IllegalStateException("Cannot access process-tree cleanup on this runtime", error)
+    }
+}
 
 object ProcessUtil {
     data class Result(
@@ -90,9 +116,7 @@ object ProcessUtil {
 
     internal fun terminateAndReap(process: Process) {
         try {
-            process.toHandle().descendants().use { children ->
-                children.forEach { child -> child.destroyForcibly() }
-            }
+            destroyDescendantsIfSupported(process)
         } finally {
             process.destroyForcibly()
             var interrupted = false
