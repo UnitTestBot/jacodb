@@ -31,7 +31,7 @@ internal class WatcherActor(
     private sealed interface Status {
         data object Idle : Status
         data class DetectingTermination(
-            val computation: CompletableDeferred<Unit>,
+            val computations: MutableList<CompletableDeferred<Unit>>,
         ) : Status
     }
 
@@ -60,16 +60,18 @@ internal class WatcherActor(
 
     override suspend fun receive(message: WatcherMessage) {
         when (message) {
-            WatcherMessage.Idle -> {
-                state.status = Status.Idle
-            }
-
             WatcherMessage.OutOfSystemSend -> {
                 state.totalSent++
             }
 
             is WatcherMessage.AwaitTermination -> {
-                state.status = Status.DetectingTermination(message.computationFinished)
+                val status = state.status
+                if (status is Status.DetectingTermination) {
+                    status.computations.removeAll { it.isCompleted }
+                    status.computations.add(message.computationFinished)
+                } else {
+                    state.status = Status.DetectingTermination(mutableListOf(message.computationFinished))
+                }
             }
 
             is WatcherMessage.Register -> {
@@ -89,7 +91,7 @@ internal class WatcherActor(
         }
         val status = state.status
         if (status is Status.DetectingTermination) {
-            checkTermination(status.computation)
+            checkTermination(status.computations)
         }
     }
 
@@ -100,11 +102,12 @@ internal class WatcherActor(
         logger.info { "Messages (recv/sent): ${state.totalReceived}/${state.totalSent}\t${"%.2f".format(percent)}%\tLeft: $left" }
     }
 
-    private fun checkTermination(computationFinished: CompletableDeferred<Unit>) {
+    private fun checkTermination(computationsFinished: List<CompletableDeferred<Unit>>) {
         if (isTerminated()) {
             printStatistics()
             logger.info { "Computation finished..." }
-            computationFinished.complete(Unit)
+            state.status = Status.Idle
+            computationsFinished.forEach { it.complete(Unit) }
         }
     }
 

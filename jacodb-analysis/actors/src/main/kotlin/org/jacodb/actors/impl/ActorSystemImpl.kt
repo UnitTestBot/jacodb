@@ -19,7 +19,10 @@ package org.jacodb.actors.impl
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
 import mu.KLogger
 import mu.KotlinLogging.logger
 import org.jacodb.actors.api.ActorFactory
@@ -49,24 +52,34 @@ internal class ActorSystemImpl<Message>(
     private val user = spawner.spawn(USER_ACTOR_NAME, spawnOptions, actorFactory)
 
     override suspend fun send(message: Message) {
+        scope.ensureActive()
         watcher.receive(WatcherMessage.OutOfSystemSend)
         user.receive(message)
     }
 
     override suspend fun <R> ask(messageBuilder: (CompletableDeferred<R>) -> Message): R {
-        watcher.receive(WatcherMessage.OutOfSystemSend)
-        val deferred = CompletableDeferred<R>()
-        val ack = messageBuilder(deferred)
-        user.receive(ack)
-        val answer = deferred.await()
-        return answer
+        scope.ensureActive()
+        val requestJob = SupervisorJob(parent = scope.coroutineContext.job)
+        val deferred = CompletableDeferred<R>(parent = requestJob)
+        try {
+            val ack = messageBuilder(deferred)
+            watcher.receive(WatcherMessage.OutOfSystemSend)
+            user.receive(ack)
+            return deferred.await()
+        } finally {
+            requestJob.cancel()
+        }
     }
 
     override suspend fun awaitCompletion() {
-        val ready = CompletableDeferred<Unit>()
-        watcher.receive(WatcherMessage.AwaitTermination(ready))
-        ready.await()
-        watcher.receive(WatcherMessage.Idle)
+        scope.ensureActive()
+        val ready = CompletableDeferred<Unit>(parent = scope.coroutineContext.job)
+        try {
+            watcher.receive(WatcherMessage.AwaitTermination(ready))
+            ready.await()
+        } finally {
+            ready.cancel()
+        }
     }
 
     override suspend fun resume() {
