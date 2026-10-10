@@ -28,6 +28,7 @@ import org.jacodb.ets.model.EtsAndExpr
 import org.jacodb.ets.model.EtsAnyType
 import org.jacodb.ets.model.EtsArrayAccess
 import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsRequireObjectCoercibleExpr
 import org.jacodb.ets.model.EtsDefineAccessorStmt
 import org.jacodb.ets.model.EtsCopyDataPropertiesStmt
 import org.jacodb.ets.model.EtsAwaitExpr
@@ -400,6 +401,11 @@ class EtsMethodBuilder(
             siteId = siteId,
             cooked = cooked,
             raw = raw,
+            type = type.toEtsType(),
+        )
+
+        is RequireObjectCoercibleExprDto -> EtsRequireObjectCoercibleExpr(
+            arg = ensureOneAddress(arg.toEtsEntity()),
             type = type.toEtsType(),
         )
 
