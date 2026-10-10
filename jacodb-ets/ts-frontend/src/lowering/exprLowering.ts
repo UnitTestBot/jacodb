@@ -1006,11 +1006,60 @@ export class ExprLowerer {
     }
 
     private lowerCallArguments(node: ts.CallExpression): ValueDto[] {
-        return node.arguments.map((argument, index) =>
-            ts.isSpreadElement(argument)
-                ? this.spreadFallback(argument)
-                : this.lowerImmediateBefore(argument, node.arguments.slice(index + 1)),
-        );
+        return this.lowerArguments(node.arguments);
+    }
+
+    private lowerArguments(argumentsList: readonly ts.Expression[]): ImmediateDto[] {
+        const result: ImmediateDto[] = [];
+
+        argumentsList.forEach((argument, index) => {
+            if (!ts.isSpreadElement(argument)) {
+                result.push(this.lowerImmediateBefore(argument, argumentsList.slice(index + 1)));
+                return;
+            }
+
+            const elementTypes = this.fixedSpreadElementTypes(argument.expression);
+            const iterable = this.lowerToImmediate(argument.expression);
+            if (elementTypes === undefined) {
+                throw new LoweringError("spread argument has no statically known length");
+            }
+
+            const expandedType: TypeDto = { _: "ArrayType", elementType: UNKNOWN_TYPE, dimensions: 1 };
+            const expanded = this.materialize({
+                _: "SpreadExpansionExpr",
+                iterable,
+                expectedCount: elementTypes.length,
+            }, expandedType);
+
+            elementTypes.forEach((elementType, elementIndex) => {
+                const element = this.materialize({
+                    _: "ArrayRef",
+                    array: expanded,
+                    index: constant(String(elementIndex), NUMBER_TYPE),
+                    type: elementType,
+                }, elementType);
+                result.push(element);
+            });
+        });
+
+        return result;
+    }
+
+    private fixedSpreadElementTypes(expression: ts.Expression): TypeDto[] | undefined {
+        const value = unwrapTransparentExpression(expression);
+        if (ts.isArrayLiteralExpression(value) && value.elements.every((element) =>
+            !ts.isSpreadElement(element) && !ts.isOmittedExpression(element))) {
+            return value.elements.map((element) => this.safeTypeOf(element));
+        }
+
+        const type = this.m.checker.getTypeAtLocation(expression);
+        if (!this.m.checker.isTupleType(type)) return undefined;
+
+        const tuple = (type as ts.TupleTypeReference).target;
+        return tuple.elementFlags.every((flag) => flag === ts.ElementFlags.Required)
+            ? this.m.checker.getTypeArguments(type as ts.TupleTypeReference)
+                .map((elementType) => this.m.converter.convertType(elementType))
+            : undefined;
     }
 
     /** Preserve an already selected receiver/callee even if an argument mutates its source binding. */

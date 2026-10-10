@@ -43,6 +43,7 @@ export type ImmediateDto = LocalDto | ConstantDto | ClassValueRefDto;
 
 export type ExprDto =
     | NewExprDto
+    | SpreadExpansionExprDto
     | NewArrayExprDto
     | DeleteExprDto
     | AwaitExprDto
@@ -103,6 +104,12 @@ export interface NewExprDto {
     readonly _: "NewExpr";
     classType: TypeDto; // Result type hint; may be a union for a dynamic constructor.
     constructorValue?: ImmediateDto; // Evaluated constructor, absent for legacy/static allocation.
+}
+
+export interface SpreadExpansionExprDto {
+    readonly _: "SpreadExpansionExpr";
+    iterable: ImmediateDto;
+    expectedCount: number;
 }
 
 export interface NewArrayExprDto {

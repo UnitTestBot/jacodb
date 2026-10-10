@@ -163,7 +163,7 @@ describe("call evaluation order", () => {
         ]));
     });
 
-    it("marks an instanceof check unsupported when its constructor call contains a spread", () => {
+    it("does not call a function with an unbounded spread argument", () => {
         const { file, diagnostics } = lower(`
             class A {}
             function left(): A { return new A(); }
@@ -180,17 +180,16 @@ describe("call evaluation order", () => {
                 : [],
         );
         const spreadIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
-            && stmt.right._ === "UnsupportedValue" && stmt.right.kindName === "SpreadElement");
+            && stmt.right._ === "UnsupportedValue" && stmt.right.kindName === "CallExpression");
         const checkIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
             && stmt.right._ === "UnsupportedValue" && stmt.right.kindName === "BinaryExpression");
 
-        expect(calls.map((call) => call.name)).toEqual(["left", "first", "choose"]);
+        expect(calls.map((call) => call.name)).toEqual(["left", "first"]);
         expect(calls[1].index).toBeLessThan(spreadIndex);
-        expect(spreadIndex).toBeLessThan(calls[2].index);
-        expect(calls[2].index).toBeLessThan(checkIndex);
+        expect(spreadIndex).toBeLessThan(checkIndex);
         expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr")).toBe(false);
         expect(diagnostics.messages).toEqual(expect.arrayContaining([
-            expect.stringContaining("spread arguments are not supported"),
+            expect.stringContaining("spread argument has no statically known length"),
             expect.stringContaining("instanceof constructor value cannot be represented"),
         ]));
     });
