@@ -16,6 +16,7 @@
 
 package org.jacodb.ets.utils
 
+import org.jacodb.ets.dto.CfgDto
 import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.model.EtsBlockCfg
 import org.jacodb.ets.model.EtsFile
@@ -64,5 +65,9 @@ fun EtsBlockCfg.view() {
 }
 
 fun EtsLinearCfg.view() {
+    view(toDot())
+}
+
+fun CfgDto.view() {
     view(toDot())
 }
