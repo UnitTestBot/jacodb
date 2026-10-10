@@ -5,17 +5,34 @@ import { executeObjectIr } from "./object-runtime";
 import { lower, methodByName } from "./util";
 
 describe("lexical arrow receivers", () => {
-    it("uses the creation receiver when a stored arrow body reads this", () => {
-        const { file, diagnostics } = lower(`
-            export function result() {
+    it("uses the captured receiver before evaluating an arrow parameter default", () => {
+        const source = `
+            export function result(): number {
                 const source = {
                     offset: 11,
-                    install: function(target: any) { target.callback = () => this.offset + 1; },
+                    install: function(target: any) { target.callback = (value = this.offset) => value + 1; },
                 };
                 const target: any = { offset: 100 };
                 source.install(target);
                 return target.callback();
             }
+        `;
+        const { file, diagnostics } = lower(source);
+        const roundTripped = JSON.parse(serializeEtsFile(file));
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(executeObjectIr(roundTripped, "result")).toBe(12);
+
+        const javascript = ts.transpileModule(source, {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+        }).outputText;
+        expect(new Function("exports", `${javascript}\nreturn exports.result();`)({})).toBe(12);
+    });
+
+    it("preserves an outer binding referenced only by a parameter default", () => {
+        const { file, diagnostics } = lower(`
+            function make(seed: number) { return (value = seed) => value; }
+            export function result() { return make(12)(); }
         `);
         const roundTripped = JSON.parse(serializeEtsFile(file));
 
@@ -92,4 +109,22 @@ describe("lexical arrow receivers", () => {
         expect(nested.every((method) => method.signature.parameters[0].type._ === "LexicalEnvType")).toBe(true);
         expect(ordinary.every((method) => method.signature.parameters.length === 0)).toBe(true);
     });
+    it("uses the creation receiver when a stored arrow body reads this", () => {
+        const { file, diagnostics } = lower(`
+            export function result() {
+                const source = {
+                    offset: 11,
+                    install: function(target: any) { target.callback = () => this.offset + 1; },
+                };
+                const target: any = { offset: 100 };
+                source.install(target);
+                return target.callback();
+            }
+        `);
+        const roundTripped = JSON.parse(serializeEtsFile(file));
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(executeObjectIr(roundTripped, "result")).toBe(12);
+    });
+
 });

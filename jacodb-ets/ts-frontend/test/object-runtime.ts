@@ -90,7 +90,6 @@ export function executeObjectIr(file: EtsFileDto, name: string, args: unknown[] 
                     if (source === null || source === undefined) throw new TypeError("nullish object binding");
                     return source;
                 }
-
                 case "StaticCallExpr": return invoke(lookup(value.method), value.args.map(read), undefined);
                 case "InstanceCallExpr": {
                     const object = read(value.instance);

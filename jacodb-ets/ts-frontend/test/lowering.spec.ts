@@ -26,6 +26,25 @@ function assignmentTo(stmts: StmtDto[], name: string): AssignStmtDto | undefined
 }
 
 describe("straight-line lowering", () => {
+    it("lowers literal initializers to constants", () => {
+        const stmts = bodyStmts(`let x = 42; let s = "hi"; let b = true; let n = null; let u = undefined;`);
+        expect(stmts).toEqual([
+            asgn("x", { _: "Constant", value: "42", type: { _: "NumberType" } }),
+            asgn("s", { _: "Constant", value: "hi", type: { _: "StringType" } }),
+            asgn("b", { _: "Constant", value: "true", type: { _: "BooleanType" } }),
+            asgn("n", { _: "Constant", value: "null", type: { _: "NullType" } }),
+            asgn("u", { _: "Constant", value: "undefined", type: { _: "UndefinedType" } }),
+        ]);
+
+        function asgn(name: string, right: unknown) {
+            return {
+                _: "AssignStmt",
+                left: expect.objectContaining({ _: "StaticFieldRef", field: expect.objectContaining({ name }) }),
+                right,
+            };
+        }
+    });
+
     it("preserves bigint operations and exact literals through JSON", () => {
         const source = `
             export function increment(x: bigint): bigint { return x + 1n; }
@@ -62,25 +81,6 @@ describe("straight-line lowering", () => {
         }).outputText;
         const concrete = new Function("exports", `${javascript}\nreturn [exports.increment(1n), exports.large, exports.negative];`)({});
         expect(concrete).toEqual([2n, 9007199254740993n, -32n]);
-    });
-
-    it("lowers literal initializers to constants", () => {
-        const stmts = bodyStmts(`let x = 42; let s = "hi"; let b = true; let n = null; let u = undefined;`);
-        expect(stmts).toEqual([
-            asgn("x", { _: "Constant", value: "42", type: { _: "NumberType" } }),
-            asgn("s", { _: "Constant", value: "hi", type: { _: "StringType" } }),
-            asgn("b", { _: "Constant", value: "true", type: { _: "BooleanType" } }),
-            asgn("n", { _: "Constant", value: "null", type: { _: "NullType" } }),
-            asgn("u", { _: "Constant", value: "undefined", type: { _: "UndefinedType" } }),
-        ]);
-
-        function asgn(name: string, right: unknown) {
-            return {
-                _: "AssignStmt",
-                left: expect.objectContaining({ _: "StaticFieldRef", field: expect.objectContaining({ name }) }),
-                right,
-            };
-        }
     });
 
     it("lowers binary expressions with immediate operands", () => {

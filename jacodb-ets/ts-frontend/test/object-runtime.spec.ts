@@ -26,14 +26,14 @@ function rewriteCaptures(value: unknown, rewrite: (type: LexicalEnvTypeDto) => v
     return changed;
 }
 
-const BODY_CAPTURE = `
-    function make(seed: number) { return function() { return seed; }; }
+const DEFAULT_CAPTURE = `
+    function make(seed: number) { return (value = seed) => value; }
     export function result() { return make(12)(); }
 `;
 
 describe("object test interpreter closure environments", () => {
     it("constructs the environment from the lifted method's declared slots", () => {
-        const file = lowerSerialized(BODY_CAPTURE);
+        const file = lowerSerialized(DEFAULT_CAPTURE);
         const lifted = file.classes.flatMap((clazz) => clazz.methods)
             .find((method) => method.signature.parameters[0]?.type._ === "LexicalEnvType")!;
         const environmentType = lifted.signature.parameters[0].type;
@@ -46,7 +46,7 @@ describe("object test interpreter closure environments", () => {
     });
 
     it("rejects a closure reference omitted from its base's declared slots", () => {
-        const file = lowerSerialized(BODY_CAPTURE);
+        const file = lowerSerialized(DEFAULT_CAPTURE);
         const reference = file.classes.flatMap((clazz) => clazz.methods)
             .flatMap((method) => method.body?.cfg.blocks.flatMap((block) => block.stmts) ?? [])
             .flatMap((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "ClosureFieldRef" ? [stmt.right] : [])

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { serializeEtsFile } from "../src/serialize";
 import { BasicBlockDto, MethodDto } from "../src/dto/model";
 import { IfStmtDto, StmtDto } from "../src/dto/stmts";
+import { serializeEtsFile } from "../src/serialize";
 import { defaultMethod, lower, methodByName } from "./util";
 
 function blocksOf(method: MethodDto): BasicBlockDto[] {
