@@ -1170,9 +1170,7 @@ export class ExprLowerer {
             throw new LoweringError("new constructor value cannot be represented in EtsIR");
         }
 
-        const loweredArgs = args.map((a, index) =>
-            ts.isSpreadElement(a) ? this.spreadFallback(a) : this.lowerImmediateBefore(a, args.slice(index + 1)),
-        );
+        const loweredArgs = this.lowerArguments(args);
         const classType = staticConstructor ? this.newTargetClassType(node.expression) : inferredType;
         const temp = this.m.newTemp(classType);
         const allocation = constructorValue === undefined
