@@ -421,13 +421,14 @@ export class ExprLowerer {
         };
     }
 
-    private lowerElementAccess(node: ts.ElementAccessExpression): ValueDto {
-        if (this.computedConstructorCalleeDepth > 0) {
-            this.lowerToImmediate(node.expression);
-            this.lowerToImmediate(node.argumentExpression);
-            throw new LoweringError("computed constructor access is not represented in EtsIR");
-        }
+    private isNamespaceObject(node: ts.Expression): boolean {
+        const expression = unwrapTransparentExpression(node);
+        const symbol = ts.isIdentifier(expression) ? this.m.converter.symbolOf(expression) : undefined;
+        const typeSymbol = this.m.checker.getTypeAtLocation(node).getSymbol();
+        return [symbol, typeSymbol].some((candidate) => candidate?.declarations?.some(ts.isModuleDeclaration));
+    }
 
+    private lowerElementAccess(node: ts.ElementAccessExpression): ValueDto {
         const chain = optionalChain(node);
         if (chain !== undefined) {
             return this.lowerOptionalChain(node, chain);
@@ -435,6 +436,11 @@ export class ExprLowerer {
         const receiverType = this.m.checker.getTypeAtLocation(node.expression);
         if (!this.m.checker.isArrayType(receiverType)
             && !this.m.checker.isTupleType(receiverType)) {
+            if (this.computedConstructorCalleeDepth > 0 && this.isNamespaceObject(node.expression)) {
+                this.lowerToImmediate(node.expression);
+                this.lowerToImmediate(node.argumentExpression);
+                throw new LoweringError("computed namespace constructor access has no runtime namespace object in EtsIR");
+            }
             const instance = this.snapshotToLocal(node.expression);
             return {
                 _: "PropertyRef",
@@ -576,6 +582,10 @@ export class ExprLowerer {
         }
         const receiverType = this.m.checker.getTypeAtLocation(node.expression);
         if (!this.m.checker.isArrayType(receiverType) && !this.m.checker.isTupleType(receiverType)) {
+            if (this.computedConstructorCalleeDepth > 0 && this.isNamespaceObject(node.expression)) {
+                this.lowerToImmediate(node.argumentExpression);
+                throw new LoweringError("computed namespace constructor access has no runtime namespace object in EtsIR");
+            }
             return {
                 _: "PropertyRef",
                 instance,
@@ -1157,10 +1167,6 @@ export class ExprLowerer {
 
     private lowerNew(node: ts.NewExpression): ValueDto {
         const args = node.arguments ?? ts.factory.createNodeArray();
-        if (containsElementAccess(node.expression)) {
-            this.lowerDynamicConstructorValue(node.expression, args);
-            throw new LoweringError("computed constructor access is not represented in EtsIR");
-        }
 
         if (this.isProjectClassProperty(node.expression)) {
             this.evaluateProjectClassPropertyReceiver(node.expression);
@@ -1225,7 +1231,8 @@ export class ExprLowerer {
     private lowerDynamicConstructorValue(node: ts.Expression, args: readonly ts.Expression[]): ImmediateDto {
         this.computedConstructorCalleeDepth++;
         try {
-            return this.lowerImmediateBefore(node, args);
+            const value = this.lowerImmediateBefore(node, args);
+            return value._ === "ClassValueRef" ? this.materialize(value, value.type) : value;
         } finally {
             this.computedConstructorCalleeDepth--;
         }
@@ -1785,19 +1792,6 @@ function containsPossibleSideEffect(node: ts.Node): boolean {
     return found;
 }
 
-function containsElementAccess(node: ts.Node): boolean {
-    let found = false;
-    const visit = (current: ts.Node): void => {
-        if (found) return;
-        if (ts.isElementAccessExpression(current)) {
-            found = true;
-            return;
-        }
-        ts.forEachChild(current, visit);
-    };
-    visit(node);
-    return found;
-}
 
 /** Erase syntax that leaves an expression's runtime value unchanged. */
 function unwrapTransparentExpression(node: ts.Expression): ts.Expression {
