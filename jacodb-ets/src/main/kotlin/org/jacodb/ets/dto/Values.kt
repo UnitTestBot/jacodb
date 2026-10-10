@@ -187,6 +187,13 @@ data class TemplateObjectExprDto(
 ) : ExprDto
 
 @Serializable
+@SerialName("RequireObjectCoercibleExpr")
+data class RequireObjectCoercibleExprDto(
+    val arg: ValueDto,
+    override val type: TypeDto,
+) : ExprDto
+
+@Serializable
 @SerialName("NewArrayExpr")
 data class NewArrayExprDto(
     val elementType: TypeDto,

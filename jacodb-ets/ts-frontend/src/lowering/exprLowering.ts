@@ -1719,6 +1719,30 @@ export class ExprLowerer {
         return temp;
     }
 
+    /** Allocate the dynamic object container used by object-rest bindings. */
+    newEmptyObject(): LocalDto {
+        const registry = this.m.ctx.anonymous;
+        const signature: ClassSignatureDto = {
+            name: `${ANONYMOUS_CLASS_PREFIX}${registry.nextClassId++}$${this.m.methodName}`,
+            declaringFile: registry.defaultClassSignature.declaringFile,
+        };
+        const classType: ClassTypeDto = { _: "ClassType", signature };
+        registry.classes.push({
+            signature,
+            modifiers: 0,
+            decorators: [],
+            category: ClassCategory.OBJECT,
+            superClassName: "",
+            implementedInterfaceNames: [],
+            fields: [],
+            methods: [],
+        });
+
+        const temp = this.m.newTemp(classType);
+        this.m.cfg.emit({ _: "AssignStmt", left: temp, right: { _: "NewExpr", classType } });
+        return temp;
+    }
+
     private emitObjectPropertyStore(
         instance: LocalDto,
         name: string,

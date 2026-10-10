@@ -39,6 +39,10 @@ interface EtsExpr : EtsEntity {
             if (this is Default) return defaultVisit(expr)
             error("Cannot handle ${expr::class.java.simpleName}: $expr")
         }
+        fun visit(expr: EtsRequireObjectCoercibleExpr): R {
+            if (this is Default) return defaultVisit(expr)
+            error("Cannot handle ${expr::class.java.simpleName}: $expr")
+        }
         fun visit(expr: EtsNewArrayExpr): R
         fun visit(expr: EtsCastExpr): R
         fun visit(expr: EtsInstanceOfExpr): R
@@ -101,6 +105,7 @@ interface EtsExpr : EtsEntity {
             override fun visit(expr: EtsNewClassExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsSpreadExpansionExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsToPropertyKeyExpr): R = defaultVisit(expr)
+            override fun visit(expr: EtsRequireObjectCoercibleExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsNewArrayExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsCastExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsInstanceOfExpr): R = defaultVisit(expr)
@@ -235,6 +240,16 @@ data class EtsTemplateObjectExpr(
     }
 
     override fun toString(): String = "templateObject($siteId)"
+
+    override fun <R> accept(visitor: EtsExpr.Visitor<R>): R = visitor.visit(this)
+}
+
+/** Throws for null/undefined before evaluating any destructuring keys. */
+data class EtsRequireObjectCoercibleExpr(
+    val arg: EtsValue,
+    override val type: EtsType,
+) : EtsExpr {
+    override fun toString(): String = "requireObjectCoercible($arg)"
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R = visitor.visit(this)
 }

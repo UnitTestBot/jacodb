@@ -20,6 +20,7 @@ import org.jacodb.ets.model.EtsAddExpr
 import org.jacodb.ets.model.EtsAndExpr
 import org.jacodb.ets.model.EtsArrayAccess
 import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsRequireObjectCoercibleExpr
 import org.jacodb.ets.model.EtsDefineAccessorStmt
 import org.jacodb.ets.model.EtsCopyDataPropertiesStmt
 import org.jacodb.ets.model.EtsAwaitExpr
@@ -263,6 +264,11 @@ abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> 
         handle(value)
         value.instance.accept(this)
         value.key.accept(this)
+    }
+
+    final override fun visit(expr: EtsRequireObjectCoercibleExpr) {
+        handle(expr)
+        expr.arg.accept(this)
     }
 
     final override fun visit(expr: EtsNewArrayExpr) {
