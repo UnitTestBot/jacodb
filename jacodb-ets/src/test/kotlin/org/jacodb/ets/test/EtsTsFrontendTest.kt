@@ -126,6 +126,38 @@ class EtsTsFrontendTest {
     }
 
     @Test
+    fun `computed object binding reuses its normalized key in rest through JSON conversion`() {
+        val frontendDto = runFrontend(
+            """
+                export function pick(input: any, key: any): number {
+                    const { [key]: value, ...rest } = input;
+                    return value + rest.y;
+                }
+            """.trimIndent(),
+        )
+        val serialized = Json { serializersModule = dtoModule }.encodeToString(frontendDto)
+        val roundTripped = EtsFileDto.loadFromJson(serialized)
+        val dtoStmts = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "pick" }.body!!.cfg.blocks.flatMap { it.stmts }
+        val assignments = dtoStmts.filterIsInstance<AssignStmtDto>()
+        val read = assignments.mapNotNull { it.right as? PropertyRefDto }.single()
+        val copy = dtoStmts.filterIsInstance<CopyDataPropertiesStmtDto>().single()
+
+        assertEquals(expected = 1, actual = assignments.count { it.right is ToPropertyKeyExprDto })
+        assertEquals(expected = read.key, actual = copy.excludedKeys.single())
+        assertTrue(assignments.none { it.right is RawValueDto })
+
+        val method = roundTripped.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "pick" }
+        val converted = method.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+        val modelRead = converted.mapNotNull { it.rhv as? EtsPropertyRef }.single()
+        val modelCopy = method.cfg.stmts.filterIsInstance<EtsCopyDataPropertiesStmt>().single()
+
+        assertEquals(expected = 1, actual = converted.count { it.rhv is EtsToPropertyKeyExpr })
+        assertEquals(expected = modelRead.key, actual = modelCopy.excludedKeys.single())
+    }
+
+    @Test
     fun `object rest preserves excluded keys through JSON conversion`() {
         val frontendDto = runFrontend(
             """
