@@ -516,7 +516,7 @@ describe("straight-line lowering", () => {
     });
 
     it("degrades unsupported expressions to raw fallback values hoisted into temps", () => {
-        const { file, diagnostics } = lower("let p = /abc/g;");
+        const { file, diagnostics } = lower("let p = class { static x = 1; };");
         const stmts = singleBlockStmts(defaultMethod(file));
         // raw values are only legal as the RHS of a Local assignment: %0 := <raw>; p := %0
         const rawAssign = stmts.find(
