@@ -38,14 +38,17 @@ describe("corpus: realistic TS/JS programs lower cleanly", () => {
             const source = fs.readFileSync(path.join(FIXTURES_DIR, fixture), "utf-8");
             // lower() throws on any invariant violation.
             const { file, diagnostics } = lower(source, "corpus", fixture);
-            const expectedUnsupported = fixture === "geometry.ts" ? 3 : 0;
+            const expectedUnsupported = fixture === "geometry.ts" ? 6 : 0;
 
             expect(countRawFallbacks(file)).toBe(expectedUnsupported);
             expect(diagnostics.messages).toHaveLength(expectedUnsupported);
             if (fixture === "geometry.ts") {
-                expect(diagnostics.messages.every((message) => message.includes(
+                expect(diagnostics.messages.filter((message) => message.includes(
                     "constructor read from a mutable class property is not represented",
-                ))).toBe(true);
+                ))).toHaveLength(3);
+                expect(diagnostics.messages.filter((message) => message.includes(
+                    "runtime value of declaration 'Geometry' is not represented",
+                ))).toHaveLength(3);
             }
 
             // Sanity: every method body has at least the prologue and a terminator.

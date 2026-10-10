@@ -59,7 +59,6 @@ import org.jacodb.ets.dto.RawValueDto
 import org.jacodb.ets.dto.RelationOperationDto
 import org.jacodb.ets.dto.RequireObjectCoercibleExprDto
 import org.jacodb.ets.dto.ReturnStmtDto
-import org.jacodb.ets.dto.StaticCallExprDto
 import org.jacodb.ets.dto.StaticFieldRefDto
 import org.jacodb.ets.dto.StringTypeDto
 import org.jacodb.ets.dto.SymbolTypeDto
@@ -497,7 +496,7 @@ class EtsTsFrontendTest {
         val stmts = defaultClass.methods.single { it.signature.name == DEFAULT_ARK_METHOD_NAME }
             .body!!.cfg.blocks.flatMap { it.stmts }
         val callIndex = stmts.indexOfFirst {
-            it is AssignStmtDto && (it.right as? StaticCallExprDto)?.method?.name == "sideEffect"
+            it is AssignStmtDto && (it.right as? PtrCallExprDto)?.method?.name == "sideEffect"
         }
         val exportIndex = stmts.indexOfFirst {
             it is AssignStmtDto && (it.left as? StaticFieldRefDto)?.field?.name == "default"
@@ -509,6 +508,13 @@ class EtsTsFrontendTest {
         assertTrue(callIndex >= 0)
         assertTrue(exportIndex > callIndex)
         assertTrue(afterIndex > exportIndex)
+        val call = stmts[callIndex] as AssignStmtDto
+        val bindingRead = stmts.filterIsInstance<AssignStmtDto>()
+            .single { (it.right as? StaticFieldRefDto)?.field?.name == "sideEffect" }
+
+        assertEquals(bindingRead.left, (call.right as PtrCallExprDto).ptr)
+        assertTrue(stmts.indexOf(bindingRead) < callIndex)
+        assertEquals(call.left, (stmts[exportIndex] as AssignStmtDto).right)
         assertEquals("default", dto.exportInfos.single { it.exportName == "default" }.exportName)
 
         val model = dto.toEtsFile()
@@ -683,12 +689,18 @@ class EtsTsFrontendTest {
         val methodDto = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
             .methods.single { it.signature.name == "check" }
         val assignments = methodDto.body!!.cfg.blocks.flatMap { it.stmts }.filterIsInstance<AssignStmtDto>()
-        val pickCall = assignments.single { (it.right as? StaticCallExprDto)?.method?.name == "pick" }
-        val argumentCall = assignments.single { (it.right as? StaticCallExprDto)?.method?.name == "argument" }
+        val pickCall = assignments.single { (it.right as? PtrCallExprDto)?.method?.name == "pick" }
+        val argumentCall = assignments.single { (it.right as? PtrCallExprDto)?.method?.name == "argument" }
+        val pickBindingRead = assignments.single { (it.right as? StaticFieldRefDto)?.field?.name == "pick" }
+        val argumentBindingRead = assignments.single { (it.right as? StaticFieldRefDto)?.field?.name == "argument" }
         val allocation = assignments.single { it.right is NewExprDto }
         val allocationValue = allocation.right as NewExprDto
 
         assertEquals(pickCall.left as LocalDto, allocationValue.constructorValue as LocalDto)
+        assertEquals(pickBindingRead.left, (pickCall.right as PtrCallExprDto).ptr)
+        assertEquals(argumentBindingRead.left, (argumentCall.right as PtrCallExprDto).ptr)
+        assertTrue(assignments.indexOf(pickBindingRead) < assignments.indexOf(pickCall))
+        assertTrue(assignments.indexOf(argumentBindingRead) < assignments.indexOf(argumentCall))
         assertTrue(assignments.indexOf(pickCall) < assignments.indexOf(argumentCall))
         assertTrue(assignments.indexOf(argumentCall) < assignments.indexOf(allocation))
 
@@ -696,9 +708,12 @@ class EtsTsFrontendTest {
             .methods.single { it.name == "check" }
         val modelAllocation = modelMethod.cfg.stmts.filterIsInstance<EtsAssignStmt>()
             .single { it.rhv is EtsNewExpr }.rhv as EtsNewExpr
+        val modelPickCall = modelMethod.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+            .single { (it.rhv as? EtsPtrCallExpr)?.callee?.name == "pick" }
         val constructorValue = modelAllocation.constructorValue as EtsLocal
 
         assertEquals((pickCall.left as LocalDto).name, constructorValue.name)
+        assertEquals(modelPickCall.lhv, constructorValue)
         assertEquals(constructorValue, modelAllocation.getOperands().single())
     }
 
@@ -760,10 +775,13 @@ class EtsTsFrontendTest {
         val defaultClass = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
         val checkMethod = defaultClass.methods.single { it.signature.name == "check" }
         val assignments = checkMethod.body!!.cfg.blocks.flatMap { it.stmts }.filterIsInstance<AssignStmtDto>()
-        val constructorCall = assignments.single { (it.right as? StaticCallExprDto)?.method?.name == "choose" }
+        val constructorCall = assignments.single { (it.right as? PtrCallExprDto)?.method?.name == "choose" }
+        val bindingRead = assignments.single { (it.right as? StaticFieldRefDto)?.field?.name == "choose" }
         val instanceCheck = assignments.single { it.right is InstanceOfExprDto }.right as InstanceOfExprDto
 
         assertEquals(constructorCall.left, instanceCheck.checkValue)
+        assertEquals(bindingRead.left, (constructorCall.right as PtrCallExprDto).ptr)
+        assertTrue(assignments.indexOf(bindingRead) < assignments.indexOf(constructorCall))
         assertEquals(null, instanceCheck.checkType)
 
         val model = dto.toEtsFile()
@@ -771,8 +789,11 @@ class EtsTsFrontendTest {
             .methods.single { it.name == "check" }
         val modelCheck = modelMethod.cfg.stmts.filterIsInstance<EtsAssignStmt>()
             .single { it.rhv is EtsInstanceOfExpr }.rhv as EtsInstanceOfExpr
+        val modelConstructorCall = modelMethod.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+            .single { (it.rhv as? EtsPtrCallExpr)?.callee?.name == "choose" }
 
         assertEquals((constructorCall.left as LocalDto).name, (modelCheck.checkValue as EtsLocal).name)
+        assertEquals(modelConstructorCall.lhv, modelCheck.checkValue)
         assertEquals(null, modelCheck.checkType)
     }
 

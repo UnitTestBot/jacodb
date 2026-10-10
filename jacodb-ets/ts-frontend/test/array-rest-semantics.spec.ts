@@ -72,14 +72,15 @@ describe("array iterator behavior after JSON round trip", () => {
     it("closes on a default initializer throw and preserves the original exception", () => {
         const original = new Error("binding default");
         const { ir, native } = consumers(
-            "declare function fail(): never; function tail(input: any) { const [a = fail(), ...rest] = input; return rest; }",
-            "tail", { fail: () => { throw original; } },
+            "function tail(input: any, fail: () => never) { const [a = fail(), ...rest] = input; return rest; }",
+            "tail",
         );
+        const fail = () => { throw original; };
         const run = (collect: any) => {
             let closed = 0;
             const input = { [Symbol.iterator]: () => ({ next: () => ({ value: undefined, done: false }), return() { closed++; throw new Error("close"); } }) };
 
-            expect(() => collect(input)).toThrow(original);
+            expect(() => collect(input, fail)).toThrow(original);
             expect(closed).toBe(1);
         };
 

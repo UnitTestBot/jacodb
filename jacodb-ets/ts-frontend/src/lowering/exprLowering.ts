@@ -34,7 +34,6 @@ import {
     ANONYMOUS_METHOD_PREFIX,
     ClassCategory,
     CONSTRUCTOR_NAME,
-    DEFAULT_ARK_CLASS_NAME,
     PATTERN_PARAMETER_PREFIX,
 } from "../dto/constants";
 import { FieldDto, MethodDto } from "../dto/model";
@@ -64,6 +63,7 @@ import {
     ImmediateDto,
     LValueDto,
     LocalDto,
+    StaticFieldRefDto,
     ValueDto,
 } from "../dto/values";
 import { syntaxKindName, unsupportedValue } from "./diagnostics";
@@ -371,7 +371,9 @@ export class ExprLowerer {
             return constant("undefined", UNDEFINED_TYPE);
         }
         const declaration = this.m.converter.symbolOf(node)?.declarations?.find((candidate) =>
-            ts.isClassDeclaration(candidate) ||
+            ts.isClassDeclaration(candidate)
+            || (ts.isModuleDeclaration(candidate) && isProjectFile(candidate))
+            || (ts.isSourceFile(candidate) && !candidate.isDeclarationFile) ||
             (ts.isFunctionDeclaration(candidate) &&
                 (ts.isSourceFile(candidate.parent) || ts.isModuleBlock(candidate.parent))),
         );
@@ -381,13 +383,13 @@ export class ExprLowerer {
             const signature = this.m.converter.classSignatureOf(declaration);
             return { _: "ClassValueRef", signature, type: { _: "ClassValueType", signature } };
         }
-        if (declaration !== undefined) {
-            throw new LoweringError(`runtime value of declaration '${node.text}' is not represented in EtsIR`);
-        }
         const captured = this.m.capturedRefForIdentifier(node);
         if (captured !== undefined) return captured;
         const moduleField = this.m.moduleFieldForIdentifier(node);
         if (moduleField !== undefined) return moduleField;
+        if (declaration !== undefined) {
+            throw new LoweringError(`runtime value of declaration '${node.text}' is not represented in EtsIR`);
+        }
         // Other named references are locals; unresolved globals (e.g. console)
         // become locals with UnknownType, same as ArkAnalyzer.
         return this.m.localForIdentifier(node, this.safeTypeOf(node));
@@ -423,6 +425,9 @@ export class ExprLowerer {
         if (chain !== undefined) {
             return this.lowerOptionalChain(node, chain);
         }
+
+        const importedFunction = this.importedScopeFunctionField(node);
+        if (importedFunction !== undefined) return importedFunction;
 
         // `this.f` inside a STATIC method addresses a static field of the class.
         if (node.expression.kind === ts.SyntaxKind.ThisKeyword && this.m.isStaticMethod) {
@@ -535,6 +540,11 @@ export class ExprLowerer {
     private lowerOptionalChainCallee(root: ts.CallExpression): OptionalChainValue {
         const callee = unwrapTransparentExpression(root.expression);
         if (ts.isPropertyAccessExpression(callee) || ts.isElementAccessExpression(callee)) {
+            if (ts.isPropertyAccessExpression(callee)
+                && this.importedScopeFunctionField(callee) !== undefined) {
+                throw new LoweringError("module namespace call receiver is not represented in EtsIR");
+            }
+
             const chain = optionalChain(callee);
             if (chain !== undefined) {
                 // A grouped chain completes before the outer call; carry its receiver through the joins.
@@ -689,6 +699,9 @@ export class ExprLowerer {
             return this.m.localForIdentifier(node, this.safeTypeOf(node));
         }
         if (ts.isPropertyAccessExpression(node)) {
+            if (this.importedScopeFunctionField(node) !== undefined) {
+                throw new LoweringError("module namespace function properties are read-only");
+            }
             const ref = this.lowerPropertyAccess(node);
             if (ref._ === "PropertyRef") {
                 return this.mayReassign(node.expression, laterExpression)
@@ -1030,6 +1043,12 @@ export class ExprLowerer {
     lowerCall(node: ts.CallExpression): ValueDto {
         const callee = unwrapTransparentExpression(node.expression);
 
+        // Namespace calls require a module-object receiver that is not represented in EtsIR.
+        if (ts.isPropertyAccessExpression(callee)
+            && this.importedScopeFunctionField(callee) !== undefined) {
+            throw new LoweringError("module namespace call receiver is not represented in EtsIR");
+        }
+
         if (ts.isPropertyAccessExpression(callee) && this.isProjectClassProperty(callee.expression)) {
             this.evaluateProjectClassPropertyReceiver(callee.expression);
             throw new LoweringError("call through a mutable class property is not represented in EtsIR");
@@ -1080,6 +1099,7 @@ export class ExprLowerer {
 
         if (ts.isPropertyAccessExpression(callee)) {
             const methodName = callee.name.text;
+
             // `this.m()` inside a static method targets a static member of the
             // current class, just like `C.m()`.
             if (callee.expression.kind === ts.SyntaxKind.ThisKeyword && this.m.isStaticMethod) {
@@ -1111,27 +1131,6 @@ export class ExprLowerer {
 
         if (ts.isIdentifier(callee)) {
             const resolved = this.resolveCalleeDeclaration(node);
-            if (
-                resolved !== undefined
-                && ts.isFunctionDeclaration(resolved)
-                && isProjectFile(resolved)
-                && isScopeFunctionDeclaration(resolved)
-            ) {
-                // Free function declared in a project file: method of that file's %dflt class.
-                const declaringClass: ClassSignatureDto = {
-                    name: DEFAULT_ARK_CLASS_NAME,
-                    declaringFile: this.m.ctx.fileSignatureFor(resolved.getSourceFile()),
-                };
-                const declaringNamespace = this.m.converter.namespaceSignatureOf(resolved);
-                if (declaringNamespace !== undefined) {
-                    declaringClass.declaringNamespace = declaringNamespace;
-                }
-                return {
-                    _: "StaticCallExpr",
-                    method: this.methodSignatureForCall(node, callee.text, declaringClass),
-                    args: this.lowerCallArguments(node),
-                };
-            }
             if (resolved === undefined && !isDeclaredLocalValue(this.m, callee)) {
                 // Fully unresolved global callee — static call with the UNKNOWN class.
                 return {
@@ -1143,10 +1142,11 @@ export class ExprLowerer {
             // Snapshot a function value before arguments; an argument may mutate
             // the binding but must not change this call's selected callee.
             const localCallee = this.snapshotToLocal(callee, node.arguments);
+            const moduleField = this.m.moduleFieldForIdentifier(callee);
             return {
                 _: "PtrCallExpr",
                 ptr: localCallee,
-                method: this.methodSignatureForCall(node, callee.text, UNKNOWN_CLASS_SIGNATURE),
+                method: this.methodSignatureForCall(node, callee.text, moduleField?.field.declaringClass ?? UNKNOWN_CLASS_SIGNATURE),
                 args: this.lowerCallArguments(node),
             };
         }
@@ -1455,13 +1455,17 @@ export class ExprLowerer {
             ? node.template.templateSpans.map((span) => span.expression)
             : [];
         const unsupportedBeforeTag = this.unsupportedExpressionCount;
-        let ptr: LocalDto | undefined;
+        let ptr: LocalDto;
         let receiver: LocalDto | undefined;
         let declaringClass = UNKNOWN_CLASS_SIGNATURE;
         let name = "%tag";
-        let staticCall = false;
 
         if (ts.isPropertyAccessExpression(tag) || ts.isElementAccessExpression(tag)) {
+            if (ts.isPropertyAccessExpression(tag)
+                && this.importedScopeFunctionField(tag) !== undefined) {
+                throw new LoweringError("module namespace call receiver is not represented in EtsIR");
+            }
+
             // Property Get and key coercion can themselves mutate the source binding.
             receiver = this.snapshotToLocal(tag.expression);
             const key = ts.isPropertyAccessExpression(tag)
@@ -1475,20 +1479,10 @@ export class ExprLowerer {
             }, this.safeTypeOf(tag));
             name = ts.isPropertyAccessExpression(tag) ? tag.name.text : "%tag";
         } else {
-            const resolved = this.resolveCalleeDeclaration(node);
-            if (ts.isIdentifier(tag) && resolved !== undefined && ts.isFunctionDeclaration(resolved)
-                && isProjectFile(resolved) && isScopeFunctionDeclaration(resolved)) {
-                declaringClass = {
-                    name: DEFAULT_ARK_CLASS_NAME,
-                    declaringFile: this.m.ctx.fileSignatureFor(resolved.getSourceFile()),
-                };
-                const namespace = this.m.converter.namespaceSignatureOf(resolved);
-                if (namespace !== undefined) declaringClass.declaringNamespace = namespace;
+            ptr = this.snapshotToLocal(node.tag, substitutions);
+            if (ts.isIdentifier(tag)) {
                 name = tag.text;
-                staticCall = true;
-            } else {
-                ptr = this.snapshotToLocal(node.tag, substitutions);
-                if (ts.isIdentifier(tag)) name = tag.text;
+                declaringClass = this.m.moduleFieldForIdentifier(tag)?.field.declaringClass ?? UNKNOWN_CLASS_SIGNATURE;
             }
         }
 
@@ -1526,8 +1520,6 @@ export class ExprLowerer {
         const args = [parts, ...this.lowerArguments(substitutions)];
         const method = this.methodSignatureForCall(node, name, declaringClass);
 
-        if (staticCall) return { _: "StaticCallExpr", method, args };
-        if (ptr === undefined) throw new LoweringError("template tag has no callable value");
         return receiver === undefined
             ? { _: "PtrCallExpr", ptr, method, args }
             : { _: "PtrCallExpr", ptr, receiver, method, args };
@@ -1929,6 +1921,14 @@ export class ExprLowerer {
         return this.m.converter.typeOfNode(node);
     }
 
+    private importedScopeFunctionField(node: ts.PropertyAccessExpression): StaticFieldRefDto | undefined {
+        const receiver = unwrapTransparentExpression(node.expression);
+        if (!ts.isIdentifier(node.name) || !ts.isIdentifier(receiver)
+            || !this.m.converter.symbolOf(receiver)?.declarations?.some(ts.isSourceFile)) return undefined;
+        const field = this.m.moduleFieldForIdentifier(node.name);
+        return field?.field.type._ === "FunctionType" ? field : undefined;
+    }
+
     /**
      * If the expression statically refers to a class-like declaration
      * (class / enum — e.g. `Math`, `E` in `E.A`, `Foo` in `Foo.bar()`),
@@ -2165,10 +2165,6 @@ export function arrayElementType(array: Extract<TypeDto, { _: "ArrayType" }>): T
 
 function isProjectFile(decl: ts.Node): boolean {
     return !decl.getSourceFile().isDeclarationFile;
-}
-
-function isScopeFunctionDeclaration(decl: ts.FunctionDeclaration): boolean {
-    return ts.isSourceFile(decl.parent) || ts.isModuleBlock(decl.parent);
 }
 
 function optionalChain(node: OptionalChainSegment): OptionalChain | undefined {

@@ -362,7 +362,7 @@ describe("control flow lowering", () => {
         const blocks = blocksOf(methodByName(file, "f"));
         const entry = blocks[0];
         const callBlock = blocks.find((block) => block.stmts.some(
-            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "sideEffect",
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr" && stmt.right.method.name === "sideEffect",
         ));
         expect(lastStmt(entry)).toMatchObject({ _: "IfStmt" });
         expect(callBlock).toBeDefined();
@@ -381,7 +381,7 @@ describe("control flow lowering", () => {
         const blocks = blocksOf(methodByName(file, "f"));
         const entry = blocks[0];
         const callBlock = blocks.find((block) => block.stmts.some(
-            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "sideEffect",
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr" && stmt.right.method.name === "sideEffect",
         ));
         expect(lastStmt(entry)).toMatchObject({ _: "IfStmt" });
         expect(callBlock).toBeDefined();

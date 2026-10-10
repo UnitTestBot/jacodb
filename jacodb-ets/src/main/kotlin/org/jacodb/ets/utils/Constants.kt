@@ -33,5 +33,6 @@ const val STATIC_INIT_METHOD_NAME = "%statInit"
 
 const val ANONYMOUS_CLASS_PREFIX = "%AC"
 const val ANONYMOUS_METHOD_PREFIX = "%AM"
+const val NAMED_FUNCTION_REFERENCE_PREFIX = "%AMnamed$"
 
 const val TEMP_LOCAL_PREFIX = "%"

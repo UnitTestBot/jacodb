@@ -8,7 +8,7 @@ function assertSpreadArgumentOrder(stmts: StmtDto[], methodName: string): void {
     const expansion = stmts.find((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "SpreadExpansionExpr");
     const reads = stmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "ArrayRef");
     const call = stmts.find((stmt) => stmt._ === "AssignStmt"
-        && (stmt.right._ === "StaticCallExpr" || stmt.right._ === "InstanceCallExpr")
+        && stmt.right._ === "PtrCallExpr"
         && stmt.right.method.name === methodName);
 
     expect(reads).toHaveLength(2);
@@ -21,6 +21,7 @@ function assertSpreadArgumentOrder(stmts: StmtDto[], methodName: string): void {
     expect(call).toMatchObject({
         _: "AssignStmt",
         right: {
+            _: "PtrCallExpr",
             args: reads.map((stmt) => stmt._ === "AssignStmt" ? stmt.left : undefined),
         },
     });
@@ -81,7 +82,7 @@ describe("ordinary call spreads", () => {
         const { file, diagnostics } = lower(source);
         const stmts = singleBlockStmts(methodByName(file, "value"));
         const calls = stmts.flatMap((stmt, index) => stmt._ === "AssignStmt"
-            && stmt.right._ === "StaticCallExpr" ? [{ name: stmt.right.method.name, index, args: stmt.right.args }] : []);
+            && stmt.right._ === "PtrCallExpr" ? [{ name: stmt.right.method.name, index, args: stmt.right.args }] : []);
         const reads = stmts.flatMap((stmt, index) => stmt._ === "AssignStmt"
             && stmt.right._ === "ArrayRef" ? [index] : []);
 

@@ -35,12 +35,13 @@ import {
     ExportTypeValue,
     ImportType,
     Modifier,
+    NAMED_FUNCTION_REFERENCE_PREFIX,
 } from "../dto/constants";
 import { ClassDto, EtsFileDto, ExportInfoDto, FieldDto, ImportInfoDto, MethodDto, NamespaceDto } from "../dto/model";
 import { ClassSignatureDto, FileSignatureDto, NamespaceSignatureDto } from "../dto/signatures";
 import { VOID_TYPE } from "../dto/types";
 import { TypeConverter } from "../types/convert";
-import { classValueDeclarationOf, exportAssignmentSupport, modifiersOf } from "./astUtils";
+import { classValueDeclarationOf, exportAssignmentSupport, modifiersOf, scopeFunctionImplementation, scopeFunctionSignature } from "./astUtils";
 import { ClassBuilder } from "./classBuilder";
 import { Diagnostics } from "./diagnostics";
 import { AnonymousRegistry, LoweringContext, MethodContext } from "./methodBuilder";
@@ -379,13 +380,34 @@ class FileBuilder {
         return { classes, namespaces };
     }
 
-    /** Direct scope variables have one storage location shared by all scope methods. */
+    /** Direct scope bindings have one storage location shared by all scope methods. */
     private registerModuleFields(
         declaringClass: ClassSignatureDto,
         statements: readonly ts.Statement[],
     ): FieldDto[] {
         const fields: FieldDto[] = [];
         const registeredSymbols = new Set<ts.Symbol>();
+        for (const statement of statements) {
+            if (!ts.isFunctionDeclaration(statement) || statement.name === undefined || statement.body === undefined) continue;
+            const symbol = this.ctx.checker.getSymbolAtLocation(statement.name);
+            if (symbol === undefined || registeredSymbols.has(symbol)) continue;
+            registeredSymbols.add(symbol);
+            if (scopeFunctionImplementation(symbol) !== statement) {
+                this.ctx.diagnostics.warn(statement, `scope function '${statement.name.text}' has ambiguous implementation bodies`);
+                continue;
+            }
+
+            const type = { _: "FunctionType" as const, signature: scopeFunctionSignature(this.ctx, statement) };
+            const signature = { declaringClass, name: statement.name.text, type };
+            this.ctx.moduleFields.set(symbol, signature);
+            fields.push({
+                signature,
+                modifiers: modifiersOf(statement) | Modifier.STATIC,
+                decorators: [],
+                questionToken: false,
+                exclamationToken: false,
+            });
+        }
         for (const declaration of scopeVariableDeclarations(statements)) {
             const declarationList = declaration.parent;
             const statement = declarationList.parent;
@@ -478,6 +500,20 @@ class FileBuilder {
     ): MethodDto {
         const m = new MethodContext(this.ctx, declaringClass, DEFAULT_ARK_METHOD_NAME);
         m.emitPrologue([]);
+
+        // Function declarations are initialized before any ordinary scope statement.
+        // The value points at the original method body; no second body is lowered.
+        for (const statement of statements) {
+            if (!ts.isFunctionDeclaration(statement) || statement.name === undefined || statement.body === undefined) continue;
+            const field = m.moduleFieldForIdentifier(statement.name);
+            if (field === undefined) continue;
+            const reference = m.getOrCreateLocal(
+                `${NAMED_FUNCTION_REFERENCE_PREFIX}${statement.name.text}`,
+                { _: "FunctionType", signature: scopeFunctionSignature(this.ctx, statement) },
+            );
+            m.withOrigin(statement, () => m.cfg.emit({ _: "AssignStmt", left: field, right: reference }));
+        }
+
         const lowerer = new StmtLowerer(m);
         for (const statement of statements) {
             lowerer.lowerStatement(statement);
