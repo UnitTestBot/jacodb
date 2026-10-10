@@ -21,6 +21,10 @@ import kotlinx.serialization.json.Json
 import org.jacodb.ets.dto.ArrayRefDto
 import org.jacodb.ets.dto.ArrayTypeDto
 import org.jacodb.ets.dto.AssignStmtDto
+import org.jacodb.ets.dto.LexicalEnvTypeDto
+import org.jacodb.ets.dto.FunctionTypeDto
+import org.jacodb.ets.dto.DefineAccessorStmtDto
+import org.jacodb.ets.dto.CopyDataPropertiesStmtDto
 import org.jacodb.ets.dto.BooleanTypeDto
 import org.jacodb.ets.dto.CaughtExceptionRefDto
 import org.jacodb.ets.dto.ClassTypeDto
@@ -53,6 +57,9 @@ import org.jacodb.ets.dto.dtoModule
 import org.jacodb.ets.dto.toEtsFile
 import org.jacodb.ets.model.EtsArrayAccess
 import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsStringConstant
+import org.jacodb.ets.model.EtsDefineAccessorStmt
+import org.jacodb.ets.model.EtsCopyDataPropertiesStmt
 import org.jacodb.ets.model.EtsCaughtExceptionRef
 import org.jacodb.ets.model.EtsCallStmt
 import org.jacodb.ets.model.EtsClassValueRef
@@ -86,6 +93,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -114,6 +122,66 @@ class EtsTsFrontendTest {
 
             return EtsFileDto.loadFromJson(outputPath.readText())
         }
+    }
+
+    @Test
+    fun `object getter descriptor and lifted body survive JSON conversion`() {
+        val frontendDto = runFrontend(
+            """
+                export function value(seed: number): number {
+                    const object = { y: 2, get x() { return seed + this.y; } };
+                    return object.x;
+                }
+            """.trimIndent(),
+        )
+
+        val serialized = Json { serializersModule = dtoModule }.encodeToString(frontendDto)
+        val roundTripped = EtsFileDto.loadFromJson(serialized)
+        val dtoMethods = roundTripped.classes.flatMap { it.methods }
+        val descriptor = dtoMethods.single { it.signature.name == "value" }
+            .body!!.cfg.blocks.flatMap { it.stmts }.filterIsInstance<DefineAccessorStmtDto>().single()
+        val getterType = (descriptor.getter as LocalDto).type as FunctionTypeDto
+        val getterBody = dtoMethods.single { it.signature.name == getterType.signature.name }.body!!
+
+        assertEquals("x", (descriptor.key as ConstantDto).value)
+        assertTrue(getterBody.cfg.blocks.flatMap { it.stmts }.any { it is ReturnStmtDto })
+        assertTrue(getterBody.locals.any { it.type is LexicalEnvTypeDto })
+
+        val scene = EtsScene(listOf(roundTripped.toEtsFile()))
+        val method = scene.projectClasses.flatMap { it.methods }.single { it.name == "value" }
+        val converted = method.cfg.stmts.filterIsInstance<EtsDefineAccessorStmt>().single()
+        assertEquals("x", (converted.key as EtsStringConstant).value)
+        assertTrue(method.cfg.stmts.filterIsInstance<EtsAssignStmt>().any { it.rhv is EtsPropertyRef })
+    }
+
+    @Test
+    fun `object spread preserves ordered copy operations through JSON conversion`() {
+        val frontendDto = runFrontend(
+            """
+                export function copy(input: { x: number; y: number }): number {
+                    const object = { ...input, y: 7 };
+                    return object.y + object.x;
+                }
+            """.trimIndent(),
+        )
+
+        val serialized = Json { serializersModule = dtoModule }.encodeToString(frontendDto)
+        val roundTripped = EtsFileDto.loadFromJson(serialized)
+        val dtoStmts = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "copy" }
+            .body!!.cfg.blocks.flatMap { it.stmts }
+        val copies = dtoStmts.filterIsInstance<CopyDataPropertiesStmtDto>()
+
+        assertEquals(1, copies.size)
+        assertFalse(copies[0].throwOnNullishSource)
+        assertTrue(copies[0].excludedKeys.isEmpty())
+
+        val scene = EtsScene(listOf(roundTripped.toEtsFile()))
+        val method = scene.projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "copy" }
+        val converted = method.cfg.stmts.filterIsInstance<EtsCopyDataPropertiesStmt>()
+        assertEquals(1, converted.size)
+        assertTrue(converted[0].excludedKeys.isEmpty())
     }
 
     @Test

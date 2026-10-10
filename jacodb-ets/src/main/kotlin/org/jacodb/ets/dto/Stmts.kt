@@ -56,6 +56,24 @@ data class DefineDataPropertyStmtDto(
     val value: ValueDto,
 ) : StmtDto
 
+/** ECMAScript CopyDataProperties, including ordered own enumerable keys. */
+@Serializable
+@SerialName("CopyDataPropertiesStmt")
+data class CopyDataPropertiesStmtDto(
+    val target: ValueDto, // Local; polymorphic JSON includes its discriminator.
+    val source: ValueDto,
+    val excludedKeys: List<ValueDto>,
+    val throwOnNullishSource: Boolean,
+) : StmtDto
+
+@Serializable
+@SerialName("DefineAccessorStmt")
+data class DefineAccessorStmtDto(
+    val target: ValueDto,
+    val key: ValueDto,
+    val getter: ValueDto,
+) : StmtDto
+
 @Serializable
 @SerialName("CallStmt")
 data class CallStmtDto(

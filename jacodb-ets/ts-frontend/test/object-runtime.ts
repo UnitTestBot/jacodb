@@ -95,7 +95,7 @@ export function executeObjectIr(file: EtsFileDto, name: string, args: unknown[] 
                 }
                 case "PtrCallExpr": return Reflect.apply(
                     read(value.ptr),
-                    undefined,
+                    value.receiver === undefined ? undefined : read(value.receiver),
                     value.args.map(read),
                 );
                 case "CastExpr": return read(value.arg);
@@ -138,6 +138,35 @@ export function executeObjectIr(file: EtsFileDto, name: string, args: unknown[] 
                 switch (stmt._) {
                     case "AssignStmt": assign(stmt.left, read(stmt.right)); break;
                     case "DefineDataPropertyStmt": defineData(read(stmt.target), read(stmt.key), read(stmt.value)); break;
+                    case "DefineAccessorStmt": {
+                        const target = read(stmt.target);
+                        const key = read(stmt.key);
+                        const getter = read(stmt.getter);
+                        const old = Object.getOwnPropertyDescriptor(target, key);
+                        Object.defineProperty(target, key, {
+                            get: getter,
+                            set: old?.set,
+                            enumerable: true,
+                            configurable: true,
+                        });
+                        break;
+                    }
+                    case "CopyDataPropertiesStmt": {
+                        const source = read(stmt.source);
+                        if (source === null || source === undefined) {
+                            if (stmt.throwOnNullishSource) throw new TypeError("nullish object rest");
+                            break;
+                        }
+                        const object = Object(source);
+                        const target = read(stmt.target);
+                        const excluded = stmt.excludedKeys.map(read);
+                        for (const key of Reflect.ownKeys(object)) {
+                            if (!excluded.includes(key) && Object.getOwnPropertyDescriptor(object, key)?.enumerable) {
+                                defineData(target, key, object[key]);
+                            }
+                        }
+                        break;
+                    }
                     case "IfStmt": next = block.successors[read(stmt.condition) ? 1 : 0]; break;
                     case "ReturnStmt": return read(stmt.arg);
                     case "ReturnVoidStmt": return undefined;

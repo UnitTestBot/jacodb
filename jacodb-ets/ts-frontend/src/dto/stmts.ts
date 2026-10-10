@@ -32,6 +32,8 @@ import { CallExprDto, ImmediateDto, LocalDto, LValueDto, ValueDto } from "./valu
 export type StmtDto =
     | NopStmtDto
     | AssignStmtDto
+    | DefineAccessorStmtDto
+    | CopyDataPropertiesStmtDto
     | DefineDataPropertyStmtDto
     | CallStmtDto
     | ReturnVoidStmtDto
@@ -61,6 +63,23 @@ export interface DefineDataPropertyStmtDto {
     target: LocalDto;
     key: ImmediateDto;
     value: ImmediateDto;
+}
+
+/** ECMAScript CopyDataProperties: own enumerable keys in source enumeration order. */
+export interface CopyDataPropertiesStmtDto {
+    readonly _: "CopyDataPropertiesStmt";
+    target: LocalDto;
+    source: ImmediateDto;
+    excludedKeys: ImmediateDto[];
+    throwOnNullishSource: boolean;
+}
+
+/** Define an own enumerable configurable getter descriptor, without invoking an existing setter. */
+export interface DefineAccessorStmtDto {
+    readonly _: "DefineAccessorStmt";
+    target: LocalDto;
+    key: ImmediateDto;
+    getter: ImmediateDto;
 }
 
 export interface CallStmtDto {
