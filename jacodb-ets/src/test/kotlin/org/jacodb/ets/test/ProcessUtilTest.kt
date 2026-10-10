@@ -17,17 +17,20 @@
 package org.jacodb.ets.test
 
 import org.jacodb.ets.utils.ProcessUtil
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import java.net.ConnectException
 import java.net.Socket
 import java.nio.file.FileSystems
 import java.nio.file.StandardWatchEventKinds
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
 import kotlin.io.path.createDirectory
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.readText
+import kotlin.time.Duration.Companion.seconds
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
@@ -147,6 +150,75 @@ class ProcessUtilTest {
         } finally {
             watcher.close()
             testDirectory.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun `timeout terminates processes spawned by the command`() {
+        checkDescendantCleanup(interrupt = false)
+    }
+
+    @Test
+    fun `interruption terminates processes spawned by the command`() {
+        checkDescendantCleanup(interrupt = true)
+    }
+
+    private fun checkDescendantCleanup(interrupt: Boolean) {
+        assumeTrue(
+            runCatching { Class.forName("java.lang.ProcessHandle") }.isSuccess,
+            "Java 8 supports parent-only cleanup; descendant cleanup requires Java 9 or later",
+        )
+        val directory = createTempDirectory("process-util-descendant")
+        val ready = directory.resolve("ready")
+        val failure = AtomicReference<Throwable>()
+        val outcome = AtomicReference<ProcessUtil.Result>()
+        val watcher = FileSystems.getDefault().newWatchService()
+        directory.register(watcher, StandardWatchEventKinds.ENTRY_CREATE)
+        val childScript = "const fs = require('fs'); const net = require('net'); " +
+            "const server = net.createServer(socket => socket.end()); " +
+            "server.listen(0, '127.0.0.1', () => fs.writeFileSync(process.argv[1], " +
+            "process.pid + ' ' + server.address().port));"
+        val parentScript = "require('child_process').spawn(process.execPath, " +
+            "['-e', process.argv[1], process.argv[2]], {stdio: 'inherit'});"
+        val runner = thread(start = false) {
+            try {
+                outcome.set(ProcessUtil.run(
+                    command = listOf(node, "-e", parentScript, childScript, ready.toString()),
+                    timeout = if (interrupt) null else 1.seconds,
+                ))
+            } catch (error: Throwable) {
+                failure.set(error)
+            }
+        }
+        var pid: Long? = null
+
+        try {
+            runner.start()
+            assertTrue(watcher.poll(5, TimeUnit.SECONDS) != null, "descendant did not publish readiness")
+            val (childPid, port) = ready.readText().trim().split(' ')
+            pid = childPid.toLong()
+
+            if (interrupt) runner.interrupt()
+            runner.join(5000)
+
+            assertFalse(runner.isAlive, "process cleanup did not finish")
+            if (interrupt) assertIs<InterruptedException>(failure.get())
+            else {
+                assertEquals(null, failure.get())
+                assertTrue(outcome.get().isTimeout)
+            }
+            val connection = runCatching { Socket("127.0.0.1", port.toInt()).use { } }
+            assertIs<ConnectException>(connection.exceptionOrNull(), "descendant survived command cleanup")
+        } finally {
+            runner.interrupt()
+            runner.join(5000)
+            pid?.let { childPid ->
+                ProcessBuilder(node, "-e", "try { process.kill(Number(process.argv[1]), 'SIGKILL'); } catch {}", "$childPid")
+                    .start()
+                    .waitFor()
+            }
+            watcher.close()
+            directory.toFile().deleteRecursively()
         }
     }
 }
