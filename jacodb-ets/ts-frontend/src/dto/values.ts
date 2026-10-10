@@ -43,6 +43,7 @@ export type ImmediateDto = LocalDto | ConstantDto | ClassValueRefDto;
 
 export type ExprDto =
     | NewExprDto
+    | TemplateObjectExprDto
     | NewClassExprDto
     | SpreadExpansionExprDto
     | ToPropertyKeyExprDto
@@ -118,6 +119,14 @@ export interface SpreadExpansionExprDto {
 export interface NewClassExprDto {
     readonly _: "NewClassExpr";
     signature: ClassSignatureDto;
+}
+
+export interface TemplateObjectExprDto {
+    readonly _: "TemplateObjectExpr";
+    siteId: string;
+    cooked: (string | null)[]; // null represents undefined for an invalid template escape.
+    raw: string[];
+    type: TypeDto;
 }
 
 export interface NewArrayExprDto {

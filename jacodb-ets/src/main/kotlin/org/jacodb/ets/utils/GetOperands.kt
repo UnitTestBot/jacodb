@@ -54,6 +54,7 @@ import org.jacodb.ets.model.EtsMulExpr
 import org.jacodb.ets.model.EtsNegExpr
 import org.jacodb.ets.model.EtsNewArrayExpr
 import org.jacodb.ets.model.EtsNewExpr
+import org.jacodb.ets.model.EtsTemplateObjectExpr
 import org.jacodb.ets.model.EtsNewClassExpr
 import org.jacodb.ets.model.EtsSpreadExpansionExpr
 import org.jacodb.ets.model.EtsNopStmt
@@ -322,5 +323,8 @@ private object EntityGetOperands : EtsEntity.Visitor<Sequence<EtsEntity>> {
         sequenceOf(expr.iterable)
 
     override fun visit(expr: EtsNewClassExpr): Sequence<EtsEntity> =
+        emptySequence()
+
+    override fun visit(expr: EtsTemplateObjectExpr): Sequence<EtsEntity> =
         emptySequence()
 }

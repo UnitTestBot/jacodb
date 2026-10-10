@@ -275,6 +275,9 @@ export class ExprLowerer {
         if (ts.isTemplateExpression(node)) {
             return this.lowerTemplate(node);
         }
+        if (ts.isTaggedTemplateExpression(node)) {
+            return this.lowerTaggedTemplate(node);
+        }
         if (ts.isTypeOfExpression(node)) {
             return { _: "TypeOfExpr", arg: this.lowerToImmediate(node.expression) };
         }
@@ -1316,6 +1319,90 @@ export class ExprLowerer {
         return value;
     }
 
+    private lowerTaggedTemplate(node: ts.TaggedTemplateExpression): ValueDto {
+        const tag = unwrapTransparentExpression(node.tag);
+        const substitutions = ts.isTemplateExpression(node.template)
+            ? node.template.templateSpans.map((span) => span.expression)
+            : [];
+        const unsupportedBeforeTag = this.unsupportedExpressionCount;
+        let ptr: LocalDto | undefined;
+        let receiver: LocalDto | undefined;
+        let declaringClass = UNKNOWN_CLASS_SIGNATURE;
+        let name = "%tag";
+        let staticCall = false;
+
+        if (ts.isPropertyAccessExpression(tag) || ts.isElementAccessExpression(tag)) {
+            // Property Get and key coercion can themselves mutate the source binding.
+            receiver = this.snapshotToLocal(tag.expression);
+            const key = ts.isPropertyAccessExpression(tag)
+                ? constant(tag.name.text, STRING_TYPE)
+                : this.lowerPropertyKey(tag.argumentExpression);
+            ptr = this.materialize({
+                _: "PropertyRef",
+                instance: receiver,
+                key,
+                type: this.safeTypeOf(tag),
+            }, this.safeTypeOf(tag));
+            name = ts.isPropertyAccessExpression(tag) ? tag.name.text : "%tag";
+        } else {
+            const resolved = this.resolveCalleeDeclaration(node);
+            if (ts.isIdentifier(tag) && resolved !== undefined && ts.isFunctionDeclaration(resolved)
+                && isProjectFile(resolved) && isScopeFunctionDeclaration(resolved)) {
+                declaringClass = {
+                    name: DEFAULT_ARK_CLASS_NAME,
+                    declaringFile: this.m.ctx.fileSignatureFor(resolved.getSourceFile()),
+                };
+                const namespace = this.m.converter.namespaceSignatureOf(resolved);
+                if (namespace !== undefined) declaringClass.declaringNamespace = namespace;
+                name = tag.text;
+                staticCall = true;
+            } else {
+                ptr = this.snapshotToLocal(node.tag, substitutions);
+                if (ts.isIdentifier(tag)) name = tag.text;
+            }
+        }
+
+        if (this.unsupportedExpressionCount !== unsupportedBeforeTag) {
+            throw new LoweringError("template tag cannot be represented in EtsIR");
+        }
+
+        const literals = ts.isTemplateExpression(node.template)
+            ? [node.template.head, ...node.template.templateSpans.map((span) => span.literal)]
+            : [node.template];
+        const raw = literals.map(templateRawText);
+        const cooked = literals.map((literal, index) => {
+            // The public compiler API reports invalid escapes in an untagged token.
+            // Such escapes are legal in tagged templates, whose cooked entry is undefined.
+            const probe = ts.transpileModule(`const value = \`${raw[index]}\`;`, { reportDiagnostics: true });
+            return probe.diagnostics?.some((diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error)
+                ? null
+                : literal.text;
+        });
+        const templateType: TypeDto = {
+            _: "ArrayType",
+            elementType: cooked.includes(null)
+                ? { _: "UnionType", types: [STRING_TYPE, UNDEFINED_TYPE] }
+                : STRING_TYPE,
+            dimensions: 1,
+        };
+        const file = this.m.ctx.fileSignatureFor(node.getSourceFile());
+        const parts = this.materialize({
+            _: "TemplateObjectExpr",
+            siteId: JSON.stringify([file.projectName, file.fileName, node.template.getStart()]),
+            cooked,
+            raw,
+            type: templateType,
+        }, templateType);
+        const args = [parts, ...this.lowerArguments(substitutions)];
+        const method = this.methodSignatureForCall(node, name, declaringClass);
+
+        if (staticCall) return { _: "StaticCallExpr", method, args };
+        if (ptr === undefined) throw new LoweringError("template tag has no callable value");
+        return receiver === undefined
+            ? { _: "PtrCallExpr", ptr, method, args }
+            : { _: "PtrCallExpr", ptr, receiver, method, args };
+    }
+
     /** `a${x}b` -> chain of string `+` binops. */
     private lowerTemplate(node: ts.TemplateExpression): ValueDto {
         let acc: ImmediateDto = constant(node.head.text, STRING_TYPE);
@@ -1672,7 +1759,7 @@ export class ExprLowerer {
         return { _: "ClassType", signature: { name, declaringFile: UNKNOWN_FILE_SIGNATURE } };
     }
 
-    private resolveCalleeDeclaration(node: ts.CallExpression): ts.Declaration | undefined {
+    private resolveCalleeDeclaration(node: ts.CallExpression | ts.TaggedTemplateExpression): ts.Declaration | undefined {
         try {
             const signature = this.m.checker.getResolvedSignature(node);
             return signature?.getDeclaration();
@@ -1683,7 +1770,7 @@ export class ExprLowerer {
 
     /** Method signature for a call site, resolved through the checker when possible. */
     private methodSignatureForCall(
-        node: ts.CallExpression,
+        node: ts.CallExpression | ts.TaggedTemplateExpression,
         name: string,
         declaringClass: ClassSignatureDto,
     ): MethodSignatureDto {
@@ -1757,6 +1844,14 @@ export class ExprLowerer {
 
 export function constant(value: string, type: TypeDto): ConstantDto {
     return { _: "Constant", value, type };
+}
+
+function templateRawText(literal: ts.TemplateLiteralLikeNode): string {
+    const text = literal.getText();
+    const suffixLength = literal.kind === ts.SyntaxKind.TemplateHead || literal.kind === ts.SyntaxKind.TemplateMiddle
+        ? 2
+        : 1;
+    return text.slice(1, -suffixLength).replace(/\r\n?/g, "\n");
 }
 
 /** Preserve the source spelling only when TypeScript normalizes a non-finite literal. */
