@@ -26,6 +26,7 @@ import { MethodSignatureDto, UNKNOWN_CLASS_SIGNATURE, UNKNOWN_FILE_SIGNATURE } f
 import { BOOLEAN_TYPE, NUMBER_TYPE, STRING_TYPE, TypeDto, UNDEFINED_TYPE, UNKNOWN_TYPE } from "../dto/types";
 import { ImmediateDto, LValueDto, LocalDto, ValueDto } from "../dto/values";
 import { exportAssignmentSupport } from "./astUtils";
+import type { BuiltParameters } from "./astUtils";
 import { Label } from "./cfg";
 import { IteratorLowerer } from "./iteratorLowering";
 import { unsupportedStmt } from "./diagnostics";
@@ -70,16 +71,9 @@ export class StmtLowerer {
     ) {
         // Nested function bodies (closures, object-literal methods) are lowered
         // with a fresh StmtLowerer over their own MethodContext.
-        this.expr = new ExprLowerer(m, (nestedContext, body, parameters) => {
+        this.expr = new ExprLowerer(m, (nestedContext, body, emitPrologue) => {
             const nested = new StmtLowerer(nestedContext);
-            parameters?.forEach((parameter) => {
-                if (parameter.pattern !== undefined) {
-                    nested.lowerParameterBindingPattern(
-                        parameter.pattern,
-                        nestedContext.getOrCreateLocal(parameter.name, parameter.type),
-                    );
-                }
-            });
+            emitPrologue((parameter, local) => nested.lowerParameterBinding(parameter, local));
             if (ts.isBlock(body)) {
                 nested.lowerStatements(body.statements);
             } else {
@@ -827,9 +821,15 @@ export class StmtLowerer {
     // Destructuring
     // ------------------------------------------------------------------
 
-    /** Unpack one pattern parameter after its `%patN := ParameterRef(i)` prologue binding. */
-    lowerParameterBindingPattern(pattern: ts.BindingPattern, source: LocalDto): void {
-        this.lowerBindingPattern(pattern, source);
+    /** Apply a parameter default and unpack its pattern before the next argument is bound. */
+    lowerParameterBinding(parameter: BuiltParameters["prologueParams"][number], source: LocalDto): void {
+        const initializer = parameter.initializer;
+        if (initializer !== undefined) {
+            this.m.withOrigin(initializer, () => this.emitDefaultValue(source, parameter.type, initializer));
+        }
+        if (parameter.pattern !== undefined) {
+            this.lowerBindingPattern(parameter.pattern, source);
+        }
     }
 
     /** `{a, b: {c}, d = 1}` / `[x, , y]` unpacked from `source` via field/array refs. */
@@ -950,6 +950,7 @@ export class StmtLowerer {
             if (defaultInit !== undefined) {
                 this.emitDefaultValue(destination, type, defaultInit);
             }
+            this.m.markParameterInitialized(target);
             return;
         }
         // Nested pattern: unpack through a temp.

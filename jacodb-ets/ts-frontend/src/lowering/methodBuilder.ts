@@ -21,6 +21,7 @@ import { ClassSignatureDto, FieldSignatureDto, FileSignatureDto } from "../dto/s
 import { ClassTypeDto, LexicalEnvTypeDto, TypeDto, UNKNOWN_TYPE } from "../dto/types";
 import { ClosureFieldRefDto, LocalDto, StaticFieldRefDto, ValueDto } from "../dto/values";
 import { TypeConverter } from "../types/convert";
+import type { BuiltParameters } from "./astUtils";
 import { CfgBuilder } from "./cfg";
 import { Diagnostics, syntaxKindName } from "./diagnostics";
 
@@ -72,6 +73,7 @@ export class MethodContext {
     private readonly localNameCounters = new Map<string, number>();
     private tempCount = 0;
     private closureEnvCount = 0;
+    private readonly uninitializedParameters = new Set<ts.Symbol>();
 
     constructor(
         readonly ctx: LoweringContext,
@@ -289,8 +291,42 @@ export class MethodContext {
         return this.getOrCreateLocal(name, type);
     }
 
+    /** Parameter bindings are initially in the temporal dead zone, including patterns. */
+    private beginParameterInitialization(parameters: BuiltParameters["prologueParams"]): void {
+        const addBinding = (name: ts.BindingName): void => {
+            if (ts.isIdentifier(name)) {
+                const symbol = this.symbolForIdentifier(name);
+                if (symbol !== undefined) this.uninitializedParameters.add(symbol);
+            } else {
+                for (const element of name.elements) {
+                    if (ts.isBindingElement(element)) addBinding(element.name);
+                }
+            }
+        };
+        for (const parameter of parameters) {
+            if (parameter.identifier !== undefined) addBinding(parameter.identifier);
+            if (parameter.pattern !== undefined) addBinding(parameter.pattern);
+        }
+    }
+
+    isUninitializedParameter(identifier: ts.Identifier): boolean {
+        const symbol = this.symbolForIdentifier(identifier);
+        return symbol !== undefined && this.uninitializedParameters.has(symbol);
+    }
+
+    markParameterInitialized(identifier: ts.Identifier): void {
+        const symbol = this.symbolForIdentifier(identifier);
+        if (symbol !== undefined) this.uninitializedParameters.delete(symbol);
+    }
+
     /** Emit the standard prologue: parameter assignments, then `this := ThisRef`. */
-    emitPrologue(parameters: { name: string; type: TypeDto; identifier?: ts.Identifier }[]): void {
+    emitPrologue(
+        parameters: BuiltParameters["prologueParams"],
+        afterParameter?: (parameter: BuiltParameters["prologueParams"][number], local: LocalDto) => void,
+    ): void {
+        this.beginParameterInitialization(parameters);
+        const earlyThis = parameters.some((parameter) => parameter.initializer !== undefined || parameter.pattern !== undefined);
+        if (earlyThis) this.emitThisAssignment();
         parameters.forEach((param, index) => {
             const local = param.identifier !== undefined
                 ? this.localForIdentifier(param.identifier, param.type)
@@ -300,8 +336,11 @@ export class MethodContext {
                 left: local,
                 right: { _: "ParameterRef", index, type: param.type },
             });
+            afterParameter?.(param, local);
+            if (param.identifier !== undefined) this.markParameterInitialized(param.identifier);
         });
-        this.emitThisAssignment();
+        this.uninitializedParameters.clear();
+        if (!earlyThis) this.emitThisAssignment();
     }
 
     /**
@@ -312,7 +351,8 @@ export class MethodContext {
         environmentName: string,
         environmentType: LexicalEnvTypeDto,
         captures: ClosureCapture[],
-        parameters: { name: string; type: TypeDto; identifier?: ts.Identifier }[],
+        parameters: BuiltParameters["prologueParams"],
+        afterParameter?: (parameter: BuiltParameters["prologueParams"][number], local: LocalDto) => void,
         lexicalThis?: LocalDto,
     ): void {
         const environment = this.getOrCreateLocal(environmentName, environmentType);
@@ -320,16 +360,6 @@ export class MethodContext {
             _: "AssignStmt",
             left: environment,
             right: { _: "ParameterRef", index: 0, type: environmentType },
-        });
-        parameters.forEach((param, index) => {
-            const local = param.identifier !== undefined
-                ? this.localForIdentifier(param.identifier, param.type)
-                : this.getOrCreateLocal(param.name, param.type);
-            this.cfg.emit({
-                _: "AssignStmt",
-                left: local,
-                right: { _: "ParameterRef", index: index + 1, type: param.type },
-            });
         });
         const forwardedEnvironments = new Map<string, LocalDto>();
         for (const capture of captures) {
@@ -373,7 +403,24 @@ export class MethodContext {
             fieldName: lexicalThis.name,
             type: lexicalThis.type,
         };
-        this.emitThisAssignment(receiver);
+
+        this.beginParameterInitialization(parameters);
+        const earlyThis = parameters.some((parameter) => parameter.initializer !== undefined || parameter.pattern !== undefined);
+        if (earlyThis) this.emitThisAssignment(receiver);
+        parameters.forEach((param, index) => {
+            const local = param.identifier !== undefined
+                ? this.localForIdentifier(param.identifier, param.type)
+                : this.getOrCreateLocal(param.name, param.type);
+            this.cfg.emit({
+                _: "AssignStmt",
+                left: local,
+                right: { _: "ParameterRef", index: index + 1, type: param.type },
+            });
+            afterParameter?.(param, local);
+            if (param.identifier !== undefined) this.markParameterInitialized(param.identifier);
+        });
+        this.uninitializedParameters.clear();
+        if (!earlyThis) this.emitThisAssignment(receiver);
     }
 
     private emitThisAssignment(receiver?: ClosureFieldRefDto): void {

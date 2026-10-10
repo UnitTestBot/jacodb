@@ -22,6 +22,7 @@ import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.dto.dtoModule
 import org.jacodb.ets.dto.toEtsFile
 import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsIfStmt
 import org.jacodb.ets.model.EtsNewArrayExpr
 import org.jacodb.ets.model.EtsPtrCallExpr
 import org.jacodb.ets.utils.EtsIrProvider
@@ -62,5 +63,14 @@ class EtsTsArrayParameterTest {
 
         assertTrue(values.any { it is EtsNewArrayExpr })
         assertTrue(values.filterIsInstance<EtsPtrCallExpr>().any { it.callee.name == "next" && it.receiver != null })
+    }
+
+    @Test
+    fun `parameter defaults survive frontend JSON and model conversion`() {
+        val dto = roundTrip("export function value(a = 3, b = a + 1): number { return b; }")
+
+        val method = dto.toEtsFile().classes.flatMap { it.methods }.single { it.name == "value" }
+
+        assertTrue(method.cfg.stmts.any { it is EtsIfStmt })
     }
 }
