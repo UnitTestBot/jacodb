@@ -2058,7 +2058,7 @@ function lvalueType(target: LValueDto): TypeDto {
     }
 }
 
-function arrayElementType(array: Extract<TypeDto, { _: "ArrayType" }>): TypeDto {
+export function arrayElementType(array: Extract<TypeDto, { _: "ArrayType" }>): TypeDto {
     if (array.dimensions <= 1) {
         return array.elementType;
     }

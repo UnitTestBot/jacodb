@@ -52,4 +52,15 @@ class EtsTsArrayParameterTest {
         assertTrue(values.any { it is EtsNewArrayExpr })
         assertTrue(values.filterIsInstance<EtsPtrCallExpr>().any { it.callee.name == "next" && it.receiver != null })
     }
+
+    @Test
+    fun `array rest survives frontend JSON and model conversion`() {
+        val dto = roundTrip("export function tail(input: number[]): number[] { const [first, ...rest] = input; return rest; }")
+
+        val method = dto.toEtsFile().classes.flatMap { it.methods }.single { it.name == "tail" }
+        val values = method.cfg.stmts.filterIsInstance<EtsAssignStmt>().map { it.rhv }
+
+        assertTrue(values.any { it is EtsNewArrayExpr })
+        assertTrue(values.filterIsInstance<EtsPtrCallExpr>().any { it.callee.name == "next" && it.receiver != null })
+    }
 }
