@@ -50,6 +50,7 @@ import {
     NULL_TYPE,
     NUMBER_TYPE,
     STRING_TYPE,
+    SYMBOL_TYPE,
     TypeDto,
     UNDEFINED_TYPE,
     UNKNOWN_TYPE,
@@ -169,6 +170,8 @@ export class TypeConverter {
                 return BIGINT_TYPE;
             case ts.SyntaxKind.StringKeyword:
                 return STRING_TYPE;
+            case ts.SyntaxKind.SymbolKeyword:
+                return SYMBOL_TYPE;
             case ts.SyntaxKind.ObjectKeyword:
                 return this.materializeStructuralClass(node, [], depth, substitutions);
             case ts.SyntaxKind.VoidKeyword:
@@ -569,6 +572,7 @@ export class TypeConverter {
         if (flags & ts.TypeFlags.NumberLike) return NUMBER_TYPE;
         if (flags & ts.TypeFlags.BigIntLike) return BIGINT_TYPE;
         if (flags & ts.TypeFlags.StringLike) return STRING_TYPE;
+        if (flags & ts.TypeFlags.ESSymbolLike) return SYMBOL_TYPE;
 
         if (flags & ts.TypeFlags.TypeParameter) {
             return { _: "GenericType", name: this.typeName(type) };

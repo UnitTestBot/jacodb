@@ -41,6 +41,10 @@ interface EtsType : TypeName, CommonType {
             error("Cannot handle ${type::class.java.simpleName}: $type")
         }
         fun visit(type: EtsStringType): R
+        fun visit(type: EtsSymbolType): R {
+            if (this is Default) return defaultVisit(type)
+            error("Cannot handle ${type::class.java.simpleName}: $type")
+        }
         fun visit(type: EtsNullType): R
         fun visit(type: EtsUndefinedType): R
         fun visit(type: EtsVoidType): R
@@ -83,6 +87,7 @@ interface EtsType : TypeName, CommonType {
             override fun visit(type: EtsNumberType): R = defaultVisit(type)
             override fun visit(type: EtsBigIntType): R = defaultVisit(type)
             override fun visit(type: EtsStringType): R = defaultVisit(type)
+            override fun visit(type: EtsSymbolType): R = defaultVisit(type)
             override fun visit(type: EtsNullType): R = defaultVisit(type)
             override fun visit(type: EtsUndefinedType): R = defaultVisit(type)
             override fun visit(type: EtsVoidType): R = defaultVisit(type)
@@ -253,6 +258,17 @@ object EtsBigIntType : EtsPrimitiveType {
 object EtsStringType : EtsPrimitiveType {
     override val typeName: String
         get() = "string"
+
+    override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: EtsType.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+object EtsSymbolType : EtsPrimitiveType {
+    override val typeName: String
+        get() = "symbol"
 
     override fun toString(): String = typeName
 

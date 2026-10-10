@@ -138,6 +138,7 @@ import org.jacodb.ets.model.EtsStrictNotEqExpr
 import org.jacodb.ets.model.EtsStringConstant
 import org.jacodb.ets.model.EtsStringLiteralType
 import org.jacodb.ets.model.EtsStringType
+import org.jacodb.ets.model.EtsSymbolType
 import org.jacodb.ets.model.EtsSubExpr
 import org.jacodb.ets.model.EtsThis
 import org.jacodb.ets.model.EtsThrowStmt
@@ -741,6 +742,8 @@ fun TypeDto.toEtsType(): EtsType = when (this) {
     NumberTypeDto -> EtsNumberType
 
     StringTypeDto -> EtsStringType
+
+    SymbolTypeDto -> EtsSymbolType
 
     is TupleTypeDto -> EtsTupleType(
         types = types.map { it.toEtsType() },

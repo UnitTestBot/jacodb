@@ -129,6 +129,13 @@ data object StringTypeDto : PrimitiveTypeDto {
 }
 
 @Serializable
+@SerialName("SymbolType")
+data object SymbolTypeDto : PrimitiveTypeDto {
+    override val name: String
+        get() = "symbol"
+}
+
+@Serializable
 @SerialName("NullType")
 data object NullTypeDto : PrimitiveTypeDto {
     override val name: String
