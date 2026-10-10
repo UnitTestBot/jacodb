@@ -61,6 +61,7 @@ import { decoratorsOf, memberName, modifiersOf, resolvedSymbolOf } from "../lowe
 const MAX_DEPTH = 8;
 
 export class TypeConverter {
+    private readonly classExpressionSignatures = new WeakMap<ts.ClassExpression, ClassSignatureDto>();
     readonly structuralClasses: ClassDto[] = [];
     private readonly structuralClassByNode = new Map<ts.TypeNode, ClassDto>();
     private readonly structuralTypeParametersByNode = new Map<
@@ -79,6 +80,18 @@ export class TypeConverter {
 
     /** Class-like signature (class / interface / enum / struct) with its namespace chain. */
     classSignatureOf(decl: ts.Declaration & { name?: ts.DeclarationName }): ClassSignatureDto {
+        if (ts.isClassExpression(decl)) {
+            const registered = this.classExpressionSignatures.get(decl);
+            if (registered !== undefined) return registered;
+
+            const signature: ClassSignatureDto = {
+                name: `%ACExpr${decl.getStart()}`,
+                declaringFile: this.fileSignatureFor(decl.getSourceFile()),
+            };
+            this.classExpressionSignatures.set(decl, signature);
+            return signature;
+        }
+
         const name = decl.name !== undefined && ts.isIdentifier(decl.name)
             ? decl.name.text
             : ts.isClassDeclaration(decl) && (ts.getCombinedModifierFlags(decl) & ts.ModifierFlags.Default) !== 0
@@ -599,7 +612,8 @@ export class TypeConverter {
         // Instances of project classes/interfaces/enums -> ClassType.
         const classDecl = symbol !== undefined ? findClassLikeDeclaration(symbol) : undefined;
         if (classDecl !== undefined && isProjectDeclaration(classDecl)) {
-            if (ts.isClassDeclaration(classDecl) && type.getConstructSignatures().length > 0) {
+            if ((ts.isClassDeclaration(classDecl) || ts.isClassExpression(classDecl))
+                && type.getConstructSignatures().length > 0) {
                 return { _: "ClassValueType", signature: this.classSignatureOf(classDecl) };
             }
             const typeArgs =
@@ -740,10 +754,10 @@ function isWithin(node: ts.Node, ancestor: ts.Node): boolean {
 /** Class-like declaration of a symbol (class / interface / enum). */
 function findClassLikeDeclaration(
     symbol: ts.Symbol,
-): (ts.ClassDeclaration | ts.InterfaceDeclaration | ts.EnumDeclaration) | undefined {
+): (ts.ClassDeclaration | ts.ClassExpression | ts.InterfaceDeclaration | ts.EnumDeclaration) | undefined {
     return symbol.declarations?.find(
-        (d): d is ts.ClassDeclaration | ts.InterfaceDeclaration | ts.EnumDeclaration =>
-            ts.isClassDeclaration(d) || ts.isInterfaceDeclaration(d) || ts.isEnumDeclaration(d),
+        (d): d is ts.ClassDeclaration | ts.ClassExpression | ts.InterfaceDeclaration | ts.EnumDeclaration =>
+            ts.isClassDeclaration(d) || ts.isClassExpression(d) || ts.isInterfaceDeclaration(d) || ts.isEnumDeclaration(d),
     );
 }
 

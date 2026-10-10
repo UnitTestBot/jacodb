@@ -169,6 +169,15 @@ data class PropertyRefDto(
 ) : RefDto
 
 @Serializable
+@SerialName("NewClassExpr")
+data class NewClassExprDto(
+    val signature: ClassSignatureDto,
+) : ExprDto {
+    override val type: TypeDto
+        get() = ClassValueTypeDto(signature)
+}
+
+@Serializable
 @SerialName("NewArrayExpr")
 data class NewArrayExprDto(
     val elementType: TypeDto,

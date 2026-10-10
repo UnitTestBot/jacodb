@@ -31,6 +31,7 @@ import { ValueDto } from "./dto/values";
 
 const EXPR_KINDS = new Set([
     "NewExpr",
+    "NewClassExpr",
     "SpreadExpansionExpr",
     "ToPropertyKeyExpr",
     "NewArrayExpr",
@@ -398,6 +399,8 @@ export function valueOperands(value: ValueDto): ValueDto[] {
             return value.constructorValue !== undefined ? [value.constructorValue] : [];
         case "SpreadExpansionExpr":
             return [value.iterable];
+        case "NewClassExpr":
+            return [];
         case "NewArrayExpr":
             return [value.size];
         case "DeleteExpr":

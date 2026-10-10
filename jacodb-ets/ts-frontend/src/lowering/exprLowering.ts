@@ -294,6 +294,9 @@ export class ExprLowerer {
         if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
             return this.lowerClosure(node);
         }
+        if (ts.isClassExpression(node)) {
+            return this.lowerClassExpression(node);
+        }
         if (ts.isObjectLiteralExpression(node)) {
             return this.lowerObjectLiteral(node);
         }
@@ -1345,6 +1348,57 @@ export class ExprLowerer {
     // ------------------------------------------------------------------
     // Closures / object literals
     // ------------------------------------------------------------------
+
+    private lowerClassExpression(node: ts.ClassExpression): ValueDto {
+        if (node.heritageClauses?.length !== undefined && node.heritageClauses.length > 0) {
+            throw new LoweringError("class expression heritage is not represented in EtsIR");
+        }
+
+        if (node.name !== undefined || node.members.some((member) =>
+            ts.isClassStaticBlockDeclaration(member)
+            || (ts.getCombinedModifierFlags(member) & ts.ModifierFlags.Static) !== 0
+            || (member.name !== undefined && ts.isComputedPropertyName(member.name)))) {
+            throw new LoweringError("named, static, or computed class expression members are not represented in EtsIR");
+        }
+
+        let capturesLexicalValue = false;
+        const inspectCapture = (current: ts.Node): void => {
+            if (ts.isIdentifier(current)) {
+                const declarations = this.m.converter.symbolOf(current)?.declarations ?? [];
+                for (const declaration of declarations) {
+                    if (!ts.isVariableDeclaration(declaration) && !ts.isParameter(declaration)
+                        && !ts.isBindingElement(declaration) && !ts.isFunctionDeclaration(declaration)
+                        && !ts.isClassDeclaration(declaration)) continue;
+                    let ancestor: ts.Node | undefined = declaration;
+                    let insideClass = false;
+                    let methodLocal = false;
+                    while (ancestor !== undefined) {
+                        if (ancestor === node) insideClass = true;
+                        if (ts.isFunctionLike(ancestor)) methodLocal = true;
+                        ancestor = ancestor.parent;
+                    }
+                    if (!insideClass && methodLocal) capturesLexicalValue = true;
+                }
+            }
+            ts.forEachChild(current, inspectCapture);
+        };
+        inspectCapture(node);
+        if (capturesLexicalValue) {
+            throw new LoweringError("class expression lexical environment is not represented in EtsIR");
+        }
+
+        const buildClass = this.m.ctx.buildClassExpression;
+        if (buildClass === undefined) {
+            throw new LoweringError("class expression in a context without a class builder");
+        }
+
+        const registry = this.m.ctx.anonymous;
+        const signature = this.m.converter.classSignatureOf(node);
+        if (!registry.classes.some((clazz) => clazz.signature.name === signature.name)) {
+            registry.classes.push(buildClass(node, signature.name));
+        }
+        return { _: "NewClassExpr", signature };
+    }
 
     /**
      * Arrow function / function expression -> anonymous `%AM<n>$<method>` method

@@ -33,6 +33,66 @@ function constructorCallOf(stmt: StmtDto): InstanceCallExprDto | undefined {
 }
 
 describe("class lowering", () => {
+    it("creates a fresh class expression value with constructor and field initializer", () => {
+        const source = `
+            export function value(): number {
+                const Local = class { x = 1; };
+                return new Local().x;
+            }
+        `;
+        const { file, diagnostics } = lower(source);
+        const roundTrip = JSON.parse(serializeEtsFile(file)) as EtsFileDto;
+        const method = methodOf(classByName(roundTrip, "%dflt"), "value");
+        const stmts = singleBlockStmts(method);
+        const creation = stmts.find((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewClassExpr");
+
+        expect(creation).toMatchObject({
+            right: { _: "NewClassExpr", signature: expect.objectContaining({ name: expect.stringContaining("%AC") }) },
+        });
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr"
+            && stmt.right.constructorValue?._ === "Local")).toBe(true);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(false);
+        if (creation?._ !== "AssignStmt" || creation.right._ !== "NewClassExpr") return;
+
+        const clazz = classByName(roundTrip, creation.right.signature.name);
+        const allocation = stmts.find((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr");
+        expect(allocation).toMatchObject({ right: { classType: { _: "ClassType", signature: clazz.signature } } });
+        const instInit = methodOf(clazz, "%instInit");
+        expect(clazz.fields).toContainEqual(expect.objectContaining({ signature: expect.objectContaining({ name: "x" }) }));
+        expect(singleBlockStmts(instInit)).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            left: expect.objectContaining({ _: "InstanceFieldRef", field: expect.objectContaining({ name: "x" }) }),
+            right: expect.objectContaining({ _: "Constant", value: "1" }),
+        }));
+        expect(diagnostics.messages).toEqual([]);
+
+        const js = ts.transpileModule(source, {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+        }).outputText;
+        expect(new Function("exports", `${js}\nreturn exports.value();`)({})).toBe(1);
+    });
+
+    it("reports unrepresented class expression environments and static state explicitly", () => {
+        const { file, diagnostics } = lower(`
+            class Base {}
+            export function named(): unknown { return class Self {}; }
+            export function inherited(): unknown { return class extends Base {}; }
+            export function staticState(): unknown { return class { static x = 1; }; }
+            export function captured(value: number): unknown { return class { x = value; }; }
+        `);
+
+        for (const name of ["named", "inherited", "staticState", "captured"]) {
+            const stmts = singleBlockStmts(methodOf(classByName(file, "%dflt"), name));
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewClassExpr")).toBe(false);
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
+        }
+        expect(diagnostics.messages).toEqual(expect.arrayContaining([
+            expect.stringContaining("class expression heritage"),
+            expect.stringContaining("class expression lexical environment"),
+            expect.stringContaining("named, static, or computed class expression"),
+        ]));
+    });
+
     it("preserves a declared class constructor across reads, assignments, and returns", () => {
         const source = `
             class A { static marker = 7; }

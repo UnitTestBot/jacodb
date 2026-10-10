@@ -23,6 +23,10 @@ import org.jacodb.ets.toArrayType
 interface EtsExpr : EtsEntity {
     interface Visitor<out R> {
         fun visit(expr: EtsNewExpr): R
+        fun visit(expr: EtsNewClassExpr): R {
+            if (this is Default) return defaultVisit(expr)
+            error("Cannot handle ${expr::class.java.simpleName}: $expr")
+        }
         fun visit(expr: EtsSpreadExpansionExpr): R {
             if (this is Default) return defaultVisit(expr)
             error("Cannot handle ${expr::class.java.simpleName}: $expr")
@@ -89,6 +93,7 @@ interface EtsExpr : EtsEntity {
 
         interface Default<out R> : Visitor<R> {
             override fun visit(expr: EtsNewExpr): R = defaultVisit(expr)
+            override fun visit(expr: EtsNewClassExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsSpreadExpansionExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsToPropertyKeyExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsNewArrayExpr): R = defaultVisit(expr)
@@ -194,6 +199,17 @@ data class EtsToPropertyKeyExpr(val arg: EtsValue) : EtsExpr {
     override val type: EtsType get() = EtsUnknownType
 
     override fun toString(): String = "toPropertyKey($arg)"
+
+    override fun <R> accept(visitor: EtsExpr.Visitor<R>): R = visitor.visit(this)
+}
+
+/** Evaluation of a class expression creates a fresh constructor for [signature]. */
+data class EtsNewClassExpr(
+    val signature: EtsClassSignature,
+) : EtsExpr {
+    override val type: EtsType get() = EtsClassValueType(signature)
+
+    override fun toString(): String = "class ${signature.name}"
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R = visitor.visit(this)
 }
