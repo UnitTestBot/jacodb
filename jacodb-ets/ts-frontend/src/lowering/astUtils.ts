@@ -229,12 +229,11 @@ export function usesModuleLexicalThis(expression: ts.Expression): boolean {
     return visit(expression);
 }
 
-/** Object-literal lowering currently emits `%computed` without evaluating the key. */
+/** Computed method and accessor names still lack a runtime definition. */
 export function hasUnsupportedComputedObjectKey(expression: ts.Expression): boolean {
     const visit = (node: ts.Node): boolean => {
         if (ts.isObjectLiteralExpression(node) && node.properties.some((property) =>
-            (ts.isPropertyAssignment(property)
-                || ts.isMethodDeclaration(property)
+            (ts.isMethodDeclaration(property)
                 || ts.isGetAccessorDeclaration(property)
                 || ts.isSetAccessorDeclaration(property))
             && ts.isComputedPropertyName(property.name),

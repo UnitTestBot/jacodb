@@ -27,6 +27,10 @@ interface EtsExpr : EtsEntity {
             if (this is Default) return defaultVisit(expr)
             error("Cannot handle ${expr::class.java.simpleName}: $expr")
         }
+        fun visit(expr: EtsToPropertyKeyExpr): R {
+            if (this is Default) return defaultVisit(expr)
+            error("Cannot handle ${expr::class.java.simpleName}: $expr")
+        }
         fun visit(expr: EtsNewArrayExpr): R
         fun visit(expr: EtsCastExpr): R
         fun visit(expr: EtsInstanceOfExpr): R
@@ -86,6 +90,7 @@ interface EtsExpr : EtsEntity {
         interface Default<out R> : Visitor<R> {
             override fun visit(expr: EtsNewExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsSpreadExpansionExpr): R = defaultVisit(expr)
+            override fun visit(expr: EtsToPropertyKeyExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsNewArrayExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsCastExpr): R = defaultVisit(expr)
             override fun visit(expr: EtsInstanceOfExpr): R = defaultVisit(expr)
@@ -179,6 +184,16 @@ data class EtsSpreadExpansionExpr(
     override val type: EtsType get() = EtsUnknownType.toArrayType(dimensions = 1)
 
     override fun toString(): String = "expandSpread($iterable, $expectedCount)"
+
+
+    override fun <R> accept(visitor: EtsExpr.Visitor<R>): R = visitor.visit(this)
+}
+
+/** ECMAScript ToPropertyKey (ToPrimitive with string hint, then string or symbol). */
+data class EtsToPropertyKeyExpr(val arg: EtsValue) : EtsExpr {
+    override val type: EtsType get() = EtsUnknownType
+
+    override fun toString(): String = "toPropertyKey($arg)"
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R = visitor.visit(this)
 }

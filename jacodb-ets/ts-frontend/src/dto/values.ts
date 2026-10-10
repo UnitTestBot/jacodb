@@ -44,6 +44,7 @@ export type ImmediateDto = LocalDto | ConstantDto | ClassValueRefDto;
 export type ExprDto =
     | NewExprDto
     | SpreadExpansionExprDto
+    | ToPropertyKeyExprDto
     | NewArrayExprDto
     | DeleteExprDto
     | AwaitExprDto
@@ -67,11 +68,12 @@ export type RefDto =
     | GlobalRefDto
     | ClosureFieldRefDto
     | ArrayRefDto
+    | PropertyRefDto
     | InstanceFieldRefDto
     | StaticFieldRefDto;
 
 /** LValue kinds accepted by Kotlin Convert as the LHS of AssignStmt. */
-export type LValueDto = LocalDto | ClosureFieldRefDto | ArrayRefDto | InstanceFieldRefDto | StaticFieldRefDto;
+export type LValueDto = LocalDto | ClosureFieldRefDto | ArrayRefDto | PropertyRefDto | InstanceFieldRefDto | StaticFieldRefDto;
 
 /** Fallback for constructs we cannot model; Kotlin deserializes any unknown kind into RawValueDto. */
 export interface RawValueDto {
@@ -148,6 +150,20 @@ export interface InstanceOfExprDto {
 export interface CastExprDto {
     readonly _: "CastExpr";
     arg: ValueDto;
+    type: TypeDto;
+}
+
+/** ECMAScript ToPropertyKey; result is a string or symbol, evaluated at this statement. */
+export interface ToPropertyKeyExprDto {
+    readonly _: "ToPropertyKeyExpr";
+    arg: ImmediateDto;
+}
+
+/** Generic property Get/Set, with an already converted runtime key. */
+export interface PropertyRefDto {
+    readonly _: "PropertyRef";
+    instance: LocalDto;
+    key: ImmediateDto;
     type: TypeDto;
 }
 

@@ -32,6 +32,7 @@ import org.jacodb.ets.model.EtsCastExpr
 import org.jacodb.ets.model.EtsCaughtExceptionRef
 import org.jacodb.ets.model.EtsClosureFieldRef
 import org.jacodb.ets.model.EtsConstant
+import org.jacodb.ets.model.EtsDefineDataPropertyStmt
 import org.jacodb.ets.model.EtsDeleteExpr
 import org.jacodb.ets.model.EtsDivExpr
 import org.jacodb.ets.model.EtsEntity
@@ -66,6 +67,7 @@ import org.jacodb.ets.model.EtsPostDecExpr
 import org.jacodb.ets.model.EtsPostIncExpr
 import org.jacodb.ets.model.EtsPreDecExpr
 import org.jacodb.ets.model.EtsPreIncExpr
+import org.jacodb.ets.model.EtsPropertyRef
 import org.jacodb.ets.model.EtsPtrCallExpr
 import org.jacodb.ets.model.EtsRawEntity
 import org.jacodb.ets.model.EtsRawStmt
@@ -81,6 +83,7 @@ import org.jacodb.ets.model.EtsStringConstant
 import org.jacodb.ets.model.EtsSubExpr
 import org.jacodb.ets.model.EtsThis
 import org.jacodb.ets.model.EtsThrowStmt
+import org.jacodb.ets.model.EtsToPropertyKeyExpr
 import org.jacodb.ets.model.EtsTypeOfExpr
 import org.jacodb.ets.model.EtsUnaryPlusExpr
 import org.jacodb.ets.model.EtsUndefinedConstant
@@ -103,6 +106,9 @@ private object StmtGetOperands : EtsStmt.Visitor<Sequence<EtsEntity>> {
 
     override fun visit(stmt: EtsAssignStmt): Sequence<EtsEntity> =
         sequenceOf(stmt.rhv)
+
+    override fun visit(stmt: EtsDefineDataPropertyStmt): Sequence<EtsEntity> =
+        sequenceOf(stmt.target, stmt.key, stmt.value)
 
     override fun visit(stmt: EtsCallStmt): Sequence<EtsEntity> =
         sequenceOf(stmt.expr)
@@ -172,6 +178,12 @@ private object EntityGetOperands : EtsEntity.Visitor<Sequence<EtsEntity>> {
 
     override fun visit(expr: EtsNewExpr): Sequence<EtsEntity> =
         listOfNotNull(expr.constructorValue).asSequence()
+
+    override fun visit(expr: EtsToPropertyKeyExpr): Sequence<EtsEntity> =
+        sequenceOf(expr.arg)
+
+    override fun visit(value: EtsPropertyRef): Sequence<EtsEntity> =
+        sequenceOf(value.instance, value.key)
 
     override fun visit(expr: EtsNewArrayExpr): Sequence<EtsEntity> =
         sequenceOf(expr.size)

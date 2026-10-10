@@ -22,7 +22,7 @@
  * Unknown discriminators fall back to RawStmtDto on the Kotlin side.
  */
 
-import { CallExprDto, LValueDto, ValueDto } from "./values";
+import { CallExprDto, ImmediateDto, LocalDto, LValueDto, ValueDto } from "./values";
 
 /**
  * Closed union of the known statement kinds.
@@ -32,6 +32,7 @@ import { CallExprDto, LValueDto, ValueDto } from "./values";
 export type StmtDto =
     | NopStmtDto
     | AssignStmtDto
+    | DefineDataPropertyStmtDto
     | CallStmtDto
     | ReturnVoidStmtDto
     | ReturnStmtDto
@@ -52,6 +53,14 @@ export interface AssignStmtDto {
     readonly _: "AssignStmt";
     left: LValueDto;
     right: ValueDto;
+}
+
+/** Define an own enumerable configurable writable data property, without invoking an existing setter. */
+export interface DefineDataPropertyStmtDto {
+    readonly _: "DefineDataPropertyStmt";
+    target: LocalDto;
+    key: ImmediateDto;
+    value: ImmediateDto;
 }
 
 export interface CallStmtDto {

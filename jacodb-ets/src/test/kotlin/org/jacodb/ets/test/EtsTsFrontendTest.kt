@@ -27,6 +27,7 @@ import org.jacodb.ets.dto.ClassTypeDto
 import org.jacodb.ets.dto.ClassValueRefDto
 import org.jacodb.ets.dto.ClassValueTypeDto
 import org.jacodb.ets.dto.ConstantDto
+import org.jacodb.ets.dto.DefineDataPropertyStmtDto
 import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.dto.IfStmtDto
 import org.jacodb.ets.dto.InstanceOfExprDto
@@ -35,6 +36,7 @@ import org.jacodb.ets.dto.NewArrayExprDto
 import org.jacodb.ets.dto.NewExprDto
 import org.jacodb.ets.dto.NumberTypeDto
 import org.jacodb.ets.dto.Ops
+import org.jacodb.ets.dto.PropertyRefDto
 import org.jacodb.ets.dto.RawStmtDto
 import org.jacodb.ets.dto.RawValueDto
 import org.jacodb.ets.dto.RelationOperationDto
@@ -43,6 +45,7 @@ import org.jacodb.ets.dto.StringTypeDto
 import org.jacodb.ets.dto.StaticCallExprDto
 import org.jacodb.ets.dto.StaticFieldRefDto
 import org.jacodb.ets.dto.ThrowStmtDto
+import org.jacodb.ets.dto.ToPropertyKeyExprDto
 import org.jacodb.ets.dto.UnaryOperationDto
 import org.jacodb.ets.dto.UnknownTypeDto
 import org.jacodb.ets.dto.ValueDto
@@ -55,18 +58,21 @@ import org.jacodb.ets.model.EtsCallStmt
 import org.jacodb.ets.model.EtsClassValueRef
 import org.jacodb.ets.model.EtsClassValueType
 import org.jacodb.ets.model.EtsClosureFieldRef
+import org.jacodb.ets.model.EtsDefineDataPropertyStmt
 import org.jacodb.ets.model.EtsEqExpr
 import org.jacodb.ets.model.EtsIfStmt
 import org.jacodb.ets.model.EtsInstanceFieldRef
 import org.jacodb.ets.model.EtsInstanceOfExpr
 import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsNewExpr
+import org.jacodb.ets.model.EtsPropertyRef
 import org.jacodb.ets.model.EtsRawEntity
 import org.jacodb.ets.model.EtsRawStmt
 import org.jacodb.ets.model.EtsScene
 import org.jacodb.ets.model.EtsNewArrayExpr
 import org.jacodb.ets.model.EtsNumberConstant
 import org.jacodb.ets.model.EtsThrowStmt
+import org.jacodb.ets.model.EtsToPropertyKeyExpr
 import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
 import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
 import org.jacodb.ets.utils.EtsIrProvider
@@ -108,6 +114,38 @@ class EtsTsFrontendTest {
 
             return EtsFileDto.loadFromJson(outputPath.readText())
         }
+    }
+
+    @Test
+    fun `computed object keys survive the frontend JSON round trip`() {
+        val frontendDto = runFrontend(
+            """
+                export function read(key: string): number {
+                    const object = { [key]: 1 };
+                    return object[key];
+                }
+            """.trimIndent(),
+        )
+
+        val serialized = Json { serializersModule = dtoModule }.encodeToString(frontendDto)
+        val roundTripped = EtsFileDto.loadFromJson(serialized)
+        val dtoStmts = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "read" }
+            .body!!.cfg.blocks.flatMap { it.stmts }
+        val assignments = dtoStmts.filterIsInstance<AssignStmtDto>()
+
+        assertEquals(1, dtoStmts.filterIsInstance<DefineDataPropertyStmtDto>().size)
+        assertTrue(assignments.any { it.right is PropertyRefDto })
+        assertEquals(2, assignments.count { it.right is ToPropertyKeyExprDto })
+        assertTrue(assignments.none { it.right is RawValueDto })
+
+        val scene = EtsScene(listOf(roundTripped.toEtsFile()))
+        val method = scene.projectClasses.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "read" }
+        val converted = method.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+        assertEquals(1, method.cfg.stmts.filterIsInstance<EtsDefineDataPropertyStmt>().size)
+        assertTrue(converted.any { it.rhv is EtsPropertyRef })
+        assertEquals(2, converted.count { it.rhv is EtsToPropertyKeyExpr })
     }
 
     @Test
