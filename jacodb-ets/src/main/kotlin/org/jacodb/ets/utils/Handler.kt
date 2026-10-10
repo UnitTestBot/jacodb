@@ -465,6 +465,7 @@ abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> 
     final override fun visit(expr: EtsPtrCallExpr) {
         handle(expr)
         expr.ptr.accept(this)
+        expr.receiver?.accept(this)
         expr.args.forEach { it.accept(this) }
     }
     final override fun visit(expr: EtsSpreadExpansionExpr) {

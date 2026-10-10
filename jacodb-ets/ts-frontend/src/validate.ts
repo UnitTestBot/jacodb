@@ -364,6 +364,9 @@ function validateValue(
             }
             break;
         case "PtrCallExpr":
+            if (value.receiver !== undefined && value.receiver._ !== "Local") {
+                err(`${ctx}: PtrCallExpr.receiver must be Local`);
+            }
             // Kotlin Convert casts ptr to EtsValue — expr kinds would throw a ClassCastException.
             if (EXPR_KINDS.has(value.ptr._)) {
                 err(`${ctx}: PtrCallExpr.ptr has expr kind '${value.ptr._}', must be an immediate or ref`);
@@ -409,7 +412,7 @@ export function valueOperands(value: ValueDto): ValueDto[] {
         case "StaticCallExpr":
             return [...value.args];
         case "PtrCallExpr":
-            return [value.ptr, ...value.args];
+            return [value.ptr, ...(value.receiver === undefined ? [] : [value.receiver]), ...value.args];
         case "GlobalRef":
             return value.ref !== null ? [value.ref] : [];
         case "ClosureFieldRef":
