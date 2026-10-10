@@ -68,6 +68,7 @@ import {
 } from "../dto/values";
 import { syntaxKindName, unsupportedValue } from "./diagnostics";
 import { MethodContext } from "./methodBuilder";
+import { IteratorLowerer } from "./iteratorLowering";
 
 const RELATION_BY_SYNTAX: Partial<Record<ts.SyntaxKind, RelationOp>> = {
     [ts.SyntaxKind.EqualsEqualsToken]: "==",
@@ -1312,6 +1313,10 @@ export class ExprLowerer {
             ? contextualType
             : inferredType;
         const elementType: TypeDto = arrayType._ === "ArrayType" ? arrayElementType(arrayType) : UNKNOWN_TYPE;
+        if (node.elements.some(ts.isSpreadElement)) {
+            return this.lowerArrayLiteralWithSpread(node, arrayType, elementType);
+        }
+
         const temp = this.m.newTemp(
             arrayType._ === "ArrayType" ? arrayType : { _: "ArrayType", elementType, dimensions: 1 },
         );
@@ -1463,6 +1468,47 @@ export class ExprLowerer {
     }
 
     /** `a${x}b` -> chain of string `+` binops. */
+    private lowerArrayLiteralWithSpread(
+        node: ts.ArrayLiteralExpression,
+        arrayType: TypeDto,
+        elementType: TypeDto,
+    ): LocalDto {
+        const result = this.m.newTemp(
+            arrayType._ === "ArrayType" ? arrayType : { _: "ArrayType", elementType, dimensions: 1 },
+        );
+        this.m.cfg.emit({
+            _: "AssignStmt", left: result,
+            right: { _: "NewArrayExpr", elementType, size: constant("0", NUMBER_TYPE) },
+        });
+        const offset = this.m.newTemp(NUMBER_TYPE);
+        this.m.cfg.emit({ _: "AssignStmt", left: offset, right: constant("0", NUMBER_TYPE) });
+
+        for (const element of node.elements) {
+            if (ts.isSpreadElement(element)) {
+                const source = this.m.snapshotToLocal(this.lowerToLocal(element.expression), this.safeTypeOf(element.expression));
+                new IteratorLowerer(this.m, source).appendTo(result, offset, elementType);
+                continue;
+            }
+            if (!ts.isOmittedExpression(element)) {
+                const value = this.lowerToImmediate(element);
+                this.m.cfg.emit({
+                    _: "AssignStmt", left: { _: "ArrayRef", array: result, index: offset, type: elementType }, right: value,
+                });
+            }
+            this.m.cfg.emit({
+                _: "AssignStmt", left: offset,
+                right: { _: "BinopExpr", op: "+", left: offset, right: constant("1", NUMBER_TYPE), type: NUMBER_TYPE },
+            });
+            // Advancing a hole still grows the fresh array's length.
+            this.m.cfg.emit({
+                _: "AssignStmt",
+                left: { _: "InstanceFieldRef", instance: result, field: { declaringClass: UNKNOWN_CLASS_SIGNATURE, name: "length", type: NUMBER_TYPE } },
+                right: offset,
+            });
+        }
+        return result;
+    }
+
     private lowerTemplate(node: ts.TemplateExpression): ValueDto {
         let acc: ImmediateDto = constant(node.head.text, STRING_TYPE);
         for (const span of node.templateSpans) {
