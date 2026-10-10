@@ -90,6 +90,7 @@ import org.jacodb.ets.model.EtsSubExpr
 import org.jacodb.ets.model.EtsThis
 import org.jacodb.ets.model.EtsThrowStmt
 import org.jacodb.ets.model.EtsToPropertyKeyExpr
+import org.jacodb.ets.model.EtsToNumericExpr
 import org.jacodb.ets.model.EtsTypeOfExpr
 import org.jacodb.ets.model.EtsUnaryPlusExpr
 import org.jacodb.ets.model.EtsUndefinedConstant
@@ -195,6 +196,9 @@ private object EntityGetOperands : EtsEntity.Visitor<Sequence<EtsEntity>> {
         listOfNotNull(expr.constructorValue).asSequence()
 
     override fun visit(expr: EtsToPropertyKeyExpr): Sequence<EtsEntity> =
+        sequenceOf(expr.arg)
+
+    override fun visit(expr: EtsToNumericExpr): Sequence<EtsEntity> =
         sequenceOf(expr.arg)
 
     override fun visit(value: EtsPropertyRef): Sequence<EtsEntity> =

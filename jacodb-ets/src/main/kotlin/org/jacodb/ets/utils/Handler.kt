@@ -90,6 +90,7 @@ import org.jacodb.ets.model.EtsSubExpr
 import org.jacodb.ets.model.EtsThis
 import org.jacodb.ets.model.EtsThrowStmt
 import org.jacodb.ets.model.EtsToPropertyKeyExpr
+import org.jacodb.ets.model.EtsToNumericExpr
 import org.jacodb.ets.model.EtsTypeOfExpr
 import org.jacodb.ets.model.EtsUnaryPlusExpr
 import org.jacodb.ets.model.EtsUndefinedConstant
@@ -261,6 +262,11 @@ abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> 
     }
 
     final override fun visit(expr: EtsToPropertyKeyExpr) {
+        handle(expr)
+        expr.arg.accept(this)
+    }
+
+    final override fun visit(expr: EtsToNumericExpr) {
         handle(expr)
         expr.arg.accept(this)
     }

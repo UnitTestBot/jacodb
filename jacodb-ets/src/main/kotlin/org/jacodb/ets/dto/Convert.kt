@@ -22,6 +22,7 @@ import mu.KotlinLogging
 import org.jacodb.ets.model.EtsDefineDataPropertyStmt
 import org.jacodb.ets.model.EtsPropertyRef
 import org.jacodb.ets.model.EtsToPropertyKeyExpr
+import org.jacodb.ets.model.EtsToNumericExpr
 import org.jacodb.ets.toArrayType
 import org.jacodb.ets.model.BasicBlock
 import org.jacodb.ets.model.EtsAddExpr
@@ -392,6 +393,11 @@ class EtsMethodBuilder(
 
         is ToPropertyKeyExprDto -> EtsToPropertyKeyExpr(
             arg = ensureOneAddress(arg.toEtsEntity()),
+        )
+
+        is ToNumericExprDto -> EtsToNumericExpr(
+            arg = ensureOneAddress(arg.toEtsEntity()),
+            type = type.toEtsType(),
         )
 
         is PropertyRefDto -> EtsPropertyRef(

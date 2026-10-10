@@ -475,13 +475,19 @@ describe("straight-line lowering", () => {
         const stmts = bodyStmts(source);
         const all = assigns(stmts);
 
-        // postfix: %old := c.f; %new := %old ++; c.f := %new; post := %old
+        // Postfix returns the numeric old value after loading the field once.
         const postAssign = assignmentTo(stmts, "post")!;
         const postSource = (postAssign.right as { name: string }).name;
         const oldLoad = all.find((a) => a.left._ === "Local" && a.left.name === postSource)!;
-        expect(oldLoad.right._).toBe("InstanceFieldRef"); // holds the OLD value
+        expect(oldLoad.right._).toBe("ToNumericExpr");
+        if (oldLoad.right._ !== "ToNumericExpr" || oldLoad.right.arg._ !== "Local") {
+            throw new Error("expected a converted numeric old value");
+        }
+        const rawSource = oldLoad.right.arg.name;
+        const rawLoad = all.find((a) => a.left._ === "Local" && a.left.name === rawSource)!;
+        expect(rawLoad.right._).toBe("InstanceFieldRef");
 
-        // prefix: %old := c.f; %new := %old ++; c.f := %new; pre := %new
+        // Prefix returns the updated value.
         const preAssign = assignmentTo(stmts, "pre")!;
         const preSource = (preAssign.right as { name: string }).name;
         const newCompute = all.find((a) => a.left._ === "Local" && a.left.name === preSource)!;

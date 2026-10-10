@@ -24,6 +24,7 @@ export function executor(file: EtsFileDto, externals: Record<string, any> = {}) 
                         case "UndefinedType": return undefined;
                         case "NullType": return null;
                         case "NumberType": return Number(v.value);
+                        case "BigIntType": return BigInt(v.value);
                         case "BooleanType": return v.value === "true";
                         default: return v.value;
                     }
@@ -40,10 +41,15 @@ export function executor(file: EtsFileDto, externals: Record<string, any> = {}) 
                 }
                 case "TypeOfExpr": return typeof value(v.arg);
                 case "CastExpr": return value(v.arg);
-                case "UnopExpr":
+                case "ToNumericExpr": return -(-value(v.arg));
+                case "UnopExpr": {
                     if (v.op === "!") return !value(v.arg);
                     if (v.op === "-") return -value(v.arg);
+                    let numeric = value(v.arg);
+                    if (v.op === "++") return ++numeric;
+                    if (v.op === "--") return --numeric;
                     throw new Error(`Unsupported unary op: ${v.op}`);
+                }
                 case "BinopExpr":
                 case "ConditionExpr": {
                     const left = value(v.left);

@@ -71,6 +71,7 @@ export function executeObjectIr(file: EtsFileDto, name: string, args: unknown[] 
                     switch (value.type._) {
                         case "StringType": return value.value;
                         case "NumberType": return Number(value.value);
+                        case "BigIntType": return BigInt(value.value);
                         case "BooleanType": return value.value === "true";
                         case "NullType": return null;
                         case "UndefinedType": return undefined;
@@ -85,6 +86,7 @@ export function executeObjectIr(file: EtsFileDto, name: string, args: unknown[] 
                 case "PropertyRef": return read(value.instance)[read(value.key)];
                 case "ArrayRef": return read(value.array)[read(value.index)];
                 case "ToPropertyKeyExpr": return Reflect.ownKeys({ [read(value.arg)]: 0 })[0];
+                case "ToNumericExpr": return -(-read(value.arg));
                 case "RequireObjectCoercibleExpr": {
                     const source = read(value.arg);
                     if (source === null || source === undefined) throw new TypeError("nullish object binding");
@@ -104,10 +106,14 @@ export function executeObjectIr(file: EtsFileDto, name: string, args: unknown[] 
                     value.args.map(read),
                 );
                 case "CastExpr": return read(value.arg);
-                case "UnopExpr":
+                case "UnopExpr": {
                     if (value.op === "+") return +read(value.arg);
-                    if (value.op === "++") return Number(read(value.arg)) + 1;
+                    if (value.op === "-") return -read(value.arg);
+                    let numeric = read(value.arg);
+                    if (value.op === "++") return ++numeric;
+                    if (value.op === "--") return --numeric;
                     throw new Error(`unknown unary operator ${value.op}`);
+                }
                 case "ConditionExpr":
                     switch (value.op) {
                         case "===": return read(value.left) === read(value.right);
@@ -132,6 +138,7 @@ export function executeObjectIr(file: EtsFileDto, name: string, args: unknown[] 
                 case "ClosureFieldRef": captureEnvironment(left)[left.fieldName] = value; return;
                 case "InstanceFieldRef": read(left.instance)[left.field.name] = value; return;
                 case "PropertyRef": read(left.instance)[read(left.key)] = value; return;
+                case "ArrayRef": read(left.array)[read(left.index)] = value; return;
                 default: throw new Error(`unsupported object test assignment ${left._}`);
             }
         };

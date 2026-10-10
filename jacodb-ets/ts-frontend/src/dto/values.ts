@@ -47,6 +47,7 @@ export type ExprDto =
     | NewClassExprDto
     | SpreadExpansionExprDto
     | ToPropertyKeyExprDto
+    | ToNumericExprDto
     | RequireObjectCoercibleExprDto
     | NewArrayExprDto
     | DeleteExprDto
@@ -174,6 +175,13 @@ export interface CastExprDto {
 export interface ToPropertyKeyExprDto {
     readonly _: "ToPropertyKeyExpr";
     arg: ImmediateDto;
+}
+
+/** ECMAScript ToNumeric; uses a number hint and preserves a BigInt primitive. */
+export interface ToNumericExprDto {
+    readonly _: "ToNumericExpr";
+    arg: ImmediateDto;
+    type: TypeDto;
 }
 
 /** Generic property Get/Set, with an already converted runtime key. */
