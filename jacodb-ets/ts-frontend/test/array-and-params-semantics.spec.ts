@@ -89,18 +89,19 @@ describe("array iterator behavior after JSON round trip", () => {
     });
 
     it("evaluates the source once and drains it before the following element", () => {
-        const source = "declare function mark(n: number): number; declare function get(): Iterable<number>; function copy() { return [mark(0), ...get(), mark(9)]; }";
+        const source = "function copy(mark: (n: number) => number, get: () => Iterable<number>) { return [mark(0), ...get(), mark(9)]; }";
         const observed = (consumer: "ir" | "native") => {
             const order: any[] = [];
-            const externals = {
+            const callbacks = {
                 mark(n: number) { order.push(n); return n; },
                 get() {
                     order.push("source");
                     return { *[Symbol.iterator]() { order.push("first"); yield 1; order.push("second"); yield 2; order.push("done"); } };
                 },
             };
-            const functions = consumers(source, "copy", externals);
-            return { result: functions[consumer](), order };
+            const functions = consumers(source, "copy");
+
+            return { result: functions[consumer](callbacks.mark, callbacks.get), order };
         };
 
         expect(observed("ir")).toEqual(observed("native"));
@@ -110,14 +111,15 @@ describe("array iterator behavior after JSON round trip", () => {
     it("closes on a default initializer throw and preserves the original exception", () => {
         const original = new Error("binding default");
         const { ir, native } = consumers(
-            "declare function fail(): never; function tail(input: any) { const [a = fail(), ...rest] = input; return rest; }",
-            "tail", { fail: () => { throw original; } },
+            "function tail(input: any, fail: () => never) { const [a = fail(), ...rest] = input; return rest; }",
+            "tail",
         );
+        const fail = () => { throw original; };
         const run = (collect: any) => {
             let closed = 0;
             const input = { [Symbol.iterator]: () => ({ next: () => ({ value: undefined, done: false }), return() { closed++; throw new Error("close"); } }) };
 
-            expect(() => collect(input)).toThrow(original);
+            expect(() => collect(input, fail)).toThrow(original);
             expect(closed).toBe(1);
         };
 

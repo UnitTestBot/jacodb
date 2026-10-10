@@ -186,11 +186,11 @@ describe("class lowering", () => {
         const signatureStmts = singleBlockStmts(methodOf(defaultClass, "createBySignature"));
         const signatureAliasStmts = singleBlockStmts(methodOf(defaultClass, "createSignatureAlias"));
 
-        expect(stmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+        expect(stmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr"
             && stmt.right.method.name === "constructorValue")).toHaveLength(1);
         expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(false);
         expect(aliasStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(false);
-        expect(signatureStmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+        expect(signatureStmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr"
             && stmt.right.method.name === "constructorBySignature")).toHaveLength(1);
         for (const methodStmts of [signatureStmts, signatureAliasStmts]) {
             expect(methodStmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(false);
@@ -256,9 +256,9 @@ describe("class lowering", () => {
             (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr",
         ))!;
         const stmts = block.stmts;
-        const pickIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+        const pickIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr"
             && stmt.right.method.name === "pick");
-        const argumentIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+        const argumentIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr"
             && stmt.right.method.name === "argument");
         const allocationIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr");
         const pickCall = stmts[pickIndex]!;
@@ -623,7 +623,7 @@ describe("class lowering", () => {
         const marks = stmts.flatMap((stmt) => {
             const call = stmt._ === "CallStmt"
                 ? stmt.expr
-                : stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+                : stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr"
                   ? stmt.right
                   : undefined;
             return call?.method.name === "mark" ? [call.args[0]] : [];
@@ -769,7 +769,7 @@ describe("namespace lowering", () => {
         for (const methodName of ["create", "marker", "invoke"]) {
             const stmts = singleBlockStmts(methodOf(defaultClass, methodName));
             const callIndices = stmts.flatMap((stmt, index) =>
-                stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+                stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr"
                     && stmt.right.method.name === "getN" ? [index] : [],
             );
             const unsupportedIndex = stmts.findIndex(
@@ -909,9 +909,9 @@ describe("namespace lowering", () => {
 
         const effectStmts = singleBlockStmts(methodOf(defaultClass, "withEffects"));
         const receiverIndex = effectStmts.findIndex((stmt) => stmt._ === "AssignStmt"
-            && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "getN");
+            && stmt.right._ === "PtrCallExpr" && stmt.right.method.name === "getN");
         const keyIndex = effectStmts.findIndex((stmt) => stmt._ === "AssignStmt"
-            && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "getKey");
+            && stmt.right._ === "PtrCallExpr" && stmt.right.method.name === "getKey");
         const unsupportedIndex = effectStmts.findIndex((stmt) => stmt._ === "AssignStmt"
             && stmt.right._ === "UnsupportedValue");
         expect(receiverIndex).toBeGreaterThanOrEqual(0);
@@ -1001,9 +1001,9 @@ describe("namespace lowering", () => {
 
         const computedStmts = singleBlockStmts(methodOf(defaultClass, "computed"));
         const receiverIndex = computedStmts.findIndex((stmt) => stmt._ === "AssignStmt"
-            && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "getHolder");
+            && stmt.right._ === "PtrCallExpr" && stmt.right.method.name === "getHolder");
         const keyIndex = computedStmts.findIndex((stmt) => stmt._ === "AssignStmt"
-            && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "getKey");
+            && stmt.right._ === "PtrCallExpr" && stmt.right.method.name === "getKey");
         const propertyIndex = computedStmts.findIndex((stmt) => stmt._ === "AssignStmt"
             && stmt.right._ === "PropertyRef");
         const conversionIndex = computedStmts.findIndex((stmt) => stmt._ === "AssignStmt"

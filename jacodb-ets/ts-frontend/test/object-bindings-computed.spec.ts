@@ -54,7 +54,7 @@ describe("computed object binding keys", () => {
         const { file, diagnostics } = lower(source);
         const stmts = methodByName(file, "pick").body!.cfg.blocks.flatMap((block) => block.stmts);
         const callIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
-            && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "change");
+            && stmt.right._ === "PtrCallExpr" && stmt.right.method.name === "change");
         const readIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PropertyRef");
         const read = stmts[readIndex] as AssignStmtDto;
 

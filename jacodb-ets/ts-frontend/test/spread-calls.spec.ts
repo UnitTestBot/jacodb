@@ -8,7 +8,7 @@ function assertSpreadArgumentOrder(stmts: StmtDto[], methodName: string): void {
     const expansion = stmts.find((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "SpreadExpansionExpr");
     const reads = stmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "ArrayRef");
     const call = stmts.find((stmt) => stmt._ === "AssignStmt"
-        && (stmt.right._ === "StaticCallExpr" || stmt.right._ === "InstanceCallExpr")
+        && (stmt.right._ === "PtrCallExpr" || stmt.right._ === "InstanceCallExpr")
         && stmt.right.method.name === methodName);
 
     expect(reads).toHaveLength(2);
@@ -21,6 +21,7 @@ function assertSpreadArgumentOrder(stmts: StmtDto[], methodName: string): void {
     expect(call).toMatchObject({
         _: "AssignStmt",
         right: {
+            _: methodName === "constructor" ? "InstanceCallExpr" : "PtrCallExpr",
             args: reads.map((stmt) => stmt._ === "AssignStmt" ? stmt.left : undefined),
         },
     });
@@ -126,7 +127,7 @@ describe("fixed-size spread arguments", () => {
         const { file, diagnostics } = lower(source);
         const stmts = singleBlockStmts(methodByName(file, "value"));
         const calls = stmts.flatMap((stmt, index) => stmt._ === "AssignStmt"
-            && stmt.right._ === "StaticCallExpr" ? [{ name: stmt.right.method.name, index, args: stmt.right.args }] : []);
+            && stmt.right._ === "PtrCallExpr" ? [{ name: stmt.right.method.name, index, args: stmt.right.args }] : []);
         const reads = stmts.flatMap((stmt, index) => stmt._ === "AssignStmt"
             && stmt.right._ === "ArrayRef" ? [index] : []);
 
@@ -152,7 +153,8 @@ describe("fixed-size spread arguments", () => {
         const { file, diagnostics } = lower(source);
         const stmts = singleBlockStmts(methodByName(file, "sum"));
 
-        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt"
+            && (stmt.right._ === "PtrCallExpr" || stmt.right._ === "StaticCallExpr")
             && stmt.right.method.name === "add")).toBe(false);
         expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue"
             && stmt.right.kindName === "CallExpression")).toBe(true);
@@ -202,7 +204,7 @@ describe("computed constructor arrays", () => {
         const roundTrip = JSON.parse(serializeEtsFile(file));
         const stmts = singleBlockStmts(methodByName(roundTrip, "make"));
         const functionCalls = stmts.flatMap((stmt, index) => stmt._ === "AssignStmt"
-            && stmt.right._ === "StaticCallExpr" ? [{ name: stmt.right.method.name, index }] : []);
+            && stmt.right._ === "PtrCallExpr" ? [{ name: stmt.right.method.name, index }] : []);
         const readIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "ArrayRef");
         const allocationIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr"
             && stmt.right.constructorValue?._ === "Local");

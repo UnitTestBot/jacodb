@@ -131,7 +131,7 @@ describe("straight-line lowering", () => {
         });
     });
 
-    it("lowers free project function calls to StaticCallExpr on %dflt", () => {
+    it("lowers free project function calls through their shared binding", () => {
         const source = `
             function add(a: number, b: number): number { return a + b; }
             let s = add(1, 2);
@@ -140,7 +140,7 @@ describe("straight-line lowering", () => {
         const stmts = singleBlockStmts(defaultMethod(file));
         const sAssign = assignmentTo(stmts, "s");
         expect(sAssign!.right).toMatchObject({
-            _: "StaticCallExpr",
+            _: "PtrCallExpr",
             method: {
                 declaringClass: { name: "%dflt", declaringFile: { projectName: "proj", fileName: "test.ts" } },
                 name: "add",
@@ -168,7 +168,7 @@ describe("straight-line lowering", () => {
         const defaultClass = namespace.classes!.find((clazz) => clazz.signature.name === "%dflt")!;
         const twiceArea = defaultClass.methods.find((method) => method.signature.name === "twiceArea")!;
         const call = singleBlockStmts(twiceArea).find(
-            (stmt): stmt is AssignStmtDto => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr",
+            (stmt): stmt is AssignStmtDto => stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr",
         );
 
         expect(call).toMatchObject({

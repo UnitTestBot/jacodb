@@ -70,7 +70,7 @@ describe("call evaluation order", () => {
         const { file } = lower(source);
         const stmts = flattened(methodByName(file, "check"));
         const getNIndices = stmts.flatMap((stmt, index) =>
-            stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+            stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr"
                 && stmt.right.method.name === "getN" ? [index] : [],
         );
         const unsupportedIndex = stmts.findIndex(
@@ -102,7 +102,7 @@ describe("call evaluation order", () => {
         const { file } = lower(source);
         const stmts = flattened(methodByName(file, "check"));
         const calls = stmts.flatMap((stmt, index) =>
-            stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+            stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr"
                 ? [{ index, name: stmt.right.method.name, result: stmt.left }]
                 : [],
         );
@@ -146,21 +146,21 @@ describe("call evaluation order", () => {
             && stmt.right.name === "A")).toBe(false);
     });
 
-    it("marks an unrepresented constructor declaration unsupported", () => {
+    it("preserves the current named function value in an instanceof check", () => {
         const { file, diagnostics } = lower(`
             function Constructor() {}
             function check(value: object): boolean { return value instanceof Constructor; }
         `);
         const stmts = flattened(methodByName(file, "check"));
 
-        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(true);
-        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr")).toBe(false);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(false);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceOfExpr")).toBe(true);
+        expect(stmts).toContainEqual(expect.objectContaining({
+            right: expect.objectContaining({ _: "StaticFieldRef", field: expect.objectContaining({ name: "Constructor" }) }),
+        }));
         expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "Local"
             && stmt.right.name === "Constructor")).toBe(false);
-        expect(diagnostics.messages).toEqual(expect.arrayContaining([
-            expect.stringContaining("runtime value of declaration 'Constructor' is not represented"),
-            expect.stringContaining("instanceof constructor value cannot be represented"),
-        ]));
+        expect(diagnostics.messages).toEqual([]);
     });
 
     it("does not call a function with an unbounded spread argument", () => {
@@ -175,7 +175,7 @@ describe("call evaluation order", () => {
         `);
         const stmts = flattened(methodByName(file, "check"));
         const calls = stmts.flatMap((stmt, index) =>
-            stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+            stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr"
                 ? [{ index, name: stmt.right.method.name }]
                 : [],
         );
@@ -326,7 +326,7 @@ describe("expression evaluation snapshots", () => {
                 && stmt.right.value === "2",
         );
         const call = stmts.find(
-            (stmt) => stmt._ === "CallStmt" && stmt.expr._ === "StaticCallExpr" && stmt.expr.method.name === "sink",
+            (stmt) => stmt._ === "CallStmt" && stmt.expr._ === "PtrCallExpr" && stmt.expr.method.name === "sink",
         );
         expect(snapshot).toBeDefined();
         expect(stmts.indexOf(snapshot!)).toBeLessThan(stmts.indexOf(mutation!));
@@ -345,7 +345,7 @@ describe("expression evaluation snapshots", () => {
         `);
         const stmts = flattened(methodByName(file, "f"));
         const call = stmts.find(
-            (stmt) => stmt._ === "CallStmt" && stmt.expr._ === "StaticCallExpr" && stmt.expr.method.name === "sink",
+            (stmt) => stmt._ === "CallStmt" && stmt.expr._ === "PtrCallExpr" && stmt.expr.method.name === "sink",
         ) as Extract<StmtDto, { _: "CallStmt" }>;
         const firstArgument = call.expr.args[0] as { name: string };
         const snapshot = stmts.find(

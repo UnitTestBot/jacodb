@@ -21,6 +21,7 @@ import { ClassSignatureDto, FieldSignatureDto, FileSignatureDto } from "../dto/s
 import { ClassTypeDto, LexicalEnvTypeDto, TypeDto, UNKNOWN_TYPE } from "../dto/types";
 import { ClosureFieldRefDto, LocalDto, StaticFieldRefDto, ValueDto } from "../dto/values";
 import { TypeConverter } from "../types/convert";
+import { scopeFunctionImplementation, scopeFunctionSignature } from "./astUtils";
 import type { BuiltParameters } from "./astUtils";
 import { CfgBuilder } from "./cfg";
 import { Diagnostics, syntaxKindName } from "./diagnostics";
@@ -48,7 +49,7 @@ export interface LoweringContext {
     diagnostics: Diagnostics;
     anonymous: AnonymousRegistry;
     buildClassExpression?: (node: ts.ClassExpression, name: string) => ClassDto;
-    /** File/namespace variables represented as static fields of the owning %dflt class. */
+    /** File/namespace bindings represented as static fields of the owning %dflt class. */
     moduleFields: Map<ts.Symbol, FieldSignatureDto>;
 }
 
@@ -219,8 +220,18 @@ export class MethodContext {
         return this.converter.symbolOf(node);
     }
 
-    /** Derive storage for an imported scope variable from its declaration. */
+    /** Derive storage for an imported scope binding from its declaration. */
     private moduleFieldFromSymbol(symbol: ts.Symbol): FieldSignatureDto | undefined {
+        const functionDeclaration = scopeFunctionImplementation(symbol);
+        if (functionDeclaration !== undefined) {
+            const signature = scopeFunctionSignature(this.ctx, functionDeclaration);
+            return {
+                declaringClass: signature.declaringClass,
+                name: signature.name,
+                type: { _: "FunctionType", signature },
+            };
+        }
+
         const identifier = symbol.declarations
             ?.map(declaredBindingIdentifier)
             .find((candidate): candidate is ts.Identifier => candidate !== undefined);

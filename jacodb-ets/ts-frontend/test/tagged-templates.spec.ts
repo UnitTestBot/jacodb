@@ -2,6 +2,7 @@ import * as ts from "typescript";
 import { describe, expect, it } from "vitest";
 import { serializeEtsFile } from "../src/serialize";
 import { lower, methodByName, singleBlockStmts } from "./util";
+import { executor } from "./execute";
 
 function runTypeScript(source: string, expression: string): unknown {
     const js = ts.transpileModule(source, {
@@ -19,7 +20,7 @@ describe("tagged templates", () => {
         const roundTrip = JSON.parse(serializeEtsFile(file));
         const stmts = singleBlockStmts(methodByName(roundTrip, "value"));
         const creation = stmts.find((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "TemplateObjectExpr");
-        const call = stmts.find((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr");
+        const call = stmts.find((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr");
 
         expect(creation).toMatchObject({ right: { cooked: ["hello"], raw: ["hello"] } });
         expect(call).toMatchObject({ right: { method: { name: "first" }, args: [creation?._ === "AssignStmt" ? creation.left : undefined] } });
@@ -43,10 +44,11 @@ describe("tagged templates", () => {
         const stmts = singleBlockStmts(methodByName(JSON.parse(serializeEtsFile(file)), "value"));
         const propertyIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PropertyRef");
         const templateIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "TemplateObjectExpr");
-        const substitutionIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+        const substitutionIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr"
             && stmt.right.method.name === "substitution");
         const property = stmts[propertyIndex];
-        const call = stmts.find((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr");
+        const call = stmts.find((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr"
+            && stmt.right.method.name === "tag");
 
         expect(propertyIndex).toBeGreaterThanOrEqual(0);
         expect(templateIndex).toBeGreaterThan(propertyIndex);
@@ -99,4 +101,36 @@ describe("tagged templates", () => {
         expect(diagnostics.messages).toEqual([]);
         expect(runTypeScript(source, "exports.value()")).toBe("undefined\\unicode");
     });
+
+    it("reads the current named tag and selects it before a substitution reassigns the binding", () => {
+        const source = `
+            function tag(parts: TemplateStringsArray, value: number): number { return value + 1; }
+            function replacement(parts: TemplateStringsArray, value: number): number { return value + 10; }
+            function reset(): number { tag = replacement; return 2; }
+            export function check(): number {
+                const alias = tag;
+                const selected = tag\`text\${reset()}\`;
+                return selected * 100 + alias\`text\${2}\` * 10 + tag\`text\${2}\`;
+            }
+        `;
+        const { file, diagnostics } = lower(source);
+        const serialized = JSON.parse(serializeEtsFile(file));
+        const stmts = singleBlockStmts(methodByName(serialized, "check"));
+        const selected = stmts.find((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr"
+            && stmt.right.method.name === "tag")!;
+        if (selected._ !== "AssignStmt" || selected.right._ !== "PtrCallExpr") throw new Error("Missing tag call");
+        const selectedPtr = selected.right.ptr;
+        const selectionIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.left._ === "Local" && stmt.left.name === selectedPtr.name);
+        const mutationIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "PtrCallExpr" && stmt.right.method.name === "reset");
+
+        expect(selectionIndex).toBeGreaterThanOrEqual(0);
+        expect(mutationIndex).toBeGreaterThan(selectionIndex);
+        expect(stmts.indexOf(selected)).toBeGreaterThan(mutationIndex);
+        expect(diagnostics.messages).toEqual([]);
+        expect(executor(serialized).call("check")).toBe(342);
+        expect(runTypeScript(source, "exports.check()")).toBe(342);
+    });
+
 });

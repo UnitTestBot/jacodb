@@ -54,7 +54,7 @@ describe("computed object keys", () => {
         const { file, diagnostics } = lower(source);
         const stmts = methodByName(file, "read").body!.cfg.blocks.flatMap((block) => block.stmts);
         const keyCallIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
-            && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "takeKey");
+            && stmt.right._ === "PtrCallExpr" && stmt.right.method.name === "takeKey");
         const storeIndex = stmts.findIndex((stmt) => stmt._ === "DefineDataPropertyStmt");
         const keyStore = stmts[storeIndex] as DefineDataPropertyStmtDto;
 
@@ -107,7 +107,7 @@ describe("computed object keys", () => {
         const { file, diagnostics } = lower(source);
         const stmts = methodByName(file, "pick").body!.cfg.blocks.flatMap((block) => block.stmts);
         const callIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
-            && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "change");
+            && stmt.right._ === "PtrCallExpr" && stmt.right.method.name === "change");
         const readIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PropertyRef");
         const read = stmts[readIndex] as AssignStmtDto;
 

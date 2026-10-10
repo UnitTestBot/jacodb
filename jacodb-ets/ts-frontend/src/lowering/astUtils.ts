@@ -17,9 +17,9 @@
 /** Shared AST helpers used across the lowering modules. */
 
 import * as ts from "typescript";
-import { COMPUTED_MEMBER_NAME, Modifier, PATTERN_PARAMETER_PREFIX } from "../dto/constants";
+import { COMPUTED_MEMBER_NAME, DEFAULT_ARK_CLASS_NAME, Modifier, PATTERN_PARAMETER_PREFIX } from "../dto/constants";
 import { DecoratorDto } from "../dto/model";
-import { MethodParameterDto } from "../dto/signatures";
+import { MethodParameterDto, MethodSignatureDto } from "../dto/signatures";
 import { TypeDto, UNKNOWN_TYPE } from "../dto/types";
 import type { LoweringContext } from "./methodBuilder";
 
@@ -137,13 +137,15 @@ function staticMemberStorage(
     return "unsupported";
 }
 
-/** Scope functions, ambient classes, enums, and namespaces have no standalone value reference in EtsIR yet. */
+/** Ambient declarations, enums, and namespaces have no standalone value reference in EtsIR yet. */
 function isUnmaterializedValue(identifier: ts.Identifier, checker: ts.TypeChecker): boolean {
     const symbol = resolvedSymbolOf(identifier, checker);
+    const hasScopeFunctionBody = scopeFunctionImplementation(symbol) !== undefined;
 
     return symbol?.declarations?.some((declaration) =>
         (ts.isClassDeclaration(declaration) && declaration.getSourceFile().isDeclarationFile)
         || (ts.isFunctionDeclaration(declaration)
+            && !hasScopeFunctionBody
             && (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent)))
         || ts.isEnumDeclaration(declaration)
         || ts.isModuleDeclaration(declaration),
@@ -341,4 +343,32 @@ export function returnTypeOf(ctx: LoweringContext, decl: ts.SignatureDeclaration
         // fall through
     }
     return UNKNOWN_TYPE;
+}
+
+/** The original body emitted for a file/namespace function declaration. */
+export function scopeFunctionImplementation(symbol: ts.Symbol | undefined): ts.FunctionDeclaration | undefined {
+    const implementations = symbol?.declarations?.filter((declaration): declaration is ts.FunctionDeclaration =>
+        ts.isFunctionDeclaration(declaration)
+        && declaration.name !== undefined
+        && declaration.body !== undefined
+        && !declaration.getSourceFile().isDeclarationFile
+        && (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent)),
+    );
+    return implementations?.length === 1 ? implementations[0] : undefined;
+}
+
+export function scopeFunctionSignature(ctx: LoweringContext, decl: ts.FunctionDeclaration): MethodSignatureDto {
+    const declaringClass: MethodSignatureDto["declaringClass"] = {
+        name: DEFAULT_ARK_CLASS_NAME,
+        declaringFile: ctx.fileSignatureFor(decl.getSourceFile()),
+    };
+    const namespace = ctx.converter.namespaceSignatureOf(decl);
+    if (namespace !== undefined) declaringClass.declaringNamespace = namespace;
+
+    return {
+        declaringClass,
+        name: decl.name?.text ?? "default",
+        parameters: buildParameters(ctx, decl).parameters,
+        returnType: returnTypeOf(ctx, decl),
+    };
 }

@@ -1,3 +1,4 @@
+import { NAMED_FUNCTION_REFERENCE_PREFIX } from "../src/dto/constants";
 import { EtsFileDto, MethodDto } from "../src/dto/model";
 import { ValueDto } from "../src/dto/values";
 
@@ -8,6 +9,8 @@ import { ValueDto } from "../src/dto/values";
 export function executor(file: EtsFileDto, externals: Record<string, any> = {}) {
     const fields = new Map<string, any>();
     const methods = file.classes.flatMap((clazz) => clazz.methods);
+    const templates = new Map<string, readonly unknown[]>();
+    let initialized = false;
 
     const run = (method: MethodDto, args: any[], thisValue?: any): any => {
         if (method.body === undefined) throw new Error(`No body for ${method.signature.name}`);
@@ -18,7 +21,29 @@ export function executor(file: EtsFileDto, externals: Record<string, any> = {}) 
         let caught: any;
         const value = (v: ValueDto): any => {
             switch (v._) {
-                case "Local": return locals.get(v.name);
+                case "Local": {
+                    if (v.name.startsWith(NAMED_FUNCTION_REFERENCE_PREFIX) && !locals.has(v.name)
+                        && v.type._ === "FunctionType") {
+                        const signature = v.type.signature;
+                        const target = methods.find((candidate) => candidate.signature.name === signature.name
+                            && JSON.stringify(candidate.signature.declaringClass) === JSON.stringify(signature.declaringClass));
+                        if (target === undefined) throw new Error(`Unknown named function ${signature.name}`);
+                        locals.set(v.name, function (this: any, ...callArgs: any[]): any {
+                            return run(target, callArgs, this);
+                        });
+                    }
+                    return locals.get(v.name);
+                }
+                case "TemplateObjectExpr": {
+                    let template = templates.get(v.siteId);
+                    if (template === undefined) {
+                        const cooked = v.cooked.map((part) => part === null ? undefined : part);
+                        Object.defineProperty(cooked, "raw", { value: Object.freeze([...v.raw]) });
+                        template = Object.freeze(cooked);
+                        templates.set(v.siteId, template);
+                    }
+                    return template;
+                }
                 case "Constant":
                     switch (v.type._) {
                         case "UndefinedType": return undefined;
@@ -130,15 +155,20 @@ export function executor(file: EtsFileDto, externals: Record<string, any> = {}) 
         throw new Error("Concrete oracle step limit exceeded");
     };
 
+    const initialize = (): void => {
+        if (initialized) return;
+        const method = methods.find((candidate) => candidate.signature.name === "%dflt");
+        if (method !== undefined) run(method, []);
+        initialized = true;
+    };
+
     return {
         call(name: string, ...args: any[]): any {
+            initialize();
             const method = methods.find((candidate) => candidate.signature.name === name);
             if (method === undefined) throw new Error(`No method ${name}`);
             return run(method, args);
         },
-        initialize(): void {
-            const method = methods.find((candidate) => candidate.signature.name === "%dflt");
-            if (method !== undefined) run(method, []);
-        },
+        initialize,
     };
 }

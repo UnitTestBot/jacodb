@@ -69,7 +69,7 @@ describe("computed constructors", () => {
         const roundTrip = JSON.parse(serializeEtsFile(file));
         const stmts = singleBlockStmts(methodByName(roundTrip, "make"));
         const functionCalls = stmts.flatMap((stmt, index) => stmt._ === "AssignStmt"
-            && stmt.right._ === "StaticCallExpr" ? [{ name: stmt.right.method.name, index }] : []);
+            && stmt.right._ === "PtrCallExpr" ? [{ name: stmt.right.method.name, index }] : []);
         const readIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "ArrayRef");
         const allocationIndex = stmts.findIndex((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr"
             && stmt.right.constructorValue?._ === "Local");

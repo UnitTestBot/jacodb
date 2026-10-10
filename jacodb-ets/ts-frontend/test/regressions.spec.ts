@@ -130,7 +130,7 @@ describe("default parameter initializers", () => {
                 : [],
         );
         const defaults = stmts.flatMap((stmt, index) =>
-            stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "record"
+            stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr" && stmt.right.method.name === "record"
                 ? [{ index, label: stmt.right.args[0] }]
                 : [],
         );
@@ -185,7 +185,7 @@ describe("rest parameter calls", () => {
             right: expect.objectContaining({ _: "ParameterRef", index: 0, type: expect.objectContaining({ _: "ArrayType" }) }),
         }));
         const callArgs = allStmts(methodByName(roundTrip, "sample"))
-            .filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"
+            .filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr"
                 && stmt.right.method.name === "count")
             .map((stmt) => stmt.right.args.length);
         expect(callArgs).toEqual([0, 2]);

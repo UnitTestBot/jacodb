@@ -32,6 +32,8 @@ export const INSTANCE_INIT_METHOD_NAME = "%instInit";
 export const STATIC_INIT_METHOD_NAME = "%statInit";
 export const ANONYMOUS_CLASS_PREFIX = "%AC";
 export const ANONYMOUS_METHOD_PREFIX = "%AM";
+/** A value reference to an existing named method, rather than a lifted closure. */
+export const NAMED_FUNCTION_REFERENCE_PREFIX = "%AMnamed$";
 export const TEMP_LOCAL_PREFIX = "%";
 /** Synthetic name of a destructuring (pattern) parameter; the index keeps names distinct. */
 export const PATTERN_PARAMETER_PREFIX = "%pat";

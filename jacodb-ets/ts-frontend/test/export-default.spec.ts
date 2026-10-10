@@ -159,7 +159,7 @@ describe("export default expressions", () => {
 
         const defaultClass = file.classes.find((clazz) => clazz.signature.name === "%dflt")!;
         const calls = stmts.filter((stmt) => stmt._ === "AssignStmt"
-            && stmt.right._ === "StaticCallExpr" && stmt.right.method.name === "sideEffect");
+            && stmt.right._ === "PtrCallExpr" && stmt.right.method.name === "sideEffect");
         const exportWrite = stmts.find((stmt) => stmt._ === "AssignStmt"
             && stmt.left._ === "StaticFieldRef" && stmt.left.field.name === "default");
         const laterWrite = stmts.find((stmt) => stmt._ === "AssignStmt"
@@ -319,16 +319,16 @@ describe("export default expressions", () => {
         expect(exports.default).toMatchObject({ value: 7 });
     });
 
-    it("checks constructor arguments for unmaterialized declaration values", () => {
+    it("materializes a named function used as a constructor argument", () => {
         const { file, diagnostics } = lower(`
             class Box { constructor(value: unknown) {} }
             function factory(): number { return 1; }
             export default new Box(factory);
         `);
 
-        expect(diagnostics.messages).toContainEqual(expect.stringContaining("has no EtsIR value reference"));
+        expect(diagnostics.messages).toEqual([]);
         expect(file.classes.find((clazz) => clazz.signature.name === "%dflt")!.fields
-            .some((field) => field.signature.name === "default")).toBe(false);
+            .some((field) => field.signature.name === "default")).toBe(true);
     });
 
     it.each([
@@ -390,20 +390,22 @@ describe("export default expressions", () => {
         expect(defaultClass.fields.some((field) => field.signature.name === "default")).toBe(false);
     });
 
-    it("marks a bare declaration reference unsupported until EtsIR can represent its value", () => {
+    it("exports the current named function binding", () => {
         const { file, diagnostics } = lower(`
             function factory(): number { return 1; }
             export default factory;
         `);
 
         const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
-        expect(diagnostics.messages).toContainEqual(expect.stringContaining("has no EtsIR value reference"));
-        expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
+        expect(diagnostics.messages).toEqual([]);
+        expect(stmts).toContainEqual(expect.objectContaining({
+            right: expect.objectContaining({ _: "StaticFieldRef", field: expect.objectContaining({ name: "factory" }) }),
+        }));
         expect(file.classes.find((clazz) => clazz.signature.name === "%dflt")!.fields
-            .some((field) => field.signature.name === "default")).toBe(false);
+            .some((field) => field.signature.name === "default")).toBe(true);
     });
 
-    it("rejects a declaration value captured by an exported closure", () => {
+    it("reads a named function through its shared binding inside an exported closure", () => {
         const { file, diagnostics } = lower(`
             function factory(): number { return 1; }
             export default () => factory;
@@ -411,10 +413,15 @@ describe("export default expressions", () => {
 
         const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
 
-        expect(diagnostics.messages).toContainEqual(expect.stringContaining("has no EtsIR value reference"));
-        expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
+        expect(diagnostics.messages).toEqual([]);
+        expect(stmts.some((stmt) => stmt._ === "UnsupportedStmt")).toBe(false);
+        expect(file.classes.flatMap((clazz) => clazz.methods)
+            .flatMap((method) => method.body?.cfg.blocks.flatMap((block) => block.stmts) ?? []))
+            .toContainEqual(expect.objectContaining({
+                right: expect.objectContaining({ _: "StaticFieldRef", field: expect.objectContaining({ name: "factory" }) }),
+            }));
         expect(file.classes.find((clazz) => clazz.signature.name === "%dflt")!.fields
-            .some((field) => field.signature.name === "default")).toBe(false);
+            .some((field) => field.signature.name === "default")).toBe(true);
     });
 
     it("keeps direct calls inside an exported closure supported", () => {
@@ -427,7 +434,7 @@ describe("export default expressions", () => {
         expect(methods.flatMap((method) => method.body?.cfg.blocks.flatMap((block) => block.stmts) ?? []))
             .toContainEqual(expect.objectContaining({
                 _: "AssignStmt",
-                right: expect.objectContaining({ _: "StaticCallExpr", method: expect.objectContaining({ name: "factory" }) }),
+                right: expect.objectContaining({ _: "PtrCallExpr", method: expect.objectContaining({ name: "factory" }) }),
             }));
         expect(file.exportInfos).toContainEqual(expect.objectContaining({ exportName: "default" }));
     });
@@ -452,7 +459,7 @@ describe("export default expressions", () => {
         "<() => number>factory",
         "factory!",
         "factory satisfies () => number",
-    ])("keeps wrapped function reference %s unsupported", (expression) => {
+    ])("preserves a wrapped function reference in %s", (expression) => {
         const { file, diagnostics } = lower(`
             function factory(): number { return 1; }
             export default ${expression};
@@ -460,10 +467,12 @@ describe("export default expressions", () => {
 
         const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
 
-        expect(diagnostics.messages).toContainEqual(expect.stringContaining("has no EtsIR value reference"));
-        expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
+        expect(diagnostics.messages).toEqual([]);
+        expect(stmts).toContainEqual(expect.objectContaining({
+            right: expect.objectContaining({ _: "StaticFieldRef", field: expect.objectContaining({ name: "factory" }) }),
+        }));
         expect(file.classes.find((clazz) => clazz.signature.name === "%dflt")!.fields
-            .some((field) => field.signature.name === "default")).toBe(false);
+            .some((field) => field.signature.name === "default")).toBe(true);
     });
 
     it.each([
@@ -471,7 +480,7 @@ describe("export default expressions", () => {
         "[factory]",
         "({ factory })",
         "true ? factory : factory",
-    ])("reports an unsupported declaration value inside %s", (expression) => {
+    ])("preserves a named function value inside %s", (expression) => {
         const { file, diagnostics } = lower(`
             function factory(): number { return 1; }
             export default ${expression};
@@ -479,9 +488,9 @@ describe("export default expressions", () => {
 
         const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
 
-        expect(diagnostics.messages).toContainEqual(expect.stringContaining("has no EtsIR value reference"));
-        expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
+        expect(diagnostics.messages).toEqual([]);
+        expect(stmts.some((stmt) => stmt._ === "UnsupportedStmt")).toBe(false);
         expect(stmts.some((stmt) => stmt._ === "AssignStmt"
-            && stmt.left._ === "StaticFieldRef" && stmt.left.field.name === "default")).toBe(false);
+            && stmt.left._ === "StaticFieldRef" && stmt.left.field.name === "default")).toBe(true);
     });
 });
