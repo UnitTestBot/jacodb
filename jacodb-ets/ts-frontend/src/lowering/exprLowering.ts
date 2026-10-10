@@ -213,6 +213,25 @@ export class ExprLowerer {
             : target;
     }
 
+    /** Save components before Get/coercion, retaining raw key/index conversion at each operation. */
+    private snapshotReference(target: LValueDto): LValueDto {
+        if (target._ === "InstanceFieldRef" || target._ === "PropertyRef") {
+            return { ...target, instance: this.m.snapshotToLocal(target.instance, target.instance.type) };
+        }
+
+        if (target._ === "ArrayRef") {
+            const array = target.array;
+            const index = target.index;
+            return {
+                ...target,
+                array: array._ === "Local" ? this.m.snapshotToLocal(array, array.type) : array,
+                index: index._ === "Local" ? this.m.snapshotToLocal(index, index.type) : index,
+            };
+        }
+
+        return target;
+    }
+
     /** Hoist a value into a fresh temp: `%t := value`. */
     materialize(value: ValueDto, type: TypeDto = UNKNOWN_TYPE): LocalDto {
         const temp = this.m.newTemp(type);
@@ -863,7 +882,7 @@ export class ExprLowerer {
             return rhs;
         }
 
-        const target = this.lowerLValue(node.left, node.right);
+        let target = this.lowerLValue(node.left, node.right);
 
         if (
             opKind === ts.SyntaxKind.AmpersandAmpersandEqualsToken ||
@@ -876,7 +895,7 @@ export class ExprLowerer {
         let rhs: ValueDto;
         const compoundOp = COMPOUND_ASSIGN_BY_SYNTAX[opKind];
         if (compoundOp !== undefined) {
-            // load-op-store (note: no short-circuit for &&= / ||= / ??= — approximation)
+            target = this.snapshotReference(target);
             const oldValue = target._ === "Local"
                 ? target
                 : this.materialize(this.propertyReferenceForOperation(target), lvalueType(target));
@@ -905,6 +924,7 @@ export class ExprLowerer {
     }
 
     private lowerLogicalAssignment(node: ts.BinaryExpression, target: LValueDto): LocalDto {
+        target = this.snapshotReference(target);
         const cfg = this.m.cfg;
         const oldValue = target._ === "Local"
             ? target
@@ -986,22 +1006,7 @@ export class ExprLowerer {
         returnOld: boolean,
     ): ValueDto {
         const op: UnaryOp = operator === ts.SyntaxKind.PlusPlusToken ? "++" : "--";
-        let target = this.lowerLValue(operand);
-
-        // Get and ToNumeric can replace source bindings. Keep the selected
-        // receiver and raw index for Put, without converting the index early.
-        if (target._ === "InstanceFieldRef" || target._ === "PropertyRef") {
-            target = { ...target, instance: this.m.snapshotToLocal(target.instance, target.instance.type) };
-        } else if (target._ === "ArrayRef") {
-            const array = target.array;
-            const index = target.index;
-            target = {
-                ...target,
-                array: array._ === "Local" ? this.m.snapshotToLocal(array, array.type) : array,
-                index: index._ === "Local" ? this.m.snapshotToLocal(index, index.type) : index,
-            };
-        }
-
+        const target = this.snapshotReference(this.lowerLValue(operand));
         const rawValue = target._ === "Local"
             ? target
             : this.materialize(this.propertyReferenceForOperation(target), lvalueType(target));
