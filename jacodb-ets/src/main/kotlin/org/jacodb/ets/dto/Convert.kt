@@ -713,6 +713,7 @@ fun TypeDto.toEtsType(): EtsType = when (this) {
     is FunctionTypeDto -> EtsFunctionType(
         signature = signature.toEtsMethodSignature(),
         typeParameters = typeParameters.map { it.toEtsType() },
+        isArrow = isArrow,
     )
 
     is GenericTypeDto -> EtsGenericType(
