@@ -80,19 +80,79 @@ class EtsTsForAwaitTest {
                 .methods.single { it.signature.name == name }
             val assignments = methodDto.body!!.cfg.blocks.flatMap { it.stmts }.filterIsInstance<AssignStmtDto>()
             val calls = assignments.mapNotNull { it.right as? PtrCallExprDto }
-            val awaits = assignments.mapNotNull { it.right as? AwaitExprDto }
+            val awaitAssignments = assignments.filter { it.right is AwaitExprDto }
             val next = assignments.single { (it.right as? PtrCallExprDto)?.method?.name == "next" }
+            val iterator = (next.right as PtrCallExprDto).receiver
+            val nextAwait = awaitAssignments.single { (it.right as AwaitExprDto).arg == next.left }
+            val nextValueReads = assignments.filter {
+                (it.right as? org.jacodb.ets.dto.InstanceFieldRefDto)?.let { field ->
+                    field.field.name == "value" && field.instance == nextAwait.left
+                } == true
+            }
+            val syncValueAwait = awaitAssignments.single {
+                (it.right as AwaitExprDto).arg == nextValueReads.first().left
+            }
+            val returnLookup = assignments.single {
+                (it.right as? org.jacodb.ets.dto.InstanceFieldRefDto)?.let { field ->
+                    field.field.name == "return" && field.instance == iterator
+                } == true
+            }
+            val close = assignments.single { (it.right as? PtrCallExprDto)?.method?.name == "return" }
+            val closeCall = close.right as PtrCallExprDto
+            val closeValueRead = assignments.single {
+                (it.right as? org.jacodb.ets.dto.InstanceFieldRefDto)?.let { field ->
+                    field.field.name == "value" && field.instance == close.left
+                } == true
+            }
+            val asyncCloseAwait = awaitAssignments.single { (it.right as AwaitExprDto).arg == close.left }
+            val syncCloseAwait = awaitAssignments.single { (it.right as AwaitExprDto).arg == closeValueRead.left }
+            val missingReturnAwait = awaitAssignments.single {
+                ((it.right as AwaitExprDto).arg as? org.jacodb.ets.dto.ConstantDto)?.value == "undefined"
+            }
 
             assertTrue(calls.any { it.method.name == "Symbol.asyncIterator" && it.receiver != null })
             assertTrue(calls.any { it.method.name == "Symbol.iterator" && it.receiver != null })
-            assertEquals(2, awaits.size)
-            assertTrue(awaits.any { it.arg == next.left })
+            assertTrue(iterator != null)
+            assertEquals(2, nextValueReads.size)
+            assertTrue(nextValueReads.all { it.left == syncValueAwait.left })
+            assertEquals(returnLookup.left, closeCall.ptr)
+            assertEquals(iterator, closeCall.receiver)
+            assertTrue(assignments.any {
+                (it.right as? org.jacodb.ets.dto.InstanceFieldRefDto)?.let { field ->
+                    field.field.name == "done" && field.instance == close.left
+                } == true
+            })
+            assertEquals(
+                setOf(nextAwait, syncValueAwait, asyncCloseAwait, syncCloseAwait, missingReturnAwait),
+                awaitAssignments.toSet(),
+            )
+            assertEquals(5, awaitAssignments.size)
             assertTrue(assignments.none { it.right is RawValueDto })
 
             val modelMethod = roundTripped.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
                 .methods.single { it.name == name }
-            assertEquals(2, modelMethod.cfg.stmts.filterIsInstance<EtsAssignStmt>()
-                .count { it.rhv is EtsAwaitExpr })
+            val modelAssignments = modelMethod.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+            val modelAwaits = modelAssignments.mapNotNull { it.rhv as? EtsAwaitExpr }
+            val modelNext = modelAssignments.single {
+                (it.rhv as? org.jacodb.ets.model.EtsPtrCallExpr)?.callee?.name == "next"
+            }
+            val modelClose = modelAssignments.single {
+                (it.rhv as? org.jacodb.ets.model.EtsPtrCallExpr)?.callee?.name == "return"
+            }
+
+            assertEquals(awaitAssignments.size, modelAwaits.size)
+            assertEquals(
+                (iterator as org.jacodb.ets.dto.LocalDto).name,
+                (modelNext.rhv as org.jacodb.ets.model.EtsPtrCallExpr).receiver?.name,
+            )
+            assertEquals(
+                (modelNext.rhv as org.jacodb.ets.model.EtsPtrCallExpr).receiver,
+                (modelClose.rhv as org.jacodb.ets.model.EtsPtrCallExpr).receiver,
+            )
+            for (dtoAwait in listOf(nextAwait, syncValueAwait, asyncCloseAwait, syncCloseAwait)) {
+                val argument = (dtoAwait.right as AwaitExprDto).arg as org.jacodb.ets.dto.LocalDto
+                assertTrue(modelAwaits.any { it.arg.name == argument.name })
+            }
         }
     }
 
