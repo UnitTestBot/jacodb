@@ -225,6 +225,7 @@ data class AwaitExprDto(
 @SerialName("YieldExpr")
 data class YieldExprDto(
     val arg: ValueDto,
+    val isDelegating: Boolean = false,
 ) : ExprDto {
     override val type: TypeDto
         get() = arg.type

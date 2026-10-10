@@ -313,6 +313,7 @@ export class ExprLowerer {
                 arg: node.expression !== undefined
                     ? this.lowerToImmediate(node.expression)
                     : constant("undefined", UNDEFINED_TYPE),
+                isDelegating: node.asteriskToken !== undefined,
             };
         }
         throw new LoweringError(ts.SyntaxKind[node.kind]);

@@ -339,9 +339,10 @@ data class EtsAwaitExpr(
 data class EtsYieldExpr(
     override val arg: EtsEntity,
     override val type: EtsType,
+    val isDelegating: Boolean = false,
 ) : EtsUnaryExpr {
     override fun toString(): String {
-        return "yield $arg"
+        return if (isDelegating) "yield* $arg" else "yield $arg"
     }
 
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R {

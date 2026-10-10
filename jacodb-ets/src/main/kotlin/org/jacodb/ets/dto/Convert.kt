@@ -431,6 +431,7 @@ class EtsMethodBuilder(
         is YieldExprDto -> EtsYieldExpr(
             arg = arg.toEtsEntity(),
             type = type.toEtsType(),
+            isDelegating = isDelegating,
         )
 
         is TypeOfExprDto -> EtsTypeOfExpr(
