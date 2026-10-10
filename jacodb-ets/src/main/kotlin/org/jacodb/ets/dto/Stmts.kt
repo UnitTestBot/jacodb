@@ -67,6 +67,14 @@ data class CopyDataPropertiesStmtDto(
 ) : StmtDto
 
 @Serializable
+@SerialName("DefineAccessorStmt")
+data class DefineAccessorStmtDto(
+    val target: ValueDto,
+    val key: ValueDto,
+    val getter: ValueDto,
+) : StmtDto
+
+@Serializable
 @SerialName("CallStmt")
 data class CallStmtDto(
     val expr: CallExprDto,

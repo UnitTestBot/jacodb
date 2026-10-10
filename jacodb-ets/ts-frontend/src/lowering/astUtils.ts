@@ -229,13 +229,11 @@ export function usesModuleLexicalThis(expression: ts.Expression): boolean {
     return visit(expression);
 }
 
-/** Computed method and accessor names still lack a runtime definition. */
+/** Computed method and setter names still lack a runtime definition. */
 export function hasUnsupportedComputedObjectKey(expression: ts.Expression): boolean {
     const visit = (node: ts.Node): boolean => {
         if (ts.isObjectLiteralExpression(node) && node.properties.some((property) =>
-            (ts.isMethodDeclaration(property)
-                || ts.isGetAccessorDeclaration(property)
-                || ts.isSetAccessorDeclaration(property))
+            (ts.isMethodDeclaration(property) || ts.isSetAccessorDeclaration(property))
             && ts.isComputedPropertyName(property.name),
         )) return true;
 

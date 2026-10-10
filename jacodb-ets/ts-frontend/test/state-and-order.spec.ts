@@ -268,8 +268,12 @@ describe("call evaluation order", () => {
         expect(snapshot).toBeDefined();
         expect(stmts.indexOf(snapshot!)).toBeLessThan(stmts.indexOf(mutation!));
         expect(call).toMatchObject({
-            expr: { instance: (snapshot as Extract<StmtDto, { _: "AssignStmt" }>).left },
+            expr: { _: "PtrCallExpr", receiver: (snapshot as Extract<StmtDto, { _: "AssignStmt" }>).left },
         });
+        const selectedMethod = stmts.find((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "InstanceFieldRef" && stmt.right.field.name === "run")!;
+        expect(stmts.indexOf(selectedMethod)).toBeLessThan(stmts.indexOf(mutation!));
+        expect(call).toMatchObject({ expr: { ptr: (selectedMethod as Extract<StmtDto, { _: "AssignStmt" }>).left } });
     });
 
     it("keeps the receiver for optional method calls", () => {
@@ -283,13 +287,14 @@ describe("call evaluation order", () => {
             (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceFieldRef" && stmt.right.field.name === "run",
         );
         const call = stmts.find(
-            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceCallExpr" && stmt.right.method.name === "run",
+            (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr",
         );
         expect(methodRead).toBeDefined();
         expect(call).toMatchObject({
             right: {
-                _: "InstanceCallExpr",
-                instance: (methodRead as Extract<StmtDto, { _: "AssignStmt" }>).right._ === "InstanceFieldRef"
+                _: "PtrCallExpr",
+                ptr: (methodRead as Extract<StmtDto, { _: "AssignStmt" }>).left,
+                receiver: (methodRead as Extract<StmtDto, { _: "AssignStmt" }>).right._ === "InstanceFieldRef"
                     ? (methodRead as Extract<StmtDto, { _: "AssignStmt" }>).right.instance
                     : undefined,
             },
@@ -536,13 +541,14 @@ describe("expression evaluation snapshots", () => {
         `);
         const receiverStmts = flattened(methodByName(file, "receiver"));
         const receiverCall = receiverStmts.find(
-            (stmt) => stmt._ === "CallStmt" && stmt.expr._ === "InstanceCallExpr" && stmt.expr.method.name === "run",
+            (stmt) => stmt._ === "CallStmt" && stmt.expr._ === "PtrCallExpr" && stmt.expr.method.name === "run",
         ) as Extract<StmtDto, { _: "CallStmt" }>;
-        expect(receiverCall.expr.instance.name).toMatch(/^%/);
+        const receiver = (receiverCall.expr as { receiver: { name: string } }).receiver;
+        expect(receiver.name).toMatch(/^%/);
         expect(receiverStmts.some(
             (stmt) => stmt._ === "AssignStmt"
                 && stmt.left._ === "Local"
-                && stmt.left.name === receiverCall.expr.instance.name
+                && stmt.left.name === receiver.name
                 && stmt.right._ === "Local"
                 && stmt.right.name === "service",
         )).toBe(true);
@@ -672,8 +678,8 @@ describe("expression evaluation snapshots", () => {
         const blocks = methodByName(file, "f").body!.cfg.blocks;
         const optionalCallBlock = blocks.find((block) => block.stmts.some(
             (stmt) => stmt._ === "AssignStmt"
-                && stmt.right._ === "InstanceCallExpr"
-                && stmt.right.method.name === "b",
+                && stmt.right._ === "PtrCallExpr"
+                && stmt.right.method.name === "%call",
         ));
         const cAccessBlock = blocks.find((block) => block.stmts.some(
             (stmt) => stmt._ === "AssignStmt" && stmt.right._ === "InstanceFieldRef" && stmt.right.field.name === "c",
@@ -701,8 +707,7 @@ describe("expression evaluation snapshots", () => {
         ) as Extract<StmtDto, { _: "AssignStmt" }>;
         const methodCall = stmts.find(
             (stmt) => stmt._ === "AssignStmt"
-                && stmt.right._ === "InstanceCallExpr"
-                && stmt.right.method.name === "b",
+                && stmt.right._ === "PtrCallExpr",
         ) as Extract<StmtDto, { _: "AssignStmt" }>;
         const callBlock = blocks.find((block) => block.stmts.includes(methodCall));
         const cAccessBlock = blocks.find((block) => block.stmts.some(
@@ -714,7 +719,8 @@ describe("expression evaluation snapshots", () => {
         );
         expect(methodRead).toBeDefined();
         expect(methodCall).toBeDefined();
-        expect((methodCall.right as { instance: unknown }).instance)
+        expect((methodCall.right as { ptr: unknown }).ptr).toEqual(methodRead.left);
+        expect((methodCall.right as { receiver: unknown }).receiver)
             .toEqual((methodRead.right as { instance: unknown }).instance);
         expect(cAccessBlock).toBe(callBlock);
         expect(guards).toHaveLength(1);
@@ -731,10 +737,9 @@ describe("expression evaluation snapshots", () => {
         const stmts = blocks.flatMap((block) => block.stmts);
         const call = stmts.find(
             (stmt) => stmt._ === "AssignStmt"
-                && stmt.right._ === "InstanceCallExpr"
-                && stmt.right.method.name === "b",
+                && stmt.right._ === "PtrCallExpr",
         ) as Extract<StmtDto, { _: "AssignStmt" }>;
-        const receiver = (call.right as { instance: { name: string } }).instance;
+        const receiver = (call.right as { receiver: { name: string } }).receiver;
         const receiverSnapshot = stmts.find(
             (stmt) => stmt._ === "AssignStmt"
                 && stmt.left._ === "Local"
@@ -772,8 +777,7 @@ describe("expression evaluation snapshots", () => {
         ) as Extract<StmtDto, { _: "AssignStmt" }>;
         const methodCall = stmts.find(
             (stmt) => stmt._ === "AssignStmt"
-                && stmt.right._ === "InstanceCallExpr"
-                && stmt.right.method.name === "c",
+                && stmt.right._ === "PtrCallExpr",
         ) as Extract<StmtDto, { _: "AssignStmt" }>;
         const bAccessBlock = blocks.find((block) => block.stmts.includes(bAccess));
         const methodReadBlock = blocks.find((block) => block.stmts.includes(methodRead));
@@ -793,7 +797,8 @@ describe("expression evaluation snapshots", () => {
         expect(methodRead).toBeDefined();
         expect(methodCall).toBeDefined();
         expect(methodReadBlock).toBe(bAccessBlock);
-        expect((methodCall.right as { instance: unknown }).instance)
+        expect((methodCall.right as { ptr: unknown }).ptr).toEqual(methodRead.left);
+        expect((methodCall.right as { receiver: unknown }).receiver)
             .toEqual((methodRead.right as { instance: unknown }).instance);
         expect(dAccessBlock).toBe(methodCallBlock);
         expect(guards).toHaveLength(2);

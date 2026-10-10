@@ -20,6 +20,7 @@ import org.jacodb.ets.model.EtsAddExpr
 import org.jacodb.ets.model.EtsAndExpr
 import org.jacodb.ets.model.EtsArrayAccess
 import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsDefineAccessorStmt
 import org.jacodb.ets.model.EtsCopyDataPropertiesStmt
 import org.jacodb.ets.model.EtsAwaitExpr
 import org.jacodb.ets.model.EtsBitAndExpr
@@ -115,6 +116,9 @@ private object StmtGetOperands : EtsStmt.Visitor<Sequence<EtsEntity>> {
 
     override fun visit(stmt: EtsCopyDataPropertiesStmt): Sequence<EtsEntity> =
         sequenceOf(stmt.target, stmt.source) + stmt.excludedKeys.asSequence()
+
+    override fun visit(stmt: EtsDefineAccessorStmt): Sequence<EtsEntity> =
+        sequenceOf(stmt.target, stmt.key, stmt.getter)
 
     override fun visit(stmt: EtsCallStmt): Sequence<EtsEntity> =
         sequenceOf(stmt.expr)

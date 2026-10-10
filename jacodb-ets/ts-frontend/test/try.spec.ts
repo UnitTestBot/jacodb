@@ -182,7 +182,7 @@ describe("try/catch/finally lowering", () => {
             b.stmts.some(
                 (s) =>
                     s._ === "CallStmt" &&
-                    s.expr._ === "InstanceCallExpr" &&
+                    s.expr._ === "PtrCallExpr" &&
                     (s.expr.args[0] as { value?: string })?.value === "finally",
             ),
         );
@@ -205,7 +205,17 @@ describe("try/catch/finally lowering", () => {
             .filter((s) => s._ === "CallStmt")
             .map((s) => ((s as { expr: { args: { value?: string }[] } }).expr.args[0] ?? {}).value);
         expect(logged).toEqual(["try", "finally", "finally"]);
-        expect(blocks.flatMap((block) => block.exceptionalSuccessors ?? [])).toHaveLength(1);
+        const protectedBlock = blocks.find((block) => (block.exceptionalSuccessors?.length ?? 0) > 0)!;
+        const exceptional = protectedBlock.exceptionalSuccessors!;
+
+        expect(exceptional).toHaveLength(2);
+        expect(new Set(exceptional.map((edge) => edge.target)).size).toBe(1);
+        expect(protectedBlock.stmts[exceptional[0].stmtIndex]).toMatchObject({
+            _: "AssignStmt", right: { _: "InstanceFieldRef", field: { name: "log" } },
+        });
+        expect(protectedBlock.stmts[exceptional[1].stmtIndex]).toMatchObject({
+            _: "CallStmt", expr: { _: "PtrCallExpr", method: { name: "log" } },
+        });
     });
 
     it("runs finally and rethrows when a call fails", () => {
