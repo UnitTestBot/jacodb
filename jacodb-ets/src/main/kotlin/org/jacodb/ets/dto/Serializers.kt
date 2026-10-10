@@ -35,6 +35,8 @@ import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 
 private val logger = KotlinLogging.logger {}
 
@@ -47,6 +49,9 @@ internal val valueModule = SerializersModule {
 }
 
 internal val typeModule = SerializersModule {
+    polymorphic(TypeDto::class) {
+        subclass(BigIntTypeDto::class, BigIntTypeDto.serializer())
+    }
     polymorphicDefaultDeserializer(TypeDto::class) { RawTypeSerializer }
 }
 

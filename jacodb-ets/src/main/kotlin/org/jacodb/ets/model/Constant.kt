@@ -16,6 +16,8 @@
 
 package org.jacodb.ets.model
 
+import java.math.BigInteger
+
 interface EtsConstant : EtsImmediate
 
 data class EtsStringConstant(
@@ -62,6 +64,19 @@ data class EtsNumberConstant(
     override fun toString(): String {
         return value.toString()
     }
+
+    override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+data class EtsBigIntConstant(
+    val value: BigInteger,
+) : EtsConstant {
+    override val type: EtsType
+        get() = EtsBigIntType
+
+    override fun toString(): String = "${value}n"
 
     override fun <R> accept(visitor: EtsValue.Visitor<R>): R {
         return visitor.visit(this)

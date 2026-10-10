@@ -36,6 +36,10 @@ interface EtsType : TypeName, CommonType {
         // Primitive
         fun visit(type: EtsBooleanType): R
         fun visit(type: EtsNumberType): R
+        fun visit(type: EtsBigIntType): R {
+            if (this is Default) return defaultVisit(type)
+            error("Cannot handle ${type::class.java.simpleName}: $type")
+        }
         fun visit(type: EtsStringType): R
         fun visit(type: EtsNullType): R
         fun visit(type: EtsUndefinedType): R
@@ -77,6 +81,7 @@ interface EtsType : TypeName, CommonType {
 
             override fun visit(type: EtsBooleanType): R = defaultVisit(type)
             override fun visit(type: EtsNumberType): R = defaultVisit(type)
+            override fun visit(type: EtsBigIntType): R = defaultVisit(type)
             override fun visit(type: EtsStringType): R = defaultVisit(type)
             override fun visit(type: EtsNullType): R = defaultVisit(type)
             override fun visit(type: EtsUndefinedType): R = defaultVisit(type)
@@ -226,6 +231,17 @@ object EtsBooleanType : EtsPrimitiveType {
 object EtsNumberType : EtsPrimitiveType {
     override val typeName: String
         get() = "number"
+
+    override fun toString(): String = typeName
+
+    override fun <R> accept(visitor: EtsType.Visitor<R>): R {
+        return visitor.visit(this)
+    }
+}
+
+object EtsBigIntType : EtsPrimitiveType {
+    override val typeName: String
+        get() = "bigint"
 
     override fun toString(): String = typeName
 

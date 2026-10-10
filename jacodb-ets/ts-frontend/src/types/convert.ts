@@ -43,6 +43,7 @@ import {
     ANY_TYPE,
     ArrayTypeDto,
     BOOLEAN_TYPE,
+    BIGINT_TYPE,
     ClassTypeDto,
     GenericTypeDto,
     NEVER_TYPE,
@@ -163,8 +164,9 @@ export class TypeConverter {
             case ts.SyntaxKind.BooleanKeyword:
                 return BOOLEAN_TYPE;
             case ts.SyntaxKind.NumberKeyword:
-            case ts.SyntaxKind.BigIntKeyword:
                 return NUMBER_TYPE;
+            case ts.SyntaxKind.BigIntKeyword:
+                return BIGINT_TYPE;
             case ts.SyntaxKind.StringKeyword:
                 return STRING_TYPE;
             case ts.SyntaxKind.ObjectKeyword:
@@ -371,12 +373,19 @@ export class TypeConverter {
         if (ts.isNumericLiteral(literal)) {
             return numericLiteralType(Number(literal.text));
         }
+        if (ts.isBigIntLiteral(literal)) {
+            return BIGINT_TYPE;
+        }
         if (
             ts.isPrefixUnaryExpression(literal) &&
-            literal.operator === ts.SyntaxKind.MinusToken &&
-            ts.isNumericLiteral(literal.operand)
+            literal.operator === ts.SyntaxKind.MinusToken
         ) {
-            return numericLiteralType(-Number(literal.operand.text));
+            if (ts.isNumericLiteral(literal.operand)) {
+                return numericLiteralType(-Number(literal.operand.text));
+            }
+            if (ts.isBigIntLiteral(literal.operand)) {
+                return BIGINT_TYPE;
+            }
         }
         return UNKNOWN_TYPE;
     }
@@ -558,7 +567,7 @@ export class TypeConverter {
 
         if (flags & ts.TypeFlags.BooleanLike) return BOOLEAN_TYPE;
         if (flags & ts.TypeFlags.NumberLike) return NUMBER_TYPE;
-        if (flags & ts.TypeFlags.BigIntLike) return NUMBER_TYPE;
+        if (flags & ts.TypeFlags.BigIntLike) return BIGINT_TYPE;
         if (flags & ts.TypeFlags.StringLike) return STRING_TYPE;
 
         if (flags & ts.TypeFlags.TypeParameter) {

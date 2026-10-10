@@ -49,6 +49,7 @@ import {
 } from "../dto/signatures";
 import {
     BOOLEAN_TYPE,
+    BIGINT_TYPE,
     ClassTypeDto,
     NUMBER_TYPE,
     NULL_TYPE,
@@ -210,6 +211,9 @@ export class ExprLowerer {
     private lowerExprImpl(node: ts.Expression): ValueDto {
         if (ts.isNumericLiteral(node)) {
             return constant(numericConstantText(node), NUMBER_TYPE);
+        }
+        if (ts.isBigIntLiteral(node)) {
+            return constant(bigIntConstantText(node), BIGINT_TYPE);
         }
         if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
             return constant(node.text, STRING_TYPE);
@@ -902,6 +906,9 @@ export class ExprLowerer {
                 // Constant-fold negative literals: -5 => Constant("-5").
                 if (ts.isNumericLiteral(node.operand)) {
                     return constant(`-${numericConstantText(node.operand)}`, NUMBER_TYPE);
+                }
+                if (ts.isBigIntLiteral(node.operand)) {
+                    return constant(`-${bigIntConstantText(node.operand)}`, BIGINT_TYPE);
                 }
                 const operand = this.lowerToImmediate(node.operand);
                 if (operand._ === "Constant" && operand.value === "Infinity" && operand.type._ === "NumberType") {
@@ -1947,6 +1954,10 @@ function templateRawText(literal: ts.TemplateLiteralLikeNode): string {
 /** Preserve the source spelling only when TypeScript normalizes a non-finite literal. */
 function numericConstantText(node: ts.NumericLiteral): string {
     return Number.isFinite(Number(node.text)) ? node.text : node.getText();
+}
+
+function bigIntConstantText(node: ts.BigIntLiteral): string {
+    return BigInt(node.text.replace(/_/g, "").replace(/n$/, "")).toString();
 }
 
 function objectField(declaringClass: ClassSignatureDto, name: string, type: TypeDto): FieldDto {

@@ -31,6 +31,10 @@ interface EtsValue : EtsEntity, CommonValue {
         fun visit(value: EtsStringConstant): R
         fun visit(value: EtsBooleanConstant): R
         fun visit(value: EtsNumberConstant): R
+        fun visit(value: EtsBigIntConstant): R {
+            if (this is Default) return defaultVisit(value)
+            error("Cannot handle ${value::class.java.simpleName}: $value")
+        }
         fun visit(value: EtsNullConstant): R
         fun visit(value: EtsUndefinedConstant): R
 
@@ -57,6 +61,7 @@ interface EtsValue : EtsEntity, CommonValue {
             override fun visit(value: EtsStringConstant): R = defaultVisit(value)
             override fun visit(value: EtsBooleanConstant): R = defaultVisit(value)
             override fun visit(value: EtsNumberConstant): R = defaultVisit(value)
+            override fun visit(value: EtsBigIntConstant): R = defaultVisit(value)
             override fun visit(value: EtsNullConstant): R = defaultVisit(value)
             override fun visit(value: EtsUndefinedConstant): R = defaultVisit(value)
 

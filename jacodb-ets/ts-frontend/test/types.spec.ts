@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { ClassCategory } from "../src/dto/constants";
 import { FileSignatureDto } from "../src/dto/signatures";
 import { TypeDto } from "../src/dto/types";
+import { serializeEtsFile } from "../src/serialize";
 import { TypeConverter } from "../src/types/convert";
 import { compile, findNode, findVariable, lower, methodByName } from "./util";
 
@@ -37,7 +38,7 @@ describe("convertTypeNode (annotations)", () => {
         expect(annotationOf("let x: unknown;")).toEqual({ _: "UnknownType" });
         expect(annotationOf("let x: undefined;")).toEqual({ _: "UndefinedType" });
         expect(annotationOf("let x: never;")).toEqual({ _: "NeverType" });
-        expect(annotationOf("let x: bigint;")).toEqual({ _: "NumberType" });
+        expect(annotationOf("let x: bigint;")).toEqual({ _: "BigIntType" });
     });
 
     it("converts literal types with bare JSON primitives", () => {
@@ -46,6 +47,29 @@ describe("convertTypeNode (annotations)", () => {
         expect(annotationOf("let x: -1;")).toEqual({ _: "LiteralType", literal: -1 });
         expect(annotationOf("let x: true;")).toEqual({ _: "LiteralType", literal: true });
         expect(annotationOf("let x: null;")).toEqual({ _: "NullType" });
+    });
+
+    it("widens bigint literal annotations in parameters, locals, and returns", () => {
+        const { file, diagnostics } = lower(`
+            function positive(value: 1n): 1n {
+                const local: 1n = value;
+                return local;
+            }
+            function negative(value: -1n): -1n {
+                const local: -1n = value;
+                return local;
+            }
+        `);
+        const roundTripped = JSON.parse(serializeEtsFile(file));
+
+        expect(diagnostics.messages).toEqual([]);
+        for (const name of ["positive", "negative"]) {
+            const method = methodByName(roundTripped, name);
+
+            expect(method.signature.parameters[0].type).toEqual({ _: "BigIntType" });
+            expect(method.signature.returnType).toEqual({ _: "BigIntType" });
+            expect(method.body!.locals.find((local) => local.name === "local")?.type).toEqual({ _: "BigIntType" });
+        }
     });
 
     it("converts arrays and folds dimensions", () => {
@@ -317,6 +341,7 @@ describe("typeOfNode (inference)", () => {
         expect(inferredOf("let x = 42;")).toEqual({ _: "NumberType" });
         expect(inferredOf(`let x = "s";`)).toEqual({ _: "StringType" });
         expect(inferredOf("let x = true;")).toEqual({ _: "BooleanType" });
+        expect(inferredOf("let x = 1n;")).toEqual({ _: "BigIntType" });
     });
 
     it("keeps literal types for const-declarations", () => {
