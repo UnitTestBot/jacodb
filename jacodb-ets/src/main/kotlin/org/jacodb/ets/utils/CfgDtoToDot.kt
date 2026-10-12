@@ -16,23 +16,29 @@
 
 package org.jacodb.ets.utils
 
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jacodb.ets.dto.AliasTypeDto
 import org.jacodb.ets.dto.AnyTypeDto
 import org.jacodb.ets.dto.ArrayRefDto
 import org.jacodb.ets.dto.ArrayTypeDto
 import org.jacodb.ets.dto.AssignStmtDto
 import org.jacodb.ets.dto.AwaitExprDto
+import org.jacodb.ets.dto.BigIntTypeDto
 import org.jacodb.ets.dto.BinaryOperationDto
 import org.jacodb.ets.dto.BooleanTypeDto
 import org.jacodb.ets.dto.CallStmtDto
 import org.jacodb.ets.dto.CastExprDto
 import org.jacodb.ets.dto.CaughtExceptionRefDto
 import org.jacodb.ets.dto.CfgDto
+import org.jacodb.ets.dto.ClassTypeDto
 import org.jacodb.ets.dto.ClassValueRefDto
 import org.jacodb.ets.dto.ClassValueTypeDto
-import org.jacodb.ets.dto.ClassTypeDto
 import org.jacodb.ets.dto.ClosureFieldRefDto
 import org.jacodb.ets.dto.ConstantDto
+import org.jacodb.ets.dto.CopyDataPropertiesStmtDto
+import org.jacodb.ets.dto.DefineAccessorStmtDto
+import org.jacodb.ets.dto.DefineDataPropertyStmtDto
 import org.jacodb.ets.dto.DeleteExprDto
 import org.jacodb.ets.dto.EnumValueTypeDto
 import org.jacodb.ets.dto.FunctionTypeDto
@@ -48,25 +54,33 @@ import org.jacodb.ets.dto.LiteralTypeDto
 import org.jacodb.ets.dto.LocalDto
 import org.jacodb.ets.dto.NeverTypeDto
 import org.jacodb.ets.dto.NewArrayExprDto
+import org.jacodb.ets.dto.NewClassExprDto
 import org.jacodb.ets.dto.NewExprDto
 import org.jacodb.ets.dto.NopStmtDto
 import org.jacodb.ets.dto.NullTypeDto
 import org.jacodb.ets.dto.NumberTypeDto
 import org.jacodb.ets.dto.ParameterRefDto
 import org.jacodb.ets.dto.PrimitiveLiteralDto
+import org.jacodb.ets.dto.PropertyRefDto
 import org.jacodb.ets.dto.PtrCallExprDto
 import org.jacodb.ets.dto.RawStmtDto
 import org.jacodb.ets.dto.RawTypeDto
 import org.jacodb.ets.dto.RawValueDto
 import org.jacodb.ets.dto.RelationOperationDto
+import org.jacodb.ets.dto.RequireObjectCoercibleExprDto
 import org.jacodb.ets.dto.ReturnStmtDto
 import org.jacodb.ets.dto.ReturnVoidStmtDto
+import org.jacodb.ets.dto.SpreadExpansionExprDto
 import org.jacodb.ets.dto.StaticCallExprDto
 import org.jacodb.ets.dto.StaticFieldRefDto
 import org.jacodb.ets.dto.StmtDto
 import org.jacodb.ets.dto.StringTypeDto
+import org.jacodb.ets.dto.SymbolTypeDto
+import org.jacodb.ets.dto.TemplateObjectExprDto
 import org.jacodb.ets.dto.ThisRefDto
 import org.jacodb.ets.dto.ThrowStmtDto
+import org.jacodb.ets.dto.ToNumericExprDto
+import org.jacodb.ets.dto.ToPropertyKeyExprDto
 import org.jacodb.ets.dto.TupleTypeDto
 import org.jacodb.ets.dto.TypeDto
 import org.jacodb.ets.dto.TypeOfExprDto
@@ -98,8 +112,8 @@ fun CfgDto.toDot(
     // Nodes
     for (block in blocks) {
         if (useHtml) {
-            val s = block.stmts.joinToString("") {
-                it.toDotLabel().htmlEncode() + "<br/>"
+            val s = block.stmts.joinToString(separator = "") {
+                it.toDotLabel().htmlEncodeText() + "<br/>"
             }
             val h = "<table border=\"0\" cellborder=\"1\" cellspacing=\"0\">" +
                 "<tr><td>" + "<b>Block #${block.id}</b>" + "</td></tr>" +
@@ -107,7 +121,7 @@ fun CfgDto.toDot(
                 "</table>"
             lines += "  ${block.id} [label=<${h}>]"
         } else {
-            val s = block.stmts.joinToString("") { it.toDotLabel() + "\\l" }
+            val s = block.stmts.joinToString(separator = "") { it.toDotLabel().dotEncodeText() + "\\l" }
             lines += "  ${block.id} [label=\"Block #${block.id}\\n$s\"]"
         }
     }
@@ -142,9 +156,20 @@ fun CfgDto.toDot(
  * [org.jacodb.ets.model.EtsStmt.toDotLabel] instead.
  */
 private fun StmtDto.toDotLabel(): String {
-    val label = when (this) {
+    return when (this) {
         is NopStmtDto -> "nop"
         is AssignStmtDto -> "${left.toDotLabel()} := ${right.toDotLabel()}"
+        is DefineDataPropertyStmtDto -> "define_data_property(${target.toDotLabel()}, " +
+            "${key.toDotLabel()}, ${value.toDotLabel()})"
+        is DefineAccessorStmtDto -> "define_accessor(${target.toDotLabel()}, " +
+            "${key.toDotLabel()}, getter=${getter.toDotLabel()})"
+        is CopyDataPropertiesStmtDto -> {
+            val excluded = excludedKeys.joinToString(separator = ", ", prefix = "[", postfix = "]") {
+                it.toDotLabel()
+            }
+            "copy_data_properties(${target.toDotLabel()}, ${source.toDotLabel()}, " +
+                "excluded=$excluded, throwOnNullishSource=$throwOnNullishSource)"
+        }
         is ReturnVoidStmtDto -> "return"
         is ReturnStmtDto -> "return ${arg.toDotLabel()}"
         is ThrowStmtDto -> "throw ${arg.toDotLabel()}"
@@ -152,7 +177,6 @@ private fun StmtDto.toDotLabel(): String {
         is CallStmtDto -> expr.toDotLabel()
         is RawStmtDto -> "raw $kind"
     }
-    return label.replace("\"", "\\\"")
 }
 
 /**
@@ -166,7 +190,7 @@ private fun ValueDto.toDotLabel(): String {
         is LocalDto -> name
         is ClassValueRefDto -> "class ${signature.name}"
         is ConstantDto -> when (type) {
-            is StringTypeDto -> "\"$value\""
+            is StringTypeDto -> Json.encodeToString(value)
             else -> value
         }
 
@@ -177,11 +201,33 @@ private fun ValueDto.toDotLabel(): String {
         is GlobalRefDto -> name
         is ClosureFieldRefDto -> "${base.name}.$fieldName"
         is ArrayRefDto -> "${array.toDotLabel()}[${index.toDotLabel()}]"
+        is PropertyRefDto -> "${instance.toDotLabel()}[${key.toDotLabel()}]"
         is InstanceFieldRefDto -> "${instance.toDotLabel()}.${field.name}"
         is StaticFieldRefDto -> "${field.declaringClass.name}.${field.name}"
 
         // Expressions
-        is NewExprDto -> "new ${classType.toDotLabel()}"
+        is NewExprDto -> {
+            val constructor = constructorValue?.toDotLabel()
+            if (constructor == null) {
+                "new ${classType.toDotLabel()}"
+            } else {
+                "new ${classType.toDotLabel()} via $constructor"
+            }
+        }
+        is NewClassExprDto -> "new_class ${signature.name}"
+        is SpreadExpansionExprDto -> "expand_spread(${iterable.toDotLabel()}, expectedCount=$expectedCount)"
+        is ToPropertyKeyExprDto -> "to_property_key(${arg.toDotLabel()})"
+        is ToNumericExprDto -> "to_numeric(${arg.toDotLabel()}): ${type.toDotLabel()}"
+        is RequireObjectCoercibleExprDto -> "require_object_coercible(${arg.toDotLabel()})"
+        is TemplateObjectExprDto -> {
+            val cookedValues = cooked.joinToString(separator = ", ", prefix = "[", postfix = "]") {
+                if (it == null) "undefined" else Json.encodeToString(it)
+            }
+            val rawValues = raw.joinToString(separator = ", ", prefix = "[", postfix = "]") {
+                Json.encodeToString(it)
+            }
+            "template_object(site=${Json.encodeToString(siteId)}, cooked=$cookedValues, raw=$rawValues)"
+        }
         is NewArrayExprDto -> "new Array<${elementType.toDotLabel()}>(${size.toDotLabel()})"
         is DeleteExprDto -> "delete ${arg.toDotLabel()}"
         is AwaitExprDto -> "await ${arg.toDotLabel()}"
@@ -202,17 +248,17 @@ private fun ValueDto.toDotLabel(): String {
 
         // Call expressions
         is InstanceCallExprDto -> {
-            val argsStr = args.joinToString(", ") { it.toDotLabel() }
+            val argsStr = args.joinToString(separator = ", ") { it.toDotLabel() }
             "call ${instance.toDotLabel()}.${method.name}($argsStr)"
         }
 
         is StaticCallExprDto -> {
-            val argsStr = args.joinToString(", ") { it.toDotLabel() }
+            val argsStr = args.joinToString(separator = ", ") { it.toDotLabel() }
             "static_call ${method.declaringClass.name}.${method.name}($argsStr)"
         }
 
         is PtrCallExprDto -> {
-            val argsStr = args.joinToString(", ") { it.toDotLabel() }
+            val argsStr = args.joinToString(separator = ", ") { it.toDotLabel() }
             "ptr_call ${ptr.toDotLabel()}.${method.name}($argsStr)"
         }
 
@@ -234,11 +280,13 @@ private fun TypeDto.toDotLabel(): String {
         is VoidTypeDto -> "void"
         is NeverTypeDto -> "never"
         is NumberTypeDto -> "number"
+        is BigIntTypeDto -> "bigint"
         is StringTypeDto -> "string"
+        is SymbolTypeDto -> "symbol"
         is BooleanTypeDto -> "boolean"
 
         is LiteralTypeDto -> when (literal) {
-            is PrimitiveLiteralDto.StringLiteral -> "\"${literal.value}\""
+            is PrimitiveLiteralDto.StringLiteral -> Json.encodeToString(literal.value)
             is PrimitiveLiteralDto.NumberLiteral -> literal.value.toString()
             is PrimitiveLiteralDto.BooleanLiteral -> literal.value.toString()
         }
@@ -246,21 +294,21 @@ private fun TypeDto.toDotLabel(): String {
         // Complex types
         is ClassValueTypeDto -> "typeof ${signature.name}"
         is ClassTypeDto -> if (typeParameters.isNotEmpty()) {
-            val generics = typeParameters.joinToString(", ") { it.toDotLabel() }
+            val generics = typeParameters.joinToString(separator = ", ") { it.toDotLabel() }
             "${signature.name}<$generics>"
         } else {
             signature.name
         }
 
         is UnclearReferenceTypeDto -> if (typeParameters.isNotEmpty()) {
-            val generics = typeParameters.joinToString(", ") { it.toDotLabel() }
+            val generics = typeParameters.joinToString(separator = ", ") { it.toDotLabel() }
             "$name<$generics>"
         } else {
             name
         }
 
         is ArrayTypeDto -> "${elementType.toDotLabel()}${"[]".repeat(dimensions)}"
-        is TupleTypeDto -> types.joinToString(", ", "[", "]") { it.toDotLabel() }
+        is TupleTypeDto -> types.joinToString(separator = ", ", prefix = "[", postfix = "]") { it.toDotLabel() }
 
         is UnionTypeDto -> types.joinToString(" | ") {
             val s = it.toDotLabel()
@@ -273,7 +321,7 @@ private fun TypeDto.toDotLabel(): String {
         }
 
         is FunctionTypeDto -> {
-            val params = signature.parameters.joinToString(", ") { it.type.toDotLabel() }
+            val params = signature.parameters.joinToString(separator = ", ") { it.type.toDotLabel() }
             "($params) => ${signature.returnType.toDotLabel()}"
         }
 
