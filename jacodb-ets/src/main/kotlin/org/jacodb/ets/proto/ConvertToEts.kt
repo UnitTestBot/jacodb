@@ -49,6 +49,7 @@ import org.jacodb.ets.model.EtsEntity
 import org.jacodb.ets.model.EtsEqExpr
 import org.jacodb.ets.model.EtsExpExpr
 import org.jacodb.ets.model.EtsExpr
+import org.jacodb.ets.model.EtsExportInfo
 import org.jacodb.ets.model.EtsField
 import org.jacodb.ets.model.EtsFieldImpl
 import org.jacodb.ets.model.EtsFieldSignature
@@ -59,6 +60,7 @@ import org.jacodb.ets.model.EtsGenericType
 import org.jacodb.ets.model.EtsGtEqExpr
 import org.jacodb.ets.model.EtsGtExpr
 import org.jacodb.ets.model.EtsIfStmt
+import org.jacodb.ets.model.EtsImportInfo
 import org.jacodb.ets.model.EtsInExpr
 import org.jacodb.ets.model.EtsInstanceCallExpr
 import org.jacodb.ets.model.EtsInstanceFieldRef
@@ -135,11 +137,13 @@ import model.Class as ProtoClass
 import model.ClassSignature as ProtoClassSignature
 import model.Decorator as ProtoDecorator
 import model.Expr as ProtoExpr
+import model.ExportInfo as ProtoExportInfo
 import model.Field as ProtoField
 import model.FieldSignature as ProtoFieldSignature
 import model.File as ProtoFile
 import model.FileSignature as ProtoFileSignature
 import model.Local as ProtoLocal
+import model.ImportInfo as ProtoImportInfo
 import model.Method as ProtoMethod
 import model.MethodParameter as ProtoMethodParameter
 import model.MethodSignature as ProtoMethodSignature
@@ -154,9 +158,6 @@ import model.Type as ProtoType
 import model.UnaryExpr as ProtoUnaryExpr
 import model.UnaryOperator as ProtoUnaryOperator
 import model.Value as ProtoValue
-
-// import model.ImportInfo as ProtoImportInfo
-// import model.ExportInfo as ProtoExportInfo
 
 // region model
 
@@ -173,8 +174,8 @@ fun ProtoFile.toEts(): EtsFile {
         signature = fileSignature,
         classes = classes.map { it.toEts(fileSignature) },
         namespaces = namespaces.map { it.toEts(fileSignature) },
-        // TODO: importInfos
-        // TODO: exportInfos
+        importInfos = importInfos.map { it.toEts() },
+        exportInfos = exportInfos.map { it.toEts() },
     )
 }
 
@@ -214,6 +215,7 @@ fun ProtoField.toEts(
         modifiers = EtsModifiers(modifiers),
         isOptional = is_optional,
         isDefinitelyAssigned = is_definitely_assigned,
+        decorators = decorators.map { it.toEts() },
     )
 }
 
@@ -239,9 +241,21 @@ fun ProtoDecorator.toEts(): EtsDecorator {
     )
 }
 
-// TODO: import and export infos
-//  fun ProtoImportInfo.toEts(): EtsImportInfo
-//  fun ProtoExportInfo.toEts(): EtsExportInfo
+fun ProtoImportInfo.toEts(): EtsImportInfo = EtsImportInfo(
+    importClauseName = import_clause_name,
+    importType = import_type,
+    importFrom = import_from,
+    modifiers = EtsModifiers(modifiers),
+    nameBeforeAs = name_before_as,
+)
+
+fun ProtoExportInfo.toEts(): EtsExportInfo = EtsExportInfo(
+    exportClauseName = export_clause_name,
+    exportClauseType = export_clause_type,
+    exportFrom = export_from,
+    modifiers = EtsModifiers(modifiers),
+    nameBeforeAs = name_before_as,
+)
 
 // endregion model
 

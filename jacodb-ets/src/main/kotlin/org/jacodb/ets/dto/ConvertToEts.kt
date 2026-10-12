@@ -49,6 +49,7 @@ import org.jacodb.ets.model.EtsEnumValueType
 import org.jacodb.ets.model.EtsEqExpr
 import org.jacodb.ets.model.EtsExpExpr
 import org.jacodb.ets.model.EtsExpr
+import org.jacodb.ets.model.EtsExportInfo
 import org.jacodb.ets.model.EtsField
 import org.jacodb.ets.model.EtsFieldImpl
 import org.jacodb.ets.model.EtsFieldRef
@@ -60,6 +61,7 @@ import org.jacodb.ets.model.EtsGenericType
 import org.jacodb.ets.model.EtsGtEqExpr
 import org.jacodb.ets.model.EtsGtExpr
 import org.jacodb.ets.model.EtsIfStmt
+import org.jacodb.ets.model.EtsImportInfo
 import org.jacodb.ets.model.EtsInExpr
 import org.jacodb.ets.model.EtsInstanceCallExpr
 import org.jacodb.ets.model.EtsInstanceFieldRef
@@ -75,6 +77,7 @@ import org.jacodb.ets.model.EtsMethod
 import org.jacodb.ets.model.EtsMethodImpl
 import org.jacodb.ets.model.EtsMethodParameter
 import org.jacodb.ets.model.EtsMethodSignature
+import org.jacodb.ets.model.EtsModifier
 import org.jacodb.ets.model.EtsModifiers
 import org.jacodb.ets.model.EtsMulExpr
 import org.jacodb.ets.model.EtsNamespace
@@ -679,6 +682,7 @@ fun FieldDto.toEtsField(): EtsField {
         modifiers = EtsModifiers(modifiers),
         isOptional = isOptional,
         isDefinitelyAssigned = isDefinitelyAssigned,
+        decorators = decorators.map { it.toEtsDecorator() },
     )
 }
 
@@ -693,6 +697,26 @@ fun NamespaceDto.toEtsNamespace(): EtsNamespace {
     )
 }
 
+fun ImportInfoDto.toEtsImportInfo(): EtsImportInfo = EtsImportInfo(
+    importClauseName = importClauseName,
+    importType = importType,
+    importFrom = importFrom,
+    modifiers = EtsModifiers(modifiers),
+    nameBeforeAs = nameBeforeAs,
+)
+
+fun ExportInfoDto.toEtsExportInfo(): EtsExportInfo {
+    // The wire schema carries default exports through the existing modifier bit.
+    val exportModifiers = if (isDefault) modifiers or EtsModifier.DEFAULT.value else modifiers
+    return EtsExportInfo(
+        exportClauseName = exportClauseName,
+        exportClauseType = exportClauseType,
+        exportFrom = exportFrom,
+        modifiers = EtsModifiers(exportModifiers),
+        nameBeforeAs = nameBeforeAs,
+    )
+}
+
 fun FileDto.toEtsFile(): EtsFile {
     val signature = signature.toEtsFileSignature()
     val classes = classes.map { it.toEtsClass() }
@@ -701,6 +725,8 @@ fun FileDto.toEtsFile(): EtsFile {
         signature = signature,
         classes = classes,
         namespaces = namespaces,
+        importInfos = importInfos.map { it.toEtsImportInfo() },
+        exportInfos = exportInfos.map { it.toEtsExportInfo() },
     )
 }
 

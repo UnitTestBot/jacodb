@@ -18,7 +18,14 @@ package org.jacodb.ets.test
 
 import model.BlockCfg
 import model.Scene
+import org.jacodb.ets.dto.DecoratorDto
+import org.jacodb.ets.dto.ExportInfoDto
+import org.jacodb.ets.dto.FieldDto
+import org.jacodb.ets.dto.FileDto
+import org.jacodb.ets.dto.ImportInfoDto
 import org.jacodb.ets.dto.toDto
+import org.jacodb.ets.dto.toEtsField
+import org.jacodb.ets.dto.toEtsFile
 import org.jacodb.ets.dto.toEtsConstant
 import org.jacodb.ets.model.BasicBlock
 import org.jacodb.ets.model.EtsAnyType
@@ -32,6 +39,8 @@ import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsDecorator
 import org.jacodb.ets.model.EtsGenericType
 import org.jacodb.ets.model.EtsExpr
+import org.jacodb.ets.model.EtsFieldImpl
+import org.jacodb.ets.model.EtsFieldSignature
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsFileSignature
 import org.jacodb.ets.model.EtsIfStmt
@@ -141,6 +150,110 @@ class ProtoRoundtripTest {
         assertEquals(method.modifiers, decodedMethod.modifiers)
         assertEquals(method.decorators, decodedMethod.decorators)
         assertEquals(expected = null, actual = decodedClass.superClassName)
+    }
+
+    @Test
+    fun `field decorators survive frontend conversion and binary roundtrip`() {
+        val signature = EtsFieldSignature(
+            name = "value",
+            enclosingClass = EtsClassSignature.UNKNOWN,
+            type = EtsStringType,
+        )
+        val dto = FieldDto(
+            signature = signature.toDto(),
+            modifiers = EtsModifier.READONLY.value,
+            decorators = listOf(DecoratorDto(kind = "Inject"), DecoratorDto(kind = "Observed")),
+            isOptional = true,
+            isDefinitelyAssigned = false,
+        )
+        val field = dto.toEtsField()
+
+        val decoded = model.Field.ADAPTER.decode(field.toProto().encode()).toEts(signature.enclosingClass)
+        val decodedField = assertIs<EtsFieldImpl>(decoded)
+
+        assertEquals(signature, decodedField.signature)
+        assertEquals(EtsModifiers(mask = EtsModifier.READONLY.value), decodedField.modifiers)
+        assertEquals(listOf(EtsDecorator(name = "Inject"), EtsDecorator(name = "Observed")), decodedField.decorators)
+        assertEquals(expected = true, actual = decodedField.isOptional)
+        assertEquals(expected = false, actual = decodedField.isDefinitelyAssigned)
+    }
+
+    @Test
+    fun `binary file roundtrip retains module metadata and optional field presence`() {
+        val signature = EtsFileSignature(projectName = "roundtrip", fileName = "module.ts")
+        val proto = model.File(
+            signature = signature.toProto(),
+            importInfos = listOf(
+                model.ImportInfo(
+                    import_clause_name = "Local",
+                    import_type = "NamedImports",
+                    import_from = "./dependency",
+                    modifiers = EtsModifier.DECLARE.value,
+                    name_before_as = "Original",
+                ),
+                model.ImportInfo(import_clause_name = "Absent", import_type = "future-kind"),
+                model.ImportInfo(import_from = "", name_before_as = ""),
+            ),
+            exportInfos = listOf(
+                model.ExportInfo(
+                    export_clause_name = "Public",
+                    export_clause_type = 3,
+                    export_from = "./dependency",
+                    modifiers = EtsModifier.EXPORT.value,
+                    name_before_as = "Private",
+                ),
+                model.ExportInfo(export_clause_name = "Future", export_clause_type = 99),
+                model.ExportInfo(export_from = "", name_before_as = ""),
+            ),
+        )
+
+        val source = model.File.ADAPTER.decode(proto.encode()).toEts()
+        val decoded = model.File.ADAPTER.decode(source.toProto().encode())
+
+        assertEquals(proto, decoded)
+    }
+
+    @Test
+    fun `frontend file import aliases and default exports reach binary transport`() {
+        val signature = EtsFileSignature(projectName = "roundtrip", fileName = "frontend.ts")
+        val dto = FileDto(
+            signature = signature.toDto(),
+            namespaces = emptyList(),
+            classes = emptyList(),
+            importInfos = listOf(ImportInfoDto(
+                importClauseName = "Dependency",
+                importType = "NamespaceImport",
+                importFrom = "./dependency",
+                nameBeforeAs = "*",
+                modifiers = EtsModifier.DECLARE.value,
+            )),
+            exportInfos = listOf(ExportInfoDto(
+                exportClauseName = "default",
+                exportClauseType = 3,
+                nameBeforeAs = "localValue",
+                isDefault = true,
+                modifiers = EtsModifier.EXPORT.value,
+            )),
+        )
+
+        val source = dto.toEtsFile()
+        val decoded = model.File.ADAPTER.decode(source.toProto().encode()).toEts()
+        val imported = decoded.importInfos.single()
+        val exported = decoded.exportInfos.single()
+
+        assertEquals(expected = "Dependency", actual = imported.importClauseName)
+        assertEquals(expected = "NamespaceImport", actual = imported.importType)
+        assertEquals(expected = "./dependency", actual = imported.importFrom)
+        assertEquals(expected = "*", actual = imported.nameBeforeAs)
+        assertEquals(EtsModifiers(mask = EtsModifier.DECLARE.value), imported.modifiers)
+        assertEquals(expected = "default", actual = exported.exportClauseName)
+        assertEquals(expected = 3, actual = exported.exportClauseType)
+        assertEquals(expected = "localValue", actual = exported.nameBeforeAs)
+        assertEquals(expected = null, actual = exported.exportFrom)
+        assertEquals(
+            EtsModifiers(mask = EtsModifier.EXPORT.value or EtsModifier.DEFAULT.value),
+            exported.modifiers,
+        )
     }
 
     @Test
