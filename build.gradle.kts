@@ -84,6 +84,7 @@ allprojects {
         }
         compileKotlin {
             compilerOptions {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
                 // Restrict API resolution as well as bytecode, including inline functions.
                 freeCompilerArgs.add("-Xjdk-release=8")
             }
@@ -105,6 +106,7 @@ allprojects {
         }
         compileTestFixturesKotlin {
             compilerOptions {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
                 freeCompilerArgs.add("-Xjdk-release=8")
             }
         }
