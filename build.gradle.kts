@@ -4,6 +4,7 @@ import org.jetbrains.dokka.gradle.DokkaTaskPartial
 val groupProp = providers.gradleProperty("group").orNull
 // Use `-Pversion=1.5` to specify version for publishing.
 val versionProp = providers.gradleProperty("version").orNull
+val supportsJavaRelease = JavaVersion.current().isJava9Compatible()
 
 group = groupProp ?: "org.jacodb"
 version = versionProp ?: "1.4-SNAPSHOT"
@@ -77,10 +78,14 @@ allprojects {
 
         compileJava {
             targetCompatibility = "1.8"
+            if (supportsJavaRelease) {
+                options.release.set(8)
+            }
         }
         compileKotlin {
-            kotlinOptions {
-                jvmTarget = "1.8"
+            compilerOptions {
+                // Restrict API resolution as well as bytecode, including inline functions.
+                freeCompilerArgs.add("-Xjdk-release=8")
             }
         }
 
@@ -89,6 +94,9 @@ allprojects {
         }
         compileTestFixturesJava {
             targetCompatibility = "1.8"
+            if (supportsJavaRelease) {
+                options.release.set(8)
+            }
         }
         compileTestKotlin {
             kotlinOptions {
@@ -96,8 +104,8 @@ allprojects {
             }
         }
         compileTestFixturesKotlin {
-            kotlinOptions {
-                jvmTarget = "1.8"
+            compilerOptions {
+                freeCompilerArgs.add("-Xjdk-release=8")
             }
         }
 
