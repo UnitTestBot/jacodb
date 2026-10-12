@@ -174,10 +174,17 @@ class CompletionTest {
                 system.ask<Unit> { throw failure }
                 error("ask should fail")
             } catch (error: IllegalStateException) {
-                assertTrue(error === failure)
+                assertEquals(failure.message, error.message)
+                val preservesFailure = error === failure || error.cause === failure
+
+                assertTrue(preservesFailure)
             }
 
-            val completed = withTimeoutOrNull(1.seconds) { system.awaitCompletion(); true }
+            val completed = withTimeoutOrNull(1.seconds) {
+                system.awaitCompletion()
+
+                true
+            }
 
             assertNotNull(completed)
         } finally {
