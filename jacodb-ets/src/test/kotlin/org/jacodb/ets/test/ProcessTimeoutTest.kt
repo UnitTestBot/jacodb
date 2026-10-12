@@ -18,13 +18,18 @@ package org.jacodb.ets.test
 
 import org.jacodb.ets.utils.ProcessUtil
 import org.junit.jupiter.api.Assumptions.assumeTrue
+import java.io.IOException
+import java.io.Reader
 import java.nio.file.Files
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Duration
@@ -172,6 +177,161 @@ class ProcessTimeoutTest {
         val process = ProcessBuilder("/bin/kill", "-9", pid.toString()).redirectErrorStream(true).start()
         process.inputStream.close()
         process.waitFor()
+    }
+
+    @Test
+    fun `parent exit does not wait for an orphan holding inherited output`() {
+        val pidFile = Files.createTempFile("orphan-output-test-", ".pid")
+        val executor = Executors.newSingleThreadExecutor()
+        val result = executor.submit<ProcessUtil.Result> {
+            ProcessUtil.run(
+                command = listOf(
+                    "/bin/sh", "-c",
+                    "sleep 30 & echo $! > '$pidFile'; printf parent; printf diagnostic >&2; exit 7",
+                ),
+                timeout = 300.milliseconds,
+            )
+        }
+
+        try {
+            val completed = result.get(3, TimeUnit.SECONDS)
+
+            assertEquals(expected = 7, actual = completed.exitCode)
+            assertEquals(expected = "parent", actual = completed.stdout)
+            assertEquals(expected = "diagnostic", actual = completed.stderr)
+            assertFalse(completed.isTimeout)
+        } finally {
+            Files.readAllLines(pidFile).mapNotNull(String::toLongOrNull).forEach { pid ->
+                terminateTestProcess(pid)
+            }
+            result.cancel(true)
+            executor.shutdownNow()
+            Files.deleteIfExists(pidFile)
+        }
+    }
+
+    @Test
+    fun `timeout interrupts and joins a cooperative input reader`() {
+        val entered = CountDownLatch(1)
+        val stopped = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val input = object : Reader() {
+            override fun read(buffer: CharArray, offset: Int, length: Int): Int {
+                entered.countDown()
+                try {
+                    release.await()
+                    return -1
+                } finally {
+                    stopped.countDown()
+                }
+            }
+
+            override fun close() = Unit
+        }
+        val executor = Executors.newSingleThreadExecutor()
+        val result = executor.submit<ProcessUtil.Result> {
+            ProcessUtil.run(
+                command = listOf("/bin/sh", "-c", "exec sleep 30"),
+                input = input,
+                timeout = 300.milliseconds,
+            )
+        }
+
+        try {
+            assertTrue(entered.await(3, TimeUnit.SECONDS))
+            val completed = result.get(3, TimeUnit.SECONDS)
+
+            assertTrue(completed.isTimeout)
+            assertEquals(expected = 0L, actual = stopped.count)
+        } finally {
+            release.countDown()
+            result.cancel(true)
+            executor.shutdownNow()
+        }
+    }
+
+    @Test
+    fun `noncooperative input fails within the cleanup deadline`() {
+        val entered = CountDownLatch(1)
+        val stopped = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val input = object : Reader() {
+            override fun read(buffer: CharArray, offset: Int, length: Int): Int {
+                entered.countDown()
+                try {
+                    while (release.count != 0L) {
+                        try {
+                            release.await()
+                        } catch (_: InterruptedException) {
+                            // Deliberately simulate a caller reader that ignores cancellation.
+                        }
+                    }
+                    return -1
+                } finally {
+                    stopped.countDown()
+                }
+            }
+
+            override fun close() = Unit
+        }
+        val executor = Executors.newSingleThreadExecutor()
+        val result = executor.submit<ProcessUtil.Result> {
+            ProcessUtil.run(
+                command = listOf("/bin/sh", "-c", "exec sleep 30"),
+                input = input,
+                timeout = 300.milliseconds,
+            )
+        }
+
+        try {
+            assertTrue(entered.await(3, TimeUnit.SECONDS))
+            val failure = assertFailsWith<ExecutionException> { result.get(3, TimeUnit.SECONDS) }
+            val cause = assertIs<IllegalStateException>(failure.cause)
+
+            assertEquals(
+                expected = "Process input did not stop after interruption within the cleanup deadline",
+                actual = cause.message,
+            )
+        } finally {
+            release.countDown()
+            result.cancel(true)
+            executor.shutdownNow()
+            assertTrue(stopped.await(3, TimeUnit.SECONDS))
+        }
+    }
+
+    @Test
+    fun `input read failures are preserved when the child exits`() {
+        val input = object : Reader() {
+            override fun read(buffer: CharArray, offset: Int, length: Int): Int {
+                throw IOException("cannot read input")
+            }
+
+            override fun close() = Unit
+        }
+
+        val failure = assertFailsWith<IOException> {
+            ProcessUtil.run(
+                command = listOf("/bin/sh", "-c", "cat"),
+                input = input,
+                timeout = 1_000.milliseconds,
+            )
+        }
+
+        assertEquals(expected = "cannot read input", actual = failure.message)
+    }
+
+    @Test
+    fun `capture merges stderr when requested by the builder`() {
+        val result = ProcessUtil.run(
+            command = listOf("/bin/sh", "-c", "printf out; printf err >&2"),
+            timeout = 1_000.milliseconds,
+            builder = { redirectErrorStream(true) },
+        )
+
+        assertEquals(expected = "outerr", actual = result.stdout)
+        assertEquals(expected = "", actual = result.stderr)
+        assertFalse(result.isTimeout)
     }
 
     @Test
