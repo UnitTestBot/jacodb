@@ -19,6 +19,7 @@ package org.jacodb.ets.proto
 import org.jacodb.ets.model.EtsBlockCfg
 import org.jacodb.ets.model.EtsClass
 import org.jacodb.ets.model.EtsClassSignature
+import org.jacodb.ets.model.EtsDecorator
 import org.jacodb.ets.model.EtsField
 import org.jacodb.ets.model.EtsFieldImpl
 import org.jacodb.ets.model.EtsFieldSignature
@@ -35,6 +36,7 @@ import model.Block as ProtoBlock
 import model.BlockCfg as ProtoBlockCfg
 import model.Class as ProtoClass
 import model.ClassSignature as ProtoClassSignature
+import model.Decorator as ProtoDecorator
 import model.Field as ProtoField
 import model.FieldSignature as ProtoFieldSignature
 import model.File as ProtoFile
@@ -72,7 +74,12 @@ fun EtsNamespace.toProto(): ProtoNamespace {
 fun EtsClass.toProto(): ProtoClass {
     return ProtoClass(
         signature = signature.toProto(),
+        modifiers = modifiers.toProto(),
+        decorators = decorators.map { it.toProto() },
+        category = category.ordinal,
         type_parameters = typeParameters.map { it.toProto() },
+        super_class_name = superClassName.orEmpty(),
+        implemented_interface_names = implementedInterfaceNames,
         fields = fields.map { it.toProto() },
         methods = methods.map { it.toProto() },
     )
@@ -91,10 +98,14 @@ fun EtsField.toProto(): ProtoField {
 fun EtsMethod.toProto(): ProtoMethod {
     return ProtoMethod(
         signature = signature.toProto(),
+        type_parameters = typeParameters.map { it.toProto() },
         modifiers = modifiers.toProto(),
+        decorators = decorators.map { it.toProto() },
         cfg = cfg.toProto(),
     )
 }
+
+fun EtsDecorator.toProto(): ProtoDecorator = ProtoDecorator(kind = name)
 
 fun EtsFileSignature.toProto(): ProtoFileSignature {
     return ProtoFileSignature(

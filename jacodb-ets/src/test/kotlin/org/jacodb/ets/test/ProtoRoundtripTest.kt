@@ -26,7 +26,11 @@ import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsAwaitExpr
 import org.jacodb.ets.model.EtsBlockCfg
 import org.jacodb.ets.model.EtsBooleanType
+import org.jacodb.ets.model.EtsClassCategory
+import org.jacodb.ets.model.EtsClassImpl
 import org.jacodb.ets.model.EtsClassSignature
+import org.jacodb.ets.model.EtsDecorator
+import org.jacodb.ets.model.EtsGenericType
 import org.jacodb.ets.model.EtsExpr
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsFileSignature
@@ -34,6 +38,9 @@ import org.jacodb.ets.model.EtsIfStmt
 import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsMethod
 import org.jacodb.ets.model.EtsMethodImpl
+import org.jacodb.ets.model.EtsMethodParameter
+import org.jacodb.ets.model.EtsModifier
+import org.jacodb.ets.model.EtsModifiers
 import org.jacodb.ets.model.EtsMethodSignature
 import org.jacodb.ets.model.EtsNumberConstant
 import org.jacodb.ets.model.EtsNumberType
@@ -60,6 +67,80 @@ class ProtoRoundtripTest {
 
         assertEquals(listOf(project.signature), decoded.projectFiles.map { it.signature })
         assertEquals(listOf(sdk.signature), decoded.sdkFiles.map { it.signature })
+    }
+
+    @Test
+    fun `SDK class binary roundtrip preserves inheritance and generic declarations`() {
+        val signature = EtsClassSignature(
+            name = "Collection",
+            file = EtsFileSignature(projectName = "sdk", fileName = "collection.d.ts"),
+        )
+        val typeParameter = EtsGenericType(
+            typeName = "T",
+            constraint = EtsAnyType,
+            defaultType = EtsStringType,
+        )
+        val clazz = EtsClassImpl(
+            signature = signature,
+            fields = emptyList(),
+            methods = emptyList(),
+            category = EtsClassCategory.INTERFACE,
+            superClassName = "BaseCollection",
+            implementedInterfaceNames = listOf("Iterable", "Sized"),
+            typeParameters = listOf(typeParameter),
+            modifiers = EtsModifiers(mask = EtsModifier.EXPORT.value or EtsModifier.DECLARE.value),
+            decorators = listOf(EtsDecorator(name = "SdkContract")),
+        )
+        val sdk = EtsFile(signature = signature.file, classes = listOf(clazz))
+        val scene = EtsScene(projectFiles = emptyList(), sdkFiles = listOf(sdk))
+
+        val decoded = Scene.ADAPTER.decode(scene.toProto().encode()).toEts()
+        val decodedClass = decoded.sdkFiles.single().classes.single()
+
+        assertEquals(signature, decodedClass.signature)
+        assertEquals(clazz.category, decodedClass.category)
+        assertEquals(clazz.superClassName, decodedClass.superClassName)
+        assertEquals(clazz.implementedInterfaceNames, decodedClass.implementedInterfaceNames)
+        assertEquals(clazz.typeParameters, decodedClass.typeParameters)
+        assertEquals(clazz.modifiers, decodedClass.modifiers)
+        assertEquals(clazz.decorators, decodedClass.decorators)
+    }
+
+    @Test
+    fun `method binary roundtrip preserves generic bounds defaults and decorators`() {
+        val signature = EtsClassSignature(
+            name = "Container",
+            file = EtsFileSignature(projectName = "roundtrip", fileName = "container.ts"),
+        )
+        val typeParameter = EtsGenericType(
+            typeName = "Value",
+            constraint = EtsStringType,
+            defaultType = EtsStringType,
+        )
+        val method = EtsMethodImpl(
+            signature = EtsMethodSignature(
+                name = "convert",
+                enclosingClass = signature,
+                parameters = listOf(EtsMethodParameter(index = 0, name = "value", type = typeParameter)),
+                returnType = typeParameter,
+            ),
+            typeParameters = listOf(typeParameter),
+            modifiers = EtsModifiers(mask = EtsModifier.PUBLIC.value or EtsModifier.STATIC.value),
+            decorators = listOf(EtsDecorator(name = "Convert"), EtsDecorator(name = "Stable")),
+        )
+        val clazz = EtsClassImpl(signature = signature, fields = emptyList(), methods = listOf(method))
+        val source = EtsFile(signature = signature.file, classes = listOf(clazz))
+        val scene = EtsScene(projectFiles = listOf(source), sdkFiles = emptyList())
+
+        val decoded = Scene.ADAPTER.decode(scene.toProto().encode()).toEts()
+        val decodedClass = decoded.projectFiles.single().classes.single()
+        val decodedMethod = decodedClass.methods.single()
+
+        assertEquals(method.signature, decodedMethod.signature)
+        assertEquals(method.typeParameters, decodedMethod.typeParameters)
+        assertEquals(method.modifiers, decodedMethod.modifiers)
+        assertEquals(method.decorators, decodedMethod.decorators)
+        assertEquals(expected = null, actual = decodedClass.superClassName)
     }
 
     @Test
@@ -119,10 +200,11 @@ class ProtoRoundtripTest {
         assertEquals(cfg.successors, decoded.successors)
         val trueTarget = decoded.successors.getValue(0).first()
         val falseTarget = decoded.successors.getValue(0).last()
-        assertEquals(EtsNumberConstant(value = 11.0), decoded.blocks[trueTarget].statements
-            .filterIsInstance<EtsAssignStmt>().single().rhv)
-        assertEquals(EtsNumberConstant(value = 22.0), decoded.blocks[falseTarget].statements
-            .filterIsInstance<EtsAssignStmt>().single().rhv)
+        val trueValue = decoded.blocks[trueTarget].statements.filterIsInstance<EtsAssignStmt>().single().rhv
+        val falseValue = decoded.blocks[falseTarget].statements.filterIsInstance<EtsAssignStmt>().single().rhv
+
+        assertEquals(EtsNumberConstant(value = 11.0), trueValue)
+        assertEquals(EtsNumberConstant(value = 22.0), falseValue)
     }
 
     @Test
