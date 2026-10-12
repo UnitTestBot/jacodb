@@ -17,10 +17,16 @@
 package org.jacodb.actors.impl.workers
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.channels.onSuccess
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import org.jacodb.actors.api.Actor
 import org.jacodb.actors.api.ActorPath
@@ -43,6 +49,7 @@ internal class UserActorWorker<Message>(
     private var sent = 0
     private var status = ActorStatus.BUSY
     private val working = AtomicBoolean(true)
+    private val admissionAvailable = Channel<Unit>(capacity = Channel.CONFLATED)
 
     override fun launchLoop(actor: Actor<Message>) {
         scope.launch {
@@ -68,8 +75,28 @@ internal class UserActorWorker<Message>(
     }
 
     override suspend fun receive(message: Message): Boolean {
-        channel.send(message)
-        return true
+        try {
+            while (true) {
+                currentCoroutineContext().ensureActive()
+                val admitted = channel.trySend(message)
+                if (admitted.isSuccess) return true
+                if (admitted.isClosed) admitted.getOrThrow()
+
+                admissionAvailable.receive()
+            }
+        } finally {
+            // Pass the wake-up to another waiting sender, including when this sender is canceled.
+            // A failed attempt does not produce another token, so a full mailbox cannot busy-loop.
+            admissionAvailable.trySend(Unit)
+        }
+    }
+
+    private suspend fun receiveNotifyingSenders(): ChannelResult<Message> = coroutineScope {
+        // Register the receiver before waking a rendezvous sender. The child is joined/canceled
+        // with this actor loop, so close cannot leave a detached pending receive behind.
+        val next = async(start = CoroutineStart.UNDISPATCHED) { channel.receiveCatching() }
+        admissionAvailable.trySend(Unit)
+        next.await()
     }
 
     private suspend fun <TargetMessage> sendInternal(to: ActorRef<TargetMessage>, message: TargetMessage) {
@@ -83,7 +110,9 @@ internal class UserActorWorker<Message>(
             var receiveResult = channel.tryReceive()
             if (receiveResult.isFailure) {
                 processEmptyChannel()
-                receiveResult = channel.receiveCatching()
+                receiveResult = receiveNotifyingSenders()
+            } else {
+                admissionAvailable.trySend(Unit)
             }
             receiveResult
                 .onClosed {

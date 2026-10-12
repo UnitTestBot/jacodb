@@ -64,6 +64,10 @@ internal class WatcherActor(
                 state.totalSent++
             }
 
+            WatcherMessage.OutOfSystemSendCancelled -> {
+                state.totalSent--
+            }
+
             is WatcherMessage.AwaitTermination -> {
                 val status = state.status
                 if (status is Status.DetectingTermination) {

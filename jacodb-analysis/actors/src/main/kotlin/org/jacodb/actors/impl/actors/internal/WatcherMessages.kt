@@ -34,6 +34,8 @@ internal sealed interface WatcherMessage {
 
     data object OutOfSystemSend : WatcherMessage
 
+    data object OutOfSystemSendCancelled : WatcherMessage
+
     data class UpdateSnapshot(
         val path: ActorPath,
         val snapshot: Snapshot,

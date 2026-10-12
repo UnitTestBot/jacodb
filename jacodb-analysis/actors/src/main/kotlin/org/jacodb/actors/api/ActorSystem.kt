@@ -26,6 +26,7 @@ interface ActorSystem<Message> : AutoCloseable {
 
     suspend fun <R> ask(messageBuilder: (CompletableDeferred<R>) -> Message): R
 
+    /** Wait for admitted messages to finish and actors to become idle; canceled submissions are not work. */
     suspend fun awaitCompletion()
 
     suspend fun resume()
