@@ -29,6 +29,7 @@
  */
 
 import * as ts from "typescript";
+import { isStrictMode } from "./strictMode";
 import {
     ANONYMOUS_CLASS_PREFIX,
     ANONYMOUS_METHOD_PREFIX,
@@ -1736,6 +1737,7 @@ export class ExprLowerer {
             signature,
             modifiers: modifiersOf(node),
             decorators: [],
+            isStrictMode: isStrictMode(node),
             body: closureContext.build(),
         });
 
@@ -1827,6 +1829,7 @@ export class ExprLowerer {
                     signature: methodSignature,
                     modifiers: modifiersOf(property),
                     decorators: [],
+                    isStrictMode: isStrictMode(property),
                     body: methodContext.build(),
                 });
             } else {
