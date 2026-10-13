@@ -2,10 +2,15 @@ import { describe, expect, it } from "vitest";
 import { TypeDto } from "../src/dto/types";
 import { CallExprDto } from "../src/dto/values";
 import { serializeEtsFile } from "../src/serialize";
-import { lower, methodByName } from "./util";
+import { compile, lower, methodByName } from "./util";
 
 function resultTypes(source: string): TypeDto[] {
-    const { file, diagnostics } = lower(source);
+    // A script-level External declaration collides with lib.dom's global External interface.
+    const moduleSource = `export {};\n${source}`;
+    const { program } = compile(moduleSource);
+    expect(program.getSemanticDiagnostics()).toEqual([]);
+
+    const { file, diagnostics } = lower(moduleSource);
     expect(diagnostics.messages).toEqual([]);
     const roundTrip = JSON.parse(serializeEtsFile(file));
     const method = methodByName(roundTrip, "caller");
