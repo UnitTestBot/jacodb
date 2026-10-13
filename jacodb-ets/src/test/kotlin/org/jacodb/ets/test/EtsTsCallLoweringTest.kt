@@ -33,11 +33,15 @@ import org.jacodb.ets.dto.TemplateObjectExprDto
 import org.jacodb.ets.dto.dtoModule
 import org.jacodb.ets.dto.toEtsFile
 import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsCallExpr
 import org.jacodb.ets.model.EtsNewClassExpr
 import org.jacodb.ets.model.EtsNewExpr
+import org.jacodb.ets.model.EtsNullType
 import org.jacodb.ets.model.EtsPtrCallExpr
 import org.jacodb.ets.model.EtsSpreadExpansionExpr
 import org.jacodb.ets.model.EtsTemplateObjectExpr
+import org.jacodb.ets.model.EtsUndefinedType
+import org.jacodb.ets.model.EtsUnionType
 import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
 import org.jacodb.ets.utils.EtsIrProvider
 import org.jacodb.ets.utils.generateEtsIR
@@ -68,6 +72,27 @@ class EtsTsCallLoweringTest {
         dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
             .methods.single { it.signature.name == method }.body!!.cfg.blocks
             .flatMap { it.stmts }.filterIsInstance<AssignStmtDto>()
+
+    @Test
+    fun `call return type retains explicit nullish alternatives through serialization`() {
+        val dto = frontendRoundTrip(
+            """
+                type Maybe<T> = T | null | undefined;
+                declare class External { static choice<T>(): Maybe<T>; }
+                export function caller() { return External.choice<"known">(); }
+            """.trimIndent(),
+        )
+        val method = dto.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "caller" }
+        val call = method.cfg.stmts.filterIsInstance<EtsAssignStmt>()
+            .mapNotNull { it.rhv as? EtsCallExpr }.single { it.callee.name == "choice" }
+        val resultType = call.type as EtsUnionType
+
+        assertTrue(EtsNullType in resultType.types)
+        assertTrue(EtsUndefinedType in resultType.types)
+        assertEquals(3, resultType.types.size)
+        assertEquals(resultType, call.callee.returnType)
+    }
 
     @Test
     fun `comma constructor values decode as locals after computed access`() {

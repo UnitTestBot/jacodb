@@ -2015,6 +2015,12 @@ export class ExprLowerer {
                     parameters = this.parametersOfDeclaration(decl);
                 }
                 returnType = this.m.converter.convertType(this.m.checker.getReturnTypeOfSignature(signature));
+                if (decl?.type !== undefined) {
+                    // With strictNullChecks disabled the checker erases explicitly declared nullish alternatives.
+                    // Keep its instantiated generic result, then restore only those explicit alternatives.
+                    const declared = this.m.converter.convertTypeNode(decl.type);
+                    returnType = preserveDeclaredNullishReturn(returnType, declared);
+                }
             }
         } catch {
             // keep unknowns
@@ -2067,6 +2073,15 @@ export class ExprLowerer {
         const type = this.safeTypeOf(node.expression);
         return this.materialize(unsupportedValue(node, type), type);
     }
+}
+
+function preserveDeclaredNullishReturn(resolved: TypeDto, declared: TypeDto): TypeDto {
+    const members = (type: TypeDto): TypeDto[] => type._ === "UnionType" ? type.types.flatMap(members) : [type];
+    const resolvedMembers = members(resolved);
+    const declaredNullish = members(declared).filter((type) => type._ === "NullType" || type._ === "UndefinedType");
+    const missing = declaredNullish.filter((type) => !resolvedMembers.some((member) => member._ === type._));
+    const uniqueMissing = missing.filter((type, index) => missing.findIndex((member) => member._ === type._) === index);
+    return uniqueMissing.length === 0 ? resolved : { _: "UnionType", types: [...resolvedMembers, ...uniqueMissing] };
 }
 
 // ----------------------------------------------------------------------
