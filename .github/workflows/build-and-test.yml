@@ -71,9 +71,9 @@ jobs:
 
       - name: Upload Gradle reports
         if: (!cancelled()) && matrix.jdk == env.main_jdk
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: gradle-reports
+          name: gradle-reports-jdk-${{ matrix.jdk }}
           path: '**/build/reports/'
           retention-days: 1
   lifecycleTests:
