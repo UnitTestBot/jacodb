@@ -28,13 +28,13 @@ internal data class Snapshot(
 
 internal sealed interface WatcherMessage {
 
-    data object Idle : WatcherMessage
-
     data class Register(
         val path: ActorPath,
     ) : WatcherMessage
 
     data object OutOfSystemSend : WatcherMessage
+
+    data object OutOfSystemSendCancelled : WatcherMessage
 
     data class UpdateSnapshot(
         val path: ActorPath,

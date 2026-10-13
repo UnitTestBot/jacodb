@@ -18,8 +18,17 @@ package org.jacodb.actors.impl
 
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
 import mu.KLogger
 import mu.KotlinLogging.logger
 import org.jacodb.actors.api.ActorFactory
@@ -49,24 +58,59 @@ internal class ActorSystemImpl<Message>(
     private val user = spawner.spawn(USER_ACTOR_NAME, spawnOptions, actorFactory)
 
     override suspend fun send(message: Message) {
-        watcher.receive(WatcherMessage.OutOfSystemSend)
-        user.receive(message)
+        withSystemLifetime {
+            deliver(message)
+        }
     }
 
-    override suspend fun <R> ask(messageBuilder: (CompletableDeferred<R>) -> Message): R {
+    override suspend fun <R> ask(messageBuilder: (CompletableDeferred<R>) -> Message): R =
+        withSystemLifetime { requestJob ->
+            val deferred = CompletableDeferred<R>(parent = requestJob)
+            val ack = messageBuilder(deferred)
+            deliver(ack)
+            deferred.await()
+        }
+
+    private suspend fun deliver(message: Message) {
         watcher.receive(WatcherMessage.OutOfSystemSend)
-        val deferred = CompletableDeferred<R>()
-        val ack = messageBuilder(deferred)
-        user.receive(ack)
-        val answer = deferred.await()
-        return answer
+        try {
+            user.receive(message)
+        } catch (failure: Throwable) {
+            // UserActorWorker.receive never suspends after successful trySend, so a failure
+            // here means no message was admitted, even under prompt cancellation.
+            withContext(NonCancellable) {
+                if (scope.isActive) {
+                    watcher.receive(WatcherMessage.OutOfSystemSendCancelled)
+                }
+            }
+            throw failure
+        }
+    }
+
+    private suspend fun <R> withSystemLifetime(action: suspend (Job) -> R): R {
+        scope.ensureActive()
+        val requestJob = SupervisorJob(parent = scope.coroutineContext.job)
+        try {
+            // Delivery can suspend before a reply exists. The child follows system close,
+            // while the caller awaits in its own context and cancels the child in finally.
+            val requestScope = CoroutineScope(currentCoroutineContext() + requestJob)
+            return requestScope.async(start = CoroutineStart.UNDISPATCHED) {
+                action(requestJob)
+            }.await()
+        } finally {
+            requestJob.cancel()
+        }
     }
 
     override suspend fun awaitCompletion() {
-        val ready = CompletableDeferred<Unit>()
-        watcher.receive(WatcherMessage.AwaitTermination(ready))
-        ready.await()
-        watcher.receive(WatcherMessage.Idle)
+        scope.ensureActive()
+        val ready = CompletableDeferred<Unit>(parent = scope.coroutineContext.job)
+        try {
+            watcher.receive(WatcherMessage.AwaitTermination(ready))
+            ready.await()
+        } finally {
+            ready.cancel()
+        }
     }
 
     override suspend fun resume() {
