@@ -8,6 +8,7 @@ describe("intrinsic iterator symbol provenance", () => {
     for (const body of [
         "return [...input];",
         "const [first, ...rest] = input; return rest;",
+        "const [first] = input; return first;",
         "for (const value of input) { if (value > 0) return value; } return 0;",
     ]) {
         it(`preserves symbol identity through JSON: ${body}`, () => {
