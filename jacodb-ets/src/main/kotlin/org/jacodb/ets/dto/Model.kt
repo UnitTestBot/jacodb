@@ -83,6 +83,8 @@ data class MethodDto(
     val decorators: List<DecoratorDto>,
     val typeParameters: List<TypeDto>? = null,
     val body: BodyDto? = null,
+    /** Null means the producing frontend did not report lexical runtime strictness. */
+    val isStrictMode: Boolean? = null,
 )
 
 @Serializable

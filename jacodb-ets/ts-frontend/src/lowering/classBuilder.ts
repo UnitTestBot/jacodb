@@ -28,6 +28,7 @@
  */
 
 import * as ts from "typescript";
+import { isStrictMode } from "./strictMode";
 import {
     CONSTRUCTOR_NAME,
     ClassCategory,
@@ -271,6 +272,7 @@ export class ClassBuilder {
                     signature: { declaringClass: signature, name: STATIC_INIT_METHOD_NAME, parameters: [], returnType: VOID_TYPE },
                     modifiers: Modifier.STATIC,
                     decorators: [],
+                    isStrictMode: isStrictMode(decl),
                     body: m.build(),
                 },
             ],
@@ -299,6 +301,7 @@ export class ClassBuilder {
         const returnType = returnTypeOf(this.ctx, decl);
 
         const method: MethodDto = {
+            isStrictMode: isStrictMode(decl),
             signature: { declaringClass, name, parameters, returnType },
             modifiers: modifiersOf(decl),
             decorators: decoratorsOf(decl),
@@ -372,6 +375,7 @@ export class ClassBuilder {
             signature: { declaringClass, name: CONSTRUCTOR_NAME, parameters, returnType: classType },
             modifiers: modifiersOf(decl),
             decorators: decoratorsOf(decl),
+            isStrictMode: true,
             body: m.build(),
         };
     }
@@ -418,6 +422,7 @@ export class ClassBuilder {
             },
             modifiers: 0,
             decorators: [],
+            isStrictMode: true,
             body: m.build(),
         };
     }
@@ -511,6 +516,7 @@ export class ClassBuilder {
             signature: { declaringClass, name: INSTANCE_INIT_METHOD_NAME, parameters: [], returnType: VOID_TYPE },
             modifiers: 0,
             decorators: [],
+            isStrictMode: true,
             body: m.build(),
         };
     }
@@ -545,6 +551,7 @@ export class ClassBuilder {
             signature: { declaringClass, name: STATIC_INIT_METHOD_NAME, parameters: [], returnType: VOID_TYPE },
             modifiers: Modifier.STATIC,
             decorators: [],
+            isStrictMode: true,
             body: m.build(),
         };
     }

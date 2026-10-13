@@ -32,6 +32,7 @@ describe("wire format", () => {
                             },
                             modifiers: 0,
                             decorators: [],
+                            isStrictMode: false,
                             body: {
                                 locals: [{ name: "this", type: classType }],
                                 cfg: {

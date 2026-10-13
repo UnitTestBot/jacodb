@@ -23,6 +23,11 @@ import org.jacodb.api.common.CommonMethod
 interface EtsMethod : Base, CommonMethod {
     val signature: EtsMethodSignature
     val typeParameters: List<EtsType>
+
+    /** Null preserves unknown strictness for legacy or synthetic methods. */
+    val isStrictMode: Boolean?
+        get() = null
+
     val body: EtsMethodBody
 
     val enclosingClass: EtsClass?
@@ -57,6 +62,7 @@ class EtsMethodImpl(
     override val typeParameters: List<EtsType> = emptyList(),
     override val modifiers: EtsModifiers = EtsModifiers.EMPTY,
     override val decorators: List<EtsDecorator> = emptyList(),
+    override val isStrictMode: Boolean? = null,
 ) : EtsMethod {
     override val body: EtsMethodBody = EtsMethodBody()
 

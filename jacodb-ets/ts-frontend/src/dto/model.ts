@@ -69,6 +69,8 @@ export interface MethodDto {
     modifiers: number;
     decorators: DecoratorDto[];
     typeParameters?: TypeDto[]; // Kotlin default: null
+    /** Lexical runtime strictness; omitted by legacy frontends. */
+    isStrictMode?: boolean;
     body?: BodyDto; // omitted for bodyless methods (interfaces, ambient declarations)
 }
 

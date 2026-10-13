@@ -178,10 +178,17 @@ class EtsMethodBuilder(
     decorators: List<EtsDecorator> = emptyList(),
     locals: List<EtsLocal> = emptyList(),
     private val stmtOrigins: Map<StmtOriginKey, EtsSourceSpan> = emptyMap(),
+    isStrictMode: Boolean? = null,
 ) {
     private val locals = locals.toMutableList()
 
-    private val method = EtsMethodImpl(signature, typeParameters, modifiers, decorators).also {
+    private val method = EtsMethodImpl(
+        signature = signature,
+        typeParameters = typeParameters,
+        modifiers = modifiers,
+        decorators = decorators,
+        isStrictMode = isStrictMode,
+    ).also {
         it.body.locals = this.locals
     }
 
@@ -889,6 +896,7 @@ fun MethodDto.toEtsMethod(
             typeParameters = typeParameters,
             modifiers = modifiers,
             decorators = decorators,
+            isStrictMode = isStrictMode,
             locals = body.locals.map { it.toEtsLocal() },
             stmtOrigins = body.stmtOrigins.associate { origin ->
                 StmtOriginKey(origin.blockId, origin.stmtIndex) to origin.source.toEtsSourceSpan(enclosingFileName)
@@ -897,6 +905,7 @@ fun MethodDto.toEtsMethod(
         return builder.build(body.cfg)
     } else {
         return EtsMethodImpl(
+            isStrictMode = isStrictMode,
             signature = signature,
             typeParameters = typeParameters,
             modifiers = modifiers,

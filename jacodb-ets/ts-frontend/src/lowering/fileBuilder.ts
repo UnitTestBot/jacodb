@@ -27,6 +27,7 @@
  */
 
 import * as ts from "typescript";
+import { isStrictMode } from "./strictMode";
 import {
     DEFAULT_ARK_CLASS_NAME,
     DEFAULT_ARK_METHOD_NAME,
@@ -119,7 +120,7 @@ class FileBuilder {
     }
 
     build(sourceFile: ts.SourceFile): EtsFileDto {
-        const contents = this.buildScope(sourceFile.statements, undefined);
+        const contents = this.buildScope(sourceFile, undefined);
 
         const ownedStructuralClasses = this.ctx.converter.structuralClasses.filter(({ signature }) =>
             signature.declaringFile.projectName === this.fileSignature.projectName
@@ -323,9 +324,10 @@ class FileBuilder {
      * declared classes/interfaces/enums and nested namespaces.
      */
     private buildScope(
-        statements: readonly ts.Statement[],
+        scope: ts.SourceFile | ts.ModuleBlock,
         declaringNamespace: NamespaceSignatureDto | undefined,
     ): ScopeContents {
+        const statements = scope.statements;
         const classes: ClassDto[] = [];
         const namespaces: NamespaceDto[] = [];
 
@@ -344,7 +346,7 @@ class FileBuilder {
         }
 
         const fields = this.registerModuleFields(defaultClassSignature, statements);
-        const methods: MethodDto[] = [this.buildDefaultMethod(defaultClassSignature, statements)];
+        const methods: MethodDto[] = [this.buildDefaultMethod(defaultClassSignature, scope)];
 
         for (const statement of statements) {
             if (ts.isFunctionDeclaration(statement)) {
@@ -485,7 +487,7 @@ class FileBuilder {
             return { signature, classes: [], namespaces: [] };
         }
 
-        const contents = this.buildScope(body.statements, signature);
+        const contents = this.buildScope(body, signature);
         return {
             signature,
             classes: contents.classes,
@@ -496,8 +498,9 @@ class FileBuilder {
     /** Loose scope statements -> `%dflt` method (impl continues below). */
     private buildDefaultMethod(
         declaringClass: ClassSignatureDto,
-        statements: readonly ts.Statement[],
+        scope: ts.SourceFile | ts.ModuleBlock,
     ): MethodDto {
+        const statements = scope.statements;
         const m = new MethodContext(this.ctx, declaringClass, DEFAULT_ARK_METHOD_NAME);
         m.emitPrologue([]);
 
@@ -527,6 +530,7 @@ class FileBuilder {
             },
             modifiers: 0,
             decorators: [],
+            isStrictMode: isStrictMode(scope),
             body: m.build(),
         };
     }
