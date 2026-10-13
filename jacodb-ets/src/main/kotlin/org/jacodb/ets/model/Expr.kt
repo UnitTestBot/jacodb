@@ -851,11 +851,15 @@ interface EtsCallExpr : EtsExpr, CommonCallExpr {
     override val args: List<EtsLocal>
 }
 
+/** Intrinsic symbol keys selected by language operations, independent of source bindings named Symbol. */
+enum class EtsWellKnownSymbol { ITERATOR }
+
 data class EtsInstanceCallExpr(
     override val instance: EtsLocal,
     override val callee: EtsMethodSignature,
     override val args: List<EtsLocal>,
     override val type: EtsType,
+    val wellKnownSymbol: EtsWellKnownSymbol? = null,
 ) : EtsCallExpr, CommonInstanceCallExpr {
     override fun toString(): String {
         return "call ${instance}.${callee.name}(${args.joinToString()})"

@@ -322,6 +322,7 @@ data class InstanceCallExprDto(
     val instance: ValueDto, // Local
     override val method: MethodSignatureDto,
     override val args: List<ValueDto>,
+    val wellKnownSymbol: String? = null,
 ) : CallExprDto
 
 @Serializable

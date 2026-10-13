@@ -155,6 +155,7 @@ import org.jacodb.ets.model.EtsUnknownType
 import org.jacodb.ets.model.EtsUnsignedRightShiftExpr
 import org.jacodb.ets.model.EtsValue
 import org.jacodb.ets.model.EtsVoidType
+import org.jacodb.ets.model.EtsWellKnownSymbol
 import org.jacodb.ets.model.EtsYieldExpr
 
 private val logger = KotlinLogging.logger {}
@@ -523,6 +524,11 @@ class EtsMethodBuilder(
             callee = method.toEtsMethodSignature(),
             args = args.map { ensureLocal(it.toEtsEntity()) },
             type = type.toEtsType(),
+            wellKnownSymbol = when (wellKnownSymbol) {
+                null -> null
+                "iterator" -> EtsWellKnownSymbol.ITERATOR
+                else -> error("Unknown intrinsic symbol key: $wellKnownSymbol")
+            },
         )
 
         is StaticCallExprDto -> EtsStaticCallExpr(

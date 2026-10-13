@@ -33,6 +33,9 @@ import org.jacodb.ets.utils.generateEtsIR
 import org.junit.jupiter.api.Test
 import org.jacodb.ets.dto.SymbolTypeDto
 import org.jacodb.ets.model.EtsSymbolType
+import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsInstanceCallExpr
+import org.jacodb.ets.model.EtsWellKnownSymbol
 
 class EtsTsSymbolTest {
     companion object {
@@ -52,6 +55,23 @@ class EtsTsSymbolTest {
 
             return EtsFileDto.loadFromJson(outputPath.readText())
         }
+    }
+
+    @Test
+    fun `intrinsic iterator identity survives frontend JSON and model conversion`() {
+        val frontendDto = runFrontend(
+            source = "export function copy(input: number[], Symbol: any): number[] { return [...input]; }",
+        )
+        val roundTripped = EtsFileDto.loadFromJson(
+            Json { serializersModule = dtoModule }.encodeToString(frontendDto),
+        )
+        val method = roundTripped.toEtsFile().classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.name == "copy" }
+        val calls = method.cfg.stmts.filterIsInstance<EtsAssignStmt>().mapNotNull { it.rhv as? EtsInstanceCallExpr }
+        val iteratorCall = calls.single { it.wellKnownSymbol == EtsWellKnownSymbol.ITERATOR }
+
+        assertEquals("Symbol.iterator", iteratorCall.callee.name)
+        assertTrue(iteratorCall.args.isEmpty())
     }
 
     @Test

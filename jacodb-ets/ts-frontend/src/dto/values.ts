@@ -231,6 +231,8 @@ export interface InstanceCallExprDto {
     instance: LocalDto; // Kotlin Convert casts this to LocalDto — MUST be a Local
     method: MethodSignatureDto;
     args: ValueDto[];
+    /** Intrinsic key identity, not a property whose string name happens to mention Symbol. */
+    wellKnownSymbol?: "iterator";
 }
 
 export interface StaticCallExprDto {

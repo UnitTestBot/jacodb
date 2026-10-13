@@ -359,6 +359,9 @@ function validateValue(
             if (value.instance._ !== "Local") {
                 err(`${ctx}: InstanceCallExpr.instance has kind '${value.instance._}', must be Local`);
             }
+            if (value.wellKnownSymbol !== undefined && value.wellKnownSymbol !== "iterator") {
+                err(`${ctx}: unknown intrinsic instance-call symbol`);
+            }
             break;
         case "PropertyRef":
         case "InstanceFieldRef":
