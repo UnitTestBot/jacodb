@@ -381,6 +381,7 @@ export class StmtLowerer {
             instance: iterable,
             method: unknownMethod("Symbol.iterator"),
             args: [],
+            wellKnownSymbol: "iterator",
         });
 
         const headLabel = cfg.newLabel();

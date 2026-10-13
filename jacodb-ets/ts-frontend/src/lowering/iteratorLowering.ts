@@ -40,6 +40,7 @@ export class IteratorLowerer {
                 _: "InstanceCallExpr", instance: source,
                 method: { declaringClass: UNKNOWN_CLASS_SIGNATURE, name: "Symbol.iterator", parameters: [], returnType: UNKNOWN_TYPE },
                 args: [],
+                wellKnownSymbol: "iterator",
             },
         });
         this.requireObject(this.iterator);

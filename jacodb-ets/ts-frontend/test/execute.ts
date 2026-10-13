@@ -108,7 +108,7 @@ export function executor(file: EtsFileDto, externals: Record<string, any> = {}) 
                         if (typeof ctor !== "function") throw new Error(`Unsupported constructor ${instance.allocation}`);
                         return Reflect.construct(ctor, callArgs);
                     }
-                    const key = v.method.name === "Symbol.iterator" ? Symbol.iterator : v.method.name;
+                    const key = v.wellKnownSymbol === "iterator" ? Symbol.iterator : v.method.name;
                     return Reflect.apply(instance[key], instance, callArgs);
                 }
                 default: throw new Error(`Unsupported value: ${v._}`);
