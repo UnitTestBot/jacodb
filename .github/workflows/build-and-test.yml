@@ -82,6 +82,7 @@ jobs:
           echo "ARKANALYZER_DIR=$(realpath $DEST_DIR)" >> $GITHUB_ENV
           cd $DEST_DIR
           
+          npm pkg set "devDependencies.@types/node=18.19.130"
           npm install
           npm run build
 
