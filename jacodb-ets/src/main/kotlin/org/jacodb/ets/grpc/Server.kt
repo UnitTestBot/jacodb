@@ -17,6 +17,7 @@
 package org.jacodb.ets.grpc
 
 import mu.KotlinLogging
+import org.jacodb.ets.utils.ProcessUtil
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.net.Socket
@@ -36,15 +37,36 @@ class Server(
 ) {
     fun stop() {
         logger.info { "Stopping ArkAnalyzer server..." }
-        process.destroy()
+        var interrupted: Boolean
         try {
-            process.waitFor()
-        } catch (e: InterruptedException) {
-            logger.error(e) { "Error while waiting for server process to finish" }
+            ProcessUtil.terminateAndReap(process)
+        } finally {
+            interrupted = Thread.interrupted()
+            try {
+                interrupted = joinReader(outputThread) || interrupted
+                interrupted = joinReader(errorThread) || interrupted
+            } finally {
+                if (interrupted) {
+                    Thread.currentThread().interrupt()
+                }
+            }
         }
-        outputThread.join()
-        errorThread.join()
         logger.info { "ArkAnalyzer server stopped" }
+        if (interrupted) {
+            throw InterruptedException("Interrupted while stopping ArkAnalyzer server")
+        }
+    }
+
+    private fun joinReader(reader: Thread): Boolean {
+        var interrupted = false
+        while (reader.isAlive) {
+            try {
+                reader.join()
+            } catch (_: InterruptedException) {
+                interrupted = true
+            }
+        }
+        return interrupted
     }
 }
 
@@ -94,6 +116,10 @@ fun startArkAnalyzerServer(port: Int): Server {
         }
         .start()
 
+    return startServer(process = process, port = port, awaitReady = ::waitForServerToStart)
+}
+
+internal fun startServer(process: Process, port: Int, awaitReady: (Int) -> Unit): Server {
     // Capture process output (stdout)
     val stdout = StringBuilder()
     val outputThread = thread {
@@ -116,10 +142,21 @@ fun startArkAnalyzerServer(port: Int): Server {
         }
     }
 
-    // Wait for the server to start
-    waitForServerToStart(port)
-
-    return Server(process, outputThread, errorThread)
+    val server = Server(process, outputThread, errorThread)
+    try {
+        awaitReady(port)
+        return server
+    } catch (failure: Throwable) {
+        try {
+            server.stop()
+        } catch (cleanupFailure: Throwable) {
+            failure.addSuppressed(cleanupFailure)
+        }
+        if (failure is InterruptedException) {
+            Thread.currentThread().interrupt()
+        }
+        throw failure
+    }
 }
 
 private fun waitForServerToStart(port: Int) {

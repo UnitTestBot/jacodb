@@ -142,6 +142,7 @@ internal object EtsExprToProto : EtsExpr.Visitor<ProtoValue> {
     override fun visit(expr: EtsAwaitExpr): ProtoValue {
         val awaitExpr = ProtoAwaitExpr(
             arg = expr.arg.toProto(),
+            type = expr.type.toProto(),
         )
         return ProtoValue(expr = ProtoExpr(await_expr = awaitExpr))
     }
@@ -149,6 +150,7 @@ internal object EtsExprToProto : EtsExpr.Visitor<ProtoValue> {
     override fun visit(expr: EtsYieldExpr): ProtoValue {
         val yieldExpr = ProtoYieldExpr(
             arg = expr.arg.toProto(),
+            type = expr.type.toProto(),
         )
         return ProtoValue(expr = ProtoExpr(yield_expr = yieldExpr))
     }
