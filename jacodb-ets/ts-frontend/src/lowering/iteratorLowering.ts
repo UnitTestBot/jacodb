@@ -40,6 +40,7 @@ export class IteratorLowerer {
                 _: "InstanceCallExpr", instance: source,
                 method: { declaringClass: UNKNOWN_CLASS_SIGNATURE, name: "Symbol.iterator", parameters: [], returnType: UNKNOWN_TYPE },
                 args: [],
+                wellKnownSymbol: "iterator",
             },
         });
         this.requireObject(this.iterator);
@@ -86,6 +87,31 @@ export class IteratorLowerer {
         cfg.emit({ _: "AssignStmt", left: { _: "ArrayRef", array: target, index: offset, type: elementType }, right: value });
         cfg.emit({ _: "AssignStmt", left: offset, right: { _: "BinopExpr", op: "+", left: offset, right: number(1), type: NUMBER_TYPE } });
         cfg.goto(head);
+        cfg.placeLabel(done);
+    }
+
+    /** A binding pattern that stops before exhaustion performs normal IteratorClose. */
+    close(): void {
+        const cfg = this.m.cfg;
+        const lookup = cfg.newLabel();
+        const invoke = cfg.newLabel();
+        const done = cfg.newLabel();
+        cfg.branch(this.isExhausted(), done, lookup);
+        cfg.placeLabel(lookup);
+        cfg.emit({ _: "AssignStmt", left: this.exhausted, right: bool(true) });
+        const method = this.field(this.iterator, "return", UNKNOWN_TYPE);
+        cfg.branch({ _: "ConditionExpr", op: "==", left: method, right: { _: "Constant", value: "null", type: { _: "NullType" } } }, done, invoke);
+        cfg.placeLabel(invoke);
+        const result = this.m.newTemp(UNKNOWN_TYPE);
+        cfg.emit({
+            _: "AssignStmt", left: result,
+            right: {
+                _: "PtrCallExpr", ptr: method, receiver: this.iterator,
+                method: { declaringClass: UNKNOWN_CLASS_SIGNATURE, name: "return", parameters: [], returnType: UNKNOWN_TYPE }, args: [],
+            },
+        });
+        this.requireObject(result);
+        cfg.goto(done);
         cfg.placeLabel(done);
     }
 

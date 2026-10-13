@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { AssignStmtDto, StmtDto } from "../src/dto/stmts";
 import { serializeEtsFile } from "../src/serialize";
 import { validateEtsFile } from "../src/validate";
+import { consumers } from "./array-test-consumers";
 import { defaultMethod, lower, methodByName, singleBlockStmts } from "./util";
 
 function allStmts(source: string): StmtDto[] {
@@ -341,22 +342,64 @@ describe("destructuring", () => {
     });
 
     it("unpacks array patterns with holes and nesting", () => {
-        const stmts = allStmts(`
+        const source = `
             const data: [number, number, [string, string]] = [1, 2, ["a", "b"]];
             const [first, , [inner]] = data;
-        `);
-        const arrayReads = stmts.filter(
-            (s): s is AssignStmtDto => s._ === "AssignStmt" && s.right._ === "ArrayRef",
+            function result() { return [first, inner]; }
+        `;
+        const stmts = allStmts(source);
+        const assignments = stmts.filter((stmt): stmt is AssignStmtDto => stmt._ === "AssignStmt");
+        const iterators = assignments.flatMap((stmt) =>
+            stmt.left._ === "Local" && stmt.right._ === "InstanceCallExpr"
+                && stmt.right.wellKnownSymbol === "iterator" ? [stmt.left] : [],
         );
-        const indices = arrayReads.map((s) => (s.right as { index: { value: string } }).index.value);
-        expect(indices).toContain("0");
-        expect(indices).toContain("2");
-        expect(indices).not.toContain("1"); // hole skipped
+        const nextLookups = assignments.flatMap((stmt) =>
+            stmt.right._ === "InstanceFieldRef" && stmt.right.field.name === "next"
+                ? [{ iterator: stmt.right.instance, local: stmt.left }] : [],
+        );
+        const nextSteps = assignments.flatMap((stmt) =>
+            stmt.right._ === "PtrCallExpr" && stmt.right.method.name === "next"
+                ? [{ call: stmt.right, result: stmt.left }] : [],
+        );
+        const valueSources = assignments.flatMap((stmt) =>
+            stmt.right._ === "InstanceFieldRef" && stmt.right.field.name === "value" ? [stmt.right.instance] : [],
+        );
+        const normalCloses = assignments.flatMap((stmt) =>
+            stmt.right._ === "PtrCallExpr" && stmt.right.method.name === "return" ? [stmt.right.receiver] : [],
+        );
+        const { ir, native } = consumers(source, "result");
+
+        expect(iterators).toHaveLength(2);
+        const [outerIterator, innerIterator] = iterators;
+        expect(nextLookups).toHaveLength(2);
+        expect(nextLookups.map((lookup) => lookup.iterator)).toEqual(expect.arrayContaining(iterators));
+        expect(nextSteps).toHaveLength(4);
+        for (const { iterator, steps, values } of [
+            { iterator: outerIterator, steps: 3, values: 2 },
+            { iterator: innerIterator, steps: 1, values: 1 },
+        ]) {
+            const advances = nextSteps.filter((step) => step.call.receiver?.name === iterator.name);
+            const lookup = nextLookups.find((read) => read.iterator.name === iterator.name)!;
+            const yieldedValues = advances.filter((step) => {
+                const result = step.result;
+                return result._ === "Local" && valueSources.some((source) => source.name === result.name);
+            });
+
+            expect(advances).toHaveLength(steps);
+            expect(advances.map((step) => step.call.ptr)).toEqual(Array.from({ length: steps }, () => lookup.local));
+            // The omitted element advances the outer iterator without reading its value.
+            expect(yieldedValues).toHaveLength(values);
+        }
+        expect(normalCloses).toHaveLength(2);
+        expect(normalCloses).toEqual(expect.arrayContaining(iterators));
+        expect(assignments.filter((stmt) => stmt.right._ === "ArrayRef")).toEqual([]);
         expect(stmts.some((s) =>
             s._ === "AssignStmt"
             && s.left._ === "StaticFieldRef"
             && s.left.field.name === "inner",
         )).toBe(true);
+        expect(ir()).toEqual(native());
+        expect(ir()).toEqual([1, "a"]);
     });
 
     it("supports destructuring in for-of", () => {

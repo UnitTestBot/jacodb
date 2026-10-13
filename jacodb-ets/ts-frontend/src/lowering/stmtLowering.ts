@@ -381,6 +381,7 @@ export class StmtLowerer {
             instance: iterable,
             method: unknownMethod("Symbol.iterator"),
             args: [],
+            wellKnownSymbol: "iterator",
         });
 
         const headLabel = cfg.newLabel();
@@ -993,7 +994,7 @@ export class StmtLowerer {
         }
     }
 
-    /** `{a, b: {c}, d = 1}` / `[x, , y]` unpacked from `source` via field/array refs. */
+    /** Object bindings read properties; array bindings consume the iterator protocol. */
     private lowerBindingPattern(pattern: ts.BindingPattern, source: LocalDto): void {
         if (ts.isObjectBindingPattern(pattern)) {
             const stableSource = this.expr.materialize({
@@ -1053,49 +1054,37 @@ export class StmtLowerer {
             }
             return;
         }
-        // Array patterns with rest consume the iterator, including omitted elements.
-        if (pattern.elements.some((element) => ts.isBindingElement(element) && element.dotDotDotToken !== undefined)) {
-            if (pattern.elements.some((element) => ts.isBindingElement(element)
-                && !ts.isIdentifier(element.name))) {
-                throw new LoweringError("nested bindings in array rest are not represented with iterator semantics");
-            }
-            const iterator = new IteratorLowerer(this.m, source);
-            for (const element of pattern.elements) {
-                if (ts.isOmittedExpression(element)) {
-                    iterator.take(UNKNOWN_TYPE, { readValue: false });
-                    continue;
-                }
-                if (element.dotDotDotToken === undefined) {
-                    const value = iterator.take(this.bindingType(element.name));
-                    iterator.closeOnException(() => this.bindDestructured(element.name, value, element.initializer));
-                    continue;
-                }
-                const type = this.bindingType(element.name);
-                const elementType = type._ === "ArrayType" ? arrayElementType(type) : UNKNOWN_TYPE;
-                const rest = this.m.newTemp(type._ === "ArrayType" ? type : { _: "ArrayType", elementType, dimensions: 1 });
-                this.m.cfg.emit({ _: "AssignStmt", left: rest, right: { _: "NewArrayExpr", elementType, size: constant("0", NUMBER_TYPE) } });
-                const offset = this.m.newTemp(NUMBER_TYPE);
-                this.m.cfg.emit({ _: "AssignStmt", left: offset, right: constant("0", NUMBER_TYPE) });
-                iterator.appendTo(rest, offset, elementType);
-                this.bindDestructured(element.name, rest, undefined);
-            }
-            return;
+        // Every array binding consumes the iterator, including patterns without rest and omitted elements.
+        const hasRest = pattern.elements.some((element) => ts.isBindingElement(element)
+            && element.dotDotDotToken !== undefined);
+        const hasNestedBinding = pattern.elements.some((element) => ts.isBindingElement(element)
+            && !ts.isIdentifier(element.name));
+        if (hasRest && hasNestedBinding) {
+            throw new LoweringError("nested bindings in array rest are not represented with iterator semantics");
         }
-        pattern.elements.forEach((element, index) => {
+
+        const iterator = new IteratorLowerer(this.m, source);
+        for (const element of pattern.elements) {
             if (ts.isOmittedExpression(element)) {
-                return;
+                iterator.take(UNKNOWN_TYPE, { readValue: false });
+                continue;
             }
-            if (element.dotDotDotToken !== undefined) {
-                throw new LoweringError("rest element in array destructuring");
+            if (element.dotDotDotToken === undefined) {
+                const value = iterator.take(this.bindingType(element.name));
+                iterator.closeOnException(() => this.bindDestructured(element.name, value, element.initializer));
+                continue;
             }
-            const ref: ValueDto = {
-                _: "ArrayRef",
-                array: source,
-                index: constant(String(index), NUMBER_TYPE),
-                type: this.bindingType(element.name),
-            };
-            this.bindDestructured(element.name, ref, element.initializer);
-        });
+
+            const type = this.bindingType(element.name);
+            const elementType = type._ === "ArrayType" ? arrayElementType(type) : UNKNOWN_TYPE;
+            const rest = this.m.newTemp(type._ === "ArrayType" ? type : { _: "ArrayType", elementType, dimensions: 1 });
+            this.m.cfg.emit({ _: "AssignStmt", left: rest, right: { _: "NewArrayExpr", elementType, size: constant("0", NUMBER_TYPE) } });
+            const offset = this.m.newTemp(NUMBER_TYPE);
+            this.m.cfg.emit({ _: "AssignStmt", left: offset, right: constant("0", NUMBER_TYPE) });
+            iterator.appendTo(rest, offset, elementType);
+            this.bindDestructured(element.name, rest, undefined);
+        }
+        iterator.close();
     }
 
     private bindingType(name: ts.BindingName): TypeDto {
