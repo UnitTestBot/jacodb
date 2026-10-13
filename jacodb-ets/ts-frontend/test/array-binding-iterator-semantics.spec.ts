@@ -175,4 +175,57 @@ describe("array bindings without rest consume and close iterators", () => {
             expect(events).toEqual(["inner", "outer"]);
         }
     });
+
+    it("advances holes before nested bindings without reading omitted values", () => {
+        const { ir, native } = consumers(
+            "function bind(data: any) { const [first, , [inner]] = data; return [first, inner]; }",
+            "bind",
+        );
+
+        for (const consume of [native, ir]) {
+            const events: string[] = [];
+            const inner = {
+                next() {
+                    expect(this).toBe(inner);
+                    events.push("inner next");
+                    return { done: false, get value() { events.push("inner value"); return "a"; } };
+                },
+                return() { expect(this).toBe(inner); events.push("inner close"); return {}; },
+            };
+            const nested = {
+                [Symbol.iterator]() { expect(this).toBe(nested); events.push("inner iterator"); return inner; },
+            };
+            let step = 0;
+            const outer = {
+                next() {
+                    expect(this).toBe(outer);
+                    const index = step++;
+                    events.push(`outer next ${index}`);
+                    if (index > 2) throw new Error("binding consumed past the nested element");
+
+                    return {
+                        done: false,
+                        get value() {
+                            if (index === 1) throw new Error("the omitted value must not be read");
+                            events.push(`outer value ${index}`);
+                            return index === 0 ? 1 : nested;
+                        },
+                    };
+                },
+                return() { expect(this).toBe(outer); events.push("outer close"); return {}; },
+            };
+            const data = {
+                [Symbol.iterator]() { expect(this).toBe(data); events.push("outer iterator"); return outer; },
+            };
+
+            const result = consume(data);
+
+            expect(result).toEqual([1, "a"]);
+            expect(events).toEqual([
+                "outer iterator", "outer next 0", "outer value 0", "outer next 1", "outer next 2", "outer value 2",
+                "inner iterator", "inner next", "inner value", "inner close", "outer close",
+            ]);
+            expect(step).toBe(3);
+        }
+    });
 });
