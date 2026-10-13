@@ -22,12 +22,32 @@ package org.jacodb.ets.utils
  *
  * For example, `"Hello & <world>"` becomes `"Hello &amp; &lt;world&gt;"`.
  */
-internal fun String.htmlEncode(): String = this
+internal fun String.htmlEncode(): String = replace("\\\"", "\"").htmlEncodeText()
+
+/** Encode raw text without interpreting existing backslashes as DOT escapes. */
+internal fun String.htmlEncodeText(): String = this
     .replace("&", "&amp;")
     .replace("<", "&lt;")
     .replace(">", "&gt;")
-    .replace("\\\"", "&quot;")
     .replace("\"", "&quot;")
+
+/** Escape text at the boundary of a quoted DOT attribute. */
+internal fun String.dotEncodeText(): String = buildString {
+    for (character in this@dotEncodeText) {
+        when (character) {
+            '\\' -> append("\\\\")
+            '"' -> append("\\\"")
+            else -> {
+                if (character.isISOControl()) {
+                    append("\\\\u")
+                    append(character.code.toString(radix = 16).padStart(length = 4, padChar = '0'))
+                } else {
+                    append(character)
+                }
+            }
+        }
+    }
+}
 
 /**
  * Sanitize an integer ID for use as a Graphviz node ID.
