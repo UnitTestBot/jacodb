@@ -42,7 +42,7 @@ import { ClassDto, EtsFileDto, ExportInfoDto, FieldDto, ImportInfoDto, MethodDto
 import { ClassSignatureDto, FileSignatureDto, NamespaceSignatureDto } from "../dto/signatures";
 import { VOID_TYPE } from "../dto/types";
 import { TypeConverter } from "../types/convert";
-import { classValueDeclarationOf, exportAssignmentSupport, modifiersOf, scopeFunctionImplementation, scopeFunctionSignature } from "./astUtils";
+import { classValueDeclarationOf, exportAssignmentSupport, modifiersOf, scopeFunctionImplementation, scopeFunctionType } from "./astUtils";
 import { ClassBuilder } from "./classBuilder";
 import { Diagnostics } from "./diagnostics";
 import { AnonymousRegistry, LoweringContext, MethodContext } from "./methodBuilder";
@@ -400,7 +400,7 @@ class FileBuilder {
                 continue;
             }
 
-            const type = { _: "FunctionType" as const, signature: scopeFunctionSignature(this.ctx, statement) };
+            const type = scopeFunctionType(this.ctx, statement);
             const signature = { declaringClass, name: statement.name.text, type };
             this.ctx.moduleFields.set(symbol, signature);
             fields.push({
@@ -513,7 +513,7 @@ class FileBuilder {
             if (field === undefined) continue;
             const reference = m.getOrCreateLocal(
                 `${NAMED_FUNCTION_REFERENCE_PREFIX}${statement.name.text}`,
-                { _: "FunctionType", signature: scopeFunctionSignature(this.ctx, statement) },
+                scopeFunctionType(this.ctx, statement),
             );
             m.withOrigin(statement, () => m.cfg.emit({ _: "AssignStmt", left: field, right: reference }));
         }

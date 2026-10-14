@@ -20,7 +20,7 @@ import * as ts from "typescript";
 import { COMPUTED_MEMBER_NAME, DEFAULT_ARK_CLASS_NAME, Modifier, PATTERN_PARAMETER_PREFIX } from "../dto/constants";
 import { DecoratorDto } from "../dto/model";
 import { MethodParameterDto, MethodSignatureDto } from "../dto/signatures";
-import { TypeDto, UNKNOWN_TYPE } from "../dto/types";
+import { FunctionTypeDto, TypeDto, UNKNOWN_TYPE } from "../dto/types";
 import type { LoweringContext } from "./methodBuilder";
 
 export function memberName(name: ts.PropertyName | ts.BindingName | ts.EntityName): string {
@@ -381,4 +381,14 @@ export function scopeFunctionSignature(ctx: LoweringContext, decl: ts.FunctionDe
         parameters: buildParameters(ctx, decl).parameters,
         returnType: returnTypeOf(ctx, decl),
     };
+}
+
+/** The declared function value, including its generic binders. */
+export function scopeFunctionType(ctx: LoweringContext, decl: ts.FunctionDeclaration): FunctionTypeDto {
+    const type: FunctionTypeDto = { _: "FunctionType", signature: scopeFunctionSignature(ctx, decl) };
+    const typeParameters = ctx.converter.convertTypeParameters(decl.typeParameters);
+    if (typeParameters !== undefined) {
+        type.typeParameters = typeParameters;
+    }
+    return type;
 }

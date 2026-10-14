@@ -47,6 +47,32 @@ describe("named function bindings", () => {
         expect(nativeResult(source, "[before, alias === named, new Example().check()]")).toEqual([3, true, true]);
     });
 
+    it("keeps generic binders on the direct scope field and its initial reference", () => {
+        const source = 'function identity<T extends string = "fallback">(value: T): T { return value; }';
+        const { file, diagnostics } = lower(source);
+        const defaultClass = file.classes.find((clazz) => clazz.signature.name === "%dflt")!;
+        const fieldType = defaultClass.fields.find((field) => field.signature.name === "identity")!.signature.type;
+        const initialization = statements(defaultMethod(file)).find((stmt): stmt is AssignStmtDto =>
+            stmt._ === "AssignStmt" && stmt.left._ === "StaticFieldRef" && stmt.left.field.name === "identity")!;
+
+        expect(fieldType).toEqual({
+            _: "FunctionType",
+            signature: methodByName(file, "identity").signature,
+            typeParameters: [{
+                _: "GenericType",
+                name: "T",
+                constraint: { _: "StringType" },
+                defaultType: { _: "LiteralType", literal: "fallback" },
+            }],
+        });
+        expect(initialization.right).toEqual({
+            _: "Local",
+            name: `${NAMED_FUNCTION_REFERENCE_PREFIX}identity`,
+            type: fieldType,
+        });
+        expect(diagnostics.messages).toEqual([]);
+    });
+
     it("uses the same binding for aliases, reassignment and direct calls, selected before arguments", () => {
         const source = `
             function original(value: number): number { return value + 1; }
@@ -149,6 +175,33 @@ describe("named function bindings", () => {
             const type = stmt.right.field.type;
             expect(type).toMatchObject({ _: "FunctionType", signature: { declaringClass: stmt.right.field.declaringClass } });
         }
+        expect(diagnostics.messages).toEqual([]);
+    });
+
+    it("keeps a generic binder on an imported scope function field", () => {
+        const sources = {
+            "/module.ts": 'export function identity<T extends string = "fallback">(value: T): T { return value; }',
+            "/consumer.ts": 'import { identity } from "./module"; export function use() { const alias = identity; return alias("ok"); }',
+        };
+        const { file, diagnostics } = lowerProject(sources, "/consumer.ts");
+        const read = statements(methodByName(file, "use")).find((stmt): stmt is AssignStmtDto =>
+            stmt._ === "AssignStmt" && stmt.right._ === "StaticFieldRef" && stmt.right.field.name === "identity")!;
+
+        expect(read.right).toMatchObject({
+            _: "StaticFieldRef",
+            field: {
+                declaringClass: { declaringFile: { fileName: "/module.ts" } },
+                type: {
+                    _: "FunctionType",
+                    typeParameters: [{
+                        _: "GenericType",
+                        name: "T",
+                        constraint: { _: "StringType" },
+                        defaultType: { _: "LiteralType", literal: "fallback" },
+                    }],
+                },
+            },
+        });
         expect(diagnostics.messages).toEqual([]);
     });
 
