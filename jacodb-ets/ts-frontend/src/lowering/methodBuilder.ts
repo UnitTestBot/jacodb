@@ -217,7 +217,20 @@ export class MethodContext {
         // Unresolved identifiers (for example ambient globals in malformed input)
         // yield undefined here and retain the name-based fallback. Shorthand-property
         // names are redirected to their value symbol inside `symbolOf`.
-        return this.converter.symbolOf(node);
+        const symbol = this.converter.symbolOf(node);
+        const declaration = symbol?.declarations?.find(ts.isParameter);
+        const parameterProperty = declaration !== undefined && ts.isConstructorDeclaration(declaration.parent)
+            && declaration.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.PublicKeyword
+                || modifier.kind === ts.SyntaxKind.PrivateKeyword || modifier.kind === ts.SyntaxKind.ProtectedKeyword
+                || modifier.kind === ts.SyntaxKind.ReadonlyKeyword);
+        if (!parameterProperty) return symbol;
+
+        // A parameter property has separate Property and Variable symbols pointing
+        // at the same parameter declaration. Constructor locals and captures use
+        // the Variable symbol; the Property symbol remains class-field metadata.
+        const localSymbol = this.ctx.checker.getSymbolsInScope(declaration, ts.SymbolFlags.Variable)
+            .find((candidate) => candidate.declarations?.includes(declaration));
+        return localSymbol ?? symbol;
     }
 
     /** Derive storage for an imported scope binding from its declaration. */
