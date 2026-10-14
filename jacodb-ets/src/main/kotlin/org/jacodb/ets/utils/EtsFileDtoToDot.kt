@@ -86,17 +86,18 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
         return labelLines.joinToString("") { "$it\\l" }
     }
 
-    fun methodId(clazz: ClassDto, method: MethodDto): String {
-        return "method:${qualifiedClassName(clazz)}.${method.signature.name}"
+    fun methodId(clazz: ClassDto, method: MethodDto, methodIndex: Int): String {
+        return "method:${qualifiedClassName(clazz)}.${method.signature.name}#$methodIndex"
     }
 
     fun methodLabel(clazz: ClassDto, method: MethodDto): String {
-        return "${clazz.signature.name}::${method.signature.name}"
+        val parameters = method.signature.parameters.joinToString { "${it.name}: ${it.type}" }
+        val signature = "${clazz.signature.name}::${method.signature.name}($parameters): ${method.signature.returnType}"
+        return signature.replace("\"", "\\\"")
     }
 
-    fun blockId(clazz: ClassDto, method: MethodDto, id: Int): String {
-        val m = methodId(clazz, method)
-        return "${m}.bb${id}"
+    fun blockId(methodId: String, id: Int): String {
+        return "${methodId}.bb${id}"
     }
 
     fun blockLabel(bb: BasicBlockDto): String {
@@ -117,9 +118,9 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
         lines += """  "$c" [shape=rect,label="$clabel"]"""
 
         // Methods inside class:
-        clazz.methods.forEach { method ->
+        clazz.methods.forEachIndexed { methodIndex, method ->
             // METHOD
-            val m = methodId(clazz, method)
+            val m = methodId(clazz, method, methodIndex)
             val mlabel = methodLabel(clazz, method)
             lines += """  "$m" [shape=oval,label="$mlabel"];"""
 
@@ -129,14 +130,14 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
             if (method.body != null) {
                 // Link method to its first basic block:
                 if (method.body.cfg.blocks.isNotEmpty()) {
-                    val b = blockId(clazz, method, method.body.cfg.blocks.first().id)
+                    val b = blockId(m, method.body.cfg.blocks.first().id)
                     lines += """  "$m" -> "${b}.0" [lhead="$b"];"""
                 }
 
                 // Basic blocks with instructions:
                 method.body.cfg.blocks.forEach { bb ->
                     // BLOCK
-                    val b = blockId(clazz, method, bb.id)
+                    val b = blockId(m, bb.id)
                     val blabel = blockLabel(bb)
                     lines += ""
                     lines += """  subgraph "$b" {"""
@@ -172,8 +173,8 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
                     when (last ?: NopStmtDto) {
                         is IfStmtDto -> {
                             for ((j, succ) in bb.successors.withIndex()) {
-                                val b = blockId(clazz, method, bb.id)
-                                val bs = blockId(clazz, method, succ)
+                                val b = blockId(m, bb.id)
+                                val bs = blockId(m, succ)
                                 val label = if (j == 0) "false" else "true"
                                 lines += """  "${b}.${i}" -> "${bs}.0" [lhead="$bs", label="$label"];"""
                             }
@@ -181,8 +182,8 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
 
                         else -> {
                             for (succ in bb.successors) {
-                                val b = blockId(clazz, method, bb.id)
-                                val bs = blockId(clazz, method, succ)
+                                val b = blockId(m, bb.id)
+                                val bs = blockId(m, succ)
                                 lines += """  "${b}.${i}" -> "${bs}.0" [lhead="$bs"];"""
                             }
                         }

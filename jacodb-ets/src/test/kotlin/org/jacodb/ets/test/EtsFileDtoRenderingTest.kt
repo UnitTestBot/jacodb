@@ -16,6 +16,7 @@
 
 package org.jacodb.ets.test
 
+import org.jacodb.ets.dto.AnyTypeDto
 import org.jacodb.ets.dto.BasicBlockDto
 import org.jacodb.ets.dto.BodyDto
 import org.jacodb.ets.dto.BooleanTypeDto
@@ -27,11 +28,14 @@ import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.dto.FileSignatureDto
 import org.jacodb.ets.dto.IfStmtDto
 import org.jacodb.ets.dto.MethodDto
+import org.jacodb.ets.dto.MethodParameterDto
 import org.jacodb.ets.dto.MethodSignatureDto
 import org.jacodb.ets.dto.NamespaceDto
 import org.jacodb.ets.dto.NamespaceSignatureDto
 import org.jacodb.ets.dto.NumberTypeDto
 import org.jacodb.ets.dto.ReturnVoidStmtDto
+import org.jacodb.ets.dto.TypeDto
+import org.jacodb.ets.dto.VoidTypeDto
 import org.jacodb.ets.utils.toDot
 import org.jacodb.ets.utils.toText
 import org.junit.jupiter.api.Test
@@ -118,8 +122,8 @@ class EtsFileDtoRenderingTest {
         val dot = dto.toDot()
 
         assertTrue(dot.contains("\"class:A.B\" [shape=rect"))
-        assertTrue(dot.contains("\"method:A.B\" [shape=oval"))
-        assertTrue(dot.contains("\"class:A\" -> \"method:A.B\" [dir=none]"))
+        assertTrue(dot.contains("\"method:A.B#0\" [shape=oval"))
+        assertTrue(dot.contains("\"class:A\" -> \"method:A.B#0\" [dir=none]"))
     }
 
     @Test
@@ -159,7 +163,60 @@ class EtsFileDtoRenderingTest {
 
         val dot = dto.toDot()
 
-        assertTrue(dot.contains("\"method:C.f.bb0.0\" -> \"method:C.f.bb1.0\" [lhead=\"method:C.f.bb1\", label=\"false\"]"))
-        assertTrue(dot.contains("\"method:C.f.bb0.0\" -> \"method:C.f.bb2.0\" [lhead=\"method:C.f.bb2\", label=\"true\"]"))
+        assertTrue(dot.contains("\"method:C.f#0.bb0.0\" -> \"method:C.f#0.bb1.0\" [lhead=\"method:C.f#0.bb1\", label=\"false\"]"))
+        assertTrue(dot.contains("\"method:C.f#0.bb0.0\" -> \"method:C.f#0.bb2.0\" [lhead=\"method:C.f#0.bb2\", label=\"true\"]"))
+    }
+
+    @Test
+    fun `DTO DOT gives overload declarations and implementation distinct method and block IDs`() {
+        val classSignature = ClassSignatureDto(name = "C", declaringFile = fileSignature)
+        fun method(parameterType: TypeDto, body: BodyDto? = null) = MethodDto(
+            signature = MethodSignatureDto(
+                declaringClass = classSignature,
+                name = "f",
+                parameters = listOf(MethodParameterDto(name = "value", type = parameterType)),
+                returnType = VoidTypeDto,
+            ),
+            modifiers = 0,
+            decorators = emptyList(),
+            body = body,
+        )
+        val body = BodyDto(
+            locals = emptyList(),
+            cfg = CfgDto(
+                blocks = listOf(
+                    BasicBlockDto(id = 0, successors = listOf(1), stmts = emptyList()),
+                    BasicBlockDto(id = 1, successors = emptyList(), stmts = listOf(ReturnVoidStmtDto)),
+                ),
+            ),
+        )
+        val dto = EtsFileDto(
+            signature = fileSignature,
+            namespaces = emptyList(),
+            classes = listOf(
+                classDto(
+                    name = "C",
+                    methods = listOf(
+                        method(parameterType = NumberTypeDto),
+                        method(parameterType = BooleanTypeDto),
+                        method(parameterType = AnyTypeDto, body = body),
+                    ),
+                ),
+            ),
+            importInfos = emptyList(),
+            exportInfos = emptyList(),
+        )
+
+        val dot = dto.toDot()
+
+        assertEquals(1, dot.lines().count { it.contains("\"method:C.f#0\" [shape=oval") })
+        assertEquals(1, dot.lines().count { it.contains("\"method:C.f#1\" [shape=oval") })
+        assertEquals(1, dot.lines().count { it.contains("\"method:C.f#2\" [shape=oval") })
+        assertTrue(dot.contains("C::f(value: NumberTypeDto): VoidTypeDto"))
+        assertTrue(dot.contains("C::f(value: BooleanTypeDto): VoidTypeDto"))
+        assertTrue(dot.contains("\"method:C.f#2\" -> \"method:C.f#2.bb0.0\" [lhead=\"method:C.f#2.bb0\"]"))
+        assertTrue(dot.contains("subgraph \"method:C.f#2.bb0\""))
+        assertTrue(dot.contains("\"method:C.f#2.bb0.0\" -> \"method:C.f#2.bb1.0\" [lhead=\"method:C.f#2.bb1\"]"))
+        assertTrue(dot.contains("\"method:C.f#2.bb1.0\" [shape=box"))
     }
 }
