@@ -1630,10 +1630,11 @@ export class ExprLowerer {
             throw new LoweringError("class expression heritage is not represented in EtsIR");
         }
 
-        if (node.name !== undefined || node.members.some((member) =>
+        const hasUnrepresentedMember = node.members.some((member) =>
             ts.isClassStaticBlockDeclaration(member)
             || (ts.getCombinedModifierFlags(member) & ts.ModifierFlags.Static) !== 0
-            || (member.name !== undefined && ts.isComputedPropertyName(member.name)))) {
+            || (member.name !== undefined && ts.isComputedPropertyName(member.name)));
+        if (node.name !== undefined || hasUnrepresentedMember) {
             throw new LoweringError("named, static, or computed class expression members are not represented in EtsIR");
         }
 
