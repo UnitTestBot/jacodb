@@ -920,7 +920,7 @@ export class ExprLowerer {
         if (compoundOp !== undefined) {
             target = this.snapshotReference(target);
             const oldValue = target._ === "Local"
-                ? target
+                ? this.snapshotImmediateIfReassigned(target, node.left, node.right)
                 : this.materialize(this.propertyReferenceForOperation(target), lvalueType(target));
             rhs = {
                 _: "BinopExpr",

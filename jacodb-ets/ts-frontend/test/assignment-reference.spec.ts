@@ -44,6 +44,18 @@ const source = [
         state.stored = value;
         return result;
     }`),
+    `export function local_rhs_add(state: any): number {
+        let value = 1;
+        const result = value += (value = 2);
+        state.stored = value;
+        return result;
+    }`,
+    `export function local_rhs_multiply(state: any): number {
+        let value = 2;
+        const result = value *= (value = 3, 4);
+        state.stored = value;
+        return result;
+    }`,
 ].join("\n");
 
 let serialized: EtsFileDto;
@@ -203,5 +215,21 @@ describe("read-modify-write assignment reference capture", () => {
 
         expect(actual).toEqual(expected);
         expect(actual.stored).toBe(name === "add" ? 4 : 6);
+    });
+
+    it.each([
+        ["local_rhs_add", 3],
+        ["local_rhs_multiply", 8],
+    ] as const)("%s reads the old local before the RHS changes its binding", (name, result) => {
+        const expectedState: { stored?: number } = {};
+        const actualState: { stored?: number } = {};
+
+        const expected = native[name](expectedState);
+        const actual = executeObjectIr(serialized, name, [actualState]);
+
+        expect(expected).toBe(result);
+        expect(expectedState.stored).toBe(result);
+        expect(actual).toBe(expected);
+        expect(actualState).toEqual(expectedState);
     });
 });
