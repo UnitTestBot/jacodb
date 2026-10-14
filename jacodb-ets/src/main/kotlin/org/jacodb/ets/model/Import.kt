@@ -22,7 +22,7 @@ package org.jacodb.ets.model
  * @property name The name that will be used in the importing module (empty for side-effect imports)
  * @property type The [type][EtsImportType] of import.
  * @property from The module or path being imported from.
- * @property nameBeforeAs The original name before 'as' aliasing (null if no aliasing, "*" for namespace imports).
+ * @property nameBeforeAs The imported name before 'as' in an aliased named import; null otherwise.
  * @property modifiers Import modifiers.
  */
 data class EtsImportInfo(
@@ -46,7 +46,7 @@ data class EtsImportInfo(
     override val decorators: List<EtsDecorator> get() = emptyList()
 
     /**
-     * Import clause name without any aliasing.
+     * Imported name for a named import, or the local name for other import forms.
      */
     val originalName: String
         get() = nameBeforeAs ?: name
@@ -56,7 +56,6 @@ data class EtsImportInfo(
      *
      * ```ts
      * import React from 'react';
-     * import { default as React } from 'react';
      * ```
      */
     val isDefaultImport: Boolean
