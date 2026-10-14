@@ -45,6 +45,7 @@ export class IteratorLowerer {
         });
         this.requireObject(this.iterator);
         this.next = this.field(this.iterator, "next", UNKNOWN_TYPE);
+
         this.exhausted = m.newTemp(BOOLEAN_TYPE);
         m.cfg.emit({ _: "AssignStmt", left: this.exhausted, right: bool(false) });
     }
@@ -54,11 +55,13 @@ export class IteratorLowerer {
         const cfg = this.m.cfg;
         const value = this.m.newTemp(type);
         cfg.emit({ _: "AssignStmt", left: value, right: { _: "Constant", value: "undefined", type: { _: "UndefinedType" } } });
+
         const step = cfg.newLabel();
         const read = cfg.newLabel();
         const done = cfg.newLabel();
         cfg.branch(this.isExhausted(), done, step);
         cfg.placeLabel(step);
+
         const result = this.advance();
         cfg.branch(this.isExhausted(), done, read);
         cfg.placeLabel(read);
@@ -77,6 +80,7 @@ export class IteratorLowerer {
         const step = cfg.newLabel();
         const store = cfg.newLabel();
         const done = cfg.newLabel();
+
         cfg.placeLabel(head);
         cfg.branch(this.isExhausted(), done, step);
         cfg.placeLabel(step);
@@ -96,6 +100,7 @@ export class IteratorLowerer {
         const lookup = cfg.newLabel();
         const invoke = cfg.newLabel();
         const done = cfg.newLabel();
+
         cfg.branch(this.isExhausted(), done, lookup);
         cfg.placeLabel(lookup);
         cfg.emit({ _: "AssignStmt", left: this.exhausted, right: bool(true) });
@@ -123,6 +128,7 @@ export class IteratorLowerer {
         const invoke = cfg.newLabel();
         const rethrow = cfg.newLabel();
         const continuation = cfg.newLabel();
+
         cfg.withExceptionTarget(close, action);
         cfg.goto(continuation);
         cfg.placeLabel(close);
@@ -160,6 +166,7 @@ export class IteratorLowerer {
             },
         });
         this.requireObject(result);
+
         const done = this.field(result, "done", UNKNOWN_TYPE);
         const notDone = this.m.newTemp(BOOLEAN_TYPE);
         cfg.emit({ _: "AssignStmt", left: notDone, right: { _: "UnopExpr", op: "!", arg: done } });
@@ -171,6 +178,7 @@ export class IteratorLowerer {
         const cfg = this.m.cfg;
         const kind = this.m.newTemp(STRING_TYPE);
         cfg.emit({ _: "AssignStmt", left: kind, right: { _: "TypeOfExpr", arg: value } });
+
         const object = cfg.newLabel();
         const functionCheck = cfg.newLabel();
         const valid = cfg.newLabel();
