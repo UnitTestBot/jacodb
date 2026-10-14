@@ -28,7 +28,7 @@ class EtsLinearCfg(
 
     val predecessors: List<Set<Int>> by lazy {
         val result: List<MutableSet<Int>> = List(stmts.size) { hashSetOf() }
-        for ((index, stmt) in stmts.withIndex()) {
+        for (index in stmts.indices) {
             for (next in successors[index]) {
                 result[next].add(index)
             }
@@ -67,11 +67,6 @@ class EtsLinearCfg(
         return predecessorsCache.computeIfAbsent(node) {
             require(node.location.index >= 0) {
                 "Invalid index: ${node.location.index}"
-            }
-            for (p in predecessors[node.location.index]) {
-                require(p >= 0) {
-                    "Invalid predecessor index: $p"
-                }
             }
             predecessors[node.location.index].mapTo(hashSetOf()) { stmts[it] }
         }

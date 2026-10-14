@@ -24,14 +24,18 @@ import org.jacodb.ets.dsl.param
 import org.jacodb.ets.dsl.program
 import org.jacodb.ets.dsl.toBlockCfg
 import org.jacodb.ets.dsl.toDot
+import org.jacodb.ets.model.BasicBlock
 import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsBlockCfg
 import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsFileSignature
 import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsMethodImpl
 import org.jacodb.ets.model.EtsMethodParameter
 import org.jacodb.ets.model.EtsMethodSignature
+import org.jacodb.ets.model.EtsNopStmt
 import org.jacodb.ets.model.EtsNumberType
+import org.jacodb.ets.model.EtsStmtLocation
 import org.jacodb.ets.model.EtsUnknownType
 import org.jacodb.ets.utils.linearize
 import org.jacodb.ets.utils.toDot
@@ -39,8 +43,53 @@ import org.jacodb.ets.utils.toEtsBlockCfg
 import org.junit.jupiter.api.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class EtsCfgDslTest {
+    @Test
+    fun `block CFG rejects successor IDs equal to block count`() {
+        val method = EtsMethodImpl(
+            signature = EtsMethodSignature(
+                enclosingClass = EtsClassSignature.UNKNOWN,
+                name = "testMethod",
+                parameters = emptyList(),
+                returnType = EtsUnknownType,
+            ),
+        )
+        val block = BasicBlock(
+            id = 0,
+            statements = listOf(EtsNopStmt(location = EtsStmtLocation.stub(method))),
+        )
+
+        assertFailsWith<IllegalArgumentException> {
+            EtsBlockCfg(blocks = listOf(block), successors = mapOf(0 to listOf(1)))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            EtsBlockCfg(blocks = listOf(block), successors = mapOf(1 to emptyList()))
+        }
+    }
+
+    @Test
+    fun `block CFG retains valid self-loop terminal and empty graphs`() {
+        val method = EtsMethodImpl(
+            signature = EtsMethodSignature(
+                enclosingClass = EtsClassSignature.UNKNOWN,
+                name = "testMethod",
+                parameters = emptyList(),
+                returnType = EtsUnknownType,
+            ),
+        )
+        val stmt = EtsNopStmt(location = EtsStmtLocation.stub(method))
+        val block = BasicBlock(id = 0, statements = listOf(stmt))
+
+        val selfLoop = EtsBlockCfg(blocks = listOf(block), successors = mapOf(0 to listOf(0)))
+        val terminal = EtsBlockCfg(blocks = listOf(block), successors = mapOf(0 to emptyList()))
+
+        assertEquals(setOf(stmt), selfLoop.successors(stmt))
+        assertEquals(emptySet(), terminal.successors(stmt))
+        assertEquals(emptyList(), EtsBlockCfg.EMPTY.stmts)
+    }
+
     @Test
     fun `test simple program`() {
         val prog = program {
