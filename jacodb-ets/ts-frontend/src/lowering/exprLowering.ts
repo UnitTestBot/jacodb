@@ -161,22 +161,24 @@ export class ExprLowerer {
 
     /** Lower to any value (full exprs allowed). Use only for AssignStmt.right / CallStmt. */
     lowerExpr(node: ts.Expression): ValueDto {
-        return this.m.withOrigin(node, () => {
-            try {
-                return this.lowerExprImpl(node);
-            } catch (e) {
-                if (e instanceof LoweringError) {
-                    this.unsupportedExpressionCount++;
-                    this.m.diagnostics.warn(node, `unsupported expression: ${e.message}`);
-                    // Raw fallback values are only legal as the RHS of a Local
-                    // assignment (Kotlin's ensureOneAddress rejects EtsRawEntity in
-                    // every other position), so hoist into a temp right away.
-                    const type = this.safeTypeOf(node);
-                    return this.materialize(unsupportedValue(node, type), type);
-                }
-                throw e;
+        return this.m.withOrigin(node, () => this.lowerWithFallback(node, () => this.lowerExprImpl(node)));
+    }
+
+    private lowerWithFallback(node: ts.Expression, lower: () => ValueDto): ValueDto {
+        try {
+            return lower();
+        } catch (e) {
+            if (e instanceof LoweringError) {
+                this.unsupportedExpressionCount++;
+                this.m.diagnostics.warn(node, `unsupported expression: ${e.message}`);
+                // Raw fallback values are only legal as the RHS of a Local
+                // assignment (Kotlin's ensureOneAddress rejects EtsRawEntity in
+                // every other position), so hoist into a temp right away.
+                const type = this.safeTypeOf(node);
+                return this.materialize(unsupportedValue(node, type), type);
             }
-        });
+            throw e;
+        }
     }
 
     /** Lower to an immediate, hoisting non-immediate expressions into a temp. */
@@ -600,7 +602,7 @@ export class ExprLowerer {
                 return continueAfterCall(current);
             }
             const methodValue = this.optionalChainLocal(current.value, this.safeTypeOf(segment.expression));
-            return this.optionalEvaluatedDiamond(methodValue, this.safeTypeOf(node), () =>
+            return this.optionalEvaluatedDiamond(node, methodValue, this.safeTypeOf(node), () =>
                 continueAfterCall({ ...current, value: methodValue }));
         }
 
@@ -614,7 +616,7 @@ export class ExprLowerer {
         );
         return segment.questionDotToken === undefined
             ? continueAfterAccess()
-            : this.optionalEvaluatedDiamond(receiver, this.safeTypeOf(node), continueAfterAccess);
+            : this.optionalEvaluatedDiamond(node, receiver, this.safeTypeOf(node), continueAfterAccess);
     }
 
     private callOptionalChainSegment(node: ts.CallExpression, callee: OptionalChainValue): ValueDto {
@@ -1895,6 +1897,7 @@ export class ExprLowerer {
 
     /** Null-check diamond for an evaluated chain value; loose `!= null` also covers undefined. */
     private optionalEvaluatedDiamond(
+        node: OptionalChainSegment,
         tested: LocalDto,
         resultType: TypeDto,
         access: () => ValueDto,
@@ -1907,7 +1910,10 @@ export class ExprLowerer {
 
         cfg.branch(this.relation("!=", tested, constant("null", NULL_TYPE)), accessLabel, elseLabel);
         cfg.placeLabel(accessLabel);
-        cfg.emit({ _: "AssignStmt", left: result, right: access() });
+        // A chain continuation may contain an unsupported spread/callee. Recover
+        // inside its guarded branch so every enclosing diamond is still completed.
+        const accessed = this.lowerWithFallback(node, access);
+        cfg.emit({ _: "AssignStmt", left: result, right: accessed });
         cfg.goto(joinLabel);
         cfg.placeLabel(elseLabel);
         cfg.emit({ _: "AssignStmt", left: result, right: constant("undefined", UNDEFINED_TYPE) });
