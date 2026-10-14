@@ -377,6 +377,58 @@ describe("non-finite numeric literals", () => {
     });
 });
 
+describe("undefined identifier bindings", () => {
+    it("reads a parameter named undefined from its local binding", () => {
+        const { file, diagnostics } = lower("function value(undefined: number): number { return undefined; }");
+        const stmts = allStmts(methodByName(file, "value"));
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(stmts).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            left: { _: "Local", name: "undefined", type: { _: "NumberType" } },
+            right: { _: "ParameterRef", index: 0, type: { _: "NumberType" } },
+        }));
+        expect(stmts).toContainEqual({
+            _: "ReturnStmt",
+            arg: { _: "Local", name: "undefined", type: { _: "NumberType" } },
+        });
+    });
+
+    it("reads a local named undefined after its initializer", () => {
+        const { file, diagnostics } = lower("function value(): number { const undefined = 7; return undefined; }");
+        const stmts = allStmts(methodByName(file, "value"));
+        const returned = stmts.find((stmt) => stmt._ === "ReturnStmt");
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(returned).toMatchObject({
+            _: "ReturnStmt",
+            arg: { _: "Local", name: "undefined" },
+        });
+    });
+
+    it("reads a captured undefined binding through the closure environment", () => {
+        const { file, diagnostics } = lower("function outer(undefined: number) { return () => undefined; }");
+        const stmts = allStmts(methodByName(file, "%AM0$outer"));
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "ClosureFieldRef"
+            && stmt.right.fieldName === "undefined"
+            && stmt.right.type._ === "NumberType")).toBe(true);
+    });
+
+    it("retains the built-in undefined constant", () => {
+        const { file, diagnostics } = lower("function value() { return undefined; }");
+        const stmts = allStmts(methodByName(file, "value"));
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(stmts).toContainEqual({
+            _: "ReturnStmt",
+            arg: { _: "Constant", value: "undefined", type: { _: "UndefinedType" } },
+        });
+    });
+});
+
 describe("function hoisting", () => {
     it("materializes a capture only after the captured local is assigned", () => {
         const { file } = lower(`

@@ -352,7 +352,7 @@ export class ExprLowerer {
                 isDelegating: node.asteriskToken !== undefined,
             };
         }
-        throw new LoweringError(ts.SyntaxKind[node.kind]);
+        throw new LoweringError(syntaxKindName(node.kind));
     }
 
     // ------------------------------------------------------------------
@@ -368,7 +368,7 @@ export class ExprLowerer {
         if (nonFiniteNumber !== undefined) {
             return constant(nonFiniteNumber, NUMBER_TYPE);
         }
-        if (node.text === "undefined") {
+        if (node.text === "undefined" && this.defaultLibraryGlobalStatus(node) !== false) {
             return constant("undefined", UNDEFINED_TYPE);
         }
         const declaration = this.m.converter.symbolOf(node)?.declarations?.find((candidate) =>
@@ -399,14 +399,17 @@ export class ExprLowerer {
     /** Built-in numeric globals are constants, but a project declaration must still shadow them. */
     private builtInNonFiniteNumber(node: ts.Identifier): "Infinity" | "NaN" | undefined {
         if (node.text !== "Infinity" && node.text !== "NaN") return undefined;
-        const symbol = this.m.converter.symbolOf(node);
-        const declarations = symbol?.declarations;
-        if (declarations === undefined || declarations.length === 0 || !declarations.every((declaration) =>
+        return this.defaultLibraryGlobalStatus(node) === true ? node.text : undefined;
+    }
+
+    /** Declaration-less globals include TypeScript's intrinsic `undefined`; resolved project bindings do not. */
+    private defaultLibraryGlobalStatus(node: ts.Identifier): boolean | undefined {
+        const declarations = this.m.converter.symbolOf(node)?.declarations;
+        if (declarations === undefined || declarations.length === 0) return undefined;
+
+        return declarations.every((declaration) =>
             this.m.ctx.isDefaultLibrarySourceFile(declaration.getSourceFile()),
-        )) {
-            return undefined;
-        }
-        return node.text;
+        );
     }
 
     // ------------------------------------------------------------------
