@@ -448,14 +448,18 @@ export class ExprLowerer {
             : ts.isPropertyAccessExpression(node.expression)
               ? node.expression.name
               : undefined;
-        const receiverIsNamespace = receiverName !== undefined &&
-            this.m.converter.symbolOf(receiverName)?.declarations?.some(
-                (declaration) => ts.isModuleDeclaration(declaration) || ts.isSourceFile(declaration),
-            );
+        const receiverDeclarations = receiverName === undefined
+            ? undefined
+            : this.m.converter.symbolOf(receiverName)?.declarations;
+        const receiverIsNamespace = receiverDeclarations?.some(
+            (declaration) => ts.isModuleDeclaration(declaration) || ts.isSourceFile(declaration),
+        );
         if (receiverIsNamespace) {
             const declaration = this.m.converter.symbolOf(node.name)?.declarations?.find(ts.isClassDeclaration);
-            if (declaration !== undefined && isProjectFile(declaration) &&
-                (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent))) {
+            const isRuntimeNamespaceClass = declaration !== undefined
+                && isProjectFile(declaration)
+                && (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent));
+            if (isRuntimeNamespaceClass) {
                 throw new LoweringError("mutable namespace class property is not represented in EtsIR");
             }
         }
@@ -469,9 +473,10 @@ export class ExprLowerer {
         }
 
         const instance = this.lowerToLocal(node.expression);
-        if (this.m.converter.symbolOf(node.name)?.declarations?.some((declaration) =>
+        const isObjectLiteralAccessor = this.m.converter.symbolOf(node.name)?.declarations?.some((declaration) =>
             ts.isGetAccessorDeclaration(declaration) && ts.isObjectLiteralExpression(declaration.parent),
-        )) {
+        );
+        if (isObjectLiteralAccessor) {
             return { _: "PropertyRef", instance, key: constant(fieldName, STRING_TYPE), type: fieldType };
         }
         return {
@@ -651,9 +656,10 @@ export class ExprLowerer {
     ): ValueDto {
         if (ts.isPropertyAccessExpression(node)) {
             const fieldType = this.safeTypeOf(node);
-            if (this.m.converter.symbolOf(node.name)?.declarations?.some((declaration) =>
+            const isObjectLiteralAccessor = this.m.converter.symbolOf(node.name)?.declarations?.some((declaration) =>
                 ts.isGetAccessorDeclaration(declaration) && ts.isObjectLiteralExpression(declaration.parent),
-            )) {
+            );
+            if (isObjectLiteralAccessor) {
                 return { _: "PropertyRef", instance, key: constant(node.name.text, STRING_TYPE), type: fieldType };
             }
             return {
@@ -1930,8 +1936,11 @@ export class ExprLowerer {
 
     private importedScopeFunctionField(node: ts.PropertyAccessExpression): StaticFieldRefDto | undefined {
         const receiver = unwrapTransparentExpression(node.expression);
-        if (!ts.isIdentifier(node.name) || !ts.isIdentifier(receiver)
-            || !this.m.converter.symbolOf(receiver)?.declarations?.some(ts.isSourceFile)) return undefined;
+        if (!ts.isIdentifier(node.name) || !ts.isIdentifier(receiver)) return undefined;
+
+        const isSourceFileNamespace = this.m.converter.symbolOf(receiver)?.declarations?.some(ts.isSourceFile);
+        if (!isSourceFileNamespace) return undefined;
+
         const field = this.m.moduleFieldForIdentifier(node.name);
         return field?.field.type._ === "FunctionType" ? field : undefined;
     }
