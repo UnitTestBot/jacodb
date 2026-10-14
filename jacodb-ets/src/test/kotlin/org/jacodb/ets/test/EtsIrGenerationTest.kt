@@ -65,7 +65,7 @@ class EtsIrGenerationTest {
         val frontend = createTempDirectory("failing-ets-frontend")
         frontend.resolve("dist").createDirectories()
         frontend.resolve("dist/index.js").writeText(
-            "require('fs').writeFileSync(process.argv.at(process.argv.at(-1) === '-v' ? -2 : -1), 'partial'); console.error('frontend failed'); process.exit(7);"
+            "require('fs').writeFileSync(process.argv.at(process.argv.at(-1) === '-v' ? -2 : -1), 'partial'); console.error('неверный путь: café'); process.exit(7);"
         )
         val source = frontend.resolve("input.ts").also { it.writeText("const value = 1;") }
 
@@ -76,7 +76,7 @@ class EtsIrGenerationTest {
             }
             assertFalse(error is EtsIrGenerationTimeoutException)
             assertTrue(error.message.orEmpty().contains("exit code 7"))
-            assertTrue(error.message.orEmpty().contains("frontend failed"))
+            assertTrue(error.message.orEmpty().contains("неверный путь: café"))
             val output = outputPath(error)
             assertEquals("partial", output.readText())
             Files.delete(output)

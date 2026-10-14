@@ -22,6 +22,7 @@ import org.jacodb.ets.dto.toEtsFile
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsScene
 import java.io.FileNotFoundException
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -244,7 +245,7 @@ fun generateEtsIR(
     }
     logger.debug { "Running EtsIR generation ($provider): ${cmd.joinToString(" ")}" }
     try {
-        val res = ProcessUtil.run(cmd, timeout = timeout)
+        val res = ProcessUtil.run(cmd, timeout = timeout, charset = StandardCharsets.UTF_8)
         val failure = when {
             res.isTimeout -> "EtsIR generation ($provider) timed out after $timeout"
             res.exitCode != 0 -> "EtsIR generation ($provider) failed with exit code ${res.exitCode}"
