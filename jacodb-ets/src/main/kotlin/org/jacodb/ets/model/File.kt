@@ -25,7 +25,7 @@ class EtsFile(
 ) {
     init {
         classes.forEach { (it as EtsClassImpl).declaringFile = this }
-        namespaces.forEach { it.declaringFile = this }
+        namespaces.forEach { it.attachToFile(this) }
     }
 
     var scene: EtsScene? = null
@@ -42,4 +42,10 @@ class EtsFile(
     override fun toString(): String {
         return signature.toString()
     }
+}
+
+private fun EtsNamespace.attachToFile(file: EtsFile) {
+    declaringFile = file
+    classes.forEach { (it as EtsClassImpl).declaringFile = file }
+    namespaces.forEach { it.attachToFile(file) }
 }

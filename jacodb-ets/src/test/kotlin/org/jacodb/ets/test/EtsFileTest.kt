@@ -17,10 +17,18 @@
 package org.jacodb.ets.test
 
 import mu.KotlinLogging
+import org.jacodb.ets.model.EtsAnyType
 import org.jacodb.ets.model.EtsAssignStmt
+import org.jacodb.ets.model.EtsClassImpl
+import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsFile
+import org.jacodb.ets.model.EtsFileSignature
 import org.jacodb.ets.model.EtsInstanceFieldRef
 import org.jacodb.ets.model.EtsLocal
+import org.jacodb.ets.model.EtsMethodImpl
+import org.jacodb.ets.model.EtsMethodSignature
+import org.jacodb.ets.model.EtsNamespace
+import org.jacodb.ets.model.EtsNamespaceSignature
 import org.jacodb.ets.model.EtsNumberConstant
 import org.jacodb.ets.model.EtsReturnStmt
 import org.jacodb.ets.model.EtsStaticFieldRef
@@ -31,6 +39,7 @@ import org.jacodb.ets.utils.STATIC_INIT_METHOD_NAME
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 private val logger = KotlinLogging.logger {}
@@ -43,6 +52,34 @@ class EtsFileTest {
         private fun load(name: String): EtsFile {
             return loadEtsFileFromResource("$BASE/$name.ts.json")
         }
+    }
+
+    @Test
+    fun `file owns classes in nested namespaces`() {
+        val fileSignature = EtsFileSignature(projectName = "TestProject", fileName = "nested.ts")
+        val outerSignature = EtsNamespaceSignature(name = "Outer", file = fileSignature)
+        val innerSignature = EtsNamespaceSignature(name = "Inner", file = fileSignature, namespace = outerSignature)
+        val classSignature = EtsClassSignature(name = "Nested", file = fileSignature, namespace = innerSignature)
+        val method = EtsMethodImpl(
+            signature = EtsMethodSignature(
+                enclosingClass = classSignature,
+                name = "run",
+                parameters = emptyList(),
+                returnType = EtsAnyType,
+            ),
+        )
+        val nestedClass = EtsClassImpl(signature = classSignature, fields = emptyList(), methods = listOf(method))
+        val inner = EtsNamespace(signature = innerSignature, classes = listOf(nestedClass), namespaces = emptyList())
+        val outer = EtsNamespace(signature = outerSignature, classes = emptyList(), namespaces = listOf(inner))
+
+        val file = EtsFile(signature = fileSignature, classes = emptyList(), namespaces = listOf(outer))
+
+        assertSame(file, outer.declaringFile)
+        assertSame(file, inner.declaringFile)
+        assertSame(file, nestedClass.declaringFile)
+        assertSame(outer, inner.declaringNamespace)
+        assertSame(inner, nestedClass.declaringNamespace)
+        assertSame(nestedClass, method.enclosingClass)
     }
 
     @Test
