@@ -26,6 +26,7 @@ import org.jacodb.ets.dsl.BlockCustomEts
 import org.jacodb.ets.dsl.BlockIf
 import org.jacodb.ets.dsl.BlockNop
 import org.jacodb.ets.dsl.BlockReturn
+import org.jacodb.ets.dsl.BlockStmt
 import org.jacodb.ets.dsl.ConstantBoolean
 import org.jacodb.ets.dsl.ConstantInt
 import org.jacodb.ets.dsl.ConstantNumber
@@ -53,6 +54,7 @@ import org.jacodb.ets.model.EtsDivExpr
 import org.jacodb.ets.model.EtsEntity
 import org.jacodb.ets.model.EtsEqExpr
 import org.jacodb.ets.model.EtsFieldSignature
+import org.jacodb.ets.model.EtsFileSignature
 import org.jacodb.ets.model.EtsGtEqExpr
 import org.jacodb.ets.model.EtsGtExpr
 import org.jacodb.ets.model.EtsIfStmt
@@ -83,6 +85,11 @@ import org.jacodb.ets.model.EtsSubExpr
 import org.jacodb.ets.model.EtsThis
 import org.jacodb.ets.model.EtsUnknownType
 
+/**
+ * Custom DSL callbacks run once, in statement order. Declare any local names they produce in
+ * [EtsMethod.body].locals before conversion so generated temporaries avoid them. A late custom
+ * local that collides with an already generated temporary causes an [IllegalStateException].
+ */
 fun BlockCfg.toEtsBlockCfg(method: EtsMethod): EtsBlockCfg {
     return EtsBlockCfgBuilder(method).build(this)
 }
@@ -91,6 +98,13 @@ class EtsBlockCfgBuilder(
     val method: EtsMethod,
 ) {
     fun build(blockCfg: BlockCfg): EtsBlockCfg {
+        occupiedLocalNames += method.locals.map { it.name }
+        for (block in blockCfg.blocks) {
+            for (stmt in block.statements) {
+                stmt.collectLocalNames(occupiedLocalNames)
+            }
+        }
+
         return EtsBlockCfg(
             blocks = blockCfg.blocks.map { it.toEtsBasicBlock() },
             successors = blockCfg.successors,
@@ -98,10 +112,72 @@ class EtsBlockCfgBuilder(
     }
 
     private var freeTempLocal: Int = 0
+    private val occupiedLocalNames: MutableSet<String> = mutableSetOf()
+    private val generatedLocalNames: MutableSet<String> = mutableSetOf()
+
     private fun newTempLocal(): EtsLocal {
-        return EtsLocal(
-            name = "_tmp${freeTempLocal++}",
-        )
+        var name = "_tmp${freeTempLocal++}"
+        while (!occupiedLocalNames.add(name)) {
+            name = "_tmp${freeTempLocal++}"
+        }
+
+        generatedLocalNames += name
+        return EtsLocal(name = name)
+    }
+
+    private fun BlockStmt.collectLocalNames(destination: MutableSet<String>) {
+        when (this) {
+            is BlockAssign -> {
+                target.collectLocalNames(destination)
+                expr.collectLocalNames(destination)
+            }
+
+            is BlockReturn -> expr.collectLocalNames(destination)
+            is BlockIf -> condition.collectLocalNames(destination)
+            BlockNop, is BlockCustomEts -> Unit
+        }
+    }
+
+    private fun Expr.collectLocalNames(destination: MutableSet<String>) {
+        when (this) {
+            is Local -> destination += name
+            is FieldRef -> instance.collectLocalNames(destination)
+
+            is ArrayAccess -> {
+                array.collectLocalNames(destination)
+                index.collectLocalNames(destination)
+            }
+
+            is UnaryExpr -> expr.collectLocalNames(destination)
+
+            is BinaryExpr -> {
+                left.collectLocalNames(destination)
+                right.collectLocalNames(destination)
+            }
+
+            is CustomUnaryExpr -> arg.collectLocalNames(destination)
+
+            is CustomBinaryExpr -> {
+                left.collectLocalNames(destination)
+                right.collectLocalNames(destination)
+            }
+
+            is Parameter, ThisRef, is ConstantInt, is ConstantNumber, is ConstantBoolean,
+            is ConstantString, is StaticFieldRef, is CustomValue -> Unit
+        }
+    }
+
+    private fun reserveCustomLocalNames(
+        names: Set<String>,
+        allowedGeneratedLocalNames: Set<String> = emptySet(),
+    ) {
+        for (name in names) {
+            val collidesWithGeneratedLocal = name in generatedLocalNames && name !in allowedGeneratedLocalNames
+            check(!collidesWithGeneratedLocal) {
+                "Custom ETS value uses generated local name $name"
+            }
+            occupiedLocalNames += name
+        }
     }
 
     private val stub
@@ -182,9 +258,13 @@ class EtsBlockCfgBuilder(
             }
 
             is StaticFieldRef -> {
+                val enclosingClass = classSignature
+                    ?: method.signature.enclosingClass.takeIf { it.name == className }
+                    ?: EtsClassSignature(name = className, file = EtsFileSignature.UNKNOWN)
+
                 EtsStaticFieldRef(
                     field = EtsFieldSignature(
-                        enclosingClass = EtsClassSignature.UNKNOWN,
+                        enclosingClass = enclosingClass,
                         name = fieldName,
                         type = EtsUnknownType,
                     ),
@@ -307,18 +387,36 @@ class EtsBlockCfgBuilder(
             }
 
             is CustomValue -> {
-                toEts()
+                val entity = toEts()
+                reserveCustomLocalNames(entity.getLocals().mapTo(mutableSetOf()) { it.name })
+                entity
             }
 
             is CustomUnaryExpr -> {
                 val arg = ensureImmediate(arg.toEtsEntity())
-                toEts(arg)
+                val entity = toEts(arg)
+                val passedGeneratedNames = setOfNotNull((arg as? EtsLocal)?.name)
+                    .intersect(generatedLocalNames)
+                reserveCustomLocalNames(
+                    names = entity.getLocals().mapTo(mutableSetOf()) { it.name },
+                    allowedGeneratedLocalNames = passedGeneratedNames,
+                )
+                entity
             }
 
             is CustomBinaryExpr -> {
                 val left = ensureImmediate(left.toEtsEntity())
                 val right = ensureImmediate(right.toEtsEntity())
-                toEts(left, right)
+                val entity = toEts(left, right)
+                val passedGeneratedNames = setOfNotNull(
+                    (left as? EtsLocal)?.name,
+                    (right as? EtsLocal)?.name,
+                ).intersect(generatedLocalNames)
+                reserveCustomLocalNames(
+                    names = entity.getLocals().mapTo(mutableSetOf()) { it.name },
+                    allowedGeneratedLocalNames = passedGeneratedNames,
+                )
+                entity
             }
         }
 
@@ -358,7 +456,9 @@ class EtsBlockCfgBuilder(
                 }
 
                 is BlockCustomEts -> {
-                    etsStatements += stmt.toEts(stub)
+                    val etsStmt = stmt.toEts(stub)
+                    reserveCustomLocalNames(etsStmt.getLocals().mapTo(mutableSetOf()) { it.name })
+                    etsStatements += etsStmt
                 }
             }
         }

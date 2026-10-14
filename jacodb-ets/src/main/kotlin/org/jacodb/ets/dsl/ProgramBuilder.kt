@@ -18,6 +18,7 @@
 
 package org.jacodb.ets.dsl
 
+import org.jacodb.ets.model.EtsClassSignature
 import org.jacodb.ets.model.EtsEntity
 import org.jacodb.ets.model.EtsStmt
 import org.jacodb.ets.model.EtsStmtLocation
@@ -43,6 +44,8 @@ fun ProgramBuilder.const(value: String) = ConstantString(value)
 
 fun ProgramBuilder.fieldRef(instance: Expr, fieldName: String) = FieldRef(instance, fieldName)
 fun ProgramBuilder.staticFieldRef(className: String, fieldName: String) = StaticFieldRef(className, fieldName)
+fun ProgramBuilder.staticFieldRef(owner: EtsClassSignature, fieldName: String) =
+    StaticFieldRef(owner.name, fieldName, classSignature = owner)
 fun ProgramBuilder.arrayAccess(array: Expr, index: Expr) = ArrayAccess(array, index)
 
 fun Expr.field(name: String) = FieldRef(this, name)
