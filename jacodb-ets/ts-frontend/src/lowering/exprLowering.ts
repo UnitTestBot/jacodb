@@ -1806,13 +1806,17 @@ export class ExprLowerer {
 
     /**
      * Object literal -> anonymous `%AC<n>$<method>` class (category OBJECT) plus
-     * `new` + per-property stores at the use site. Literal methods become methods
-     * of the anonymous class.
+     * `new` + per-property stores at the use site.
      */
     private lowerObjectLiteral(node: ts.ObjectLiteralExpression): ValueDto {
         if (this.lowerFunctionBody === undefined) {
             throw new LoweringError("object literal in a context without a body lowerer");
         }
+        const hasUnmaterializedMethod = node.properties.some(ts.isMethodDeclaration);
+        if (hasUnmaterializedMethod) {
+            throw new LoweringError("object literal method needs a per-evaluation callable own property");
+        }
+
         const registry = this.m.ctx.anonymous;
         const name = `${ANONYMOUS_CLASS_PREFIX}${registry.nextClassId++}$${this.m.methodName}`;
         const signature: ClassSignatureDto = {
@@ -1822,7 +1826,6 @@ export class ExprLowerer {
         const classType: ClassTypeDto = { _: "ClassType", signature };
 
         const fields: FieldDto[] = [];
-        const methods: MethodDto[] = [];
         const temp = this.m.newTemp(classType);
         this.m.cfg.emit({ _: "AssignStmt", left: temp, right: { _: "NewExpr", classType } });
 
@@ -1867,31 +1870,6 @@ export class ExprLowerer {
                     : constant(memberName(property.name), STRING_TYPE);
                 const getter = this.lowerClosure(property);
                 this.m.cfg.emit({ _: "DefineAccessorStmt", target: temp, key, getter });
-            } else if (ts.isMethodDeclaration(property)) {
-                if (ts.isComputedPropertyName(property.name)) {
-                    throw new LoweringError("computed object method name is not represented in EtsIR");
-                }
-                const methodName = memberName(property.name);
-                const { parameters, prologueParams } = buildParameters(this.m.ctx, property);
-                const methodSignature: MethodSignatureDto = {
-                    declaringClass: signature,
-                    name: methodName,
-                    parameters,
-                    returnType: returnTypeOf(this.m.ctx, property),
-                };
-                const methodContext = new MethodContext(this.m.ctx, signature, methodName);
-                if (property.body !== undefined) {
-                    this.lowerFunctionBody(methodContext, property.body, (afterParameter) =>
-                        methodContext.emitPrologue(prologueParams, afterParameter),
-                    );
-                }
-                methods.push({
-                    signature: methodSignature,
-                    modifiers: modifiersOf(property),
-                    decorators: [],
-                    isStrictMode: isStrictMode(property),
-                    body: methodContext.build(),
-                });
             } else {
                 // Setters remain separately unsupported.
                 throw new LoweringError(`object literal member: ${syntaxKindName(property.kind)}`);
@@ -1906,7 +1884,7 @@ export class ExprLowerer {
             superClassName: "",
             implementedInterfaceNames: [],
             fields,
-            methods,
+            methods: [],
         });
 
         return temp;

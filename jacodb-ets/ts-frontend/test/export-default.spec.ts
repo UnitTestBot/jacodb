@@ -68,14 +68,22 @@ describe("export default expressions", () => {
         expect(oracle).toBe("true");
     });
 
-    it("keeps this inside an object method bound to its ordinary receiver", () => {
+    it("marks an object-method default export unsupported while preserving export metadata", () => {
         const source = `export default ({ read() { return this; } });`;
-        const { file, stmts } = moduleStatements(source);
+        const { file, diagnostics } = lower(source);
+        const stmts = defaultMethod(file).body!.cfg.blocks.flatMap((block) => block.stmts);
 
         expect(stmts).toContainEqual(expect.objectContaining({
             _: "AssignStmt",
             left: expect.objectContaining({ _: "StaticFieldRef", field: expect.objectContaining({ name: "default" }) }),
         }));
+        expect(stmts).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            right: expect.objectContaining({ _: "UnsupportedValue", kindName: "ObjectLiteralExpression" }),
+        }));
+        expect(diagnostics.messages).toEqual(expect.arrayContaining([
+            expect.stringContaining("object literal method needs a per-evaluation callable own property"),
+        ]));
         expect(file.exportInfos).toContainEqual(expect.objectContaining({ exportName: "default" }));
 
         const moduleUrl = `data:text/javascript,${encodeURIComponent(source)}`;

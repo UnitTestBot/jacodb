@@ -42,8 +42,8 @@ describe("lexical strict-mode metadata", () => {
         expect(methodByName(ownDirective, "%dflt").isStrictMode).toBe(false);
     });
 
-    it("keeps sloppy object methods distinct from strict class code and initializers", () => {
-        const { file } = lower(`
+    it("keeps an unsupported sloppy object method distinct from strict class code", () => {
+        const { file, diagnostics } = lower(`
             function object() { return { sloppy() { return 1; } }; }
             class Box {
                 value = 1;
@@ -53,8 +53,15 @@ describe("lexical strict-mode metadata", () => {
         `);
         const box = file.classes.find(clazz => clazz.signature.name === "Box")!;
 
-        expect(methodByName(file, "sloppy").isStrictMode).toBe(false);
         expect(methodByName(file, "object").isStrictMode).toBe(false);
+        const objectStmts = methodByName(file, "object").body!.cfg.blocks.flatMap((block) => block.stmts);
+        expect(objectStmts).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            right: expect.objectContaining({ _: "UnsupportedValue", kindName: "ObjectLiteralExpression" }),
+        }));
+        expect(diagnostics.messages).toEqual(expect.arrayContaining([
+            expect.stringContaining("object literal method needs a per-evaluation callable own property"),
+        ]));
         expect(box.methods.length).toBeGreaterThan(3);
         expect(box.methods.every(method => method.isStrictMode === true)).toBe(true);
     });

@@ -268,14 +268,13 @@ describe("object literals", () => {
     it("creates %AC classes with fields and per-property stores", () => {
         const { file } = lower(`
             let radius = 3;
-            const shape = { kind: "circle", radius, describe(): string { return this.kind; } };
+            const shape = { kind: "circle", radius };
         `);
         const anonClass = file.classes.find((c) => c.signature.name.startsWith("%AC0"));
         expect(anonClass).toBeDefined();
         expect(anonClass!.category).toBe(5);
         expect(anonClass!.fields.map((f) => f.signature.name)).toEqual(["kind", "radius"]);
-        expect(anonClass!.methods.map((m) => m.signature.name)).toEqual(["describe"]);
-        expect(anonClass!.methods[0].body).toBeDefined();
+        expect(anonClass!.methods).toEqual([]);
 
         const stmts = singleBlockStmts(defaultMethod(file));
         const newExpr = stmts.find(

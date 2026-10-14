@@ -98,6 +98,11 @@ own name at runtime use the raw fallback. Their recursive binding cannot be
 represented by the current lifted-closure environment; type-only references
 and shadowed names do not trigger this fallback. Top-level named functions
 retain their existing recursion representation.
+Object literal method declarations use the raw fallback, including named and
+computed methods. Anonymous-class method metadata alone cannot install a fresh
+callable own property at each object evaluation in source order. Data properties
+containing function values and getter descriptors keep their existing lowering
+paths.
 
 ## Development
 
