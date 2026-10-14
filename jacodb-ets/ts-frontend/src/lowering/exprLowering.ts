@@ -1485,7 +1485,7 @@ export class ExprLowerer {
                 _: "InstanceCallExpr",
                 instance: value,
                 method: {
-                    declaringClass: classType._ === "ClassType" ? classType.signature : UNKNOWN_CLASS_SIGNATURE,
+                    declaringClass: classType.signature,
                     name: CONSTRUCTOR_NAME,
                     parameters: [
                         { name: "pattern", type: STRING_TYPE },
