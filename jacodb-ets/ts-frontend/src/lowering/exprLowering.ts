@@ -1511,6 +1511,10 @@ export class ExprLowerer {
         let name = "%tag";
 
         if (ts.isPropertyAccessExpression(tag) || ts.isElementAccessExpression(tag)) {
+            if (tag.expression.kind === ts.SyntaxKind.SuperKeyword) {
+                throw new LoweringError("super property read needs superclass-relative property lookup");
+            }
+
             if (ts.isPropertyAccessExpression(tag)
                 && this.importedScopeFunctionField(tag) !== undefined) {
                 throw new LoweringError("module namespace call receiver is not represented in EtsIR");
