@@ -1448,7 +1448,7 @@ export class ExprLowerer {
         node.elements.forEach((element, index) => {
             if (ts.isOmittedExpression(element)) return;
 
-            const value = ts.isSpreadElement(element) ? this.spreadFallback(element) : this.lowerToImmediate(element);
+            const value = this.lowerToImmediate(element);
             this.m.cfg.emit({
                 _: "AssignStmt",
                 left: {
@@ -2116,15 +2116,6 @@ export class ExprLowerer {
             return { _: "ClassType", signature: checkValue.signature };
         }
         return null;
-    }
-
-    private spreadFallback(node: ts.SpreadElement): ValueDto {
-        this.unsupportedExpressionCount++;
-        this.m.diagnostics.warn(node, "spread arguments are not supported yet");
-        // Hoisted for the same reason as in lowerExpr: raw values are only
-        // legal as the RHS of a Local assignment.
-        const type = this.safeTypeOf(node.expression);
-        return this.materialize(unsupportedValue(node, type), type);
     }
 }
 
