@@ -16,6 +16,7 @@
 
 package org.jacodb.ets.test
 
+import mu.KotlinLogging
 import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsInstanceFieldRef
@@ -32,7 +33,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
-private val logger = mu.KotlinLogging.logger {}
+private val logger = KotlinLogging.logger {}
 
 class EtsFileTest {
 
@@ -47,6 +48,7 @@ class EtsFileTest {
     @Test
     fun printEtsInstructions() {
         val etsFile = load("classes/SimpleClass")
+
         etsFile.classes.forEach { cls ->
             cls.methods.forEach { method ->
                 logger.info {
