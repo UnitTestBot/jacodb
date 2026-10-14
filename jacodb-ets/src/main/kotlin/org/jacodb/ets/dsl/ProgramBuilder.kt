@@ -87,13 +87,23 @@ class CustomBinaryExpr(
     val toEts: (left: EtsEntity, right: EtsEntity) -> EtsEntity,
 ) : Expr
 
+private fun List<Node>.snapshot(): List<Node> = map { node ->
+    when (node) {
+        is If -> node.copy(
+            thenBranch = node.thenBranch.snapshot(),
+            elseBranch = node.elseBranch.snapshot(),
+        )
+
+        else -> node
+    }
+}
+
 class ProgramBuilderImpl : ProgramBuilder {
     private val _nodes: MutableList<Node> = mutableListOf()
     val nodes: List<Node> get() = _nodes
 
-    fun build(): Program {
-        return Program(nodes)
-    }
+    /** Capture the completed node tree; later builder calls cannot change this program. */
+    fun build(): Program = Program(nodes.snapshot())
 
     override fun nop() {
         _nodes += Nop
@@ -141,10 +151,8 @@ class IfBuilder : ProgramBuilder {
         elseBuilder.apply(block)
     }
 
-    fun elseIf(condition: Expr, block: ProgramBuilder.() -> Unit): IfBuilder {
+    fun elseIf(condition: Expr, block: ProgramBuilder.() -> Unit): IfBuilder =
         elseBuilder.ifStmt(condition, block)
-        return this
-    }
 
     override fun ifStmt(condition: Expr, block: ProgramBuilder.() -> Unit): IfBuilder =
         thenBuilder.ifStmt(condition, block)
