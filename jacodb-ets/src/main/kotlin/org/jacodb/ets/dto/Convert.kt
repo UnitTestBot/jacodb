@@ -181,6 +181,7 @@ class EtsMethodBuilder(
     isStrictMode: Boolean? = null,
 ) {
     private val locals = locals.toMutableList()
+    private val occupiedLocalNames = this.locals.mapTo(mutableSetOf()) { it.name }
 
     private val method = EtsMethodImpl(
         signature = signature,
@@ -199,7 +200,12 @@ class EtsMethodBuilder(
     private var currentOrigin: EtsSourceSpan? = null
 
     private fun newTempLocal(): EtsLocal {
-        val local = EtsLocal("_tmp${freeTempLocal++}")
+        var name = "_tmp${freeTempLocal++}"
+        while (!occupiedLocalNames.add(name)) {
+            name = "_tmp${freeTempLocal++}"
+        }
+
+        val local = EtsLocal(name)
         this@EtsMethodBuilder.locals += local
         return local
     }

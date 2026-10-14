@@ -21,12 +21,14 @@ import org.jacodb.ets.dto.BodyDto
 import org.jacodb.ets.dto.CfgDto
 import org.jacodb.ets.dto.ClassSignatureDto
 import org.jacodb.ets.dto.ClosureFieldRefDto
+import org.jacodb.ets.dto.ConstantDto
 import org.jacodb.ets.dto.FileSignatureDto
 import org.jacodb.ets.dto.AssignStmtDto
 import org.jacodb.ets.dto.LocalDto
 import org.jacodb.ets.dto.MethodDto
 import org.jacodb.ets.dto.MethodSignatureDto
 import org.jacodb.ets.dto.NumberTypeDto
+import org.jacodb.ets.dto.ReturnStmtDto
 import org.jacodb.ets.dto.ReturnVoidStmtDto
 import org.jacodb.ets.dto.SourceSpanDto
 import org.jacodb.ets.dto.StmtOriginDto
@@ -35,13 +37,56 @@ import org.jacodb.ets.dto.toEtsMethod
 import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsClosureFieldRef
 import org.jacodb.ets.model.EtsNopStmt
+import org.jacodb.ets.model.EtsReturnStmt
 import org.jacodb.ets.model.EtsSourceSpan
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 
 class EtsMethodBuilderTest {
+    @Test
+    fun `generated local skips names supplied by DTO`() {
+        val methodDto = MethodDto(
+            signature = MethodSignatureDto(
+                declaringClass = ClassSignatureDto(
+                    name = "TestClass",
+                    declaringFile = FileSignatureDto(projectName = "TestProject", fileName = "test.ts"),
+                ),
+                name = "testMethod",
+                parameters = emptyList(),
+                returnType = NumberTypeDto,
+            ),
+            modifiers = 0,
+            decorators = emptyList(),
+            body = BodyDto(
+                locals = listOf(
+                    LocalDto(name = "_tmp0", type = NumberTypeDto),
+                    LocalDto(name = "_tmp1", type = NumberTypeDto),
+                ),
+                cfg = CfgDto(
+                    blocks = listOf(
+                        BasicBlockDto(
+                            id = 0,
+                            successors = emptyList(),
+                            stmts = listOf(ReturnStmtDto(arg = ConstantDto(value = "1", type = NumberTypeDto))),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        val method = methodDto.toEtsMethod()
+        val statements = method.cfg.blocks.single().statements
+        val assignment = assertIs<EtsAssignStmt>(statements[0])
+        val returnStmt = assertIs<EtsReturnStmt>(statements[1])
+
+        assertEquals(listOf("_tmp0", "_tmp1", "_tmp2"), method.locals.map { it.name })
+        assertSame(method.locals[2], assignment.lhv)
+        assertSame(assignment.lhv, returnStmt.returnValue)
+    }
+
     @Test
     fun `assignment accepts closure field reference as LHV`() {
         val methodDto = MethodDto(
