@@ -530,6 +530,7 @@ class EtsMethodBuilder(
             callee = method.toEtsMethodSignature(),
             args = args.map { ensureLocal(it.toEtsEntity()) },
             type = type.toEtsType(),
+            isSuperCall = isSuperCall,
             wellKnownSymbol = when (wellKnownSymbol) {
                 null -> null
                 "iterator" -> EtsWellKnownSymbol.ITERATOR

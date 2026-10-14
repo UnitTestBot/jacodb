@@ -231,6 +231,8 @@ export interface InstanceCallExprDto {
     instance: LocalDto; // Kotlin Convert casts this to LocalDto — MUST be a Local
     method: MethodSignatureDto;
     args: ValueDto[];
+    /** Explicit `super.m()` dispatch keeps the declaring superclass independent of the receiver's runtime class. */
+    isSuperCall?: boolean;
     /** Intrinsic key identity, not a property whose string name happens to mention Symbol. */
     wellKnownSymbol?: "iterator";
 }

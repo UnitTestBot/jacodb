@@ -1098,6 +1098,7 @@ export class ExprLowerer {
                 instance: thisLocal,
                 method: this.methodSignatureForCall(node, callee.name.text, superSignature),
                 args: this.lowerCallArguments(node),
+                isSuperCall: true,
             };
         }
 

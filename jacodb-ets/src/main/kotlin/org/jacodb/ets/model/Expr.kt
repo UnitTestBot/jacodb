@@ -859,6 +859,7 @@ data class EtsInstanceCallExpr(
     override val args: List<EtsLocal>,
     override val type: EtsType,
     val wellKnownSymbol: EtsWellKnownSymbol? = null,
+    val isSuperCall: Boolean = false,
 ) : EtsCallExpr, CommonInstanceCallExpr {
     override fun toString(): String {
         return "call ${instance}.${callee.name}(${args.joinToString()})"
