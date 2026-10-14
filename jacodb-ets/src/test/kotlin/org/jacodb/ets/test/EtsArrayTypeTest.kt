@@ -31,28 +31,42 @@ import kotlin.test.assertEquals
 class EtsArrayTypeTest {
     @Test
     fun `converts deeply nested DTO array dimensions`() {
-        val type = ArrayTypeDto(ArrayTypeDto(ArrayTypeDto(NumberTypeDto, 1), 1), 2)
+        val innerArrayType = ArrayTypeDto(NumberTypeDto, dimensions = 1)
+        val nestedArrayType = ArrayTypeDto(innerArrayType, dimensions = 1)
+        val type = ArrayTypeDto(nestedArrayType, dimensions = 2)
 
-        assertEquals(EtsArrayType(EtsNumberType, 4), type.toEtsType())
+        val actualType = type.toEtsType()
+
+        assertEquals(EtsArrayType(EtsNumberType, dimensions = 4), actualType)
     }
 
     @Test
     fun `DTO new array expression flattens deeply nested array dimensions`() {
+        val innerArrayType = ArrayTypeDto(NumberTypeDto, dimensions = 1)
+        val nestedArrayType = ArrayTypeDto(innerArrayType, dimensions = 1)
+        val elementType = ArrayTypeDto(nestedArrayType, dimensions = 1)
         val expression = NewArrayExprDto(
-            elementType = ArrayTypeDto(ArrayTypeDto(ArrayTypeDto(NumberTypeDto, 1), 1), 1),
-            size = ConstantDto("2", NumberTypeDto),
+            elementType = elementType,
+            size = ConstantDto(value = "2", type = NumberTypeDto),
         )
 
-        assertEquals(ArrayTypeDto(NumberTypeDto, 4), expression.type)
+        val actualType = expression.type
+
+        assertEquals(ArrayTypeDto(NumberTypeDto, dimensions = 4), actualType)
     }
 
     @Test
     fun `model new array expression flattens deeply nested array dimensions`() {
+        val innerArrayType = EtsArrayType(EtsNumberType, dimensions = 1)
+        val nestedArrayType = EtsArrayType(innerArrayType, dimensions = 1)
+        val elementType = EtsArrayType(nestedArrayType, dimensions = 1)
         val expression = EtsNewArrayExpr(
-            elementType = EtsArrayType(EtsArrayType(EtsArrayType(EtsNumberType, 1), 1), 1),
-            size = EtsNumberConstant(2.0),
+            elementType = elementType,
+            size = EtsNumberConstant(value = 2.0),
         )
 
-        assertEquals(EtsArrayType(EtsNumberType, 4), expression.type)
+        val actualType = expression.type
+
+        assertEquals(EtsArrayType(EtsNumberType, dimensions = 4), actualType)
     }
 }
