@@ -1718,6 +1718,13 @@ export class ExprLowerer {
         if (node.body === undefined) {
             throw new LoweringError("function declaration without a body");
         }
+        if (ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node)) {
+            const referencesOwnName = node.name !== undefined && referencesOwnFunctionName(node, this.m.checker);
+            if (referencesOwnName) {
+                throw new LoweringError("recursive lifted function binding is not represented in EtsIR");
+            }
+        }
+
         const registry = this.m.ctx.anonymous;
         const name = `${ANONYMOUS_METHOD_PREFIX}${registry.nextMethodId++}$${this.m.methodName}`;
         const declaringClass = this.m.declaringClass;
@@ -1726,7 +1733,10 @@ export class ExprLowerer {
         const returnType = returnTypeOf(this.m.ctx, node);
         const baseSignature: MethodSignatureDto = { declaringClass, name, parameters, returnType };
         const capturedIdentifiers = collectCapturedIdentifiers(node, this.m.checker);
-        if (capturedIdentifiers.some((identifier) => this.m.isUninitializedParameter(identifier))) {
+        const capturesUninitializedParameter = capturedIdentifiers.some((identifier) =>
+            this.m.isUninitializedParameter(identifier),
+        );
+        if (capturesUninitializedParameter) {
             throw new LoweringError("closure capturing an uninitialized parameter requires a runtime temporal-dead-zone cell");
         }
         const captures = capturedIdentifiers
@@ -2394,6 +2404,42 @@ function collectCapturedIdentifiers(
         }
     }
     return [...captures.values()];
+}
+
+/** A lifted function cannot read its own binding from the enclosing method's locals. */
+function referencesOwnFunctionName(
+    node: ts.FunctionDeclaration | ts.FunctionExpression,
+    checker: ts.TypeChecker,
+): boolean {
+    const body = node.body;
+    if (node.name === undefined || body === undefined) return false;
+
+    const ownSymbol = checker.getSymbolAtLocation(node.name);
+    if (ownSymbol === undefined) return false;
+
+    let found = false;
+    const visit = (current: ts.Node): void => {
+        if (found || ts.isTypeNode(current)) return;
+
+        if (ts.isIdentifier(current) && current !== node.name) {
+            const isPropertyName = ts.isPropertyAccessExpression(current.parent) && current.parent.name === current;
+            if (!isPropertyName) {
+                const symbol = ts.isShorthandPropertyAssignment(current.parent) && current.parent.name === current
+                    ? checker.getShorthandAssignmentValueSymbol(current.parent) ?? checker.getSymbolAtLocation(current)
+                    : checker.getSymbolAtLocation(current);
+                if (symbol === ownSymbol) {
+                    found = true;
+                    return;
+                }
+            }
+        }
+
+        ts.forEachChild(current, visit);
+    };
+
+    for (const parameter of node.parameters) visit(parameter);
+    visit(body);
+    return found;
 }
 
 function isCapturableDeclaration(node: ts.Declaration): boolean {

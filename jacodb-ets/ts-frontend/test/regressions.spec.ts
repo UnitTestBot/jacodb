@@ -452,8 +452,8 @@ describe("function hoisting", () => {
         expect(seedAssign).toBeLessThan(closureCreate);
     });
 
-    it("does not make a recursive nested function capture itself", () => {
-        const { file } = lower(`
+    it("marks a recursive nested declaration unsupported before emitting a callable", () => {
+        const { file, diagnostics } = lower(`
             function run(n: number): number {
                 return fact(n);
                 function fact(k: number): number {
@@ -461,7 +461,108 @@ describe("function hoisting", () => {
                 }
             }
         `);
-        const closure = methodByName(file, "%AM0$run");
-        expect(closure.signature.parameters.some((p) => p.type._ === "LexicalEnvType")).toBe(false);
+        const run = methodByName(file, "run");
+        const fallback = allStmts(run).find((stmt) => stmt._ === "UnsupportedStmt");
+
+        expect(fallback).toMatchObject({ _: "UnsupportedStmt", kindName: "FunctionDeclaration" });
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining(
+            "unsupported statement: recursive lifted function binding is not represented in EtsIR",
+        ));
+        expect(file.classes.flatMap((clazz) => clazz.methods).some((method) => method.signature.name.startsWith("%AM")))
+            .toBe(false);
+    });
+
+    it("rejects a nested declaration whose default reads its own mutable binding", () => {
+        const { file, diagnostics } = lower(`
+            function run(): number {
+                function fact(value: number = fact(1)): number { return value; }
+                return fact();
+            }
+        `);
+
+        expect(allStmts(methodByName(file, "run"))).toContainEqual(expect.objectContaining({
+            _: "UnsupportedStmt", kindName: "FunctionDeclaration",
+        }));
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining("recursive lifted function binding"));
+    });
+
+    it("marks a recursive named expression unsupported even when its outer alias is rebound", () => {
+        const source = `
+            function make() {
+                let alias = function self(n: number): number { return n ? self(n - 1) : 0; };
+                const original = alias;
+                alias = undefined as any;
+                return original;
+            }
+        `;
+        const { file, diagnostics } = lower(source);
+        const body = methodByName(file, "make").body!;
+        const assignments = allStmts(methodByName(file, "make")).filter(
+            (stmt): stmt is AssignStmtDto => stmt._ === "AssignStmt",
+        );
+        const fallback = assignments.find((stmt) => stmt.right._ === "UnsupportedValue");
+        const fallbackOrigin = body.stmtOrigins?.find(({ blockId, stmtIndex }) =>
+            body.cfg.blocks[blockId].stmts[stmtIndex] === fallback,
+        );
+
+        expect(fallback?.right).toMatchObject({
+            _: "UnsupportedValue", kindName: "FunctionExpression", type: { _: "FunctionType" },
+        });
+        expect(fallbackOrigin?.source.nodeKind).toBe("FunctionExpression");
+        expect(source.slice(fallbackOrigin!.source.startOffset, fallbackOrigin!.source.endOffset))
+            .toContain("function self(n: number)");
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining(
+            "unsupported expression: recursive lifted function binding is not represented in EtsIR",
+        ));
+        expect(file.classes.flatMap((clazz) => clazz.methods).some((method) => method.signature.name.startsWith("%AM")))
+            .toBe(false);
+    });
+
+    it("rejects a named expression whose parameter default captures its private name", () => {
+        const { file, diagnostics } = lower(`
+            function make() {
+                return function self(next = () => self(1)) { return next(); };
+            }
+        `);
+
+        expect(allStmts(methodByName(file, "make"))).toContainEqual(expect.objectContaining({
+            right: expect.objectContaining({ _: "UnsupportedValue", kindName: "FunctionExpression" }),
+        }));
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining("recursive lifted function binding"));
+    });
+
+    it("rejects repeated creation of a recursive named expression in a factory", () => {
+        const { file, diagnostics } = lower(`
+            function make() {
+                return function self(n: number): number { return n ? self(n - 1) : 0; };
+            }
+            const first = make();
+            const second = make();
+        `);
+
+        expect(allStmts(methodByName(file, "make"))).toContainEqual(expect.objectContaining({
+            right: expect.objectContaining({ _: "UnsupportedValue", kindName: "FunctionExpression" }),
+        }));
+        expect(diagnostics.messages.filter((message) => message.includes("recursive lifted function binding")))
+            .toHaveLength(1);
+    });
+
+    it("keeps shadowed spelling and type-only self references on the supported path", () => {
+        const { file, diagnostics } = lower(`
+            function run(): number {
+                function fact(value: number): number {
+                    type Own = typeof fact;
+                    const next = (fact: number): number => fact + 1;
+                    return next(value);
+                }
+                return fact(2);
+            }
+            const named = function self(value: typeof self): typeof self { return value; };
+        `);
+
+        expect(methodByName(file, "%AM0$run")).toBeDefined();
+        expect(file.classes.flatMap((clazz) => clazz.methods).some((method) => method.signature.name.startsWith("%AM")))
+            .toBe(true);
+        expect(diagnostics.messages.some((message) => message.includes("recursive lifted function binding"))).toBe(false);
     });
 });

@@ -93,6 +93,11 @@ property read and use the fallback before key or argument evaluation. Ordinary
 named superclass method calls such as `super.m(...)` retain their direct call
 representation.
 Assignments to named or computed `super` properties are also explicitly unsupported.
+Nested function declarations and named function expressions that refer to their
+own name at runtime use the raw fallback. Their recursive binding cannot be
+represented by the current lifted-closure environment; type-only references
+and shadowed names do not trigger this fallback. Top-level named functions
+retain their existing recursion representation.
 
 ## Development
 
