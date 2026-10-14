@@ -80,7 +80,8 @@ export function buildEtsFile(
     };
 
     const checker = program.getTypeChecker();
-    const converter = new TypeConverter(checker, fileSignatureFor);
+    const isDefaultLibrarySourceFile = (sf: ts.SourceFile): boolean => program.isSourceFileDefaultLibrary(sf);
+    const converter = new TypeConverter(checker, fileSignatureFor, isDefaultLibrarySourceFile);
     const anonymous: AnonymousRegistry = {
         defaultClassSignature: { name: DEFAULT_ARK_CLASS_NAME, declaringFile: fileSignature },
         methods: [],
@@ -92,7 +93,7 @@ export function buildEtsFile(
         checker,
         converter,
         fileSignatureFor,
-        isDefaultLibrarySourceFile: (sf) => program.isSourceFileDefaultLibrary(sf),
+        isDefaultLibrarySourceFile,
         diagnostics,
         anonymous,
         moduleFields: new Map(),
