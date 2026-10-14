@@ -33,11 +33,9 @@ class EtsFieldImpl(
     override val modifiers: EtsModifiers = EtsModifiers.EMPTY,
     val isOptional: Boolean = false,  // '?'
     val isDefinitelyAssigned: Boolean = false, // '!'
+    override val decorators: List<EtsDecorator> = emptyList(),
 ) : EtsField {
     override var declaringClass: EtsClass? = null
-
-    override val decorators: List<EtsDecorator>
-        get() = error("Fields do not have decorators")
 
     override fun toString(): String {
         return signature.toString()

@@ -45,11 +45,13 @@ import org.jacodb.ets.dto.StmtDto
 import org.jacodb.ets.dto.TypeDto
 import org.jacodb.ets.dto.ValueDto
 import org.jacodb.ets.dto.dtoModule
+import org.jacodb.ets.dto.toEtsField
 import org.jacodb.ets.dto.toEtsLocal
 import org.jacodb.ets.dto.toEtsMethod
 import org.jacodb.ets.model.EtsAnyType
 import org.jacodb.ets.model.EtsClassCategory
 import org.jacodb.ets.model.EtsClassSignature
+import org.jacodb.ets.model.EtsDecorator
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsFileSignature
 import org.jacodb.ets.model.EtsLocal
@@ -315,6 +317,35 @@ class EtsFromJsonTest {
         val fieldDto = Json.decodeFromString<FieldDto>(jsonString)
         logger.info { "fieldDto = $fieldDto" }
         assertEquals(field, fieldDto)
+    }
+
+    @Test
+    fun testFieldDecoratorsSurviveConversion() {
+        val signature = FieldSignatureDto(
+            declaringClass = ClassSignatureDto(
+                name = "TestClass",
+                declaringFile = FileSignatureDto(
+                    projectName = "TestProject",
+                    fileName = "test.ts",
+                ),
+            ),
+            name = "x",
+            type = NumberTypeDto,
+        )
+        val decoratedDto = FieldDto(
+            signature = signature,
+            modifiers = 0,
+            decorators = listOf(DecoratorDto(kind = "marker")),
+            isOptional = false,
+            isDefinitelyAssigned = false,
+        )
+
+        val decoratedField = decoratedDto.toEtsField()
+        val plainField = decoratedDto.copy(decorators = emptyList()).toEtsField()
+
+        assertEquals(listOf(EtsDecorator(name = "marker")), decoratedField.decorators)
+        assertTrue(decoratedField.hasDecorator(EtsDecorator(name = "marker")))
+        assertEquals(emptyList(), plainField.decorators)
     }
 
     @Test

@@ -938,14 +938,11 @@ fun SourceSpanDto.toEtsSourceSpan(enclosingFileName: String = ""): EtsSourceSpan
 
 fun FieldDto.toEtsField(): EtsField {
     return EtsFieldImpl(
-        signature = EtsFieldSignature(
-            enclosingClass = signature.declaringClass.toEtsClassSignature(),
-            name = signature.name,
-            type = signature.type.toEtsType()
-        ),
+        signature = signature.toEtsFieldSignature(),
         modifiers = EtsModifiers(modifiers),
         isOptional = isOptional,
         isDefinitelyAssigned = isDefinitelyAssigned,
+        decorators = decorators.map { it.toEtsDecorator() },
     )
 }
 
@@ -953,6 +950,7 @@ fun NamespaceDto.toEtsNamespace(enclosingFileName: String = signature.declaringF
     val signature = signature.toEtsNamespaceSignature()
     val classes = classes.map { it.toEtsClass(enclosingFileName) }
     val namespaces = namespaces.map { it.toEtsNamespace(enclosingFileName) }
+
     return EtsNamespace(
         signature = signature,
         classes = classes,
@@ -966,6 +964,7 @@ fun EtsFileDto.toEtsFile(): EtsFile {
     val namespaces = namespaces.map { it.toEtsNamespace(signature.fileName) }
     val importInfos = importInfos.map { it.toEtsImportInfo() }
     val exportInfos = exportInfos.map { it.toEtsExportInfo() }
+
     return EtsFile(
         signature = signature,
         classes = classes,
