@@ -127,7 +127,6 @@ data class ImportInfoDto(
     val importFrom: String,
     val nameBeforeAs: String? = null,
     val modifiers: Int,
-    // val decorators: List<DecoratorDto>,
 )
 
 @Serializable
@@ -138,12 +137,9 @@ data class ExportInfoDto(
     val nameBeforeAs: String? = null,
     val modifiers: Int,
     val isTypeOnly: Boolean = false,
-    // val decorators: List<DecoratorDto>,
 )
 
 @Serializable
 data class DecoratorDto(
     val kind: String,
-    // val content: String? = null,
-    // val param: String? = null,
 )

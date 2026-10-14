@@ -24,6 +24,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -759,6 +760,30 @@ class EtsTsFrontendTest {
 
         assertEquals(UnknownTypeDto, decoded.classType)
         assertEquals(null, decoded.constructorValue)
+    }
+
+    @Test
+    fun `new JSON accepts a direct class constructor value`() {
+        val signature = """{"name":"A","declaringFile":{"projectName":"test","fileName":"class.ts"}}"""
+        val source = """
+            {
+              "_": "NewExpr",
+              "classType": { "_": "UnknownType" },
+              "constructorValue": {
+                "_": "ClassValueRef",
+                "signature": $signature,
+                "type": { "_": "ClassValueType", "signature": $signature }
+              }
+            }
+        """.trimIndent()
+
+        val decoded = Json { serializersModule = dtoModule }
+            .decodeFromString(ValueDto.serializer(), source) as NewExprDto
+
+        val constructorValue = decoded.constructorValue
+        assertIs<ClassValueRefDto>(constructorValue)
+        assertEquals("A", constructorValue.signature.name)
+        assertEquals(ClassValueTypeDto(constructorValue.signature), constructorValue.type)
     }
 
     @Test
