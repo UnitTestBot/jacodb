@@ -83,6 +83,9 @@ throwing; EtsIR has no trap table for precise exception semantics.
 Optional calls on `super` properties (including computed properties) use this
 raw fallback because EtsIR cannot currently preserve superclass-relative
 property lookup before the nullish guard and conditional call.
+Direct named calls such as `super.m(...)` through a superclass getter that
+returns a function use the same fallback; their property lookup must precede
+argument evaluation and invocation.
 
 ## Development
 

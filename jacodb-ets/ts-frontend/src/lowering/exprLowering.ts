@@ -1101,6 +1101,11 @@ export class ExprLowerer {
 
         // `super.m(...)` — instance call on `this` with the superclass as declaring class.
         if (ts.isPropertyAccessExpression(callee) && callee.expression.kind === ts.SyntaxKind.SuperKeyword) {
+            const isAccessorCall = this.m.converter.symbolOf(callee.name)?.declarations?.some(ts.isGetAccessorDeclaration);
+            if (isAccessorCall) {
+                throw new LoweringError("super getter call needs superclass-relative property lookup");
+            }
+
             const thisLocal = this.m.getOrCreateLocal("this", this.m.thisType());
             const superSignature = this.classSignatureFromType(this.safeTypeOf(callee.expression));
             return {
@@ -1235,16 +1240,22 @@ export class ExprLowerer {
 
     private fixedSpreadElementTypes(expression: ts.Expression): TypeDto[] | undefined {
         const value = unwrapTransparentExpression(expression);
-        if (ts.isArrayLiteralExpression(value) && value.elements.every((element) =>
-            !ts.isSpreadElement(element) && !ts.isOmittedExpression(element))) {
-            return value.elements.map((element) => this.safeTypeOf(element));
+        if (ts.isArrayLiteralExpression(value)) {
+            const hasFixedElements = value.elements.every((element) =>
+                !ts.isSpreadElement(element) && !ts.isOmittedExpression(element));
+            if (hasFixedElements) {
+                return value.elements.map((element) => this.safeTypeOf(element));
+            }
         }
 
         const type = this.m.checker.getTypeAtLocation(expression);
-        if (!this.m.checker.isTupleType(type)) return undefined;
+        if (!this.m.checker.isTupleType(type)) {
+            return undefined;
+        }
 
         const tuple = (type as ts.TupleTypeReference).target;
-        return tuple.elementFlags.every((flag) => flag === ts.ElementFlags.Required)
+        const hasOnlyRequiredElements = tuple.elementFlags.every((flag) => flag === ts.ElementFlags.Required);
+        return hasOnlyRequiredElements
             ? this.m.checker.getTypeArguments(type as ts.TupleTypeReference)
                 .map((elementType) => this.m.converter.convertType(elementType))
             : undefined;

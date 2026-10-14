@@ -266,3 +266,49 @@ describe("optional super callees", () => {
             .toBe(false);
     });
 });
+
+describe("direct super getter calls", () => {
+    it("falls back before reading the getter or evaluating call arguments", () => {
+        const call = "super.m(this.argument())";
+        const source = `
+            class Base {
+                get m(): (value: number) => number { return (value) => value + 1; }
+            }
+            class Derived extends Base {
+                argument(): number { return 2; }
+                f(): number { return ${call}; }
+            }
+        `;
+
+        const { file, diagnostics } = lower(source);
+        const body = methodByName(file, "f").body!;
+        const stmts = body.cfg.blocks.flatMap((block) => block.stmts);
+        const rawAssign = stmts.find((stmt): stmt is Extract<StmtDto, { _: "AssignStmt" }> =>
+            stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue",
+        );
+        const startOffset = source.indexOf(call);
+        const precedingLines = source.slice(0, startOffset).split("\n");
+        const line = precedingLines.length;
+        const column = precedingLines[precedingLines.length - 1].length + 1;
+        const rawOrigin = body.stmtOrigins?.find(({ blockId, stmtIndex }) =>
+            body.cfg.blocks[blockId].stmts[stmtIndex] === rawAssign,
+        );
+
+        expect(diagnostics.messages).toEqual([
+            `test.ts:${line}:${column}: unsupported expression: super getter call needs superclass-relative property lookup`,
+        ]);
+        expect(rawAssign?.right).toEqual({
+            _: "UnsupportedValue",
+            kindName: "CallExpression",
+            text: call,
+            type: { _: "NumberType" },
+        });
+        expect(rawOrigin?.source).toMatchObject({
+            startOffset,
+            endOffset: startOffset + call.length,
+            nodeKind: "CallExpression",
+        });
+        expect(stmts.some(emitsPropertyRead)).toBe(false);
+        expect(stmts.some(emitsCall)).toBe(false);
+    });
+});
