@@ -309,9 +309,11 @@ fun loadEtsFileAutoConvert(
         useArkAnalyzerTypeInference = useArkAnalyzerTypeInference,
         provider = provider,
     )
-    irFilePath.inputStream().use { stream ->
-        val etsFileDto = EtsFileDto.loadFromJson(stream)
-        return etsFileDto.toEtsFile()
+    return withGeneratedIrOutput(irFilePath, isProject = false) {
+        irFilePath.inputStream().use { stream ->
+            val etsFileDto = EtsFileDto.loadFromJson(stream)
+            etsFileDto.toEtsFile()
+        }
     }
 }
 
@@ -330,7 +332,33 @@ fun loadEtsProjectAutoConvert(
         provider = provider,
     )
 
-    return loadEtsProjectFromIR(irFolderPath, sdkIRPath)
+    return withGeneratedIrOutput(irFolderPath, isProject = true) {
+        loadEtsProjectFromIR(irFolderPath, sdkIRPath)
+    }
+}
+
+private inline fun <T> withGeneratedIrOutput(output: Path, isProject: Boolean, load: () -> T): T {
+    var loadFailure: Throwable? = null
+    try {
+        return load()
+    } catch (failure: Throwable) {
+        loadFailure = failure
+        throw failure
+    } finally {
+        try {
+            if (isProject) {
+                check(output.toFile().deleteRecursively()) { "Could not remove generated EtsIR output '$output'" }
+            } else {
+                Files.deleteIfExists(output)
+            }
+        } catch (cleanupFailure: Throwable) {
+            if (loadFailure != null) {
+                loadFailure.addSuppressed(cleanupFailure)
+            } else {
+                throw cleanupFailure
+            }
+        }
+    }
 }
 
 fun loadEtsProjectFromIR(
