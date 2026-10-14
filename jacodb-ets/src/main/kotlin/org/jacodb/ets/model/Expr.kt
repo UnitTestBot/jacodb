@@ -205,7 +205,6 @@ data class EtsSpreadExpansionExpr(
 
     override fun toString(): String = "expandSpread($iterable, $expectedCount)"
 
-
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R = visitor.visit(this)
 }
 

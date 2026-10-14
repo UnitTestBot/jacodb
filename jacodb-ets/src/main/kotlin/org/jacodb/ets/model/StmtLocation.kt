@@ -60,7 +60,7 @@ data class EtsStmtLocation(
 
     companion object {
         fun stub(method: EtsMethod, origin: EtsSourceSpan? = null): EtsStmtLocation {
-            return EtsStmtLocation(method, -1, origin)
+            return EtsStmtLocation(method = method, index = -1, origin = origin)
         }
     }
 }
