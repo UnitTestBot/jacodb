@@ -121,13 +121,17 @@ function staticMemberStorage(
     if (!ts.isIdentifier(node.name)) return "unsupported";
 
     const declarations = resolvedSymbolOf(node.name, checker)?.declarations ?? [];
-    const member = declarations.find((declaration) =>
-        declaration.parent === classDecl
-        && (ts.isPropertyDeclaration(declaration)
+    const member = declarations.find((declaration) => {
+        const belongsToClass = declaration.parent === classDecl;
+        if (!belongsToClass) return false;
+
+        const hasSupportedMemberKind = ts.isPropertyDeclaration(declaration)
             || ts.isMethodDeclaration(declaration)
-            || ts.isEnumMember(declaration))
-        && memberName(declaration.name) === node.name.text,
-    );
+            || ts.isEnumMember(declaration);
+        if (!hasSupportedMemberKind) return false;
+
+        return memberName(declaration.name) === node.name.text;
+    });
     if (member === undefined) return "unsupported";
 
     if (ts.isEnumMember(member) && ts.isEnumDeclaration(classDecl)) return "field";
@@ -156,9 +160,12 @@ function isUnmaterializedValue(identifier: ts.Identifier, checker: ts.TypeChecke
 function usesMutableClassProperty(expression: ts.Expression, checker: ts.TypeChecker): boolean {
     const visit = (node: ts.Node): boolean => {
         if (ts.isTypeNode(node)) return false;
-        if (ts.isPropertyAccessExpression(node) && resolvedSymbolOf(node.name, checker)?.declarations?.some(
-            (declaration) => ts.isClassDeclaration(declaration) && !declaration.getSourceFile().isDeclarationFile,
-        )) return true;
+        if (ts.isPropertyAccessExpression(node)) {
+            const referencesProjectClass = resolvedSymbolOf(node.name, checker)?.declarations?.some(
+                (declaration) => ts.isClassDeclaration(declaration) && !declaration.getSourceFile().isDeclarationFile,
+            ) ?? false;
+            if (referencesProjectClass) return true;
+        }
 
         let found = false;
         ts.forEachChild(node, (child) => { found = visit(child) || found; });
@@ -234,10 +241,13 @@ export function usesModuleLexicalThis(expression: ts.Expression): boolean {
 /** Computed method and setter names still lack a runtime definition. */
 export function hasUnsupportedComputedObjectKey(expression: ts.Expression): boolean {
     const visit = (node: ts.Node): boolean => {
-        if (ts.isObjectLiteralExpression(node) && node.properties.some((property) =>
-            (ts.isMethodDeclaration(property) || ts.isSetAccessorDeclaration(property))
-            && ts.isComputedPropertyName(property.name),
-        )) return true;
+        if (ts.isObjectLiteralExpression(node)) {
+            const hasComputedMethodOrSetter = node.properties.some((property) => {
+                const isMethodOrSetter = ts.isMethodDeclaration(property) || ts.isSetAccessorDeclaration(property);
+                return isMethodOrSetter && ts.isComputedPropertyName(property.name);
+            });
+            if (hasComputedMethodOrSetter) return true;
+        }
 
         let found = false;
         ts.forEachChild(node, (child) => { found = visit(child) || found; });
