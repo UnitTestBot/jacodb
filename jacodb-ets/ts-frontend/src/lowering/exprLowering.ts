@@ -417,6 +417,10 @@ export class ExprLowerer {
     // ------------------------------------------------------------------
 
     private lowerPropertyAccess(node: ts.PropertyAccessExpression): ValueDto {
+        if (node.expression.kind === ts.SyntaxKind.SuperKeyword) {
+            throw new LoweringError("super property read needs superclass-relative property lookup");
+        }
+
         const fieldName = node.name.text;
         const fieldType = this.safeTypeOf(node);
 
@@ -498,6 +502,10 @@ export class ExprLowerer {
     }
 
     private lowerElementAccess(node: ts.ElementAccessExpression): ValueDto {
+        if (node.expression.kind === ts.SyntaxKind.SuperKeyword) {
+            throw new LoweringError("super property read needs superclass-relative property lookup");
+        }
+
         const chain = optionalChain(node);
         if (chain !== undefined) {
             return this.lowerOptionalChain(node, chain);
@@ -658,6 +666,10 @@ export class ExprLowerer {
         node: ts.PropertyAccessExpression | ts.ElementAccessExpression,
         instance: LocalDto,
     ): ValueDto {
+        if (node.expression.kind === ts.SyntaxKind.SuperKeyword) {
+            throw new LoweringError("super property read needs superclass-relative property lookup");
+        }
+
         if (ts.isPropertyAccessExpression(node)) {
             const fieldType = this.safeTypeOf(node);
             const isObjectLiteralAccessor = this.m.converter.symbolOf(node.name)?.declarations?.some((declaration) =>
@@ -713,6 +725,10 @@ export class ExprLowerer {
             return this.m.localForIdentifier(node, this.safeTypeOf(node));
         }
         if (ts.isPropertyAccessExpression(node)) {
+            if (node.expression.kind === ts.SyntaxKind.SuperKeyword) {
+                throw new LoweringError("super property assignment needs superclass-relative property lookup");
+            }
+
             if (this.importedScopeFunctionField(node) !== undefined) {
                 throw new LoweringError("module namespace function properties are read-only");
             }
@@ -730,6 +746,10 @@ export class ExprLowerer {
             throw new LoweringError("property access did not produce a field ref");
         }
         if (ts.isElementAccessExpression(node)) {
+            if (node.expression.kind === ts.SyntaxKind.SuperKeyword) {
+                throw new LoweringError("super property assignment needs superclass-relative property lookup");
+            }
+
             const receiverType = this.m.checker.getTypeAtLocation(node.expression);
             if (!this.m.checker.isArrayType(receiverType) && !this.m.checker.isTupleType(receiverType)) {
                 const instance = this.snapshotToLocal(node.expression);
@@ -1172,6 +1192,10 @@ export class ExprLowerer {
         }
 
         if (ts.isElementAccessExpression(callee)) {
+            if (callee.expression.kind === ts.SyntaxKind.SuperKeyword) {
+                throw new LoweringError("super property read needs superclass-relative property lookup");
+            }
+
             const receiver = this.snapshotToLocal(callee.expression);
             const ptr = this.materialize({
                 _: "PropertyRef",

@@ -86,6 +86,13 @@ property lookup before the nullish guard and conditional call.
 Direct named calls such as `super.m(...)` through a superclass getter that
 returns a function use the same fallback; their property lookup must precede
 argument evaluation and invocation.
+Nonoptional `super` property reads, including `super.x` and `super["x"]`,
+also use this fallback because ordinary field references cannot select the
+superclass getter. Computed calls such as `super["m"](...)` require that same
+property read and use the fallback before key or argument evaluation. Ordinary
+named superclass method calls such as `super.m(...)` retain their direct call
+representation.
+Assignments to named or computed `super` properties are also explicitly unsupported.
 
 ## Development
 

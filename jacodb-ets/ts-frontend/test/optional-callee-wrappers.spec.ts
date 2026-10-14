@@ -312,3 +312,59 @@ describe("direct super getter calls", () => {
         expect(stmts.some(emitsCall)).toBe(false);
     });
 });
+
+describe("nonoptional super property reads", () => {
+    it.each([
+        { expression: "super.x", kindName: "PropertyAccessExpression" },
+        { expression: "super['x']", kindName: "ElementAccessExpression" },
+        { expression: "super[this.key()]", kindName: "ElementAccessExpression" },
+        { expression: "super['m'](this.argument())", kindName: "CallExpression" },
+        { expression: "super[this.methodKey()](this.argument())", kindName: "CallExpression" },
+    ])("falls back before a superclass-relative read or computed call: $expression", ({ expression, kindName }) => {
+        const source = `
+            class Base {
+                get x(): number { return 1; }
+                m(value: number): number { return value + 1; }
+            }
+            class Derived extends Base {
+                override get x(): number { return 2; }
+                override m(value: number): number { return value + 2; }
+                key(): "x" { return "x"; }
+                methodKey(): "m" { return "m"; }
+                argument(): number { return 5; }
+                f(): number { return ${expression}; }
+            }
+        `;
+
+        const { file, diagnostics } = lower(source);
+        const body = methodByName(file, "f").body!;
+        const stmts = body.cfg.blocks.flatMap((block) => block.stmts);
+        const rawAssign = stmts.find((stmt): stmt is Extract<StmtDto, { _: "AssignStmt" }> =>
+            stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue",
+        );
+        const startOffset = source.indexOf(expression);
+        const precedingLines = source.slice(0, startOffset).split("\n");
+        const line = precedingLines.length;
+        const column = precedingLines[precedingLines.length - 1].length + 1;
+        const rawOrigin = body.stmtOrigins?.find(({ blockId, stmtIndex }) =>
+            body.cfg.blocks[blockId].stmts[stmtIndex] === rawAssign,
+        );
+
+        expect(diagnostics.messages).toEqual([
+            `test.ts:${line}:${column}: unsupported expression: super property read needs superclass-relative property lookup`,
+        ]);
+        expect(rawAssign?.right).toEqual({
+            _: "UnsupportedValue",
+            kindName,
+            text: expression,
+            type: { _: "NumberType" },
+        });
+        expect(rawOrigin?.source).toMatchObject({
+            startOffset,
+            endOffset: startOffset + expression.length,
+            nodeKind: kindName,
+        });
+        expect(stmts.some(emitsPropertyRead)).toBe(false);
+        expect(stmts.some(emitsCall)).toBe(false);
+    });
+});
