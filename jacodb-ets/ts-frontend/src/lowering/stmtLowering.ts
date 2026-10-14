@@ -65,6 +65,7 @@ export class StmtLowerer {
     private readonly finallyScopes: (ts.Block | (() => void))[] = [];
     private readonly finallyExceptionTargets: Label[] = [];
     private readonly catchScopes: CatchContext[] = [];
+    private readonly unsupportedForwardFunctionCaptures = new Set<ts.Statement>();
     private pendingLabel: string | undefined;
 
     constructor(
@@ -88,18 +89,28 @@ export class StmtLowerer {
         // Function declarations are hoisted in JavaScript, but lowering materializes
         // their captured values at the creation point: hoisting unconditionally would
         // snapshot captures BEFORE the captured variables are assigned. Hoist only the
-        // declarations that are actually referenced earlier in the same statement list;
-        // everything else keeps source order, so its captures are already initialized.
+        // declarations whose values are evaluated earlier in the same statement list;
+        // a reference in a deferred closure body cannot force early capture.
         const hoisted = new Set<ts.Statement>();
         statements.forEach((statement, index) => {
             if (!ts.isFunctionDeclaration(statement) || statement.name === undefined) {
                 return;
             }
-            const name = statement.name.text;
+            const functionSymbol = this.m.converter.symbolOf(statement.name);
+            if (functionSymbol === undefined) {
+                return;
+            }
+
             for (let i = 0; i < index; i++) {
-                if (referencesName(statements[i], name)) {
+                const earlierStatement = statements[i];
+                const uses = this.functionUses(earlierStatement, functionSymbol);
+                if (uses.eager) {
                     hoisted.add(statement);
-                    return;
+                }
+                if (uses.deferred) {
+                    // Capturing a function before its binding is assigned needs a
+                    // live binding cell, which the lifted environment cannot express.
+                    this.unsupportedForwardFunctionCaptures.add(earlierStatement);
                 }
             }
         });
@@ -113,6 +124,87 @@ export class StmtLowerer {
                 this.lowerStatement(statement);
             }
         }
+    }
+
+    private functionUses(node: ts.Node, functionSymbol: ts.Symbol): { eager: boolean; deferred: boolean } {
+        let eager = false;
+        let deferred = false;
+        const visit = (current: ts.Node, inDeferredBody: boolean): void => {
+            if ((eager && deferred) || ts.isTypeNode(current)) {
+                return;
+            }
+
+            if (ts.isCallExpression(current)) {
+                const invokedFunction = this.immediatelyCalledFunction(current.expression);
+                if (invokedFunction !== undefined) {
+                    for (const argument of current.arguments) {
+                        visit(argument, inDeferredBody);
+                    }
+                    for (const parameter of invokedFunction.parameters) {
+                        visit(parameter, inDeferredBody);
+                    }
+                    visit(invokedFunction.body, inDeferredBody);
+                    return;
+                }
+            }
+
+            if (ts.isFunctionLike(current)) {
+                if (current.name !== undefined && ts.isComputedPropertyName(current.name)) {
+                    visit(current.name.expression, inDeferredBody);
+                }
+                for (const parameter of current.parameters) {
+                    visit(parameter, true);
+                }
+                const hasRuntimeBody = ts.isFunctionDeclaration(current)
+                    || ts.isFunctionExpression(current)
+                    || ts.isArrowFunction(current)
+                    || ts.isMethodDeclaration(current)
+                    || ts.isConstructorDeclaration(current)
+                    || ts.isGetAccessorDeclaration(current)
+                    || ts.isSetAccessorDeclaration(current);
+                if (hasRuntimeBody && current.body !== undefined) {
+                    visit(current.body, true);
+                }
+                return;
+            }
+
+            if (ts.isIdentifier(current)) {
+                const parent = current.parent;
+                const isPropertyName = (ts.isPropertyAccessExpression(parent) && parent.name === current)
+                    || (ts.isPropertyAssignment(parent) && parent.name === current);
+                const isBindingName = (ts.isVariableDeclaration(parent)
+                    || ts.isBindingElement(parent)
+                    || ts.isParameter(parent)) && parent.name === current;
+                const isValueReference = !isPropertyName && !isBindingName;
+                if (isValueReference) {
+                    const referenceSymbol = this.m.converter.symbolOf(current);
+                    if (referenceSymbol === functionSymbol) {
+                        if (inDeferredBody) deferred = true;
+                        else eager = true;
+                        return;
+                    }
+                }
+            }
+
+            ts.forEachChild(current, (child) => visit(child, inDeferredBody));
+        };
+
+        visit(node, false);
+        return { eager, deferred };
+    }
+
+    private immediatelyCalledFunction(expression: ts.Expression): ts.ArrowFunction | ts.FunctionExpression | undefined {
+        while (
+            ts.isParenthesizedExpression(expression)
+            || ts.isAsExpression(expression)
+            || ts.isTypeAssertionExpression(expression)
+            || ts.isNonNullExpression(expression)
+            || ts.isSatisfiesExpression(expression)
+        ) {
+            expression = expression.expression;
+        }
+
+        return ts.isArrowFunction(expression) || ts.isFunctionExpression(expression) ? expression : undefined;
     }
 
     lowerStatement(node: ts.Statement): void {
@@ -134,6 +226,10 @@ export class StmtLowerer {
         // The pending label (from a LabeledStatement) applies only to the directly wrapped stmt.
         const label = this.pendingLabel;
         this.pendingLabel = undefined;
+
+        if (this.unsupportedForwardFunctionCaptures.has(node)) {
+            throw new LoweringError("closure capturing a later function binding requires a runtime binding cell");
+        }
 
         if (ts.isVariableStatement(node)) {
             this.lowerVariableDeclarations(node.declarationList);
@@ -264,7 +360,7 @@ export class StmtLowerer {
             }
             return;
         }
-        if (
+        const isDeclarationHandledOutsideBody =
             ts.isClassDeclaration(node) ||
             ts.isInterfaceDeclaration(node) ||
             ts.isEnumDeclaration(node) ||
@@ -272,9 +368,9 @@ export class StmtLowerer {
             ts.isTypeAliasDeclaration(node) ||
             ts.isImportDeclaration(node) ||
             ts.isExportDeclaration(node) ||
-            ts.isExportAssignment(node) ||
-            ts.isImportEqualsDeclaration(node)
-        ) {
+            ts.isImportEqualsDeclaration(node);
+
+        if (isDeclarationHandledOutsideBody) {
             // Declarations are handled at file/class level, not as body statements.
             return;
         }
@@ -996,6 +1092,8 @@ export class StmtLowerer {
 
     /** Object bindings read properties; array bindings consume the iterator protocol. */
     private lowerBindingPattern(pattern: ts.BindingPattern, source: LocalDto): void {
+        this.ensureSupportedArrayRestBindings(pattern);
+
         if (ts.isObjectBindingPattern(pattern)) {
             const stableSource = this.expr.materialize({
                 _: "RequireObjectCoercibleExpr",
@@ -1055,14 +1153,6 @@ export class StmtLowerer {
             return;
         }
         // Every array binding consumes the iterator, including patterns without rest and omitted elements.
-        const hasRest = pattern.elements.some((element) => ts.isBindingElement(element)
-            && element.dotDotDotToken !== undefined);
-        const hasNestedBinding = pattern.elements.some((element) => ts.isBindingElement(element)
-            && !ts.isIdentifier(element.name));
-        if (hasRest && hasNestedBinding) {
-            throw new LoweringError("nested bindings in array rest are not represented with iterator semantics");
-        }
-
         const iterator = new IteratorLowerer(this.m, source);
         for (const element of pattern.elements) {
             if (ts.isOmittedExpression(element)) {
@@ -1085,6 +1175,24 @@ export class StmtLowerer {
             this.bindDestructured(element.name, rest, undefined);
         }
         iterator.close();
+    }
+
+    private ensureSupportedArrayRestBindings(pattern: ts.BindingPattern): void {
+        if (ts.isArrayBindingPattern(pattern)) {
+            const hasRest = pattern.elements.some((element) => ts.isBindingElement(element)
+                && element.dotDotDotToken !== undefined);
+            const hasNestedBinding = pattern.elements.some((element) => ts.isBindingElement(element)
+                && !ts.isIdentifier(element.name));
+            if (hasRest && hasNestedBinding) {
+                throw new LoweringError("nested bindings in array rest are not represented with iterator semantics");
+            }
+        }
+
+        for (const element of pattern.elements) {
+            if (ts.isBindingElement(element) && !ts.isIdentifier(element.name)) {
+                this.ensureSupportedArrayRestBindings(element.name);
+            }
+        }
     }
 
     private bindingType(name: ts.BindingName): TypeDto {

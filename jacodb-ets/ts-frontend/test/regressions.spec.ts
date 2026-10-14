@@ -30,6 +30,22 @@ describe("unsupported loop bindings do not break the whole file", () => {
     }
 });
 
+it("finalizes a for initializer with an unsupported nested array rest binding", () => {
+    const { file, diagnostics } = lower(`
+        function f(input: any): void {
+            for (const [[...[value]]] = input; false;) {}
+        }
+    `);
+    const stmts = allStmts(methodByName(file, "f"));
+
+    expect(stmts).toContainEqual(expect.objectContaining({
+        _: "UnsupportedStmt", kindName: "ForStatement",
+    }));
+    expect(diagnostics.messages).toContainEqual(expect.stringContaining(
+        "unsupported statement: nested bindings in array rest are not represented with iterator semantics",
+    ));
+});
+
 it("lowers a computed object key in a for-of binding", () => {
     const { file, diagnostics } = lower(`
         const xs = [{ a: 1 }];
@@ -430,6 +446,124 @@ describe("undefined identifier bindings", () => {
 });
 
 describe("function hoisting", () => {
+    it.each([
+        ["function declaration", "function first(): number { return later(); }", "FunctionDeclaration"],
+        ["arrow initializer", "const first = (): number => later();", "VariableStatement"],
+    ])("marks a forward function captured by an earlier %s unsupported", (_case, earlierStatement, kindName) => {
+        const { file, diagnostics } = lower(`
+            function outer(): number {
+                ${earlierStatement}
+                let seed = 1;
+                function later(): number { return seed; }
+                return first();
+            }
+        `);
+        const stmts = singleBlockStmts(methodByName(file, "outer"));
+        const fallback = stmts.find((stmt) => stmt._ === "UnsupportedStmt");
+        const seedAssignment = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.left._ === "Local" && stmt.left.name === "seed");
+        const laterAssignment = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "Local" && stmt.right.name.startsWith("%AM"));
+
+        expect(fallback).toMatchObject({ _: "UnsupportedStmt", kindName });
+        expect(seedAssignment).toBeGreaterThanOrEqual(0);
+        expect(laterAssignment).toBeGreaterThan(seedAssignment);
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining(
+            "closure capturing a later function binding requires a runtime binding cell",
+        ));
+    });
+
+    it.each([
+        ["arrow", "(() => later())()"],
+        ["function expression", "(function (): number { return later(); })()"],
+        ["arrow with a parameter default", "((value: number = later()) => value)()"],
+    ])("hoists a function used by an immediately invoked %s", (_case, invocation) => {
+        const { file, diagnostics } = lower(`
+            function outer(): number {
+                const value = ${invocation};
+                function later(): number { return 7; }
+                return value;
+            }
+        `);
+        const stmts = singleBlockStmts(methodByName(file, "outer"));
+        const laterBinding = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.left._ === "Local" && stmt.left.name === "later"
+            && stmt.right._ === "Local" && stmt.right.name.startsWith("%AM"));
+        const invokedCall = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "PtrCallExpr");
+
+        expect(laterBinding).toBeGreaterThanOrEqual(0);
+        expect(invokedCall).toBeGreaterThanOrEqual(0);
+        expect(laterBinding).toBeLessThan(invokedCall);
+        expect(stmts.some((stmt) => stmt._ === "UnsupportedStmt")).toBe(false);
+        expect(diagnostics.messages).toEqual([]);
+    });
+
+    it.each([
+        ["unrelated property key", "const object = { later: 0 };"],
+        ["shadowed shorthand value", "{ const later = 0; const object = { later }; }"],
+        ["type-only reference", "type Later = typeof later;"],
+    ])("keeps a later closure after its capture for %s", (_case, earlierStatement) => {
+        const { file, diagnostics } = lower(`
+            function outer(): number {
+                ${earlierStatement}
+                let seed = 1;
+                function later(): number { return seed; }
+                return later();
+            }
+        `);
+        const stmts = singleBlockStmts(methodByName(file, "outer"));
+        const seedAssignment = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.left._ === "Local" && stmt.left.name === "seed");
+        const closureAssignment = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "Local" && stmt.right.name.startsWith("%AM"));
+
+        expect(seedAssignment).toBeGreaterThanOrEqual(0);
+        expect(closureAssignment).toBeGreaterThanOrEqual(0);
+        expect(seedAssignment).toBeLessThan(closureAssignment);
+        expect(diagnostics.messages).toEqual([]);
+    });
+
+    it("hoists a function referenced by an earlier call", () => {
+        const { file, diagnostics } = lower(`
+            function outer(): number {
+                const result = later();
+                function later(): number { return 7; }
+                return result;
+            }
+        `);
+        const stmts = singleBlockStmts(methodByName(file, "outer"));
+        const closureAssignment = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "Local" && stmt.right.name.startsWith("%AM"));
+        const call = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "PtrCallExpr");
+
+        expect(closureAssignment).toBeGreaterThanOrEqual(0);
+        expect(call).toBeGreaterThanOrEqual(0);
+        expect(closureAssignment).toBeLessThan(call);
+        expect(diagnostics.messages).toEqual([]);
+    });
+
+    it("hoists a function referenced by an earlier shorthand property", () => {
+        const { file, diagnostics } = lower(`
+            function outer() {
+                const object = { later };
+                function later(): number { return 7; }
+                return object.later;
+            }
+        `);
+        const stmts = singleBlockStmts(methodByName(file, "outer"));
+        const closureAssignment = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "Local" && stmt.right.name.startsWith("%AM"));
+        const objectCreation = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "NewExpr");
+
+        expect(closureAssignment).toBeGreaterThanOrEqual(0);
+        expect(objectCreation).toBeGreaterThanOrEqual(0);
+        expect(closureAssignment).toBeLessThan(objectCreation);
+        expect(diagnostics.messages).toEqual([]);
+    });
+
     it("materializes a capture only after the captured local is assigned", () => {
         const { file } = lower(`
             function outer(): number {
