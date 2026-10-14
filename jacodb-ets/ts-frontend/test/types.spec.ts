@@ -479,6 +479,66 @@ describe("typeOfNode (inference)", () => {
         });
     });
 
+    it("preserves the binder of an inferred generic function value", () => {
+        const type = inferredOf('const x = <T extends string = "fallback">(value: T): T => value;');
+
+        expect(type).toMatchObject({
+            _: "FunctionType",
+            signature: {
+                parameters: [{ name: "value", type: { _: "GenericType", name: "T" } }],
+                returnType: { _: "GenericType", name: "T" },
+            },
+            typeParameters: [{
+                _: "GenericType",
+                name: "T",
+                constraint: { _: "StringType" },
+                defaultType: { _: "LiteralType", literal: "fallback" },
+            }],
+        });
+    });
+
+    it("keeps an inferred generic field binder and its outer class parameter", () => {
+        const { file } = lower(`
+            class Holder<U> {
+                callback = <T extends U = U>(value: T): T => value;
+            }
+        `);
+        const holder = file.classes.find((candidate) => candidate.signature.name === "Holder");
+        const callbackType = holder?.fields.find((field) => field.signature.name === "callback")?.signature.type;
+
+        expect(callbackType).toMatchObject({
+            _: "FunctionType",
+            signature: {
+                parameters: [{ name: "value", type: { _: "GenericType", name: "T" } }],
+                returnType: { _: "GenericType", name: "T" },
+            },
+            typeParameters: [{
+                _: "GenericType",
+                name: "T",
+                constraint: { _: "GenericType", name: "U" },
+                defaultType: { _: "GenericType", name: "U" },
+            }],
+        });
+    });
+
+    it("does not copy a generic declaration binder onto a specialized callable", () => {
+        const type = inferredOf(`
+            const identity = <T>(value: T): T => value;
+            const specialized: (value: number) => number = identity;
+            const x = specialized;
+        `);
+
+        expect(type).toMatchObject({
+            _: "FunctionType",
+            signature: {
+                parameters: [{ name: "value", type: { _: "NumberType" } }],
+                returnType: { _: "NumberType" },
+            },
+        });
+        if (type._ !== "FunctionType") throw new Error("expected a specialized function type");
+        expect(type.typeParameters).toBeUndefined();
+    });
+
     it("never throws on weird nodes", () => {
         expect(inferredOf("let x = Symbol('s');")).toBeDefined();
     });

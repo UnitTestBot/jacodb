@@ -709,7 +709,7 @@ export class TypeConverter {
                 ts.isIdentifier(declaration.name)
                     ? declaration.name.text
                     : "";
-            return {
+            const result: FunctionTypeDto = {
                 _: "FunctionType",
                 signature: {
                     declaringClass: UNKNOWN_CLASS_SIGNATURE,
@@ -718,6 +718,26 @@ export class TypeConverter {
                     returnType,
                 },
             };
+            const typeParameters = signature.getTypeParameters();
+            if (typeParameters !== undefined && typeParameters.length > 0) {
+                result.typeParameters = typeParameters.map((typeParameter): GenericTypeDto => {
+                    const binder: GenericTypeDto = { _: "GenericType", name: this.typeName(typeParameter) };
+
+                    const constraint = this.checker.getBaseConstraintOfType(typeParameter);
+                    if (constraint !== undefined) {
+                        binder.constraint = this.convertType(constraint, depth + 1);
+                    }
+
+                    const defaultType = this.checker.getDefaultFromTypeParameter(typeParameter);
+                    if (defaultType !== undefined) {
+                        binder.defaultType = this.convertType(defaultType, depth + 1);
+                    }
+
+                    return binder;
+                });
+            }
+
+            return result;
         } catch {
             return UNKNOWN_TYPE;
         }
