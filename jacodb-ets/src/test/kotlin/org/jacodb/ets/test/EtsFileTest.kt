@@ -62,6 +62,7 @@ class EtsFileTest {
     @Test
     fun `test sample TypeMismatch`() {
         val etsFile = load("TypeMismatch")
+
         etsFile.classes.forEach { cls ->
             cls.methods.forEach { method ->
                 when (method.name) {
@@ -86,6 +87,7 @@ class EtsFileTest {
         // instance initializer
         run {
             val method = cls.methods.single { it.name == INSTANCE_INIT_METHOD_NAME }
+
             assertEquals(3, method.cfg.stmts.size)
 
             // this := ThisRef
@@ -133,6 +135,7 @@ class EtsFileTest {
         // static initializer
         run {
             val method = cls.methods.single { it.name == STATIC_INIT_METHOD_NAME }
+
             assertEquals(3, method.cfg.stmts.size)
 
             // this := ThisRef

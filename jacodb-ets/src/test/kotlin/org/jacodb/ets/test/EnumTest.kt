@@ -30,10 +30,12 @@ class EnumTest {
     fun testEnum() {
         val path = "/samples/source/lang/enum.ts"
         val res = getResourcePath(path)
+
         val file = loadEtsFileAutoConvert(res)
 
         // Count enum classes
         val enumClasses = file.allClasses.filter { it.category == EtsClassCategory.ENUM }
+
         assertTrue(enumClasses.size >= 5, "File should have multiple enums")
 
         // Check for specific enum types
@@ -55,9 +57,11 @@ class EnumTest {
     fun testEnumEdgeCases() {
         val path = "/samples/source/lang/enum-edge-cases.ts"
         val res = getResourcePath(path)
+
         val file = loadEtsFileAutoConvert(res)
 
         val enumClasses = file.allClasses.filter { it.category == EtsClassCategory.ENUM }
+
         assertTrue(enumClasses.isNotEmpty(), "Edge cases file should have enums")
 
         // Check for specific edge case enums
@@ -79,9 +83,11 @@ class EnumTest {
     fun testEnumModules() {
         val path = "/samples/source/lang/enum-modules.ts"
         val res = getResourcePath(path)
+
         val file = loadEtsFileAutoConvert(res)
 
         val enumClasses = file.allClasses.filter { it.category == EtsClassCategory.ENUM }
+
         assertTrue(enumClasses.isNotEmpty(), "Modules file should have enums")
 
         // Check for exported enums
@@ -100,24 +106,29 @@ class EnumTest {
     fun testEnumUsageInClasses() {
         val path = "/samples/source/lang/enum.ts"
         val res = getResourcePath(path)
+
         val file = loadEtsFileAutoConvert(res)
 
         // Find class that uses enums
         val usageClass = file.allClasses.find { it.name == "EnumUsageExamples" }
+
         assertNotNull(usageClass, "Should find EnumUsageExamples class")
 
         // Verify the class has methods that work with enums
         val methods = usageClass.methods
+
         assertTrue(methods.any { it.name == "setColor" }, "Should have setColor method")
         assertTrue(methods.any { it.name == "getDirection" }, "Should have getDirection method")
         assertTrue(methods.any { it.name == "handleDirection" }, "Should have handleDirection method")
 
         // Check method parameter counts
         val setColorMethod = methods.find { it.name == "setColor" }
+
         assertNotNull(setColorMethod, "setColor method should exist")
         assertEquals(1, setColorMethod.parameters.size, "setColor should have 1 parameter")
 
         val getDirectionMethod = methods.find { it.name == "getDirection" }
+
         assertNotNull(getDirectionMethod, "getDirection method should exist")
         assertEquals(0, getDirectionMethod.parameters.size, "getDirection should have no parameters")
     }
@@ -126,6 +137,7 @@ class EnumTest {
     fun testEnumVsClassDistinction() {
         val path = "/samples/source/lang/enum.ts"
         val res = getResourcePath(path)
+
         val file = loadEtsFileAutoConvert(res)
 
         // Count different class categories
