@@ -21,6 +21,7 @@ import org.jacodb.ets.dto.ClassDto
 import org.jacodb.ets.dto.EtsFileDto
 import org.jacodb.ets.dto.IfStmtDto
 import org.jacodb.ets.dto.MethodDto
+import org.jacodb.ets.dto.NamespaceDto
 import org.jacodb.ets.dto.NopStmtDto
 import org.jacodb.ets.dto.StmtDto
 import java.io.File
@@ -39,8 +40,16 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
         lines += "  $x [fontname=\"JetBrains Mono,Source Code Pro,monospace\"];"
     }
 
+    fun qualifiedClassName(clazz: ClassDto): String {
+        val namespaceNames = generateSequence(clazz.signature.declaringNamespace) { it.declaringNamespace }
+            .toList()
+            .asReversed()
+            .map { it.name }
+        return (namespaceNames + clazz.signature.name).joinToString(".")
+    }
+
     fun classId(clazz: ClassDto): String {
-        return clazz.signature.name
+        return "class:${qualifiedClassName(clazz)}"
     }
 
     fun classLabel(clazz: ClassDto): String {
@@ -78,7 +87,7 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
     }
 
     fun methodId(clazz: ClassDto, method: MethodDto): String {
-        return "${clazz.signature.name}.${method.signature.name}"
+        return "method:${qualifiedClassName(clazz)}.${method.signature.name}"
     }
 
     fun methodLabel(clazz: ClassDto, method: MethodDto): String {
@@ -100,7 +109,7 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
         return labelLines.joinToString("") { "${it}\\l" }
     }
 
-    classes.forEach { clazz ->
+    fun renderClass(clazz: ClassDto) {
         // CLASS
         val c = classId(clazz)
         val clabel = classLabel(clazz)
@@ -165,7 +174,7 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
                             for ((j, succ) in bb.successors.withIndex()) {
                                 val b = blockId(clazz, method, bb.id)
                                 val bs = blockId(clazz, method, succ)
-                                val label = if (j == 0) "true" else "false"
+                                val label = if (j == 0) "false" else "true"
                                 lines += """  "${b}.${i}" -> "${bs}.0" [lhead="$bs", label="$label"];"""
                             }
                         }
@@ -182,6 +191,14 @@ fun EtsFileDto.toDot(useLR: Boolean = false): String {
             }
         }
     }
+
+    fun renderNamespace(namespace: NamespaceDto) {
+        namespace.classes.forEach(::renderClass)
+        namespace.namespaces.forEach { renderNamespace(it) }
+    }
+
+    classes.forEach(::renderClass)
+    namespaces.forEach(::renderNamespace)
 
     lines += "}"
     return lines.joinToString("\n")

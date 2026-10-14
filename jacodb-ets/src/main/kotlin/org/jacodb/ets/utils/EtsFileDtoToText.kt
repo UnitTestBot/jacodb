@@ -16,12 +16,14 @@
 
 package org.jacodb.ets.utils
 
+import org.jacodb.ets.dto.ClassDto
 import org.jacodb.ets.dto.EtsFileDto
+import org.jacodb.ets.dto.NamespaceDto
 
 fun EtsFileDto.toText(): String {
     val lines: MutableList<String> = mutableListOf()
     lines += "EtsFileDto '${signature}':"
-    classes.forEach { clazz ->
+    fun renderClass(clazz: ClassDto) {
         lines += "= CLASS '${clazz.signature}':"
         lines += "  superClass = '${clazz.superClassName}'"
         lines += "  typeParameters = ${clazz.typeParameters}"
@@ -56,5 +58,14 @@ fun EtsFileDto.toText(): String {
             }
         }
     }
+
+    fun renderNamespace(namespace: NamespaceDto) {
+        namespace.classes.forEach(::renderClass)
+        namespace.namespaces.forEach { renderNamespace(it) }
+    }
+
+    classes.forEach(::renderClass)
+    namespaces.forEach(::renderNamespace)
+
     return lines.joinToString("\n")
 }

@@ -43,9 +43,73 @@ import org.jacodb.ets.utils.toEtsBlockCfg
 import org.junit.jupiter.api.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class EtsCfgDslTest {
+    @Test
+    fun `program DOT gives repeated nop positions distinct nodes and stops at return`() {
+        val prog = program {
+            nop()
+            nop()
+            ret(const(0))
+            nop()
+        }
+
+        val dot = prog.toDot()
+
+        assertTrue(dot.contains("  0 -> 1"))
+        assertTrue(dot.contains("  1 -> 2"))
+        assertFalse(dot.contains("  0 -> 0"))
+        assertFalse(dot.contains("  2 -> 3"))
+    }
+
+    @Test
+    fun `program DOT joins both conditional branches without bypassing them`() {
+        val prog = program {
+            val i = local("i")
+
+            ifStmt(const(true)) {
+                assign(i, const(1))
+            }.`else` {
+                assign(i, const(2))
+            }
+            ret(i)
+        }
+
+        val dot = prog.toDot()
+
+        assertTrue(dot.contains("  0 -> 1 [label=\"true\"]"))
+        assertTrue(dot.contains("  0 -> 2 [label=\"false\"]"))
+        assertTrue(dot.contains("  1 -> 3"))
+        assertTrue(dot.contains("  2 -> 3"))
+        assertFalse(dot.contains("  0 -> 3"))
+    }
+
+    @Test
+    fun `program DOT labels empty branch continuation and goto has no fallthrough`() {
+        val prog = program {
+            val i = local("i")
+
+            ifStmt(const(true)) {
+                assign(i, const(1))
+            }
+            goto("done")
+            nop()
+            label("done")
+            ret(i)
+        }
+
+        val dot = prog.toDot()
+
+        assertTrue(dot.contains("  0 -> 1 [label=\"true\"]"))
+        assertTrue(dot.contains("  0 -> 2 [label=\"false\"]"))
+        assertTrue(dot.contains("  1 -> 2"))
+        assertTrue(dot.contains("  2 -> 4"))
+        assertFalse(dot.contains("  2 -> 3"))
+    }
+
     @Test
     fun `block CFG rejects successor IDs equal to block count`() {
         val method = EtsMethodImpl(
