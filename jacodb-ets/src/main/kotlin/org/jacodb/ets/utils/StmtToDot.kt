@@ -18,6 +18,9 @@ package org.jacodb.ets.utils
 
 import org.jacodb.ets.model.EtsAssignStmt
 import org.jacodb.ets.model.EtsCallStmt
+import org.jacodb.ets.model.EtsCopyDataPropertiesStmt
+import org.jacodb.ets.model.EtsDefineAccessorStmt
+import org.jacodb.ets.model.EtsDefineDataPropertyStmt
 import org.jacodb.ets.model.EtsIfStmt
 import org.jacodb.ets.model.EtsNopStmt
 import org.jacodb.ets.model.EtsRawStmt
@@ -33,8 +36,9 @@ internal fun EtsStmt.toDotLabel(): String {
         is EtsThrowStmt -> "throw $exception"
         is EtsIfStmt -> "if ($condition)"
         is EtsCallStmt -> "call $expr"
+        is EtsDefineDataPropertyStmt, is EtsCopyDataPropertiesStmt, is EtsDefineAccessorStmt -> toString()
         is EtsRawStmt -> "raw $kind"
         else -> error("Unsupported statement: $this")
     }
-    return label.replace("\"", "\\\"")
+    return label
 }

@@ -101,7 +101,7 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
         val h = sanitize(stmt.hashCode())
         val clusterName = "cluster_${h}_B${parentBlock}"
         // method signature label
-        val methodSig = cfg.entries.first().location.method.signature
+        val methodSig = cfg.entries.first().location.method.signature.toString().dotQuoteEncode()
         // open subgraph
         lines += "  subgraph \"$clusterName\" {"
         lines += "    label=\"$methodSig\";"
@@ -181,7 +181,7 @@ private fun buildPlainLabel(
             in pathStmts -> "[·] "
             else -> ""
         }
-        "$pfx$raw\\l"
+        "${(pfx + raw).dotQuoteEncode()}\\l"
     }
     return "Block #${block.id}\\n" + body
 }

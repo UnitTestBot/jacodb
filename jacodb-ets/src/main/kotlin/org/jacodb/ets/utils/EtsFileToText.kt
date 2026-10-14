@@ -21,7 +21,7 @@ import org.jacodb.ets.model.EtsFile
 fun EtsFile.toText(): String {
     val lines: MutableList<String> = mutableListOf()
     lines += "EtsFile '${signature}':"
-    classes.forEach { clazz ->
+    allClasses.forEach { clazz ->
         lines += "= CLASS '${clazz.signature}':"
         lines += "  typeParameters = ${clazz.typeParameters}"
         lines += "  modifiers = ${clazz.modifiers}"
