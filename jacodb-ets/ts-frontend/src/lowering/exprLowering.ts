@@ -549,6 +549,10 @@ export class ExprLowerer {
     private lowerOptionalChainCallee(root: ts.CallExpression): OptionalChainValue {
         const callee = unwrapTransparentExpression(root.expression);
         if (ts.isPropertyAccessExpression(callee) || ts.isElementAccessExpression(callee)) {
+            if (callee.expression.kind === ts.SyntaxKind.SuperKeyword) {
+                throw new LoweringError("optional super property call needs superclass-relative property lookup");
+            }
+
             if (ts.isPropertyAccessExpression(callee)
                 && this.importedScopeFunctionField(callee) !== undefined) {
                 throw new LoweringError("module namespace call receiver is not represented in EtsIR");

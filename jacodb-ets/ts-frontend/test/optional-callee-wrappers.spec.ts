@@ -1,8 +1,9 @@
 import { runInNewContext } from "node:vm";
 import * as ts from "typescript";
 import { describe, expect, it } from "vitest";
+import { StmtDto } from "../src/dto/stmts";
 import { executeObjectIr } from "./object-runtime";
-import { lower } from "./util";
+import { lower, methodByName } from "./util";
 
 function executions(source: string): ((...args: unknown[]) => unknown)[] {
     const { file, diagnostics } = lower(source);
@@ -14,6 +15,21 @@ function executions(source: string): ((...args: unknown[]) => unknown)[] {
     expect(diagnostics.messages).toEqual([]);
     const native = runInNewContext(`${javascript}\nexports.value`, { exports: {} });
     return [native, (...args) => executeObjectIr(serialized, "value", args)];
+}
+
+function emitsCall(stmt: StmtDto): boolean {
+    if (stmt._ === "CallStmt") return true;
+    if (stmt._ !== "AssignStmt") return false;
+
+    const kind = stmt.right._;
+    return kind === "StaticCallExpr" || kind === "InstanceCallExpr" || kind === "PtrCallExpr";
+}
+
+function emitsPropertyRead(stmt: StmtDto): boolean {
+    if (stmt._ !== "AssignStmt") return false;
+
+    const kind = stmt.right._;
+    return kind === "InstanceFieldRef" || kind === "PropertyRef" || kind === "ArrayRef";
 }
 
 describe("transparent optional callees", () => {
@@ -168,5 +184,85 @@ describe("transparent optional callees", () => {
             expect(thrown).toHaveProperty("name", "TypeError");
             expect(state.order).toBe(expectedOrder);
         }
+    });
+});
+
+describe("optional super callees", () => {
+    it.each([
+        { call: "super.m?.()", kindName: "CallExpression", typeKind: "NumberType" },
+        { call: "(super.m as any)?.()", kindName: "CallExpression", typeKind: "AnyType" },
+        { call: "super['m']?.()", kindName: "CallExpression", typeKind: "NumberType" },
+        {
+            call: "(super[this.key()] as any)?.(this.argument())",
+            kindName: "CallExpression",
+            typeKind: "AnyType",
+        },
+        { call: "super.m?.().toString()", kindName: "CallExpression", typeKind: "StringType" },
+    ])("uses an explicit fallback before lowering the property or call: $call", ({ call, kindName, typeKind }) => {
+        const source = `
+            class Base { m(): number { return 1; } }
+            class Derived extends Base {
+                override m(): number { return 2; }
+                key(): "m" { return "m"; }
+                argument(): number { return 0; }
+                f(): unknown { return ${call}; }
+            }
+        `;
+
+        const { file, diagnostics } = lower(source);
+        const body = methodByName(file, "f").body!;
+        const stmts = body.cfg.blocks.flatMap((block) => block.stmts);
+        const rawAssign = stmts.find((stmt): stmt is Extract<StmtDto, { _: "AssignStmt" }> =>
+            stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue",
+        );
+        const startOffset = source.indexOf(call);
+        const precedingLines = source.slice(0, startOffset).split("\n");
+        const line = precedingLines.length;
+        const column = precedingLines[precedingLines.length - 1].length + 1;
+        const rawOrigin = body.stmtOrigins?.find(({ blockId, stmtIndex }) =>
+            body.cfg.blocks[blockId].stmts[stmtIndex] === rawAssign,
+        );
+
+        expect(diagnostics.messages).toEqual([
+            `test.ts:${line}:${column}: unsupported expression: optional super property call needs superclass-relative property lookup`,
+        ]);
+        expect(rawAssign).toBeDefined();
+        expect(rawAssign?.right).toEqual({
+            _: "UnsupportedValue",
+            kindName,
+            text: call,
+            type: { _: typeKind },
+        });
+        expect(rawOrigin?.source).toMatchObject({
+            startOffset,
+            endOffset: startOffset + call.length,
+            nodeKind: kindName,
+        });
+        expect(stmts.some(emitsPropertyRead)).toBe(false);
+        expect(stmts.some(emitsCall)).toBe(false);
+    });
+
+    it("still lowers an ordinary super call before optional invocation of its result", () => {
+        const source = `
+            class Base { m(): () => number { return () => 1; } }
+            class Derived extends Base {
+                override m(): () => number { return () => 2; }
+                f(): number | undefined {
+                    const direct = super.m();
+                    return super.m()?.();
+                }
+            }
+        `;
+
+        const { file, diagnostics } = lower(source);
+        const stmts = methodByName(file, "f").body!.cfg.blocks.flatMap((block) => block.stmts);
+        const superCalls = stmts.filter((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "InstanceCallExpr"
+            && stmt.right.isSuperCall === true);
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(superCalls).toHaveLength(2);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue"))
+            .toBe(false);
     });
 });
