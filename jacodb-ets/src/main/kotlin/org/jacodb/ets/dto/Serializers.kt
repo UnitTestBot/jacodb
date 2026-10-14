@@ -120,6 +120,14 @@ object RawStmtSerializer : KSerializer<RawStmtDto> {
     override fun deserialize(decoder: Decoder): RawStmtDto {
         require(decoder is JsonDecoder)
         val element = decoder.decodeJsonElement().jsonObject
+        val discriminator = element["_"]?.jsonPrimitive?.content
+        val isDirectRawEnvelope = discriminator == null &&
+            element.keys == setOf("kind", "extra") && element["extra"] is JsonObject
+        if (discriminator == "RawStmt" || isDirectRawEnvelope) {
+            val payload = JsonObject(element.filterKeys { it != "_" })
+            return decoder.json.decodeFromJsonElement(serializer, payload)
+        }
+
         if ("_" in element.keys) {
             val kind = element.getValue("_").jsonPrimitive.content
             val details = element.toMutableMap()
@@ -146,6 +154,14 @@ object RawValueSerializer : KSerializer<RawValueDto> {
     override fun deserialize(decoder: Decoder): RawValueDto {
         require(decoder is JsonDecoder)
         val element = decoder.decodeJsonElement().jsonObject
+        val discriminator = element["_"]?.jsonPrimitive?.content
+        val isDirectRawEnvelope = discriminator == null &&
+            element.keys == setOf("kind", "extra", "type") && element["extra"] is JsonObject
+        if (discriminator == "RawValue" || isDirectRawEnvelope) {
+            val payload = JsonObject(element.filterKeys { it != "_" })
+            return decoder.json.decodeFromJsonElement(serializer, payload)
+        }
+
         if ("_" in element.keys) {
             val kind = element.getValue("_").jsonPrimitive.content
             val type = decoder.json.decodeFromJsonElement<TypeDto>(element.getValue("type"))
@@ -176,6 +192,14 @@ object RawTypeSerializer : KSerializer<RawTypeDto> {
     override fun deserialize(decoder: Decoder): RawTypeDto {
         require(decoder is JsonDecoder)
         val element = decoder.decodeJsonElement().jsonObject
+        val discriminator = element["_"]?.jsonPrimitive?.content
+        val isDirectRawEnvelope = discriminator == null &&
+            element.keys == setOf("kind", "extra") && element["extra"] is JsonObject
+        if (discriminator == "RawType" || isDirectRawEnvelope) {
+            val payload = JsonObject(element.filterKeys { it != "_" })
+            return decoder.json.decodeFromJsonElement(serializer, payload)
+        }
+
         if ("_" in element.keys) {
             val kind = element.getValue("_").jsonPrimitive.content
             val details = element.toMutableMap()
