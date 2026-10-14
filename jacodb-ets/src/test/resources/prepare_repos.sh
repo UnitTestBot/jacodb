@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-cd "$(dirname $0)"
+cd "$(dirname "$0")"
 mkdir -p repos
 cd repos
 
@@ -10,15 +10,16 @@ function prepare_repo() {
     echo "Usage: prepare_repo <repo>"
     exit 1
   fi
-  REPO=$1
-  DIR=$(basename -s .git $(git ls-remote --get-url $REPO))
-  echo "Preparing repository: $REPO"
-  if [[ ! -d $DIR ]]; then
+  local repo=$1
+  local dir
+  dir=$(basename -s .git "$(git ls-remote --get-url "$repo")")
+  echo "Preparing repository: $repo"
+  if [[ ! -d $dir ]]; then
     echo "Cloning..."
-    git clone $REPO
+    git clone "$repo"
   else
-    echo "Directory '$DIR' already exists. Pulling latest changes..."
-    git -C $DIR pull &
+    echo "Directory '$dir' already exists. Pulling latest changes..."
+    git -C "$dir" pull
   fi
 }
 
@@ -36,5 +37,3 @@ prepare_repo https://gitcode.com/openharmony/applications_screenlock
 prepare_repo https://gitcode.com/openharmony/applications_settings
 prepare_repo https://gitcode.com/openharmony/applications_settings_data
 prepare_repo https://gitcode.com/openharmony/applications_systemui
-
-wait

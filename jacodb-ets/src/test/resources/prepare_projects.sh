@@ -1,14 +1,14 @@
-#/bin/bash
+#!/bin/bash
 set -euo pipefail
 
-if [[ -z "${ARKANALYZER_DIR}" ]]; then
+if [[ -z "${ARKANALYZER_DIR:-}" ]]; then
   echo "ARKANALYZER_DIR is undefined"
   exit 1
 fi
 
 echo "ARKANALYZER_DIR=${ARKANALYZER_DIR}"
-SCRIPT_TS=$ARKANALYZER_DIR/src/save/serializeArkIR.ts
-SCRIPT_JS=$ARKANALYZER_DIR/out/src/save/serializeArkIR.js
+SCRIPT_TS="$ARKANALYZER_DIR/src/save/serializeArkIR.ts"
+SCRIPT_JS="$ARKANALYZER_DIR/out/src/save/serializeArkIR.js"
 
 if [[ ! -f $SCRIPT_JS ]]; then
   echo "Script not found: $SCRIPT_JS"
@@ -36,7 +36,7 @@ while getopts ":f" opt; do
   esac
 done
 
-cd "$(dirname $0)"
+cd "$(dirname "$0")"
 mkdir -p projects
 cd projects
 
@@ -51,24 +51,73 @@ function check_repo() {
   fi
 }
 
+function finish_project() {
+  local status=$1
+  local backup_dir=""
+  trap - EXIT
+
+  if [[ $status -ne 0 ]]; then
+    if ! rm -rf "$STAGING_PROJECT"; then
+      echo "Could not remove failed staging project: $STAGING_PROJECT" >&2
+    fi
+    exit "$status"
+  fi
+
+  if ! touch "$STAGING_PROJECT/.prepared"; then
+    rm -rf "$STAGING_PROJECT"
+    exit 1
+  fi
+
+  if [[ -e $PROJECT_TARGET || -L $PROJECT_TARGET ]]; then
+    backup_dir=$(mktemp -d "$WORK_DIR/.${PROJECT_NAME}.backup.XXXXXX") || {
+      rm -rf "$STAGING_PROJECT"
+      exit 1
+    }
+    if ! mv "$PROJECT_TARGET" "$backup_dir/previous"; then
+      rm -rf "$STAGING_PROJECT" "$backup_dir"
+      exit 1
+    fi
+  fi
+
+  if ! mv "$STAGING_PROJECT" "$PROJECT_TARGET"; then
+    if [[ -n $backup_dir ]]; then
+      if mv "$backup_dir/previous" "$PROJECT_TARGET"; then
+        rm -rf "$backup_dir"
+      else
+        echo "Could not restore project; previous output remains at: $backup_dir/previous" >&2
+      fi
+    fi
+    rm -rf "$STAGING_PROJECT"
+    exit 1
+  fi
+
+  if [[ -n $backup_dir ]]; then
+    rm -rf "$backup_dir"
+  fi
+}
+
 function prepare_project_dir() {
   if [[ $# -ne 1 ]]; then
     echo "Usage: prepare_project <name>"
     exit 1
   fi
-  NAME=$1
+  local name=$1
   echo
-  echo "=== Preparing project: $NAME"
+  echo "=== Preparing project: $name"
   echo
-  if [[ -d $NAME ]]; then
-    echo "Directory already exists: $NAME"
-    # If `-f` (force mode) is not provided, exit the preparation for this project:
-    if [[ $do_force -eq 0 ]]; then
-      exit
-    fi
+  if [[ -d $name && -f $name/.prepared && $do_force -eq 0 ]]; then
+    echo "Project already prepared: $name"
+    exit 0
   fi
-  mkdir -p $NAME
-  cd $NAME
+
+  PROJECTS_DIR=$PWD
+  PROJECT_NAME=$name
+  PROJECT_TARGET="$PROJECTS_DIR/$name"
+  WORK_DIR="$(dirname "$PROJECTS_DIR")/.project-work"
+  mkdir -p "$WORK_DIR"
+  STAGING_PROJECT=$(mktemp -d "$WORK_DIR/.${name}.staging.XXXXXX")
+  trap 'finish_project "$?"' EXIT
+  cd "$STAGING_PROJECT"
 }
 
 function prepare_module() {
@@ -76,19 +125,26 @@ function prepare_module() {
     echo "Usage: prepare_module <module> <root>"
     exit 1
   fi
-  local MODULE=$1
-  local ROOT=$2
-  echo "= Preparing module: $MODULE"
-  local SRC="source/$MODULE"
-  local ETSIR="etsir/$MODULE"
-  mkdir -p $(dirname $SRC)
+  local module=$1
+  local root=$2
+  local source="source/$module"
+  local etsir="etsir/$module"
+  local source_dir
+
+  echo "= Preparing module: $module"
+  source_dir=$(cd "$root/src/main/ets" && pwd -P)
+  mkdir -p "$(dirname "$source")"
   echo "Linking sources..."
   echo "pwd = $(pwd)"
-  ln -srfT "$ROOT/src/main/ets" $SRC
+  ln -s "$source_dir" "$source"
   echo "Serializing..."
   # TODO: add switch for using npx/node
-  # npx ts-node --files --transpileOnly $SCRIPT_TS -p $SRC $ETSIR -v -t 1
-  node $SCRIPT_JS -p $SRC $ETSIR -v -t 1
+  # npx ts-node --files --transpileOnly "$SCRIPT_TS" -p "$source" "$etsir" -v -t 1
+  node "$SCRIPT_JS" -p "$source" "$etsir" -v -t 1
+  if [[ ! -d $etsir ]]; then
+    echo "Serializer did not create output: $etsir" >&2
+    return 1
+  fi
 }
 
 (
