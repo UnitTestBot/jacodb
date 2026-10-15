@@ -38,7 +38,7 @@ import {
     PATTERN_PARAMETER_PREFIX,
 } from "../dto/constants";
 import { FieldDto, MethodDto } from "../dto/model";
-import { bindingIdentifier, buildParameters, BuiltParameters, classLikeDeclarationOf, memberName, modifiersOf, returnTypeOf } from "./astUtils";
+import { bindingIdentifier, buildParameters, BuiltParameters, classLikeDeclarationOf, memberName, modifiersOf, returnTypeOf, unsupportedClassDeclarationReason } from "./astUtils";
 import { BinaryOp, RelationOp, UnaryOp } from "../dto/ops";
 import {
     ClassSignatureDto,
@@ -381,6 +381,11 @@ export class ExprLowerer {
         if (declaration !== undefined && ts.isClassDeclaration(declaration) &&
             isProjectFile(declaration) &&
             (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent))) {
+            const unsupportedReason = unsupportedClassDeclarationReason(declaration, this.m.checker);
+            if (unsupportedReason !== undefined) {
+                throw new LoweringError(`class value has no EtsIR representation: ${unsupportedReason}`);
+            }
+
             const signature = this.m.converter.classSignatureOf(declaration);
             return { _: "ClassValueRef", signature, type: { _: "ClassValueType", signature } };
         }
@@ -1991,6 +1996,13 @@ export class ExprLowerer {
 
         const decl = classLikeDeclarationOf(value, this.m.checker);
         if (decl === undefined) return undefined;
+        const unsupportedReason = ts.isClassDeclaration(decl) && isProjectFile(decl)
+            ? unsupportedClassDeclarationReason(decl, this.m.checker)
+            : undefined;
+        if (unsupportedReason !== undefined) {
+            throw new LoweringError(`class value has no EtsIR representation: ${unsupportedReason}`);
+        }
+
         if (isProjectFile(decl)) {
             return this.m.converter.classSignatureOf(decl);
         }

@@ -42,7 +42,7 @@ import { ClassDto, EtsFileDto, ExportInfoDto, FieldDto, ImportInfoDto, MethodDto
 import { ClassSignatureDto, FileSignatureDto, NamespaceSignatureDto } from "../dto/signatures";
 import { VOID_TYPE } from "../dto/types";
 import { TypeConverter } from "../types/convert";
-import { classValueDeclarationOf, exportAssignmentSupport, modifiersOf, scopeFunctionImplementation, scopeFunctionType } from "./astUtils";
+import { classValueDeclarationOf, exportAssignmentSupport, modifiersOf, scopeFunctionImplementation, scopeFunctionType, unsupportedClassDeclarationReason } from "./astUtils";
 import { ClassBuilder } from "./classBuilder";
 import { Diagnostics } from "./diagnostics";
 import { AnonymousRegistry, LoweringContext, MethodContext } from "./methodBuilder";
@@ -218,6 +218,11 @@ class FileBuilder {
     private buildExportInfos(sourceFile: ts.SourceFile): ExportInfoDto[] {
         const infos: ExportInfoDto[] = [];
         for (const statement of sourceFile.statements) {
+            if (ts.isClassDeclaration(statement)
+                && unsupportedClassDeclarationReason(statement, this.ctx.checker) !== undefined) {
+                continue;
+            }
+
             // Exported declarations: `export class C {}`, `export function f() {}`, ...
             const modifiers = modifiersOf(statement);
             if ((modifiers & Modifier.EXPORT) !== 0) {
@@ -261,6 +266,12 @@ class FileBuilder {
                     infos.push(info);
                 } else if (ts.isNamedExports(statement.exportClause)) {
                     for (const element of statement.exportClause.elements) {
+                        const exportedClass = classValueDeclarationOf(element.name, this.ctx.checker);
+                        if (exportedClass !== undefined
+                            && unsupportedClassDeclarationReason(exportedClass, this.ctx.checker) !== undefined) {
+                            continue;
+                        }
+
                         const info: ExportInfoDto = {
                             exportName: element.name.text,
                             exportType: this.exportTypeOfSymbol(element.name),
@@ -288,6 +299,12 @@ class FileBuilder {
             }
             // `export default <expr>;` stores a snapshot in `%dflt.default`.
             if (ts.isExportAssignment(statement)) {
+                const exportedClass = classValueDeclarationOf(statement.expression, this.ctx.checker);
+                if (exportedClass !== undefined
+                    && unsupportedClassDeclarationReason(exportedClass, this.ctx.checker) !== undefined) {
+                    continue;
+                }
+
                 if (exportAssignmentSupport(statement, this.ctx.checker) !== "supported") {
                     const name = ts.isIdentifier(statement.expression) ? statement.expression.text : "default";
                     infos.push({
@@ -356,7 +373,9 @@ class FileBuilder {
                     methods.push(this.classBuilder.buildMethodFromDecl(defaultClassSignature, statement, name));
                 }
             } else if (ts.isClassDeclaration(statement)) {
-                classes.push(this.classBuilder.buildClass(statement, anonymousDefaultExportBinding(statement)));
+                if (unsupportedClassDeclarationReason(statement, this.ctx.checker) === undefined) {
+                    classes.push(this.classBuilder.buildClass(statement, anonymousDefaultExportBinding(statement)));
+                }
             } else if (ts.isInterfaceDeclaration(statement)) {
                 classes.push(this.classBuilder.buildInterface(statement));
             } else if (ts.isEnumDeclaration(statement)) {

@@ -2,10 +2,10 @@ import * as ts from "typescript";
 import { describe, expect, it } from "vitest";
 import { Modifier } from "../src/dto/constants";
 import { ClassDto, EtsFileDto, MethodDto } from "../src/dto/model";
-import { StmtDto } from "../src/dto/stmts";
+import { RawStmtDto, StmtDto } from "../src/dto/stmts";
 import { InstanceCallExprDto } from "../src/dto/values";
 import { serializeEtsFile } from "../src/serialize";
-import { compile, lower, singleBlockStmts } from "./util";
+import { compile, lower, lowerProject, singleBlockStmts } from "./util";
 
 const FILE_SIG = { projectName: "proj", fileName: "test.ts" };
 
@@ -33,6 +33,172 @@ function constructorCallOf(stmt: StmtDto): InstanceCallExprDto | undefined {
 }
 
 describe("class lowering", () => {
+    it("keeps computed class declarations wholly raw before claiming class storage", () => {
+        const { file, diagnostics } = lower(`
+            let evaluations = 0;
+            function key(): "dynamic" { evaluations++; return "dynamic"; }
+            export class Constant { ["x"] = 1; }
+            class SideEffect { [key()] = 2; }
+            class StaticKey { static [key()] = 3; }
+            class NoInitializer { [key()]: number; }
+            class ComputedMethod { [key()](): number { return 4; } }
+            class ComputedAccessor { get [key()](): number { return 5; } }
+            class Supported { x = 6; }
+            export function refer(): typeof Constant { return Constant; }
+            export default Constant;
+        `);
+        const rejected = ["Constant", "SideEffect", "StaticKey", "NoInitializer", "ComputedMethod", "ComputedAccessor"];
+        const defaultBody = methodOf(classByName(file, "%dflt"), "%dflt").body!;
+        const referenceBody = methodOf(classByName(file, "%dflt"), "refer").body!;
+        const rawClasses = defaultBody.cfg.blocks.flatMap((block) => block.stmts)
+            .map((stmt) => stmt as RawStmtDto)
+            .filter((stmt) => stmt._ === "UnsupportedStmt" && stmt.kindName === "ClassDeclaration");
+
+        expect(rawClasses).toHaveLength(rejected.length);
+        expect(rawClasses.map((stmt) => stmt.text))
+            .toEqual(rejected.map((name) => expect.stringContaining(`class ${name}`)));
+        expect(defaultBody.stmtOrigins?.filter((origin) => origin.source.nodeKind === "ClassDeclaration"))
+            .toHaveLength(rejected.length);
+        expect(file.classes.filter((clazz) => rejected.includes(clazz.signature.name))).toEqual([]);
+        expect(file.classes.flatMap((clazz) => clazz.fields).some((field) => field.signature.name === "%computed"))
+            .toBe(false);
+        expect(file.exportInfos.some((info) => info.exportName === "Constant")).toBe(false);
+        expect(file.exportInfos.some((info) => info.exportName === "default")).toBe(false);
+        expect(defaultBody.cfg.blocks.flatMap((block) => block.stmts))
+            .toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ExportAssignment" }));
+        expect(referenceBody.cfg.blocks.flatMap((block) => block.stmts).some((stmt) =>
+            stmt._ === "ReturnStmt" && stmt.arg._ === "ClassValueRef",
+        )).toBe(false);
+        expect(referenceBody.cfg.blocks.flatMap((block) => block.stmts))
+            .toContainEqual(expect.objectContaining({ _: "AssignStmt", right: expect.objectContaining({ _: "UnsupportedValue" }) }));
+        expect(classByName(file, "Supported").fields[0].signature.name).toBe("x");
+        expect(diagnostics.messages.filter((message) => message.includes("unsupported statement: computed class member")))
+            .toHaveLength(rejected.length);
+    });
+
+    it("rejects derived declarations transitively when a computed base has no class DTO", () => {
+        const source = `
+            export class Base { ["x"] = 1; }
+            export class Derived extends Base { own = 2; }
+            export class Grandchild extends Derived {}
+            class OrdinaryBase { value = 3; }
+            export class OrdinaryDerived extends OrdinaryBase {}
+            export function refer(): typeof Derived { return Derived; }
+        `;
+        const { file, diagnostics } = lower(source);
+        const defaultBody = methodOf(classByName(file, "%dflt"), "%dflt").body!;
+        const rejected = ["Base", "Derived", "Grandchild"];
+        const rawClasses = defaultBody.cfg.blocks.flatMap((block) => block.stmts)
+            .map((stmt) => stmt as RawStmtDto)
+            .filter((stmt) => stmt._ === "UnsupportedStmt" && stmt.kindName === "ClassDeclaration");
+        const rawOrigins = defaultBody.stmtOrigins?.filter((origin) => origin.source.nodeKind === "ClassDeclaration") ?? [];
+
+        expect(rawClasses).toHaveLength(rejected.length);
+        expect(rawOrigins.map((origin) => source.slice(origin.source.startOffset, origin.source.endOffset)))
+            .toEqual(rejected.map((name) => expect.stringContaining(`class ${name}`)));
+        expect(file.classes.filter((clazz) => rejected.includes(clazz.signature.name))).toEqual([]);
+        expect(file.exportInfos.filter((info) => rejected.includes(info.exportName))).toEqual([]);
+        expect(file.classes.flatMap((clazz) => clazz.methods).some((method) =>
+            method.signature.name === "constructor"
+            && rejected.includes(method.signature.declaringClass.name),
+        )).toBe(false);
+        expect(methodOf(classByName(file, "%dflt"), "refer").body!.cfg.blocks.flatMap((block) => block.stmts))
+            .toContainEqual(expect.objectContaining({ _: "AssignStmt", right: expect.objectContaining({ _: "UnsupportedValue" }) }));
+        expect(classByName(file, "OrdinaryDerived").superClassName).toBe("OrdinaryBase");
+        expect(diagnostics.messages.filter((message) => message.includes("unsupported statement: ")))
+            .toHaveLength(rejected.length);
+    });
+
+    it("rejects a derived declaration through an imported base alias", () => {
+        const { file, diagnostics } = lowerProject({
+            "/base.ts": `export class Base { ["x"] = 1; }`,
+            "/consumer.ts": `
+                import { Base as ImportedBase } from "./base";
+                export class Derived extends ImportedBase {}
+                class Grandchild extends Derived {}
+                class OrdinaryBase {}
+                class OrdinaryDerived extends OrdinaryBase {}
+            `,
+        }, "/consumer.ts");
+        const defaultBody = methodOf(classByName(file, "%dflt"), "%dflt").body!;
+        const rawClasses = defaultBody.cfg.blocks.flatMap((block) => block.stmts)
+            .map((stmt) => stmt as RawStmtDto)
+            .filter((stmt) => stmt._ === "UnsupportedStmt" && stmt.kindName === "ClassDeclaration");
+
+        expect(rawClasses).toHaveLength(2);
+        expect(file.classes.some((clazz) => clazz.signature.name === "Derived" || clazz.signature.name === "Grandchild"))
+            .toBe(false);
+        expect(file.exportInfos.some((info) => info.exportName === "Derived")).toBe(false);
+        expect(classByName(file, "OrdinaryDerived").superClassName).toBe("OrdinaryBase");
+        expect(diagnostics.messages.filter((message) => message.includes("base class"))).toHaveLength(2);
+    });
+
+    it("keeps local value and mutable extends aliases raw instead of inventing a fixed base", () => {
+        const source = `
+            class Base { ["x"] = 1; }
+            const Alias = Base;
+            export class Derived extends Alias {}
+            export class Grandchild extends Derived {}
+            let Mutable = Base;
+            export class ViaMutable extends Mutable {}
+            const Expression = class extends Base {};
+            class OrdinaryBase {}
+            class OrdinaryDerived extends OrdinaryBase {}
+        `;
+        const { file, diagnostics } = lower(source);
+        const defaultBody = methodOf(classByName(file, "%dflt"), "%dflt").body!;
+        const rejected = ["Base", "Derived", "Grandchild", "ViaMutable"];
+        const rawClasses = defaultBody.cfg.blocks.flatMap((block) => block.stmts)
+            .map((stmt) => stmt as RawStmtDto)
+            .filter((stmt) => stmt._ === "UnsupportedStmt" && stmt.kindName === "ClassDeclaration");
+        const rawOrigins = defaultBody.stmtOrigins?.filter((origin) => origin.source.nodeKind === "ClassDeclaration") ?? [];
+
+        expect(rawClasses).toHaveLength(rejected.length);
+        expect(rawOrigins.map((origin) => source.slice(origin.source.startOffset, origin.source.endOffset)))
+            .toEqual(rejected.map((name) => expect.stringContaining(`class ${name}`)));
+        expect(file.classes.filter((clazz) => rejected.includes(clazz.signature.name))).toEqual([]);
+        expect(file.exportInfos.filter((info) => rejected.includes(info.exportName))).toEqual([]);
+        expect(file.classes.some((clazz) => clazz.signature.name.startsWith("%ACExpr"))).toBe(false);
+        expect(defaultBody.cfg.blocks.flatMap((block) => block.stmts))
+            .toContainEqual(expect.objectContaining({ _: "AssignStmt", right: expect.objectContaining({ _: "UnsupportedValue" }) }));
+        expect(classByName(file, "OrdinaryDerived").superClassName).toBe("OrdinaryBase");
+        expect(diagnostics.messages.filter((message) => message.includes("unsupported statement: ")))
+            .toHaveLength(rejected.length);
+        expect(diagnostics.messages.some((message) => message.includes("class expression heritage"))).toBe(true);
+    });
+
+    it("keeps inferred literal field types when the checker retains them", () => {
+        const { file, diagnostics } = lower(`
+            class Kinds {
+                readonly fixed = "ok";
+                pinned = "ok" as const;
+                mutable = "ok";
+                readFixed() { return this.fixed; }
+                readPinned() { return this.pinned; }
+                readMutable() { return this.mutable; }
+            }
+        `);
+        const kinds = classByName(file, "Kinds");
+        const fieldType = (name: string) => kinds.fields.find((field) => field.signature.name === name)?.signature.type;
+        const readType = (name: string) => {
+            const statements = methodOf(kinds, name).body!.cfg.blocks.flatMap((block) => block.stmts);
+            for (const statement of statements) {
+                if (statement._ === "AssignStmt" && statement.right._ === "InstanceFieldRef") {
+                    return statement.right.field.type;
+                }
+            }
+            return undefined;
+        };
+
+        expect(fieldType("fixed")).toEqual({ _: "LiteralType", literal: "ok" });
+        expect(fieldType("pinned")).toEqual({ _: "LiteralType", literal: "ok" });
+        expect(fieldType("mutable")).toEqual({ _: "StringType" });
+        expect(readType("readFixed")).toEqual(fieldType("fixed"));
+        expect(readType("readPinned")).toEqual(fieldType("pinned"));
+        expect(readType("readMutable")).toEqual(fieldType("mutable"));
+        expect(diagnostics.messages).toEqual([]);
+    });
+
     it("creates a fresh class expression value with constructor and field initializer", () => {
         const source = `
             export function value(): number {

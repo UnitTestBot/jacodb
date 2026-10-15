@@ -30,6 +30,37 @@ export function memberName(name: ts.PropertyName | ts.BindingName | ts.EntityNam
     return COMPUTED_MEMBER_NAME;
 }
 
+/** Reject unsupported members, unsupported bases, and runtime base values without a stable class declaration. */
+export function unsupportedClassDeclarationReason(decl: ts.ClassDeclaration, checker: ts.TypeChecker): string | undefined {
+    const visited = new Set<ts.ClassDeclaration>();
+    const reasonOf = (current: ts.ClassDeclaration): string | undefined => {
+        if (visited.has(current)) return undefined;
+        visited.add(current);
+
+        const hasComputedMember = current.members.some((member) =>
+            member.name !== undefined && ts.isComputedPropertyName(member.name));
+        if (hasComputedMember) return "computed class member needs definition-time key evaluation";
+
+        const extendsType = current.heritageClauses
+            ?.find((clause) => clause.token === ts.SyntaxKind.ExtendsKeyword)
+            ?.types[0];
+        if (extendsType === undefined) return undefined;
+
+        const base = classLikeDeclarationOf(extendsType.expression, checker);
+        if (base === undefined || !ts.isClassDeclaration(base)) {
+            return `base expression '${extendsType.expression.getText()}' has no directly resolved class declaration`;
+        }
+        if (base.getSourceFile().isDeclarationFile) {
+            return undefined;
+        }
+
+        const baseReason = reasonOf(base);
+        return baseReason === undefined ? undefined : `base class '${base.name?.getText() ?? "<anonymous>"}' is unsupported: ${baseReason}`;
+    };
+
+    return reasonOf(decl);
+}
+
 export function modifiersOf(node: ts.Node): number {
     const flags = ts.getCombinedModifierFlags(node as ts.Declaration);
     let result = 0;
@@ -147,7 +178,9 @@ function isUnmaterializedValue(identifier: ts.Identifier, checker: ts.TypeChecke
     const hasScopeFunctionBody = scopeFunctionImplementation(symbol) !== undefined;
 
     return symbol?.declarations?.some((declaration) =>
-        (ts.isClassDeclaration(declaration) && declaration.getSourceFile().isDeclarationFile)
+        (ts.isClassDeclaration(declaration)
+            && (declaration.getSourceFile().isDeclarationFile
+                || unsupportedClassDeclarationReason(declaration, checker) !== undefined))
         || (ts.isFunctionDeclaration(declaration)
             && !hasScopeFunctionBody
             && (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent)))
@@ -181,7 +214,24 @@ export function usesUnmaterializedDeclarationValue(expression: ts.Expression, ch
         if (ts.isTypeNode(node)) return false;
         if (ts.isIdentifier(node)) return isUnmaterializedValue(node, checker);
 
-        if (ts.isNewExpression(node) && classLikeDeclarationOf(node.expression, checker) !== undefined) {
+        if (ts.isPropertyAccessExpression(node)) {
+            const receiverClass = classLikeDeclarationOf(node.expression, checker);
+            if (receiverClass !== undefined
+                && ts.isClassDeclaration(receiverClass)
+                && unsupportedClassDeclarationReason(receiverClass, checker) !== undefined) {
+                return true;
+            }
+        }
+
+        const constructedClass = ts.isNewExpression(node)
+            ? classLikeDeclarationOf(node.expression, checker)
+            : undefined;
+        if (ts.isNewExpression(node) && constructedClass !== undefined) {
+            if (ts.isClassDeclaration(constructedClass)
+                && unsupportedClassDeclarationReason(constructedClass, checker) !== undefined) {
+                return true;
+            }
+
             return node.arguments?.some(visit) ?? false;
         }
         if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {

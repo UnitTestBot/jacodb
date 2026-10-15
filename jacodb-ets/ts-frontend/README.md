@@ -107,6 +107,13 @@ computed methods. Anonymous-class method metadata alone cannot install a fresh
 callable own property at each object evaluation in source order. Data properties
 containing function values and getter descriptors keep their existing lowering
 paths.
+Class declarations with computed property, method, or accessor names use a
+whole-declaration raw fallback, as do classes inheriting from such a declaration.
+EtsIR class fields cannot represent the definition-time evaluation of those
+keys or their runtime names. An `extends` value that does not resolve directly
+to a class declaration also uses this fallback; its runtime base cannot be
+fixed from the source name alone. Class expressions with heritage remain
+unsupported by the existing expression fallback.
 
 ## Development
 

@@ -39,7 +39,7 @@ import {
 } from "../dto/constants";
 import { BodyDto, ClassDto, FieldDto, MethodDto } from "../dto/model";
 import { ClassSignatureDto, UNKNOWN_FILE_SIGNATURE } from "../dto/signatures";
-import { ClassTypeDto, TypeDto, BOOLEAN_TYPE, NUMBER_TYPE, STRING_TYPE, UNKNOWN_TYPE, VOID_TYPE } from "../dto/types";
+import { ClassTypeDto, TypeDto, NUMBER_TYPE, STRING_TYPE, UNKNOWN_TYPE, VOID_TYPE } from "../dto/types";
 import { buildParameters, decoratorsOf, memberName, modifiersOf, parameterType, returnTypeOf } from "./astUtils";
 import { unsupportedStmt } from "./diagnostics";
 import { LoweringError, constant } from "./exprLowering";
@@ -643,8 +643,7 @@ export class ClassBuilder {
             return this.ctx.converter.convertTypeNode(decl.type);
         }
         if (decl.initializer !== undefined) {
-            const inferred = this.ctx.converter.typeOfNode(decl.name);
-            return widenLiteral(inferred);
+            return this.ctx.converter.typeOfNode(decl.name);
         }
         return UNKNOWN_TYPE;
     }
@@ -692,19 +691,4 @@ function extendedInterfacesOf(decl: ts.InterfaceDeclaration): string[] {
         }
     }
     return [];
-}
-
-/** Widen literal types inferred from initializers (fields are mutable). */
-function widenLiteral(type: TypeDto): TypeDto {
-    if (type._ === "LiteralType") {
-        switch (typeof type.literal) {
-            case "number":
-                return NUMBER_TYPE;
-            case "string":
-                return STRING_TYPE;
-            case "boolean":
-                return BOOLEAN_TYPE;
-        }
-    }
-    return type;
 }
