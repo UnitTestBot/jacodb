@@ -694,6 +694,7 @@ describe("class lowering", () => {
 
     it("initializes derived fields after super on every conditional branch", () => {
         const { file } = lower(`
+            class Base {}
             class Derived extends Base {
                 value = 42;
                 constructor(flag: boolean) { if (flag) super(); else super(); }

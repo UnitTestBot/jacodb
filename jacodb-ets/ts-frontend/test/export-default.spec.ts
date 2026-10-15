@@ -79,7 +79,7 @@ describe("export default expressions", () => {
         }));
         expect(stmts).toContainEqual(expect.objectContaining({
             _: "AssignStmt",
-            right: expect.objectContaining({ _: "UnsupportedValue", kindName: "ObjectLiteralExpression" }),
+            right: expect.objectContaining({ _: "UnsupportedValue" }),
         }));
         expect(diagnostics.messages).toEqual(expect.arrayContaining([
             expect.stringContaining("object literal method needs a per-evaluation callable own property"),

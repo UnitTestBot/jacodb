@@ -265,10 +265,13 @@ describe("control flow lowering", () => {
         `);
         const method = defaultMethod(file);
         const stmts = allStmts(method);
-        const calls = stmts.filter((s) => s._ === "AssignStmt" && s.right._ === "InstanceCallExpr");
-        const methodNames = calls.map(
-            (s) => ((s as { right: { method: { name: string } } }).right.method.name),
-        );
+        const methodNames = stmts.flatMap((statement) => {
+            if (statement._ !== "AssignStmt") return [];
+            if (statement.right._ !== "InstanceCallExpr" && statement.right._ !== "PtrCallExpr") return [];
+
+            return [statement.right.method.name];
+        });
+
         expect(methodNames).toContain("Symbol.iterator");
         expect(methodNames).toContain("next");
         const fieldReads = stmts

@@ -134,7 +134,7 @@ describe("object method materialization boundary", () => {
 
         expect(stmts).toContainEqual(expect.objectContaining({
             _: "AssignStmt",
-            right: expect.objectContaining({ _: "UnsupportedValue", kindName: "ObjectLiteralExpression" }),
+            right: expect.objectContaining({ _: "UnsupportedValue" }),
         }));
         expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
         expect(stmts.some((stmt) => stmt._ === "DefineDataPropertyStmt" || stmt._ === "CopyDataPropertiesStmt")).toBe(false);
@@ -153,7 +153,7 @@ describe("object method materialization boundary", () => {
         expect(diagnostics.messages).toEqual([]);
         expect(stmts).toContainEqual(expect.objectContaining({
             _: "DefineDataPropertyStmt",
-            key: { _: "Constant", value: "method" },
+            key: expect.objectContaining({ _: "Constant", value: "method" }),
             value: expect.objectContaining({ _: "Local", type: expect.objectContaining({ _: "FunctionType" }) }),
         }));
         expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(false);

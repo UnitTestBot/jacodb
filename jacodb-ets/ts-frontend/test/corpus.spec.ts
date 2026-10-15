@@ -5,6 +5,10 @@ import { EtsFileDto } from "../src/dto/model";
 import { lower } from "./util";
 
 const FIXTURES_DIR = path.join(__dirname, "fixtures");
+const EXPECTED_RAW_FALLBACKS: Record<string, number> = {
+    "geometry.ts": 6,
+    "events.js": 1,
+};
 
 /** Count raw fallback statements/values (any "Unsupported*" discriminator). */
 function countRawFallbacks(file: EtsFileDto): number {
@@ -38,7 +42,7 @@ describe("corpus: realistic TS/JS programs lower cleanly", () => {
             const source = fs.readFileSync(path.join(FIXTURES_DIR, fixture), "utf-8");
             // lower() throws on any invariant violation.
             const { file, diagnostics } = lower(source, "corpus", fixture);
-            const expectedUnsupported = fixture === "geometry.ts" ? 6 : 0;
+            const expectedUnsupported = EXPECTED_RAW_FALLBACKS[fixture] ?? 0;
 
             expect(countRawFallbacks(file)).toBe(expectedUnsupported);
             expect(diagnostics.messages).toHaveLength(expectedUnsupported);
@@ -61,6 +65,27 @@ describe("corpus: realistic TS/JS programs lower cleanly", () => {
                     ];
                 }),
             ];
+
+            if (fixture === "events.js") {
+                const statements = allMethods.flatMap((method) =>
+                    method.body?.cfg.blocks.flatMap((block) => block.stmts) ?? [],
+                );
+
+                expect(statements).toContainEqual(expect.objectContaining({
+                    _: "AssignStmt",
+                    right: expect.objectContaining({
+                        _: "UnsupportedValue",
+                        kindName: "ObjectLiteralExpression",
+                        text: expect.stringContaining("on(name, handler)"),
+                    }),
+                }));
+                expect(diagnostics.messages).toEqual([
+                    expect.stringContaining(
+                        "unsupported expression: object literal method needs a per-evaluation callable own property",
+                    ),
+                ]);
+            }
+
             for (const method of allMethods) {
                 if (method.body !== undefined) {
                     const stmts = method.body.cfg.blocks.flatMap((b) => b.stmts);

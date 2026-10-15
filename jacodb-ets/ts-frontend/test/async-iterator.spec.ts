@@ -119,9 +119,11 @@ function program(source: string) {
     expect(validateEtsFile(roundTripped)).toEqual([]);
 
     const method = methodByName(roundTripped, "run");
+    const native = new Function("input", `${source}; return run(input);`) as (input: unknown) => unknown;
+
     return {
         ir: (input: unknown) => execute(method, input),
-        native: new Function("input", `${source}; return run(input);`) as (input: unknown) => Promise<unknown>,
+        native: async (input: unknown) => native(input),
     };
 }
 

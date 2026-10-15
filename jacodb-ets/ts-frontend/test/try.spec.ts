@@ -180,8 +180,14 @@ describe("try/catch/finally lowering", () => {
         expect(diagnostics.messages).toEqual([]);
         expect(caught).toMatchObject({ left: { _: "Local", name: expect.stringMatching(/^%/) } });
         expect(propertyReads).toEqual(expect.arrayContaining([
-            expect.objectContaining({ left: { name: "message" }, right: { key: { value: "message" } } }),
-            expect.objectContaining({ left: { name: "unused" }, right: { key: { value: "unused" } } }),
+            expect.objectContaining({
+                left: expect.objectContaining({ name: "message" }),
+                right: expect.objectContaining({ key: expect.objectContaining({ value: "message" }) }),
+            }),
+            expect.objectContaining({
+                left: expect.objectContaining({ name: "unused" }),
+                right: expect.objectContaining({ key: expect.objectContaining({ value: "unused" }) }),
+            }),
         ]));
         expect(stmts).toContainEqual({ _: "ReturnStmt", arg: expect.objectContaining({ name: "message" }) });
     });

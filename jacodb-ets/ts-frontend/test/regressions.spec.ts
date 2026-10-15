@@ -100,7 +100,6 @@ describe("unsupported loop bindings do not break the whole file", () => {
     const cases: Record<string, string> = {
         "array pattern with rest": "declare const xs: any[]; for (const [[a], ...rest] of xs) { console.log(a); }",
         "member expression target": "declare const xs: any[]; const obj: any = {}; for (obj.x of xs) { console.log(obj.x); }",
-        "rest in for-in": "declare const o: any; for (const [[a], ...rest] in o) { console.log(a); }",
     };
 
     for (const [name, source] of Object.entries(cases)) {
@@ -112,6 +111,21 @@ describe("unsupported loop bindings do not break the whole file", () => {
             expect(diagnostics.messages.some((msg) => msg.includes("unsupported loop binding"))).toBe(true);
         });
     }
+});
+
+it("marks for-in enumeration unsupported before attempting its nested rest binding", () => {
+    const { file, diagnostics } = lower(`
+        declare const o: any;
+        for (const [[a], ...rest] in o) { console.log(a); }
+    `);
+    const stmts = file.classes.flatMap((clazz) => clazz.methods.flatMap((method) => allStmts(method)));
+
+    expect(stmts).toContainEqual(expect.objectContaining({
+        _: "UnsupportedStmt", kindName: "ForInStatement",
+    }));
+    expect(diagnostics.messages).toContainEqual(expect.stringContaining(
+        "unsupported for-in enumeration: inherited and changing keys cannot be represented",
+    ));
 });
 
 it("finalizes a for initializer with an unsupported nested array rest binding", () => {
@@ -778,7 +792,14 @@ describe("function hoisting", () => {
             const named = function self(value: typeof self): typeof self { return value; };
         `);
 
-        expect(methodByName(file, "%AM0$run")).toBeDefined();
+        expect(allStmts(methodByName(file, "run"))).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            left: expect.objectContaining({ _: "Local", name: "fact" }),
+            right: expect.objectContaining({
+                _: "Local", name: expect.stringMatching(/^%AM\d+\$run$/),
+                type: expect.objectContaining({ _: "FunctionType" }),
+            }),
+        }));
         expect(file.classes.flatMap((clazz) => clazz.methods).some((method) => method.signature.name.startsWith("%AM")))
             .toBe(true);
         expect(diagnostics.messages.some((message) => message.includes("recursive lifted function binding"))).toBe(false);
