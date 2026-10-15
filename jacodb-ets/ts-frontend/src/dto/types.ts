@@ -33,6 +33,7 @@ export type TypeDto =
     | GenericTypeDto
     | AliasTypeDto
     | LexicalEnvTypeDto
+    | LexicalEnvTypeRefDto
     | EnumValueTypeDto
     | VoidTypeDto
     | NeverTypeDto
@@ -81,6 +82,15 @@ export interface LexicalEnvTypeDto {
     // This list is statically List<LocalDto> on the Kotlin side, so entries do
     // not carry the polymorphic "_": "Local" discriminator.
     closures: LexicalEnvLocalDto[];
+}
+
+/** The table is statically typed, so definition rows do not repeat a discriminator. */
+export type LexicalEnvTypeDefinitionDto = Omit<LexicalEnvTypeDto, "_">;
+
+/** Wire-only reference into the enclosing file's lossless lexical-environment table. */
+export interface LexicalEnvTypeRefDto {
+    readonly _: "LexicalEnvTypeRef";
+    id: number;
 }
 
 export interface LexicalEnvLocalDto {

@@ -47,7 +47,7 @@ import org.jacodb.ets.dto.FunctionTypeDto
 import org.jacodb.ets.dto.IfStmtDto
 import org.jacodb.ets.dto.InstanceCallExprDto
 import org.jacodb.ets.dto.InstanceOfExprDto
-import org.jacodb.ets.dto.LexicalEnvTypeDto
+import org.jacodb.ets.dto.LexicalEnvTypeRefDto
 import org.jacodb.ets.dto.LocalDto
 import org.jacodb.ets.dto.NewArrayExprDto
 import org.jacodb.ets.dto.NewExprDto
@@ -89,6 +89,7 @@ import org.jacodb.ets.model.EtsFunctionType
 import org.jacodb.ets.model.EtsIfStmt
 import org.jacodb.ets.model.EtsInstanceFieldRef
 import org.jacodb.ets.model.EtsInstanceOfExpr
+import org.jacodb.ets.model.EtsLexicalEnvType
 import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsNewArrayExpr
 import org.jacodb.ets.model.EtsNewExpr
@@ -412,16 +413,21 @@ class EtsTsFrontendTest {
             .body!!.cfg.blocks.flatMap { it.stmts }.filterIsInstance<DefineAccessorStmtDto>().single()
         val getterType = (descriptor.getter as LocalDto).type as FunctionTypeDto
         val getterBody = dtoMethods.single { it.signature.name == getterType.signature.name }.body!!
+        val getterEnvironment = getterBody.locals.map { it.type }.filterIsInstance<LexicalEnvTypeRefDto>().single()
 
         assertEquals("x", (descriptor.key as ConstantDto).value)
         assertTrue(getterBody.cfg.blocks.flatMap { it.stmts }.any { it is ReturnStmtDto })
-        assertTrue(getterBody.locals.any { it.type is LexicalEnvTypeDto })
+        assertTrue(roundTripped.lexicalEnvTypes[getterEnvironment.id].closures.any { it.name == "seed" })
 
         val scene = EtsScene(listOf(roundTripped.toEtsFile()))
         val method = scene.projectClasses.flatMap { it.methods }.single { it.name == "value" }
         val converted = method.cfg.stmts.filterIsInstance<EtsDefineAccessorStmt>().single()
+        val convertedGetter = scene.projectClasses.flatMap { it.methods }.single { it.name == getterType.signature.name }
+        val convertedEnvironment = convertedGetter.body.locals.map { it.type }.filterIsInstance<EtsLexicalEnvType>().single()
+
         assertEquals("x", (converted.key as EtsStringConstant).value)
         assertTrue(method.cfg.stmts.filterIsInstance<EtsAssignStmt>().any { it.rhv is EtsPropertyRef })
+        assertTrue(convertedEnvironment.closures.any { it.name == "seed" })
     }
 
     @Test

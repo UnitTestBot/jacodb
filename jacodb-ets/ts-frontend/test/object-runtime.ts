@@ -1,6 +1,7 @@
 import { EtsFileDto, MethodDto } from "../src/dto/model";
 import { LexicalEnvTypeDto } from "../src/dto/types";
 import { ClosureFieldRefDto } from "../src/dto/values";
+import { resolveLexicalEnvTypes } from "./util";
 
 const MAX_OBJECT_TEST_STEPS = 1_000;
 
@@ -10,6 +11,7 @@ const MAX_OBJECT_TEST_STEPS = 1_000;
  * the USVM interpreter and rejects every operation outside the tested subset.
  */
 export function executeObjectIr(file: EtsFileDto, name: string, args: unknown[] = []): unknown {
+    resolveLexicalEnvTypes(file);
     const methods = file.classes.flatMap((clazz) => clazz.methods);
     const moduleValues = new Map<string, unknown>();
     const lookup = (signature: any): MethodDto => {

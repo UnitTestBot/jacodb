@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { consumers } from "./array-test-consumers";
-import { lower } from "./util";
+import { lower, resolveLexicalEnvTypes } from "./util";
 import { serializeEtsFile } from "../src/serialize";
 
 describe("default parameter observable behavior", () => {
@@ -15,7 +15,7 @@ describe("default parameter observable behavior", () => {
     it("records ordinary closure captures referenced only by a parameter default", () => {
         const source = "function make(seed: number) { return function(value = seed) { return value; }; }";
         const { file, diagnostics } = lower(source);
-        const roundTripped = JSON.parse(serializeEtsFile(file));
+        const roundTripped = resolveLexicalEnvTypes(JSON.parse(serializeEtsFile(file)));
         const nested = roundTripped.classes.flatMap((clazz) => clazz.methods)
             .find((method) => method.signature.name.startsWith("%AM"));
         const environment = nested!.body!.locals.find((local) => local.type._ === "LexicalEnvType");
