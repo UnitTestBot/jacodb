@@ -69,6 +69,12 @@ data class LexicalEnvTypeDto(
 ) : TypeDto
 
 @Serializable
+@SerialName("LexicalEnvTypeRef")
+data class LexicalEnvTypeRefDto(
+    val id: Int,
+) : TypeDto
+
+@Serializable
 @SerialName("EnumValueType")
 data class EnumValueTypeDto(
     val signature: ClassSignatureDto,

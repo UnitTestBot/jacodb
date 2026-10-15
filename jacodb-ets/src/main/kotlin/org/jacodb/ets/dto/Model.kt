@@ -30,6 +30,8 @@ data class EtsFileDto(
     val classes: List<ClassDto>,
     val importInfos: List<ImportInfoDto>,
     val exportInfos: List<ExportInfoDto>,
+    /** Shared lexical environments referenced by zero-based [LexicalEnvTypeRefDto.id]. */
+    val lexicalEnvTypes: List<LexicalEnvTypeDto> = emptyList(),
 ) {
     companion object {
         private val json = Json {
