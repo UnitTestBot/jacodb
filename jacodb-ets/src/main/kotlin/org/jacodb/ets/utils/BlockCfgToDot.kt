@@ -37,7 +37,7 @@ fun EtsBlockCfg.toDot(
                 "</table>"
             lines += "  ${block.id} [label=<${h}>]"
         } else {
-            val s = block.statements.joinToString("") { it.toDotLabel() + "\\l" }
+            val s = block.statements.joinToString("") { it.toDotLabel().dotQuoteEncode() + "\\l" }
             lines += "  ${block.id} [label=\"Block #${block.id}\\n$s\"]"
         }
     }

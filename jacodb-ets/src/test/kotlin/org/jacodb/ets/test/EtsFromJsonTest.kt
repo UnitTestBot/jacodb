@@ -17,7 +17,11 @@
 package org.jacodb.ets.test
 
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import mu.KotlinLogging
 import org.jacodb.ets.dto.AnyTypeDto
@@ -41,11 +45,13 @@ import org.jacodb.ets.dto.StmtDto
 import org.jacodb.ets.dto.TypeDto
 import org.jacodb.ets.dto.ValueDto
 import org.jacodb.ets.dto.dtoModule
+import org.jacodb.ets.dto.toEtsField
 import org.jacodb.ets.dto.toEtsLocal
 import org.jacodb.ets.dto.toEtsMethod
 import org.jacodb.ets.model.EtsAnyType
 import org.jacodb.ets.model.EtsClassCategory
 import org.jacodb.ets.model.EtsClassSignature
+import org.jacodb.ets.model.EtsDecorator
 import org.jacodb.ets.model.EtsFile
 import org.jacodb.ets.model.EtsFileSignature
 import org.jacodb.ets.model.EtsLocal
@@ -311,6 +317,35 @@ class EtsFromJsonTest {
         val fieldDto = Json.decodeFromString<FieldDto>(jsonString)
         logger.info { "fieldDto = $fieldDto" }
         assertEquals(field, fieldDto)
+    }
+
+    @Test
+    fun testFieldDecoratorsSurviveConversion() {
+        val signature = FieldSignatureDto(
+            declaringClass = ClassSignatureDto(
+                name = "TestClass",
+                declaringFile = FileSignatureDto(
+                    projectName = "TestProject",
+                    fileName = "test.ts",
+                ),
+            ),
+            name = "x",
+            type = NumberTypeDto,
+        )
+        val decoratedDto = FieldDto(
+            signature = signature,
+            modifiers = 0,
+            decorators = listOf(DecoratorDto(kind = "marker")),
+            isOptional = false,
+            isDefinitelyAssigned = false,
+        )
+
+        val decoratedField = decoratedDto.toEtsField()
+        val plainField = decoratedDto.copy(decorators = emptyList()).toEtsField()
+
+        assertEquals(listOf(EtsDecorator(name = "marker")), decoratedField.decorators)
+        assertTrue(decoratedField.hasDecorator(EtsDecorator(name = "marker")))
+        assertEquals(emptyList(), plainField.decorators)
     }
 
     @Test
@@ -650,6 +685,70 @@ class EtsFromJsonTest {
         assertIs<RawStmtDto>(stmtDto)
         assertEquals("DummyStmt", stmtDto.kind)
         assertEquals(42, stmtDto.extra.getValue("value").jsonPrimitive.content.toInt())
+    }
+
+    @Test
+    fun testRawStmtGeneratedEnvelopeRoundTrip() {
+        val raw = RawStmtDto(
+            kind = "DummyStmt",
+            extra = JsonObject(mapOf("kind" to JsonPrimitive("inner"), "extra" to JsonPrimitive(42))),
+        )
+
+        val polymorphicJson = json.encodeToString<StmtDto>(raw)
+        val directJson = json.encodeToString(raw)
+
+        assertEquals("RawStmt", json.parseToJsonElement(polymorphicJson).jsonObject.getValue("_").jsonPrimitive.content)
+        assertEquals(raw, json.decodeFromString<StmtDto>(polymorphicJson))
+        assertEquals(raw, json.decodeFromString<RawStmtDto>(directJson))
+    }
+
+    @Test
+    fun testRawValueGeneratedEnvelopeRoundTripWithRawType() {
+        val rawType = RawTypeDto(
+            kind = "DummyType",
+            extra = JsonObject(mapOf("value" to JsonPrimitive(42))),
+        )
+        val raw = RawValueDto(
+            kind = "DummyValue",
+            extra = JsonObject(mapOf("kind" to JsonPrimitive("inner"), "extra" to JsonPrimitive(42))),
+            type = rawType,
+        )
+
+        val polymorphicJson = json.encodeToString<ValueDto>(raw)
+        val directJson = json.encodeToString(raw)
+
+        assertEquals("RawValue", json.parseToJsonElement(polymorphicJson).jsonObject.getValue("_").jsonPrimitive.content)
+        assertEquals(raw, json.decodeFromString<ValueDto>(polymorphicJson))
+        assertEquals(raw, json.decodeFromString<RawValueDto>(directJson))
+    }
+
+    @Test
+    fun testRawTypeGeneratedEnvelopeRoundTrip() {
+        val raw = RawTypeDto(
+            kind = "DummyType",
+            extra = JsonObject(mapOf("kind" to JsonPrimitive("inner"), "extra" to JsonPrimitive(42))),
+        )
+
+        val polymorphicJson = json.encodeToString<TypeDto>(raw)
+        val directJson = json.encodeToString(raw)
+
+        assertEquals("RawType", json.parseToJsonElement(polymorphicJson).jsonObject.getValue("_").jsonPrimitive.content)
+        assertEquals(raw, json.decodeFromString<TypeDto>(polymorphicJson))
+        assertEquals(raw, json.decodeFromString<RawTypeDto>(directJson))
+    }
+
+    @Test
+    fun testLegacyFlatRawObjectsWithDirectKind() {
+        val rawStmt = json.decodeFromString<RawStmtDto>("""{"kind":"DummyStmt","value":42}""")
+        val rawValue = json.decodeFromString<RawValueDto>(
+            """{"kind":"DummyValue","value":42,"type":{"_":"NumberType"}}"""
+        )
+        val rawType = json.decodeFromString<RawTypeDto>("""{"kind":"DummyType","value":42}""")
+
+        assertEquals(JsonPrimitive(42), rawStmt.extra.getValue("value"))
+        assertEquals(JsonPrimitive(42), rawValue.extra.getValue("value"))
+        assertEquals(NumberTypeDto, rawValue.type)
+        assertEquals(JsonPrimitive(42), rawType.extra.getValue("value"))
     }
 
     @Test

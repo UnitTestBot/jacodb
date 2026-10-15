@@ -16,10 +16,13 @@
 
 package org.jacodb.ets.test
 
+import kotlinx.serialization.SerializationException
 import org.jacodb.ets.utils.EtsIrGenerationException
 import org.jacodb.ets.utils.EtsIrGenerationTimeoutException
 import org.jacodb.ets.utils.EtsIrProvider
 import org.jacodb.ets.utils.generateEtsIR
+import org.jacodb.ets.utils.loadEtsFileAutoConvert
+import org.jacodb.ets.utils.loadEtsProjectAutoConvert
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
@@ -65,7 +68,7 @@ class EtsIrGenerationTest {
         val frontend = createTempDirectory("failing-ets-frontend")
         frontend.resolve("dist").createDirectories()
         frontend.resolve("dist/index.js").writeText(
-            "require('fs').writeFileSync(process.argv.at(process.argv.at(-1) === '-v' ? -2 : -1), 'partial'); console.error('frontend failed'); process.exit(7);"
+            "require('fs').writeFileSync(process.argv.at(process.argv.at(-1) === '-v' ? -2 : -1), 'partial'); console.error('неверный путь: café'); process.exit(7);"
         )
         val source = frontend.resolve("input.ts").also { it.writeText("const value = 1;") }
 
@@ -76,7 +79,7 @@ class EtsIrGenerationTest {
             }
             assertFalse(error is EtsIrGenerationTimeoutException)
             assertTrue(error.message.orEmpty().contains("exit code 7"))
-            assertTrue(error.message.orEmpty().contains("frontend failed"))
+            assertTrue(error.message.orEmpty().contains("неверный путь: café"))
             val output = outputPath(error)
             assertEquals("partial", output.readText())
             Files.delete(output)
@@ -180,6 +183,90 @@ class EtsIrGenerationTest {
             assertFalse(Files.exists(Paths.get(outputMarker.readText())))
         } finally {
             System.clearProperty("ets.frontend.dir")
+        }
+    }
+
+    @Test
+    fun `file auto convert removes generated output after loading`() = withAutoConvertFrontend(validJson = true) { frontend ->
+        val source = frontend.resolve("source.ts").also { it.writeText("const value = 1;") }
+        val outputMarker = frontend.resolve("generated-output")
+
+        val file = loadEtsFileAutoConvert(source, provider = EtsIrProvider.TS_FRONTEND)
+
+        assertEquals("source.ts", file.signature.fileName)
+        assertFalse(Files.exists(Paths.get(outputMarker.readText())))
+    }
+
+    @Test
+    fun `file auto convert removes generated output after invalid JSON`() = withAutoConvertFrontend(validJson = false) { frontend ->
+        val source = frontend.resolve("source.ts").also { it.writeText("const value = 1;") }
+        val outputMarker = frontend.resolve("generated-output")
+
+        assertFailsWith<SerializationException> {
+            loadEtsFileAutoConvert(source, provider = EtsIrProvider.TS_FRONTEND)
+        }
+
+        assertFalse(Files.exists(Paths.get(outputMarker.readText())))
+    }
+
+    @Test
+    fun `project auto convert removes generated output after loading`() = withAutoConvertFrontend(validJson = true) { frontend ->
+        val project = frontend.resolve("project").createDirectories()
+        project.resolve("source.ts").writeText("const value = 1;")
+        val sdkIr = frontend.resolve("sdk-ir").createDirectories()
+        val sdkFile = sdkIr.resolve("sdk.json")
+        sdkFile.writeText(
+            """{"signature":{"projectName":"sdk","fileName":"sdk.ts"},"namespaces":[],"classes":[],"importInfos":[],"exportInfos":[]}"""
+        )
+        val outputMarker = frontend.resolve("generated-output")
+
+        val scene = loadEtsProjectAutoConvert(project, sdkIRPath = sdkIr, provider = EtsIrProvider.TS_FRONTEND)
+
+        assertEquals("source.ts", scene.projectFiles.single().signature.fileName)
+        assertEquals("sdk.ts", scene.sdkFiles.single().signature.fileName)
+        assertTrue(Files.exists(sdkFile))
+        assertFalse(Files.exists(Paths.get(outputMarker.readText())))
+    }
+
+    @Test
+    fun `project auto convert removes generated output after invalid JSON`() = withAutoConvertFrontend(validJson = false) { frontend ->
+        val project = frontend.resolve("project").createDirectories()
+        project.resolve("source.ts").writeText("const value = 1;")
+        val outputMarker = frontend.resolve("generated-output")
+
+        assertFailsWith<SerializationException> {
+            loadEtsProjectAutoConvert(project, provider = EtsIrProvider.TS_FRONTEND)
+        }
+
+        assertFalse(Files.exists(Paths.get(outputMarker.readText())))
+    }
+
+    private fun withAutoConvertFrontend(validJson: Boolean, block: (Path) -> Unit) {
+        val frontend = createTempDirectory("auto-convert-frontend")
+        frontend.resolve("dist").createDirectories()
+        val payload = if (validJson) {
+            "JSON.stringify({signature:{projectName:'',fileName:'source.ts'},namespaces:[],classes:[],importInfos:[],exportInfos:[]})"
+        } else {
+            "'invalid JSON'"
+        }
+
+        frontend.resolve("dist/index.js").writeText(
+            """
+                const fs = require('fs');
+                const path = require('path');
+                const output = process.argv.at(process.argv.at(-1) === '-v' ? -2 : -1);
+                fs.writeFileSync(path.join(__dirname, '..', 'generated-output'), output);
+                const target = process.argv.includes('-p') ? path.join(output, 'source.ts.json') : output;
+                fs.writeFileSync(target, $payload);
+            """.trimIndent()
+        )
+
+        System.setProperty("ets.frontend.dir", frontend.toString())
+        try {
+            block(frontend)
+        } finally {
+            System.clearProperty("ets.frontend.dir")
+            frontend.toFile().deleteRecursively()
         }
     }
 

@@ -29,7 +29,43 @@ class IdentityHashSet<T>(
         return map.put(element, Unit) == null
     }
 
+    override fun contains(element: T): Boolean {
+        return map.containsKey(element)
+    }
+
+    override fun remove(element: T): Boolean {
+        return map.remove(element) != null
+    }
+
+    override fun removeAll(elements: Collection<T>): Boolean {
+        val elementsByIdentity = IdentityHashMap<T, Unit>()
+        elements.forEach { elementsByIdentity[it] = Unit }
+
+        return removeKeysWhere { elementsByIdentity.containsKey(it) }
+    }
+
+    override fun retainAll(elements: Collection<T>): Boolean {
+        val elementsByIdentity = IdentityHashMap<T, Unit>()
+        elements.forEach { elementsByIdentity[it] = Unit }
+
+        return removeKeysWhere { !elementsByIdentity.containsKey(it) }
+    }
+
     override fun iterator(): MutableIterator<T> {
         return map.keys.iterator()
+    }
+
+    private fun removeKeysWhere(predicate: (T) -> Boolean): Boolean {
+        val iterator = map.keys.iterator()
+        var changed = false
+
+        while (iterator.hasNext()) {
+            if (predicate(iterator.next())) {
+                iterator.remove()
+                changed = true
+            }
+        }
+
+        return changed
     }
 }

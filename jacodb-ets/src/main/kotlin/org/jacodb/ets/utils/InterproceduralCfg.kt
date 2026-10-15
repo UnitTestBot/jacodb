@@ -43,6 +43,11 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
     currentStmt: EtsStmt?,
     useHtml: Boolean = true,
 ): String {
+    val discoveredCallees = callees.entries.toList()
+    val calleeIdsByCallSite = discoveredCallees.withIndex().associate { (id, entry) ->
+        entry.key to id
+    }
+
     val lines = mutableListOf<String>()
     lines += "digraph world {"
     lines += "  compound=true"
@@ -51,11 +56,6 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
     // --- 1) Main CFG with ports on call statements ---
     for (block in main.blocks) {
         val nodeId = "M_${block.id}"
-        // compute all call hashes in this block
-        val callHashes = callees.keys
-            .filter { it.second == block.id }
-            .map { sanitize(it.first.hashCode()) }
-            .toSet()
 
         if (useHtml) {
             // build HTML table rows, adding port attribute on call lines
@@ -66,8 +66,8 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
                     in pathStmts -> "yellow"
                     else -> "white"
                 }
-                val stmtHash = sanitize(stmt.hashCode())
-                val portAttr = if (stmtHash in callHashes) " port=\"p$stmtHash\"" else ""
+                val calleeId = calleeIdsByCallSite[stmt to block.id]
+                val portAttr = if (calleeId != null) " port=\"p$calleeId\"" else ""
                 "<tr><td balign=\"left\" bgcolor=\"$bg\"$portAttr>$txt</td></tr>"
             }
             val table = buildString {
@@ -82,6 +82,7 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
             lines += "  $nodeId [label=\"$lbl\"];"
         }
     }
+
     // Main CFG edges
     for ((bid, succs) in main.successors) {
         val from = "M_$bid"
@@ -95,21 +96,21 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
         }
     }
 
-    // --- 2) Callee clusters with call-edge from port ---
-    for ((key, cfg) in callees) {
-        val (stmt, parentBlock) = key
-        val h = sanitize(stmt.hashCode())
-        val clusterName = "cluster_${h}_B${parentBlock}"
-        // method signature label
-        val methodSig = cfg.entries.first().location.method.signature
-        // open subgraph
+    // --- 2) Callee clusters and call edges ---
+    for ((calleeId, entry) in discoveredCallees.withIndex()) {
+        val (_, parentBlock) = entry.key
+        val cfg = entry.value
+        val clusterName = "cluster_${calleeId}_B${parentBlock}"
+        val entryBlock = cfg.blocks.firstOrNull()
+        val methodSig = entryBlock?.statements?.first()?.location?.method?.signature?.toString()
+        val clusterLabel = (methodSig ?: "empty CFG").dotQuoteEncode()
+
         lines += "  subgraph \"$clusterName\" {"
-        lines += "    label=\"$methodSig\";"
+        lines += "    label=\"$clusterLabel\";"
         lines += "    style=dashed;"
 
-        // render callee nodes
         for (blk in cfg.blocks) {
-            val calleeNode = "C_${h}_${blk.id}"
+            val calleeNode = "C_${calleeId}_${blk.id}"
             if (useHtml) {
                 val table = buildHtmlTable(blk, pathStmts, currentStmt)
                 lines += "    $calleeNode [label=<$table>];"
@@ -118,27 +119,29 @@ fun InterproceduralCfg.toHighlightedDotWithCalls(
                 lines += "    $calleeNode [label=\"$lbl\"];"
             }
         }
-        // render callee edges
+
+        val emptyNode = "C_${calleeId}_empty"
+        if (entryBlock == null) {
+            lines += "    $emptyNode [label=\"empty CFG\"];"
+        }
+
         for ((bid, succs) in cfg.successors) {
-            val from = "C_${h}_$bid"
+            val from = "C_${calleeId}_$bid"
             when (succs.size) {
-                1 -> lines += "    $from -> C_${h}_${succs[0]};"
+                1 -> lines += "    $from -> C_${calleeId}_${succs[0]};"
                 2 -> {
                     val (t, f) = succs
-                    lines += "    $from -> C_${h}_$t [label=\"true\"];"
-                    lines += "    $from -> C_${h}_$f [label=\"false\"];"
+                    lines += "    $from -> C_${calleeId}_$t [label=\"true\"];"
+                    lines += "    $from -> C_${calleeId}_$f [label=\"false\"];"
                 }
             }
         }
         lines += "  }"
 
-        // connect from the specific port on the caller block
-        // connect from the specific port on the caller block using tailport
         val caller = "M_${parentBlock}"
-        val entryId = cfg.blocks.first().id
-        val calleeEntry = "C_${h}_$entryId"
-        val stmtHash = sanitize(stmt.hashCode())
-        lines += "  $caller:p$stmtHash -> $calleeEntry [tailport=\"p$stmtHash\" ltail=\"$clusterName\" lhead=\"$clusterName\" style=dotted label=\"call\"];"
+        val calleeEntry = if (entryBlock == null) emptyNode else "C_${calleeId}_${entryBlock.id}"
+        val callerPort = if (useHtml) "$caller:p$calleeId" else caller
+        lines += "  $callerPort -> $calleeEntry [lhead=\"$clusterName\" style=dotted label=\"call\"];"
     }
 
     lines += "}"
@@ -150,19 +153,15 @@ private fun buildHtmlTable(
     pathStmts: Set<EtsStmt>,
     currentStmt: EtsStmt?,
 ): String {
-    var i = 0
     val rows = block.statements.joinToString(separator = "") { stmt ->
         val txt = stmt.toDotLabel().htmlEncode()
-        val stmtHash = sanitize(stmt.hashCode())
-        val portAttr = if (stmt.callExpr != null) " port=\"p$stmtHash\"" else ""
 
         val bg = when (stmt) {
             currentStmt -> "lightblue"
             in pathStmts -> "yellow"
             else -> "white"
         }
-        i++
-        "<tr><td balign=\"left\" bgcolor=\"$bg\"$portAttr>$txt</td></tr>"
+        "<tr><td balign=\"left\" bgcolor=\"$bg\">$txt</td></tr>"
     }
     return "<table border=\"0\" cellborder=\"1\" cellspacing=\"0\">" +
         "<tr><td><b>Block #${block.id}</b></td></tr>" + rows +
@@ -181,7 +180,7 @@ private fun buildPlainLabel(
             in pathStmts -> "[·] "
             else -> ""
         }
-        "$pfx$raw\\l"
+        "${(pfx + raw).dotQuoteEncode()}\\l"
     }
     return "Block #${block.id}\\n" + body
 }

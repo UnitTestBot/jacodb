@@ -57,8 +57,9 @@ class CollectorTest {
                 result += stmt.toString()
             }
         }
+
         stmt.accept(c)
-        println(result)
+
         assertEquals("[a := b + 42.0, a, b + 42.0, b, 42.0]", result.toString())
     }
 
@@ -68,8 +69,9 @@ class CollectorTest {
         val c = EntityCollector(mutableSetOf<String>()) {
             it.toString()
         }
+
         stmt.accept(c)
-        println(c.result)
+
         assertEquals("[a, b + 42.0, b, 42.0]", c.result.toString())
     }
 }

@@ -100,26 +100,28 @@ data class EtsExportInfo(
         get() = name != originalName
 
     override fun toString(): String {
+        val exportKeyword = if (isTypeOnly) "export type" else "export"
+
         return when {
             // Re-exports
             from != null -> {
                 val alias = if (isAliased) " as $name" else ""
                 if (isStarReExport) {
-                    "export *$alias from '$from'"
+                    "$exportKeyword *$alias from '$from'"
                 } else {
-                    "export { $originalName$alias } from '$from'"
+                    "$exportKeyword { $originalName$alias } from '$from'"
                 }
             }
 
             // Direct default export
-            isDefaultExport -> {
+            isDefault -> {
                 "export default ${nameBeforeAs ?: originalName}"
             }
 
             // Direct named export
             else -> {
                 val alias = if (isAliased) " as $name" else ""
-                "export { $originalName$alias }"
+                "$exportKeyword { $originalName$alias }"
             }
         }
     }

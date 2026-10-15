@@ -26,8 +26,14 @@ internal fun String.htmlEncode(): String = this
     .replace("&", "&amp;")
     .replace("<", "&lt;")
     .replace(">", "&gt;")
-    .replace("\\\"", "&quot;")
     .replace("\"", "&quot;")
+
+/** Escape source text inside a quoted DOT string; renderer-owned escapes are added afterward. */
+internal fun String.dotQuoteEncode(): String = this
+    .replace("\\", "\\\\")
+    .replace("\"", "\\\"")
+    .replace("\r", "\\r")
+    .replace("\n", "\\n")
 
 /**
  * Sanitize an integer ID for use as a Graphviz node ID.

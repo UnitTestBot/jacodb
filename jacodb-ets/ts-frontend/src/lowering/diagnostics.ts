@@ -17,9 +17,9 @@
 /**
  * Diagnostics collection + Raw* fallback emission.
  *
- * The frontend must never fail on exotic-but-parseable input: anything we cannot
- * lower degrades to a raw statement/value with an "Unsupported*" discriminator,
- * which the Kotlin side deserializes into RawStmtDto / RawValueDto automatically.
+ * Known unsupported constructs degrade to a raw statement/value with an
+ * "Unsupported*" discriminator, which the Kotlin side deserializes into
+ * RawStmtDto / RawValueDto. Unexpected lowering errors still propagate.
  */
 
 import * as ts from "typescript";

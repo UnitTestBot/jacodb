@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { executor } from "./execute";
+import { CONSTRUCTOR_NAME } from "../src/dto/constants";
 import { AssignStmtDto, StmtDto } from "../src/dto/stmts";
 import { serializeEtsFile } from "../src/serialize";
 import { syntaxKindName } from "../src/lowering/diagnostics";
@@ -11,12 +12,94 @@ function allStmts(method: { body?: { cfg: { blocks: { stmts: StmtDto[] }[] } } }
     return (method.body?.cfg.blocks ?? []).flatMap((block) => block.stmts);
 }
 
+function callName(stmt: StmtDto): string | undefined {
+    if (stmt._ !== "AssignStmt" && stmt._ !== "CallStmt") return undefined;
+
+    const value = stmt._ === "AssignStmt" ? stmt.right : stmt.expr;
+    if (value._ === "InstanceCallExpr" || value._ === "StaticCallExpr" || value._ === "PtrCallExpr") {
+        return value.method.name;
+    }
+    return undefined;
+}
+
+it("keeps direct methods with unsupported parameter patterns opaque without losing later declarations", () => {
+    const source = `
+        function direct([[x], ...rest]: any[]) { return x; }
+        class Holder {
+            constructor([[created], ...rest]: any[]) {}
+            method([[value], ...tail]: any[]) { return value; }
+            healthy(value = 3) { return value; }
+        }
+        function later(value: number) { return value + 1; }
+        function supported([first, ...tail]: any[] = [1, 2]) { return first; }
+    `;
+    const { file, diagnostics } = lower(source);
+    const holder = file.classes.find((clazz) => clazz.signature.name === "Holder")!;
+    const unsupported = [
+        { method: methodByName(file, "direct"), kind: "FunctionDeclaration" },
+        { method: holder.methods.find((method) => method.signature.name === CONSTRUCTOR_NAME)!, kind: "Constructor" },
+        { method: holder.methods.find((method) => method.signature.name === "method")!, kind: "MethodDeclaration" },
+    ];
+
+    for (const { method, kind } of unsupported) {
+        const body = method.body!;
+        const stmts = allStmts(method);
+        const rawIndex = stmts.findIndex((stmt) => stmt._ === "UnsupportedStmt");
+        const rawOrigin = body.stmtOrigins?.find(({ blockId, stmtIndex }) =>
+            body.cfg.blocks[blockId].stmts[stmtIndex] === stmts[rawIndex],
+        );
+
+        expect(method.signature.parameters).toHaveLength(1);
+        expect(stmts[rawIndex]).toMatchObject({ _: "UnsupportedStmt", kindName: kind });
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt")).toBe(false);
+        expect(rawOrigin?.source.nodeKind).toBe(kind);
+        expect(source.slice(rawOrigin!.source.startOffset, rawOrigin!.source.endOffset)).toContain("[[");
+    }
+
+    expect(diagnostics.messages.filter((message) => message.includes("unsupported parameter binding"))).toHaveLength(3);
+    expect(allStmts(methodByName(file, "later")).some((stmt) => stmt._ === "ReturnStmt")).toBe(true);
+    expect(allStmts(holder.methods.find((method) => method.signature.name === "healthy")!)
+        .some((stmt) => stmt._ === "IfStmt")).toBe(true);
+
+    const supportedStmts = allStmts(methodByName(file, "supported"));
+    expect(supportedStmts.some((stmt) => stmt._ === "IfStmt")).toBe(true);
+    expect(supportedStmts.some((stmt) => callName(stmt) === "next")).toBe(true);
+    expect(supportedStmts.some((stmt) => stmt._ === "UnsupportedStmt")).toBe(false);
+});
+
+it("preflights every variable declaration pattern before emitting any initializer in the statement", () => {
+    const { file, diagnostics } = lower(`
+        declare function first(): any[];
+        declare function second(): any[];
+        function bad() {
+            const keep = first(), [[value], ...tail] = second();
+            return 1;
+        }
+        function good() {
+            const [value, ...tail] = second();
+            return value;
+        }
+    `);
+    const badStmts = allStmts(methodByName(file, "bad"));
+    const rawIndex = badStmts.findIndex((stmt) => stmt._ === "UnsupportedStmt");
+    const goodStmts = allStmts(methodByName(file, "good"));
+
+    expect(badStmts[rawIndex]).toMatchObject({ _: "UnsupportedStmt", kindName: "VariableStatement" });
+    expect(badStmts.slice(0, rawIndex).map(callName)).not.toContain("first");
+    expect(badStmts.slice(0, rawIndex).map(callName)).not.toContain("second");
+    expect(diagnostics.messages).toContainEqual(expect.stringContaining(
+        "unsupported statement: nested bindings in array rest are not represented with iterator semantics",
+    ));
+    expect(goodStmts.some((stmt) => callName(stmt) === "second")).toBe(true);
+    expect(goodStmts.some((stmt) => callName(stmt) === "next")).toBe(true);
+    expect(goodStmts.some((stmt) => stmt._ === "UnsupportedStmt")).toBe(false);
+});
+
 describe("unsupported loop bindings do not break the whole file", () => {
     // `lower()` throws on unplaced labels via finalize(), so merely lowering is the assertion.
     const cases: Record<string, string> = {
         "array pattern with rest": "declare const xs: any[]; for (const [[a], ...rest] of xs) { console.log(a); }",
         "member expression target": "declare const xs: any[]; const obj: any = {}; for (obj.x of xs) { console.log(obj.x); }",
-        "rest in for-in": "declare const o: any; for (const [[a], ...rest] in o) { console.log(a); }",
     };
 
     for (const [name, source] of Object.entries(cases)) {
@@ -28,6 +111,37 @@ describe("unsupported loop bindings do not break the whole file", () => {
             expect(diagnostics.messages.some((msg) => msg.includes("unsupported loop binding"))).toBe(true);
         });
     }
+});
+
+it("marks for-in enumeration unsupported before attempting its nested rest binding", () => {
+    const { file, diagnostics } = lower(`
+        declare const o: any;
+        for (const [[a], ...rest] in o) { console.log(a); }
+    `);
+    const stmts = file.classes.flatMap((clazz) => clazz.methods.flatMap((method) => allStmts(method)));
+
+    expect(stmts).toContainEqual(expect.objectContaining({
+        _: "UnsupportedStmt", kindName: "ForInStatement",
+    }));
+    expect(diagnostics.messages).toContainEqual(expect.stringContaining(
+        "unsupported for-in enumeration: inherited and changing keys cannot be represented",
+    ));
+});
+
+it("finalizes a for initializer with an unsupported nested array rest binding", () => {
+    const { file, diagnostics } = lower(`
+        function f(input: any): void {
+            for (const [[...[value]]] = input; false;) {}
+        }
+    `);
+    const stmts = allStmts(methodByName(file, "f"));
+
+    expect(stmts).toContainEqual(expect.objectContaining({
+        _: "UnsupportedStmt", kindName: "ForStatement",
+    }));
+    expect(diagnostics.messages).toContainEqual(expect.stringContaining(
+        "unsupported statement: nested bindings in array rest are not represented with iterator semantics",
+    ));
 });
 
 it("lowers a computed object key in a for-of binding", () => {
@@ -377,7 +491,177 @@ describe("non-finite numeric literals", () => {
     });
 });
 
+describe("undefined identifier bindings", () => {
+    it("reads a parameter named undefined from its local binding", () => {
+        const { file, diagnostics } = lower("function value(undefined: number): number { return undefined; }");
+        const stmts = allStmts(methodByName(file, "value"));
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(stmts).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            left: { _: "Local", name: "undefined", type: { _: "NumberType" } },
+            right: { _: "ParameterRef", index: 0, type: { _: "NumberType" } },
+        }));
+        expect(stmts).toContainEqual({
+            _: "ReturnStmt",
+            arg: { _: "Local", name: "undefined", type: { _: "NumberType" } },
+        });
+    });
+
+    it("reads a local named undefined after its initializer", () => {
+        const { file, diagnostics } = lower("function value(): number { const undefined = 7; return undefined; }");
+        const stmts = allStmts(methodByName(file, "value"));
+        const returned = stmts.find((stmt) => stmt._ === "ReturnStmt");
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(returned).toMatchObject({
+            _: "ReturnStmt",
+            arg: { _: "Local", name: "undefined" },
+        });
+    });
+
+    it("reads a captured undefined binding through the closure environment", () => {
+        const { file, diagnostics } = lower("function outer(undefined: number) { return () => undefined; }");
+        const stmts = allStmts(methodByName(file, "%AM0$outer"));
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "ClosureFieldRef"
+            && stmt.right.fieldName === "undefined"
+            && stmt.right.type._ === "NumberType")).toBe(true);
+    });
+
+    it("retains the built-in undefined constant", () => {
+        const { file, diagnostics } = lower("function value() { return undefined; }");
+        const stmts = allStmts(methodByName(file, "value"));
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(stmts).toContainEqual({
+            _: "ReturnStmt",
+            arg: { _: "Constant", value: "undefined", type: { _: "UndefinedType" } },
+        });
+    });
+});
+
 describe("function hoisting", () => {
+    it.each([
+        ["function declaration", "function first(): number { return later(); }", "FunctionDeclaration"],
+        ["arrow initializer", "const first = (): number => later();", "VariableStatement"],
+    ])("marks a forward function captured by an earlier %s unsupported", (_case, earlierStatement, kindName) => {
+        const { file, diagnostics } = lower(`
+            function outer(): number {
+                ${earlierStatement}
+                let seed = 1;
+                function later(): number { return seed; }
+                return first();
+            }
+        `);
+        const stmts = singleBlockStmts(methodByName(file, "outer"));
+        const fallback = stmts.find((stmt) => stmt._ === "UnsupportedStmt");
+        const seedAssignment = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.left._ === "Local" && stmt.left.name === "seed");
+        const laterAssignment = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "Local" && stmt.right.name.startsWith("%AM"));
+
+        expect(fallback).toMatchObject({ _: "UnsupportedStmt", kindName });
+        expect(seedAssignment).toBeGreaterThanOrEqual(0);
+        expect(laterAssignment).toBeGreaterThan(seedAssignment);
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining(
+            "closure capturing a later function binding requires a runtime binding cell",
+        ));
+    });
+
+    it.each([
+        ["arrow", "(() => later())()"],
+        ["function expression", "(function (): number { return later(); })()"],
+        ["arrow with a parameter default", "((value: number = later()) => value)()"],
+    ])("hoists a function used by an immediately invoked %s", (_case, invocation) => {
+        const { file, diagnostics } = lower(`
+            function outer(): number {
+                const value = ${invocation};
+                function later(): number { return 7; }
+                return value;
+            }
+        `);
+        const stmts = singleBlockStmts(methodByName(file, "outer"));
+        const laterBinding = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.left._ === "Local" && stmt.left.name === "later"
+            && stmt.right._ === "Local" && stmt.right.name.startsWith("%AM"));
+        const invokedCall = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "PtrCallExpr");
+
+        expect(laterBinding).toBeGreaterThanOrEqual(0);
+        expect(invokedCall).toBeGreaterThanOrEqual(0);
+        expect(laterBinding).toBeLessThan(invokedCall);
+        expect(stmts.some((stmt) => stmt._ === "UnsupportedStmt")).toBe(false);
+        expect(diagnostics.messages).toEqual([]);
+    });
+
+    it.each([
+        ["unrelated property key", "const object = { later: 0 };"],
+        ["shadowed shorthand value", "{ const later = 0; const object = { later }; }"],
+        ["type-only reference", "type Later = typeof later;"],
+    ])("keeps a later closure after its capture for %s", (_case, earlierStatement) => {
+        const { file, diagnostics } = lower(`
+            function outer(): number {
+                ${earlierStatement}
+                let seed = 1;
+                function later(): number { return seed; }
+                return later();
+            }
+        `);
+        const stmts = singleBlockStmts(methodByName(file, "outer"));
+        const seedAssignment = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.left._ === "Local" && stmt.left.name === "seed");
+        const closureAssignment = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "Local" && stmt.right.name.startsWith("%AM"));
+
+        expect(seedAssignment).toBeGreaterThanOrEqual(0);
+        expect(closureAssignment).toBeGreaterThanOrEqual(0);
+        expect(seedAssignment).toBeLessThan(closureAssignment);
+        expect(diagnostics.messages).toEqual([]);
+    });
+
+    it("hoists a function referenced by an earlier call", () => {
+        const { file, diagnostics } = lower(`
+            function outer(): number {
+                const result = later();
+                function later(): number { return 7; }
+                return result;
+            }
+        `);
+        const stmts = singleBlockStmts(methodByName(file, "outer"));
+        const closureAssignment = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "Local" && stmt.right.name.startsWith("%AM"));
+        const call = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "PtrCallExpr");
+
+        expect(closureAssignment).toBeGreaterThanOrEqual(0);
+        expect(call).toBeGreaterThanOrEqual(0);
+        expect(closureAssignment).toBeLessThan(call);
+        expect(diagnostics.messages).toEqual([]);
+    });
+
+    it("hoists a function referenced by an earlier shorthand property", () => {
+        const { file, diagnostics } = lower(`
+            function outer() {
+                const object = { later };
+                function later(): number { return 7; }
+                return object.later;
+            }
+        `);
+        const stmts = singleBlockStmts(methodByName(file, "outer"));
+        const closureAssignment = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "Local" && stmt.right.name.startsWith("%AM"));
+        const objectCreation = stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "NewExpr");
+
+        expect(closureAssignment).toBeGreaterThanOrEqual(0);
+        expect(objectCreation).toBeGreaterThanOrEqual(0);
+        expect(closureAssignment).toBeLessThan(objectCreation);
+        expect(diagnostics.messages).toEqual([]);
+    });
+
     it("materializes a capture only after the captured local is assigned", () => {
         const { file } = lower(`
             function outer(): number {
@@ -400,8 +684,8 @@ describe("function hoisting", () => {
         expect(seedAssign).toBeLessThan(closureCreate);
     });
 
-    it("does not make a recursive nested function capture itself", () => {
-        const { file } = lower(`
+    it("marks a recursive nested declaration unsupported before emitting a callable", () => {
+        const { file, diagnostics } = lower(`
             function run(n: number): number {
                 return fact(n);
                 function fact(k: number): number {
@@ -409,7 +693,115 @@ describe("function hoisting", () => {
                 }
             }
         `);
-        const closure = methodByName(file, "%AM0$run");
-        expect(closure.signature.parameters.some((p) => p.type._ === "LexicalEnvType")).toBe(false);
+        const run = methodByName(file, "run");
+        const fallback = allStmts(run).find((stmt) => stmt._ === "UnsupportedStmt");
+
+        expect(fallback).toMatchObject({ _: "UnsupportedStmt", kindName: "FunctionDeclaration" });
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining(
+            "unsupported statement: recursive lifted function binding is not represented in EtsIR",
+        ));
+        expect(file.classes.flatMap((clazz) => clazz.methods).some((method) => method.signature.name.startsWith("%AM")))
+            .toBe(false);
+    });
+
+    it("rejects a nested declaration whose default reads its own mutable binding", () => {
+        const { file, diagnostics } = lower(`
+            function run(): number {
+                function fact(value: number = fact(1)): number { return value; }
+                return fact();
+            }
+        `);
+
+        expect(allStmts(methodByName(file, "run"))).toContainEqual(expect.objectContaining({
+            _: "UnsupportedStmt", kindName: "FunctionDeclaration",
+        }));
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining("recursive lifted function binding"));
+    });
+
+    it("marks a recursive named expression unsupported even when its outer alias is rebound", () => {
+        const source = `
+            function make() {
+                let alias = function self(n: number): number { return n ? self(n - 1) : 0; };
+                const original = alias;
+                alias = undefined as any;
+                return original;
+            }
+        `;
+        const { file, diagnostics } = lower(source);
+        const body = methodByName(file, "make").body!;
+        const assignments = allStmts(methodByName(file, "make")).filter(
+            (stmt): stmt is AssignStmtDto => stmt._ === "AssignStmt",
+        );
+        const fallback = assignments.find((stmt) => stmt.right._ === "UnsupportedValue");
+        const fallbackOrigin = body.stmtOrigins?.find(({ blockId, stmtIndex }) =>
+            body.cfg.blocks[blockId].stmts[stmtIndex] === fallback,
+        );
+
+        expect(fallback?.right).toMatchObject({
+            _: "UnsupportedValue", kindName: "FunctionExpression", type: { _: "FunctionType" },
+        });
+        expect(fallbackOrigin?.source.nodeKind).toBe("FunctionExpression");
+        expect(source.slice(fallbackOrigin!.source.startOffset, fallbackOrigin!.source.endOffset))
+            .toContain("function self(n: number)");
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining(
+            "unsupported expression: recursive lifted function binding is not represented in EtsIR",
+        ));
+        expect(file.classes.flatMap((clazz) => clazz.methods).some((method) => method.signature.name.startsWith("%AM")))
+            .toBe(false);
+    });
+
+    it("rejects a named expression whose parameter default captures its private name", () => {
+        const { file, diagnostics } = lower(`
+            function make() {
+                return function self(next = () => self(1)) { return next(); };
+            }
+        `);
+
+        expect(allStmts(methodByName(file, "make"))).toContainEqual(expect.objectContaining({
+            right: expect.objectContaining({ _: "UnsupportedValue", kindName: "FunctionExpression" }),
+        }));
+        expect(diagnostics.messages).toContainEqual(expect.stringContaining("recursive lifted function binding"));
+    });
+
+    it("rejects repeated creation of a recursive named expression in a factory", () => {
+        const { file, diagnostics } = lower(`
+            function make() {
+                return function self(n: number): number { return n ? self(n - 1) : 0; };
+            }
+            const first = make();
+            const second = make();
+        `);
+
+        expect(allStmts(methodByName(file, "make"))).toContainEqual(expect.objectContaining({
+            right: expect.objectContaining({ _: "UnsupportedValue", kindName: "FunctionExpression" }),
+        }));
+        expect(diagnostics.messages.filter((message) => message.includes("recursive lifted function binding")))
+            .toHaveLength(1);
+    });
+
+    it("keeps shadowed spelling and type-only self references on the supported path", () => {
+        const { file, diagnostics } = lower(`
+            function run(): number {
+                function fact(value: number): number {
+                    type Own = typeof fact;
+                    const next = (fact: number): number => fact + 1;
+                    return next(value);
+                }
+                return fact(2);
+            }
+            const named = function self(value: typeof self): typeof self { return value; };
+        `);
+
+        expect(allStmts(methodByName(file, "run"))).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            left: expect.objectContaining({ _: "Local", name: "fact" }),
+            right: expect.objectContaining({
+                _: "Local", name: expect.stringMatching(/^%AM\d+\$run$/),
+                type: expect.objectContaining({ _: "FunctionType" }),
+            }),
+        }));
+        expect(file.classes.flatMap((clazz) => clazz.methods).some((method) => method.signature.name.startsWith("%AM")))
+            .toBe(true);
+        expect(diagnostics.messages.some((message) => message.includes("recursive lifted function binding"))).toBe(false);
     });
 });

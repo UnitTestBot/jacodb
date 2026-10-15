@@ -1,30 +1,7 @@
 import * as ts from "typescript";
 import { describe, expect, it } from "vitest";
-import { StmtDto } from "../src/dto/stmts";
 import { serializeEtsFile } from "../src/serialize";
 import { lower, methodByName, singleBlockStmts } from "./util";
-
-function assertSpreadArgumentOrder(stmts: StmtDto[], methodName: string): void {
-    const expansion = stmts.find((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "SpreadExpansionExpr");
-    const reads = stmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "ArrayRef");
-    const call = stmts.find((stmt) => stmt._ === "AssignStmt"
-        && (stmt.right._ === "StaticCallExpr" || stmt.right._ === "InstanceCallExpr")
-        && stmt.right.method.name === methodName);
-
-    expect(reads).toHaveLength(2);
-    expect(expansion).toMatchObject({ right: { _: "SpreadExpansionExpr", expectedCount: 2 } });
-    for (const read of reads) {
-        expect(read).toMatchObject({ right: { array: expansion?._ === "AssignStmt" ? expansion.left : undefined } });
-    }
-    expect(reads.map((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "ArrayRef"
-        && stmt.right.index._ === "Constant" ? stmt.right.index.value : "invalid")).toEqual(["0", "1"]);
-    expect(call).toMatchObject({
-        _: "AssignStmt",
-        right: {
-            args: reads.map((stmt) => stmt._ === "AssignStmt" ? stmt.left : undefined),
-        },
-    });
-}
 
 function runTypeScript(source: string, expression: string): unknown {
     const js = ts.transpileModule(source, {

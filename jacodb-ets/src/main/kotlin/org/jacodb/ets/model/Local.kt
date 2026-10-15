@@ -24,6 +24,7 @@ data class EtsLocal(
         if (type is EtsLexicalEnvType) {
             return "$name<${type.closures.joinToString(",")}>"
         }
+
         return name
     }
 

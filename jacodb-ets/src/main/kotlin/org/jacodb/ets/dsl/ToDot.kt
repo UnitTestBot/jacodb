@@ -16,8 +16,6 @@
 
 package org.jacodb.ets.dsl
 
-import java.util.IdentityHashMap
-
 private fun Node.toDotLabel(): String {
     val label = when (this) {
         is Nop -> "nop"
@@ -31,71 +29,76 @@ private fun Node.toDotLabel(): String {
     return label.replace("\"", "\\\"")
 }
 
+private class DotNode(
+    val id: Int,
+    val node: Node,
+    val thenBranch: List<DotNode> = emptyList(),
+    val elseBranch: List<DotNode> = emptyList(),
+)
+
 fun Program.toDot(): String {
     val lines = mutableListOf<String>()
     lines += "digraph cfg {"
     lines += "  node [shape=rect fontname=\"monospace\"]"
 
-    val labelMap: MutableMap<String, Label> = hashMapOf()
-    val nodeToId: MutableMap<Node, Int> = IdentityHashMap()
+    val labelMap: MutableMap<String, DotNode> = hashMapOf()
     var freeId = 0
 
-    fun processForNodes(nodes: List<Node>) {
-        for (node in nodes) {
-            val id = nodeToId.computeIfAbsent(node) { freeId++ }
+    fun processForNodes(nodes: List<Node>): List<DotNode> {
+        return nodes.map { node ->
+            val id = freeId++
             lines += "  $id [label=\"${node.toDotLabel()}\"]"
-            if (node is If) {
-                processForNodes(node.thenBranch)
-                processForNodes(node.elseBranch)
-            }
+
+            val thenBranch = if (node is If) processForNodes(node.thenBranch) else emptyList()
+            val elseBranch = if (node is If) processForNodes(node.elseBranch) else emptyList()
+            val dotNode = DotNode(id = id, node = node, thenBranch = thenBranch, elseBranch = elseBranch)
+
             if (node is Label) {
                 check(node.name !in labelMap) { "Duplicate label: ${node.name}" }
-                labelMap[node.name] = node
+                labelMap[node.name] = dotNode
             }
+
+            dotNode
         }
     }
 
-    processForNodes(nodes)
+    val dotNodes = processForNodes(nodes)
 
-    fun processForEdges(nodes: List<Node>) {
-        for (node in nodes) {
-            val id = nodeToId[node] ?: error("No ID for $node")
-            when (node) {
+    fun processForEdges(nodes: List<DotNode>, continuation: DotNode? = null) {
+        for ((index, dotNode) in nodes.withIndex()) {
+            val next = nodes.getOrNull(index + 1) ?: continuation
+            when (val node = dotNode.node) {
                 is If -> {
-                    if (node.thenBranch.isNotEmpty()) {
-                        val thenNode = node.thenBranch.first()
-                        val thenId = nodeToId[thenNode] ?: error("No ID for $thenNode")
-                        lines += "  $id -> $thenId [label=\"true\"]"
-                        processForEdges(node.thenBranch)
+                    val thenEntry = dotNode.thenBranch.firstOrNull() ?: next
+                    if (thenEntry != null) {
+                        lines += "  ${dotNode.id} -> ${thenEntry.id} [label=\"true\"]"
                     }
-                    if (node.elseBranch.isNotEmpty()) {
-                        val elseNode = node.elseBranch.first()
-                        val elseId = nodeToId[elseNode] ?: error("No ID for $elseNode")
-                        lines += "  $id -> $elseId [label=\"false\"]"
-                        processForEdges(node.elseBranch)
+                    processForEdges(dotNode.thenBranch, next)
+
+                    val elseEntry = dotNode.elseBranch.firstOrNull() ?: next
+                    if (elseEntry != null) {
+                        lines += "  ${dotNode.id} -> ${elseEntry.id} [label=\"false\"]"
                     }
+                    processForEdges(dotNode.elseBranch, next)
                 }
 
                 is Goto -> {
-                    val labelNode = labelMap[node.targetLabel] ?: error("Unknown label: ${node.targetLabel}")
-                    val labelId = nodeToId[labelNode] ?: error("No ID for $labelNode")
-                    lines += "  $id -> $labelId"
+                    val target = labelMap[node.targetLabel] ?: error("Unknown label: ${node.targetLabel}")
+                    lines += "  ${dotNode.id} -> ${target.id}"
                 }
 
+                is Return -> Unit
+
                 else -> {
-                    // See below.
+                    if (next != null) {
+                        lines += "  ${dotNode.id} -> ${next.id}"
+                    }
                 }
             }
         }
-
-        for ((cur, next) in nodes.zipWithNext()) {
-            val curId = nodeToId[cur] ?: error("No ID for $cur")
-            val nextId = nodeToId[next] ?: error("No ID for $next")
-            lines += "  $curId -> $nextId"
-        }
     }
 
-    processForEdges(nodes)
+    processForEdges(dotNodes)
 
     lines += "}"
     return lines.joinToString("\n")

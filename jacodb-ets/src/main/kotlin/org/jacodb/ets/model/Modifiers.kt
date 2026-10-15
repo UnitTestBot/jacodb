@@ -17,21 +17,21 @@
 package org.jacodb.ets.model
 
 enum class EtsModifier(val value: Int, val string: String) {
-    PRIVATE(1 shl 0, "private"),
-    PROTECTED(1 shl 1, "protected"),
-    PUBLIC(1 shl 2, "public"),
-    EXPORT(1 shl 3, "export"),
-    STATIC(1 shl 4, "static"),
-    ABSTRACT(1 shl 5, "abstract"),
-    ASYNC(1 shl 6, "async"),
-    CONST(1 shl 7, "const"),
-    ACCESSOR(1 shl 8, "accessor"),
-    DEFAULT(1 shl 9, "default"),
-    IN(1 shl 10, "in"),
-    READONLY(1 shl 11, "readonly"),
-    OUT(1 shl 12, "out"),
-    OVERRIDE(1 shl 13, "override"),
-    DECLARE(1 shl 14, "declare");
+    PRIVATE(value = 1 shl 0, string = "private"),
+    PROTECTED(value = 1 shl 1, string = "protected"),
+    PUBLIC(value = 1 shl 2, string = "public"),
+    EXPORT(value = 1 shl 3, string = "export"),
+    STATIC(value = 1 shl 4, string = "static"),
+    ABSTRACT(value = 1 shl 5, string = "abstract"),
+    ASYNC(value = 1 shl 6, string = "async"),
+    CONST(value = 1 shl 7, string = "const"),
+    ACCESSOR(value = 1 shl 8, string = "accessor"),
+    DEFAULT(value = 1 shl 9, string = "default"),
+    IN(value = 1 shl 10, string = "in"),
+    READONLY(value = 1 shl 11, string = "readonly"),
+    OUT(value = 1 shl 12, string = "out"),
+    OVERRIDE(value = 1 shl 13, string = "override"),
+    DECLARE(value = 1 shl 14, string = "declare");
 }
 
 interface WithModifiers {
@@ -60,10 +60,10 @@ interface WithModifiers {
 @JvmInline
 value class EtsModifiers(val mask: Int) : WithModifiers {
     companion object {
-        val EMPTY = EtsModifiers(0)
+        val EMPTY = EtsModifiers(mask = 0)
 
         fun of(vararg modifiers: EtsModifier): EtsModifiers {
-            return EtsModifiers(modifiers.fold(0) { acc, modifier -> acc or modifier.value })
+            return EtsModifiers(mask = modifiers.fold(initial = 0) { acc, modifier -> acc or modifier.value })
         }
     }
 

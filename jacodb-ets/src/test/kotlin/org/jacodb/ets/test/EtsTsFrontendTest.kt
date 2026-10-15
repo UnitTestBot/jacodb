@@ -24,6 +24,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -585,6 +586,20 @@ class EtsTsFrontendTest {
     }
 
     @Test
+    fun `named object method is unsupported before allocation through JSON conversion`() {
+        val dto = runFrontend("export function value() { return { x: 1, method() { return this.x; } }; }")
+        val serialized = Json { serializersModule = dtoModule }.encodeToString(dto)
+        val roundTripped = EtsFileDto.loadFromJson(serialized)
+        val stmts = roundTripped.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
+            .methods.single { it.signature.name == "value" }.body!!.cfg.blocks.flatMap { it.stmts }
+
+        assertTrue(stmts.filterIsInstance<AssignStmtDto>().any { it.right is RawValueDto })
+        assertTrue(stmts.filterIsInstance<AssignStmtDto>().none { it.right is NewExprDto })
+        assertTrue(stmts.none { it is DefineDataPropertyStmtDto })
+        assertTrue(roundTripped.classes.none { it.signature.name.startsWith("%AC") })
+    }
+
+    @Test
     fun `nested ordinary function this does not suppress default export in JSON`() {
         val dto = runFrontend(
             "export default () => { function inner() { return this; } return 1; };"
@@ -759,6 +774,30 @@ class EtsTsFrontendTest {
 
         assertEquals(UnknownTypeDto, decoded.classType)
         assertEquals(null, decoded.constructorValue)
+    }
+
+    @Test
+    fun `new JSON accepts a direct class constructor value`() {
+        val signature = """{"name":"A","declaringFile":{"projectName":"test","fileName":"class.ts"}}"""
+        val source = """
+            {
+              "_": "NewExpr",
+              "classType": { "_": "UnknownType" },
+              "constructorValue": {
+                "_": "ClassValueRef",
+                "signature": $signature,
+                "type": { "_": "ClassValueType", "signature": $signature }
+              }
+            }
+        """.trimIndent()
+
+        val decoded = Json { serializersModule = dtoModule }
+            .decodeFromString(ValueDto.serializer(), source) as NewExprDto
+
+        val constructorValue = decoded.constructorValue
+        assertIs<ClassValueRefDto>(constructorValue)
+        assertEquals("A", constructorValue.signature.name)
+        assertEquals(ClassValueTypeDto(constructorValue.signature), constructorValue.type)
     }
 
     @Test
@@ -1352,7 +1391,7 @@ class EtsTsFrontendTest {
     fun `closures, destructuring and object literals convert to the model`() {
         val etsFileDto = runFrontend(
             """
-                const config = { host: "localhost", port: 8080, describe(): string { return this.host; } };
+                const config = { host: "localhost", port: 8080 };
                 const { host, port: p = 80 } = config;
 
                 const handlers = [1, 2, 3].map((x: number) => x * 2);
@@ -1401,10 +1440,10 @@ class EtsTsFrontendTest {
             "captured locals must be writable through the lexical environment",
         )
 
-        // Object literal became an anonymous class with fields and a method.
+        // Object literal became an anonymous class with data fields.
         val anonymousClass = scene.projectClasses.single { it.name.startsWith("%AC0") }
         assertTrue(anonymousClass.fields.any { it.name == "host" })
-        assertTrue(anonymousClass.methods.any { it.name == "describe" })
+        assertTrue(anonymousClass.methods.isEmpty())
 
         // Destructured module bindings use the default class's shared storage.
         assertTrue(defaultClass.fields.any { it.name == "host" })

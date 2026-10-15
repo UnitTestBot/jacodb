@@ -2,6 +2,8 @@ import { EtsFileDto, MethodDto } from "../src/dto/model";
 import { LexicalEnvTypeDto } from "../src/dto/types";
 import { ClosureFieldRefDto } from "../src/dto/values";
 
+const MAX_OBJECT_TEST_STEPS = 1_000;
+
 /**
  * A deliberately small concrete consumer for object-lowering regressions.
  * Executes serialized EtsIR using JavaScript property operations; this is not
@@ -40,7 +42,9 @@ export function executeObjectIr(file: EtsFileDto, name: string, args: unknown[] 
         };
         const captureEnvironment = (reference: ClosureFieldRefDto): Record<string, unknown> => {
             const type = reference.base.type;
-            if (type._ !== "LexicalEnvType" || !type.closures.some((capture) => capture.name === reference.fieldName)) {
+            const isDeclaredCapture = type._ === "LexicalEnvType"
+                && type.closures.some((capture) => capture.name === reference.fieldName);
+            if (!isDeclaredCapture) {
                 throw new Error(`undeclared test capture ${reference.fieldName}`);
             }
 
@@ -144,7 +148,7 @@ export function executeObjectIr(file: EtsFileDto, name: string, args: unknown[] 
         };
         const blocks = method.body.cfg.blocks;
         let block = blocks[0];
-        for (let steps = 0; block !== undefined && steps < 1000; steps++) {
+        for (let steps = 0; block !== undefined && steps < MAX_OBJECT_TEST_STEPS; steps++) {
             let next = block.successors[0];
             for (const stmt of block.stmts) {
                 switch (stmt._) {

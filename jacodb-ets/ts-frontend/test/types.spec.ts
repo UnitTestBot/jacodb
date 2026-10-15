@@ -5,13 +5,13 @@ import { FileSignatureDto } from "../src/dto/signatures";
 import { TypeDto } from "../src/dto/types";
 import { serializeEtsFile } from "../src/serialize";
 import { TypeConverter } from "../src/types/convert";
-import { compile, findNode, findVariable, lower, methodByName } from "./util";
+import { compile, findNode, findVariable, lower, lowerProject, methodByName } from "./util";
 
 const FILE_SIG: FileSignatureDto = { projectName: "proj", fileName: "test.ts" };
 
 function makeConverter(source: string): { converter: TypeConverter; sourceFile: ts.SourceFile } {
-    const { checker, sourceFile } = compile(source);
-    const converter = new TypeConverter(checker, () => FILE_SIG);
+    const { program, checker, sourceFile } = compile(source);
+    const converter = new TypeConverter(checker, () => FILE_SIG, (sf) => program.isSourceFileDefaultLibrary(sf));
     return { converter, sourceFile };
 }
 
@@ -99,6 +99,35 @@ describe("convertTypeNode (annotations)", () => {
             elementType: { _: "NumberType" },
             dimensions: 1,
         });
+    });
+
+    it("keeps a project class named Array distinct from the default-library array", () => {
+        const type = annotationOf("export {}; class Array<T> { value!: T } let x: Array<number>;");
+
+        expect(type).toEqual({
+            _: "ClassType",
+            signature: { name: "Array", declaringFile: FILE_SIG },
+            typeParameters: [{ _: "NumberType" }],
+        });
+    });
+
+    it("keeps an imported class aliased as Array distinct from the default-library array", () => {
+        const { file } = lowerProject({
+            "/model.ts": "export class Box<T> { value!: T }",
+            "/consumer.ts": `
+                import { Box as Array } from "./model";
+                export function read(value: Array<number>): Array<number> { return value; }
+            `,
+        }, "/consumer.ts");
+        const expectedType = {
+            _: "ClassType",
+            signature: { name: "Box", declaringFile: { projectName: "proj", fileName: "/model.ts" } },
+            typeParameters: [{ _: "NumberType" }],
+        };
+
+        const signature = methodByName(file, "read").signature;
+        expect(signature.parameters[0].type).toEqual(expectedType);
+        expect(signature.returnType).toEqual(expectedType);
     });
 
     it("converts tuples", () => {
@@ -262,6 +291,70 @@ describe("convertTypeNode (annotations)", () => {
         });
     });
 
+    it("preserves a generic function type's binder, constraint, and default", () => {
+        const type = annotationOf('let x: <T extends string = "fallback">(value: T) => T;');
+
+        expect(type).toEqual({
+            _: "FunctionType",
+            signature: {
+                declaringClass: { name: "", declaringFile: { projectName: "%unk", fileName: "%unk" } },
+                name: "",
+                parameters: [{ name: "value", type: { _: "GenericType", name: "T" } }],
+                returnType: { _: "GenericType", name: "T" },
+            },
+            typeParameters: [{
+                _: "GenericType",
+                name: "T",
+                constraint: { _: "StringType" },
+                defaultType: { _: "LiteralType", literal: "fallback" },
+            }],
+        });
+    });
+
+    it("instantiates outer alias parameters in a generic function binder", () => {
+        const type = annotationOf(`
+            type Callback<U> = <T extends U = U>(value: T) => T;
+            let x: Callback<string>;
+        `);
+
+        expect(type).toEqual({
+            _: "FunctionType",
+            signature: {
+                declaringClass: { name: "", declaringFile: { projectName: "%unk", fileName: "%unk" } },
+                name: "",
+                parameters: [{ name: "value", type: { _: "GenericType", name: "T" } }],
+                returnType: { _: "GenericType", name: "T" },
+            },
+            typeParameters: [{
+                _: "GenericType",
+                name: "T",
+                constraint: { _: "StringType" },
+                defaultType: { _: "StringType" },
+            }],
+        });
+    });
+
+    it("keeps a function's own type parameter when it shadows an alias parameter", () => {
+        const type = annotationOf(`
+            type Shadow<T> = <T extends string = "local">(value: T) => T;
+            let x: Shadow<number>;
+        `);
+
+        expect(type).toMatchObject({
+            _: "FunctionType",
+            signature: {
+                parameters: [{ name: "value", type: { _: "GenericType", name: "T" } }],
+                returnType: { _: "GenericType", name: "T" },
+            },
+            typeParameters: [{
+                _: "GenericType",
+                name: "T",
+                constraint: { _: "StringType" },
+                defaultType: { _: "LiteralType", literal: "local" },
+            }],
+        });
+    });
+
     it("materializes object type literals as structural classes", () => {
         const { file } = lower(`
             class C {
@@ -384,6 +477,66 @@ describe("typeOfNode (inference)", () => {
                 returnType: { _: "StringType" },
             },
         });
+    });
+
+    it("preserves the binder of an inferred generic function value", () => {
+        const type = inferredOf('const x = <T extends string = "fallback">(value: T): T => value;');
+
+        expect(type).toMatchObject({
+            _: "FunctionType",
+            signature: {
+                parameters: [{ name: "value", type: { _: "GenericType", name: "T" } }],
+                returnType: { _: "GenericType", name: "T" },
+            },
+            typeParameters: [{
+                _: "GenericType",
+                name: "T",
+                constraint: { _: "StringType" },
+                defaultType: { _: "LiteralType", literal: "fallback" },
+            }],
+        });
+    });
+
+    it("keeps an inferred generic field binder and its outer class parameter", () => {
+        const { file } = lower(`
+            class Holder<U> {
+                callback = <T extends U = U>(value: T): T => value;
+            }
+        `);
+        const holder = file.classes.find((candidate) => candidate.signature.name === "Holder");
+        const callbackType = holder?.fields.find((field) => field.signature.name === "callback")?.signature.type;
+
+        expect(callbackType).toMatchObject({
+            _: "FunctionType",
+            signature: {
+                parameters: [{ name: "value", type: { _: "GenericType", name: "T" } }],
+                returnType: { _: "GenericType", name: "T" },
+            },
+            typeParameters: [{
+                _: "GenericType",
+                name: "T",
+                constraint: { _: "GenericType", name: "U" },
+                defaultType: { _: "GenericType", name: "U" },
+            }],
+        });
+    });
+
+    it("does not copy a generic declaration binder onto a specialized callable", () => {
+        const type = inferredOf(`
+            const identity = <T>(value: T): T => value;
+            const specialized: (value: number) => number = identity;
+            const x = specialized;
+        `);
+
+        expect(type).toMatchObject({
+            _: "FunctionType",
+            signature: {
+                parameters: [{ name: "value", type: { _: "NumberType" } }],
+                returnType: { _: "NumberType" },
+            },
+        });
+        if (type._ !== "FunctionType") throw new Error("expected a specialized function type");
+        expect(type.typeParameters).toBeUndefined();
     });
 
     it("never throws on weird nodes", () => {

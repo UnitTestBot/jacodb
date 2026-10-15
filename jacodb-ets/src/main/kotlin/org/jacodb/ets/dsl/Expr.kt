@@ -16,6 +16,8 @@
 
 package org.jacodb.ets.dsl
 
+import org.jacodb.ets.model.EtsClassSignature
+
 sealed interface Expr
 
 data class Local(val name: String) : LValue {
@@ -96,7 +98,14 @@ data class FieldRef(
 data class StaticFieldRef(
     val className: String,
     val fieldName: String,
+    val classSignature: EtsClassSignature? = null,
 ) : LValue {
+    init {
+        require(classSignature == null || classSignature.name == className) {
+            "Static field class name does not match its signature"
+        }
+    }
+
     override fun toString() = "$className.$fieldName"
 }
 

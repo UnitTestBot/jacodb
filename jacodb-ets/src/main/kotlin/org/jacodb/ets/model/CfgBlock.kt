@@ -40,9 +40,9 @@ class EtsBlockCfg(
             require(block.id == i) { "Block id ${block.id} mismatch index $i" }
         }
         for ((id, successorIds) in successors) {
-            require(id in 0..blocks.size) { "Block id $id is out of bounds" }
+            require(id in blocks.indices) { "Block id $id is out of bounds" }
             for (s in successorIds) {
-                require(s in 0..blocks.size) { "Successor $s is out of bounds" }
+                require(s in blocks.indices) { "Successor $s is out of bounds" }
             }
         }
         for ((blockId, stmtTargets) in exceptionalSuccessors) {

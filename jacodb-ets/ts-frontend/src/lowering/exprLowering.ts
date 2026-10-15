@@ -37,8 +37,8 @@ import {
     CONSTRUCTOR_NAME,
     PATTERN_PARAMETER_PREFIX,
 } from "../dto/constants";
-import { FieldDto, MethodDto } from "../dto/model";
-import { bindingIdentifier, buildParameters, BuiltParameters, classLikeDeclarationOf, memberName, modifiersOf, returnTypeOf } from "./astUtils";
+import { FieldDto } from "../dto/model";
+import { bindingIdentifier, buildParameters, BuiltParameters, classLikeDeclarationOf, memberName, modifiersOf, returnTypeOf, unsupportedClassDeclarationReason } from "./astUtils";
 import { BinaryOp, RelationOp, UnaryOp } from "../dto/ops";
 import {
     ClassSignatureDto,
@@ -352,7 +352,7 @@ export class ExprLowerer {
                 isDelegating: node.asteriskToken !== undefined,
             };
         }
-        throw new LoweringError(ts.SyntaxKind[node.kind]);
+        throw new LoweringError(syntaxKindName(node.kind));
     }
 
     // ------------------------------------------------------------------
@@ -368,7 +368,7 @@ export class ExprLowerer {
         if (nonFiniteNumber !== undefined) {
             return constant(nonFiniteNumber, NUMBER_TYPE);
         }
-        if (node.text === "undefined") {
+        if (node.text === "undefined" && this.defaultLibraryGlobalStatus(node) !== false) {
             return constant("undefined", UNDEFINED_TYPE);
         }
         const declaration = this.m.converter.symbolOf(node)?.declarations?.find((candidate) =>
@@ -381,6 +381,11 @@ export class ExprLowerer {
         if (declaration !== undefined && ts.isClassDeclaration(declaration) &&
             isProjectFile(declaration) &&
             (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent))) {
+            const unsupportedReason = unsupportedClassDeclarationReason(declaration, this.m.checker);
+            if (unsupportedReason !== undefined) {
+                throw new LoweringError(`class value has no EtsIR representation: ${unsupportedReason}`);
+            }
+
             const signature = this.m.converter.classSignatureOf(declaration);
             return { _: "ClassValueRef", signature, type: { _: "ClassValueType", signature } };
         }
@@ -399,14 +404,17 @@ export class ExprLowerer {
     /** Built-in numeric globals are constants, but a project declaration must still shadow them. */
     private builtInNonFiniteNumber(node: ts.Identifier): "Infinity" | "NaN" | undefined {
         if (node.text !== "Infinity" && node.text !== "NaN") return undefined;
-        const symbol = this.m.converter.symbolOf(node);
-        const declarations = symbol?.declarations;
-        if (declarations === undefined || declarations.length === 0 || !declarations.every((declaration) =>
+        return this.defaultLibraryGlobalStatus(node) === true ? node.text : undefined;
+    }
+
+    /** Declaration-less globals include TypeScript's intrinsic `undefined`; resolved project bindings do not. */
+    private defaultLibraryGlobalStatus(node: ts.Identifier): boolean | undefined {
+        const declarations = this.m.converter.symbolOf(node)?.declarations;
+        if (declarations === undefined || declarations.length === 0) return undefined;
+
+        return declarations.every((declaration) =>
             this.m.ctx.isDefaultLibrarySourceFile(declaration.getSourceFile()),
-        )) {
-            return undefined;
-        }
-        return node.text;
+        );
     }
 
     // ------------------------------------------------------------------
@@ -414,6 +422,10 @@ export class ExprLowerer {
     // ------------------------------------------------------------------
 
     private lowerPropertyAccess(node: ts.PropertyAccessExpression): ValueDto {
+        if (node.expression.kind === ts.SyntaxKind.SuperKeyword) {
+            throw new LoweringError("super property read needs superclass-relative property lookup");
+        }
+
         const fieldName = node.name.text;
         const fieldType = this.safeTypeOf(node);
 
@@ -445,14 +457,18 @@ export class ExprLowerer {
             : ts.isPropertyAccessExpression(node.expression)
               ? node.expression.name
               : undefined;
-        const receiverIsNamespace = receiverName !== undefined &&
-            this.m.converter.symbolOf(receiverName)?.declarations?.some(
-                (declaration) => ts.isModuleDeclaration(declaration) || ts.isSourceFile(declaration),
-            );
+        const receiverDeclarations = receiverName === undefined
+            ? undefined
+            : this.m.converter.symbolOf(receiverName)?.declarations;
+        const receiverIsNamespace = receiverDeclarations?.some(
+            (declaration) => ts.isModuleDeclaration(declaration) || ts.isSourceFile(declaration),
+        );
         if (receiverIsNamespace) {
             const declaration = this.m.converter.symbolOf(node.name)?.declarations?.find(ts.isClassDeclaration);
-            if (declaration !== undefined && isProjectFile(declaration) &&
-                (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent))) {
+            const isRuntimeNamespaceClass = declaration !== undefined
+                && isProjectFile(declaration)
+                && (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent));
+            if (isRuntimeNamespaceClass) {
                 throw new LoweringError("mutable namespace class property is not represented in EtsIR");
             }
         }
@@ -466,9 +482,10 @@ export class ExprLowerer {
         }
 
         const instance = this.lowerToLocal(node.expression);
-        if (this.m.converter.symbolOf(node.name)?.declarations?.some((declaration) =>
+        const isObjectLiteralAccessor = this.m.converter.symbolOf(node.name)?.declarations?.some((declaration) =>
             ts.isGetAccessorDeclaration(declaration) && ts.isObjectLiteralExpression(declaration.parent),
-        )) {
+        );
+        if (isObjectLiteralAccessor) {
             return { _: "PropertyRef", instance, key: constant(fieldName, STRING_TYPE), type: fieldType };
         }
         return {
@@ -490,6 +507,10 @@ export class ExprLowerer {
     }
 
     private lowerElementAccess(node: ts.ElementAccessExpression): ValueDto {
+        if (node.expression.kind === ts.SyntaxKind.SuperKeyword) {
+            throw new LoweringError("super property read needs superclass-relative property lookup");
+        }
+
         const chain = optionalChain(node);
         if (chain !== undefined) {
             return this.lowerOptionalChain(node, chain);
@@ -541,6 +562,10 @@ export class ExprLowerer {
     private lowerOptionalChainCallee(root: ts.CallExpression): OptionalChainValue {
         const callee = unwrapTransparentExpression(root.expression);
         if (ts.isPropertyAccessExpression(callee) || ts.isElementAccessExpression(callee)) {
+            if (callee.expression.kind === ts.SyntaxKind.SuperKeyword) {
+                throw new LoweringError("optional super property call needs superclass-relative property lookup");
+            }
+
             if (ts.isPropertyAccessExpression(callee)
                 && this.importedScopeFunctionField(callee) !== undefined) {
                 throw new LoweringError("module namespace call receiver is not represented in EtsIR");
@@ -646,11 +671,16 @@ export class ExprLowerer {
         node: ts.PropertyAccessExpression | ts.ElementAccessExpression,
         instance: LocalDto,
     ): ValueDto {
+        if (node.expression.kind === ts.SyntaxKind.SuperKeyword) {
+            throw new LoweringError("super property read needs superclass-relative property lookup");
+        }
+
         if (ts.isPropertyAccessExpression(node)) {
             const fieldType = this.safeTypeOf(node);
-            if (this.m.converter.symbolOf(node.name)?.declarations?.some((declaration) =>
+            const isObjectLiteralAccessor = this.m.converter.symbolOf(node.name)?.declarations?.some((declaration) =>
                 ts.isGetAccessorDeclaration(declaration) && ts.isObjectLiteralExpression(declaration.parent),
-            )) {
+            );
+            if (isObjectLiteralAccessor) {
                 return { _: "PropertyRef", instance, key: constant(node.name.text, STRING_TYPE), type: fieldType };
             }
             return {
@@ -700,6 +730,10 @@ export class ExprLowerer {
             return this.m.localForIdentifier(node, this.safeTypeOf(node));
         }
         if (ts.isPropertyAccessExpression(node)) {
+            if (node.expression.kind === ts.SyntaxKind.SuperKeyword) {
+                throw new LoweringError("super property assignment needs superclass-relative property lookup");
+            }
+
             if (this.importedScopeFunctionField(node) !== undefined) {
                 throw new LoweringError("module namespace function properties are read-only");
             }
@@ -717,6 +751,10 @@ export class ExprLowerer {
             throw new LoweringError("property access did not produce a field ref");
         }
         if (ts.isElementAccessExpression(node)) {
+            if (node.expression.kind === ts.SyntaxKind.SuperKeyword) {
+                throw new LoweringError("super property assignment needs superclass-relative property lookup");
+            }
+
             const receiverType = this.m.checker.getTypeAtLocation(node.expression);
             if (!this.m.checker.isArrayType(receiverType) && !this.m.checker.isTupleType(receiverType)) {
                 const instance = this.snapshotToLocal(node.expression);
@@ -911,7 +949,7 @@ export class ExprLowerer {
         if (compoundOp !== undefined) {
             target = this.snapshotReference(target);
             const oldValue = target._ === "Local"
-                ? target
+                ? this.snapshotImmediateIfReassigned(target, node.left, node.right)
                 : this.materialize(this.propertyReferenceForOperation(target), lvalueType(target));
             rhs = {
                 _: "BinopExpr",
@@ -1088,6 +1126,11 @@ export class ExprLowerer {
 
         // `super.m(...)` — instance call on `this` with the superclass as declaring class.
         if (ts.isPropertyAccessExpression(callee) && callee.expression.kind === ts.SyntaxKind.SuperKeyword) {
+            const isAccessorCall = this.m.converter.symbolOf(callee.name)?.declarations?.some(ts.isGetAccessorDeclaration);
+            if (isAccessorCall) {
+                throw new LoweringError("super getter call needs superclass-relative property lookup");
+            }
+
             const thisLocal = this.m.getOrCreateLocal("this", this.m.thisType());
             const superSignature = this.classSignatureFromType(this.safeTypeOf(callee.expression));
             return {
@@ -1095,6 +1138,7 @@ export class ExprLowerer {
                 instance: thisLocal,
                 method: this.methodSignatureForCall(node, callee.name.text, superSignature),
                 args: this.lowerCallArguments(node),
+                isSuperCall: true,
             };
         }
 
@@ -1153,6 +1197,10 @@ export class ExprLowerer {
         }
 
         if (ts.isElementAccessExpression(callee)) {
+            if (callee.expression.kind === ts.SyntaxKind.SuperKeyword) {
+                throw new LoweringError("super property read needs superclass-relative property lookup");
+            }
+
             const receiver = this.snapshotToLocal(callee.expression);
             const ptr = this.materialize({
                 _: "PropertyRef",
@@ -1221,16 +1269,22 @@ export class ExprLowerer {
 
     private fixedSpreadElementTypes(expression: ts.Expression): TypeDto[] | undefined {
         const value = unwrapTransparentExpression(expression);
-        if (ts.isArrayLiteralExpression(value) && value.elements.every((element) =>
-            !ts.isSpreadElement(element) && !ts.isOmittedExpression(element))) {
-            return value.elements.map((element) => this.safeTypeOf(element));
+        if (ts.isArrayLiteralExpression(value)) {
+            const hasFixedElements = value.elements.every((element) =>
+                !ts.isSpreadElement(element) && !ts.isOmittedExpression(element));
+            if (hasFixedElements) {
+                return value.elements.map((element) => this.safeTypeOf(element));
+            }
         }
 
         const type = this.m.checker.getTypeAtLocation(expression);
-        if (!this.m.checker.isTupleType(type)) return undefined;
+        if (!this.m.checker.isTupleType(type)) {
+            return undefined;
+        }
 
         const tuple = (type as ts.TupleTypeReference).target;
-        return tuple.elementFlags.every((flag) => flag === ts.ElementFlags.Required)
+        const hasOnlyRequiredElements = tuple.elementFlags.every((flag) => flag === ts.ElementFlags.Required);
+        return hasOnlyRequiredElements
             ? this.m.checker.getTypeArguments(type as ts.TupleTypeReference)
                 .map((elementType) => this.m.converter.convertType(elementType))
             : undefined;
@@ -1399,7 +1453,7 @@ export class ExprLowerer {
         node.elements.forEach((element, index) => {
             if (ts.isOmittedExpression(element)) return;
 
-            const value = ts.isSpreadElement(element) ? this.spreadFallback(element) : this.lowerToImmediate(element);
+            const value = this.lowerToImmediate(element);
             this.m.cfg.emit({
                 _: "AssignStmt",
                 left: {
@@ -1436,7 +1490,7 @@ export class ExprLowerer {
                 _: "InstanceCallExpr",
                 instance: value,
                 method: {
-                    declaringClass: classType._ === "ClassType" ? classType.signature : UNKNOWN_CLASS_SIGNATURE,
+                    declaringClass: classType.signature,
                     name: CONSTRUCTOR_NAME,
                     parameters: [
                         { name: "pattern", type: STRING_TYPE },
@@ -1462,6 +1516,10 @@ export class ExprLowerer {
         let name = "%tag";
 
         if (ts.isPropertyAccessExpression(tag) || ts.isElementAccessExpression(tag)) {
+            if (tag.expression.kind === ts.SyntaxKind.SuperKeyword) {
+                throw new LoweringError("super property read needs superclass-relative property lookup");
+            }
+
             if (ts.isPropertyAccessExpression(tag)
                 && this.importedScopeFunctionField(tag) !== undefined) {
                 throw new LoweringError("module namespace call receiver is not represented in EtsIR");
@@ -1605,10 +1663,11 @@ export class ExprLowerer {
             throw new LoweringError("class expression heritage is not represented in EtsIR");
         }
 
-        if (node.name !== undefined || node.members.some((member) =>
+        const hasUnrepresentedMember = node.members.some((member) =>
             ts.isClassStaticBlockDeclaration(member)
             || (ts.getCombinedModifierFlags(member) & ts.ModifierFlags.Static) !== 0
-            || (member.name !== undefined && ts.isComputedPropertyName(member.name)))) {
+            || (member.name !== undefined && ts.isComputedPropertyName(member.name)));
+        if (node.name !== undefined || hasUnrepresentedMember) {
             throw new LoweringError("named, static, or computed class expression members are not represented in EtsIR");
         }
 
@@ -1668,6 +1727,13 @@ export class ExprLowerer {
         if (node.body === undefined) {
             throw new LoweringError("function declaration without a body");
         }
+        if (ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node)) {
+            const referencesOwnName = node.name !== undefined && referencesOwnFunctionName(node, this.m.checker);
+            if (referencesOwnName) {
+                throw new LoweringError("recursive lifted function binding is not represented in EtsIR");
+            }
+        }
+
         const registry = this.m.ctx.anonymous;
         const name = `${ANONYMOUS_METHOD_PREFIX}${registry.nextMethodId++}$${this.m.methodName}`;
         const declaringClass = this.m.declaringClass;
@@ -1676,7 +1742,10 @@ export class ExprLowerer {
         const returnType = returnTypeOf(this.m.ctx, node);
         const baseSignature: MethodSignatureDto = { declaringClass, name, parameters, returnType };
         const capturedIdentifiers = collectCapturedIdentifiers(node, this.m.checker);
-        if (capturedIdentifiers.some((identifier) => this.m.isUninitializedParameter(identifier))) {
+        const capturesUninitializedParameter = capturedIdentifiers.some((identifier) =>
+            this.m.isUninitializedParameter(identifier),
+        );
+        if (capturesUninitializedParameter) {
             throw new LoweringError("closure capturing an uninitialized parameter requires a runtime temporal-dead-zone cell");
         }
         const captures = capturedIdentifiers
@@ -1746,13 +1815,17 @@ export class ExprLowerer {
 
     /**
      * Object literal -> anonymous `%AC<n>$<method>` class (category OBJECT) plus
-     * `new` + per-property stores at the use site. Literal methods become methods
-     * of the anonymous class.
+     * `new` + per-property stores at the use site.
      */
     private lowerObjectLiteral(node: ts.ObjectLiteralExpression): ValueDto {
         if (this.lowerFunctionBody === undefined) {
             throw new LoweringError("object literal in a context without a body lowerer");
         }
+        const hasUnmaterializedMethod = node.properties.some(ts.isMethodDeclaration);
+        if (hasUnmaterializedMethod) {
+            throw new LoweringError("object literal method needs a per-evaluation callable own property");
+        }
+
         const registry = this.m.ctx.anonymous;
         const name = `${ANONYMOUS_CLASS_PREFIX}${registry.nextClassId++}$${this.m.methodName}`;
         const signature: ClassSignatureDto = {
@@ -1762,7 +1835,6 @@ export class ExprLowerer {
         const classType: ClassTypeDto = { _: "ClassType", signature };
 
         const fields: FieldDto[] = [];
-        const methods: MethodDto[] = [];
         const temp = this.m.newTemp(classType);
         this.m.cfg.emit({ _: "AssignStmt", left: temp, right: { _: "NewExpr", classType } });
 
@@ -1807,31 +1879,6 @@ export class ExprLowerer {
                     : constant(memberName(property.name), STRING_TYPE);
                 const getter = this.lowerClosure(property);
                 this.m.cfg.emit({ _: "DefineAccessorStmt", target: temp, key, getter });
-            } else if (ts.isMethodDeclaration(property)) {
-                if (ts.isComputedPropertyName(property.name)) {
-                    throw new LoweringError("computed object method name is not represented in EtsIR");
-                }
-                const methodName = memberName(property.name);
-                const { parameters, prologueParams } = buildParameters(this.m.ctx, property);
-                const methodSignature: MethodSignatureDto = {
-                    declaringClass: signature,
-                    name: methodName,
-                    parameters,
-                    returnType: returnTypeOf(this.m.ctx, property),
-                };
-                const methodContext = new MethodContext(this.m.ctx, signature, methodName);
-                if (property.body !== undefined) {
-                    this.lowerFunctionBody(methodContext, property.body, (afterParameter) =>
-                        methodContext.emitPrologue(prologueParams, afterParameter),
-                    );
-                }
-                methods.push({
-                    signature: methodSignature,
-                    modifiers: modifiersOf(property),
-                    decorators: [],
-                    isStrictMode: isStrictMode(property),
-                    body: methodContext.build(),
-                });
             } else {
                 // Setters remain separately unsupported.
                 throw new LoweringError(`object literal member: ${syntaxKindName(property.kind)}`);
@@ -1846,7 +1893,7 @@ export class ExprLowerer {
             superClassName: "",
             implementedInterfaceNames: [],
             fields,
-            methods,
+            methods: [],
         });
 
         return temp;
@@ -1926,8 +1973,11 @@ export class ExprLowerer {
 
     private importedScopeFunctionField(node: ts.PropertyAccessExpression): StaticFieldRefDto | undefined {
         const receiver = unwrapTransparentExpression(node.expression);
-        if (!ts.isIdentifier(node.name) || !ts.isIdentifier(receiver)
-            || !this.m.converter.symbolOf(receiver)?.declarations?.some(ts.isSourceFile)) return undefined;
+        if (!ts.isIdentifier(node.name) || !ts.isIdentifier(receiver)) return undefined;
+
+        const isSourceFileNamespace = this.m.converter.symbolOf(receiver)?.declarations?.some(ts.isSourceFile);
+        if (!isSourceFileNamespace) return undefined;
+
         const field = this.m.moduleFieldForIdentifier(node.name);
         return field?.field.type._ === "FunctionType" ? field : undefined;
     }
@@ -1946,6 +1996,13 @@ export class ExprLowerer {
 
         const decl = classLikeDeclarationOf(value, this.m.checker);
         if (decl === undefined) return undefined;
+        const unsupportedReason = ts.isClassDeclaration(decl) && isProjectFile(decl)
+            ? unsupportedClassDeclarationReason(decl, this.m.checker)
+            : undefined;
+        if (unsupportedReason !== undefined) {
+            throw new LoweringError(`class value has no EtsIR representation: ${unsupportedReason}`);
+        }
+
         if (isProjectFile(decl)) {
             return this.m.converter.classSignatureOf(decl);
         }
@@ -2063,15 +2120,6 @@ export class ExprLowerer {
             return { _: "ClassType", signature: checkValue.signature };
         }
         return null;
-    }
-
-    private spreadFallback(node: ts.SpreadElement): ValueDto {
-        this.unsupportedExpressionCount++;
-        this.m.diagnostics.warn(node, "spread arguments are not supported yet");
-        // Hoisted for the same reason as in lowerExpr: raw values are only
-        // legal as the RHS of a Local assignment.
-        const type = this.safeTypeOf(node.expression);
-        return this.materialize(unsupportedValue(node, type), type);
     }
 }
 
@@ -2350,6 +2398,42 @@ function collectCapturedIdentifiers(
         }
     }
     return [...captures.values()];
+}
+
+/** A lifted function cannot read its own binding from the enclosing method's locals. */
+function referencesOwnFunctionName(
+    node: ts.FunctionDeclaration | ts.FunctionExpression,
+    checker: ts.TypeChecker,
+): boolean {
+    const body = node.body;
+    if (node.name === undefined || body === undefined) return false;
+
+    const ownSymbol = checker.getSymbolAtLocation(node.name);
+    if (ownSymbol === undefined) return false;
+
+    let found = false;
+    const visit = (current: ts.Node): void => {
+        if (found || ts.isTypeNode(current)) return;
+
+        if (ts.isIdentifier(current) && current !== node.name) {
+            const isPropertyName = ts.isPropertyAccessExpression(current.parent) && current.parent.name === current;
+            if (!isPropertyName) {
+                const symbol = ts.isShorthandPropertyAssignment(current.parent) && current.parent.name === current
+                    ? checker.getShorthandAssignmentValueSymbol(current.parent) ?? checker.getSymbolAtLocation(current)
+                    : checker.getSymbolAtLocation(current);
+                if (symbol === ownSymbol) {
+                    found = true;
+                    return;
+                }
+            }
+        }
+
+        ts.forEachChild(current, visit);
+    };
+
+    for (const parameter of node.parameters) visit(parameter);
+    visit(body);
+    return found;
 }
 
 function isCapturableDeclaration(node: ts.Declaration): boolean {

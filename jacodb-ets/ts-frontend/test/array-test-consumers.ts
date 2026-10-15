@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { expect } from "vitest";
 import * as ts from "typescript";
 import { serializeEtsFile } from "../src/serialize";
 import { executor } from "./execute";

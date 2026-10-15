@@ -21,8 +21,10 @@ import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import java.net.ConnectException
 import java.net.Socket
+import java.nio.charset.StandardCharsets
 import java.nio.file.FileSystems
 import java.nio.file.StandardWatchEventKinds
+import java.util.Optional
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -37,6 +39,10 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class ProcessUtilTest {
+    private companion object {
+        const val CLEANUP_TEST_WAIT_MILLIS = 8_000L
+    }
+
     private val node = System.getenv("NODE_EXECUTABLE") ?: "node"
 
     @Test
@@ -80,6 +86,19 @@ class ProcessUtilTest {
         assertEquals("stdout", result.stdout)
         assertEquals("stderr", result.stderr)
         assertFalse(result.isTimeout)
+    }
+
+    @Test
+    fun `decodes UTF-8 diagnostics when selected for the command`() {
+        val expected = "неверный путь: café"
+
+        val result = ProcessUtil.run(
+            command = listOf(node, "-e", "process.stderr.write('неверный путь: café')"),
+            charset = StandardCharsets.UTF_8,
+        )
+
+        assertEquals(0, result.exitCode)
+        assertEquals(expected, result.stderr)
     }
 
     @Test
@@ -196,10 +215,11 @@ class ProcessUtilTest {
             runner.start()
             assertTrue(watcher.poll(5, TimeUnit.SECONDS) != null, "descendant did not publish readiness")
             val (childPid, port) = ready.readText().trim().split(' ')
-            pid = childPid.toLong()
+            val childPidLong = childPid.toLong()
+            pid = childPidLong
 
             if (interrupt) runner.interrupt()
-            runner.join(5000)
+            runner.join(CLEANUP_TEST_WAIT_MILLIS)
 
             assertFalse(runner.isAlive, "process cleanup did not finish")
             if (interrupt) assertIs<InterruptedException>(failure.get())
@@ -209,9 +229,10 @@ class ProcessUtilTest {
             }
             val connection = runCatching { Socket("127.0.0.1", port.toInt()).use { } }
             assertIs<ConnectException>(connection.exceptionOrNull(), "descendant survived command cleanup")
+            assertFalse(isProcessAlive(childPidLong), "descendant remained alive after cleanup returned")
         } finally {
             runner.interrupt()
-            runner.join(5000)
+            runner.join(CLEANUP_TEST_WAIT_MILLIS)
             pid?.let { childPid ->
                 ProcessBuilder(node, "-e", "try { process.kill(Number(process.argv[1]), 'SIGKILL'); } catch {}", "$childPid")
                     .start()
@@ -220,5 +241,16 @@ class ProcessUtilTest {
             watcher.close()
             directory.toFile().deleteRecursively()
         }
+    }
+
+    private fun isProcessAlive(pid: Long): Boolean {
+        val handleClass = Class.forName("java.lang.ProcessHandle")
+        val pidParameterType = checkNotNull(Long::class.javaPrimitiveType)
+        val optionalHandle = handleClass.getMethod("of", pidParameterType)
+            .invoke(null, pid) as Optional<*>
+        if (!optionalHandle.isPresent) return false
+
+        val handle = optionalHandle.get()
+        return handleClass.getMethod("isAlive").invoke(handle) as Boolean
     }
 }

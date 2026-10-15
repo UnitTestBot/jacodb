@@ -100,3 +100,62 @@ describe("object getter descriptors", () => {
         expect(diagnostics.messages.some((message) => message.includes("SetAccessor"))).toBe(true);
     });
 });
+
+describe("object method materialization boundary", () => {
+    it.each([
+        ["direct and detached receiver", `export function run() {
+            const object = { method() { return this; } };
+            const detached = object.method;
+            return [object.method(), detached()];
+        }`],
+        ["captured local", `export function run(seed: number) {
+            return { method(value = seed) { return value + seed; } };
+        }`],
+        ["fresh identity", `export function run() {
+            const make = () => ({ method() { return 1; } });
+            return make().method === make().method;
+        }`],
+        ["method after data property", `export function run() {
+            return { method: 1, method() { return 2; } };
+        }`],
+        ["data property after method", `export function run() {
+            return { method() { return 1; }, method: 2 };
+        }`],
+        ["method after spread", `export function run(source: object) {
+            return { ...source, method() { return 1; } };
+        }`],
+        ["spread after method", `export function run(source: object) {
+            return { method() { return 1; }, ...source };
+        }`],
+    ])("rejects %s before object allocation or member effects", (_scenario, source) => {
+        const { file, diagnostics } = lower(source);
+        const stmts = file.classes.flatMap((clazz) => clazz.methods)
+            .flatMap((method) => method.body?.cfg.blocks.flatMap((block) => block.stmts) ?? []);
+
+        expect(stmts).toContainEqual(expect.objectContaining({
+            _: "AssignStmt",
+            right: expect.objectContaining({ _: "UnsupportedValue" }),
+        }));
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "NewExpr")).toBe(false);
+        expect(stmts.some((stmt) => stmt._ === "DefineDataPropertyStmt" || stmt._ === "CopyDataPropertiesStmt")).toBe(false);
+        expect(diagnostics.messages).toEqual(expect.arrayContaining([
+            expect.stringContaining("object literal method needs a per-evaluation callable own property"),
+        ]));
+        expect(file.classes.some((clazz) => clazz.signature.name.startsWith("%AC"))).toBe(false);
+    });
+
+    it("keeps an ordinary function-valued data property on the supported store path", () => {
+        const { file, diagnostics } = lower(`export function run(seed: number) {
+            return { method: function (value: number) { return value + seed; } };
+        }`);
+        const stmts = methodByName(file, "run").body!.cfg.blocks.flatMap((block) => block.stmts);
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(stmts).toContainEqual(expect.objectContaining({
+            _: "DefineDataPropertyStmt",
+            key: expect.objectContaining({ _: "Constant", value: "method" }),
+            value: expect.objectContaining({ _: "Local", type: expect.objectContaining({ _: "FunctionType" }) }),
+        }));
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue")).toBe(false);
+    });
+});

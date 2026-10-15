@@ -18,29 +18,48 @@ package org.jacodb.ets.utils
 
 import mu.KotlinLogging
 import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
 import java.nio.charset.Charset
 import java.nio.file.Files
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.stream.Stream
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 private val logger = KotlinLogging.logger {}
+private val descendantTerminationGrace = 5.seconds
+
+private class ObservedDescendants(
+    val handles: List<Any>,
+    val isAlive: Method,
+    val onExit: Method,
+)
 
 /** Java 8 exposes parent cleanup only; process-tree cleanup is available on Java 9 and later. */
-private fun destroyDescendantsIfSupported(process: Process) {
+private fun destroyDescendantsIfSupported(process: Process): ObservedDescendants? {
     val handleClass = try {
         Class.forName("java.lang.ProcessHandle")
     } catch (_: ClassNotFoundException) {
-        return
+        return null
     }
 
     try {
         val handle = Process::class.java.getMethod("toHandle").invoke(process)
         val descendants = handleClass.getMethod("descendants").invoke(handle) as Stream<*>
         val destroy = handleClass.getMethod("destroyForcibly")
-        descendants.use { children ->
-            children.forEach { child -> destroy.invoke(child) }
+        val handles = descendants.use { children ->
+            children.toArray().filterNotNull()
         }
+        handles.forEach { child -> destroy.invoke(child) }
+
+        return ObservedDescendants(
+            handles = handles,
+            isAlive = handleClass.getMethod("isAlive"),
+            onExit = handleClass.getMethod("onExit"),
+        )
     } catch (error: InvocationTargetException) {
         val cause = error.targetException
         if (cause is RuntimeException) throw cause
@@ -50,21 +69,62 @@ private fun destroyDescendantsIfSupported(process: Process) {
     }
 }
 
+private fun awaitDescendantTermination(descendants: ObservedDescendants?) {
+    if (descendants == null) return
+
+    val startedAt = System.nanoTime()
+    try {
+        for (handle in descendants.handles) {
+            val isAlive = descendants.isAlive.invoke(handle) as Boolean
+            if (!isAlive) continue
+
+            val elapsed = System.nanoTime() - startedAt
+            val remaining = descendantTerminationGrace.inWholeNanoseconds - elapsed
+            if (remaining <= 0) {
+                throw IllegalStateException("Timed out waiting for process descendants to terminate")
+            }
+
+            val completion = descendants.onExit.invoke(handle) as CompletableFuture<*>
+            try {
+                completion.get(remaining, TimeUnit.NANOSECONDS)
+            } catch (error: TimeoutException) {
+                throw IllegalStateException("Timed out waiting for process descendants to terminate", error)
+            } catch (error: ExecutionException) {
+                throw IllegalStateException("Could not verify process descendant termination", error)
+            }
+        }
+
+        val stillAlive = descendants.handles.any { handle ->
+            descendants.isAlive.invoke(handle) as Boolean
+        }
+        if (stillAlive) {
+            throw IllegalStateException("A process descendant remained alive after termination")
+        }
+    } catch (error: InvocationTargetException) {
+        throw IllegalStateException("Could not verify process descendant termination", error.targetException)
+    } catch (error: ReflectiveOperationException) {
+        throw IllegalStateException("Cannot access process descendant termination on this runtime", error)
+    }
+}
+
 private fun terminateAndReap(
     process: Process,
     initialInterruption: InterruptedException? = null,
 ) {
     var interruption = initialInterruption
     var cleanupFailure: RuntimeException? = null
-    try {
+    val descendants = try {
         destroyDescendantsIfSupported(process)
     } catch (error: RuntimeException) {
         cleanupFailure = error
+        null
     }
+
     process.destroy()
     if (process.isAlive) {
         process.destroyForcibly()
     }
+
     while (true) {
         try {
             process.waitFor()
@@ -80,6 +140,23 @@ private fun terminateAndReap(
             }
         }
     }
+
+    try {
+        awaitDescendantTermination(descendants)
+    } catch (error: InterruptedException) {
+        if (interruption == null) {
+            interruption = error
+        } else if (interruption !== error) {
+            interruption.addSuppressed(error)
+        }
+    } catch (error: RuntimeException) {
+        if (cleanupFailure == null) {
+            cleanupFailure = error
+        } else if (cleanupFailure !== error) {
+            cleanupFailure.addSuppressed(error)
+        }
+    }
+
     if (interruption != null) {
         cleanupFailure?.let { interruption.addSuppressed(it) }
         Thread.currentThread().interrupt()
@@ -100,9 +177,9 @@ object ProcessUtil {
         command: List<String>,
         input: String? = null,
         timeout: Duration? = null,
+        charset: Charset = Charset.defaultCharset(),
     ): Result {
         logger.debug { "Running command: $command" }
-        val charset = Charset.defaultCharset()
         val tempDirectory = Files.createTempDirectory("jacodb-process-")
         try {
             val stdinFile = tempDirectory.resolve("stdin")
@@ -123,12 +200,12 @@ object ProcessUtil {
                     false
                 } else {
                     !process.waitFor(
-                        timeout.inWholeNanoseconds.coerceAtLeast(0),
+                        timeout.inWholeNanoseconds.coerceAtLeast(minimumValue = 0),
                         TimeUnit.NANOSECONDS,
                     )
                 }
             } catch (error: InterruptedException) {
-                terminateAndReap(process, error)
+                terminateAndReap(process, initialInterruption = error)
                 throw error
             }
 

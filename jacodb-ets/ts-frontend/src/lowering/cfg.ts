@@ -219,11 +219,9 @@ export class CfgBuilder {
                     // DTO convention: [false, true].
                     const falseSuccessor = idOf.get(t.falseTarget);
                     const trueSuccessor = idOf.get(t.trueTarget);
-                    if (
-                        falseSuccessor === undefined ||
-                        trueSuccessor === undefined ||
-                        falseSuccessor === trueSuccessor
-                    ) {
+                    const hasInvalidSuccessors = falseSuccessor === undefined ||
+                        trueSuccessor === undefined || falseSuccessor === trueSuccessor;
+                    if (hasInvalidSuccessors) {
                         throw new Error("if terminator must resolve to two distinct successor ids");
                     }
                     successors = [falseSuccessor, trueSuccessor];
@@ -279,13 +277,14 @@ export class CfgBuilder {
 }
 
 function blockTargets(block: BuilderBlock): Label[] {
+    const terminator = block.terminator;
+    const exceptionalTerminator = terminator.kind === "throw" || terminator.kind === "if" ? terminator : undefined;
+    const terminatorExceptionTarget = exceptionalTerminator?.exceptionTarget;
+
     return [
-        ...terminatorTargets(block.terminator),
+        ...terminatorTargets(terminator),
         ...block.stmts.flatMap((stmt) => stmt.exceptionTarget === undefined ? [] : [stmt.exceptionTarget]),
-        ...((block.terminator.kind === "throw" || block.terminator.kind === "if") &&
-            block.terminator.exceptionTarget !== undefined
-            ? [block.terminator.exceptionTarget]
-            : []),
+        ...(terminatorExceptionTarget === undefined ? [] : [terminatorExceptionTarget]),
     ];
 }
 
@@ -312,13 +311,22 @@ function mayThrowValue(value: ValueDto): boolean {
         case "ParameterRef":
         case "CaughtExceptionRef":
             return false;
-        case "ConditionExpr":
-            return value.op === "in" ||
-                (!["===", "!=="].includes(value.op) &&
-                    (!isPrimitive(value.left) || !isPrimitive(value.right)));
-        case "BinopExpr":
-            return !["&&", "||", "??"].includes(value.op) &&
-                (!isPrimitive(value.left) || !isPrimitive(value.right));
+        case "ConditionExpr": {
+            if (value.op === "in") return true;
+
+            const requiresCoercion = !["===", "!=="].includes(value.op);
+            if (!requiresCoercion) return false;
+
+            const hasNonPrimitiveOperand = !isPrimitive(value.left) || !isPrimitive(value.right);
+            return hasNonPrimitiveOperand;
+        }
+        case "BinopExpr": {
+            const mayCoerceOperands = !["&&", "||", "??"].includes(value.op);
+            if (!mayCoerceOperands) return false;
+
+            const hasNonPrimitiveOperand = !isPrimitive(value.left) || !isPrimitive(value.right);
+            return hasNonPrimitiveOperand;
+        }
         case "UnopExpr":
             return value.op !== "!" && !isPrimitive(value.arg);
         case "TypeOfExpr":

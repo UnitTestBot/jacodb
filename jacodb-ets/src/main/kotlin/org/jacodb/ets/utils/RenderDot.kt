@@ -25,6 +25,43 @@ import kotlin.io.path.nameWithoutExtension
 import kotlin.time.Duration.Companion.seconds
 
 private val logger = KotlinLogging.logger {}
+private val renderTimeout = 30.seconds
+
+internal fun dotRenderCommand(
+    dotCommand: List<String>,
+    format: String,
+    dotFile: Path,
+    outputFile: Path,
+): List<String> = dotCommand + listOf(
+    "-T$format",
+    dotFile.toString(),
+    "-o",
+    outputFile.toString(),
+)
+
+internal fun checkRenderResult(result: ProcessUtil.Result, outputFile: Path) {
+    if (result.isTimeout) {
+        throw IllegalStateException("DOT rendering timed out for $outputFile: ${result.stderr}")
+    }
+
+    if (result.exitCode != 0) {
+        throw IllegalStateException(
+            "DOT rendering failed for $outputFile with exit code ${result.exitCode}: ${result.stderr}"
+        )
+    }
+}
+
+internal fun renderDotFile(
+    dotCommand: List<String>,
+    format: String,
+    dotFile: Path,
+    outputFile: Path,
+) {
+    val command = dotRenderCommand(dotCommand, format, dotFile, outputFile)
+    val result = ProcessUtil.run(command = command, timeout = renderTimeout)
+
+    checkRenderResult(result, outputFile)
+}
 
 fun render(
     dotDir: Path,
@@ -37,18 +74,8 @@ fun render(
         val formatFile = (dotDir.resolveSibling(format) / relative)
             .resolveSibling("${relative.nameWithoutExtension}.$format")
         formatFile.parent?.createDirectories()
-        val cmd: List<String> = listOf(
-            "dot",
-            "-T$format",
-            "$dotPath",
-            "-o",
-            "$formatFile"
-        )
-        val res = ProcessUtil.run(cmd, timeout = 30.seconds)
-        if (res.isTimeout) {
-            logger.error { "Rendering DOT to ${format.uppercase()} timed out" }
-        } else {
-            logger.info { "Generated ${format.uppercase()} file: ${formatFile.absolute()}" }
-        }
+        renderDotFile(dotCommand = listOf("dot"), format = format, dotFile = dotPath, outputFile = formatFile)
+
+        logger.info { "Generated ${format.uppercase()} file: ${formatFile.absolute()}" }
     }
 }

@@ -38,13 +38,13 @@ fun EtsFile.toDot(useLR: Boolean = false): String {
         lines += "  $x [fontname=\"$fontname\", fontsize=$fontsize];"
     }
 
-    fun classId(clazz: EtsClass): String {
-        return clazz.signature.name
+    fun classId(classIndex: Int): String {
+        return "class:$classIndex"
     }
 
     fun classLabel(clazz: EtsClass): String {
         val labelLines: MutableList<String> = mutableListOf()
-        labelLines += clazz.signature.name
+        labelLines += clazz.signature.toString()
         labelLines += "Fields: (${clazz.fields.size})"
         clazz.fields.forEach { field ->
             labelLines += "  ${field.signature.name}: ${field.signature.type}"
@@ -62,37 +62,37 @@ fun EtsFile.toDot(useLR: Boolean = false): String {
             }
             labelLines += "  $name$generics($params): $returnType"
         }
-        return labelLines.joinToString("") { "$it\\l" }
+        return labelLines.joinToString("") { "${it.dotQuoteEncode()}\\l" }
     }
 
-    fun methodId(clazz: EtsClass, method: EtsMethod): String {
-        return "${clazz.signature.name}.${method.signature.name}"
+    fun methodId(classIndex: Int, methodIndex: Int): String {
+        return "method:$classIndex:$methodIndex"
     }
 
-    fun methodLabel(clazz: EtsClass, method: EtsMethod): String {
-        return "${clazz.signature.name}::${method.signature.name}"
+    fun methodLabel(method: EtsMethod): String {
+        return method.signature.toString().dotQuoteEncode()
     }
 
-    fun stmtId(clazz: EtsClass, method: EtsMethod, stmt: EtsStmt): String {
-        return "${methodId(clazz, method)}.${stmt.location.index}"
+    fun stmtId(classIndex: Int, methodIndex: Int, stmt: EtsStmt): String {
+        return "stmt:$classIndex:$methodIndex:${stmt.location.index}"
     }
 
     fun stmtLabel(stmt: EtsStmt): String {
-        return stmt.toString().replace("\"", "\\\"")
+        return stmt.toString().dotQuoteEncode()
     }
 
-    classes.forEach { clazz ->
+    allClasses.forEachIndexed { classIndex, clazz ->
         // CLASS
-        val c = classId(clazz)
+        val c = classId(classIndex)
         val clabel = classLabel(clazz)
         lines += ""
         lines += """  "$c" [shape=box,label="$clabel"]"""
 
         // Methods inside class:
-        clazz.methods.forEach { method ->
+        clazz.methods.forEachIndexed { methodIndex, method ->
             // METHOD
-            val m = methodId(clazz, method)
-            val mlabel = methodLabel(clazz, method)
+            val m = methodId(classIndex, methodIndex)
+            val mlabel = methodLabel(method)
             lines += """  "$m" [shape=oval,label="$mlabel"];"""
 
             // Link class to method:
@@ -100,14 +100,14 @@ fun EtsFile.toDot(useLR: Boolean = false): String {
 
             // Link method to the entry point:
             method.cfg.entries.forEach { entry ->
-                val f = stmtId(clazz, method, entry)
+                val f = stmtId(classIndex, methodIndex, entry)
                 lines += """  "$m" -> "$f";"""
             }
 
             // Statements inside method:
             method.cfg.stmts.forEach { stmt ->
                 // STATEMENT
-                val s = stmtId(clazz, method, stmt)
+                val s = stmtId(classIndex, methodIndex, stmt)
                 val slabel = stmtLabel(stmt)
                 lines += """  "$s" [shape=box,label="$slabel"];"""
 
@@ -133,7 +133,7 @@ fun EtsFile.toDot(useLR: Boolean = false): String {
 
                     else -> {
                         method.cfg.successors(stmt).forEach { succ ->
-                            val w = stmtId(clazz, method, succ)
+                            val w = stmtId(classIndex, methodIndex, succ)
                             lines += """  "$s" -> "$w";"""
                         }
                     }

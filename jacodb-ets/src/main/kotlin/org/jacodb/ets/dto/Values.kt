@@ -63,7 +63,7 @@ data class ConstantDto(
 data class ClassValueRefDto(
     val signature: ClassSignatureDto,
     override val type: TypeDto,
-) : ValueDto
+) : ImmediateDto
 
 // TODO: uncomment and adapt the following code for different constants
 //       Currently, ArkIR stores all constants as strings (see ConstantDto above),
@@ -322,6 +322,7 @@ data class InstanceCallExprDto(
     val instance: ValueDto, // Local
     override val method: MethodSignatureDto,
     override val args: List<ValueDto>,
+    val isSuperCall: Boolean = false,
     val wellKnownSymbol: String? = null,
 ) : CallExprDto
 

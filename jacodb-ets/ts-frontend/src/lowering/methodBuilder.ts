@@ -21,7 +21,7 @@ import { ClassSignatureDto, FieldSignatureDto, FileSignatureDto } from "../dto/s
 import { ClassTypeDto, LexicalEnvTypeDto, TypeDto, UNKNOWN_TYPE } from "../dto/types";
 import { ClosureFieldRefDto, LocalDto, StaticFieldRefDto, ValueDto } from "../dto/values";
 import { TypeConverter } from "../types/convert";
-import { scopeFunctionImplementation, scopeFunctionSignature } from "./astUtils";
+import { scopeFunctionImplementation, scopeFunctionType } from "./astUtils";
 import type { BuiltParameters } from "./astUtils";
 import { CfgBuilder } from "./cfg";
 import { Diagnostics, syntaxKindName } from "./diagnostics";
@@ -237,11 +237,11 @@ export class MethodContext {
     private moduleFieldFromSymbol(symbol: ts.Symbol): FieldSignatureDto | undefined {
         const functionDeclaration = scopeFunctionImplementation(symbol);
         if (functionDeclaration !== undefined) {
-            const signature = scopeFunctionSignature(this.ctx, functionDeclaration);
+            const type = scopeFunctionType(this.ctx, functionDeclaration);
             return {
-                declaringClass: signature.declaringClass,
-                name: signature.name,
-                type: { _: "FunctionType", signature },
+                declaringClass: type.signature.declaringClass,
+                name: type.signature.name,
+                type,
             };
         }
 
@@ -263,13 +263,14 @@ export class MethodContext {
         const directScope = ts.isVariableStatement(statement)
             && (ts.isSourceFile(statement.parent) || ts.isModuleBlock(statement.parent));
         const functionScoped = (declarationList.flags & ts.NodeFlags.BlockScoped) === 0;
-        if (!directScope && (!functionScoped || moduleScopeOf(variableDeclaration) === undefined)) return undefined;
+        const moduleScope = moduleScopeOf(variableDeclaration);
+        const hasModuleStorage = directScope || (functionScoped && moduleScope !== undefined);
+        if (!hasModuleStorage) return undefined;
 
         const declaringClass: ClassSignatureDto = {
             name: DEFAULT_ARK_CLASS_NAME,
             declaringFile: this.ctx.fileSignatureFor(identifier.getSourceFile()),
         };
-        const moduleScope = directScope ? statement.parent : moduleScopeOf(variableDeclaration);
         if (moduleScope !== undefined && ts.isModuleBlock(moduleScope) && ts.isModuleDeclaration(moduleScope.parent)) {
             const namespace = this.converter.namespaceSignatureOf(moduleScope.parent);
             if (namespace !== undefined) declaringClass.declaringNamespace = namespace;
@@ -476,16 +477,15 @@ function declaredBindingIdentifier(declaration: ts.Declaration): ts.Identifier |
 function moduleScopeOf(node: ts.Node): ts.SourceFile | ts.ModuleBlock | undefined {
     for (let current: ts.Node | undefined = node.parent; current !== undefined; current = current.parent) {
         if (ts.isSourceFile(current) || ts.isModuleBlock(current)) return current;
-        if (
-            ts.isFunctionDeclaration(current)
+        const isFunctionBoundary = ts.isFunctionDeclaration(current)
             || ts.isFunctionExpression(current)
             || ts.isArrowFunction(current)
             || ts.isMethodDeclaration(current)
             || ts.isConstructorDeclaration(current)
             || ts.isGetAccessorDeclaration(current)
             || ts.isSetAccessorDeclaration(current)
-            || ts.isClassStaticBlockDeclaration(current)
-        ) return undefined;
+            || ts.isClassStaticBlockDeclaration(current);
+        if (isFunctionBoundary) return undefined;
     }
     return undefined;
 }

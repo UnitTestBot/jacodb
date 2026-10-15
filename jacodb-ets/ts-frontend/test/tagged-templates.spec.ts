@@ -102,6 +102,54 @@ describe("tagged templates", () => {
         expect(runTypeScript(source, "exports.value()")).toBe("undefined\\unicode");
     });
 
+    it.each([
+        "super.tag`x${this.substitution()}`",
+        "super[this.key()]`x${this.substitution()}`",
+    ])("keeps tagged superclass property lookup unsupported before evaluating keys or substitutions: %s", (tag) => {
+        const source = `
+            class Base {
+                tag(parts: TemplateStringsArray, value: string): string { return "base" + value; }
+            }
+            class Derived extends Base {
+                effects = 0;
+                override tag(parts: TemplateStringsArray, value: string): string { return "derived" + value; }
+                key(): "tag" { this.effects++; return "tag"; }
+                substitution(): string { this.effects++; return "value"; }
+                value(): string { return ${tag}; }
+            }
+        `;
+        const { file, diagnostics } = lower(source);
+        const body = methodByName(file, "value").body!;
+        const stmts = body.cfg.blocks.flatMap((block) => block.stmts);
+        const rawAssign = stmts.find((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "UnsupportedValue");
+        const startOffset = source.indexOf(tag);
+        const precedingLines = source.slice(0, startOffset).split("\n");
+        const line = precedingLines.length;
+        const column = precedingLines[precedingLines.length - 1].length + 1;
+        const rawOrigin = body.stmtOrigins?.find(({ blockId, stmtIndex }) =>
+            body.cfg.blocks[blockId].stmts[stmtIndex] === rawAssign,
+        );
+
+        expect(diagnostics.messages).toEqual([
+            `test.ts:${line}:${column}: unsupported expression: super property read needs superclass-relative property lookup`,
+        ]);
+        expect(rawAssign).toMatchObject({ right: {
+            _: "UnsupportedValue",
+            kindName: "TaggedTemplateExpression",
+            text: tag,
+            type: { _: "StringType" },
+        } });
+        expect(rawOrigin?.source).toMatchObject({
+            startOffset,
+            endOffset: startOffset + tag.length,
+            nodeKind: "TaggedTemplateExpression",
+        });
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PropertyRef")).toBe(false);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "TemplateObjectExpr")).toBe(false);
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PtrCallExpr")).toBe(false);
+        expect(stmts.some((stmt) => stmt._ === "CallStmt")).toBe(false);
+    });
+
     it("reads the current named tag and selects it before a substitution reassigns the binding", () => {
         const source = `
             function tag(parts: TemplateStringsArray, value: number): number { return value + 1; }

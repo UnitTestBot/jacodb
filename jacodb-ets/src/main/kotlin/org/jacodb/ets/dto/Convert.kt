@@ -181,6 +181,7 @@ class EtsMethodBuilder(
     isStrictMode: Boolean? = null,
 ) {
     private val locals = locals.toMutableList()
+    private val occupiedLocalNames = this.locals.mapTo(mutableSetOf()) { it.name }
 
     private val method = EtsMethodImpl(
         signature = signature,
@@ -199,7 +200,12 @@ class EtsMethodBuilder(
     private var currentOrigin: EtsSourceSpan? = null
 
     private fun newTempLocal(): EtsLocal {
-        val local = EtsLocal("_tmp${freeTempLocal++}")
+        var name = "_tmp${freeTempLocal++}"
+        while (!occupiedLocalNames.add(name)) {
+            name = "_tmp${freeTempLocal++}"
+        }
+
+        val local = EtsLocal(name)
         this@EtsMethodBuilder.locals += local
         return local
     }
@@ -524,6 +530,7 @@ class EtsMethodBuilder(
             callee = method.toEtsMethodSignature(),
             args = args.map { ensureLocal(it.toEtsEntity()) },
             type = type.toEtsType(),
+            isSuperCall = isSuperCall,
             wellKnownSymbol = when (wellKnownSymbol) {
                 null -> null
                 "iterator" -> EtsWellKnownSymbol.ITERATOR
@@ -932,14 +939,11 @@ fun SourceSpanDto.toEtsSourceSpan(enclosingFileName: String = ""): EtsSourceSpan
 
 fun FieldDto.toEtsField(): EtsField {
     return EtsFieldImpl(
-        signature = EtsFieldSignature(
-            enclosingClass = signature.declaringClass.toEtsClassSignature(),
-            name = signature.name,
-            type = signature.type.toEtsType()
-        ),
+        signature = signature.toEtsFieldSignature(),
         modifiers = EtsModifiers(modifiers),
         isOptional = isOptional,
         isDefinitelyAssigned = isDefinitelyAssigned,
+        decorators = decorators.map { it.toEtsDecorator() },
     )
 }
 
@@ -947,6 +951,7 @@ fun NamespaceDto.toEtsNamespace(enclosingFileName: String = signature.declaringF
     val signature = signature.toEtsNamespaceSignature()
     val classes = classes.map { it.toEtsClass(enclosingFileName) }
     val namespaces = namespaces.map { it.toEtsNamespace(enclosingFileName) }
+
     return EtsNamespace(
         signature = signature,
         classes = classes,
@@ -960,6 +965,7 @@ fun EtsFileDto.toEtsFile(): EtsFile {
     val namespaces = namespaces.map { it.toEtsNamespace(signature.fileName) }
     val importInfos = importInfos.map { it.toEtsImportInfo() }
     val exportInfos = exportInfos.map { it.toEtsExportInfo() }
+
     return EtsFile(
         signature = signature,
         classes = classes,

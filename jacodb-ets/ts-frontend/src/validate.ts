@@ -171,11 +171,13 @@ function validateBody(body: BodyDto, ctx: string, errors: string[]): void {
         });
 
         const last = block.stmts.length > 0 ? block.stmts[block.stmts.length - 1] : undefined;
+        const endsWithExit = last !== undefined &&
+            (last._ === "ReturnStmt" || last._ === "ReturnVoidStmt" || last._ === "ThrowStmt");
         if (last !== undefined && last._ === "IfStmt") {
             if (block.successors.length !== 2) {
                 err(`${blockCtx}: ends with IfStmt but has ${block.successors.length} successors (need exactly 2: [false, true])`);
             }
-        } else if (last !== undefined && (last._ === "ReturnStmt" || last._ === "ReturnVoidStmt" || last._ === "ThrowStmt")) {
+        } else if (last !== undefined && endsWithExit) {
             if (block.successors.length !== 0) {
                 err(`${blockCtx}: ends with '${last._}' but has ${block.successors.length} successors`);
             }
@@ -209,13 +211,10 @@ function validateBody(body: BodyDto, ctx: string, errors: string[]): void {
         if (source.startOffset < 0 || source.endOffset < source.startOffset) {
             err(`source origin ${key} has invalid offset range [${source.startOffset}, ${source.endOffset})`);
         }
-        if (
-            source.startLine < 0 ||
-            source.startColumn < 0 ||
-            source.endLine < source.startLine ||
-            source.endColumn < 0 ||
-            (source.endLine === source.startLine && source.endColumn < source.startColumn)
-        ) {
+        const hasNegativePosition = source.startLine < 0 || source.startColumn < 0 || source.endColumn < 0;
+        const endsBeforeStart = source.endLine < source.startLine ||
+            (source.endLine === source.startLine && source.endColumn < source.startColumn);
+        if (hasNegativePosition || endsBeforeStart) {
             err(
                 `source origin ${key} has invalid line/column range ` +
                     `${source.startLine}:${source.startColumn}-${source.endLine}:${source.endColumn}`,
@@ -235,13 +234,13 @@ function validateBody(body: BodyDto, ctx: string, errors: string[]): void {
         for (const b of blocks) {
             const actual = new Set(b.predecessors);
             const expected = expectedPreds.get(b.id)!;
-            if (actual.size !== expected.size || [...expected].some((p) => !actual.has(p))) {
+            const hasMissingPredecessor = [...expected].some((predecessor) => !actual.has(predecessor));
+            if (actual.size !== expected.size || hasMissingPredecessor) {
                 err(`block ${b.id}: predecessors [${[...actual]}] inconsistent with successors (expected [${[...expected]}])`);
             }
         }
     }
 }
-
 
 function validateStmt(
     stmt: StmtDto,

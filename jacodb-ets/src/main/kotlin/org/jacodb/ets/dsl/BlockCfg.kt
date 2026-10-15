@@ -16,9 +16,6 @@
 
 package org.jacodb.ets.dsl
 
-import org.jacodb.ets.utils.IdentityHashSet
-import java.util.IdentityHashMap
-
 data class Block(
     val id: Int,
     val statements: List<BlockStmt>,
@@ -29,41 +26,73 @@ data class BlockCfg(
     val successors: Map<Int, List<Int>>, // for IF stmt, successors are (true, false) branches
 )
 
-fun Program.toBlockCfg(): BlockCfg {
-    val labelToNode: MutableMap<String, Node> = hashMapOf()
-    val targets: MutableSet<Node> = IdentityHashSet()
+private class NodeOccurrence(
+    val node: Node,
+    val thenBranch: List<NodeOccurrence> = emptyList(),
+    val elseBranch: List<NodeOccurrence> = emptyList(),
+)
 
-    fun findLabels(nodes: List<Node>) {
-        if (nodes.lastOrNull() is Label) {
+fun Program.toBlockCfg(): BlockCfg {
+    fun collectOccurrences(nodes: List<Node>): List<NodeOccurrence> = nodes.map { node ->
+        if (node is If) {
+            NodeOccurrence(
+                node = node,
+                thenBranch = collectOccurrences(node.thenBranch),
+                elseBranch = collectOccurrences(node.elseBranch),
+            )
+        } else {
+            NodeOccurrence(node)
+        }
+    }
+
+    val occurrences = collectOccurrences(nodes)
+    val labelToOccurrence: MutableMap<String, NodeOccurrence> = hashMapOf()
+    val targets: MutableSet<NodeOccurrence> = hashSetOf()
+
+    fun findLabels(nodes: List<NodeOccurrence>) {
+        if (nodes.lastOrNull()?.node is Label) {
             error("Label at the end of the block: $nodes")
         }
-        for ((stmt, next) in nodes.zipWithNext()) {
-            if (stmt is Label) {
-                check(next !is Label) { "Two labels in a row: $stmt, $next" }
-                check(next !is Goto) { "Label followed by goto: $stmt, $next" }
-                check(stmt.name !in labelToNode) { "Duplicate label: ${stmt.name}" }
-                labelToNode[stmt.name] = next
-            }
+        for ((occurrence, next) in nodes.zipWithNext()) {
+            val label = occurrence.node as? Label ?: continue
+
+            check(next.node !is Label) { "Two labels in a row: $label, ${next.node}" }
+            check(next.node !is Goto) { "Label followed by goto: $label, ${next.node}" }
+            check(label.name !in labelToOccurrence) { "Duplicate label: ${label.name}" }
+            labelToOccurrence[label.name] = next
         }
-        for (node in nodes) {
-            if (node is If) {
-                findLabels(node.thenBranch)
-                findLabels(node.elseBranch)
-            }
-            if (node is Goto) {
-                targets += labelToNode[node.targetLabel] ?: error("Unknown label: ${node.targetLabel}")
+        for (occurrence in nodes) {
+            findLabels(occurrence.thenBranch)
+            findLabels(occurrence.elseBranch)
+        }
+    }
+
+    findLabels(occurrences)
+
+    fun findTargets(nodes: List<NodeOccurrence>) {
+        for (occurrence in nodes) {
+            when (val node = occurrence.node) {
+                is If -> {
+                    findTargets(occurrence.thenBranch)
+                    findTargets(occurrence.elseBranch)
+                }
+
+                is Goto -> targets += labelToOccurrence[node.targetLabel]
+                    ?: error("Unknown label: ${node.targetLabel}")
+
+                else -> Unit
             }
         }
     }
 
-    findLabels(nodes)
+    findTargets(occurrences)
 
     val blocks: MutableList<Block> = mutableListOf()
     val successors: MutableMap<Int, List<Int>> = hashMapOf()
-    val stmtToBlock: MutableMap<BlockStmt, Int> = IdentityHashMap()
-    val nodeToStmt: MutableMap<Node, BlockStmt> = IdentityHashMap()
+    val occurrenceToBlock: MutableMap<NodeOccurrence, Int> = hashMapOf()
+    val pendingGotos: MutableList<Pair<Int, String>> = mutableListOf()
 
-    fun buildBlocks(nodes: List<Node>): Pair<Int, Int>? {
+    fun buildBlocks(nodes: List<NodeOccurrence>): Pair<Int, Int>? {
         if (nodes.isEmpty()) return null
 
         lateinit var currentBlock: MutableList<BlockStmt>
@@ -75,14 +104,20 @@ fun Program.toBlockCfg(): BlockCfg {
             return block
         }
 
+        fun newEmptyBranch(): Block {
+            val branch = Block(blocks.size, emptyList())
+            blocks += branch
+            return branch
+        }
+
         var block = newBlock()
         val firstBlockId = block.id
 
-        for (node in nodes) {
+        for ((index, occurrence) in nodes.withIndex()) {
+            val node = occurrence.node
             if (node is Label) continue
 
-            if (node in targets && currentBlock.isNotEmpty()) {
-                block.statements.forEach { stmtToBlock[it] = block.id }
+            if (occurrence in targets && currentBlock.isNotEmpty()) {
                 val prevBlock = block
                 block = newBlock()
                 successors[prevBlock.id] = listOf(block.id)
@@ -97,17 +132,16 @@ fun Program.toBlockCfg(): BlockCfg {
                     is CustomEts -> BlockCustomEts(node.toEts)
                     else -> error("Unexpected node: $node")
                 }
-                nodeToStmt[node] = stmt
+                occurrenceToBlock[occurrence] = block.id
                 currentBlock += stmt
             }
 
             if (node is If) {
-                block.statements.forEach { stmtToBlock[it] = block.id }
                 val ifBlock = block
                 block = newBlock()
 
-                val thenBlocks = buildBlocks(node.thenBranch)
-                val elseBlocks = buildBlocks(node.elseBranch)
+                val thenBlocks = buildBlocks(occurrence.thenBranch)
+                val elseBlocks = buildBlocks(occurrence.elseBranch)
 
                 when {
                     thenBlocks != null && elseBlocks != null -> {
@@ -147,29 +181,41 @@ fun Program.toBlockCfg(): BlockCfg {
                     }
 
                     else -> {
-                        successors[ifBlock.id] = listOf(block.id)
+                        val trueBranch = newEmptyBranch()
+                        val falseBranch = newEmptyBranch()
+                        successors[ifBlock.id] = listOf(trueBranch.id, falseBranch.id)
+                        successors[trueBranch.id] = listOf(block.id)
+                        successors[falseBranch.id] = listOf(block.id)
                     }
                 }
             } else if (node is Goto) {
-                val targetNode = labelToNode[node.targetLabel] ?: error("Unknown label: ${node.targetLabel}")
-                val target = nodeToStmt[targetNode] ?: error("No statement for $targetNode")
-                val targetBlockId = stmtToBlock[target] ?: error("No block for $target")
-                successors[block.id] = listOf(targetBlockId)
-                block.statements.forEach { stmtToBlock[it] = block.id }
+                pendingGotos += block.id to node.targetLabel
                 block = newBlock()
             } else if (node is Return) {
                 successors[block.id] = emptyList()
-                break
+                if (index < nodes.lastIndex) {
+                    block = newBlock()
+                }
             }
         }
 
-        block.statements.forEach { stmtToBlock[it] = block.id }
         val lastBlockId = block.id
 
         return Pair(firstBlockId, lastBlockId)
     }
 
-    buildBlocks(nodes)
+    buildBlocks(occurrences)
+
+    for ((sourceBlockId, label) in pendingGotos) {
+        val targetOccurrence = labelToOccurrence.getValue(label)
+        val targetBlockId = occurrenceToBlock[targetOccurrence]
+            ?: error("No block for ${targetOccurrence.node}")
+        successors[sourceBlockId] = listOf(targetBlockId)
+    }
+
+    for (block in blocks) {
+        successors.putIfAbsent(block.id, emptyList())
+    }
 
     return BlockCfg(blocks, successors)
 }

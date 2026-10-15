@@ -80,6 +80,45 @@ represented as `RawStmt` or `RawValue` and reported with `-v`. The frontend
 records per-statement exceptional-successor edges for `try`/`catch`. Raw
 constructs remain opaque and are treated conservatively as potentially
 throwing; EtsIR has no trap table for precise exception semantics.
+`for-in` statements use this raw fallback, including loops over objects with
+only own keys. EtsIR currently has no operation for enumerating inherited
+enumerable keys and checking pending keys as the object changes during the loop;
+an `Object.keys` snapshot would silently change the loop's behavior.
+Optional calls on `super` properties (including computed properties) use this
+raw fallback because EtsIR cannot currently preserve superclass-relative
+property lookup before the nullish guard and conditional call.
+Direct named calls such as `super.m(...)` through a superclass getter that
+returns a function use the same fallback; their property lookup must precede
+argument evaluation and invocation.
+Nonoptional `super` property reads, including `super.x` and `super["x"]`,
+also use this fallback because ordinary field references cannot select the
+superclass getter. Computed calls such as `super["m"](...)` require that same
+property read and use the fallback before key or argument evaluation. Ordinary
+named superclass method calls such as `super.m(...)` retain their direct call
+representation.
+Assignments to named or computed `super` properties are also explicitly unsupported.
+Nested function declarations and named function expressions that refer to their
+own name at runtime use the raw fallback. Their recursive binding cannot be
+represented by the current lifted-closure environment; type-only references
+and shadowed names do not trigger this fallback. Top-level named functions
+retain their existing recursion representation.
+Object literal method declarations use the raw fallback, including named and
+computed methods. Anonymous-class method metadata alone cannot install a fresh
+callable own property at each object evaluation in source order. Data properties
+containing function values and getter descriptors keep their existing lowering
+paths.
+Class declarations with computed property, method, or accessor names use a
+whole-declaration raw fallback, as do classes inheriting from such a declaration.
+EtsIR class fields cannot represent the definition-time evaluation of those
+keys or their runtime names. An `extends` value that does not resolve directly
+to a class declaration also uses this fallback; its runtime base cannot be
+fixed from the source name alone. Class expressions with heritage remain
+unsupported by the existing expression fallback.
+Default derived constructors forward fixed parameters through constructor-free
+ancestors. When an inherited constructor has a rest parameter, the synthetic
+constructor emits an unsupported statement: the current call IR cannot forward
+the received rest array as an arbitrary number of arguments without packing it
+again. Explicit constructors retain their usual lowering.
 
 ## Development
 

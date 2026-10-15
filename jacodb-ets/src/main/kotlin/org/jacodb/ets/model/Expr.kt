@@ -205,7 +205,6 @@ data class EtsSpreadExpansionExpr(
 
     override fun toString(): String = "expandSpread($iterable, $expectedCount)"
 
-
     override fun <R> accept(visitor: EtsExpr.Visitor<R>): R = visitor.visit(this)
 }
 
@@ -860,6 +859,7 @@ data class EtsInstanceCallExpr(
     override val args: List<EtsLocal>,
     override val type: EtsType,
     val wellKnownSymbol: EtsWellKnownSymbol? = null,
+    val isSuperCall: Boolean = false,
 ) : EtsCallExpr, CommonInstanceCallExpr {
     override fun toString(): String {
         return "call ${instance}.${callee.name}(${args.joinToString()})"

@@ -20,7 +20,7 @@ import * as ts from "typescript";
 import { COMPUTED_MEMBER_NAME, DEFAULT_ARK_CLASS_NAME, Modifier, PATTERN_PARAMETER_PREFIX } from "../dto/constants";
 import { DecoratorDto } from "../dto/model";
 import { MethodParameterDto, MethodSignatureDto } from "../dto/signatures";
-import { TypeDto, UNKNOWN_TYPE } from "../dto/types";
+import { FunctionTypeDto, TypeDto, UNKNOWN_TYPE } from "../dto/types";
 import type { LoweringContext } from "./methodBuilder";
 
 export function memberName(name: ts.PropertyName | ts.BindingName | ts.EntityName): string {
@@ -28,6 +28,37 @@ export function memberName(name: ts.PropertyName | ts.BindingName | ts.EntityNam
         return name.text;
     }
     return COMPUTED_MEMBER_NAME;
+}
+
+/** Reject unsupported members, unsupported bases, and runtime base values without a stable class declaration. */
+export function unsupportedClassDeclarationReason(decl: ts.ClassDeclaration, checker: ts.TypeChecker): string | undefined {
+    const visited = new Set<ts.ClassDeclaration>();
+    const reasonOf = (current: ts.ClassDeclaration): string | undefined => {
+        if (visited.has(current)) return undefined;
+        visited.add(current);
+
+        const hasComputedMember = current.members.some((member) =>
+            member.name !== undefined && ts.isComputedPropertyName(member.name));
+        if (hasComputedMember) return "computed class member needs definition-time key evaluation";
+
+        const extendsType = current.heritageClauses
+            ?.find((clause) => clause.token === ts.SyntaxKind.ExtendsKeyword)
+            ?.types[0];
+        if (extendsType === undefined) return undefined;
+
+        const base = classLikeDeclarationOf(extendsType.expression, checker);
+        if (base === undefined || !ts.isClassDeclaration(base)) {
+            return `base expression '${extendsType.expression.getText()}' has no directly resolved class declaration`;
+        }
+        if (base.getSourceFile().isDeclarationFile) {
+            return undefined;
+        }
+
+        const baseReason = reasonOf(base);
+        return baseReason === undefined ? undefined : `base class '${base.name?.getText() ?? "<anonymous>"}' is unsupported: ${baseReason}`;
+    };
+
+    return reasonOf(decl);
 }
 
 export function modifiersOf(node: ts.Node): number {
@@ -121,13 +152,17 @@ function staticMemberStorage(
     if (!ts.isIdentifier(node.name)) return "unsupported";
 
     const declarations = resolvedSymbolOf(node.name, checker)?.declarations ?? [];
-    const member = declarations.find((declaration) =>
-        declaration.parent === classDecl
-        && (ts.isPropertyDeclaration(declaration)
+    const member = declarations.find((declaration) => {
+        const belongsToClass = declaration.parent === classDecl;
+        if (!belongsToClass) return false;
+
+        const hasSupportedMemberKind = ts.isPropertyDeclaration(declaration)
             || ts.isMethodDeclaration(declaration)
-            || ts.isEnumMember(declaration))
-        && memberName(declaration.name) === node.name.text,
-    );
+            || ts.isEnumMember(declaration);
+        if (!hasSupportedMemberKind) return false;
+
+        return memberName(declaration.name) === node.name.text;
+    });
     if (member === undefined) return "unsupported";
 
     if (ts.isEnumMember(member) && ts.isEnumDeclaration(classDecl)) return "field";
@@ -143,7 +178,9 @@ function isUnmaterializedValue(identifier: ts.Identifier, checker: ts.TypeChecke
     const hasScopeFunctionBody = scopeFunctionImplementation(symbol) !== undefined;
 
     return symbol?.declarations?.some((declaration) =>
-        (ts.isClassDeclaration(declaration) && declaration.getSourceFile().isDeclarationFile)
+        (ts.isClassDeclaration(declaration)
+            && (declaration.getSourceFile().isDeclarationFile
+                || unsupportedClassDeclarationReason(declaration, checker) !== undefined))
         || (ts.isFunctionDeclaration(declaration)
             && !hasScopeFunctionBody
             && (ts.isSourceFile(declaration.parent) || ts.isModuleBlock(declaration.parent)))
@@ -156,9 +193,12 @@ function isUnmaterializedValue(identifier: ts.Identifier, checker: ts.TypeChecke
 function usesMutableClassProperty(expression: ts.Expression, checker: ts.TypeChecker): boolean {
     const visit = (node: ts.Node): boolean => {
         if (ts.isTypeNode(node)) return false;
-        if (ts.isPropertyAccessExpression(node) && resolvedSymbolOf(node.name, checker)?.declarations?.some(
-            (declaration) => ts.isClassDeclaration(declaration) && !declaration.getSourceFile().isDeclarationFile,
-        )) return true;
+        if (ts.isPropertyAccessExpression(node)) {
+            const referencesProjectClass = resolvedSymbolOf(node.name, checker)?.declarations?.some(
+                (declaration) => ts.isClassDeclaration(declaration) && !declaration.getSourceFile().isDeclarationFile,
+            ) ?? false;
+            if (referencesProjectClass) return true;
+        }
 
         let found = false;
         ts.forEachChild(node, (child) => { found = visit(child) || found; });
@@ -174,7 +214,24 @@ export function usesUnmaterializedDeclarationValue(expression: ts.Expression, ch
         if (ts.isTypeNode(node)) return false;
         if (ts.isIdentifier(node)) return isUnmaterializedValue(node, checker);
 
-        if (ts.isNewExpression(node) && classLikeDeclarationOf(node.expression, checker) !== undefined) {
+        if (ts.isPropertyAccessExpression(node)) {
+            const receiverClass = classLikeDeclarationOf(node.expression, checker);
+            if (receiverClass !== undefined
+                && ts.isClassDeclaration(receiverClass)
+                && unsupportedClassDeclarationReason(receiverClass, checker) !== undefined) {
+                return true;
+            }
+        }
+
+        const constructedClass = ts.isNewExpression(node)
+            ? classLikeDeclarationOf(node.expression, checker)
+            : undefined;
+        if (ts.isNewExpression(node) && constructedClass !== undefined) {
+            if (ts.isClassDeclaration(constructedClass)
+                && unsupportedClassDeclarationReason(constructedClass, checker) !== undefined) {
+                return true;
+            }
+
             return node.arguments?.some(visit) ?? false;
         }
         if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
@@ -234,10 +291,13 @@ export function usesModuleLexicalThis(expression: ts.Expression): boolean {
 /** Computed method and setter names still lack a runtime definition. */
 export function hasUnsupportedComputedObjectKey(expression: ts.Expression): boolean {
     const visit = (node: ts.Node): boolean => {
-        if (ts.isObjectLiteralExpression(node) && node.properties.some((property) =>
-            (ts.isMethodDeclaration(property) || ts.isSetAccessorDeclaration(property))
-            && ts.isComputedPropertyName(property.name),
-        )) return true;
+        if (ts.isObjectLiteralExpression(node)) {
+            const hasComputedMethodOrSetter = node.properties.some((property) => {
+                const isMethodOrSetter = ts.isMethodDeclaration(property) || ts.isSetAccessorDeclaration(property);
+                return isMethodOrSetter && ts.isComputedPropertyName(property.name);
+            });
+            if (hasComputedMethodOrSetter) return true;
+        }
 
         let found = false;
         ts.forEachChild(node, (child) => { found = visit(child) || found; });
@@ -371,4 +431,14 @@ export function scopeFunctionSignature(ctx: LoweringContext, decl: ts.FunctionDe
         parameters: buildParameters(ctx, decl).parameters,
         returnType: returnTypeOf(ctx, decl),
     };
+}
+
+/** The declared function value, including its generic binders. */
+export function scopeFunctionType(ctx: LoweringContext, decl: ts.FunctionDeclaration): FunctionTypeDto {
+    const type: FunctionTypeDto = { _: "FunctionType", signature: scopeFunctionSignature(ctx, decl) };
+    const typeParameters = ctx.converter.convertTypeParameters(decl.typeParameters);
+    if (typeParameters !== undefined) {
+        type.typeParameters = typeParameters;
+    }
+    return type;
 }

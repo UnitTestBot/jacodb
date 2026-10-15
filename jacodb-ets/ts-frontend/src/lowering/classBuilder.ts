@@ -37,13 +37,14 @@ import {
     PATTERN_PARAMETER_PREFIX,
     STATIC_INIT_METHOD_NAME,
 } from "../dto/constants";
-import { ClassDto, FieldDto, MethodDto } from "../dto/model";
+import { BodyDto, ClassDto, FieldDto, MethodDto } from "../dto/model";
 import { ClassSignatureDto, UNKNOWN_FILE_SIGNATURE } from "../dto/signatures";
-import { ClassTypeDto, TypeDto, BOOLEAN_TYPE, NUMBER_TYPE, STRING_TYPE, UNKNOWN_TYPE, VOID_TYPE } from "../dto/types";
+import { ClassTypeDto, TypeDto, NUMBER_TYPE, STRING_TYPE, UNKNOWN_TYPE, VOID_TYPE } from "../dto/types";
 import { buildParameters, decoratorsOf, memberName, modifiersOf, parameterType, returnTypeOf } from "./astUtils";
-import { constant } from "./exprLowering";
+import { unsupportedStmt } from "./diagnostics";
+import { LoweringError, constant } from "./exprLowering";
 import { LoweringContext, MethodContext } from "./methodBuilder";
-import { StmtLowerer } from "./stmtLowering";
+import { StmtLowerer, ensureSupportedBindingPattern } from "./stmtLowering";
 
 type ClassMemberDecl = ts.MethodDeclaration | ts.GetAccessorDeclaration | ts.SetAccessorDeclaration;
 
@@ -109,7 +110,7 @@ export class ClassBuilder {
         methods.push(
             ctorDecl !== undefined
                 ? this.buildConstructor(signature, ctorDecl, superClass?.signature)
-                : this.synthesizeDefaultConstructor(signature, superClass),
+                : this.synthesizeDefaultConstructor(signature, decl, superClass),
         );
 
         const result: ClassDto = {
@@ -313,6 +314,12 @@ export class ClassBuilder {
 
         if (decl.body !== undefined) {
             const isStaticMethod = (modifiersOf(decl) & Modifier.STATIC) !== 0;
+            const patternError = this.parameterPatternError(decl);
+            if (patternError !== undefined) {
+                method.body = this.unsupportedParameterBody(decl, declaringClass, name, patternError, isStaticMethod);
+                return method;
+            }
+
             const m = new MethodContext(this.ctx, declaringClass, name, isStaticMethod);
             const lowerer = new StmtLowerer(m);
             m.emitPrologue(prologueParams, (parameter, local) =>
@@ -326,7 +333,7 @@ export class ClassBuilder {
 
     buildBodylessMethod(declaringClass: ClassSignatureDto, decl: ts.MethodSignature): MethodDto {
         const { parameters } = buildParameters(this.ctx, decl);
-        return {
+        const method: MethodDto = {
             signature: {
                 declaringClass,
                 name: memberName(decl.name),
@@ -336,6 +343,12 @@ export class ClassBuilder {
             modifiers: modifiersOf(decl),
             decorators: [],
         };
+        const typeParameters = this.ctx.converter.convertTypeParameters(decl.typeParameters);
+        if (typeParameters !== undefined) {
+            method.typeParameters = typeParameters;
+        }
+
+        return method;
     }
 
     private buildConstructor(
@@ -345,6 +358,16 @@ export class ClassBuilder {
     ): MethodDto {
         const { parameters, prologueParams } = buildParameters(this.ctx, decl);
         const classType: ClassTypeDto = { _: "ClassType", signature: declaringClass };
+        const patternError = this.parameterPatternError(decl);
+        if (patternError !== undefined) {
+            return {
+                signature: { declaringClass, name: CONSTRUCTOR_NAME, parameters, returnType: classType },
+                modifiers: modifiersOf(decl),
+                decorators: decoratorsOf(decl),
+                isStrictMode: true,
+                body: this.unsupportedParameterBody(decl, declaringClass, CONSTRUCTOR_NAME, patternError),
+            };
+        }
 
         const m = new MethodContext(this.ctx, declaringClass, CONSTRUCTOR_NAME);
         const lowerer = new StmtLowerer(m);
@@ -380,8 +403,38 @@ export class ClassBuilder {
         };
     }
 
+    private parameterPatternError(decl: ts.SignatureDeclarationBase): string | undefined {
+        try {
+            for (const parameter of decl.parameters) {
+                if (!ts.isIdentifier(parameter.name)) {
+                    ensureSupportedBindingPattern(parameter.name);
+                }
+            }
+        } catch (error) {
+            if (error instanceof LoweringError) {
+                return error.message;
+            }
+            throw error;
+        }
+        return undefined;
+    }
+
+    private unsupportedParameterBody(
+        decl: ts.SignatureDeclarationBase,
+        declaringClass: ClassSignatureDto,
+        name: string,
+        reason: string,
+        isStaticMethod?: boolean,
+    ): BodyDto {
+        this.ctx.diagnostics.warn(decl, `unsupported parameter binding: ${reason}`);
+        const m = new MethodContext(this.ctx, declaringClass, name, isStaticMethod);
+        m.withOrigin(decl, () => m.cfg.emit(unsupportedStmt(decl)));
+        return m.build();
+    }
+
     private synthesizeDefaultConstructor(
         declaringClass: ClassSignatureDto,
+        decl: ts.ClassLikeDeclaration,
         superClass?: { signature: ClassSignatureDto; constructorDecl?: ts.ConstructorDeclaration },
     ): MethodDto {
         const classType: ClassTypeDto = { _: "ClassType", signature: declaringClass };
@@ -389,6 +442,26 @@ export class ClassBuilder {
         const inherited = superClass?.constructorDecl !== undefined
             ? buildParameters(this.ctx, superClass.constructorDecl)
             : { parameters: [], prologueParams: [] };
+        const hasRestParameter = inherited.parameters.some((parameter) => parameter.isRest === true);
+        if (hasRestParameter) {
+            // ParameterRef for a rest parameter is already a packed array. Passing
+            // it as one call argument would pack it again in the base constructor.
+            this.ctx.diagnostics.warn(decl, "unsupported default constructor forwarding of rest arguments");
+            m.withOrigin(decl, () => m.cfg.emit(unsupportedStmt(decl)));
+            return {
+                signature: {
+                    declaringClass,
+                    name: CONSTRUCTOR_NAME,
+                    parameters: inherited.parameters,
+                    returnType: classType,
+                },
+                modifiers: 0,
+                decorators: [],
+                isStrictMode: true,
+                body: m.build(),
+            };
+        }
+
         m.emitPrologue(inherited.prologueParams);
         if (superClass !== undefined) {
             const thisLocal = m.getOrCreateLocal("this", classType);
@@ -451,6 +524,7 @@ export class ClassBuilder {
 
     private superClassInfo(
         decl: ts.ClassLikeDeclaration,
+        visitedClasses: Set<ts.ClassDeclaration> = new Set(),
     ): { signature: ClassSignatureDto; constructorDecl?: ts.ConstructorDeclaration } | undefined {
         const extended = decl.heritageClauses
             ?.find((clause) => clause.token === ts.SyntaxKind.ExtendsKeyword)
@@ -467,9 +541,20 @@ export class ClassBuilder {
                 name: extended.expression.getText(),
                 declaringFile: UNKNOWN_FILE_SIGNATURE,
             };
-        const constructorDecl = classDeclaration?.members.find(
+        const ownConstructor = classDeclaration?.members.find(
             (member): member is ts.ConstructorDeclaration => ts.isConstructorDeclaration(member) && member.body !== undefined,
         ) ?? classDeclaration?.members.find(ts.isConstructorDeclaration);
+        // A default derived constructor forwards the arguments accepted by the
+        // first explicit constructor, even across other default constructors.
+        let constructorDecl = ownConstructor;
+        const canFollowBase = constructorDecl === undefined
+            && classDeclaration !== undefined
+            && !visitedClasses.has(classDeclaration);
+        if (canFollowBase && classDeclaration !== undefined) {
+            visitedClasses.add(classDeclaration);
+            constructorDecl = this.superClassInfo(classDeclaration, visitedClasses)?.constructorDecl;
+        }
+
         return constructorDecl === undefined ? { signature } : { signature, constructorDecl };
     }
 
@@ -597,8 +682,7 @@ export class ClassBuilder {
             return this.ctx.converter.convertTypeNode(decl.type);
         }
         if (decl.initializer !== undefined) {
-            const inferred = this.ctx.converter.typeOfNode(decl.name);
-            return widenLiteral(inferred);
+            return this.ctx.converter.typeOfNode(decl.name);
         }
         return UNKNOWN_TYPE;
     }
@@ -646,19 +730,4 @@ function extendedInterfacesOf(decl: ts.InterfaceDeclaration): string[] {
         }
     }
     return [];
-}
-
-/** Widen literal types inferred from initializers (fields are mutable). */
-function widenLiteral(type: TypeDto): TypeDto {
-    if (type._ === "LiteralType") {
-        switch (typeof type.literal) {
-            case "number":
-                return NUMBER_TYPE;
-            case "string":
-                return STRING_TYPE;
-            case "boolean":
-                return BOOLEAN_TYPE;
-        }
-    }
-    return type;
 }

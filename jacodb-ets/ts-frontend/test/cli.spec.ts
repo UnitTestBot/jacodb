@@ -35,6 +35,12 @@ describe("parseArgs", () => {
         expect(args).toMatchObject({ typeInference: 1, input: "in", output: "out" });
     });
 
+    it("preserves dash-prefixed paths with spaces after --", () => {
+        const args = parseArgs(["--", "-my file.ts", "-output dir.json"]);
+
+        expect(args).toMatchObject({ input: "-my file.ts", output: "-output dir.json" });
+    });
+
     it("treats -t without numeric value as level 1", () => {
         const args = parseArgs(["in", "out", "-t"]);
         expect(args).toMatchObject({ typeInference: 1, input: "in", output: "out" });

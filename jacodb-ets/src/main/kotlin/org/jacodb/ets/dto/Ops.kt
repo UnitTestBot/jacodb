@@ -24,9 +24,6 @@ object Ops {
         const val BIT_NOT = "~"
         const val INC = "++"
         const val DEC = "--"
-        // const val DELETE = "delete"
-        // const val TYPEOF = "typeof"
-        // const val VOID = "void"
     }
 
     object Binary {
@@ -45,8 +42,6 @@ object Ops {
         const val AND = "&&"
         const val OR = "||"
         const val NULLISH = "??"
-        // const val COMMA = ","
-        // const val AS = "as"
     }
 
     object Relational {
@@ -59,6 +54,5 @@ object Ops {
         const val GT = ">"
         const val GT_EQ = ">="
         const val IN = "in"
-        // const val INSTANCEOF = "instanceof"
     }
 }

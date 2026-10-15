@@ -98,15 +98,7 @@ import org.jacodb.ets.model.EtsUnsignedRightShiftExpr
 import org.jacodb.ets.model.EtsVoidExpr
 import org.jacodb.ets.model.EtsYieldExpr
 
-/**
- * An example handler for [EtsEntity] and [EtsStmt].
- *
- * This class is not meant to be used directly, but rather serves as a template for creating custom handlers.
- *
- * **Note:** this class might seem as completely useless, but it actually guards
- * from missing any of the visit methods in the future.
- * If this fails to compile, you might need to implement new methods in [AbstractHandler].
- */
+/** An example of observing the statements and entities visited by [AbstractHandler]. */
 class ExampleHandler : AbstractHandler() {
     override fun handle(value: EtsEntity) {
         // Handle the entity
@@ -119,6 +111,7 @@ class ExampleHandler : AbstractHandler() {
     }
 }
 
+/** Calls [handle] before visiting each node's children; it does not transform the IR. */
 abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> {
 
     abstract fun handle(value: EtsEntity)
@@ -524,6 +517,7 @@ abstract class AbstractHandler : EtsEntity.Visitor<Unit>, EtsStmt.Visitor<Unit> 
         expr.receiver?.accept(this)
         expr.args.forEach { it.accept(this) }
     }
+
     final override fun visit(expr: EtsSpreadExpansionExpr) {
         handle(expr)
         expr.iterable.accept(this)

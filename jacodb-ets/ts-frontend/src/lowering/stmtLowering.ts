@@ -25,7 +25,7 @@ import * as ts from "typescript";
 import { MethodSignatureDto, UNKNOWN_CLASS_SIGNATURE, UNKNOWN_FILE_SIGNATURE } from "../dto/signatures";
 import { BOOLEAN_TYPE, NUMBER_TYPE, STRING_TYPE, SYMBOL_TYPE, TypeDto, UNDEFINED_TYPE, UNKNOWN_TYPE } from "../dto/types";
 import { ImmediateDto, LValueDto, LocalDto, ValueDto } from "../dto/values";
-import { exportAssignmentSupport } from "./astUtils";
+import { exportAssignmentSupport, unsupportedClassDeclarationReason } from "./astUtils";
 import type { BuiltParameters } from "./astUtils";
 import { Label } from "./cfg";
 import { IteratorLowerer, throwRuntimeError } from "./iteratorLowering";
@@ -46,7 +46,7 @@ interface BreakableContext {
     kind: "loop" | "switch" | "labeled-block";
     breakTarget: Label;
     continueTarget?: Label;
-    label?: string;
+    labels: readonly string[];
     /** finallyScopes depth at the moment this breakable was entered. */
     finallyDepth?: number;
     /** Iterator cleanup also runs on break from this loop, but not on continue. */
@@ -65,7 +65,8 @@ export class StmtLowerer {
     private readonly finallyScopes: (ts.Block | (() => void))[] = [];
     private readonly finallyExceptionTargets: Label[] = [];
     private readonly catchScopes: CatchContext[] = [];
-    private pendingLabel: string | undefined;
+    private readonly unsupportedForwardFunctionCaptures = new Set<ts.Statement>();
+    private pendingLabels: readonly string[] = [];
 
     constructor(
         private readonly m: MethodContext,
@@ -88,18 +89,28 @@ export class StmtLowerer {
         // Function declarations are hoisted in JavaScript, but lowering materializes
         // their captured values at the creation point: hoisting unconditionally would
         // snapshot captures BEFORE the captured variables are assigned. Hoist only the
-        // declarations that are actually referenced earlier in the same statement list;
-        // everything else keeps source order, so its captures are already initialized.
+        // declarations whose values are evaluated earlier in the same statement list;
+        // a reference in a deferred closure body cannot force early capture.
         const hoisted = new Set<ts.Statement>();
         statements.forEach((statement, index) => {
             if (!ts.isFunctionDeclaration(statement) || statement.name === undefined) {
                 return;
             }
-            const name = statement.name.text;
+            const functionSymbol = this.m.converter.symbolOf(statement.name);
+            if (functionSymbol === undefined) {
+                return;
+            }
+
             for (let i = 0; i < index; i++) {
-                if (referencesName(statements[i], name)) {
+                const earlierStatement = statements[i];
+                const uses = this.functionUses(earlierStatement, functionSymbol);
+                if (uses.eager) {
                     hoisted.add(statement);
-                    return;
+                }
+                if (uses.deferred) {
+                    // Capturing a function before its binding is assigned needs a
+                    // live binding cell, which the lifted environment cannot express.
+                    this.unsupportedForwardFunctionCaptures.add(earlierStatement);
                 }
             }
         });
@@ -113,6 +124,87 @@ export class StmtLowerer {
                 this.lowerStatement(statement);
             }
         }
+    }
+
+    private functionUses(node: ts.Node, functionSymbol: ts.Symbol): { eager: boolean; deferred: boolean } {
+        let eager = false;
+        let deferred = false;
+        const visit = (current: ts.Node, inDeferredBody: boolean): void => {
+            if ((eager && deferred) || ts.isTypeNode(current)) {
+                return;
+            }
+
+            if (ts.isCallExpression(current)) {
+                const invokedFunction = this.immediatelyCalledFunction(current.expression);
+                if (invokedFunction !== undefined) {
+                    for (const argument of current.arguments) {
+                        visit(argument, inDeferredBody);
+                    }
+                    for (const parameter of invokedFunction.parameters) {
+                        visit(parameter, inDeferredBody);
+                    }
+                    visit(invokedFunction.body, inDeferredBody);
+                    return;
+                }
+            }
+
+            if (ts.isFunctionLike(current)) {
+                if (current.name !== undefined && ts.isComputedPropertyName(current.name)) {
+                    visit(current.name.expression, inDeferredBody);
+                }
+                for (const parameter of current.parameters) {
+                    visit(parameter, true);
+                }
+                const hasRuntimeBody = ts.isFunctionDeclaration(current)
+                    || ts.isFunctionExpression(current)
+                    || ts.isArrowFunction(current)
+                    || ts.isMethodDeclaration(current)
+                    || ts.isConstructorDeclaration(current)
+                    || ts.isGetAccessorDeclaration(current)
+                    || ts.isSetAccessorDeclaration(current);
+                if (hasRuntimeBody && current.body !== undefined) {
+                    visit(current.body, true);
+                }
+                return;
+            }
+
+            if (ts.isIdentifier(current)) {
+                const parent = current.parent;
+                const isPropertyName = (ts.isPropertyAccessExpression(parent) && parent.name === current)
+                    || (ts.isPropertyAssignment(parent) && parent.name === current);
+                const isBindingName = (ts.isVariableDeclaration(parent)
+                    || ts.isBindingElement(parent)
+                    || ts.isParameter(parent)) && parent.name === current;
+                const isValueReference = !isPropertyName && !isBindingName;
+                if (isValueReference) {
+                    const referenceSymbol = this.m.converter.symbolOf(current);
+                    if (referenceSymbol === functionSymbol) {
+                        if (inDeferredBody) deferred = true;
+                        else eager = true;
+                        return;
+                    }
+                }
+            }
+
+            ts.forEachChild(current, (child) => visit(child, inDeferredBody));
+        };
+
+        visit(node, false);
+        return { eager, deferred };
+    }
+
+    private immediatelyCalledFunction(expression: ts.Expression): ts.ArrowFunction | ts.FunctionExpression | undefined {
+        while (
+            ts.isParenthesizedExpression(expression)
+            || ts.isAsExpression(expression)
+            || ts.isTypeAssertionExpression(expression)
+            || ts.isNonNullExpression(expression)
+            || ts.isSatisfiesExpression(expression)
+        ) {
+            expression = expression.expression;
+        }
+
+        return ts.isArrowFunction(expression) || ts.isFunctionExpression(expression) ? expression : undefined;
     }
 
     lowerStatement(node: ts.Statement): void {
@@ -131,9 +223,13 @@ export class StmtLowerer {
     }
 
     private lowerStatementImpl(node: ts.Statement): void {
-        // The pending label (from a LabeledStatement) applies only to the directly wrapped stmt.
-        const label = this.pendingLabel;
-        this.pendingLabel = undefined;
+        // Contiguous labels name the same directly wrapped loop or switch.
+        const labels = this.pendingLabels;
+        this.pendingLabels = [];
+
+        if (this.unsupportedForwardFunctionCaptures.has(node)) {
+            throw new LoweringError("closure capturing a later function binding requires a runtime binding cell");
+        }
 
         if (ts.isVariableStatement(node)) {
             this.lowerVariableDeclarations(node.declarationList);
@@ -144,27 +240,27 @@ export class StmtLowerer {
             return;
         }
         if (ts.isWhileStatement(node)) {
-            this.lowerWhile(node, label);
+            this.lowerWhile(node, labels);
             return;
         }
         if (ts.isDoStatement(node)) {
-            this.lowerDoWhile(node, label);
+            this.lowerDoWhile(node, labels);
             return;
         }
         if (ts.isForStatement(node)) {
-            this.lowerFor(node, label);
+            this.lowerFor(node, labels);
             return;
         }
         if (ts.isForOfStatement(node)) {
-            this.lowerForOf(node, label);
+            this.lowerForOf(node, labels);
             return;
         }
         if (ts.isForInStatement(node)) {
-            this.lowerForIn(node, label);
+            this.lowerForIn(node);
             return;
         }
         if (ts.isSwitchStatement(node)) {
-            this.lowerSwitch(node, label);
+            this.lowerSwitch(node, labels);
             return;
         }
         if (ts.isBreakStatement(node)) {
@@ -264,7 +360,14 @@ export class StmtLowerer {
             }
             return;
         }
-        if (
+        const unsupportedClassReason = ts.isClassDeclaration(node)
+            ? unsupportedClassDeclarationReason(node, this.m.checker)
+            : undefined;
+        if (unsupportedClassReason !== undefined) {
+            throw new LoweringError(unsupportedClassReason);
+        }
+
+        const isDeclarationHandledOutsideBody =
             ts.isClassDeclaration(node) ||
             ts.isInterfaceDeclaration(node) ||
             ts.isEnumDeclaration(node) ||
@@ -272,9 +375,9 @@ export class StmtLowerer {
             ts.isTypeAliasDeclaration(node) ||
             ts.isImportDeclaration(node) ||
             ts.isExportDeclaration(node) ||
-            ts.isExportAssignment(node) ||
-            ts.isImportEqualsDeclaration(node)
-        ) {
+            ts.isImportEqualsDeclaration(node);
+
+        if (isDeclarationHandledOutsideBody) {
             // Declarations are handled at file/class level, not as body statements.
             return;
         }
@@ -303,7 +406,7 @@ export class StmtLowerer {
         cfg.placeLabel(endLabel);
     }
 
-    private lowerWhile(node: ts.WhileStatement, label: string | undefined): void {
+    private lowerWhile(node: ts.WhileStatement, labels: readonly string[]): void {
         const cfg = this.m.cfg;
         const headLabel = cfg.newLabel();
         const bodyLabel = cfg.newLabel();
@@ -312,21 +415,21 @@ export class StmtLowerer {
         cfg.placeLabel(headLabel);
         this.expr.lowerCondition(node.expression, bodyLabel, exitLabel);
         cfg.placeLabel(bodyLabel);
-        this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: headLabel, label }, () => {
+        this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: headLabel, labels }, () => {
             this.lowerStatement(node.statement);
         });
         cfg.goto(headLabel);
         cfg.placeLabel(exitLabel);
     }
 
-    private lowerDoWhile(node: ts.DoStatement, label: string | undefined): void {
+    private lowerDoWhile(node: ts.DoStatement, labels: readonly string[]): void {
         const cfg = this.m.cfg;
         const bodyLabel = cfg.newLabel();
         const condLabel = cfg.newLabel();
         const exitLabel = cfg.newLabel();
 
         cfg.placeLabel(bodyLabel);
-        this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: condLabel, label }, () => {
+        this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: condLabel, labels }, () => {
             this.lowerStatement(node.statement);
         });
         cfg.placeLabel(condLabel);
@@ -334,7 +437,7 @@ export class StmtLowerer {
         cfg.placeLabel(exitLabel);
     }
 
-    private lowerFor(node: ts.ForStatement, label: string | undefined): void {
+    private lowerFor(node: ts.ForStatement, labels: readonly string[]): void {
         const cfg = this.m.cfg;
         if (node.initializer !== undefined) {
             if (ts.isVariableDeclarationList(node.initializer)) {
@@ -355,7 +458,7 @@ export class StmtLowerer {
             cfg.goto(bodyLabel);
         }
         cfg.placeLabel(bodyLabel);
-        this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: updateLabel, label }, () => {
+        this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: updateLabel, labels }, () => {
             this.lowerStatement(node.statement);
         });
         cfg.goto(updateLabel);
@@ -368,37 +471,28 @@ export class StmtLowerer {
     }
 
     /** Lower iterator reads, including Async-from-Sync value unwrapping for `for await`. */
-    private lowerForOf(node: ts.ForOfStatement, label: string | undefined): void {
+    private lowerForOf(node: ts.ForOfStatement, labels: readonly string[]): void {
         const cfg = this.m.cfg;
         const source = this.expr.lowerToLocal(node.expression);
         const isAsync = node.awaitModifier !== undefined;
         // GetMethod may invoke a getter that reassigns the source binding.
         const iterable = isAsync ? this.m.snapshotToLocal(source, source.type) : source;
+        const syncIterator = isAsync ? undefined : new IteratorLowerer(this.m, iterable);
         const asyncIterator = isAsync ? this.lowerAsyncIterator(iterable) : undefined;
-
-        const iterator = asyncIterator?.iterator ?? this.expr.materialize({
-            _: "InstanceCallExpr",
-            instance: iterable,
-            method: unknownMethod("Symbol.iterator"),
-            args: [],
-            wellKnownSymbol: "iterator",
-        });
 
         const headLabel = cfg.newLabel();
         const bodyLabel = cfg.newLabel();
         const exitLabel = cfg.newLabel();
 
         cfg.placeLabel(headLabel);
-        const result = this.m.newTemp(UNKNOWN_TYPE);
-        const nextResult = isAsync ? this.m.newTemp(UNKNOWN_TYPE) : result;
-        cfg.emit({
-            _: "AssignStmt",
-            left: nextResult,
-            right: asyncIterator === undefined
-                ? { _: "InstanceCallExpr", instance: iterator, method: unknownMethod("next"), args: [] }
-                : { _: "PtrCallExpr", ptr: asyncIterator.next, receiver: iterator, method: unknownMethod("next"), args: [] },
-        });
+        const result = syncIterator?.step() ?? this.m.newTemp(UNKNOWN_TYPE);
         if (asyncIterator !== undefined) {
+            const nextResult = this.m.newTemp(UNKNOWN_TYPE);
+            cfg.emit({ _: "AssignStmt", left: nextResult, right: {
+                _: "PtrCallExpr", ptr: asyncIterator.next, receiver: asyncIterator.iterator,
+                method: unknownMethod("next"), args: [],
+            } });
+
             const syncResult = cfg.newLabel();
             const asyncResult = cfg.newLabel();
             const resultReady = cfg.newLabel();
@@ -414,13 +508,15 @@ export class StmtLowerer {
             this.requireIteratorObject(result);
         }
 
-        const doneType = asyncIterator === undefined ? BOOLEAN_TYPE : UNKNOWN_TYPE;
-        const rawDone = this.expr.materialize(this.iteratorField(result, "done", doneType), doneType);
-        // IteratorComplete uses ToBoolean, including non-boolean truthy done values.
-        const notDone = asyncIterator === undefined ? undefined
-            : this.expr.materialize({ _: "UnopExpr", op: "!", arg: rawDone }, BOOLEAN_TYPE);
-        const done = notDone === undefined ? rawDone
-            : this.expr.materialize({ _: "UnopExpr", op: "!", arg: notDone }, BOOLEAN_TYPE);
+        let done: ValueDto;
+        if (syncIterator !== undefined) {
+            done = syncIterator.isDone();
+        } else {
+            const rawDone = this.expr.materialize(this.iteratorField(result, "done"));
+            // IteratorComplete uses ToBoolean, including non-boolean truthy done values.
+            const notDone = this.expr.materialize({ _: "UnopExpr", op: "!", arg: rawDone }, BOOLEAN_TYPE);
+            done = this.expr.materialize({ _: "UnopExpr", op: "!", arg: notDone }, BOOLEAN_TYPE);
+        }
 
         const value = asyncIterator === undefined ? undefined : this.m.newTemp(UNKNOWN_TYPE);
         if (asyncIterator !== undefined && value !== undefined) {
@@ -439,6 +535,15 @@ export class StmtLowerer {
         cfg.branch(this.expr.relation("==", done, constant("true", BOOLEAN_TYPE)), exitLabel, bodyLabel);
 
         cfg.placeLabel(bodyLabel);
+        if (syncIterator !== undefined) {
+            // IteratorValue happens before the body, so a failed getter does not close the iterator.
+            const value = this.m.newTemp(UNKNOWN_TYPE);
+            cfg.emit({ _: "AssignStmt", left: value, right: syncIterator.valueOf(result, UNKNOWN_TYPE) });
+            this.lowerLoopBodyWithClose(node, labels, headLabel, exitLabel, () => syncIterator.close(), value);
+            cfg.placeLabel(exitLabel);
+            return;
+        }
+
         if (asyncIterator !== undefined && value !== undefined) {
             const asyncValue = cfg.newLabel();
             const valueReady = cfg.newLabel();
@@ -447,41 +552,50 @@ export class StmtLowerer {
             cfg.emit({ _: "AssignStmt", left: value, right: this.iteratorField(result, "value") });
             cfg.placeLabel(valueReady);
         }
-        const lowerBody = (breakFinallyDepth?: number) => {
-            this.emitLoopBinding(node.initializer, (binding) => value ?? this.iteratorField(result, "value", binding.type));
-            this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: headLabel, label, breakFinallyDepth }, () => {
-                this.lowerStatement(node.statement);
-            });
-        };
-        if (asyncIterator === undefined) {
-            lowerBody();
-            cfg.goto(headLabel);
-        } else {
-            const closeOnThrow = cfg.newLabel();
-            const rethrow = cfg.newLabel();
-            const outerFinallyDepth = this.finallyScopes.length;
-            this.finallyScopes.push(() => this.lowerAsyncIteratorClose(asyncIterator));
-            this.finallyExceptionTargets.push(closeOnThrow);
-            this.catchScopes.push({ target: closeOnThrow, finallyDepth: this.finallyScopes.length });
-            try {
-                cfg.withExceptionTarget(closeOnThrow, () => lowerBody(outerFinallyDepth));
-            } finally {
-                this.catchScopes.pop();
-                this.finallyScopes.pop();
-                this.finallyExceptionTargets.pop();
-            }
-            cfg.goto(headLabel);
-
-            cfg.placeLabel(closeOnThrow);
-            const original = this.m.newTemp(UNKNOWN_TYPE);
-            cfg.emit({ _: "AssignStmt", left: original, right: { _: "CaughtExceptionRef", type: UNKNOWN_TYPE } });
-            // AsyncIteratorClose preserves an existing throw over any cleanup failure.
-            cfg.withExceptionTarget(rethrow, () => this.lowerAsyncIteratorClose(asyncIterator));
-            cfg.goto(rethrow);
-            cfg.placeLabel(rethrow);
-            cfg.throwValue(original);
+        if (asyncIterator !== undefined && value !== undefined) {
+            this.lowerLoopBodyWithClose(node, labels, headLabel, exitLabel,
+                () => this.lowerAsyncIteratorClose(asyncIterator), value);
         }
         cfg.placeLabel(exitLabel);
+    }
+
+    private lowerLoopBodyWithClose(
+        node: ts.ForOfStatement,
+        labels: readonly string[],
+        headLabel: Label,
+        exitLabel: Label,
+        close: () => void,
+        value: LocalDto,
+    ): void {
+        const cfg = this.m.cfg;
+        const closeOnThrow = cfg.newLabel();
+        const rethrow = cfg.newLabel();
+        const outerFinallyDepth = this.finallyScopes.length;
+
+        this.finallyScopes.push(close);
+        this.finallyExceptionTargets.push(closeOnThrow);
+        this.catchScopes.push({ target: closeOnThrow, finallyDepth: this.finallyScopes.length });
+        try {
+            cfg.withExceptionTarget(closeOnThrow, () => {
+                this.emitLoopBinding(node.initializer, () => value);
+                this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: headLabel,
+                    labels, breakFinallyDepth: outerFinallyDepth }, () => this.lowerStatement(node.statement));
+            });
+        } finally {
+            this.catchScopes.pop();
+            this.finallyScopes.pop();
+            this.finallyExceptionTargets.pop();
+        }
+
+        cfg.goto(headLabel);
+        cfg.placeLabel(closeOnThrow);
+        const original = this.m.newTemp(UNKNOWN_TYPE);
+        cfg.emit({ _: "AssignStmt", left: original, right: { _: "CaughtExceptionRef", type: UNKNOWN_TYPE } });
+        // IteratorClose preserves the original throw over a cleanup failure.
+        cfg.withExceptionTarget(rethrow, close);
+        cfg.goto(rethrow);
+        cfg.placeLabel(rethrow);
+        cfg.throwValue(original);
     }
 
     private lowerAsyncIteratorClose(record: { iterator: LocalDto; fromSync: LocalDto }): void {
@@ -583,67 +697,10 @@ export class StmtLowerer {
         cfg.placeLabel(valid);
     }
 
-    /**
-     * `for (const k in obj)` — index loop over `Object.keys(obj)`:
-     *   %keys := Object.keys(obj); %i := 0
-     *   head: %len := %keys.length; if (%i < %len) body else exit
-     *   body: k := %keys[%i]; ...; %i := %i ++
-     */
-    private lowerForIn(node: ts.ForInStatement, label: string | undefined): void {
-        const cfg = this.m.cfg;
-        const target = this.expr.lowerToImmediate(node.expression);
-
-        const keys = this.m.newTemp({ _: "ArrayType", elementType: { _: "StringType" }, dimensions: 1 });
-        cfg.emit({
-            _: "AssignStmt",
-            left: keys,
-            right: {
-                _: "StaticCallExpr",
-                method: {
-                    declaringClass: { name: "Object", declaringFile: UNKNOWN_FILE_SIGNATURE },
-                    name: "keys",
-                    parameters: [],
-                    returnType: { _: "ArrayType", elementType: { _: "StringType" }, dimensions: 1 },
-                },
-                args: [target],
-            },
-        });
-        const index = this.m.newTemp(NUMBER_TYPE);
-        cfg.emit({ _: "AssignStmt", left: index, right: constant("0", NUMBER_TYPE) });
-
-        const headLabel = cfg.newLabel();
-        const bodyLabel = cfg.newLabel();
-        const exitLabel = cfg.newLabel();
-
-        cfg.placeLabel(headLabel);
-        const length = this.m.newTemp(NUMBER_TYPE);
-        cfg.emit({
-            _: "AssignStmt",
-            left: length,
-            right: {
-                _: "InstanceFieldRef",
-                instance: keys,
-                field: { declaringClass: UNKNOWN_CLASS_SIGNATURE, name: "length", type: NUMBER_TYPE },
-            },
-        });
-        cfg.branch(this.expr.relation("<", index, length), bodyLabel, exitLabel);
-
-        cfg.placeLabel(bodyLabel);
-        this.emitLoopBinding(node.initializer, () => ({
-            _: "ArrayRef",
-            array: keys,
-            index,
-            type: { _: "StringType" },
-        }));
-        const continueLabel = cfg.newLabel();
-        this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: continueLabel, label }, () => {
-            this.lowerStatement(node.statement);
-        });
-        cfg.goto(continueLabel);
-        cfg.placeLabel(continueLabel);
-        cfg.emit({ _: "AssignStmt", left: index, right: { _: "UnopExpr", op: "++", arg: index } });
-        cfg.goto(headLabel);
-        cfg.placeLabel(exitLabel);
+    /** EtsIR has no prototype-aware, live for-in key enumerator. */
+    private lowerForIn(node: ts.ForInStatement): void {
+        this.m.diagnostics.warn(node, "unsupported for-in enumeration: inherited and changing keys cannot be represented");
+        this.m.cfg.emit(unsupportedStmt(node));
     }
 
     /**
@@ -706,7 +763,7 @@ export class StmtLowerer {
         throw new LoweringError("unsupported loop binding");
     }
 
-    private lowerSwitch(node: ts.SwitchStatement, label: string | undefined): void {
+    private lowerSwitch(node: ts.SwitchStatement, labels: readonly string[]): void {
         const cfg = this.m.cfg;
         const caseExpressions = node.caseBlock.clauses.flatMap((clause) =>
             ts.isCaseClause(clause) ? [clause.expression] : []);
@@ -731,7 +788,7 @@ export class StmtLowerer {
         cfg.goto(defaultIndex >= 0 ? bodyLabels[defaultIndex] : exitLabel);
 
         // Bodies in source order with natural fallthrough.
-        this.inBreakable({ kind: "switch", breakTarget: exitLabel, label }, () => {
+        this.inBreakable({ kind: "switch", breakTarget: exitLabel, labels }, () => {
             clauses.forEach((clause, i) => {
                 cfg.placeLabel(bodyLabels[i]);
                 for (const statement of clause.statements) {
@@ -765,24 +822,27 @@ export class StmtLowerer {
     }
 
     private lowerLabeled(node: ts.LabeledStatement): void {
-        const inner = node.statement;
-        if (
-            ts.isWhileStatement(inner) ||
-            ts.isDoStatement(inner) ||
-            ts.isForStatement(inner) ||
-            ts.isForOfStatement(inner) ||
-            ts.isForInStatement(inner) ||
-            ts.isSwitchStatement(inner)
-        ) {
-            this.pendingLabel = node.label.text;
-            this.lowerStatement(inner);
+        const labels: string[] = [];
+        let target: ts.Statement = node;
+        while (ts.isLabeledStatement(target)) {
+            labels.push(target.label.text);
+            target = target.statement;
+        }
+
+        const targetsLoop = ts.isWhileStatement(target) || ts.isDoStatement(target)
+            || ts.isForStatement(target) || ts.isForOfStatement(target) || ts.isForInStatement(target);
+        const targetsSwitch = ts.isSwitchStatement(target);
+        if (targetsLoop || targetsSwitch) {
+            this.pendingLabels = labels;
+            this.lowerStatement(target);
             return;
         }
+
         // Labeled block: breakable region.
         const cfg = this.m.cfg;
         const exitLabel = cfg.newLabel();
-        this.inBreakable({ kind: "labeled-block", breakTarget: exitLabel, label: node.label.text }, () => {
-            this.lowerStatement(inner);
+        this.inBreakable({ kind: "labeled-block", breakTarget: exitLabel, labels: [node.label.text] }, () => {
+            this.lowerStatement(node.statement);
         });
         cfg.goto(exitLabel);
         cfg.placeLabel(exitLabel);
@@ -790,6 +850,11 @@ export class StmtLowerer {
 
     /** Lower the catch as an exceptional target of statements inside the try body. */
     private lowerTry(node: ts.TryStatement): void {
+        const catchBinding = node.catchClause?.variableDeclaration?.name;
+        if (catchBinding !== undefined && !ts.isIdentifier(catchBinding)) {
+            ensureSupportedBindingPattern(catchBinding);
+        }
+
         const cfg = this.m.cfg;
         const joinLabel = cfg.newLabel();
         const finallyBlock = node.finallyBlock;
@@ -813,25 +878,30 @@ export class StmtLowerer {
 
                 cfg.placeLabel(catchLabel);
                 const decl = catchClause.variableDeclaration;
-                if (
-                    decl !== undefined &&
-                    ts.isIdentifier(decl.name) &&
-                    this.referencesCatchBinding(catchClause.block, decl.name)
-                ) {
-                    const caughtType =
-                        decl.type !== undefined ? this.m.converter.convertTypeNode(decl.type) : UNKNOWN_TYPE;
-                    const caught = this.m.localForIdentifier(decl.name, caughtType);
-                    cfg.emit({
-                        _: "AssignStmt",
-                        left: caught,
-                        right: { _: "CaughtExceptionRef", type: caughtType },
-                    });
-                }
-                if (finallyExceptionLabel === undefined) {
+                const lowerCatch = (): void => {
+                    const bindingName = decl?.name;
+                    if (decl !== undefined && bindingName !== undefined && ts.isIdentifier(bindingName)) {
+                        const bindingIsReferenced = this.referencesCatchBinding(catchClause.block, bindingName);
+                        if (bindingIsReferenced) {
+                            const caughtType =
+                                decl.type !== undefined ? this.m.converter.convertTypeNode(decl.type) : UNKNOWN_TYPE;
+                            const caught = this.m.localForIdentifier(bindingName, caughtType);
+                            cfg.emit({
+                                _: "AssignStmt",
+                                left: caught,
+                                right: { _: "CaughtExceptionRef", type: caughtType },
+                            });
+                        }
+                    } else if (bindingName !== undefined && !ts.isIdentifier(bindingName)) {
+                        const caught = this.m.newTemp(UNKNOWN_TYPE);
+                        cfg.emit({ _: "AssignStmt", left: caught, right: { _: "CaughtExceptionRef", type: UNKNOWN_TYPE } });
+                        this.lowerBindingPattern(bindingName, caught);
+                    }
+
                     this.lowerStatement(catchClause.block);
-                } else {
-                    cfg.withExceptionTarget(finallyExceptionLabel, () => this.lowerStatement(catchClause.block));
-                }
+                };
+                if (finallyExceptionLabel === undefined) lowerCatch();
+                else cfg.withExceptionTarget(finallyExceptionLabel, lowerCatch);
                 cfg.goto(joinLabel);
             } else {
                 if (finallyExceptionLabel === undefined) {
@@ -931,7 +1001,7 @@ export class StmtLowerer {
         for (let i = this.breakables.length - 1; i >= 0; i--) {
             const context = this.breakables[i];
             if (label !== undefined) {
-                if (context.label === label && (!forContinue || context.kind === "loop")) {
+                if (context.labels.includes(label) && (!forContinue || context.kind === "loop")) {
                     return context;
                 }
             } else if (!forContinue || context.kind === "loop") {
@@ -942,6 +1012,12 @@ export class StmtLowerer {
     }
 
     lowerVariableDeclarations(list: ts.VariableDeclarationList): void {
+        for (const decl of list.declarations) {
+            if (!ts.isIdentifier(decl.name)) {
+                ensureSupportedBindingPattern(decl.name);
+            }
+        }
+
         for (const decl of list.declarations) {
             this.lowerVariableDeclaration(decl);
         }
@@ -996,6 +1072,8 @@ export class StmtLowerer {
 
     /** Object bindings read properties; array bindings consume the iterator protocol. */
     private lowerBindingPattern(pattern: ts.BindingPattern, source: LocalDto): void {
+        ensureSupportedBindingPattern(pattern);
+
         if (ts.isObjectBindingPattern(pattern)) {
             const stableSource = this.expr.materialize({
                 _: "RequireObjectCoercibleExpr",
@@ -1055,14 +1133,6 @@ export class StmtLowerer {
             return;
         }
         // Every array binding consumes the iterator, including patterns without rest and omitted elements.
-        const hasRest = pattern.elements.some((element) => ts.isBindingElement(element)
-            && element.dotDotDotToken !== undefined);
-        const hasNestedBinding = pattern.elements.some((element) => ts.isBindingElement(element)
-            && !ts.isIdentifier(element.name));
-        if (hasRest && hasNestedBinding) {
-            throw new LoweringError("nested bindings in array rest are not represented with iterator semantics");
-        }
-
         const iterator = new IteratorLowerer(this.m, source);
         for (const element of pattern.elements) {
             if (ts.isOmittedExpression(element)) {
@@ -1127,6 +1197,41 @@ export class StmtLowerer {
         cfg.emit({ _: "AssignStmt", left: target, right: this.expr.lowerExpr(defaultInit) });
         cfg.goto(doneLabel);
         cfg.placeLabel(doneLabel);
+    }
+}
+
+/** Reject structural patterns before emitting any source effects or CFG labels. */
+export function ensureSupportedBindingPattern(pattern: ts.BindingPattern): void {
+    if (ts.isArrayBindingPattern(pattern)) {
+        const hasRest = pattern.elements.some((element) => ts.isBindingElement(element)
+            && element.dotDotDotToken !== undefined);
+        const hasNestedBinding = pattern.elements.some((element) => ts.isBindingElement(element)
+            && !ts.isIdentifier(element.name));
+        if (hasRest && hasNestedBinding) {
+            throw new LoweringError("nested bindings in array rest are not represented with iterator semantics");
+        }
+    }
+
+    for (const element of pattern.elements) {
+        if (!ts.isBindingElement(element)) continue;
+
+        if (ts.isObjectBindingPattern(pattern)) {
+            if (element.dotDotDotToken !== undefined && !ts.isIdentifier(element.name)) {
+                throw new LoweringError("nested object-rest target");
+            }
+
+            const propertyName = element.propertyName;
+            const unsupportedPropertyName = propertyName !== undefined
+                && !ts.isComputedPropertyName(propertyName)
+                && propertyNameText(propertyName) === undefined;
+            if (unsupportedPropertyName) {
+                throw new LoweringError("computed property in destructuring");
+            }
+        }
+
+        if (!ts.isIdentifier(element.name)) {
+            ensureSupportedBindingPattern(element.name);
+        }
     }
 }
 

@@ -45,6 +45,7 @@ import {
     BOOLEAN_TYPE,
     BIGINT_TYPE,
     ClassTypeDto,
+    FunctionTypeDto,
     GenericTypeDto,
     NEVER_TYPE,
     NULL_TYPE,
@@ -74,6 +75,7 @@ export class TypeConverter {
     constructor(
         private readonly checker: ts.TypeChecker,
         private readonly fileSignatureFor: (sf: ts.SourceFile) => FileSignatureDto,
+        private readonly isDefaultLibrarySourceFile: (sf: ts.SourceFile) => boolean,
     ) {}
 
     // ------------------------------------------------------------------
@@ -209,10 +211,17 @@ export class TypeConverter {
             };
         }
         if (ts.isFunctionTypeNode(node)) {
-            return {
+            const result: FunctionTypeDto = {
                 _: "FunctionType",
                 signature: this.functionSignatureFromTypeNode(node, depth, substitutions),
             };
+
+            const typeParameters = this.convertTypeParameters(node.typeParameters, depth, substitutions);
+            if (typeParameters !== undefined) {
+                result.typeParameters = typeParameters;
+            }
+
+            return result;
         }
         if (ts.isTypeQueryNode(node)) {
             const symbol = this.symbolOf(node.exprName);
@@ -401,12 +410,14 @@ export class TypeConverter {
         const name = entityNameToString(node.typeName);
         const typeArgs = node.typeArguments?.map((t) => this.convertTypeNode(t, depth + 1, substitutions));
 
-        // `Array<T>` is a proper array type.
-        if (name === "Array" && typeArgs !== undefined && typeArgs.length === 1) {
+        const symbol = this.resolveSymbol(node.typeName);
+        const isDefaultLibraryArray = name === "Array" && symbol?.declarations?.some(
+            (declaration) => this.isDefaultLibrarySourceFile(declaration.getSourceFile()),
+        ) === true;
+        if (isDefaultLibraryArray && typeArgs !== undefined && typeArgs.length === 1) {
             return foldArray(typeArgs[0]);
         }
 
-        const symbol = this.resolveSymbol(node.typeName);
         if (symbol !== undefined) {
             const classDecl = findClassLikeDeclaration(symbol);
             if (classDecl !== undefined && isProjectDeclaration(classDecl)) {
@@ -451,13 +462,17 @@ export class TypeConverter {
     }
 
     /** Type parameter declaration -> GenericType{name, constraint?, defaultType?}. */
-    convertTypeParameter(decl: ts.TypeParameterDeclaration, depth: number = 0): GenericTypeDto {
+    convertTypeParameter(
+        decl: ts.TypeParameterDeclaration,
+        depth: number = 0,
+        substitutions?: ReadonlyMap<ts.TypeParameterDeclaration, TypeDto>,
+    ): GenericTypeDto {
         const result: GenericTypeDto = { _: "GenericType", name: decl.name.text };
         if (decl.constraint !== undefined) {
-            result.constraint = this.convertTypeNode(decl.constraint, depth + 1);
+            result.constraint = this.convertTypeNode(decl.constraint, depth + 1, substitutions);
         }
         if (decl.default !== undefined) {
-            result.defaultType = this.convertTypeNode(decl.default, depth + 1);
+            result.defaultType = this.convertTypeNode(decl.default, depth + 1, substitutions);
         }
         return result;
     }
@@ -465,11 +480,13 @@ export class TypeConverter {
     /** Type parameter list of a class/method, or undefined when absent. */
     convertTypeParameters(
         decls: readonly ts.TypeParameterDeclaration[] | undefined,
+        depth: number = 0,
+        substitutions?: ReadonlyMap<ts.TypeParameterDeclaration, TypeDto>,
     ): TypeDto[] | undefined {
         if (decls === undefined || decls.length === 0) {
             return undefined;
         }
-        return decls.map((d) => this.convertTypeParameter(d));
+        return decls.map((d) => this.convertTypeParameter(d, depth, substitutions));
     }
 
     private functionSignatureFromTypeNode(
@@ -692,7 +709,7 @@ export class TypeConverter {
                 ts.isIdentifier(declaration.name)
                     ? declaration.name.text
                     : "";
-            return {
+            const result: FunctionTypeDto = {
                 _: "FunctionType",
                 signature: {
                     declaringClass: UNKNOWN_CLASS_SIGNATURE,
@@ -701,6 +718,34 @@ export class TypeConverter {
                     returnType,
                 },
             };
+            const typeParameters = signature.getTypeParameters();
+            if (typeParameters !== undefined && typeParameters.length > 0) {
+                result.typeParameters = typeParameters.map((typeParameter, index): GenericTypeDto => {
+                    const binder: GenericTypeDto = { _: "GenericType", name: this.typeName(typeParameter) };
+
+                    const parameterDeclaration = declaration?.typeParameters?.[index];
+                    const isLiveDeclaration = parameterDeclaration !== undefined &&
+                        this.checker.getTypeAtLocation(parameterDeclaration.name) === typeParameter;
+                    const declaredConstraint = isLiveDeclaration ? parameterDeclaration.constraint : undefined;
+                    if (declaredConstraint !== undefined) {
+                        binder.constraint = this.convertTypeNode(declaredConstraint, depth + 1);
+                    } else {
+                        const constraint = this.checker.getBaseConstraintOfType(typeParameter);
+                        if (constraint !== undefined) {
+                            binder.constraint = this.convertType(constraint, depth + 1);
+                        }
+                    }
+
+                    const defaultType = this.checker.getDefaultFromTypeParameter(typeParameter);
+                    if (defaultType !== undefined) {
+                        binder.defaultType = this.convertType(defaultType, depth + 1);
+                    }
+
+                    return binder;
+                });
+            }
+
+            return result;
         } catch {
             return UNKNOWN_TYPE;
         }

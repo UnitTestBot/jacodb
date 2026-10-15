@@ -42,7 +42,7 @@ import { ClassDto, EtsFileDto, ExportInfoDto, FieldDto, ImportInfoDto, MethodDto
 import { ClassSignatureDto, FileSignatureDto, NamespaceSignatureDto } from "../dto/signatures";
 import { VOID_TYPE } from "../dto/types";
 import { TypeConverter } from "../types/convert";
-import { classValueDeclarationOf, exportAssignmentSupport, modifiersOf, scopeFunctionImplementation, scopeFunctionSignature } from "./astUtils";
+import { classValueDeclarationOf, exportAssignmentSupport, modifiersOf, scopeFunctionImplementation, scopeFunctionType, unsupportedClassDeclarationReason } from "./astUtils";
 import { ClassBuilder } from "./classBuilder";
 import { Diagnostics } from "./diagnostics";
 import { AnonymousRegistry, LoweringContext, MethodContext } from "./methodBuilder";
@@ -80,7 +80,8 @@ export function buildEtsFile(
     };
 
     const checker = program.getTypeChecker();
-    const converter = new TypeConverter(checker, fileSignatureFor);
+    const isDefaultLibrarySourceFile = (sf: ts.SourceFile): boolean => program.isSourceFileDefaultLibrary(sf);
+    const converter = new TypeConverter(checker, fileSignatureFor, isDefaultLibrarySourceFile);
     const anonymous: AnonymousRegistry = {
         defaultClassSignature: { name: DEFAULT_ARK_CLASS_NAME, declaringFile: fileSignature },
         methods: [],
@@ -92,7 +93,7 @@ export function buildEtsFile(
         checker,
         converter,
         fileSignatureFor,
-        isDefaultLibrarySourceFile: (sf) => program.isSourceFileDefaultLibrary(sf),
+        isDefaultLibrarySourceFile,
         diagnostics,
         anonymous,
         moduleFields: new Map(),
@@ -217,22 +218,32 @@ class FileBuilder {
     private buildExportInfos(sourceFile: ts.SourceFile): ExportInfoDto[] {
         const infos: ExportInfoDto[] = [];
         for (const statement of sourceFile.statements) {
+            if (ts.isClassDeclaration(statement)
+                && unsupportedClassDeclarationReason(statement, this.ctx.checker) !== undefined) {
+                continue;
+            }
+
             // Exported declarations: `export class C {}`, `export function f() {}`, ...
             const modifiers = modifiersOf(statement);
             if ((modifiers & Modifier.EXPORT) !== 0) {
                 const name = declarationName(statement) ?? anonymousDefaultExportBinding(statement);
                 if (name !== undefined) {
+                    const typeDeclarationName = ts.isInterfaceDeclaration(statement) || ts.isTypeAliasDeclaration(statement)
+                        ? statement.name
+                        : undefined;
+                    const isTypeOnly = typeDeclarationName !== undefined
+                        && this.isTypeOnlyLocalExport(typeDeclarationName);
                     infos.push({
                         exportName: name,
                         exportType: exportTypeOfDeclaration(statement),
                         modifiers,
-                        isTypeOnly: false,
+                        isTypeOnly,
                     });
                 } else if (ts.isVariableStatement(statement)) {
                     for (const decl of statement.declarationList.declarations) {
-                        if (ts.isIdentifier(decl.name)) {
+                        for (const identifier of bindingIdentifiers(decl.name)) {
                             infos.push({
-                                exportName: decl.name.text,
+                                exportName: identifier.text,
                                 exportType: ExportType.LOCAL,
                                 modifiers,
                                 isTypeOnly: false,
@@ -260,11 +271,20 @@ class FileBuilder {
                     infos.push(info);
                 } else if (ts.isNamedExports(statement.exportClause)) {
                     for (const element of statement.exportClause.elements) {
+                        const exportedClass = classValueDeclarationOf(element.name, this.ctx.checker);
+                        if (exportedClass !== undefined
+                            && unsupportedClassDeclarationReason(exportedClass, this.ctx.checker) !== undefined) {
+                            continue;
+                        }
+
+                        const localName = element.propertyName ?? element.name;
+                        const isTypeOnly = statement.isTypeOnly || element.isTypeOnly
+                            || (exportFrom === undefined && this.isTypeOnlyLocalExport(localName));
                         const info: ExportInfoDto = {
                             exportName: element.name.text,
                             exportType: this.exportTypeOfSymbol(element.name),
                             modifiers: 0,
-                            isTypeOnly: statement.isTypeOnly || element.isTypeOnly,
+                            isTypeOnly,
                         };
                         if (element.propertyName !== undefined) info.nameBeforeAs = element.propertyName.text;
                         if (exportFrom !== undefined) info.exportFrom = exportFrom;
@@ -287,6 +307,12 @@ class FileBuilder {
             }
             // `export default <expr>;` stores a snapshot in `%dflt.default`.
             if (ts.isExportAssignment(statement)) {
+                const exportedClass = classValueDeclarationOf(statement.expression, this.ctx.checker);
+                if (exportedClass !== undefined
+                    && unsupportedClassDeclarationReason(exportedClass, this.ctx.checker) !== undefined) {
+                    continue;
+                }
+
                 if (exportAssignmentSupport(statement, this.ctx.checker) !== "supported") {
                     const name = ts.isIdentifier(statement.expression) ? statement.expression.text : "default";
                     infos.push({
@@ -318,16 +344,24 @@ class FileBuilder {
         return decl !== undefined ? exportTypeOfDeclaration(decl) : ExportType.UNKNOWN;
     }
 
+    /** A local symbol can merge type and value declarations; only pure types lack a runtime export. */
+    private isTypeOnlyLocalExport(node: ts.Node): boolean {
+        const symbol = this.ctx.converter.symbolOf(node);
+        return symbol !== undefined
+            && (symbol.flags & ts.SymbolFlags.Type) !== 0
+            && (symbol.flags & ts.SymbolFlags.Value) === 0;
+    }
+
     /**
      * Lower the statements of a scope (file or namespace body):
      * a `%dflt` class collecting loose statements + functions, plus
      * declared classes/interfaces/enums and nested namespaces.
      */
     private buildScope(
-        scope: ts.SourceFile | ts.ModuleBlock,
+        scope: ts.SourceFile | ts.ModuleBlock | ts.ModuleDeclaration,
         declaringNamespace: NamespaceSignatureDto | undefined,
     ): ScopeContents {
-        const statements = scope.statements;
+        const statements = ts.isModuleDeclaration(scope) ? [] : scope.statements;
         const classes: ClassDto[] = [];
         const namespaces: NamespaceDto[] = [];
 
@@ -355,7 +389,9 @@ class FileBuilder {
                     methods.push(this.classBuilder.buildMethodFromDecl(defaultClassSignature, statement, name));
                 }
             } else if (ts.isClassDeclaration(statement)) {
-                classes.push(this.classBuilder.buildClass(statement, anonymousDefaultExportBinding(statement)));
+                if (unsupportedClassDeclarationReason(statement, this.ctx.checker) === undefined) {
+                    classes.push(this.classBuilder.buildClass(statement, anonymousDefaultExportBinding(statement)));
+                }
             } else if (ts.isInterfaceDeclaration(statement)) {
                 classes.push(this.classBuilder.buildInterface(statement));
             } else if (ts.isEnumDeclaration(statement)) {
@@ -399,7 +435,7 @@ class FileBuilder {
                 continue;
             }
 
-            const type = { _: "FunctionType" as const, signature: scopeFunctionSignature(this.ctx, statement) };
+            const type = scopeFunctionType(this.ctx, statement);
             const signature = { declaringClass, name: statement.name.text, type };
             this.ctx.moduleFields.set(symbol, signature);
             fields.push({
@@ -462,9 +498,8 @@ class FileBuilder {
             this.ctx.diagnostics.warn(decl, "string-named modules are not supported");
             return undefined;
         }
-        // `namespace A.B {}` nests; resolve the innermost body.
-        let body = decl.body;
-        let signature: NamespaceSignatureDto = {
+        const body = decl.body;
+        const signature: NamespaceSignatureDto = {
             name: decl.name.text,
             declaringFile: this.fileSignature,
         };
@@ -473,17 +508,23 @@ class FileBuilder {
             signature.declaringNamespace = outer;
         }
 
-        while (body !== undefined && ts.isModuleDeclaration(body)) {
-            const innerSignature: NamespaceSignatureDto = {
-                name: ts.isIdentifier(body.name) ? body.name.text : "%unk",
-                declaringFile: this.fileSignature,
-                declaringNamespace: signature,
-            };
-            signature = innerSignature;
-            body = body.body;
-        }
-        if (body === undefined || !ts.isModuleBlock(body)) {
+        if (body === undefined) {
             // Ambient namespace without a body.
+            return { signature, classes: [], namespaces: [] };
+        }
+
+        if (ts.isModuleDeclaration(body)) {
+            // A dotted declaration has no block for its outer scope.
+            const contents = this.buildScope(decl, signature);
+            const inner = this.buildNamespace(body);
+            if (inner !== undefined) {
+                contents.namespaces.push(inner);
+            }
+            return { signature, classes: contents.classes, namespaces: contents.namespaces };
+        }
+
+        if (!ts.isModuleBlock(body)) {
+            this.ctx.diagnostics.warn(body, "namespace body is not supported");
             return { signature, classes: [], namespaces: [] };
         }
 
@@ -498,9 +539,9 @@ class FileBuilder {
     /** Loose scope statements -> `%dflt` method (impl continues below). */
     private buildDefaultMethod(
         declaringClass: ClassSignatureDto,
-        scope: ts.SourceFile | ts.ModuleBlock,
+        scope: ts.SourceFile | ts.ModuleBlock | ts.ModuleDeclaration,
     ): MethodDto {
-        const statements = scope.statements;
+        const statements = ts.isModuleDeclaration(scope) ? [] : scope.statements;
         const m = new MethodContext(this.ctx, declaringClass, DEFAULT_ARK_METHOD_NAME);
         m.emitPrologue([]);
 
@@ -512,7 +553,7 @@ class FileBuilder {
             if (field === undefined) continue;
             const reference = m.getOrCreateLocal(
                 `${NAMED_FUNCTION_REFERENCE_PREFIX}${statement.name.text}`,
-                { _: "FunctionType", signature: scopeFunctionSignature(this.ctx, statement) },
+                scopeFunctionType(this.ctx, statement),
             );
             m.withOrigin(statement, () => m.cfg.emit({ _: "AssignStmt", left: field, right: reference }));
         }
