@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Modifier } from "../src/dto/constants";
+import { ExportType, Modifier } from "../src/dto/constants";
 import { lower } from "./util";
 
 describe("import infos", () => {
@@ -48,6 +48,41 @@ describe("export infos", () => {
         expect(byName["v"].exportType).toBe(3); // LOCAL
         expect(byName["N"].exportType).toBe(0); // NAMESPACE
         expect(byName["C"].modifiers & Modifier.EXPORT).toBe(Modifier.EXPORT);
+    });
+
+    it("exports each object and array destructuring binding through its module field", () => {
+        const { file } = lower(`
+            export const { left: renamed, right } = { left: 1, right: 2 };
+            export const [first, , third] = [3, 4, 5];
+        `);
+
+        const exportNames = file.exportInfos.map((info) => info.exportName);
+        const defaultClass = file.classes.find((clazz) => clazz.signature.name === "%dflt")!;
+        const fieldNames = defaultClass.fields.map((field) => field.signature.name);
+
+        expect(exportNames).toEqual(["renamed", "right", "first", "third"]);
+        expect(fieldNames).toEqual(expect.arrayContaining(exportNames));
+        expect(file.exportInfos.every((info) => info.exportType === ExportType.LOCAL && !info.isTypeOnly)).toBe(true);
+    });
+
+    it("marks pure type exports without hiding a merged runtime value", () => {
+        const { file } = lower(`
+            export interface I {}
+            export type T = number;
+            type Local = string;
+            export { Local };
+            export class Hybrid {}
+            export interface Hybrid {}
+            export { Hybrid as Both };
+        `);
+
+        const byName = Object.fromEntries(file.exportInfos.map((info) => [info.exportName, info]));
+
+        expect(byName["I"].isTypeOnly).toBe(true);
+        expect(byName["T"].isTypeOnly).toBe(true);
+        expect(byName["Local"].isTypeOnly).toBe(true);
+        expect(byName["Hybrid"].isTypeOnly).toBe(false);
+        expect(byName["Both"].isTypeOnly).toBe(false);
     });
 
     it("builds infos for re-exports with nameBeforeAs and exportFrom", () => {

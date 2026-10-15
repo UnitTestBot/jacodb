@@ -228,17 +228,22 @@ class FileBuilder {
             if ((modifiers & Modifier.EXPORT) !== 0) {
                 const name = declarationName(statement) ?? anonymousDefaultExportBinding(statement);
                 if (name !== undefined) {
+                    const typeDeclarationName = ts.isInterfaceDeclaration(statement) || ts.isTypeAliasDeclaration(statement)
+                        ? statement.name
+                        : undefined;
+                    const isTypeOnly = typeDeclarationName !== undefined
+                        && this.isTypeOnlyLocalExport(typeDeclarationName);
                     infos.push({
                         exportName: name,
                         exportType: exportTypeOfDeclaration(statement),
                         modifiers,
-                        isTypeOnly: false,
+                        isTypeOnly,
                     });
                 } else if (ts.isVariableStatement(statement)) {
                     for (const decl of statement.declarationList.declarations) {
-                        if (ts.isIdentifier(decl.name)) {
+                        for (const identifier of bindingIdentifiers(decl.name)) {
                             infos.push({
-                                exportName: decl.name.text,
+                                exportName: identifier.text,
                                 exportType: ExportType.LOCAL,
                                 modifiers,
                                 isTypeOnly: false,
@@ -272,11 +277,14 @@ class FileBuilder {
                             continue;
                         }
 
+                        const localName = element.propertyName ?? element.name;
+                        const isTypeOnly = statement.isTypeOnly || element.isTypeOnly
+                            || (exportFrom === undefined && this.isTypeOnlyLocalExport(localName));
                         const info: ExportInfoDto = {
                             exportName: element.name.text,
                             exportType: this.exportTypeOfSymbol(element.name),
                             modifiers: 0,
-                            isTypeOnly: statement.isTypeOnly || element.isTypeOnly,
+                            isTypeOnly,
                         };
                         if (element.propertyName !== undefined) info.nameBeforeAs = element.propertyName.text;
                         if (exportFrom !== undefined) info.exportFrom = exportFrom;
@@ -334,6 +342,14 @@ class FileBuilder {
     private exportTypeOfSymbol(node: ts.Node): ExportTypeValue {
         const decl = this.ctx.converter.symbolOf(node)?.declarations?.[0];
         return decl !== undefined ? exportTypeOfDeclaration(decl) : ExportType.UNKNOWN;
+    }
+
+    /** A local symbol can merge type and value declarations; only pure types lack a runtime export. */
+    private isTypeOnlyLocalExport(node: ts.Node): boolean {
+        const symbol = this.ctx.converter.symbolOf(node);
+        return symbol !== undefined
+            && (symbol.flags & ts.SymbolFlags.Type) !== 0
+            && (symbol.flags & ts.SymbolFlags.Value) === 0;
     }
 
     /**
