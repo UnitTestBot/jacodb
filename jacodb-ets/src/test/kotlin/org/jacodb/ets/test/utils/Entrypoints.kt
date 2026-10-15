@@ -59,7 +59,7 @@ object DumpEtsFileToDot {
     private const val NAME = "basic"
     private const val PATH = "/etsir/samples/$NAME.ts.json"
     private val DOT_DIR = Path("dot")
-    private val DOT_PATH = Path("$NAME.dto.dot") // relative to DOT_DIR
+    private val DOT_PATH = Path("$NAME.dot") // relative to DOT_DIR
 
     @JvmStatic
     fun main(args: Array<String>) {
