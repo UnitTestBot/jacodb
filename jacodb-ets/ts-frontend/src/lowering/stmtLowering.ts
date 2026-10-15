@@ -879,22 +879,23 @@ export class StmtLowerer {
                 cfg.placeLabel(catchLabel);
                 const decl = catchClause.variableDeclaration;
                 const lowerCatch = (): void => {
-                    if (decl !== undefined && ts.isIdentifier(decl.name)) {
-                        const bindingIsReferenced = this.referencesCatchBinding(catchClause.block, decl.name);
+                    const bindingName = decl?.name;
+                    if (decl !== undefined && bindingName !== undefined && ts.isIdentifier(bindingName)) {
+                        const bindingIsReferenced = this.referencesCatchBinding(catchClause.block, bindingName);
                         if (bindingIsReferenced) {
                             const caughtType =
                                 decl.type !== undefined ? this.m.converter.convertTypeNode(decl.type) : UNKNOWN_TYPE;
-                            const caught = this.m.localForIdentifier(decl.name, caughtType);
+                            const caught = this.m.localForIdentifier(bindingName, caughtType);
                             cfg.emit({
                                 _: "AssignStmt",
                                 left: caught,
                                 right: { _: "CaughtExceptionRef", type: caughtType },
                             });
                         }
-                    } else if (decl !== undefined) {
+                    } else if (bindingName !== undefined && !ts.isIdentifier(bindingName)) {
                         const caught = this.m.newTemp(UNKNOWN_TYPE);
                         cfg.emit({ _: "AssignStmt", left: caught, right: { _: "CaughtExceptionRef", type: UNKNOWN_TYPE } });
-                        this.lowerBindingPattern(decl.name, caught);
+                        this.lowerBindingPattern(bindingName, caught);
                     }
 
                     this.lowerStatement(catchClause.block);

@@ -523,6 +523,11 @@ class FileBuilder {
             return { signature, classes: contents.classes, namespaces: contents.namespaces };
         }
 
+        if (!ts.isModuleBlock(body)) {
+            this.ctx.diagnostics.warn(body, "namespace body is not supported");
+            return { signature, classes: [], namespaces: [] };
+        }
+
         const contents = this.buildScope(body, signature);
         return {
             signature,

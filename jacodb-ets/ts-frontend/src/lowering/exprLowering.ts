@@ -37,7 +37,7 @@ import {
     CONSTRUCTOR_NAME,
     PATTERN_PARAMETER_PREFIX,
 } from "../dto/constants";
-import { FieldDto, MethodDto } from "../dto/model";
+import { FieldDto } from "../dto/model";
 import { bindingIdentifier, buildParameters, BuiltParameters, classLikeDeclarationOf, memberName, modifiersOf, returnTypeOf, unsupportedClassDeclarationReason } from "./astUtils";
 import { BinaryOp, RelationOp, UnaryOp } from "../dto/ops";
 import {
