@@ -110,7 +110,7 @@ export class ClassBuilder {
         methods.push(
             ctorDecl !== undefined
                 ? this.buildConstructor(signature, ctorDecl, superClass?.signature)
-                : this.synthesizeDefaultConstructor(signature, superClass),
+                : this.synthesizeDefaultConstructor(signature, decl, superClass),
         );
 
         const result: ClassDto = {
@@ -428,6 +428,7 @@ export class ClassBuilder {
 
     private synthesizeDefaultConstructor(
         declaringClass: ClassSignatureDto,
+        decl: ts.ClassLikeDeclaration,
         superClass?: { signature: ClassSignatureDto; constructorDecl?: ts.ConstructorDeclaration },
     ): MethodDto {
         const classType: ClassTypeDto = { _: "ClassType", signature: declaringClass };
@@ -435,6 +436,26 @@ export class ClassBuilder {
         const inherited = superClass?.constructorDecl !== undefined
             ? buildParameters(this.ctx, superClass.constructorDecl)
             : { parameters: [], prologueParams: [] };
+        const hasRestParameter = inherited.parameters.some((parameter) => parameter.isRest === true);
+        if (hasRestParameter) {
+            // ParameterRef for a rest parameter is already a packed array. Passing
+            // it as one call argument would pack it again in the base constructor.
+            this.ctx.diagnostics.warn(decl, "unsupported default constructor forwarding of rest arguments");
+            m.withOrigin(decl, () => m.cfg.emit(unsupportedStmt(decl)));
+            return {
+                signature: {
+                    declaringClass,
+                    name: CONSTRUCTOR_NAME,
+                    parameters: inherited.parameters,
+                    returnType: classType,
+                },
+                modifiers: 0,
+                decorators: [],
+                isStrictMode: true,
+                body: m.build(),
+            };
+        }
+
         m.emitPrologue(inherited.prologueParams);
         if (superClass !== undefined) {
             const thisLocal = m.getOrCreateLocal("this", classType);
@@ -497,6 +518,7 @@ export class ClassBuilder {
 
     private superClassInfo(
         decl: ts.ClassLikeDeclaration,
+        visitedClasses: Set<ts.ClassDeclaration> = new Set(),
     ): { signature: ClassSignatureDto; constructorDecl?: ts.ConstructorDeclaration } | undefined {
         const extended = decl.heritageClauses
             ?.find((clause) => clause.token === ts.SyntaxKind.ExtendsKeyword)
@@ -513,9 +535,20 @@ export class ClassBuilder {
                 name: extended.expression.getText(),
                 declaringFile: UNKNOWN_FILE_SIGNATURE,
             };
-        const constructorDecl = classDeclaration?.members.find(
+        const ownConstructor = classDeclaration?.members.find(
             (member): member is ts.ConstructorDeclaration => ts.isConstructorDeclaration(member) && member.body !== undefined,
         ) ?? classDeclaration?.members.find(ts.isConstructorDeclaration);
+        // A default derived constructor forwards the arguments accepted by the
+        // first explicit constructor, even across other default constructors.
+        let constructorDecl = ownConstructor;
+        const canFollowBase = constructorDecl === undefined
+            && classDeclaration !== undefined
+            && !visitedClasses.has(classDeclaration);
+        if (canFollowBase && classDeclaration !== undefined) {
+            visitedClasses.add(classDeclaration);
+            constructorDecl = this.superClassInfo(classDeclaration, visitedClasses)?.constructorDecl;
+        }
+
         return constructorDecl === undefined ? { signature } : { signature, constructorDecl };
     }
 

@@ -758,6 +758,81 @@ describe("class lowering", () => {
         });
     });
 
+    it("forwards constructor arguments through two default derived constructors", () => {
+        const { file } = lower(`
+            function mark(): number { return 7; }
+            class Grand { constructor(public value: number = mark(), label?: string) {} }
+            class Base extends Grand {}
+            class Derived extends Base {}
+            export function read(): number { return new Derived(9).value; }
+        `);
+        const expectedParameters = [
+            { name: "value", type: { _: "NumberType" } },
+            { name: "label", type: { _: "StringType" }, isOptional: true },
+        ];
+
+        for (const [className, baseName] of [["Base", "Grand"], ["Derived", "Base"]]) {
+            const ctor = methodOf(classByName(file, className), "constructor");
+            const stmts = singleBlockStmts(ctor);
+            const forwardedCall = stmts.map(constructorCallOf).find((call) => call !== undefined);
+            const parameterRefs = stmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "ParameterRef");
+
+            expect(ctor.signature.parameters).toMatchObject(expectedParameters);
+            expect(parameterRefs.map((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "ParameterRef"
+                ? stmt.right.index : undefined)).toEqual([0, 1]);
+            expect(forwardedCall).toMatchObject({
+                method: { declaringClass: { name: baseName }, parameters: expectedParameters },
+                args: [{ name: "value" }, { name: "label" }],
+            });
+            expect(stmts.some((stmt) => stmt._ === "AssignStmt"
+                && stmt.right._ === "PtrCallExpr" && stmt.right.method.name === "mark")).toBe(false);
+        }
+
+        const grandCtor = methodOf(classByName(file, "Grand"), "constructor");
+        const grandStmts = grandCtor.body!.cfg.blocks.flatMap((block) => block.stmts);
+        expect(grandStmts.some((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "PtrCallExpr" && stmt.right.method.name === "mark")).toBe(true);
+    });
+
+    it("marks default rest forwarding unsupported instead of passing a packed array as one argument", () => {
+        const { file, diagnostics } = lower(`
+            class Grand { constructor(...values: number[]) {} }
+            class Base extends Grand {}
+            class Derived extends Base {}
+            export function create(): Derived { return new Derived(1, 2); }
+        `);
+
+        for (const className of ["Base", "Derived"]) {
+            const ctor = methodOf(classByName(file, className), "constructor");
+            const stmts = ctor.body!.cfg.blocks.flatMap((block) => block.stmts);
+
+            expect(ctor.signature.parameters).toMatchObject([{ name: "values", isRest: true }]);
+            expect(stmts).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt" }));
+            expect(stmts.some((stmt) => constructorCallOf(stmt) !== undefined)).toBe(false);
+        }
+
+        expect(diagnostics.messages.filter((message) =>
+            message.includes("unsupported default constructor forwarding of rest arguments"),
+        )).toHaveLength(2);
+    });
+
+    it("uses an explicit intermediate constructor as the forwarding boundary", () => {
+        const { file } = lower(`
+            class Grand { constructor(value: number, label: string) {} }
+            class Base extends Grand { constructor(value: number) { super(value, "base"); } }
+            class Derived extends Base {}
+        `);
+        const ctor = methodOf(classByName(file, "Derived"), "constructor");
+        const stmts = singleBlockStmts(ctor);
+        const forwardedCall = stmts.map(constructorCallOf).find((call) => call !== undefined);
+
+        expect(ctor.signature.parameters).toMatchObject([{ name: "value", type: { _: "NumberType" } }]);
+        expect(forwardedCall).toMatchObject({
+            method: { declaringClass: { name: "Base" }, parameters: [{ name: "value" }] },
+            args: [{ name: "value" }],
+        });
+    });
+
     it("places derived parameter properties after super and before instance fields", () => {
         const { file } = lower(`
             class Base { constructor() {} }

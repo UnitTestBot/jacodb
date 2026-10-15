@@ -114,6 +114,11 @@ keys or their runtime names. An `extends` value that does not resolve directly
 to a class declaration also uses this fallback; its runtime base cannot be
 fixed from the source name alone. Class expressions with heritage remain
 unsupported by the existing expression fallback.
+Default derived constructors forward fixed parameters through constructor-free
+ancestors. When an inherited constructor has a rest parameter, the synthetic
+constructor emits an unsupported statement: the current call IR cannot forward
+the received rest array as an arbitrary number of arguments without packing it
+again. Explicit constructors retain their usual lowering.
 
 ## Development
 
