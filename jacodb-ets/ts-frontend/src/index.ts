@@ -55,12 +55,11 @@ interface CliArgs {
 /**
  * Hand-rolled arg parsing.
  * NOTE: the Kotlin side historically passes `-t N` as a SINGLE argv token `"-t N"`,
- * so tokens containing spaces are pre-split here.
+ * so that option form is recognized while parsing options.
  * Everything after a `--` separator is treated as positional, which is the escape
  * hatch for paths starting with a dash.
  */
 export function parseArgs(argv: string[]): CliArgs | string {
-    const tokens = argv.flatMap((a) => (a.startsWith("-") && a.includes(" ") ? a.split(/\s+/) : [a]));
     const positional: string[] = [];
     const args: CliArgs = {
         input: "",
@@ -72,8 +71,8 @@ export function parseArgs(argv: string[]): CliArgs | string {
         verbose: false,
     };
     let positionalOnly = false;
-    for (let i = 0; i < tokens.length; i++) {
-        const token = tokens[i];
+    for (let i = 0; i < argv.length; i++) {
+        const token = argv[i];
         if (positionalOnly) {
             positional.push(token);
             continue;
@@ -82,6 +81,13 @@ export function parseArgs(argv: string[]): CliArgs | string {
             positionalOnly = true;
             continue;
         }
+
+        const historicalTypeInference = /^-t\s+(\d+)$/.exec(token);
+        if (historicalTypeInference !== null) {
+            args.typeInference = parseInt(historicalTypeInference[1], 10);
+            continue;
+        }
+
         switch (token) {
             case "-p":
             case "--project":
@@ -101,7 +107,7 @@ export function parseArgs(argv: string[]): CliArgs | string {
                 break;
             case "-t":
             case "--type-inference": {
-                const next = tokens[i + 1];
+                const next = argv[i + 1];
                 if (next !== undefined && /^\d+$/.test(next)) {
                     args.typeInference = parseInt(next, 10);
                     i++;
@@ -292,8 +298,8 @@ export function main(argv: string[]): number {
             path.relative(inputPath, path.resolve(sf.fileName)).split(path.sep).join("/");
         const fileSignatureFor = (sf: ts.SourceFile) => {
             const relative = path.relative(inputPath, path.resolve(sf.fileName));
-            const isProjectFile = isWithinDirectory(inputPath, sf.fileName)
-                && !relative.split(path.sep).includes("node_modules");
+            const isDependency = relative.split(path.sep).includes("node_modules");
+            const isProjectFile = isWithinDirectory(inputPath, sf.fileName) && !isDependency;
             if (isProjectFile) {
                 return { projectName, fileName: relativeOf(sf) };
             }
@@ -318,7 +324,9 @@ export function main(argv: string[]): number {
                 process.stderr.write(`invariant violation in ${relative}: ${violation}\n`);
                 hadErrors = true;
             }
-            log(`emitted: ${outputFile}`);
+            if (result.violations.length === 0) {
+                log(`emitted: ${outputFile}`);
+            }
         }
         return hadErrors ? 1 : 0;
     }
