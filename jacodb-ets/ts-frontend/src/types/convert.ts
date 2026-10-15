@@ -720,12 +720,20 @@ export class TypeConverter {
             };
             const typeParameters = signature.getTypeParameters();
             if (typeParameters !== undefined && typeParameters.length > 0) {
-                result.typeParameters = typeParameters.map((typeParameter): GenericTypeDto => {
+                result.typeParameters = typeParameters.map((typeParameter, index): GenericTypeDto => {
                     const binder: GenericTypeDto = { _: "GenericType", name: this.typeName(typeParameter) };
 
-                    const constraint = this.checker.getBaseConstraintOfType(typeParameter);
-                    if (constraint !== undefined) {
-                        binder.constraint = this.convertType(constraint, depth + 1);
+                    const parameterDeclaration = declaration?.typeParameters?.[index];
+                    const isLiveDeclaration = parameterDeclaration !== undefined &&
+                        this.checker.getTypeAtLocation(parameterDeclaration.name) === typeParameter;
+                    const declaredConstraint = isLiveDeclaration ? parameterDeclaration.constraint : undefined;
+                    if (declaredConstraint !== undefined) {
+                        binder.constraint = this.convertTypeNode(declaredConstraint, depth + 1);
+                    } else {
+                        const constraint = this.checker.getBaseConstraintOfType(typeParameter);
+                        if (constraint !== undefined) {
+                            binder.constraint = this.convertType(constraint, depth + 1);
+                        }
                     }
 
                     const defaultType = this.checker.getDefaultFromTypeParameter(typeParameter);
