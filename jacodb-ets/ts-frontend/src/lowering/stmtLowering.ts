@@ -843,6 +843,11 @@ export class StmtLowerer {
 
     /** Lower the catch as an exceptional target of statements inside the try body. */
     private lowerTry(node: ts.TryStatement): void {
+        const catchBinding = node.catchClause?.variableDeclaration?.name;
+        if (catchBinding !== undefined && !ts.isIdentifier(catchBinding)) {
+            this.ensureSupportedBindingPattern(catchBinding);
+        }
+
         const cfg = this.m.cfg;
         const joinLabel = cfg.newLabel();
         const finallyBlock = node.finallyBlock;
@@ -866,25 +871,29 @@ export class StmtLowerer {
 
                 cfg.placeLabel(catchLabel);
                 const decl = catchClause.variableDeclaration;
-                if (
-                    decl !== undefined &&
-                    ts.isIdentifier(decl.name) &&
-                    this.referencesCatchBinding(catchClause.block, decl.name)
-                ) {
-                    const caughtType =
-                        decl.type !== undefined ? this.m.converter.convertTypeNode(decl.type) : UNKNOWN_TYPE;
-                    const caught = this.m.localForIdentifier(decl.name, caughtType);
-                    cfg.emit({
-                        _: "AssignStmt",
-                        left: caught,
-                        right: { _: "CaughtExceptionRef", type: caughtType },
-                    });
-                }
-                if (finallyExceptionLabel === undefined) {
+                const lowerCatch = (): void => {
+                    if (decl !== undefined && ts.isIdentifier(decl.name)) {
+                        const bindingIsReferenced = this.referencesCatchBinding(catchClause.block, decl.name);
+                        if (bindingIsReferenced) {
+                            const caughtType =
+                                decl.type !== undefined ? this.m.converter.convertTypeNode(decl.type) : UNKNOWN_TYPE;
+                            const caught = this.m.localForIdentifier(decl.name, caughtType);
+                            cfg.emit({
+                                _: "AssignStmt",
+                                left: caught,
+                                right: { _: "CaughtExceptionRef", type: caughtType },
+                            });
+                        }
+                    } else if (decl !== undefined) {
+                        const caught = this.m.newTemp(UNKNOWN_TYPE);
+                        cfg.emit({ _: "AssignStmt", left: caught, right: { _: "CaughtExceptionRef", type: UNKNOWN_TYPE } });
+                        this.lowerBindingPattern(decl.name, caught);
+                    }
+
                     this.lowerStatement(catchClause.block);
-                } else {
-                    cfg.withExceptionTarget(finallyExceptionLabel, () => this.lowerStatement(catchClause.block));
-                }
+                };
+                if (finallyExceptionLabel === undefined) lowerCatch();
+                else cfg.withExceptionTarget(finallyExceptionLabel, lowerCatch);
                 cfg.goto(joinLabel);
             } else {
                 if (finallyExceptionLabel === undefined) {
@@ -1049,7 +1058,7 @@ export class StmtLowerer {
 
     /** Object bindings read properties; array bindings consume the iterator protocol. */
     private lowerBindingPattern(pattern: ts.BindingPattern, source: LocalDto): void {
-        this.ensureSupportedArrayRestBindings(pattern);
+        this.ensureSupportedBindingPattern(pattern);
 
         if (ts.isObjectBindingPattern(pattern)) {
             const stableSource = this.expr.materialize({
@@ -1134,7 +1143,7 @@ export class StmtLowerer {
         iterator.close();
     }
 
-    private ensureSupportedArrayRestBindings(pattern: ts.BindingPattern): void {
+    private ensureSupportedBindingPattern(pattern: ts.BindingPattern): void {
         if (ts.isArrayBindingPattern(pattern)) {
             const hasRest = pattern.elements.some((element) => ts.isBindingElement(element)
                 && element.dotDotDotToken !== undefined);
@@ -1146,8 +1155,24 @@ export class StmtLowerer {
         }
 
         for (const element of pattern.elements) {
-            if (ts.isBindingElement(element) && !ts.isIdentifier(element.name)) {
-                this.ensureSupportedArrayRestBindings(element.name);
+            if (!ts.isBindingElement(element)) continue;
+
+            if (ts.isObjectBindingPattern(pattern)) {
+                if (element.dotDotDotToken !== undefined && !ts.isIdentifier(element.name)) {
+                    throw new LoweringError("nested object-rest target");
+                }
+
+                const propertyName = element.propertyName;
+                const unsupportedPropertyName = propertyName !== undefined
+                    && !ts.isComputedPropertyName(propertyName)
+                    && propertyNameText(propertyName) === undefined;
+                if (unsupportedPropertyName) {
+                    throw new LoweringError("computed property in destructuring");
+                }
+            }
+
+            if (!ts.isIdentifier(element.name)) {
+                this.ensureSupportedBindingPattern(element.name);
             }
         }
     }

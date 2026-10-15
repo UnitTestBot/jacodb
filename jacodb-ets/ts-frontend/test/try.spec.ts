@@ -165,6 +165,77 @@ describe("try/catch/finally lowering", () => {
         expect(catchBindings).toHaveLength(1);
     });
 
+    it("binds destructured catch values, including an unused property read", () => {
+        const source = `
+            function f(): number {
+                try { throw { message: 7, unused: 8 }; }
+                catch ({ message, unused }) { return message; }
+            }
+        `;
+        const { file, diagnostics } = lower(source);
+        const stmts = methodByName(file, "f").body!.cfg.blocks.flatMap((block) => block.stmts);
+        const caught = stmts.find((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "CaughtExceptionRef");
+        const propertyReads = stmts.filter((stmt) => stmt._ === "AssignStmt" && stmt.right._ === "PropertyRef");
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(caught).toMatchObject({ left: { _: "Local", name: expect.stringMatching(/^%/) } });
+        expect(propertyReads).toEqual(expect.arrayContaining([
+            expect.objectContaining({ left: { name: "message" }, right: { key: { value: "message" } } }),
+            expect.objectContaining({ left: { name: "unused" }, right: { key: { value: "unused" } } }),
+        ]));
+        expect(stmts).toContainEqual({ _: "ReturnStmt", arg: expect.objectContaining({ name: "message" }) });
+    });
+
+    it("binds an array catch pattern through the iterator protocol", () => {
+        const source = `
+            function f(): number {
+                try { throw [7]; }
+                catch ([first]) { return first; }
+            }
+        `;
+        const { file, diagnostics } = lower(source);
+        const stmts = methodByName(file, "f").body!.cfg.blocks.flatMap((block) => block.stmts);
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(stmts).toContainEqual(expect.objectContaining({
+            _: "AssignStmt", right: expect.objectContaining({ _: "CaughtExceptionRef" }),
+        }));
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "InstanceCallExpr" && stmt.right.method.name === "Symbol.iterator")).toBe(true);
+        expect(stmts).toContainEqual({ _: "ReturnStmt", arg: expect.objectContaining({ name: "first" }) });
+    });
+
+    it("runs finally and reaches an outer catch when catch destructuring fails", () => {
+        const blocks = blocksOf(`
+            function f(input: any): number {
+                try {
+                    try { throw input; }
+                    catch ({ message }) { return message; }
+                    finally { console.log("fin"); }
+                } catch { return 9; }
+            }
+        `);
+        const bindingBlock = blocks.find((block) => block.stmts.some((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "RequireObjectCoercibleExpr"))!;
+        const bindingIndex = bindingBlock.stmts.findIndex((stmt) => stmt._ === "AssignStmt"
+            && stmt.right._ === "RequireObjectCoercibleExpr");
+        const finallyTarget = bindingBlock.exceptionalSuccessors?.find((edge) => edge.stmtIndex === bindingIndex)?.target;
+        const finallyBlock = blocks[finallyTarget!];
+        const rethrowIndex = finallyBlock.stmts.findIndex((stmt) => stmt._ === "ThrowStmt");
+        const outerCatch = blocks.find((block) => block.stmts.some((stmt) => stmt._ === "ReturnStmt"
+            && stmt.arg._ === "Constant" && stmt.arg.value === "9"))!;
+
+        expect(finallyTarget).toBeDefined();
+        expect(finallyTarget).not.toBe(bindingBlock.id);
+        expect(finallyBlock.stmts).toContainEqual(expect.objectContaining({
+            _: "CallStmt", expr: expect.objectContaining({
+                args: expect.arrayContaining([expect.objectContaining({ value: "fin" })]),
+            }),
+        }));
+        expect(rethrowIndex).toBeGreaterThanOrEqual(0);
+        expect(finallyBlock.exceptionalSuccessors).toContainEqual({ stmtIndex: rethrowIndex, target: outerCatch.id });
+    });
+
     it("joins try and catch paths on the finally block", () => {
         const blocks = blocksOf(`
             function f(): void {
