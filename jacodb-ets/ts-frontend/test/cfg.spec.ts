@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { BasicBlockDto, MethodDto } from "../src/dto/model";
 import { IfStmtDto, StmtDto } from "../src/dto/stmts";
 import { serializeEtsFile } from "../src/serialize";
+import { executor } from "./execute";
 import { defaultMethod, lower, methodByName } from "./util";
 
 function blocksOf(method: MethodDto): BasicBlockDto[] {
@@ -305,17 +306,47 @@ describe("control flow lowering", () => {
         expect(concrete).toBe(7);
     });
 
-    it("lowers for-in via Object.keys indexing", () => {
-        const { file } = lower(`
-            let obj = [1];
-            for (const k in obj) { console.log(k); }
+    it.each([
+        "function enumerate() { for (const key in Object.create({ inherited: 1 })) return key; }",
+        "function enumerate(input: any) { for (const key in input) { if (key === 'a') delete input.b; } }",
+    ])("marks prototype-aware and changing-key for-in enumeration unsupported: %s", (source) => {
+        const { file, diagnostics } = lower(source);
+        const method = methodByName(file, "enumerate");
+        const stmts = allStmts(method);
+        const raw = stmts.find((stmt) => (stmt as { _: string })._ === "UnsupportedStmt");
+
+        expect(diagnostics.messages).toHaveLength(1);
+        expect(diagnostics.messages[0]).toContain("unsupported for-in enumeration");
+        expect(raw).toMatchObject({ kindName: "ForInStatement" });
+        expect(method.body!.stmtOrigins!.some(({ blockId, stmtIndex, source: origin }) =>
+            method.body!.cfg.blocks[blockId].stmts[stmtIndex] === raw && origin.nodeKind === "ForInStatement",
+        )).toBe(true);
+        expect(stmts.some((stmt) => stmt._ === "IfStmt"
+            || (stmt._ === "AssignStmt" && stmt.right._ === "StaticCallExpr"))).toBe(false);
+    });
+
+    it("resolves contiguous while labels through continue, break, and nested finally", () => {
+        const { file, diagnostics } = lower(`
+            function run(limit: number): number {
+                let i = 0;
+                let trace = 0;
+                outer: inner: while (i < limit) {
+                    try {
+                        i++;
+                        if (i === 1) continue outer;
+                        break inner;
+                    } finally {
+                        trace += 10;
+                    }
+                }
+                return trace + i;
+            }
         `);
-        const stmts = allStmts(defaultMethod(file));
-        const staticCalls = stmts.filter((s) => s._ === "AssignStmt" && s.right._ === "StaticCallExpr");
-        expect(staticCalls.length).toBeGreaterThan(0);
-        expect(staticCalls[0]).toMatchObject({
-            right: { method: { declaringClass: { name: "Object" }, name: "keys" } },
-        });
+        const stmts = allStmts(methodByName(file, "run"));
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(stmts.some((stmt) => (stmt as { _: string })._ === "UnsupportedStmt")).toBe(false);
+        expect(executor(file).call("run", 2)).toBe(22);
     });
 
     it("supports labeled break from nested loops", () => {

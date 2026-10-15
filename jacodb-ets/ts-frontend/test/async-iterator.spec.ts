@@ -514,6 +514,28 @@ describe("for-await abrupt completion closes its iterator", () => {
         }
     });
 
+    it("shares a for-of target across contiguous labels without closing on same-loop continue", async () => {
+        const run = program(`function run(input) {
+            outer: inner: for (const value of input) {
+                if (value === 1) continue outer;
+                break inner;
+            }
+            return 9;
+        }`);
+
+        for (const consume of [run.native, run.ir]) {
+            const events: string[] = [];
+            let step = 0;
+            const input = { [Symbol.iterator]: () => ({
+                next: () => ({ value: ++step, done: false }),
+                return: () => { events.push(`close after ${step}`); return { done: true }; },
+            }) };
+
+            expect(await consume(input)).toBe(9);
+            expect(events).toEqual(["close after 2"]);
+        }
+    });
+
     it("routes a cleanup failure to the enclosing catch without closing twice", async () => {
         const run = program(`async function run(input) {
             try { for await (const value of input) break; }

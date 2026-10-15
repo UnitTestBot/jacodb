@@ -80,6 +80,10 @@ represented as `RawStmt` or `RawValue` and reported with `-v`. The frontend
 records per-statement exceptional-successor edges for `try`/`catch`. Raw
 constructs remain opaque and are treated conservatively as potentially
 throwing; EtsIR has no trap table for precise exception semantics.
+`for-in` statements use this raw fallback, including loops over objects with
+only own keys. EtsIR currently has no operation for enumerating inherited
+enumerable keys and checking pending keys as the object changes during the loop;
+an `Object.keys` snapshot would silently change the loop's behavior.
 Optional calls on `super` properties (including computed properties) use this
 raw fallback because EtsIR cannot currently preserve superclass-relative
 property lookup before the nullish guard and conditional call.

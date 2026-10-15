@@ -46,7 +46,7 @@ interface BreakableContext {
     kind: "loop" | "switch" | "labeled-block";
     breakTarget: Label;
     continueTarget?: Label;
-    label?: string;
+    labels: readonly string[];
     /** finallyScopes depth at the moment this breakable was entered. */
     finallyDepth?: number;
     /** Iterator cleanup also runs on break from this loop, but not on continue. */
@@ -66,7 +66,7 @@ export class StmtLowerer {
     private readonly finallyExceptionTargets: Label[] = [];
     private readonly catchScopes: CatchContext[] = [];
     private readonly unsupportedForwardFunctionCaptures = new Set<ts.Statement>();
-    private pendingLabel: string | undefined;
+    private pendingLabels: readonly string[] = [];
 
     constructor(
         private readonly m: MethodContext,
@@ -223,9 +223,9 @@ export class StmtLowerer {
     }
 
     private lowerStatementImpl(node: ts.Statement): void {
-        // The pending label (from a LabeledStatement) applies only to the directly wrapped stmt.
-        const label = this.pendingLabel;
-        this.pendingLabel = undefined;
+        // Contiguous labels name the same directly wrapped loop or switch.
+        const labels = this.pendingLabels;
+        this.pendingLabels = [];
 
         if (this.unsupportedForwardFunctionCaptures.has(node)) {
             throw new LoweringError("closure capturing a later function binding requires a runtime binding cell");
@@ -240,27 +240,27 @@ export class StmtLowerer {
             return;
         }
         if (ts.isWhileStatement(node)) {
-            this.lowerWhile(node, label);
+            this.lowerWhile(node, labels);
             return;
         }
         if (ts.isDoStatement(node)) {
-            this.lowerDoWhile(node, label);
+            this.lowerDoWhile(node, labels);
             return;
         }
         if (ts.isForStatement(node)) {
-            this.lowerFor(node, label);
+            this.lowerFor(node, labels);
             return;
         }
         if (ts.isForOfStatement(node)) {
-            this.lowerForOf(node, label);
+            this.lowerForOf(node, labels);
             return;
         }
         if (ts.isForInStatement(node)) {
-            this.lowerForIn(node, label);
+            this.lowerForIn(node);
             return;
         }
         if (ts.isSwitchStatement(node)) {
-            this.lowerSwitch(node, label);
+            this.lowerSwitch(node, labels);
             return;
         }
         if (ts.isBreakStatement(node)) {
@@ -399,7 +399,7 @@ export class StmtLowerer {
         cfg.placeLabel(endLabel);
     }
 
-    private lowerWhile(node: ts.WhileStatement, label: string | undefined): void {
+    private lowerWhile(node: ts.WhileStatement, labels: readonly string[]): void {
         const cfg = this.m.cfg;
         const headLabel = cfg.newLabel();
         const bodyLabel = cfg.newLabel();
@@ -408,21 +408,21 @@ export class StmtLowerer {
         cfg.placeLabel(headLabel);
         this.expr.lowerCondition(node.expression, bodyLabel, exitLabel);
         cfg.placeLabel(bodyLabel);
-        this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: headLabel, label }, () => {
+        this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: headLabel, labels }, () => {
             this.lowerStatement(node.statement);
         });
         cfg.goto(headLabel);
         cfg.placeLabel(exitLabel);
     }
 
-    private lowerDoWhile(node: ts.DoStatement, label: string | undefined): void {
+    private lowerDoWhile(node: ts.DoStatement, labels: readonly string[]): void {
         const cfg = this.m.cfg;
         const bodyLabel = cfg.newLabel();
         const condLabel = cfg.newLabel();
         const exitLabel = cfg.newLabel();
 
         cfg.placeLabel(bodyLabel);
-        this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: condLabel, label }, () => {
+        this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: condLabel, labels }, () => {
             this.lowerStatement(node.statement);
         });
         cfg.placeLabel(condLabel);
@@ -430,7 +430,7 @@ export class StmtLowerer {
         cfg.placeLabel(exitLabel);
     }
 
-    private lowerFor(node: ts.ForStatement, label: string | undefined): void {
+    private lowerFor(node: ts.ForStatement, labels: readonly string[]): void {
         const cfg = this.m.cfg;
         if (node.initializer !== undefined) {
             if (ts.isVariableDeclarationList(node.initializer)) {
@@ -451,7 +451,7 @@ export class StmtLowerer {
             cfg.goto(bodyLabel);
         }
         cfg.placeLabel(bodyLabel);
-        this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: updateLabel, label }, () => {
+        this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: updateLabel, labels }, () => {
             this.lowerStatement(node.statement);
         });
         cfg.goto(updateLabel);
@@ -464,7 +464,7 @@ export class StmtLowerer {
     }
 
     /** Lower iterator reads, including Async-from-Sync value unwrapping for `for await`. */
-    private lowerForOf(node: ts.ForOfStatement, label: string | undefined): void {
+    private lowerForOf(node: ts.ForOfStatement, labels: readonly string[]): void {
         const cfg = this.m.cfg;
         const source = this.expr.lowerToLocal(node.expression);
         const isAsync = node.awaitModifier !== undefined;
@@ -532,7 +532,7 @@ export class StmtLowerer {
             // IteratorValue happens before the body, so a failed getter does not close the iterator.
             const value = this.m.newTemp(UNKNOWN_TYPE);
             cfg.emit({ _: "AssignStmt", left: value, right: syncIterator.valueOf(result, UNKNOWN_TYPE) });
-            this.lowerLoopBodyWithClose(node, label, headLabel, exitLabel, () => syncIterator.close(), value);
+            this.lowerLoopBodyWithClose(node, labels, headLabel, exitLabel, () => syncIterator.close(), value);
             cfg.placeLabel(exitLabel);
             return;
         }
@@ -546,7 +546,7 @@ export class StmtLowerer {
             cfg.placeLabel(valueReady);
         }
         if (asyncIterator !== undefined && value !== undefined) {
-            this.lowerLoopBodyWithClose(node, label, headLabel, exitLabel,
+            this.lowerLoopBodyWithClose(node, labels, headLabel, exitLabel,
                 () => this.lowerAsyncIteratorClose(asyncIterator), value);
         }
         cfg.placeLabel(exitLabel);
@@ -554,7 +554,7 @@ export class StmtLowerer {
 
     private lowerLoopBodyWithClose(
         node: ts.ForOfStatement,
-        label: string | undefined,
+        labels: readonly string[],
         headLabel: Label,
         exitLabel: Label,
         close: () => void,
@@ -572,7 +572,7 @@ export class StmtLowerer {
             cfg.withExceptionTarget(closeOnThrow, () => {
                 this.emitLoopBinding(node.initializer, () => value);
                 this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: headLabel,
-                    label, breakFinallyDepth: outerFinallyDepth }, () => this.lowerStatement(node.statement));
+                    labels, breakFinallyDepth: outerFinallyDepth }, () => this.lowerStatement(node.statement));
             });
         } finally {
             this.catchScopes.pop();
@@ -690,67 +690,10 @@ export class StmtLowerer {
         cfg.placeLabel(valid);
     }
 
-    /**
-     * `for (const k in obj)` — index loop over `Object.keys(obj)`:
-     *   %keys := Object.keys(obj); %i := 0
-     *   head: %len := %keys.length; if (%i < %len) body else exit
-     *   body: k := %keys[%i]; ...; %i := %i ++
-     */
-    private lowerForIn(node: ts.ForInStatement, label: string | undefined): void {
-        const cfg = this.m.cfg;
-        const target = this.expr.lowerToImmediate(node.expression);
-
-        const keys = this.m.newTemp({ _: "ArrayType", elementType: { _: "StringType" }, dimensions: 1 });
-        cfg.emit({
-            _: "AssignStmt",
-            left: keys,
-            right: {
-                _: "StaticCallExpr",
-                method: {
-                    declaringClass: { name: "Object", declaringFile: UNKNOWN_FILE_SIGNATURE },
-                    name: "keys",
-                    parameters: [],
-                    returnType: { _: "ArrayType", elementType: { _: "StringType" }, dimensions: 1 },
-                },
-                args: [target],
-            },
-        });
-        const index = this.m.newTemp(NUMBER_TYPE);
-        cfg.emit({ _: "AssignStmt", left: index, right: constant("0", NUMBER_TYPE) });
-
-        const headLabel = cfg.newLabel();
-        const bodyLabel = cfg.newLabel();
-        const exitLabel = cfg.newLabel();
-
-        cfg.placeLabel(headLabel);
-        const length = this.m.newTemp(NUMBER_TYPE);
-        cfg.emit({
-            _: "AssignStmt",
-            left: length,
-            right: {
-                _: "InstanceFieldRef",
-                instance: keys,
-                field: { declaringClass: UNKNOWN_CLASS_SIGNATURE, name: "length", type: NUMBER_TYPE },
-            },
-        });
-        cfg.branch(this.expr.relation("<", index, length), bodyLabel, exitLabel);
-
-        cfg.placeLabel(bodyLabel);
-        this.emitLoopBinding(node.initializer, () => ({
-            _: "ArrayRef",
-            array: keys,
-            index,
-            type: { _: "StringType" },
-        }));
-        const continueLabel = cfg.newLabel();
-        this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: continueLabel, label }, () => {
-            this.lowerStatement(node.statement);
-        });
-        cfg.goto(continueLabel);
-        cfg.placeLabel(continueLabel);
-        cfg.emit({ _: "AssignStmt", left: index, right: { _: "UnopExpr", op: "++", arg: index } });
-        cfg.goto(headLabel);
-        cfg.placeLabel(exitLabel);
+    /** EtsIR has no prototype-aware, live for-in key enumerator. */
+    private lowerForIn(node: ts.ForInStatement): void {
+        this.m.diagnostics.warn(node, "unsupported for-in enumeration: inherited and changing keys cannot be represented");
+        this.m.cfg.emit(unsupportedStmt(node));
     }
 
     /**
@@ -813,7 +756,7 @@ export class StmtLowerer {
         throw new LoweringError("unsupported loop binding");
     }
 
-    private lowerSwitch(node: ts.SwitchStatement, label: string | undefined): void {
+    private lowerSwitch(node: ts.SwitchStatement, labels: readonly string[]): void {
         const cfg = this.m.cfg;
         const caseExpressions = node.caseBlock.clauses.flatMap((clause) =>
             ts.isCaseClause(clause) ? [clause.expression] : []);
@@ -838,7 +781,7 @@ export class StmtLowerer {
         cfg.goto(defaultIndex >= 0 ? bodyLabels[defaultIndex] : exitLabel);
 
         // Bodies in source order with natural fallthrough.
-        this.inBreakable({ kind: "switch", breakTarget: exitLabel, label }, () => {
+        this.inBreakable({ kind: "switch", breakTarget: exitLabel, labels }, () => {
             clauses.forEach((clause, i) => {
                 cfg.placeLabel(bodyLabels[i]);
                 for (const statement of clause.statements) {
@@ -872,24 +815,27 @@ export class StmtLowerer {
     }
 
     private lowerLabeled(node: ts.LabeledStatement): void {
-        const inner = node.statement;
-        if (
-            ts.isWhileStatement(inner) ||
-            ts.isDoStatement(inner) ||
-            ts.isForStatement(inner) ||
-            ts.isForOfStatement(inner) ||
-            ts.isForInStatement(inner) ||
-            ts.isSwitchStatement(inner)
-        ) {
-            this.pendingLabel = node.label.text;
-            this.lowerStatement(inner);
+        const labels: string[] = [];
+        let target: ts.Statement = node;
+        while (ts.isLabeledStatement(target)) {
+            labels.push(target.label.text);
+            target = target.statement;
+        }
+
+        const targetsLoop = ts.isWhileStatement(target) || ts.isDoStatement(target)
+            || ts.isForStatement(target) || ts.isForOfStatement(target) || ts.isForInStatement(target);
+        const targetsSwitch = ts.isSwitchStatement(target);
+        if (targetsLoop || targetsSwitch) {
+            this.pendingLabels = labels;
+            this.lowerStatement(target);
             return;
         }
+
         // Labeled block: breakable region.
         const cfg = this.m.cfg;
         const exitLabel = cfg.newLabel();
-        this.inBreakable({ kind: "labeled-block", breakTarget: exitLabel, label: node.label.text }, () => {
-            this.lowerStatement(inner);
+        this.inBreakable({ kind: "labeled-block", breakTarget: exitLabel, labels: [node.label.text] }, () => {
+            this.lowerStatement(node.statement);
         });
         cfg.goto(exitLabel);
         cfg.placeLabel(exitLabel);
@@ -1038,7 +984,7 @@ export class StmtLowerer {
         for (let i = this.breakables.length - 1; i >= 0; i--) {
             const context = this.breakables[i];
             if (label !== undefined) {
-                if (context.label === label && (!forContinue || context.kind === "loop")) {
+                if (context.labels.includes(label) && (!forContinue || context.kind === "loop")) {
                     return context;
                 }
             } else if (!forContinue || context.kind === "loop") {
