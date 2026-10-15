@@ -1333,4 +1333,28 @@ describe("namespace lowering", () => {
         });
         expect(nested.classes!.map((c) => c.signature.name)).toContain("E");
     });
+
+    it("keeps every scope in a dotted namespace declaration", () => {
+        const { file, diagnostics } = lower("namespace A.B { export class C {} }");
+        const explicit = lower("namespace A { namespace B { export class C {} } }").file;
+        const outer = file.namespaces[0];
+        const inner = outer.namespaces![0];
+        const outerDefault = outer.classes!.find((clazz) => clazz.signature.name === "%dflt")!;
+        const innerDefault = inner.classes!.find((clazz) => clazz.signature.name === "%dflt")!;
+        const declaredClass = inner.classes!.find((clazz) => clazz.signature.name === "C")!;
+
+        expect(file.namespaces).toHaveLength(1);
+        expect(outer.signature).toEqual(explicit.namespaces[0].signature);
+        expect(outer.namespaces).toHaveLength(1);
+        expect(inner.signature).toEqual(explicit.namespaces[0].namespaces![0].signature);
+        expect(inner.namespaces).toHaveLength(0);
+        expect(outerDefault.signature.declaringNamespace).toEqual(outer.signature);
+        expect(innerDefault.signature.declaringNamespace).toEqual(inner.signature);
+        expect(outerDefault.methods.map((method) => method.signature.name)).toEqual(["%dflt"]);
+        expect(innerDefault.methods.map((method) => method.signature.name)).toEqual(["%dflt"]);
+        expect(declaredClass.signature).toEqual({
+            name: "C", declaringFile: FILE_SIG, declaringNamespace: inner.signature,
+        });
+        expect(diagnostics.messages).toEqual([]);
+    });
 });

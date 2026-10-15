@@ -358,10 +358,10 @@ class FileBuilder {
      * declared classes/interfaces/enums and nested namespaces.
      */
     private buildScope(
-        scope: ts.SourceFile | ts.ModuleBlock,
+        scope: ts.SourceFile | ts.ModuleBlock | ts.ModuleDeclaration,
         declaringNamespace: NamespaceSignatureDto | undefined,
     ): ScopeContents {
-        const statements = scope.statements;
+        const statements = ts.isModuleDeclaration(scope) ? [] : scope.statements;
         const classes: ClassDto[] = [];
         const namespaces: NamespaceDto[] = [];
 
@@ -498,9 +498,8 @@ class FileBuilder {
             this.ctx.diagnostics.warn(decl, "string-named modules are not supported");
             return undefined;
         }
-        // `namespace A.B {}` nests; resolve the innermost body.
-        let body = decl.body;
-        let signature: NamespaceSignatureDto = {
+        const body = decl.body;
+        const signature: NamespaceSignatureDto = {
             name: decl.name.text,
             declaringFile: this.fileSignature,
         };
@@ -509,18 +508,19 @@ class FileBuilder {
             signature.declaringNamespace = outer;
         }
 
-        while (body !== undefined && ts.isModuleDeclaration(body)) {
-            const innerSignature: NamespaceSignatureDto = {
-                name: ts.isIdentifier(body.name) ? body.name.text : "%unk",
-                declaringFile: this.fileSignature,
-                declaringNamespace: signature,
-            };
-            signature = innerSignature;
-            body = body.body;
-        }
-        if (body === undefined || !ts.isModuleBlock(body)) {
+        if (body === undefined) {
             // Ambient namespace without a body.
             return { signature, classes: [], namespaces: [] };
+        }
+
+        if (ts.isModuleDeclaration(body)) {
+            // A dotted declaration has no block for its outer scope.
+            const contents = this.buildScope(decl, signature);
+            const inner = this.buildNamespace(body);
+            if (inner !== undefined) {
+                contents.namespaces.push(inner);
+            }
+            return { signature, classes: contents.classes, namespaces: contents.namespaces };
         }
 
         const contents = this.buildScope(body, signature);
@@ -534,9 +534,9 @@ class FileBuilder {
     /** Loose scope statements -> `%dflt` method (impl continues below). */
     private buildDefaultMethod(
         declaringClass: ClassSignatureDto,
-        scope: ts.SourceFile | ts.ModuleBlock,
+        scope: ts.SourceFile | ts.ModuleBlock | ts.ModuleDeclaration,
     ): MethodDto {
-        const statements = scope.statements;
+        const statements = ts.isModuleDeclaration(scope) ? [] : scope.statements;
         const m = new MethodContext(this.ctx, declaringClass, DEFAULT_ARK_METHOD_NAME);
         m.emitPrologue([]);
 
