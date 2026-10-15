@@ -37,13 +37,14 @@ import {
     PATTERN_PARAMETER_PREFIX,
     STATIC_INIT_METHOD_NAME,
 } from "../dto/constants";
-import { ClassDto, FieldDto, MethodDto } from "../dto/model";
+import { BodyDto, ClassDto, FieldDto, MethodDto } from "../dto/model";
 import { ClassSignatureDto, UNKNOWN_FILE_SIGNATURE } from "../dto/signatures";
 import { ClassTypeDto, TypeDto, BOOLEAN_TYPE, NUMBER_TYPE, STRING_TYPE, UNKNOWN_TYPE, VOID_TYPE } from "../dto/types";
 import { buildParameters, decoratorsOf, memberName, modifiersOf, parameterType, returnTypeOf } from "./astUtils";
-import { constant } from "./exprLowering";
+import { unsupportedStmt } from "./diagnostics";
+import { LoweringError, constant } from "./exprLowering";
 import { LoweringContext, MethodContext } from "./methodBuilder";
-import { StmtLowerer } from "./stmtLowering";
+import { StmtLowerer, ensureSupportedBindingPattern } from "./stmtLowering";
 
 type ClassMemberDecl = ts.MethodDeclaration | ts.GetAccessorDeclaration | ts.SetAccessorDeclaration;
 
@@ -313,6 +314,12 @@ export class ClassBuilder {
 
         if (decl.body !== undefined) {
             const isStaticMethod = (modifiersOf(decl) & Modifier.STATIC) !== 0;
+            const patternError = this.parameterPatternError(decl);
+            if (patternError !== undefined) {
+                method.body = this.unsupportedParameterBody(decl, declaringClass, name, patternError, isStaticMethod);
+                return method;
+            }
+
             const m = new MethodContext(this.ctx, declaringClass, name, isStaticMethod);
             const lowerer = new StmtLowerer(m);
             m.emitPrologue(prologueParams, (parameter, local) =>
@@ -345,6 +352,16 @@ export class ClassBuilder {
     ): MethodDto {
         const { parameters, prologueParams } = buildParameters(this.ctx, decl);
         const classType: ClassTypeDto = { _: "ClassType", signature: declaringClass };
+        const patternError = this.parameterPatternError(decl);
+        if (patternError !== undefined) {
+            return {
+                signature: { declaringClass, name: CONSTRUCTOR_NAME, parameters, returnType: classType },
+                modifiers: modifiersOf(decl),
+                decorators: decoratorsOf(decl),
+                isStrictMode: true,
+                body: this.unsupportedParameterBody(decl, declaringClass, CONSTRUCTOR_NAME, patternError),
+            };
+        }
 
         const m = new MethodContext(this.ctx, declaringClass, CONSTRUCTOR_NAME);
         const lowerer = new StmtLowerer(m);
@@ -378,6 +395,35 @@ export class ClassBuilder {
             isStrictMode: true,
             body: m.build(),
         };
+    }
+
+    private parameterPatternError(decl: ts.SignatureDeclarationBase): string | undefined {
+        try {
+            for (const parameter of decl.parameters) {
+                if (!ts.isIdentifier(parameter.name)) {
+                    ensureSupportedBindingPattern(parameter.name);
+                }
+            }
+        } catch (error) {
+            if (error instanceof LoweringError) {
+                return error.message;
+            }
+            throw error;
+        }
+        return undefined;
+    }
+
+    private unsupportedParameterBody(
+        decl: ts.SignatureDeclarationBase,
+        declaringClass: ClassSignatureDto,
+        name: string,
+        reason: string,
+        isStaticMethod?: boolean,
+    ): BodyDto {
+        this.ctx.diagnostics.warn(decl, `unsupported parameter binding: ${reason}`);
+        const m = new MethodContext(this.ctx, declaringClass, name, isStaticMethod);
+        m.withOrigin(decl, () => m.cfg.emit(unsupportedStmt(decl)));
+        return m.build();
     }
 
     private synthesizeDefaultConstructor(

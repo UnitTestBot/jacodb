@@ -845,7 +845,7 @@ export class StmtLowerer {
     private lowerTry(node: ts.TryStatement): void {
         const catchBinding = node.catchClause?.variableDeclaration?.name;
         if (catchBinding !== undefined && !ts.isIdentifier(catchBinding)) {
-            this.ensureSupportedBindingPattern(catchBinding);
+            ensureSupportedBindingPattern(catchBinding);
         }
 
         const cfg = this.m.cfg;
@@ -1005,6 +1005,12 @@ export class StmtLowerer {
 
     lowerVariableDeclarations(list: ts.VariableDeclarationList): void {
         for (const decl of list.declarations) {
+            if (!ts.isIdentifier(decl.name)) {
+                ensureSupportedBindingPattern(decl.name);
+            }
+        }
+
+        for (const decl of list.declarations) {
             this.lowerVariableDeclaration(decl);
         }
     }
@@ -1058,7 +1064,7 @@ export class StmtLowerer {
 
     /** Object bindings read properties; array bindings consume the iterator protocol. */
     private lowerBindingPattern(pattern: ts.BindingPattern, source: LocalDto): void {
-        this.ensureSupportedBindingPattern(pattern);
+        ensureSupportedBindingPattern(pattern);
 
         if (ts.isObjectBindingPattern(pattern)) {
             const stableSource = this.expr.materialize({
@@ -1143,40 +1149,6 @@ export class StmtLowerer {
         iterator.close();
     }
 
-    private ensureSupportedBindingPattern(pattern: ts.BindingPattern): void {
-        if (ts.isArrayBindingPattern(pattern)) {
-            const hasRest = pattern.elements.some((element) => ts.isBindingElement(element)
-                && element.dotDotDotToken !== undefined);
-            const hasNestedBinding = pattern.elements.some((element) => ts.isBindingElement(element)
-                && !ts.isIdentifier(element.name));
-            if (hasRest && hasNestedBinding) {
-                throw new LoweringError("nested bindings in array rest are not represented with iterator semantics");
-            }
-        }
-
-        for (const element of pattern.elements) {
-            if (!ts.isBindingElement(element)) continue;
-
-            if (ts.isObjectBindingPattern(pattern)) {
-                if (element.dotDotDotToken !== undefined && !ts.isIdentifier(element.name)) {
-                    throw new LoweringError("nested object-rest target");
-                }
-
-                const propertyName = element.propertyName;
-                const unsupportedPropertyName = propertyName !== undefined
-                    && !ts.isComputedPropertyName(propertyName)
-                    && propertyNameText(propertyName) === undefined;
-                if (unsupportedPropertyName) {
-                    throw new LoweringError("computed property in destructuring");
-                }
-            }
-
-            if (!ts.isIdentifier(element.name)) {
-                this.ensureSupportedBindingPattern(element.name);
-            }
-        }
-    }
-
     private bindingType(name: ts.BindingName): TypeDto {
         return ts.isIdentifier(name) ? this.m.converter.typeOfNode(name) : UNKNOWN_TYPE;
     }
@@ -1217,6 +1189,41 @@ export class StmtLowerer {
         cfg.emit({ _: "AssignStmt", left: target, right: this.expr.lowerExpr(defaultInit) });
         cfg.goto(doneLabel);
         cfg.placeLabel(doneLabel);
+    }
+}
+
+/** Reject structural patterns before emitting any source effects or CFG labels. */
+export function ensureSupportedBindingPattern(pattern: ts.BindingPattern): void {
+    if (ts.isArrayBindingPattern(pattern)) {
+        const hasRest = pattern.elements.some((element) => ts.isBindingElement(element)
+            && element.dotDotDotToken !== undefined);
+        const hasNestedBinding = pattern.elements.some((element) => ts.isBindingElement(element)
+            && !ts.isIdentifier(element.name));
+        if (hasRest && hasNestedBinding) {
+            throw new LoweringError("nested bindings in array rest are not represented with iterator semantics");
+        }
+    }
+
+    for (const element of pattern.elements) {
+        if (!ts.isBindingElement(element)) continue;
+
+        if (ts.isObjectBindingPattern(pattern)) {
+            if (element.dotDotDotToken !== undefined && !ts.isIdentifier(element.name)) {
+                throw new LoweringError("nested object-rest target");
+            }
+
+            const propertyName = element.propertyName;
+            const unsupportedPropertyName = propertyName !== undefined
+                && !ts.isComputedPropertyName(propertyName)
+                && propertyNameText(propertyName) === undefined;
+            if (unsupportedPropertyName) {
+                throw new LoweringError("computed property in destructuring");
+            }
+        }
+
+        if (!ts.isIdentifier(element.name)) {
+            ensureSupportedBindingPattern(element.name);
+        }
     }
 }
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { executor } from "./execute";
+import { CONSTRUCTOR_NAME } from "../src/dto/constants";
 import { AssignStmtDto, StmtDto } from "../src/dto/stmts";
 import { serializeEtsFile } from "../src/serialize";
 import { syntaxKindName } from "../src/lowering/diagnostics";
@@ -10,6 +11,89 @@ import { defaultMethod, lower, lowerProject, methodByName, singleBlockStmts } fr
 function allStmts(method: { body?: { cfg: { blocks: { stmts: StmtDto[] }[] } } }): StmtDto[] {
     return (method.body?.cfg.blocks ?? []).flatMap((block) => block.stmts);
 }
+
+function callName(stmt: StmtDto): string | undefined {
+    if (stmt._ !== "AssignStmt" && stmt._ !== "CallStmt") return undefined;
+
+    const value = stmt._ === "AssignStmt" ? stmt.right : stmt.expr;
+    if (value._ === "InstanceCallExpr" || value._ === "StaticCallExpr" || value._ === "PtrCallExpr") {
+        return value.method.name;
+    }
+    return undefined;
+}
+
+it("keeps direct methods with unsupported parameter patterns opaque without losing later declarations", () => {
+    const source = `
+        function direct([[x], ...rest]: any[]) { return x; }
+        class Holder {
+            constructor([[created], ...rest]: any[]) {}
+            method([[value], ...tail]: any[]) { return value; }
+            healthy(value = 3) { return value; }
+        }
+        function later(value: number) { return value + 1; }
+        function supported([first, ...tail]: any[] = [1, 2]) { return first; }
+    `;
+    const { file, diagnostics } = lower(source);
+    const holder = file.classes.find((clazz) => clazz.signature.name === "Holder")!;
+    const unsupported = [
+        { method: methodByName(file, "direct"), kind: "FunctionDeclaration" },
+        { method: holder.methods.find((method) => method.signature.name === CONSTRUCTOR_NAME)!, kind: "Constructor" },
+        { method: holder.methods.find((method) => method.signature.name === "method")!, kind: "MethodDeclaration" },
+    ];
+
+    for (const { method, kind } of unsupported) {
+        const body = method.body!;
+        const stmts = allStmts(method);
+        const rawIndex = stmts.findIndex((stmt) => stmt._ === "UnsupportedStmt");
+        const rawOrigin = body.stmtOrigins?.find(({ blockId, stmtIndex }) =>
+            body.cfg.blocks[blockId].stmts[stmtIndex] === stmts[rawIndex],
+        );
+
+        expect(method.signature.parameters).toHaveLength(1);
+        expect(stmts[rawIndex]).toMatchObject({ _: "UnsupportedStmt", kindName: kind });
+        expect(stmts.some((stmt) => stmt._ === "AssignStmt")).toBe(false);
+        expect(rawOrigin?.source.nodeKind).toBe(kind);
+        expect(source.slice(rawOrigin!.source.startOffset, rawOrigin!.source.endOffset)).toContain("[[");
+    }
+
+    expect(diagnostics.messages.filter((message) => message.includes("unsupported parameter binding"))).toHaveLength(3);
+    expect(allStmts(methodByName(file, "later")).some((stmt) => stmt._ === "ReturnStmt")).toBe(true);
+    expect(allStmts(holder.methods.find((method) => method.signature.name === "healthy")!)
+        .some((stmt) => stmt._ === "IfStmt")).toBe(true);
+
+    const supportedStmts = allStmts(methodByName(file, "supported"));
+    expect(supportedStmts.some((stmt) => stmt._ === "IfStmt")).toBe(true);
+    expect(supportedStmts.some((stmt) => callName(stmt) === "next")).toBe(true);
+    expect(supportedStmts.some((stmt) => stmt._ === "UnsupportedStmt")).toBe(false);
+});
+
+it("preflights every variable declaration pattern before emitting any initializer in the statement", () => {
+    const { file, diagnostics } = lower(`
+        declare function first(): any[];
+        declare function second(): any[];
+        function bad() {
+            const keep = first(), [[value], ...tail] = second();
+            return 1;
+        }
+        function good() {
+            const [value, ...tail] = second();
+            return value;
+        }
+    `);
+    const badStmts = allStmts(methodByName(file, "bad"));
+    const rawIndex = badStmts.findIndex((stmt) => stmt._ === "UnsupportedStmt");
+    const goodStmts = allStmts(methodByName(file, "good"));
+
+    expect(badStmts[rawIndex]).toMatchObject({ _: "UnsupportedStmt", kindName: "VariableStatement" });
+    expect(badStmts.slice(0, rawIndex).map(callName)).not.toContain("first");
+    expect(badStmts.slice(0, rawIndex).map(callName)).not.toContain("second");
+    expect(diagnostics.messages).toContainEqual(expect.stringContaining(
+        "unsupported statement: nested bindings in array rest are not represented with iterator semantics",
+    ));
+    expect(goodStmts.some((stmt) => callName(stmt) === "second")).toBe(true);
+    expect(goodStmts.some((stmt) => callName(stmt) === "next")).toBe(true);
+    expect(goodStmts.some((stmt) => stmt._ === "UnsupportedStmt")).toBe(false);
+});
 
 describe("unsupported loop bindings do not break the whole file", () => {
     // `lower()` throws on unplaced labels via finalize(), so merely lowering is the assertion.
