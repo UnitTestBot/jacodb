@@ -500,15 +500,17 @@ export class ClassBuilder {
         const thisLocal = m.getOrCreateLocal("this", m.thisType());
         const lowerer = new StmtLowerer(m);
         for (const field of fields) {
-            const fieldType = this.fieldType(field);
-            m.cfg.emit({
-                _: "AssignStmt",
-                left: {
-                    _: "InstanceFieldRef",
-                    instance: thisLocal,
-                    field: { declaringClass, name: memberName(field.name), type: fieldType },
-                },
-                right: lowerer.expr.lowerToImmediate(field.initializer!),
+            m.withOrigin(field, () => {
+                const fieldType = this.fieldType(field);
+                m.cfg.emit({
+                    _: "AssignStmt",
+                    left: {
+                        _: "InstanceFieldRef",
+                        instance: thisLocal,
+                        field: { declaringClass, name: memberName(field.name), type: fieldType },
+                    },
+                    right: lowerer.expr.lowerToImmediate(field.initializer!),
+                });
             });
         }
         m.cfg.ret();
@@ -530,17 +532,19 @@ export class ClassBuilder {
         const lowerer = new StmtLowerer(m);
         for (const initializer of initializers) {
             if (ts.isPropertyDeclaration(initializer)) {
-                m.cfg.emit({
-                    _: "AssignStmt",
-                    left: {
-                        _: "StaticFieldRef",
-                        field: {
-                            declaringClass,
-                            name: memberName(initializer.name),
-                            type: this.fieldType(initializer),
+                m.withOrigin(initializer, () => {
+                    m.cfg.emit({
+                        _: "AssignStmt",
+                        left: {
+                            _: "StaticFieldRef",
+                            field: {
+                                declaringClass,
+                                name: memberName(initializer.name),
+                                type: this.fieldType(initializer),
+                            },
                         },
-                    },
-                    right: lowerer.expr.lowerToImmediate(initializer.initializer!),
+                        right: lowerer.expr.lowerToImmediate(initializer.initializer!),
+                    });
                 });
             } else {
                 lowerer.lowerStatements(initializer.body.statements);
