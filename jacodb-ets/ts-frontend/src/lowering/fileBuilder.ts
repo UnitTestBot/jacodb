@@ -154,6 +154,12 @@ class FileBuilder {
         // Index by key once: `find` with a per-candidate key recomputation is quadratic.
         const byKey = new Map<string, ClassDto>();
         for (const candidate of classes) {
+            // Declaration merging gives runtime classes and type-only augmentations
+            // the same signature. Only the runtime declaration can own closures.
+            const typeOnly = candidate.category === ClassCategory.INTERFACE
+                || candidate.category === ClassCategory.TYPE_LITERAL;
+            if (typeOnly) continue;
+
             const key = classSignatureKey(candidate.signature);
             if (!byKey.has(key)) byKey.set(key, candidate);
         }
