@@ -88,7 +88,6 @@ import org.jacodb.ets.model.EtsInstanceFieldRef
 import org.jacodb.ets.model.EtsInstanceOfExpr
 import org.jacodb.ets.model.EtsIntersectionType
 import org.jacodb.ets.model.EtsLeftShiftExpr
-import org.jacodb.ets.model.EtsLexicalEnvType
 import org.jacodb.ets.model.EtsLocal
 import org.jacodb.ets.model.EtsLValue
 import org.jacodb.ets.model.EtsLocalSignature
@@ -745,10 +744,9 @@ fun TypeDto.toEtsType(): EtsType = when (this) {
         types = types.map { it.toEtsType() },
     )
 
-    is LexicalEnvTypeDto -> EtsLexicalEnvType(
-        nestedMethod = method.toEtsMethodSignature(),
-        closures = closures.map { it.toEtsLocal() },
-    )
+    is LexicalEnvTypeDto -> convertLexicalEnvType(type = this)
+
+    is LexicalEnvTypeRefDto -> resolveLexicalEnvType(id = id)
 
     is LiteralTypeDto -> when (val literalValue = literal) {
         is PrimitiveLiteralDto.StringLiteral -> EtsStringLiteralType(literalValue.value)
@@ -954,13 +952,13 @@ fun NamespaceDto.toEtsNamespace(enclosingFileName: String = signature.declaringF
     )
 }
 
-fun EtsFileDto.toEtsFile(): EtsFile {
+fun EtsFileDto.toEtsFile(): EtsFile = withLexicalEnvTypes(types = lexicalEnvTypes) {
     val signature = signature.toEtsFileSignature()
     val classes = classes.map { it.toEtsClass(signature.fileName) }
     val namespaces = namespaces.map { it.toEtsNamespace(signature.fileName) }
     val importInfos = importInfos.map { it.toEtsImportInfo() }
     val exportInfos = exportInfos.map { it.toEtsExportInfo() }
-    return EtsFile(
+    EtsFile(
         signature = signature,
         classes = classes,
         namespaces = namespaces,
