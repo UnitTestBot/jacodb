@@ -761,8 +761,7 @@ export class ExprLowerer {
             return this.lowerAssignment(node);
         }
         if (opKind === ts.SyntaxKind.CommaToken) {
-            this.lowerDiscarded(node.left);
-            return this.lowerExprImpl(node.right);
+            return this.lowerComma(node);
         }
         if (opKind === ts.SyntaxKind.InstanceOfKeyword) {
             const arg = this.lowerImmediateBefore(node.left, node.right);
@@ -816,6 +815,25 @@ export class ExprLowerer {
         }
 
         throw new LoweringError(`binary operator ${ts.SyntaxKind[opKind]}`);
+    }
+
+    /** Minified libraries can contain thousands of comma operands in one expression. */
+    private lowerComma(node: ts.BinaryExpression): ValueDto {
+        const pending: ts.Expression[] = [node];
+        while (pending.length > 0) {
+            const operand = pending.pop()!;
+            const isComma = ts.isBinaryExpression(operand) && operand.operatorToken.kind === ts.SyntaxKind.CommaToken;
+            if (isComma) {
+                pending.push(operand.right, operand.left);
+                continue;
+            }
+
+            const isLastOperand = pending.length === 0;
+            if (isLastOperand) return this.lowerExpr(operand);
+
+            this.m.withOrigin(operand, () => this.lowerDiscarded(operand));
+        }
+        throw new Error("Comma expression has no operands");
     }
 
     relation(op: RelationOp, left: ValueDto, right: ValueDto): ConditionExprDto {
