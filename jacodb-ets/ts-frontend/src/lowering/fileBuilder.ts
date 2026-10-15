@@ -18,7 +18,8 @@
  * File-level lowering: ts.SourceFile -> EtsFileDto.
  *
  * Structure conventions (ArkAnalyzer-compatible):
- *  - every file (and every namespace) gets a default class `%dflt`;
+ *  - files and runtime namespaces get a default class `%dflt`;
+ *  - ambient namespaces only need a default class for declared scope members;
  *  - loose top-level statements form its default method `%dflt`;
  *  - function declarations become methods of the enclosing `%dflt`;
  *  - classes/interfaces/enums become ClassDto entries;
@@ -360,6 +361,7 @@ class FileBuilder {
     private buildScope(
         scope: ts.SourceFile | ts.ModuleBlock | ts.ModuleDeclaration,
         declaringNamespace: NamespaceSignatureDto | undefined,
+        options: { ambient?: boolean } = {},
     ): ScopeContents {
         const statements = ts.isModuleDeclaration(scope) ? [] : scope.statements;
         const classes: ClassDto[] = [];
@@ -380,7 +382,10 @@ class FileBuilder {
         }
 
         const fields = this.registerModuleFields(defaultClassSignature, statements);
-        const methods: MethodDto[] = [this.buildDefaultMethod(defaultClassSignature, scope)];
+        const isAmbientScope = options.ambient ?? false;
+        const methods: MethodDto[] = isAmbientScope
+            ? []
+            : [this.buildDefaultMethod(defaultClassSignature, scope)];
 
         for (const statement of statements) {
             if (ts.isFunctionDeclaration(statement)) {
@@ -404,16 +409,22 @@ class FileBuilder {
             }
         }
 
-        classes.unshift({
-            signature: defaultClassSignature,
-            modifiers: 0,
-            decorators: [],
-            category: ClassCategory.CLASS,
-            superClassName: "",
-            implementedInterfaceNames: [],
-            fields,
-            methods,
-        });
+        // Ambient namespaces describe existing values and are erased by TypeScript.
+        // Keep declared scope members, but do not invent an executable initializer
+        // or an empty runtime class for each repeated declaration of the namespace.
+        const hasScopeMembers = fields.length > 0 || methods.length > 0;
+        if (hasScopeMembers) {
+            classes.unshift({
+                signature: defaultClassSignature,
+                modifiers: 0,
+                decorators: [],
+                category: ClassCategory.CLASS,
+                superClassName: "",
+                implementedInterfaceNames: [],
+                fields,
+                methods,
+            });
+        }
 
         return { classes, namespaces };
     }
@@ -513,9 +524,11 @@ class FileBuilder {
             return { signature, classes: [], namespaces: [] };
         }
 
+        const scopeOptions = { ambient: isAmbientNamespace(decl) };
+
         if (ts.isModuleDeclaration(body)) {
             // A dotted declaration has no block for its outer scope.
-            const contents = this.buildScope(decl, signature);
+            const contents = this.buildScope(decl, signature, scopeOptions);
             const inner = this.buildNamespace(body);
             if (inner !== undefined) {
                 contents.namespaces.push(inner);
@@ -528,7 +541,7 @@ class FileBuilder {
             return { signature, classes: [], namespaces: [] };
         }
 
-        const contents = this.buildScope(body, signature);
+        const contents = this.buildScope(body, signature, scopeOptions);
         return {
             signature,
             classes: contents.classes,
@@ -575,6 +588,16 @@ class FileBuilder {
             body: m.build(),
         };
     }
+}
+
+function isAmbientNamespace(declaration: ts.ModuleDeclaration): boolean {
+    if (declaration.getSourceFile().isDeclarationFile) return true;
+
+    for (let node: ts.Node | undefined = declaration; node !== undefined; node = node.parent) {
+        const hasAmbientModifier = ts.isModuleDeclaration(node) && (modifiersOf(node) & Modifier.DECLARE) !== 0;
+        if (hasAmbientModifier) return true;
+    }
+    return false;
 }
 
 function bindingIdentifiers(name: ts.BindingName): ts.Identifier[] {
