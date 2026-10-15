@@ -3,13 +3,13 @@ import { EtsFileDto } from "../src/dto/model";
 import { LexicalEnvTypeDto } from "../src/dto/types";
 import { serializeEtsFile } from "../src/serialize";
 import { executeObjectIr } from "./object-runtime";
-import { lower } from "./util";
+import { lower, resolveLexicalEnvTypes } from "./util";
 
 function lowerSerialized(source: string): EtsFileDto {
     const { file, diagnostics } = lower(source);
 
     expect(diagnostics.messages).toEqual([]);
-    return JSON.parse(serializeEtsFile(file));
+    return resolveLexicalEnvTypes(JSON.parse(serializeEtsFile(file)));
 }
 
 function rewriteCaptures(value: unknown, rewrite: (type: LexicalEnvTypeDto) => void): number {

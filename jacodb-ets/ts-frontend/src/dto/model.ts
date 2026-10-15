@@ -28,7 +28,7 @@ import {
     FileSignatureDto,
 } from "./signatures";
 import { StmtDto } from "./stmts";
-import { TypeDto } from "./types";
+import { LexicalEnvTypeDefinitionDto, TypeDto } from "./types";
 
 export interface EtsFileDto {
     signature: FileSignatureDto;
@@ -36,6 +36,8 @@ export interface EtsFileDto {
     classes: ClassDto[];
     importInfos: ImportInfoDto[];
     exportInfos: ExportInfoDto[];
+    /** Optional wire table; every capture and method type is retained exactly once. */
+    lexicalEnvTypes?: LexicalEnvTypeDefinitionDto[];
 }
 
 export interface NamespaceDto {

@@ -119,6 +119,7 @@ export function lowerProject(sources: Readonly<Record<string, string>>, entryFil
 
 /** The `%dflt` method of the `%dflt` class. */
 export function defaultMethod(file: EtsFileDto): MethodDto {
+    resolveLexicalEnvTypes(file);
     const clazz = file.classes.find((c) => c.signature.name === "%dflt");
     if (clazz === undefined) throw new Error("no %dflt class");
     const method = clazz.methods.find((m) => m.signature.name === "%dflt");
@@ -128,12 +129,40 @@ export function defaultMethod(file: EtsFileDto): MethodDto {
 
 /** Method by name across all classes of the file. */
 export function methodByName(file: EtsFileDto, name: string): MethodDto {
+    resolveLexicalEnvTypes(file);
     for (const clazz of file.classes) {
         for (const method of clazz.methods) {
             if (method.signature.name === name) return method;
         }
     }
     throw new Error(`method '${name}' not found`);
+}
+
+/** Match the Kotlin consumer's nominal table resolution before test-model inspection. */
+export function resolveLexicalEnvTypes(file: EtsFileDto): EtsFileDto {
+    const definitions = file.lexicalEnvTypes;
+    if (definitions === undefined) return file;
+    const environments = definitions.map((definition) => ({ _: "LexicalEnvType", ...definition }));
+    const visited = new WeakSet<object>();
+    const resolve = (value: unknown): unknown => {
+        if (value === null || typeof value !== "object") return value;
+        if ((value as { _?: string })._ === "LexicalEnvTypeRef") {
+            const id = (value as { id: number }).id;
+            if (!Number.isInteger(id) || id < 0 || id >= environments.length) {
+                throw new Error(`invalid test lexical-environment reference ${id}`);
+            }
+            return resolve(environments[id]);
+        }
+        if (visited.has(value)) return value;
+        visited.add(value);
+        const record = value as Record<string, unknown>;
+        for (const [key, child] of Object.entries(record)) record[key] = resolve(child);
+        return value;
+    };
+
+    delete file.lexicalEnvTypes;
+    resolve(file);
+    return file;
 }
 
 /** All statements of a single-block body (asserts the body has exactly one block). */
