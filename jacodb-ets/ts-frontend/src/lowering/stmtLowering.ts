@@ -470,31 +470,22 @@ export class StmtLowerer {
         const isAsync = node.awaitModifier !== undefined;
         // GetMethod may invoke a getter that reassigns the source binding.
         const iterable = isAsync ? this.m.snapshotToLocal(source, source.type) : source;
+        const syncIterator = isAsync ? undefined : new IteratorLowerer(this.m, iterable);
         const asyncIterator = isAsync ? this.lowerAsyncIterator(iterable) : undefined;
-
-        const iterator = asyncIterator?.iterator ?? this.expr.materialize({
-            _: "InstanceCallExpr",
-            instance: iterable,
-            method: unknownMethod("Symbol.iterator"),
-            args: [],
-            wellKnownSymbol: "iterator",
-        });
 
         const headLabel = cfg.newLabel();
         const bodyLabel = cfg.newLabel();
         const exitLabel = cfg.newLabel();
 
         cfg.placeLabel(headLabel);
-        const result = this.m.newTemp(UNKNOWN_TYPE);
-        const nextResult = isAsync ? this.m.newTemp(UNKNOWN_TYPE) : result;
-        cfg.emit({
-            _: "AssignStmt",
-            left: nextResult,
-            right: asyncIterator === undefined
-                ? { _: "InstanceCallExpr", instance: iterator, method: unknownMethod("next"), args: [] }
-                : { _: "PtrCallExpr", ptr: asyncIterator.next, receiver: iterator, method: unknownMethod("next"), args: [] },
-        });
+        const result = syncIterator?.step() ?? this.m.newTemp(UNKNOWN_TYPE);
         if (asyncIterator !== undefined) {
+            const nextResult = this.m.newTemp(UNKNOWN_TYPE);
+            cfg.emit({ _: "AssignStmt", left: nextResult, right: {
+                _: "PtrCallExpr", ptr: asyncIterator.next, receiver: asyncIterator.iterator,
+                method: unknownMethod("next"), args: [],
+            } });
+
             const syncResult = cfg.newLabel();
             const asyncResult = cfg.newLabel();
             const resultReady = cfg.newLabel();
@@ -510,13 +501,15 @@ export class StmtLowerer {
             this.requireIteratorObject(result);
         }
 
-        const doneType = asyncIterator === undefined ? BOOLEAN_TYPE : UNKNOWN_TYPE;
-        const rawDone = this.expr.materialize(this.iteratorField(result, "done", doneType), doneType);
-        // IteratorComplete uses ToBoolean, including non-boolean truthy done values.
-        const notDone = asyncIterator === undefined ? undefined
-            : this.expr.materialize({ _: "UnopExpr", op: "!", arg: rawDone }, BOOLEAN_TYPE);
-        const done = notDone === undefined ? rawDone
-            : this.expr.materialize({ _: "UnopExpr", op: "!", arg: notDone }, BOOLEAN_TYPE);
+        let done: ValueDto;
+        if (syncIterator !== undefined) {
+            done = syncIterator.isDone();
+        } else {
+            const rawDone = this.expr.materialize(this.iteratorField(result, "done"));
+            // IteratorComplete uses ToBoolean, including non-boolean truthy done values.
+            const notDone = this.expr.materialize({ _: "UnopExpr", op: "!", arg: rawDone }, BOOLEAN_TYPE);
+            done = this.expr.materialize({ _: "UnopExpr", op: "!", arg: notDone }, BOOLEAN_TYPE);
+        }
 
         const value = asyncIterator === undefined ? undefined : this.m.newTemp(UNKNOWN_TYPE);
         if (asyncIterator !== undefined && value !== undefined) {
@@ -535,6 +528,15 @@ export class StmtLowerer {
         cfg.branch(this.expr.relation("==", done, constant("true", BOOLEAN_TYPE)), exitLabel, bodyLabel);
 
         cfg.placeLabel(bodyLabel);
+        if (syncIterator !== undefined) {
+            // IteratorValue happens before the body, so a failed getter does not close the iterator.
+            const value = this.m.newTemp(UNKNOWN_TYPE);
+            cfg.emit({ _: "AssignStmt", left: value, right: syncIterator.valueOf(result, UNKNOWN_TYPE) });
+            this.lowerLoopBodyWithClose(node, label, headLabel, exitLabel, () => syncIterator.close(), value);
+            cfg.placeLabel(exitLabel);
+            return;
+        }
+
         if (asyncIterator !== undefined && value !== undefined) {
             const asyncValue = cfg.newLabel();
             const valueReady = cfg.newLabel();
@@ -543,41 +545,50 @@ export class StmtLowerer {
             cfg.emit({ _: "AssignStmt", left: value, right: this.iteratorField(result, "value") });
             cfg.placeLabel(valueReady);
         }
-        const lowerBody = (breakFinallyDepth?: number) => {
-            this.emitLoopBinding(node.initializer, (binding) => value ?? this.iteratorField(result, "value", binding.type));
-            this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: headLabel, label, breakFinallyDepth }, () => {
-                this.lowerStatement(node.statement);
-            });
-        };
-        if (asyncIterator === undefined) {
-            lowerBody();
-            cfg.goto(headLabel);
-        } else {
-            const closeOnThrow = cfg.newLabel();
-            const rethrow = cfg.newLabel();
-            const outerFinallyDepth = this.finallyScopes.length;
-            this.finallyScopes.push(() => this.lowerAsyncIteratorClose(asyncIterator));
-            this.finallyExceptionTargets.push(closeOnThrow);
-            this.catchScopes.push({ target: closeOnThrow, finallyDepth: this.finallyScopes.length });
-            try {
-                cfg.withExceptionTarget(closeOnThrow, () => lowerBody(outerFinallyDepth));
-            } finally {
-                this.catchScopes.pop();
-                this.finallyScopes.pop();
-                this.finallyExceptionTargets.pop();
-            }
-            cfg.goto(headLabel);
-
-            cfg.placeLabel(closeOnThrow);
-            const original = this.m.newTemp(UNKNOWN_TYPE);
-            cfg.emit({ _: "AssignStmt", left: original, right: { _: "CaughtExceptionRef", type: UNKNOWN_TYPE } });
-            // AsyncIteratorClose preserves an existing throw over any cleanup failure.
-            cfg.withExceptionTarget(rethrow, () => this.lowerAsyncIteratorClose(asyncIterator));
-            cfg.goto(rethrow);
-            cfg.placeLabel(rethrow);
-            cfg.throwValue(original);
+        if (asyncIterator !== undefined && value !== undefined) {
+            this.lowerLoopBodyWithClose(node, label, headLabel, exitLabel,
+                () => this.lowerAsyncIteratorClose(asyncIterator), value);
         }
         cfg.placeLabel(exitLabel);
+    }
+
+    private lowerLoopBodyWithClose(
+        node: ts.ForOfStatement,
+        label: string | undefined,
+        headLabel: Label,
+        exitLabel: Label,
+        close: () => void,
+        value: LocalDto,
+    ): void {
+        const cfg = this.m.cfg;
+        const closeOnThrow = cfg.newLabel();
+        const rethrow = cfg.newLabel();
+        const outerFinallyDepth = this.finallyScopes.length;
+
+        this.finallyScopes.push(close);
+        this.finallyExceptionTargets.push(closeOnThrow);
+        this.catchScopes.push({ target: closeOnThrow, finallyDepth: this.finallyScopes.length });
+        try {
+            cfg.withExceptionTarget(closeOnThrow, () => {
+                this.emitLoopBinding(node.initializer, () => value);
+                this.inBreakable({ kind: "loop", breakTarget: exitLabel, continueTarget: headLabel,
+                    label, breakFinallyDepth: outerFinallyDepth }, () => this.lowerStatement(node.statement));
+            });
+        } finally {
+            this.catchScopes.pop();
+            this.finallyScopes.pop();
+            this.finallyExceptionTargets.pop();
+        }
+
+        cfg.goto(headLabel);
+        cfg.placeLabel(closeOnThrow);
+        const original = this.m.newTemp(UNKNOWN_TYPE);
+        cfg.emit({ _: "AssignStmt", left: original, right: { _: "CaughtExceptionRef", type: UNKNOWN_TYPE } });
+        // IteratorClose preserves the original throw over a cleanup failure.
+        cfg.withExceptionTarget(rethrow, close);
+        cfg.goto(rethrow);
+        cfg.placeLabel(rethrow);
+        cfg.throwValue(original);
     }
 
     private lowerAsyncIteratorClose(record: { iterator: LocalDto; fromSync: LocalDto }): void {

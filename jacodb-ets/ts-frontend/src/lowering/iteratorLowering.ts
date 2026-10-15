@@ -2,7 +2,7 @@
 import { CONSTRUCTOR_NAME } from "../dto/constants";
 import { UNKNOWN_CLASS_SIGNATURE, UNKNOWN_FILE_SIGNATURE } from "../dto/signatures";
 import { BOOLEAN_TYPE, NUMBER_TYPE, STRING_TYPE, TypeDto, UNKNOWN_TYPE } from "../dto/types";
-import { ImmediateDto, LocalDto } from "../dto/values";
+import { ImmediateDto, LocalDto, ValueDto } from "../dto/values";
 import { MethodContext } from "./methodBuilder";
 
 const number = (value: number): ImmediateDto => ({ _: "Constant", value: String(value), type: NUMBER_TYPE });
@@ -92,6 +92,19 @@ export class IteratorLowerer {
         cfg.emit({ _: "AssignStmt", left: offset, right: { _: "BinopExpr", op: "+", left: offset, right: number(1), type: NUMBER_TYPE } });
         cfg.goto(head);
         cfg.placeLabel(done);
+    }
+
+    /** Advance a loop without reading value until IteratorComplete is false. */
+    step(): LocalDto {
+        return this.advance();
+    }
+
+    isDone(): ValueDto {
+        return this.isExhausted();
+    }
+
+    valueOf(result: LocalDto, type: TypeDto): ValueDto {
+        return this.fieldRef(result, "value", type);
     }
 
     /** A binding pattern that stops before exhaustion performs normal IteratorClose. */

@@ -567,3 +567,137 @@ describe("for-await abrupt completion closes its iterator", () => {
     });
 
 });
+
+describe("synchronous for-of iterator protocol and cleanup", () => {
+    it("caches next, converts done to boolean, and rejects primitive iterator results", async () => {
+        const run = program("function run(input) { let total = 0; for (const value of input) total += value; return total; }");
+        const input = (lookups: { count: number }) => {
+            let step = 0;
+            const iterator = {
+                get next() {
+                    lookups.count++;
+                    return function () {
+                        expect(this).toBe(iterator);
+                        return step++ === 0 ? { value: 7, done: false } : { done: "finished" };
+                    };
+                },
+            };
+            return { [Symbol.iterator]: () => iterator };
+        };
+        const irLookups = { count: 0 };
+        const nativeLookups = { count: 0 };
+
+        expect(await run.ir(input(irLookups))).toBe(7);
+        expect(await run.native(input(nativeLookups))).toBe(7);
+        expect(irLookups.count).toBe(nativeLookups.count);
+        expect(irLookups.count).toBe(1);
+
+        for (const invalid of [
+            { [Symbol.iterator]: () => 1 },
+            { [Symbol.iterator]: () => ({ next: () => 1 }) },
+        ]) {
+            await expect(run.ir(invalid)).rejects.toBeInstanceOf(TypeError);
+            await expect(run.native(invalid)).rejects.toBeInstanceOf(TypeError);
+        }
+    });
+
+    for (const completion of ["break;", "return value;", "throw value;"]) {
+        it(`closes on ${completion} with the original completion`, async () => {
+            const run = program(`function run(input) { for (const value of input) { ${completion} } return 9; }`);
+            const failure = new Error("body failure");
+            const results: unknown[] = [];
+            const logs: string[][] = [];
+
+            for (const consume of [run.native, run.ir]) {
+                const events: string[] = [];
+                const input = closingInput(events, { sync: true, value: completion.startsWith("throw") ? failure : 7 });
+                try { results.push(await consume(input)); } catch (error) { results.push(error); }
+                logs.push(events);
+            }
+
+            expect(results[1]).toBe(results[0]);
+            expect(logs[1]).toEqual(logs[0]);
+            expect(logs[1]).toEqual(["return lookup", "return call"]);
+        });
+    }
+
+    it("closes on a binding failure and preserves the body throw over cleanup failure", async () => {
+        const bindingRun = program("function run(input) { for (const {field} of input) return field; }");
+        const bodyRun = program("function run(input) { for (const value of input) throw value; }");
+        const bodyFailure = new Error("body failure");
+        const closeFailure = new Error("close failure");
+
+        for (const consume of [bindingRun.native, bindingRun.ir]) {
+            const events: string[] = [];
+            await expect(consume(closingInput(events, { sync: true, value: null }))).rejects.toBeInstanceOf(TypeError);
+            expect(events).toEqual(["return lookup", "return call"]);
+        }
+        for (const consume of [bodyRun.native, bodyRun.ir]) {
+            const input = closingInput([], { sync: true, value: bodyFailure, close: () => { throw closeFailure; } });
+            await expect(consume(input)).rejects.toBe(bodyFailure);
+        }
+    });
+
+    it("propagates cleanup failures on break and runs inner finally before close", async () => {
+        const run = program(`function run(input) {
+            for (const value of input) {
+                try { break; } finally { input.events.push("inner finally"); }
+            }
+            return 9;
+        }`);
+        const closeFailure = new Error("close failure");
+
+        for (const consume of [run.native, run.ir]) {
+            const events: string[] = [];
+            const input = Object.assign(closingInput(events, { sync: true }), { events });
+            expect(await consume(input)).toBe(9);
+            expect(events).toEqual(["inner finally", "return lookup", "return call"]);
+
+            const failingEvents: string[] = [];
+            const failingInput = Object.assign(
+                closingInput(failingEvents, { sync: true, close: () => { throw closeFailure; } }),
+                { events: failingEvents },
+            );
+            await expect(consume(failingInput)).rejects.toBe(closeFailure);
+        }
+    });
+
+    it("does not close when reading the step value fails before binding", async () => {
+        const run = program("function run(input) { for (const value of input) break; }");
+        const failure = new Error("value getter failure");
+
+        for (const consume of [run.native, run.ir]) {
+            let closes = 0;
+            const input = { [Symbol.iterator]: () => ({
+                next: () => ({ done: false, get value() { throw failure; } }),
+                return: () => { closes++; return {}; },
+            }) };
+
+            await expect(consume(input)).rejects.toBe(failure);
+            expect(closes).toBe(0);
+        }
+    });
+
+    it("skips close on natural exhaustion, same-loop continue, and a failing next call", async () => {
+        const run = program("function run(input) { for (const value of input) continue; return 9; }");
+        const failure = new Error("next failure");
+
+        for (const rejectNext of [false, true]) {
+            for (const consume of [run.native, run.ir]) {
+                const events: string[] = [];
+                let step = 0;
+                const input = { [Symbol.iterator]: () => ({
+                    next: () => {
+                        if (rejectNext) throw failure;
+                        return { value: 1, done: step++ > 0 };
+                    },
+                    return: () => { events.push("closed"); return {}; },
+                }) };
+
+                if (rejectNext) await expect(consume(input)).rejects.toBe(failure);
+                else expect(await consume(input)).toBe(9);
+                expect(events).toEqual([]);
+            }
+        }
+    });
+});
