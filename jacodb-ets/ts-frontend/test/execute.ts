@@ -1,6 +1,32 @@
 import { NAMED_FUNCTION_REFERENCE_PREFIX } from "../src/dto/constants";
 import { EtsFileDto, MethodDto } from "../src/dto/model";
+import { ClassSignatureDto, FileSignatureDto, MethodSignatureDto, NamespaceSignatureDto } from "../src/dto/signatures";
 import { ValueDto } from "../src/dto/values";
+
+const MAX_CONCRETE_ORACLE_STEPS = 100_000;
+
+function sameFileSignature(left: FileSignatureDto, right: FileSignatureDto): boolean {
+    return left.projectName === right.projectName && left.fileName === right.fileName;
+}
+
+function sameNamespaceSignature(left: NamespaceSignatureDto | undefined, right: NamespaceSignatureDto | undefined): boolean {
+    if (left === undefined || right === undefined) return left === right;
+
+    return left.name === right.name
+        && sameFileSignature(left.declaringFile, right.declaringFile)
+        && sameNamespaceSignature(left.declaringNamespace, right.declaringNamespace);
+}
+
+function sameClassSignature(left: ClassSignatureDto, right: ClassSignatureDto): boolean {
+    return left.name === right.name
+        && sameFileSignature(left.declaringFile, right.declaringFile)
+        && sameNamespaceSignature(left.declaringNamespace, right.declaringNamespace);
+}
+
+function matchesMethod(candidate: MethodDto, signature: MethodSignatureDto): boolean {
+    return candidate.signature.name === signature.name
+        && sameClassSignature(candidate.signature.declaringClass, signature.declaringClass);
+}
 
 /** Small concrete oracle for this regression suite. Unknown IR fails loudly.
  * Calls consume raw arguments and pack isRest on entry, matching TsInterpreter.
@@ -22,11 +48,12 @@ export function executor(file: EtsFileDto, externals: Record<string, any> = {}) 
         const value = (v: ValueDto): any => {
             switch (v._) {
                 case "Local": {
-                    if (v.name.startsWith(NAMED_FUNCTION_REFERENCE_PREFIX) && !locals.has(v.name)
-                        && v.type._ === "FunctionType") {
+                    const isUnboundNamedFunction = v.name.startsWith(NAMED_FUNCTION_REFERENCE_PREFIX)
+                        && !locals.has(v.name)
+                        && v.type._ === "FunctionType";
+                    if (isUnboundNamedFunction) {
                         const signature = v.type.signature;
-                        const target = methods.find((candidate) => candidate.signature.name === signature.name
-                            && JSON.stringify(candidate.signature.declaringClass) === JSON.stringify(signature.declaringClass));
+                        const target = methods.find((candidate) => matchesMethod(candidate, signature));
                         if (target === undefined) throw new Error(`Unknown named function ${signature.name}`);
                         locals.set(v.name, function (this: any, ...callArgs: any[]): any {
                             return run(target, callArgs, this);
@@ -94,7 +121,7 @@ export function executor(file: EtsFileDto, externals: Record<string, any> = {}) 
                     }
                 }
                 case "StaticCallExpr": {
-                    const target = methods.find((candidate) => candidate.signature.name === v.method.name);
+                    const target = methods.find((candidate) => matchesMethod(candidate, v.method));
                     return target?.body !== undefined
                         ? run(target, v.args.map(value))
                         : externals[v.method.name](...v.args.map(value));
@@ -125,7 +152,7 @@ export function executor(file: EtsFileDto, externals: Record<string, any> = {}) 
         };
 
         let blockId = 0;
-        for (let steps = 0; steps < 100_000; steps++) {
+        for (let steps = 0; steps < MAX_CONCRETE_ORACLE_STEPS; steps++) {
             const block = method.body.cfg.blocks[blockId];
             let next = block.successors[0];
             for (let index = 0; index < block.stmts.length; index++) {
