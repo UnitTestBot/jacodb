@@ -933,6 +933,29 @@ describe("interface lowering", () => {
         expect(check.signature.returnType).toEqual({ _: "BooleanType" });
     });
 
+    it("preserves generic binders on bodyless interface methods", () => {
+        const { file, diagnostics } = lower(`
+            interface Identity {
+                identity<T extends string = "fallback">(value: T): T;
+            }
+        `);
+        const identity = methodOf(classByName(file, "Identity"), "identity");
+
+        expect(identity.body).toBeUndefined();
+        expect(identity.typeParameters).toEqual([{
+            _: "GenericType",
+            name: "T",
+            constraint: { _: "StringType" },
+            defaultType: { _: "LiteralType", literal: "fallback" },
+        }]);
+        expect(identity.signature.parameters).toEqual([{
+            name: "value",
+            type: { _: "GenericType", name: "T" },
+        }]);
+        expect(identity.signature.returnType).toEqual({ _: "GenericType", name: "T" });
+        expect(diagnostics.messages).toEqual([]);
+    });
+
     it("represents index signatures as typed fields", () => {
         const { file, diagnostics } = lower(`
             interface Graph {

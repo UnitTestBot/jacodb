@@ -333,7 +333,7 @@ export class ClassBuilder {
 
     buildBodylessMethod(declaringClass: ClassSignatureDto, decl: ts.MethodSignature): MethodDto {
         const { parameters } = buildParameters(this.ctx, decl);
-        return {
+        const method: MethodDto = {
             signature: {
                 declaringClass,
                 name: memberName(decl.name),
@@ -343,6 +343,12 @@ export class ClassBuilder {
             modifiers: modifiersOf(decl),
             decorators: [],
         };
+        const typeParameters = this.ctx.converter.convertTypeParameters(decl.typeParameters);
+        if (typeParameters !== undefined) {
+            method.typeParameters = typeParameters;
+        }
+
+        return method;
     }
 
     private buildConstructor(
