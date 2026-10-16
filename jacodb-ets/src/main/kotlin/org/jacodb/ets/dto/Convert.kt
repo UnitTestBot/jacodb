@@ -530,11 +530,7 @@ class EtsMethodBuilder(
             args = args.map { ensureLocal(it.toEtsEntity()) },
             type = type.toEtsType(),
             isSuperCall = isSuperCall,
-            wellKnownSymbol = when (wellKnownSymbol) {
-                null -> null
-                "iterator" -> EtsWellKnownSymbol.ITERATOR
-                else -> error("Unknown intrinsic symbol key: $wellKnownSymbol")
-            },
+            wellKnownSymbol = wellKnownSymbol.toEtsWellKnownSymbol(),
         )
 
         is StaticCallExprDto -> EtsStaticCallExpr(
@@ -861,6 +857,7 @@ fun FieldSignatureDto.toEtsFieldSignature(): EtsFieldSignature {
         enclosingClass = declaringClass.toEtsClassSignature(),
         name = name,
         type = type.toEtsType(),
+        wellKnownSymbol = wellKnownSymbol.toEtsWellKnownSymbol(),
     )
 }
 
@@ -878,7 +875,14 @@ fun MethodSignatureDto.toEtsMethodSignature(): EtsMethodSignature {
             )
         },
         returnType = returnType.toEtsType(),
+        wellKnownSymbol = wellKnownSymbol.toEtsWellKnownSymbol(),
     )
+}
+
+private fun String?.toEtsWellKnownSymbol(): EtsWellKnownSymbol? = when (this) {
+    null -> null
+    "iterator" -> EtsWellKnownSymbol.ITERATOR
+    else -> error("Unknown intrinsic symbol key: $this")
 }
 
 fun LocalSignatureDto.toEtsLocalSignature(): EtsLocalSignature {

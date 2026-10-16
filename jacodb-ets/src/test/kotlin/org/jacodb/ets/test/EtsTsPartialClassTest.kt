@@ -21,6 +21,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import org.jacodb.ets.dto.AssignStmtDto
 import org.jacodb.ets.dto.EtsFileDto
@@ -28,6 +29,7 @@ import org.jacodb.ets.dto.RawStmtDto
 import org.jacodb.ets.dto.RawValueDto
 import org.jacodb.ets.dto.toEtsFile
 import org.jacodb.ets.model.EtsRawStmt
+import org.jacodb.ets.model.EtsWellKnownSymbol
 import org.jacodb.ets.utils.DEFAULT_ARK_CLASS_NAME
 import org.jacodb.ets.utils.DEFAULT_ARK_METHOD_NAME
 import org.jacodb.ets.utils.EtsIrProvider
@@ -49,10 +51,53 @@ class EtsTsPartialClassTest {
     }
 
     @Test
+    fun `constant computed members retain executable lifecycle and exact identities after model conversion`() {
+        val dto = frontend(
+            """
+                export class Counter {
+                    ['value'] = 7;
+                    [1e2] = 11;
+                    [-0] = 13;
+                    [Symbol.iterator]() { return 17; }
+                    ['Symbol.iterator']() { return 19; }
+                    increment(value: number) { return value + this.value; }
+                }
+                export class Fields {
+                    [Symbol.iterator] = 1;
+                    ['Symbol.iterator'] = 2;
+                }
+                export function construct() { return new Counter(); }
+            """.trimIndent(),
+        )
+
+        val model = dto.toEtsFile()
+        val counter = model.classes.single { it.name == "Counter" }
+        val symbolMethod = counter.methods.single { it.signature.wellKnownSymbol == EtsWellKnownSymbol.ITERATOR }
+        val stringMethod = counter.methods.single {
+            it.name == "Symbol.iterator" && it.signature.wellKnownSymbol == null
+        }
+        val fields = model.classes.single { it.name == "Fields" }.fields
+        val symbolField = fields.single { it.signature.wellKnownSymbol == EtsWellKnownSymbol.ITERATOR }
+        val stringField = fields.single { it.signature.wellKnownSymbol == null }
+        val module = model.classes.single { it.name == DEFAULT_ARK_CLASS_NAME }
+
+        assertEquals(expected = listOf("value", "100", "0"), actual = counter.fields.map { it.name })
+        assertNotEquals(illegal = stringMethod.signature, actual = symbolMethod.signature)
+        assertEquals(expected = "Symbol.iterator", actual = symbolMethod.name)
+        assertNotEquals(illegal = stringField.signature, actual = symbolField.signature)
+        for (method in counter.methods) {
+            assertFalse(method.cfg.stmts.any { it is EtsRawStmt }, message = "Unexpected unsupported body: ${method.name}")
+        }
+        assertTrue(dto.exportInfos.any { it.exportName == "Counter" })
+        assertFalse(module.methods.single { it.name == "construct" }.cfg.stmts.any { it is EtsRawStmt })
+    }
+
+    @Test
     fun `ordinary bodies survive native frontend and model conversion with unsupported lifecycle`() {
         val dto = frontend(
             """
-                class Base { [Symbol.iterator]() { return [][Symbol.iterator](); } }
+                const tag: unique symbol = Symbol("tag");
+                class Base { [tag]() { return []; } }
                 export class Counter extends Base {
                     own = 7;
                     increment(value: number) { return value + this.own; }
