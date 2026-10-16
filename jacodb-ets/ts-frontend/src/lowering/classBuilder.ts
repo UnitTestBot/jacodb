@@ -40,7 +40,7 @@ import {
 import { BodyDto, ClassDto, FieldDto, MethodDto } from "../dto/model";
 import { ClassSignatureDto, UNKNOWN_FILE_SIGNATURE } from "../dto/signatures";
 import { ClassTypeDto, TypeDto, NUMBER_TYPE, STRING_TYPE, UNKNOWN_TYPE, VOID_TYPE } from "../dto/types";
-import { buildParameters, decoratorsOf, memberName, modifiersOf, parameterType, returnTypeOf, unsupportedClassDeclarationReason } from "./astUtils";
+import { buildParameters, classMemberKey, ClassMemberKey, decoratorsOf, memberName, modifiersOf, parameterType, returnTypeOf, unsupportedClassDeclarationReason } from "./astUtils";
 import { unsupportedStmt } from "./diagnostics";
 import { LoweringError, constant } from "./exprLowering";
 import { LoweringContext, MethodContext } from "./methodBuilder";
@@ -69,17 +69,25 @@ export class ClassBuilder {
         const staticInitializers: (ts.PropertyDeclaration | ts.ClassStaticBlockDeclaration)[] = [];
         const fields: FieldDto[] = [];
         const methods: MethodDto[] = [];
+        const computedMethods = new Set<MethodDto>();
         let ctorDecl: ts.ConstructorDeclaration | undefined;
 
         for (const member of decl.members) {
-            const hasComputedName = member.name !== undefined && ts.isComputedPropertyName(member.name);
-            if (hasComputedName) {
+            const key = member.name === undefined ? undefined : classMemberKey(member.name, this.ctx.checker);
+            const hasUnsupportedComputedName = member.name !== undefined && ts.isComputedPropertyName(member.name)
+                && (key === undefined || key.name === CONSTRUCTOR_NAME);
+            if (hasUnsupportedComputedName) {
                 // Keep independent bodies without inventing storage for an unevaluated key.
                 continue;
             }
 
             if (ts.isPropertyDeclaration(member)) {
-                fields.push(this.buildField(signature, member));
+                const field = this.buildField(signature, member);
+                const previous = fields.findIndex((candidate) => candidate.signature.name === field.signature.name
+                    && candidate.signature.wellKnownSymbol === field.signature.wellKnownSymbol
+                    && (candidate.modifiers & Modifier.STATIC) === (field.modifiers & Modifier.STATIC));
+                if (previous >= 0) fields.splice(previous, 1);
+                fields.push(field);
                 if (member.initializer !== undefined) {
                     if (isStatic(member)) {
                         staticInitializers.push(member);
@@ -102,7 +110,22 @@ export class ClassBuilder {
                 ts.isGetAccessorDeclaration(member) ||
                 ts.isSetAccessorDeclaration(member)
             ) {
-                methods.push(this.buildMethodFromDecl(signature, member));
+                const method = this.buildMethodFromDecl(signature, member);
+                const sameKey = (candidate: MethodDto): boolean => candidate.signature.name === method.signature.name
+                    && candidate.signature.wellKnownSymbol === method.signature.wellKnownSymbol
+                    && (candidate.modifiers & Modifier.STATIC) === (method.modifiers & Modifier.STATIC);
+                const replacesComputedKey = ts.isComputedPropertyName(member.name)
+                    || methods.some((candidate) => computedMethods.has(candidate) && sameKey(candidate));
+                const replacesMethod = definitionFailure === undefined && replacesComputedKey
+                    && ts.isMethodDeclaration(member) && member.body !== undefined;
+                if (replacesMethod) {
+                    // Runtime definitions replace earlier bodies; overload declarations are retained.
+                    for (let index = methods.length - 1; index >= 0; index--) {
+                        if (methods[index].body !== undefined && sameKey(methods[index])) methods.splice(index, 1);
+                    }
+                }
+                if (ts.isComputedPropertyName(member.name)) computedMethods.add(method);
+                methods.push(method);
             } else if (ts.isIndexSignatureDeclaration(member)) {
                 fields.push(this.buildIndexSignatureField(signature, member));
             } else if (ts.isSemicolonClassElement(member)) {
@@ -344,13 +367,14 @@ export class ClassBuilder {
         decl: ClassMemberDecl | ts.FunctionDeclaration,
         nameOverride?: string,
     ): MethodDto {
-        const name = nameOverride ?? (decl.name !== undefined ? memberName(decl.name) : "");
+        const key = decl.name === undefined ? { name: "" } : this.memberKey(decl.name);
+        const name = nameOverride ?? key.name;
         const { parameters, prologueParams } = buildParameters(this.ctx, decl);
         const returnType = returnTypeOf(this.ctx, decl);
 
         const method: MethodDto = {
             isStrictMode: isStrictMode(decl),
-            signature: { declaringClass, name, parameters, returnType },
+            signature: { declaringClass, ...key, name, parameters, returnType },
             modifiers: modifiersOf(decl),
             decorators: decoratorsOf(decl),
         };
@@ -639,7 +663,7 @@ export class ClassBuilder {
                     left: {
                         _: "InstanceFieldRef",
                         instance: thisLocal,
-                        field: { declaringClass, name: memberName(field.name), type: fieldType },
+                        field: { declaringClass, ...this.memberKey(field.name), type: fieldType },
                     },
                     right: lowerer.expr.lowerToImmediate(field.initializer!),
                 });
@@ -671,7 +695,7 @@ export class ClassBuilder {
                             _: "StaticFieldRef",
                             field: {
                                 declaringClass,
-                                name: memberName(initializer.name),
+                                ...this.memberKey(initializer.name),
                                 type: this.fieldType(initializer),
                             },
                         },
@@ -700,7 +724,7 @@ export class ClassBuilder {
         return {
             signature: {
                 declaringClass,
-                name: memberName(decl.name),
+                ...this.memberKey(decl.name),
                 type: this.fieldType(decl),
             },
             modifiers: modifiersOf(decl),
@@ -708,6 +732,10 @@ export class ClassBuilder {
             questionToken: decl.questionToken !== undefined,
             exclamationToken: decl.exclamationToken !== undefined,
         };
+    }
+
+    private memberKey(name: ts.PropertyName): ClassMemberKey {
+        return classMemberKey(name, this.ctx.checker) ?? { name: memberName(name) };
     }
 
     private buildParameterPropertyField(
