@@ -107,13 +107,19 @@ computed methods. Anonymous-class method metadata alone cannot install a fresh
 callable own property at each object evaluation in source order. Data properties
 containing function values and getter descriptors keep their existing lowering
 paths.
-Class declarations with computed property, method, or accessor names use a
-whole-declaration raw fallback, as do classes inheriting from such a declaration.
-EtsIR class fields cannot represent the definition-time evaluation of those
-keys or their runtime names. An `extends` value that does not resolve directly
-to a class declaration also uses this fallback; its runtime base cannot be
-fixed from the source name alone. Class expressions with heritage remain
-unsupported by the existing expression fallback.
+Class declarations with computed names or an unresolved runtime base retain
+their ordinary named method bodies for independent analysis on an existing
+symbolic receiver. Their module declaration, constructor, and instance/static
+initializers remain explicitly unsupported. They do not supply a runtime class
+value or runtime exports, and computed members do not become invented fields.
+Member lookup depending on the missing base/prototype is unsupported; direct
+access to declared own data fields is retained only when computed string keys
+cannot redefine them. No construction or definition-time effects are claimed.
+These restrictions also apply transitively through base declarations. Class
+field initializer closures retain lifted body metadata, but the unsupported
+initializer does not create their captured environments; this does not make
+them standalone analysis entries. Class expressions with heritage retain their
+existing expression fallback.
 Default derived constructors forward fixed parameters through constructor-free
 ancestors. When an inherited constructor has a rest parameter, the synthetic
 constructor emits an unsupported statement: the current call IR cannot forward

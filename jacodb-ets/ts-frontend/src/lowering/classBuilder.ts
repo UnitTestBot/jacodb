@@ -40,7 +40,7 @@ import {
 import { BodyDto, ClassDto, FieldDto, MethodDto } from "../dto/model";
 import { ClassSignatureDto, UNKNOWN_FILE_SIGNATURE } from "../dto/signatures";
 import { ClassTypeDto, TypeDto, NUMBER_TYPE, STRING_TYPE, UNKNOWN_TYPE, VOID_TYPE } from "../dto/types";
-import { buildParameters, decoratorsOf, memberName, modifiersOf, parameterType, returnTypeOf } from "./astUtils";
+import { buildParameters, decoratorsOf, memberName, modifiersOf, parameterType, returnTypeOf, unsupportedClassDeclarationReason } from "./astUtils";
 import { unsupportedStmt } from "./diagnostics";
 import { LoweringError, constant } from "./exprLowering";
 import { LoweringContext, MethodContext } from "./methodBuilder";
@@ -60,6 +60,9 @@ export class ClassBuilder {
         const signature = nameOverride === undefined
             ? convertedSignature
             : { ...convertedSignature, name: nameOverride };
+        const definitionFailure = ts.isClassDeclaration(decl)
+            ? unsupportedClassDeclarationReason(decl, this.ctx.checker)
+            : undefined;
         const superClass = this.superClassInfo(decl);
 
         const instanceFields: ts.PropertyDeclaration[] = [];
@@ -69,6 +72,12 @@ export class ClassBuilder {
         let ctorDecl: ts.ConstructorDeclaration | undefined;
 
         for (const member of decl.members) {
+            const hasComputedName = member.name !== undefined && ts.isComputedPropertyName(member.name);
+            if (hasComputedName) {
+                // Keep independent bodies without inventing storage for an unevaluated key.
+                continue;
+            }
+
             if (ts.isPropertyDeclaration(member)) {
                 fields.push(this.buildField(signature, member));
                 if (member.initializer !== undefined) {
@@ -105,13 +114,28 @@ export class ClassBuilder {
             }
         }
 
-        methods.push(this.buildInstInit(signature, instanceFields));
-        methods.push(this.buildStatInit(signature, staticInitializers));
-        methods.push(
-            ctorDecl !== undefined
-                ? this.buildConstructor(signature, ctorDecl, superClass?.signature)
-                : this.synthesizeDefaultConstructor(signature, decl, superClass),
-        );
+        if (definitionFailure === undefined) {
+            methods.push(this.buildInstInit(signature, instanceFields));
+            methods.push(this.buildStatInit(signature, staticInitializers));
+            methods.push(
+                ctorDecl !== undefined
+                    ? this.buildConstructor(signature, ctorDecl, superClass?.signature)
+                    : this.synthesizeDefaultConstructor(signature, decl, superClass),
+            );
+        } else {
+            this.ctx.diagnostics.warn(decl, `class bodies retained without definition semantics: ${definitionFailure}`);
+            // Lower initializers to retain their lifted closure bodies, then discard
+            // the executable initialization. No captured environment is constructed.
+            const initializers = [
+                this.buildInstInit(signature, instanceFields),
+                this.buildStatInit(signature, staticInitializers),
+            ];
+            for (const initializer of initializers) {
+                initializer.body = this.unsupportedClassLifecycle(signature, decl, initializer.signature.name).body;
+                methods.push(initializer);
+            }
+            methods.push(this.unsupportedClassLifecycle(signature, decl, CONSTRUCTOR_NAME, ctorDecl));
+        }
 
         const result: ClassDto = {
             signature,
@@ -128,6 +152,29 @@ export class ClassBuilder {
             result.typeParameters = typeParameters;
         }
         return result;
+    }
+
+    private unsupportedClassLifecycle(
+        declaringClass: ClassSignatureDto,
+        declaration: ts.ClassLikeDeclaration,
+        name: string,
+        constructor?: ts.ConstructorDeclaration,
+    ): MethodDto {
+        const m = new MethodContext(this.ctx, declaringClass, name);
+        m.emitPrologue([]);
+        m.withOrigin(declaration, () => m.cfg.emit(unsupportedStmt(declaration)));
+
+        const parameters = constructor === undefined ? [] : buildParameters(this.ctx, constructor).parameters;
+        const returnType: TypeDto = name === CONSTRUCTOR_NAME
+            ? { _: "ClassType", signature: declaringClass }
+            : VOID_TYPE;
+        return {
+            signature: { declaringClass, name, parameters, returnType },
+            modifiers: name === STATIC_INIT_METHOD_NAME ? Modifier.STATIC : 0,
+            decorators: [],
+            isStrictMode: true,
+            body: m.build(),
+        };
     }
 
     // ------------------------------------------------------------------
