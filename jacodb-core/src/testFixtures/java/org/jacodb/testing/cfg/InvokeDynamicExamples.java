@@ -19,6 +19,7 @@ package org.jacodb.testing.cfg;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class InvokeDynamicExamples {
 
@@ -160,5 +161,17 @@ public class InvokeDynamicExamples {
         String expected = "beef";
         String actual = collection.innerMap.get("deadabc");
         return expected.equals(actual) ? "OK" : "BAD";
+    }
+
+    public static Predicate<Integer> makeWhitespacePredicate() {
+        return Character::isWhitespace;
+    }
+
+    public static Predicate<Integer> makeWideningPredicate() {
+        return InvokeDynamicExamples::positiveLong;
+    }
+
+    private static boolean positiveLong(long value) {
+        return value > 0;
     }
 }
