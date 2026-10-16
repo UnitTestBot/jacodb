@@ -276,7 +276,8 @@ class JcInstListBuilder(val method: JcMethod,val instList: JcInstList<JcRawInst>
 
     private fun tryResolveJcLambdaExpr(expr: JcRawDynamicCallExpr): JcLambdaExpr? {
         if (expr.bsmArgs.size != 3) return null
-        val (interfaceMethodType, implementation, dynamicMethodType) = expr.bsmArgs
+        // RawInstListBuilder stores bootstrap arguments in reverse class-file order.
+        val (dynamicMethodType, implementation, interfaceMethodType) = expr.bsmArgs
 
         if (interfaceMethodType !is BsmMethodTypeArg) return null
         if (dynamicMethodType !is BsmMethodTypeArg) return null
