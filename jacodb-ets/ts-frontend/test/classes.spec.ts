@@ -45,7 +45,7 @@ describe("class lowering", () => {
         const { file, diagnostics } = lower(`
             let evaluations = 0;
             function key(): "dynamic" { evaluations++; return "dynamic"; }
-            export class Constant { ["x"] = 1; }
+            export class Constant { [String("x")] = 1; }
             class SideEffect { [key()] = 2; }
             class StaticKey { static [key()] = 3; }
             class NoInitializer { [key()]: number; }
@@ -86,7 +86,7 @@ describe("class lowering", () => {
 
     it("keeps derived lifecycle unsupported transitively without dropping class bodies", () => {
         const source = `
-            export class Base { ["x"] = 1; }
+            export class Base { [String("x")] = 1; }
             export class Derived extends Base { own = 2; }
             export class Grandchild extends Derived {}
             class OrdinaryBase { value = 3; }
@@ -115,7 +115,7 @@ describe("class lowering", () => {
 
     it("retains bodies through an imported base alias while rejecting its lifecycle", () => {
         const { file, diagnostics } = lowerProject({
-            "/base.ts": `export class Base { ["x"] = 1; }`,
+            "/base.ts": `export class Base { [String("x")] = 1; }`,
             "/consumer.ts": `
                 import { Base as ImportedBase } from "./base";
                 export class Derived extends ImportedBase {}
@@ -138,7 +138,7 @@ describe("class lowering", () => {
 
     it("keeps local value and mutable extends aliases raw instead of inventing a fixed base", () => {
         const source = `
-            class Base { ["x"] = 1; }
+            class Base { [String("x")] = 1; }
             const Alias = Base;
             export class Derived extends Alias {}
             export class Grandchild extends Derived {}

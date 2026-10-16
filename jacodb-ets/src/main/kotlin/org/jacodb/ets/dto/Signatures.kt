@@ -44,6 +44,7 @@ data class FieldSignatureDto(
     val declaringClass: ClassSignatureDto,
     val name: String,
     val type: TypeDto,
+    val wellKnownSymbol: String? = null,
 )
 
 @Serializable
@@ -53,6 +54,7 @@ data class MethodSignatureDto(
     val name: String,
     val parameters: List<MethodParameterDto>,
     val returnType: TypeDto,
+    val wellKnownSymbol: String? = null,
 )
 
 @Serializable

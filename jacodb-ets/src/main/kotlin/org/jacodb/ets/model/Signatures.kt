@@ -116,6 +116,7 @@ data class EtsFieldSignature(
     val enclosingClass: EtsClassSignature,
     val name: String,
     val type: EtsType,
+    val wellKnownSymbol: EtsWellKnownSymbol? = null,
 ) {
     override fun toString(): String {
         return "${enclosingClass.name}::$name: $type"
@@ -128,6 +129,7 @@ data class EtsMethodSignature(
     val name: String,
     val parameters: List<EtsMethodParameter>,
     val returnType: EtsType,
+    val wellKnownSymbol: EtsWellKnownSymbol? = null,
 ) {
     override fun toString(): String {
         val params = parameters.joinToString()

@@ -29,7 +29,7 @@ function hasUnsupported(method: MethodDto): boolean {
 
 describe("independent bodies of classes with unsupported definitions", () => {
     it.each([
-        { name: "computed ancestor", setup: "class Base { [Symbol.iterator]() { return [][Symbol.iterator](); } }", base: "Base" },
+        { name: "computed ancestor", setup: "class Base { [String('iterator')]() { return []; } }", base: "Base" },
         { name: "ambient DOM constructor", setup: "", base: "HTMLElement" },
         { name: "ambient Map constructor", setup: "", base: "Map<string, number>", runtimeBase: "Map" },
         { name: "mutable constructor alias", setup: "class Plain {} let Alias: typeof Plain = Plain;", base: "Alias" },
@@ -151,7 +151,8 @@ describe("independent bodies of classes with unsupported definitions", () => {
 
     it("retains lifted field closure bodies without constructing their captured environment", () => {
         const { file } = lower(`
-            class Base { [Symbol.iterator]() { return []; } }
+            const tag: unique symbol = Symbol("tag");
+            class Base { [tag]() { return []; } }
             class Target extends Base {
                 own = 4;
                 calculate = (value: number) => this.own + value;
