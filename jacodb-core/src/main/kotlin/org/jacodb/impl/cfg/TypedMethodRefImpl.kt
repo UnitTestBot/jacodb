@@ -71,8 +71,10 @@ abstract class MethodSignatureRef(
                 append("#")
                 append(name)
                 append("(")
-                argumentTypes.joinToString(", ") { it.typeName }
-                append(")'")
+                append(argumentTypes.joinToString(", ") { it.typeName })
+                append(")' (descriptor: ")
+                append(description)
+                append(")")
             }
         }
 

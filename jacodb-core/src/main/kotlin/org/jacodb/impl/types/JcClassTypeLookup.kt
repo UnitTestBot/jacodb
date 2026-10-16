@@ -36,7 +36,24 @@ class JcClassTypeLookupImpl(val type: JcClassType) : JcLookup<JcTypedField, JcTy
     }
 
     override fun specialMethod(name: String, description: String): JcTypedMethod? {
-        return JcClassTypeLookup.JcSpecialTypedMethodLookup(type, name, description).lookup()
+        val method = type.jcClass.lookup.specialMethod(name, description) ?: return null
+        val pendingTypes = ArrayDeque<JcClassType>()
+        val visitedClasses = hashSetOf<JcClassOrInterface>()
+        pendingTypes.add(type)
+
+        while (pendingTypes.isNotEmpty()) {
+            val current = pendingTypes.removeFirst()
+            if (!visitedClasses.add(current.jcClass)) continue
+
+            if (current.jcClass == method.enclosingClass) {
+                return current.declaredMethods.firstOrNull { it.method == method }
+            }
+
+            current.superType?.let { pendingTypes.add(it) }
+            pendingTypes.addAll(current.interfaces)
+        }
+
+        return null
     }
 }
 
@@ -78,19 +95,6 @@ abstract class JcClassTypeLookup<Result : JcAccessible>(clazz: JcClassType) :
 
         override val predicate: (JcTypedMethod) -> Boolean
             get() = { it.name == name && it.isStatic && it.method.description == description }
-
-    }
-
-    internal class JcSpecialTypedMethodLookup(
-        type: JcClassType,
-        name: String,
-        description: String,
-    ) : JcTypedMethodLookup(type, name, description) {
-
-        override fun JcClassType.next() = listOfNotNull(superType)
-
-        override val predicate: (JcTypedMethod) -> Boolean
-            get() = { it.name == name && it.method.description == description }
 
     }
 
