@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ClassCategory } from "../src/dto/constants";
 import { AssignStmtDto, StmtDto } from "../src/dto/stmts";
 import { serializeEtsFile } from "../src/serialize";
 import { validateEtsFile } from "../src/validate";
@@ -126,6 +127,42 @@ describe("closures", () => {
         expect(file.classes.find((clazz) => clazz.signature.name === "%dflt")!.methods).not.toContainEqual(
             expect.objectContaining({ signature: expect.objectContaining({ name: "%AM0$make" }) }),
         );
+    });
+
+    it.each([
+        { interfaceFirst: true, namespace: false },
+        { interfaceFirst: false, namespace: false },
+        { interfaceFirst: true, namespace: true },
+        { interfaceFirst: false, namespace: true },
+    ])("attaches merged-class closures to the runtime owner: %o", ({ interfaceFirst, namespace }) => {
+        const augmentation = `interface Counter { make(step: number): () => () => number; }`;
+        const implementation = `
+            class Counter {
+                value = 1;
+                make(step: number): () => () => number {
+                    return () => () => this.value + step;
+                }
+            }
+        `;
+        const declarations = interfaceFirst
+            ? augmentation + implementation
+            : implementation + augmentation;
+        const source = namespace ? `namespace Scope { ${declarations} }` : declarations;
+
+        const { file, diagnostics } = lower(source);
+        const roundTrip = JSON.parse(serializeEtsFile(file)) as typeof file;
+        const classes = namespace ? roundTrip.namespaces[0].classes! : roundTrip.classes;
+        const runtime = classes.find((owner) => owner.category === ClassCategory.CLASS
+            && owner.signature.name === "Counter")!;
+        const typeOnly = classes.find((owner) => owner.category === ClassCategory.INTERFACE)!;
+        const closures = runtime.methods.filter((method) => method.signature.name.startsWith("%AM"));
+
+        expect(diagnostics.messages).toEqual([]);
+        expect(closures).toHaveLength(2);
+        expect(closures.every((method) => method.signature.declaringClass.name === "Counter")).toBe(true);
+        expect(closures.every((method) => method.body !== undefined)).toBe(true);
+        expect(typeOnly.methods.some((method) => method.signature.name.startsWith("%AM"))).toBe(false);
+        expect(validateEtsFile(roundTrip)).toEqual([]);
     });
 
     it("propagates transitive captures through nested closures", () => {
