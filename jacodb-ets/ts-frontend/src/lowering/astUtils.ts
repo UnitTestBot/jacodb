@@ -30,7 +30,7 @@ export function memberName(name: ts.PropertyName | ts.BindingName | ts.EntityNam
     return COMPUTED_MEMBER_NAME;
 }
 
-/** Reject unsupported members, unsupported bases, and runtime base values without a stable class declaration. */
+/** Definition semantics that prevent constructing a class value, independently of its retained method bodies. */
 export function unsupportedClassDeclarationReason(decl: ts.ClassDeclaration, checker: ts.TypeChecker): string | undefined {
     const visited = new Set<ts.ClassDeclaration>();
     const reasonOf = (current: ts.ClassDeclaration): string | undefined => {

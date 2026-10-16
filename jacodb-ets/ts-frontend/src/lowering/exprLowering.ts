@@ -484,6 +484,7 @@ export class ExprLowerer {
         }
 
         const instance = this.lowerToLocal(node.expression);
+        this.ensureSupportedClassMemberLookup(node);
         const isObjectLiteralAccessor = this.m.converter.symbolOf(node.name)?.declarations?.some((declaration) =>
             ts.isGetAccessorDeclaration(declaration) && ts.isObjectLiteralExpression(declaration.parent),
         );
@@ -526,10 +527,12 @@ export class ExprLowerer {
                 throw new LoweringError("computed namespace constructor access has no runtime namespace object in EtsIR");
             }
             const instance = this.snapshotToLocal(node.expression);
+            const key = this.propertyAccessKey(this.lowerToImmediate(node.argumentExpression), instance);
+            this.ensureSupportedClassMemberLookup(node);
             return {
                 _: "PropertyRef",
                 instance,
-                key: this.propertyAccessKey(this.lowerToImmediate(node.argumentExpression), instance),
+                key,
                 type: this.safeTypeOf(node),
             };
         }
@@ -678,6 +681,7 @@ export class ExprLowerer {
         }
 
         if (ts.isPropertyAccessExpression(node)) {
+            this.ensureSupportedClassMemberLookup(node);
             const fieldType = this.safeTypeOf(node);
             const isObjectLiteralAccessor = this.m.converter.symbolOf(node.name)?.declarations?.some((declaration) =>
                 ts.isGetAccessorDeclaration(declaration) && ts.isObjectLiteralExpression(declaration.parent),
@@ -701,10 +705,12 @@ export class ExprLowerer {
                 this.lowerToImmediate(node.argumentExpression);
                 throw new LoweringError("computed namespace constructor access has no runtime namespace object in EtsIR");
             }
+            const key = this.propertyAccessKey(this.lowerToImmediate(node.argumentExpression), instance);
+            this.ensureSupportedClassMemberLookup(node);
             return {
                 _: "PropertyRef",
                 instance,
-                key: this.propertyAccessKey(this.lowerToImmediate(node.argumentExpression), instance),
+                key,
                 type: this.safeTypeOf(node),
             };
         }
@@ -761,6 +767,7 @@ export class ExprLowerer {
             if (!this.m.checker.isArrayType(receiverType) && !this.m.checker.isTupleType(receiverType)) {
                 const instance = this.snapshotToLocal(node.expression);
                 const key = this.snapshotToLocal(node.argumentExpression);
+                this.ensureSupportedClassMemberLookup(node);
 
                 // Reference evaluation retains the raw key; Get and Put each convert it.
                 return { _: "PropertyRef", instance, key, type: this.safeTypeOf(node) };
@@ -1146,6 +1153,7 @@ export class ExprLowerer {
 
         // `super.m(...)` — instance call on `this` with the superclass as declaring class.
         if (ts.isPropertyAccessExpression(callee) && callee.expression.kind === ts.SyntaxKind.SuperKeyword) {
+            this.ensureSupportedClassMemberLookup(callee);
             const isAccessorCall = this.m.converter.symbolOf(callee.name)?.declarations?.some(ts.isGetAccessorDeclaration);
             if (isAccessorCall) {
                 throw new LoweringError("super getter call needs superclass-relative property lookup");
@@ -1168,6 +1176,7 @@ export class ExprLowerer {
             // `this.m()` inside a static method targets a static member of the
             // current class, just like `C.m()`.
             if (callee.expression.kind === ts.SyntaxKind.ThisKeyword && this.m.isStaticMethod) {
+                this.ensureSupportedClassMemberLookup(callee);
                 return {
                     _: "StaticCallExpr",
                     method: this.methodSignatureForCall(node, methodName, this.m.declaringClass),
@@ -1222,10 +1231,12 @@ export class ExprLowerer {
             }
 
             const receiver = this.snapshotToLocal(callee.expression);
+            const key = this.propertyAccessKey(this.lowerToImmediate(callee.argumentExpression), receiver);
+            this.ensureSupportedClassMemberLookup(callee);
             const ptr = this.materialize({
                 _: "PropertyRef",
                 instance: receiver,
-                key: this.propertyAccessKey(this.lowerToImmediate(callee.argumentExpression), receiver),
+                key,
                 type: this.safeTypeOf(callee),
             }, this.safeTypeOf(callee));
             return {
@@ -1550,6 +1561,7 @@ export class ExprLowerer {
             const key = ts.isPropertyAccessExpression(tag)
                 ? constant(tag.name.text, STRING_TYPE)
                 : this.propertyAccessKey(this.lowerToImmediate(tag.argumentExpression), receiver);
+            this.ensureSupportedClassMemberLookup(tag);
             ptr = this.materialize({
                 _: "PropertyRef",
                 instance: receiver,
@@ -1993,6 +2005,74 @@ export class ExprLowerer {
 
     private safeTypeOf(node: ts.Node): TypeDto {
         return this.m.converter.typeOfNode(node);
+    }
+
+    /** Method entry does not prove that an unsupported base/prototype was constructed. */
+    private ensureSupportedClassMemberLookup(node: ts.PropertyAccessExpression | ts.ElementAccessExpression): void {
+        const receiver = unwrapTransparentExpression(node.expression);
+        const receiverType = this.m.checker.getNonNullableType(this.m.checker.getTypeAtLocation(receiver));
+        const declarations = this.receiverClassDeclarations(receiverType);
+        if (node.expression.kind === ts.SyntaxKind.SuperKeyword) {
+            let enclosing: ts.Node | undefined = node.parent;
+            while (enclosing !== undefined && !ts.isClassDeclaration(enclosing)) enclosing = enclosing.parent;
+            if (enclosing !== undefined && ts.isClassDeclaration(enclosing)) declarations.add(enclosing);
+        }
+
+        const property = ts.isPropertyAccessExpression(node) ? this.m.converter.symbolOf(node.name) : undefined;
+        for (const declaration of declarations) {
+            const definitionFailure = unsupportedClassDeclarationReason(declaration, this.m.checker);
+            if (definitionFailure === undefined) continue;
+
+            const isOwnDataField = property?.declarations?.some((member) =>
+                ts.isPropertyDeclaration(member)
+                && member.parent === declaration
+                && !ts.isComputedPropertyName(member.name),
+            ) ?? false;
+            const needsDefinition = !isOwnDataField || this.hasUnrepresentedStringKey(declaration);
+            if (needsDefinition) {
+                throw new LoweringError(`member lookup depends on unsupported class definition: ${definitionFailure}`);
+            }
+        }
+    }
+
+    private receiverClassDeclarations(type: ts.Type): Set<ts.ClassDeclaration> {
+        const declarations = new Set<ts.ClassDeclaration>();
+        const visited = new Set<ts.Type>();
+        const collect = (current: ts.Type): void => {
+            if (visited.has(current)) return;
+            visited.add(current);
+
+            for (const declaration of current.getSymbol()?.declarations ?? []) {
+                if (ts.isClassDeclaration(declaration)) declarations.add(declaration);
+            }
+            if (current.isUnionOrIntersection()) current.types.forEach(collect);
+
+            const constraint = this.m.checker.getBaseConstraintOfType(current);
+            if (constraint !== undefined) collect(constraint);
+            const apparent = this.m.checker.getApparentType(current);
+            if (apparent !== current) collect(apparent);
+        };
+
+        collect(type);
+        return declarations;
+    }
+
+    private hasUnrepresentedStringKey(declaration: ts.ClassDeclaration, visited = new Set<ts.ClassDeclaration>()): boolean {
+        if (visited.has(declaration)) return false;
+        visited.add(declaration);
+
+        const hasStringKey = declaration.members.some((member) => {
+            if (member.name === undefined || !ts.isComputedPropertyName(member.name)) return false;
+            const keyType = this.m.checker.getTypeAtLocation(member.name.expression);
+            return (keyType.flags & ts.TypeFlags.ESSymbolLike) === 0;
+        });
+        if (hasStringKey) return true;
+
+        const extended = declaration.heritageClauses
+            ?.find((clause) => clause.token === ts.SyntaxKind.ExtendsKeyword)?.types[0];
+        if (extended === undefined) return false;
+        const base = classLikeDeclarationOf(extended.expression, this.m.checker);
+        return base !== undefined && ts.isClassDeclaration(base) && this.hasUnrepresentedStringKey(base, visited);
     }
 
     private importedScopeFunctionField(node: ts.PropertyAccessExpression): StaticFieldRefDto | undefined {

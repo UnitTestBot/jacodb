@@ -32,8 +32,16 @@ function constructorCallOf(stmt: StmtDto): InstanceCallExprDto | undefined {
     return value?._ === "InstanceCallExpr" && value.method.name === "constructor" ? value : undefined;
 }
 
+function expectUnsupportedLifecycle(clazz: ClassDto): void {
+    for (const name of ["constructor", "%instInit", "%statInit"]) {
+        const statements = methodOf(clazz, name).body!.cfg.blocks.flatMap((block) => block.stmts);
+        expect(statements).toContainEqual(expect.objectContaining({ _: "UnsupportedStmt", kindName: "ClassDeclaration" }));
+        expect(statements.some((statement) => constructorCallOf(statement) !== undefined)).toBe(false);
+    }
+}
+
 describe("class lowering", () => {
-    it("keeps computed class declarations wholly raw before claiming class storage", () => {
+    it("keeps computed class definition and lifecycle raw while retaining body declarations", () => {
         const { file, diagnostics } = lower(`
             let evaluations = 0;
             function key(): "dynamic" { evaluations++; return "dynamic"; }
@@ -59,7 +67,7 @@ describe("class lowering", () => {
             .toEqual(rejected.map((name) => expect.stringContaining(`class ${name}`)));
         expect(defaultBody.stmtOrigins?.filter((origin) => origin.source.nodeKind === "ClassDeclaration"))
             .toHaveLength(rejected.length);
-        expect(file.classes.filter((clazz) => rejected.includes(clazz.signature.name))).toEqual([]);
+        for (const name of rejected) expectUnsupportedLifecycle(classByName(file, name));
         expect(file.classes.flatMap((clazz) => clazz.fields).some((field) => field.signature.name === "%computed"))
             .toBe(false);
         expect(file.exportInfos.some((info) => info.exportName === "Constant")).toBe(false);
@@ -76,7 +84,7 @@ describe("class lowering", () => {
             .toHaveLength(rejected.length);
     });
 
-    it("rejects derived declarations transitively when a computed base has no class DTO", () => {
+    it("keeps derived lifecycle unsupported transitively without dropping class bodies", () => {
         const source = `
             export class Base { ["x"] = 1; }
             export class Derived extends Base { own = 2; }
@@ -96,12 +104,8 @@ describe("class lowering", () => {
         expect(rawClasses).toHaveLength(rejected.length);
         expect(rawOrigins.map((origin) => source.slice(origin.source.startOffset, origin.source.endOffset)))
             .toEqual(rejected.map((name) => expect.stringContaining(`class ${name}`)));
-        expect(file.classes.filter((clazz) => rejected.includes(clazz.signature.name))).toEqual([]);
+        for (const name of rejected) expectUnsupportedLifecycle(classByName(file, name));
         expect(file.exportInfos.filter((info) => rejected.includes(info.exportName))).toEqual([]);
-        expect(file.classes.flatMap((clazz) => clazz.methods).some((method) =>
-            method.signature.name === "constructor"
-            && rejected.includes(method.signature.declaringClass.name),
-        )).toBe(false);
         expect(methodOf(classByName(file, "%dflt"), "refer").body!.cfg.blocks.flatMap((block) => block.stmts))
             .toContainEqual(expect.objectContaining({ _: "AssignStmt", right: expect.objectContaining({ _: "UnsupportedValue" }) }));
         expect(classByName(file, "OrdinaryDerived").superClassName).toBe("OrdinaryBase");
@@ -109,7 +113,7 @@ describe("class lowering", () => {
             .toHaveLength(rejected.length);
     });
 
-    it("rejects a derived declaration through an imported base alias", () => {
+    it("retains bodies through an imported base alias while rejecting its lifecycle", () => {
         const { file, diagnostics } = lowerProject({
             "/base.ts": `export class Base { ["x"] = 1; }`,
             "/consumer.ts": `
@@ -126,11 +130,10 @@ describe("class lowering", () => {
             .filter((stmt) => stmt._ === "UnsupportedStmt" && stmt.kindName === "ClassDeclaration");
 
         expect(rawClasses).toHaveLength(2);
-        expect(file.classes.some((clazz) => clazz.signature.name === "Derived" || clazz.signature.name === "Grandchild"))
-            .toBe(false);
+        for (const name of ["Derived", "Grandchild"]) expectUnsupportedLifecycle(classByName(file, name));
         expect(file.exportInfos.some((info) => info.exportName === "Derived")).toBe(false);
         expect(classByName(file, "OrdinaryDerived").superClassName).toBe("OrdinaryBase");
-        expect(diagnostics.messages.filter((message) => message.includes("base class"))).toHaveLength(2);
+        expect(diagnostics.messages.filter((message) => message.includes("unsupported statement: base class"))).toHaveLength(2);
     });
 
     it("keeps local value and mutable extends aliases raw instead of inventing a fixed base", () => {
@@ -156,7 +159,7 @@ describe("class lowering", () => {
         expect(rawClasses).toHaveLength(rejected.length);
         expect(rawOrigins.map((origin) => source.slice(origin.source.startOffset, origin.source.endOffset)))
             .toEqual(rejected.map((name) => expect.stringContaining(`class ${name}`)));
-        expect(file.classes.filter((clazz) => rejected.includes(clazz.signature.name))).toEqual([]);
+        for (const name of rejected) expectUnsupportedLifecycle(classByName(file, name));
         expect(file.exportInfos.filter((info) => rejected.includes(info.exportName))).toEqual([]);
         expect(file.classes.some((clazz) => clazz.signature.name.startsWith("%ACExpr"))).toBe(false);
         expect(defaultBody.cfg.blocks.flatMap((block) => block.stmts))

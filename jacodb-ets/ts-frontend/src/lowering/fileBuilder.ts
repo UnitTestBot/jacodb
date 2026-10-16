@@ -394,9 +394,8 @@ class FileBuilder {
                     methods.push(this.classBuilder.buildMethodFromDecl(defaultClassSignature, statement, name));
                 }
             } else if (ts.isClassDeclaration(statement)) {
-                if (unsupportedClassDeclarationReason(statement, this.ctx.checker) === undefined) {
-                    classes.push(this.classBuilder.buildClass(statement, anonymousDefaultExportBinding(statement)));
-                }
+                // Class definition can be unsupported while individual method bodies remain useful.
+                classes.push(this.classBuilder.buildClass(statement, anonymousDefaultExportBinding(statement)));
             } else if (ts.isInterfaceDeclaration(statement)) {
                 classes.push(this.classBuilder.buildInterface(statement));
             } else if (ts.isEnumDeclaration(statement)) {
