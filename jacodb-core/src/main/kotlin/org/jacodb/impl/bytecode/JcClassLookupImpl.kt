@@ -17,6 +17,9 @@
 package org.jacodb.impl.bytecode
 
 import org.jacodb.api.jvm.*
+import org.jacodb.api.jvm.ext.CONSTRUCTOR
+import org.jacodb.api.jvm.ext.allSuperHierarchy
+import org.jacodb.api.jvm.ext.isSubClassOf
 import org.jacodb.api.jvm.ext.packageName
 
 class JcClassLookupImpl(val clazz: JcClassOrInterface) : JcLookup<JcField, JcMethod> {
@@ -34,7 +37,25 @@ class JcClassLookupImpl(val clazz: JcClassOrInterface) : JcLookup<JcField, JcMet
     }
 
     override fun specialMethod(name: String, description: String): JcMethod? {
-        return JcClassLookup.JcSpecialMethodLookup(clazz, name, description).lookup()
+        val classMethod = JcClassLookup.JcSpecialMethodLookup(clazz, name, description).lookup()
+        if (classMethod != null || name == CONSTRUCTOR) return classMethod
+
+        // A declaration anywhere in the class chain takes precedence over an interface default.
+        val interfaceMethods = clazz.allSuperHierarchy
+            .filter { it.isInterface }
+            .flatMap { it.declaredMethods }
+            .filter { it.name == name && it.description == description && !it.isStatic && !it.isPrivate }
+
+        val maximallySpecific = interfaceMethods.filter { candidate ->
+            val overriddenBySubinterface = interfaceMethods.any { other ->
+                other.enclosingClass != candidate.enclosingClass &&
+                    other.enclosingClass.isSubClassOf(candidate.enclosingClass)
+            }
+            !overriddenBySubinterface
+        }
+
+        val defaultMethods = maximallySpecific.filterNot { it.isAbstract }
+        return if (defaultMethods.isEmpty()) maximallySpecific.firstOrNull() else defaultMethods.singleOrNull()
     }
 
 }
@@ -84,10 +105,14 @@ internal abstract class JcClassLookup<Result : JcAccessible>(clazz: JcClassOrInt
         description: String,
     ) : JcMethodLookup(clazz, name, description) {
 
-        override fun JcClassOrInterface.next() = emptyList<JcClassOrInterface>()
+        private val isConstructorLookup = name == CONSTRUCTOR
+
+        override fun JcClassOrInterface.next(): List<JcClassOrInterface> {
+            return if (isConstructorLookup) emptyList() else listOfNotNull(superClass)
+        }
 
         override val predicate: (JcMethod) -> Boolean
-            get() = { it.name == name && it.isStatic && it.description == description }
+            get() = { it.name == name && !it.isStatic && it.description == description }
 
     }
 
