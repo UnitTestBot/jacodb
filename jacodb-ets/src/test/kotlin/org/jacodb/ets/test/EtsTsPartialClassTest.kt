@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test
 
 class EtsTsPartialClassTest {
     private fun frontend(source: String): EtsFileDto {
-        val input = createTempDirectory("ts-partial-class").resolve("test.ts")
+        val input = createTempDirectory(prefix = "ts-partial-class").resolve("test.ts")
         input.writeText(source)
 
         val output = generateEtsIR(
@@ -76,13 +76,13 @@ class EtsTsPartialClassTest {
             .body!!.cfg.blocks.flatMap { it.stmts }
         assertTrue(body.isNotEmpty())
         assertFalse(body.filterIsInstance<AssignStmtDto>().any { it.right is RawValueDto })
-        assertEquals("Base", counter.superClassName)
+        assertEquals(expected = "Base", actual = counter.superClassName)
         assertTrue(dto.exportInfos.none { it.exportName == "Counter" || it.exportName == "Registry" })
 
         val module = dto.classes.single { it.signature.name == DEFAULT_ARK_CLASS_NAME }
         val statements = module.methods.single { it.signature.name == DEFAULT_ARK_METHOD_NAME }
             .body!!.cfg.blocks.flatMap { it.stmts }
-        assertEquals(3, statements.filterIsInstance<RawStmtDto>().count { it.kind == "UnsupportedStmt" })
+        assertEquals(expected = 3, actual = statements.filterIsInstance<RawStmtDto>().count { it.kind == "UnsupportedStmt" })
     }
 
     @Test
@@ -104,6 +104,9 @@ class EtsTsPartialClassTest {
             .body!!.cfg.blocks.flatMap { it.stmts }.filterIsInstance<AssignStmtDto>()
         assertFalse(independent.any { it.right is RawValueDto })
         assertTrue(dependent.any { it.right is RawValueDto })
-        assertEquals("HTMLElement", dto.toEtsFile().classes.single { it.name == "Element" }.superClass?.name)
+        assertEquals(
+            expected = "HTMLElement",
+            actual = dto.toEtsFile().classes.single { it.name == "Element" }.superClass?.name,
+        )
     }
 }
