@@ -56,6 +56,36 @@ describe("parseArgs", () => {
 });
 
 describe("project mode", () => {
+    it("supports Node20 projects with relative TypeScript extension imports", () => {
+        const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-node20-"));
+        tempDirs.push(projectDir);
+        fs.writeFileSync(path.join(projectDir, "package.json"), JSON.stringify({ type: "module" }));
+        fs.writeFileSync(path.join(projectDir, "tsconfig.json"), JSON.stringify({
+            compilerOptions: {
+                module: "node20", moduleResolution: "nodenext", rewriteRelativeImportExtensions: true,
+                noEmit: true, allowImportingTsExtensions: true,
+            },
+            files: ["index.ts", "dependency.ts"],
+        }));
+        fs.writeFileSync(path.join(projectDir, "dependency.ts"), "export class Dependency { value = 7; }");
+        fs.writeFileSync(path.join(projectDir, "index.ts"),
+            'import { Dependency } from "./dependency.ts"; export class Client extends Dependency {}');
+
+        const inputs = resolveProjectInputs(projectDir);
+        const outputDir = path.join(projectDir, "ir");
+        const result = main(["--project", projectDir, outputDir]);
+
+        expect(inputs.options.module).toBe(ts.ModuleKind.Node20);
+        expect(inputs.options.rewriteRelativeImportExtensions).toBe(true);
+        expect(result).toBe(0);
+        const file = JSON.parse(fs.readFileSync(path.join(outputDir, "index.ts.json"), "utf8"));
+        expect(file.importInfos).toContainEqual(expect.objectContaining({ importFrom: "./dependency.ts" }));
+        expect(file.classes).toContainEqual(expect.objectContaining({
+            signature: expect.objectContaining({ name: "Client" }),
+            superClassName: "Dependency",
+        }));
+    });
+
     it("keeps an imported class alias while rejecting a mutable namespace property", () => {
         const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "ets-frontend-class-alias-"));
         tempDirs.push(projectDir);

@@ -91,29 +91,31 @@ export class StmtLowerer {
         // snapshot captures BEFORE the captured variables are assigned. Hoist only the
         // declarations whose values are evaluated earlier in the same statement list;
         // a reference in a deferred closure body cannot force early capture.
-        const hoisted = new Set<ts.Statement>();
+        const declarations = new Map<ts.Symbol, { statement: ts.Statement; index: number }[]>();
         statements.forEach((statement, index) => {
-            if (!ts.isFunctionDeclaration(statement) || statement.name === undefined) {
-                return;
-            }
-            const functionSymbol = this.m.converter.symbolOf(statement.name);
-            if (functionSymbol === undefined) {
-                return;
-            }
+            if (!ts.isFunctionDeclaration(statement) || statement.name === undefined) return;
+            const symbol = this.m.converter.symbolOf(statement.name);
+            if (symbol === undefined) return;
 
-            for (let i = 0; i < index; i++) {
-                const earlierStatement = statements[i];
-                const uses = this.functionUses(earlierStatement, functionSymbol);
-                if (uses.eager) {
-                    hoisted.add(statement);
-                }
-                if (uses.deferred) {
-                    // Capturing a function before its binding is assigned needs a
-                    // live binding cell, which the lifted environment cannot express.
-                    this.unsupportedForwardFunctionCaptures.add(earlierStatement);
-                }
-            }
+            const existing = declarations.get(symbol) ?? [];
+            existing.push({ statement, index });
+            declarations.set(symbol, existing);
         });
+
+        const hoisted = new Set<ts.Statement>();
+        if (declarations.size > 0) {
+            statements.forEach((statement, index) => {
+                // Collect all forward references in one traversal instead of rescanning
+                // every earlier subtree separately for every later declaration.
+                for (const [symbol, uses] of this.functionUses(statement, declarations)) {
+                    for (const declaration of declarations.get(symbol)!) {
+                        if (declaration.index <= index) continue;
+                        if (uses.eager) hoisted.add(declaration.statement);
+                        if (uses.deferred) this.unsupportedForwardFunctionCaptures.add(statement);
+                    }
+                }
+            });
+        }
         for (const statement of statements) {
             if (hoisted.has(statement)) {
                 this.lowerStatement(statement);
@@ -126,11 +128,13 @@ export class StmtLowerer {
         }
     }
 
-    private functionUses(node: ts.Node, functionSymbol: ts.Symbol): { eager: boolean; deferred: boolean } {
-        let eager = false;
-        let deferred = false;
+    private functionUses(
+        node: ts.Node,
+        functionSymbols: ReadonlyMap<ts.Symbol, unknown>,
+    ): Map<ts.Symbol, { eager: boolean; deferred: boolean }> {
+        const uses = new Map<ts.Symbol, { eager: boolean; deferred: boolean }>();
         const visit = (current: ts.Node, inDeferredBody: boolean): void => {
-            if ((eager && deferred) || ts.isTypeNode(current)) {
+            if (ts.isTypeNode(current)) {
                 return;
             }
 
@@ -178,9 +182,12 @@ export class StmtLowerer {
                 const isValueReference = !isPropertyName && !isBindingName;
                 if (isValueReference) {
                     const referenceSymbol = this.m.converter.symbolOf(current);
-                    if (referenceSymbol === functionSymbol) {
-                        if (inDeferredBody) deferred = true;
-                        else eager = true;
+                    const isScopeFunction = referenceSymbol !== undefined && functionSymbols.has(referenceSymbol);
+                    if (isScopeFunction) {
+                        const referenceUses = uses.get(referenceSymbol) ?? { eager: false, deferred: false };
+                        if (inDeferredBody) referenceUses.deferred = true;
+                        else referenceUses.eager = true;
+                        uses.set(referenceSymbol, referenceUses);
                         return;
                     }
                 }
@@ -190,7 +197,7 @@ export class StmtLowerer {
         };
 
         visit(node, false);
-        return { eager, deferred };
+        return uses;
     }
 
     private immediatelyCalledFunction(expression: ts.Expression): ts.ArrowFunction | ts.FunctionExpression | undefined {

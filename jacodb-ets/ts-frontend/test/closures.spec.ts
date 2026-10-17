@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { ClassCategory } from "../src/dto/constants";
 import { AssignStmtDto, StmtDto } from "../src/dto/stmts";
+import { buildEtsFile } from "../src/lowering/fileBuilder";
 import { serializeEtsFile } from "../src/serialize";
 import { validateEtsFile } from "../src/validate";
 import { consumers } from "./array-test-consumers";
-import { defaultMethod, lower, methodByName, singleBlockStmts } from "./util";
+import { compile, defaultMethod, lower, methodByName, singleBlockStmts } from "./util";
 
 function allStmts(source: string): StmtDto[] {
     const { file } = lower(source);
@@ -15,6 +16,23 @@ function allStmts(source: string): StmtDto[] {
 }
 
 describe("closures", () => {
+    it("does not repeatedly resolve sibling function subtrees for forward references", () => {
+        const declarations = Array.from({ length: 200 }, (_, index) =>
+            `function sibling${index}() { return input; }`).join("\n");
+        const { program, sourceFile, checker } = compile(`function outer(input: number) { ${declarations} }`);
+        const resolutions = vi.spyOn(checker, "getSymbolAtLocation");
+
+        try {
+            const file = buildEtsFile(program, sourceFile, { projectName: "proj", fileName: "test.ts" });
+
+            expect(validateEtsFile(file)).toEqual([]);
+            // One identifier per sibling must not cause a quadratic number of checker lookups.
+            expect(resolutions.mock.calls.length).toBeLessThan(5_000);
+        } finally {
+            resolutions.mockRestore();
+        }
+    });
+
     it("lifts arrow functions into %AM methods with FunctionType use-site locals", () => {
         const { file } = lower(`
             let arr = [1, 2, 3];
