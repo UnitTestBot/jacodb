@@ -46,6 +46,8 @@ export interface FieldSignatureDto {
     declaringClass: ClassSignatureDto;
     name: string;
     type: TypeDto;
+    /** Symbol keys remain distinct from string-named lookalikes. */
+    wellKnownSymbol?: "iterator";
 }
 
 export interface MethodParameterDto {
@@ -61,6 +63,7 @@ export interface MethodSignatureDto {
     name: string;
     parameters: MethodParameterDto[];
     returnType: TypeDto;
+    wellKnownSymbol?: "iterator";
 }
 
 export interface LocalSignatureDto {

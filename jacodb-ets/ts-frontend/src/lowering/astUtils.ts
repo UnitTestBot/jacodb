@@ -17,17 +17,65 @@
 /** Shared AST helpers used across the lowering modules. */
 
 import * as ts from "typescript";
-import { COMPUTED_MEMBER_NAME, DEFAULT_ARK_CLASS_NAME, Modifier, PATTERN_PARAMETER_PREFIX } from "../dto/constants";
+import { COMPUTED_MEMBER_NAME, CONSTRUCTOR_NAME, DEFAULT_ARK_CLASS_NAME, INSTANCE_INIT_METHOD_NAME, Modifier, PATTERN_PARAMETER_PREFIX, STATIC_INIT_METHOD_NAME } from "../dto/constants";
 import { DecoratorDto } from "../dto/model";
 import { MethodParameterDto, MethodSignatureDto } from "../dto/signatures";
 import { FunctionTypeDto, TypeDto, UNKNOWN_TYPE } from "../dto/types";
 import type { LoweringContext } from "./methodBuilder";
 
 export function memberName(name: ts.PropertyName | ts.BindingName | ts.EntityName): string {
-    if (ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name) || ts.isPrivateIdentifier(name)) {
+    const literal = ts.isComputedPropertyName(name) ? name.expression : name;
+    if (ts.isNumericLiteral(literal)) return String(Number(literal.text));
+    if (ts.isStringLiteral(literal) || ts.isNoSubstitutionTemplateLiteral(literal)) return literal.text;
+    if (ts.isIdentifier(name) || ts.isPrivateIdentifier(name)) {
         return name.text;
     }
     return COMPUTED_MEMBER_NAME;
+}
+
+export interface ClassMemberKey {
+    name: string;
+    wellKnownSymbol?: "iterator";
+}
+
+/** Literal keys and the unshadowed standard-library iterator key. */
+export function classMemberKey(name: ts.PropertyName, checker: ts.TypeChecker): ClassMemberKey | undefined {
+    if (!ts.isComputedPropertyName(name)) return { name: memberName(name) };
+
+    const expression = name.expression;
+    const isLiteral = ts.isStringLiteral(expression)
+        || ts.isNoSubstitutionTemplateLiteral(expression)
+        || ts.isNumericLiteral(expression);
+    if (isLiteral) return literalClassMemberKey(memberName(name));
+
+    const isNegativeNumber = ts.isPrefixUnaryExpression(expression)
+        && expression.operator === ts.SyntaxKind.MinusToken
+        && ts.isNumericLiteral(expression.operand);
+    if (isNegativeNumber) return literalClassMemberKey(String(-Number(expression.operand.text)));
+
+    const isIteratorAccess = ts.isPropertyAccessExpression(expression)
+        && expression.name.text === "iterator"
+        && ts.isIdentifier(expression.expression)
+        && expression.expression.text === "Symbol";
+    if (!isIteratorAccess) return undefined;
+
+    const symbolDeclarations = resolvedSymbolOf(expression.expression, checker)?.declarations ?? [];
+    const iteratorDeclarations = resolvedSymbolOf(expression.name, checker)?.declarations ?? [];
+    const isLibraryDeclaration = (declaration: ts.Declaration): boolean => {
+        const source = declaration.getSourceFile();
+        return source.isDeclarationFile && source.hasNoDefaultLib
+            && /(?:^|[/\\])lib\.es\d+(?:\.\w+)*\.d\.ts$/.test(source.fileName);
+    };
+    const isIntrinsic = symbolDeclarations.length > 0 && iteratorDeclarations.length > 0
+        && symbolDeclarations.every(isLibraryDeclaration) && iteratorDeclarations.every(isLibraryDeclaration);
+    if (!isIntrinsic) return undefined;
+
+    return { name: "Symbol.iterator", wellKnownSymbol: "iterator" };
+}
+
+function literalClassMemberKey(name: string): ClassMemberKey | undefined {
+    const isLifecycleName = [CONSTRUCTOR_NAME, INSTANCE_INIT_METHOD_NAME, STATIC_INIT_METHOD_NAME].includes(name);
+    return isLifecycleName ? undefined : { name };
 }
 
 /** Definition semantics that prevent constructing a class value, independently of its retained method bodies. */
@@ -37,9 +85,22 @@ export function unsupportedClassDeclarationReason(decl: ts.ClassDeclaration, che
         if (visited.has(current)) return undefined;
         visited.add(current);
 
-        const hasComputedMember = current.members.some((member) =>
-            member.name !== undefined && ts.isComputedPropertyName(member.name));
-        if (hasComputedMember) return "computed class member needs definition-time key evaluation";
+        const hasUnsupportedComputedMember = current.members.some((member) => {
+            if (member.name === undefined || !ts.isComputedPropertyName(member.name)) return false;
+
+            const key = classMemberKey(member.name, checker);
+            if (key === undefined) return true;
+
+            const hasAccessorCollision = current.members.some((other) => {
+                if (!ts.isGetAccessorDeclaration(other) && !ts.isSetAccessorDeclaration(other)) return false;
+
+                const otherKey = classMemberKey(other.name, checker);
+                return otherKey?.name === key.name && otherKey?.wellKnownSymbol === key.wellKnownSymbol
+                    && (modifiersOf(other) & Modifier.STATIC) === (modifiersOf(member) & Modifier.STATIC);
+            });
+            return hasAccessorCollision;
+        });
+        if (hasUnsupportedComputedMember) return "computed class member needs definition-time key evaluation";
 
         const extendsType = current.heritageClauses
             ?.find((clause) => clause.token === ts.SyntaxKind.ExtendsKeyword)
