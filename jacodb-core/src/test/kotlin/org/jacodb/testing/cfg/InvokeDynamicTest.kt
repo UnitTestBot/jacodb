@@ -61,6 +61,27 @@ class InvokeDynamicTest : BaseInstructionsTest() {
     @Test
     fun `invoke dynamic constructor`() = runStaticMethod<InvokeDynamicExamples>("testInvokeDynamicConstructor")
 
+    @Test
+    fun `erased and instantiated method types remain distinct for an unboxing reference`() {
+        assertLambdaMethodTypes(methodName = "makeWhitespacePredicate", implementationParameter = "int")
+    }
+
+    @Test
+    fun `instantiated method type retains the wrapper before implementation widening`() {
+        assertLambdaMethodTypes(methodName = "makeWideningPredicate", implementationParameter = "long")
+    }
+
+    private fun assertLambdaMethodTypes(methodName: String, implementationParameter: String) {
+        val clazz = cp.findClass<InvokeDynamicExamples>()
+        val method = clazz.declaredMethods.single { it.name == methodName }
+        val lambda = method.instList.filterIsInstance<JcAssignInst>()
+            .map { it.rhv }.filterIsInstance<JcLambdaExpr>().single()
+
+        assertEquals(listOf("java.lang.Object"), lambda.interfaceMethodType.argumentTypes.map { it.typeName })
+        assertEquals(listOf("java.lang.Integer"), lambda.dynamicMethodType.argumentTypes.map { it.typeName })
+        assertEquals(listOf(implementationParameter), lambda.actualMethod.method.parameters.map { it.type.typeName })
+    }
+
     private inline fun <reified T> runStaticMethod(name: String) {
         val clazz = cp.findClass<T>()
 
